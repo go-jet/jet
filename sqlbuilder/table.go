@@ -131,11 +131,9 @@ func (t *Table) ForceIndex(index string) *Table {
 // Generates the sql string for the current table expression.  Note: the
 // generated string may not be a valid/executable sql statement.
 func (t *Table) SerializeSql(database string, out *bytes.Buffer) error {
-	_, _ = out.WriteString("`")
 	_, _ = out.WriteString(database)
-	_, _ = out.WriteString("`.`")
+	_, _ = out.WriteString(".")
 	_, _ = out.WriteString(t.Name())
-	_, _ = out.WriteString("`")
 
 	if t.forcedIndex != "" {
 		if !validIdentifierName(t.forcedIndex) {

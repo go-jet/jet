@@ -75,13 +75,10 @@ func (c *baseColumn) setTableName(table string) error {
 
 func (c *baseColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
 	if c.table != "" {
-		_ = out.WriteByte('`')
 		_, _ = out.WriteString(c.table)
-		_, _ = out.WriteString("`.")
+		_, _ = out.WriteString(".")
 	}
-	_, _ = out.WriteString("`")
 	_, _ = out.WriteString(c.name)
-	_ = out.WriteByte('`')
 	return nil
 }
 
@@ -147,7 +144,7 @@ func DateTimeColumn(name string, nullable NullableColumn) NonAliasColumn {
 	return dc
 }
 
-type integerColumn struct {
+type IntegerColumn struct {
 	baseColumn
 	isExpression
 }
@@ -158,7 +155,7 @@ func IntColumn(name string, nullable NullableColumn) NonAliasColumn {
 	if !validIdentifierName(name) {
 		panic("Invalid column name in int column")
 	}
-	ic := &integerColumn{}
+	ic := &IntegerColumn{}
 	ic.name = name
 	ic.nullable = nullable
 	return ic
