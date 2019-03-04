@@ -2,9 +2,9 @@ package tests
 
 import (
 	"fmt"
+	. "github.com/sub0Zero/.test_files/dvd_rental/dvds/table"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
 	. "github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
-	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/public/table"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -16,10 +16,10 @@ var (
 	user       = "postgres"
 	password   = "postgres"
 	dbname     = "dvd_rental"
-	schemaName = "public"
+	schemaName = "dvds"
 )
 
-//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema public -path .test_files
+//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema dvds -path .test_files
 
 func TestGenerateModel(t *testing.T) {
 	connectString := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
@@ -28,13 +28,17 @@ func TestGenerateModel(t *testing.T) {
 	err := generator.Generate(folderPath, connectString, dbname, schemaName)
 
 	assert.NilError(t, err)
+
+	err = generator.Generate(folderPath, connectString, dbname, "sport")
+
+	assert.NilError(t, err)
 }
 
 func TestSelectQuery(t *testing.T) {
-	query, err := table.Actor.InnerJoinOn(table.Store, Eq(table.Actor.ActorID, table.Store.StoreID)).
-		Select(table.Store.StoreID, table.Store.AddressID, table.Actor.ActorID).String(schemaName)
+	query, err := Actor.InnerJoinOn(Store, Eq(Actor.ActorID, Store.StoreID)).
+		Select(Store.StoreID, Store.AddressID, Actor.ActorID).String(schemaName)
 
 	assert.NilError(t, err)
 
-	assert.Equal(t, query, "SELECT store.store_id,store.address_id,actor.actor_id FROM public.actor JOIN public.store ON actor.actor_id=store.store_id")
+	assert.Equal(t, query, "SELECT store.store_id,store.address_id,actor.actor_id FROM dvds.actor JOIN dvds.store ON actor.actor_id=store.store_id")
 }

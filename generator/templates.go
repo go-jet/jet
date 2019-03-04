@@ -1,30 +1,39 @@
 package generator
 
-var TableTemplate = `package table
+var SqlBuilderTableTemplate = `package table
 
 import "github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
 
-type {{camelize .TableInfo.Name}}Table struct {
+type {{.ToGoStructName}} struct {
 	sqlbuilder.Table
 	
 	//Columns
-{{- range .TableInfo.Columns}}
-	{{camelize .Name}} sqlbuilder.NonAliasColumn
+{{- range .Columns}}
+	{{.ToGoFieldName}} sqlbuilder.NonAliasColumn
 {{- end}}
 }
 
-var {{camelize .TableInfo.Name}} = &{{camelize .TableInfo.Name}}Table{
-	Table: *sqlbuilder.NewTable("{{.TableInfo.Name}}", {{.ColumnNameList ", "}}),
+var {{.ToGoVarName}} = &{{.ToGoStructName}}{
+	Table: *sqlbuilder.NewTable("{{.Name}}", {{.ToGoColumnFieldList ", "}}),
 	
 	//Columns
-{{- range .TableInfo.Columns}}
-	{{camelize .Name}}: {{columnName $.TableInfo.Name .Name}},
+{{- range .Columns}}
+	{{.ToGoFieldName}}: {{.ToGoVarName}},
 {{- end}}
 }
 
 var (
-{{- range .TableInfo.Columns}}
-	{{columnName $.TableInfo.Name .Name}} = sqlbuilder.IntColumn("{{.Name}}", {{if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}})
+{{- range .Columns}}
+	{{.ToGoVarName}} = sqlbuilder.IntColumn("{{.Name}}", {{if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}})
 {{- end}}
 )
+`
+
+var DataModelTemplate = `package model
+
+type {{.ToGoModelStructName}} struct {
+{{- range .Columns}}
+	{{.ToGoDMFieldName}} {{.ToGoType}} {{if .IsUnique}}` + "`sql:\"unique\"`" + ` {{end}}
+{{- end}}
+}
 `
