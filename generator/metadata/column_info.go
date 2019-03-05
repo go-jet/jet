@@ -45,10 +45,11 @@ func (c ColumnInfo) GoBaseType() string {
 		case "smallint":
 			return "int16"
 		case "integer":
-			return "int"
+			return "int32"
 		case "bigint":
 			return "int64"
-		//case "date" : return "time.Time"
+		case "date", "timestamp without time zone", "timestamp with time zone":
+			return "time.Time"
 		case "bytea":
 			return "[]byte"
 		case "text":

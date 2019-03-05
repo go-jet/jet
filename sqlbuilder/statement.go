@@ -2,7 +2,10 @@ package sqlbuilder
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
+	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder/execution"
+	"reflect"
 	"regexp"
 
 	"github.com/dropbox/godropbox/errors"
@@ -11,6 +14,7 @@ import (
 type Statement interface {
 	// String returns generated SQL as string.
 	String(database string) (sql string, err error)
+	Execute(db *sql.DB, destination interface{}) error
 }
 
 type SelectStatement interface {
@@ -131,6 +135,10 @@ type unionStatementImpl struct {
 	limit, offset int64
 	// True if results of the union should be deduped.
 	unique bool
+}
+
+func (us *unionStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
 }
 
 func (us *unionStatementImpl) Where(expression BoolExpression) UnionStatement {
@@ -303,6 +311,22 @@ type selectStatementImpl struct {
 	withSharedLock bool
 	forUpdate      bool
 	distinct       bool
+}
+
+func (s *selectStatementImpl) Execute(db *sql.DB, destination interface{}) error {
+	destinationType := reflect.TypeOf(destination)
+
+	if destinationType.Kind() == reflect.Ptr && destinationType.Elem().Kind() == reflect.Struct {
+		s.Limit(1)
+	}
+
+	query, err := s.String("dvds")
+
+	if err != nil {
+		return err
+	}
+
+	return execution.Execute(db, query, destination)
 }
 
 func (s *selectStatementImpl) Copy() SelectStatement {
@@ -495,6 +519,10 @@ type insertStatementImpl struct {
 	ignore                bool
 }
 
+func (i *insertStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
+}
+
 func (s *insertStatementImpl) Add(
 	row ...Expression) InsertStatement {
 
@@ -665,6 +693,10 @@ type updateStatementImpl struct {
 	comment      string
 }
 
+func (u *updateStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
+}
+
 func (u *updateStatementImpl) Set(
 	column NonAliasColumn,
 	expression Expression) UpdateStatement {
@@ -808,6 +840,10 @@ type deleteStatementImpl struct {
 	comment string
 }
 
+func (d *deleteStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
+}
+
 func (d *deleteStatementImpl) Where(expression BoolExpression) DeleteStatement {
 	d.where = expression
 	return d
@@ -895,6 +931,10 @@ type tableLock struct {
 	w bool
 }
 
+func (l *lockStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
+}
+
 // AddReadLock takes read lock on the table.
 func (s *lockStatementImpl) AddReadLock(t *Table) LockStatement {
 	s.locks = append(s.locks, tableLock{t: t, w: false})
@@ -951,6 +991,10 @@ func NewUnlockStatement() UnlockStatement {
 type unlockStatementImpl struct {
 }
 
+func (u *unlockStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
+}
+
 func (s *unlockStatementImpl) String(database string) (sql string, err error) {
 	return "UNLOCK TABLES", nil
 }
@@ -966,6 +1010,10 @@ func NewGtidNextStatement(sid []byte, gno uint64) GtidNextStatement {
 type gtidNextStatementImpl struct {
 	sid []byte
 	gno uint64
+}
+
+func (g *gtidNextStatementImpl) Execute(db *sql.DB, data interface{}) error {
+	return nil
 }
 
 func (s *gtidNextStatementImpl) String(database string) (sql string, err error) {

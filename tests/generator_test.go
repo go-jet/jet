@@ -1,15 +1,18 @@
 package tests
 
 import (
+	"database/sql"
 	"fmt"
-	. "github.com/sub0Zero/.test_files/dvd_rental/dvds/table"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
-	. "github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
+	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
+	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
+	"os"
 	"testing"
 )
 
-var (
+const (
 	folderPath = ".test_files/"
 	host       = "localhost"
 	port       = 5432
@@ -19,26 +22,80 @@ var (
 	schemaName = "dvds"
 )
 
+var connectString = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+var db *sql.DB
+
 //go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema dvds -path .test_files
 
+func TestMain(m *testing.M) {
+	fmt.Println("Begin")
+	var err error
+	db, err = sql.Open("postgres", connectString)
+	if err != nil {
+		panic("Failed to connect to test db")
+	}
+	defer db.Close()
+
+	ret := m.Run()
+
+	db.Close()
+	fmt.Println("END")
+
+	os.Exit(ret)
+}
+
 func TestGenerateModel(t *testing.T) {
-	connectString := fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable",
-		host, port, user, password, dbname)
 
 	err := generator.Generate(folderPath, connectString, dbname, schemaName)
 
 	assert.NilError(t, err)
 
-	err = generator.Generate(folderPath, connectString, dbname, "sport")
-
-	assert.NilError(t, err)
+	//err = generator.Generate(folderPath, connectString, dbname, "sport")
+	//
+	//assert.NilError(t, err)
 }
 
 func TestSelectQuery(t *testing.T) {
-	query, err := Actor.InnerJoinOn(Store, Eq(Actor.ActorID, Store.StoreID)).
-		Select(Store.StoreID, Store.AddressID, Actor.ActorID).String(schemaName)
+	//query := Actor.InnerJoinOn(Store, Eq(Actor.ActorID, Store.StoreID)).
+	//	Select(Store.StoreID, Store.AddressID, Actor.ActorID)
+	//
+	//queryStr, err := query.String(schemaName)
+	//
+	//assert.NilError(t, err)
+	//
+	//assert.Equal(t, queryStr, "SELECT store.store_id,store.address_id,actor.actor_id FROM dvds.actor JOIN dvds.store ON actor.actor_id=store.store_id")
+	//
+	//err = query.Execute(db, nil)
+
+	customers := []model.Customer{}
+
+	query := Customer.Select(Customer.All...)
+
+	queryStr, err := query.String(schemaName)
+
+	assert.NilError(t, err)
+	assert.Equal(t, queryStr, "SELECT customer.customer_id,customer.store_id,customer.first_name,customer.last_name,customer.email,customer.address_id,customer.activebool,customer.create_date,customer.last_update,customer.active FROM dvds.customer")
+
+	//fmt.Println(queryStr)
+
+	err = query.Execute(db, &customers)
+
+	//fmt.Println(customers)
+	//
+	//spew.Sdump(customers)
 
 	assert.NilError(t, err)
 
-	assert.Equal(t, query, "SELECT store.store_id,store.address_id,actor.actor_id FROM dvds.actor JOIN dvds.store ON actor.actor_id=store.store_id")
+	assert.Equal(t, len(customers), 599)
+
+	actor := model.Actor{}
+	err = Actor.Select(Actor.All...).Execute(db, &actor)
+
+	assert.NilError(t, err)
+
+	spew.Dump(actor)
+	//time, _ := time.Parse("2006-01-02 15:04:05.00MST", "2013-05-26 14:47:57.62MST")
+	assert.Equal(t, actor.ActorID, int32(1))
+	assert.Equal(t, actor.FirstName, "Penelope")
+	assert.Equal(t, actor.LastName, "Guiness")
 }

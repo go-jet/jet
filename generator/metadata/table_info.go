@@ -15,6 +15,26 @@ type TableInfo struct {
 	DatabaseInfo    *DatabaseInfo
 }
 
+func (t TableInfo) GetImports() []string {
+	imports := map[string]string{}
+
+	for _, column := range t.Columns {
+		columnType := column.GoBaseType()
+
+		if columnType == "time.Time" {
+			imports["time.Time"] = "time"
+		}
+	}
+
+	ret := []string{}
+
+	for _, packageImport := range imports {
+		ret = append(ret, packageImport)
+	}
+
+	return ret
+}
+
 func (t TableInfo) IsForeignKey(columnName string) bool {
 	_, exist := t.ForeignTableMap[columnName]
 

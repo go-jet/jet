@@ -11,6 +11,8 @@ type {{.ToGoStructName}} struct {
 {{- range .Columns}}
 	{{.ToGoFieldName}} sqlbuilder.NonAliasColumn
 {{- end}}
+
+	All       []sqlbuilder.Projection
 }
 
 var {{.ToGoVarName}} = &{{.ToGoStructName}}{
@@ -20,6 +22,8 @@ var {{.ToGoVarName}} = &{{.ToGoStructName}}{
 {{- range .Columns}}
 	{{.ToGoFieldName}}: {{.ToGoVarName}},
 {{- end}}
+
+	All: []sqlbuilder.Projection{ {{.ToGoColumnFieldList ", "}} },
 }
 
 var (
@@ -30,6 +34,10 @@ var (
 `
 
 var DataModelTemplate = `package model
+
+{{range .GetImports}}
+	import "{{.}}"
+{{end}}
 
 type {{.ToGoModelStructName}} struct {
 {{- range .Columns}}
