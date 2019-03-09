@@ -4,6 +4,7 @@ import "fmt"
 
 func Example() {
 	t1 := NewTable(
+		"shard1",
 		"parent_prefix",
 		IntColumn("ns_id", NotNullable),
 		IntColumn("hash", NotNullable),
@@ -13,6 +14,7 @@ func Example() {
 			NotNullable))
 
 	t2 := NewTable(
+		"shard1",
 		"sfj",
 		IntColumn("ns_id", NotNullable),
 		IntColumn("sjid", NotNullable),
@@ -31,7 +33,7 @@ func Example() {
 	join := t2.LeftJoinOn(t1, Eq(ns_id1, ns_id2))
 	q := join.Select(ns_id2, sjid, prefix, filename).Where(
 		And(EqL(ns_id2, 456), In(sjid, in)))
-	text, _ := q.String("shard1")
+	text, _ := q.String()
 	fmt.Println(text)
 	// Output:
 	// SELECT `sfj`.`ns_id`,`sfj`.`sjid`,`parent_prefix`.`prefix`,`sfj`.`filename` FROM `shard1`.`sfj` LEFT JOIN `shard1`.`parent_prefix` ON `parent_prefix`.`ns_id`=`sfj`.`ns_id` WHERE (`sfj`.`ns_id`=456 AND `sfj`.`sjid` IN (1,2,3))

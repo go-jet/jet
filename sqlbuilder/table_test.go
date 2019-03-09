@@ -32,7 +32,7 @@ func (s *TableSuite) TestCValidLookup(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`")
+	c.Assert(sql, gc.Equals, "table1.col1")
 }
 
 func (s *TableSuite) TestCInvalidLookup(c *gc.C) {
@@ -47,23 +47,23 @@ func (s *TableSuite) TestCInvalidLookup(c *gc.C) {
 func (s *TableSuite) TestValidForcedIndex(c *gc.C) {
 	t := table1.ForceIndex("foo")
 	buf := &bytes.Buffer{}
-	err := t.SerializeSql("db", buf)
+	err := t.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`db`.`table1` FORCE INDEX (`foo`)")
+	c.Assert(sql, gc.Equals, "db.table1 FORCE INDEX (foo)")
 
 	// Ensure the original table is unchanged
 	buf = &bytes.Buffer{}
-	err = table1.SerializeSql("db", buf)
+	err = table1.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 	sql = buf.String()
-	c.Assert(sql, gc.Equals, "`db`.`table1`")
+	c.Assert(sql, gc.Equals, "db.table1")
 }
 
 func (s *TableSuite) TestInvalidForcedIndex(c *gc.C) {
 	t := table1.ForceIndex("foo\x00")
 	buf := &bytes.Buffer{}
-	err := t.SerializeSql("db", buf)
+	err := t.SerializeSql(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -72,7 +72,7 @@ func (s *TableSuite) TestJoinNilLeftTable(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.SerializeSql("db", buf)
+	err := join.SerializeSql(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -81,7 +81,7 @@ func (s *TableSuite) TestJoinNilRightTable(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.SerializeSql("db", buf)
+	err := join.SerializeSql(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -90,7 +90,7 @@ func (s *TableSuite) TestJoinNilOnCondition(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.SerializeSql("db", buf)
+	err := join.SerializeSql(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -99,14 +99,14 @@ func (s *TableSuite) TestInnerJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.SerializeSql("db", buf)
+	err := join.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`db`.`table1` JOIN `db`.`table2` ON `table1`.`col3`=`table2`.`col3`")
+		"db.table1 JOIN db.table2 ON table1.col3=table2.col3")
 }
 
 func (s *TableSuite) TestLeftJoin(c *gc.C) {
@@ -114,15 +114,15 @@ func (s *TableSuite) TestLeftJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.SerializeSql("db", buf)
+	err := join.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`db`.`table1` LEFT JOIN `db`.`table2` "+
-			"ON `table1`.`col3`=`table2`.`col3`")
+		"db.table1 LEFT JOIN db.table2 "+
+			"ON table1.col3=table2.col3")
 }
 
 func (s *TableSuite) TestRightJoin(c *gc.C) {
@@ -130,15 +130,15 @@ func (s *TableSuite) TestRightJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.SerializeSql("db", buf)
+	err := join.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`db`.`table1` RIGHT JOIN `db`.`table2` "+
-			"ON `table1`.`col3`=`table2`.`col3`")
+		"db.table1 RIGHT JOIN db.table2 "+
+			"ON table1.col3=table2.col3")
 }
 
 func (s *TableSuite) TestJoinColumns(c *gc.C) {
@@ -160,16 +160,16 @@ func (s *TableSuite) TestNestedInnerJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join2.SerializeSql("db", buf)
+	err := join2.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`db`.`table1` "+
-			"JOIN `db`.`table2` ON `table1`.`col3`=`table2`.`col3` "+
-			"JOIN `db`.`table3` ON `table1`.`col1`=`table3`.`col1`")
+		"db.table1 "+
+			"JOIN db.table2 ON table1.col3=table2.col3 "+
+			"JOIN db.table3 ON table1.col1=table3.col1")
 }
 
 func (s *TableSuite) TestNestedLeftJoin(c *gc.C) {
@@ -178,16 +178,16 @@ func (s *TableSuite) TestNestedLeftJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join2.SerializeSql("db", buf)
+	err := join2.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`db`.`table1` "+
-			"JOIN `db`.`table2` ON `table1`.`col3`=`table2`.`col3` "+
-			"LEFT JOIN `db`.`table3` ON `table1`.`col1`=`table3`.`col1`")
+		"db.table1 "+
+			"JOIN db.table2 ON table1.col3=table2.col3 "+
+			"LEFT JOIN db.table3 ON table1.col1=table3.col1")
 }
 
 func (s *TableSuite) TestNestedRightJoin(c *gc.C) {
@@ -196,14 +196,14 @@ func (s *TableSuite) TestNestedRightJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join2.SerializeSql("db", buf)
+	err := join2.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`db`.`table1` "+
-			"JOIN `db`.`table2` ON `table1`.`col3`=`table2`.`col3` "+
-			"RIGHT JOIN `db`.`table3` ON `table1`.`col1`=`table3`.`col1`")
+		"db.table1 "+
+			"JOIN db.table2 ON table1.col3=table2.col3 "+
+			"RIGHT JOIN db.table3 ON table1.col1=table3.col1")
 }

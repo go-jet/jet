@@ -71,7 +71,7 @@ func TestSelectQuery(t *testing.T) {
 
 	query := Customer.Select(Customer.All...)
 
-	queryStr, err := query.String(schemaName)
+	queryStr, err := query.String()
 
 	assert.NilError(t, err)
 	assert.Equal(t, queryStr, "SELECT customer.customer_id,customer.store_id,customer.first_name,customer.last_name,customer.email,customer.address_id,customer.activebool,customer.create_date,customer.last_update,customer.active FROM dvds.customer")

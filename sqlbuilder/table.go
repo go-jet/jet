@@ -18,7 +18,7 @@ type ReadableTable interface {
 	// Generates the sql string for the current table expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
 	// The database is the name of the database the table is on
-	SerializeSql(database string, out *bytes.Buffer) error
+	SerializeSql(out *bytes.Buffer) error
 
 	// Generates a select query on the current table.
 	Select(projections ...Projection) SelectStatement
@@ -41,7 +41,7 @@ type WritableTable interface {
 	// Generates the sql string for the current table expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
 	// The database is the name of the database the table is on
-	SerializeSql(database string, out *bytes.Buffer) error
+	SerializeSql(out *bytes.Buffer) error
 
 	Insert(columns ...NonAliasColumn) InsertStatement
 	Update() UpdateStatement
@@ -50,12 +50,13 @@ type WritableTable interface {
 
 // Defines a physical table in the database that is both readable and writable.
 // This function will panic if name is not valid
-func NewTable(name string, columns ...NonAliasColumn) *Table {
+func NewTable(schemaName, name string, columns ...NonAliasColumn) *Table {
 	if !validIdentifierName(name) {
 		panic("Invalid table name")
 	}
 
 	t := &Table{
+		schemaName:   schemaName,
 		name:         name,
 		columns:      columns,
 		columnLookup: make(map[string]NonAliasColumn),
@@ -76,6 +77,7 @@ func NewTable(name string, columns ...NonAliasColumn) *Table {
 }
 
 type Table struct {
+	schemaName   string
 	name         string
 	columns      []NonAliasColumn
 	columnLookup map[string]NonAliasColumn
@@ -116,6 +118,10 @@ func (t *Table) Name() string {
 	return t.name
 }
 
+func (t *Table) SchemaName() string {
+	return t.schemaName
+}
+
 // Returns a list of the table's columns
 func (t *Table) Columns() []NonAliasColumn {
 	return t.columns
@@ -130,8 +136,12 @@ func (t *Table) ForceIndex(index string) *Table {
 
 // Generates the sql string for the current table expression.  Note: the
 // generated string may not be a valid/executable sql statement.
-func (t *Table) SerializeSql(database string, out *bytes.Buffer) error {
-	_, _ = out.WriteString(database)
+func (t *Table) SerializeSql(out *bytes.Buffer) error {
+	if !validIdentifierName(t.schemaName) {
+		return errors.New("Invalid database name specified")
+	}
+
+	_, _ = out.WriteString(t.schemaName)
 	_, _ = out.WriteString(".")
 	_, _ = out.WriteString(t.Name())
 
@@ -139,9 +149,9 @@ func (t *Table) SerializeSql(database string, out *bytes.Buffer) error {
 		if !validIdentifierName(t.forcedIndex) {
 			return errors.Newf("'%s' is not a valid identifier for an index", t.forcedIndex)
 		}
-		_, _ = out.WriteString(" FORCE INDEX (`")
+		_, _ = out.WriteString(" FORCE INDEX (")
 		_, _ = out.WriteString(t.forcedIndex)
-		_, _ = out.WriteString("`)")
+		_, _ = out.WriteString(")")
 	}
 
 	return nil
@@ -250,9 +260,7 @@ func (t *joinTable) Columns() []NonAliasColumn {
 	return columns
 }
 
-func (t *joinTable) SerializeSql(
-	database string,
-	out *bytes.Buffer) (err error) {
+func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 
 	if t.lhs == nil {
 		return errors.Newf("nil lhs.  Generated sql: %s", out.String())
@@ -264,7 +272,7 @@ func (t *joinTable) SerializeSql(
 		return errors.Newf("nil onCondition.  Generated sql: %s", out.String())
 	}
 
-	if err = t.lhs.SerializeSql(database, out); err != nil {
+	if err = t.lhs.SerializeSql(out); err != nil {
 		return
 	}
 
@@ -277,7 +285,7 @@ func (t *joinTable) SerializeSql(
 		_, _ = out.WriteString(" RIGHT JOIN ")
 	}
 
-	if err = t.rhs.SerializeSql(database, out); err != nil {
+	if err = t.rhs.SerializeSql(out); err != nil {
 		return
 	}
 

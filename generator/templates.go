@@ -16,7 +16,7 @@ type {{.ToGoStructName}} struct {
 }
 
 var {{.ToGoVarName}} = &{{.ToGoStructName}}{
-	Table: *sqlbuilder.NewTable("{{.Name}}", {{.ToGoColumnFieldList ", "}}),
+	Table: *sqlbuilder.NewTable("{{.DatabaseInfo.SchemaName}}", "{{.Name}}", {{.ToGoColumnFieldList ", "}}),
 	
 	//Columns
 {{- range .Columns}}

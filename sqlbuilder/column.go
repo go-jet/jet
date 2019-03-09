@@ -230,9 +230,9 @@ func (c *aliasColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
 	if err := c.expression.SerializeSql(out); err != nil {
 		return err
 	}
-	_, _ = out.WriteString(") AS `")
+	_, _ = out.WriteString(") AS \"")
 	_, _ = out.WriteString(c.name)
-	_ = out.WriteByte('`')
+	_ = out.WriteByte('"')
 	return nil
 }
 

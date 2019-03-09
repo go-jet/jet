@@ -39,7 +39,7 @@ func (s *ExprSuite) TestConjunctExprSingleElement(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`=1")
+	c.Assert(sql, gc.Equals, "table1.col1=1")
 }
 
 func (s *ExprSuite) TestTupleExpr(c *gc.C) {
@@ -57,7 +57,7 @@ func (s *ExprSuite) TestTupleExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"(`table1`.`col1`,1,'five')")
+		"(table1.col1,1,'five')")
 
 }
 
@@ -73,7 +73,7 @@ func (s *ExprSuite) TestLikeExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`table1`.`col1` LIKE '\\%my\\_prefix%'")
+		"table1.col1 LIKE '\\%my\\_prefix%'")
 
 }
 
@@ -89,7 +89,7 @@ func (s *ExprSuite) TestRegexExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`table1`.`col1` REGEXP '[[:<:]]log|[[.low-line.]]log'")
+		"table1.col1 REGEXP '[[:<:]]log|[[.low-line.]]log'")
 
 }
 
@@ -105,7 +105,7 @@ func (s *ExprSuite) TestAndExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"(`table1`.`col1`=1 AND `table1`.`col2`=2 AND `table1`.`col3`=3)")
+		"(table1.col1=1 AND table1.col2=2 AND table1.col3=3)")
 }
 
 func (s *ExprSuite) TestOrExpr(c *gc.C) {
@@ -120,7 +120,7 @@ func (s *ExprSuite) TestOrExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"(`table1`.`col1`=1 OR `table1`.`col2`=2 OR `table1`.`col3`=3)")
+		"(table1.col1=1 OR table1.col2=2 OR table1.col3=3)")
 }
 
 func (s *ExprSuite) TestAddExpr(c *gc.C) {
@@ -189,7 +189,7 @@ func (s *ExprSuite) TestNegateExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "NOT (`table1`.`col1`=123)")
+	c.Assert(sql, gc.Equals, "NOT (table1.col1=123)")
 }
 
 func (s *ExprSuite) TestBinaryExprNilRHS(c *gc.C) {
@@ -210,7 +210,7 @@ func (s *ExprSuite) TestEqExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`=321")
+	c.Assert(sql, gc.Equals, "table1.col1=321")
 }
 
 func (s *ExprSuite) TestEqExprNilLHS(c *gc.C) {
@@ -222,7 +222,7 @@ func (s *ExprSuite) TestEqExprNilLHS(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1` IS null")
+	c.Assert(sql, gc.Equals, "table1.col1 IS null")
 }
 
 func (s *ExprSuite) TestNeqExpr(c *gc.C) {
@@ -234,7 +234,7 @@ func (s *ExprSuite) TestNeqExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`!=123")
+	c.Assert(sql, gc.Equals, "table1.col1!=123")
 }
 
 func (s *ExprSuite) TestNeqExprNilLHS(c *gc.C) {
@@ -246,7 +246,7 @@ func (s *ExprSuite) TestNeqExprNilLHS(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1` IS NOT null")
+	c.Assert(sql, gc.Equals, "table1.col1 IS NOT null")
 }
 
 func (s *ExprSuite) TestLtExpr(c *gc.C) {
@@ -258,7 +258,7 @@ func (s *ExprSuite) TestLtExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`<-1.5")
+	c.Assert(sql, gc.Equals, "table1.col1<-1.5")
 }
 
 func (s *ExprSuite) TestLteExpr(c *gc.C) {
@@ -273,7 +273,7 @@ func (s *ExprSuite) TestLteExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"`table1`.`col1`<='foo\\\"\\';drop user table;'")
+		"table1.col1<='foo\\\"\\';drop user table;'")
 }
 
 func (s *ExprSuite) TestGtExpr(c *gc.C) {
@@ -285,7 +285,7 @@ func (s *ExprSuite) TestGtExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`>1.1")
+	c.Assert(sql, gc.Equals, "table1.col1>1.1")
 }
 
 func (s *ExprSuite) TestGteExpr(c *gc.C) {
@@ -297,7 +297,7 @@ func (s *ExprSuite) TestGteExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`>=1")
+	c.Assert(sql, gc.Equals, "table1.col1>=1")
 }
 
 func (s *ExprSuite) TestInExpr(c *gc.C) {
@@ -310,7 +310,7 @@ func (s *ExprSuite) TestInExpr(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1` IN (1,2,3)")
+	c.Assert(sql, gc.Equals, "table1.col1 IN (1,2,3)")
 }
 
 func (s *ExprSuite) TestInExprEmptyList(c *gc.C) {
@@ -356,7 +356,7 @@ func (s *ExprSuite) TestSqlFuncExprNonEmptyArgList(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "add(`table1`.`col1`,`table1`.`col2`)")
+	c.Assert(sql, gc.Equals, "add(table1.col1,table1.col2)")
 }
 
 func (s *ExprSuite) TestOrderByClauseNilExpr(c *gc.C) {
@@ -377,7 +377,7 @@ func (s *ExprSuite) TestAsc(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1` ASC")
+	c.Assert(sql, gc.Equals, "table1.col1 ASC")
 }
 
 func (s *ExprSuite) TestDesc(c *gc.C) {
@@ -389,7 +389,7 @@ func (s *ExprSuite) TestDesc(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1` DESC")
+	c.Assert(sql, gc.Equals, "table1.col1 DESC")
 }
 
 func (s *ExprSuite) TestIf(c *gc.C) {
@@ -405,7 +405,7 @@ func (s *ExprSuite) TestIf(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"IF(`table1`.`col1`>1.1,`table1`.`col1`,`table1`.`col2`)")
+		"IF(table1.col1>1.1,table1.col1,table1.col2)")
 }
 
 func (s *ExprSuite) TestColumnValue(c *gc.C) {
@@ -417,7 +417,7 @@ func (s *ExprSuite) TestColumnValue(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "VALUES(`table1`.`col1`)")
+	c.Assert(sql, gc.Equals, "VALUES(table1.col1)")
 }
 
 func (s *ExprSuite) TestBitwiseOr(c *gc.C) {

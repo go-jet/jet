@@ -36,7 +36,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSqlForColumnList(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`col`")
+	c.Assert(sql, gc.Equals, "col")
 
 	// With table name
 	err = col.setTableName("foo")
@@ -48,7 +48,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSqlForColumnList(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql = buf.String()
-	c.Assert(sql, gc.Equals, "`foo`.`col`")
+	c.Assert(sql, gc.Equals, "foo.col")
 }
 
 func (s *ColumnSuite) TestRealColumnSerializeSql(c *gc.C) {
@@ -61,7 +61,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSql(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`col`")
+	c.Assert(sql, gc.Equals, "col")
 
 	// With table name
 	err = col.setTableName("foo")
@@ -73,7 +73,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSql(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql = buf.String()
-	c.Assert(sql, gc.Equals, "`foo`.`col`")
+	c.Assert(sql, gc.Equals, "foo.col")
 }
 
 //
@@ -96,7 +96,7 @@ func (s *ColumnSuite) TestAliasColumnSerializeSqlForColumnList(c *gc.C) {
 	sql := buf.String()
 	c.Assert(err, gc.IsNil)
 
-	c.Assert(sql, gc.Equals, "(max(`table1`.`col1`)) AS `foo`")
+	c.Assert(sql, gc.Equals, "(max(table1.col1)) AS \"foo\"")
 }
 
 func (s *ColumnSuite) TestAliasColumnSerializeSqlForColumnListNilExpr(c *gc.C) {
@@ -157,7 +157,7 @@ func (s *ColumnSuite) TestDeferredLookupColumnSerializeSqlForColumnList(
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`")
+	c.Assert(sql, gc.Equals, "table1.col1")
 
 	// check cached lookup
 	buf = &bytes.Buffer{}
@@ -166,7 +166,7 @@ func (s *ColumnSuite) TestDeferredLookupColumnSerializeSqlForColumnList(
 	c.Assert(err, gc.IsNil)
 
 	sql = buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`")
+	c.Assert(sql, gc.Equals, "table1.col1")
 }
 
 func (s *ColumnSuite) TestDeferredLookupColumnSerializeSqlForColumnListInvalidName(
@@ -188,7 +188,7 @@ func (s *ColumnSuite) TestDeferredLookupColumnSerializeSql(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
-	c.Assert(sql, gc.Equals, "`table1`.`col1`")
+	c.Assert(sql, gc.Equals, "table1.col1")
 }
 
 func (s *ColumnSuite) TestDeferredLookupColumnSerializeSqlInvalidName(c *gc.C) {

@@ -13,7 +13,7 @@ import (
 
 type Statement interface {
 	// String returns generated SQL as string.
-	String(database string) (sql string, err error)
+	String() (sql string, err error)
 	Execute(db *sql.DB, destination interface{}) error
 }
 
@@ -186,13 +186,13 @@ func (us *unionStatementImpl) Offset(offset int64) UnionStatement {
 	return us
 }
 
-func (us *unionStatementImpl) String(database string) (sql string, err error) {
+func (us *unionStatementImpl) String() (sql string, err error) {
 	if len(us.selects) == 0 {
 		return "", errors.Newf("Union statement must have at least one SELECT")
 	}
 
 	if len(us.selects) == 1 {
-		return us.selects[0].String(database)
+		return us.selects[0].String()
 	}
 
 	// Union statements in MySQL require that the same number of columns in each subquery
@@ -239,7 +239,7 @@ func (us *unionStatementImpl) String(database string) (sql string, err error) {
 			}
 		}
 		_, _ = buf.WriteString("(")
-		selectSql, err := statement.String(database)
+		selectSql, err := statement.String()
 		if err != nil {
 			return "", err
 		}
@@ -320,7 +320,7 @@ func (s *selectStatementImpl) Execute(db *sql.DB, destination interface{}) error
 		s.Limit(1)
 	}
 
-	query, err := s.String("dvds")
+	query, err := s.String()
 
 	if err != nil {
 		return err
@@ -407,11 +407,7 @@ func (q *selectStatementImpl) Comment(comment string) SelectStatement {
 }
 
 // Return the properly escaped SQL statement, against the specified database
-func (q *selectStatementImpl) String(database string) (sql string, err error) {
-	if !validIdentifierName(database) {
-		return "", errors.New("Invalid database name specified")
-	}
-
+func (q *selectStatementImpl) String() (sql string, err error) {
 	buf := new(bytes.Buffer)
 	_, _ = buf.WriteString("SELECT ")
 
@@ -447,7 +443,7 @@ func (q *selectStatementImpl) String(database string) (sql string, err error) {
 	if q.table == nil {
 		return "", errors.Newf("nil table.  Generated sql: %s", buf.String())
 	}
-	if err = q.table.SerializeSql(database, buf); err != nil {
+	if err = q.table.SerializeSql(buf); err != nil {
 		return
 	}
 
@@ -551,11 +547,7 @@ func (s *insertStatementImpl) Comment(comment string) InsertStatement {
 	return s
 }
 
-func (s *insertStatementImpl) String(database string) (sql string, err error) {
-	if !validIdentifierName(database) {
-		return "", errors.New("Invalid database name specified")
-	}
-
+func (s *insertStatementImpl) String() (sql string, err error) {
 	buf := new(bytes.Buffer)
 	_, _ = buf.WriteString("INSERT ")
 	if s.ignore {
@@ -571,7 +563,7 @@ func (s *insertStatementImpl) String(database string) (sql string, err error) {
 		return "", errors.Newf("nil table.  Generated sql: %s", buf.String())
 	}
 
-	if err = s.table.SerializeSql(database, buf); err != nil {
+	if err = s.table.SerializeSql(buf); err != nil {
 		return
 	}
 
@@ -727,11 +719,7 @@ func (u *updateStatementImpl) Comment(comment string) UpdateStatement {
 	return u
 }
 
-func (u *updateStatementImpl) String(database string) (sql string, err error) {
-	if !validIdentifierName(database) {
-		return "", errors.New("Invalid database name specified")
-	}
-
+func (u *updateStatementImpl) String() (sql string, err error) {
 	buf := new(bytes.Buffer)
 	_, _ = buf.WriteString("UPDATE ")
 
@@ -743,7 +731,7 @@ func (u *updateStatementImpl) String(database string) (sql string, err error) {
 		return "", errors.Newf("nil table.  Generated sql: %s", buf.String())
 	}
 
-	if err = u.table.SerializeSql(database, buf); err != nil {
+	if err = u.table.SerializeSql(buf); err != nil {
 		return
 	}
 
@@ -866,11 +854,7 @@ func (d *deleteStatementImpl) Comment(comment string) DeleteStatement {
 	return d
 }
 
-func (d *deleteStatementImpl) String(database string) (sql string, err error) {
-	if !validIdentifierName(database) {
-		return "", errors.New("Invalid database name specified")
-	}
-
+func (d *deleteStatementImpl) String() (sql string, err error) {
 	buf := new(bytes.Buffer)
 	_, _ = buf.WriteString("DELETE FROM ")
 
@@ -882,7 +866,7 @@ func (d *deleteStatementImpl) String(database string) (sql string, err error) {
 		return "", errors.Newf("nil table.  Generated sql: %s", buf.String())
 	}
 
-	if err = d.table.SerializeSql(database, buf); err != nil {
+	if err = d.table.SerializeSql(buf); err != nil {
 		return
 	}
 
@@ -947,11 +931,7 @@ func (s *lockStatementImpl) AddWriteLock(t *Table) LockStatement {
 	return s
 }
 
-func (s *lockStatementImpl) String(database string) (sql string, err error) {
-	if !validIdentifierName(database) {
-		return "", errors.New("Invalid database name specified")
-	}
-
+func (s *lockStatementImpl) String() (sql string, err error) {
 	if len(s.locks) == 0 {
 		return "", errors.New("No locks added")
 	}
@@ -964,7 +944,7 @@ func (s *lockStatementImpl) String(database string) (sql string, err error) {
 			return "", errors.Newf("nil table.  Generated sql: %s", buf.String())
 		}
 
-		if err = lock.t.SerializeSql(database, buf); err != nil {
+		if err = lock.t.SerializeSql(buf); err != nil {
 			return
 		}
 
@@ -995,7 +975,7 @@ func (u *unlockStatementImpl) Execute(db *sql.DB, data interface{}) error {
 	return nil
 }
 
-func (s *unlockStatementImpl) String(database string) (sql string, err error) {
+func (s *unlockStatementImpl) String() (sql string, err error) {
 	return "UNLOCK TABLES", nil
 }
 
@@ -1016,7 +996,7 @@ func (g *gtidNextStatementImpl) Execute(db *sql.DB, data interface{}) error {
 	return nil
 }
 
-func (s *gtidNextStatementImpl) String(database string) (sql string, err error) {
+func (s *gtidNextStatementImpl) String() (sql string, err error) {
 	// This statement sets a session local variable defining what the next transaction ID is.  It
 	// does not interact with other MySQL sessions. It is neither a DDL nor DML statement, so we
 	// don't have to worry about data corruption.
