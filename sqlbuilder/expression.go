@@ -443,7 +443,7 @@ func Eq(lhs, rhs Expression) BoolExpression {
 	if ok && sqltypes.Value(lit.value).IsNull() {
 		return newBoolExpression(lhs, rhs, []byte(" IS "))
 	}
-	return newBoolExpression(lhs, rhs, []byte("="))
+	return newBoolExpression(lhs, rhs, []byte(" = "))
 }
 
 // Returns a representation of "a=b", where b is a literal

@@ -28,7 +28,7 @@ func (c ColumnInfo) ToGoVarName() string {
 
 func (c ColumnInfo) ToGoType() string {
 	typeStr := c.GoBaseType()
-	if c.IsNullable {
+	if c.IsNullable || c.TableInfo.IsForeignKey(c.Name) {
 		return "*" + typeStr
 	}
 
@@ -54,6 +54,8 @@ func (c ColumnInfo) GoBaseType() string {
 			return "[]byte"
 		case "text":
 			return "string"
+		case "numeric", "real":
+			return "float64"
 		default:
 			return "string"
 		}

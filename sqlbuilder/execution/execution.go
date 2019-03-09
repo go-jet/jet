@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/serenize/snaker"
 	"reflect"
+	"time"
 )
 
 func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
@@ -26,10 +27,14 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
 
 	columnNames, _ := rows.Columns()
 	columnTypes, _ := rows.ColumnTypes()
 	values := createScanValue(columnTypes)
+	//
+	//spew.Dump(columnTypes)
+	//spew.Dump(values)
 
 	for rows.Next() {
 		err := rows.Scan(values...)
@@ -79,28 +84,77 @@ func newElemForSlice(destinationSlicePtr interface{}) interface{} {
 func mapValuesToStruct(columnNames []string, row []interface{}, destination interface{}) error {
 	structType := reflect.TypeOf(destination).Elem()
 	structValue := reflect.ValueOf(destination).Elem()
+	structName := structType.Name()
 
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
+		//fieldTypeName := fieldType.Name
 		fieldValue := structValue.Field(i)
+		//fmt.Println("---------------", fieldTypeName)
+		//spew.Dump(fieldType.Type)
 
-		fieldName := fieldType.Name
+		if !isDbBaseType(fieldType.Type) {
+			if fieldType.Type.Kind() == reflect.Struct {
+				err := mapValuesToStruct(columnNames, row, fieldValue.Addr().Interface())
+				if err != nil {
+					return err
+				}
+			} else if fieldType.Type.Kind() == reflect.Ptr {
+				newStructValue := reflect.New(fieldType.Type.Elem())
+				err := mapValuesToStruct(columnNames, row, newStructValue.Interface())
+				if err != nil {
+					return err
+				}
 
-		//columnName := structName + "." + fieldName
-		columnName := snaker.CamelToSnake(fieldName)
+				if newStructValue.Elem().Interface() != reflect.New(fieldType.Type.Elem()).Elem().Interface() {
+					fieldValue.Set(newStructValue)
+				}
+			}
+		} else {
+			fieldName := fieldType.Name
 
-		rowIndex := getIndex(columnNames, columnName)
+			columnName := snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName)
+			//columnName := snaker.CamelToSnake(fieldName)
 
-		if rowIndex < 0 {
-			continue
+			//fmt.Println(columnName)
+			rowIndex := getIndex(columnNames, columnName)
+
+			if rowIndex < 0 {
+				continue
+			}
+
+			//spew.Dump(row[rowIndex])
+
+			rowColumnValue := reflect.ValueOf(row[rowIndex])
+
+			//spew.Dump(rowColumnValue, fieldValue)
+			setReflectValue(rowColumnValue, fieldValue)
 		}
-
-		rowColumnValue := reflect.ValueOf(row[rowIndex])
-
-		setReflectValue(rowColumnValue, fieldValue)
 	}
 
 	return nil
+}
+
+var timeType = reflect.TypeOf(time.Now())
+var floatType = reflect.TypeOf(1.0)
+var stringType = reflect.TypeOf("str")
+var intType = reflect.TypeOf(1)
+
+func isDbBaseType(objType reflect.Type) bool {
+	//isBaseType := objType == timeType || floatType == objType || stringType == objType || intType == objType
+	//isPtrToBaseType := objType.Kind() == reflect.Ptr && (objType.Elem() == timeType || floatType == objType.Elem() ||
+	//		stringType == objType.Elem() || intType == objType.Elem())
+	typeStr := objType.String()
+
+	switch typeStr {
+	case "string", "int32", "int16", "float64", "time.Time":
+		return true
+	case "*string", "*int32", "*int16", "*float64", "*time.Time":
+		return true
+	}
+
+	//return isBaseType || isPtrToBaseType
+	return false
 }
 
 func setReflectValue(source, destination reflect.Value) {
@@ -133,7 +187,7 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	values := make([]interface{}, len(columnTypes))
 
 	for i, sqlColumnType := range columnTypes {
-		columnType := sqlColumnType.ScanType()
+		columnType := getScanType(sqlColumnType)
 
 		columnValue := reflect.New(columnType)
 
@@ -141,4 +195,19 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	}
 
 	return values
+}
+
+func getScanType(columnType *sql.ColumnType) reflect.Type {
+	scanType := columnType.ScanType()
+	//fmt.Println(scanType.String())
+	if scanType.String() != "interface {}" {
+		return scanType
+	}
+
+	switch columnType.DatabaseTypeName() {
+	case "FLOAT4":
+		return floatType
+	default:
+		return stringType
+	}
 }

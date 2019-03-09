@@ -74,16 +74,24 @@ func (c *baseColumn) setTableName(table string) error {
 }
 
 func (c *baseColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
+
+	c.SerializeSql(out)
+
+	if c.table != "" {
+		_, _ = out.WriteString(" AS \"" + c.table + "." + c.name + "\"")
+	}
+
+	return nil
+}
+
+func (c *baseColumn) SerializeSql(out *bytes.Buffer) error {
 	if c.table != "" {
 		_, _ = out.WriteString(c.table)
 		_, _ = out.WriteString(".")
 	}
 	_, _ = out.WriteString(c.name)
-	return nil
-}
 
-func (c *baseColumn) SerializeSql(out *bytes.Buffer) error {
-	return c.SerializeSqlForColumnList(out)
+	return nil
 }
 
 type bytesColumn struct {

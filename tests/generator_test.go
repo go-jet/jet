@@ -3,8 +3,8 @@ package tests
 import (
 	"database/sql"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
+	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
@@ -74,8 +74,7 @@ func TestSelectQuery(t *testing.T) {
 	queryStr, err := query.String()
 
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, "SELECT customer.customer_id,customer.store_id,customer.first_name,customer.last_name,customer.email,customer.address_id,customer.activebool,customer.create_date,customer.last_update,customer.active FROM dvds.customer")
-
+	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id",customer.store_id AS "customer.store_id",customer.first_name AS "customer.first_name",customer.last_name AS "customer.last_name",customer.email AS "customer.email",customer.address_id AS "customer.address_id",customer.activebool AS "customer.activebool",customer.create_date AS "customer.create_date",customer.last_update AS "customer.last_update",customer.active AS "customer.active" FROM dvds.customer`)
 	//fmt.Println(queryStr)
 
 	err = query.Execute(db, &customers)
@@ -93,9 +92,34 @@ func TestSelectQuery(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	spew.Dump(actor)
+	//spew.Dump(actor)
 	//time, _ := time.Parse("2006-01-02 15:04:05.00MST", "2013-05-26 14:47:57.62MST")
 	assert.Equal(t, actor.ActorID, int32(1))
 	assert.Equal(t, actor.FirstName, "Penelope")
 	assert.Equal(t, actor.LastName, "Guiness")
+}
+
+func TestJoinQuery(t *testing.T) {
+
+	//filmActor := model.FilmActor{}
+	allFilmActorColumns := append(append(Actor.All, Film.All...), Language.All...)
+	query := FilmActor.
+		InnerJoinOn(Actor, sqlbuilder.Eq(FilmActor.ActorID, Actor.ActorID)).
+		InnerJoinOn(Film, sqlbuilder.Eq(FilmActor.FilmID, Film.FilmID)).
+		InnerJoinOn(Language, sqlbuilder.Eq(Film.LanguageID, Language.LanguageID)).
+		Select(allFilmActorColumns...).
+		Where(sqlbuilder.Eq(FilmActor.ActorID, sqlbuilder.Literal(1)))
+
+	queryStr, err := query.String()
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+	filmActor := model.FilmActor{}
+
+	err = query.Execute(db, &filmActor)
+
+	assert.NilError(t, err)
+
+	//spew.Dump(filmActor)
 }
