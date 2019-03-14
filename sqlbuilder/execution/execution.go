@@ -3,8 +3,10 @@ package execution
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/serenize/snaker"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -31,31 +33,30 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 
 	columnNames, _ := rows.Columns()
 	columnTypes, _ := rows.ColumnTypes()
-	values := createScanValue(columnTypes)
-	//
-	//spew.Dump(columnTypes)
-	//spew.Dump(values)
+	rowData := createScanValue(columnTypes)
+
+	scanContext := &scanContext{
+		columnNames:      columnNames,
+		uniqueObjectsMap: make(map[string]interface{}),
+	}
 
 	for rows.Next() {
-		err := rows.Scan(values...)
+		err := rows.Scan(rowData...)
 
 		if err != nil {
 			return err
 		}
 
+		columnProcessed := make([]bool, len(columnTypes))
+
 		if destinationType.Elem().Kind() == reflect.Slice {
-
-			destinationStructPtr := newElemForSlice(destinationPtr)
-
-			err = mapValuesToStruct(columnNames, values, destinationStructPtr)
+			err := mapRowToSlice(scanContext, "", columnProcessed, rowData, destinationPtr)
 
 			if err != nil {
 				return err
 			}
-
-			appendElemToSlice(destinationPtr, destinationStructPtr)
 		} else if destinationType.Elem().Kind() == reflect.Struct {
-			return mapValuesToStruct(columnNames, values, destinationPtr)
+			return mapRowToStruct(scanContext, "", columnProcessed, rowData, destinationPtr)
 		}
 	}
 
@@ -68,20 +69,213 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 	return nil
 }
 
-func appendElemToSlice(slice interface{}, obj interface{}) {
-	//spew.Dump(slice)
-	sliceValue := reflect.ValueOf(slice).Elem()
+type scanContext struct {
+	columnNames      []string
+	uniqueObjectsMap map[string]interface{}
+}
 
-	sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(obj).Elem()))
+func getColumnTypeName(columnName string) (string, error) {
+	split := strings.Split(columnName, ".")
+	if len(split) != 2 {
+		return "", errors.New("Invalid column name")
+	}
+
+	return split[0], nil
+}
+
+func allProcessed(arr []bool) bool {
+	for _, b := range arr {
+		if !b {
+			return false
+		}
+	}
+
+	return true
+}
+
+func getGroupKey(scanContext *scanContext, row []interface{}, structType reflect.Type) string {
+	structName := structType.Name()
+	groupKey := ""
+
+	for i := 0; i < structType.NumField(); i++ {
+		fieldType := structType.Field(i)
+
+		////fmt.Println(fieldType.Tag)
+
+		if fieldType.Tag == `sql:"unique"` {
+			fieldName := fieldType.Name
+			columnName := snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName)
+
+			//fmt.Println(fieldName)
+			rowIndex := getIndex(scanContext.columnNames, columnName)
+
+			if rowIndex < 0 {
+				continue
+			}
+
+			rowValue := reflect.ValueOf(row[rowIndex])
+
+			groupKey = groupKey + reflectValueToString(rowValue)
+		} else if !isDbBaseType(fieldType.Type) {
+			var structType reflect.Type
+			if fieldType.Type.Kind() == reflect.Struct {
+				structType = fieldType.Type
+			} else if fieldType.Type.Kind() == reflect.Ptr && fieldType.Type.Elem().Kind() == reflect.Struct {
+				structType = fieldType.Type.Elem()
+			} else {
+				continue
+			}
+
+			//spew.Dump(structType)
+
+			structGroupKey := getGroupKey(scanContext, row, structType)
+
+			//groupKey = strings.Join([]string{structGroupKey, groupKey}, ":")
+
+			groupKey = groupKey + structGroupKey
+		}
+	}
+
+	//fmt.Println(groupKey)
+	return groupKey
+}
+
+func getSliceStructType(slicePtr interface{}) reflect.Type {
+	sliceTypePtr := reflect.TypeOf(slicePtr)
+
+	elemType := sliceTypePtr.Elem().Elem()
+
+	if elemType.Kind() == reflect.Ptr {
+		return elemType.Elem()
+	}
+
+	return elemType
+}
+
+func mapRowToSlice(scanContext *scanContext, groupKey string, columnProcessed []bool, row []interface{}, destinationPtr interface{}) error {
+	if allProcessed(columnProcessed) {
+		return nil
+	}
+
+	var err error
+
+	structType := getSliceStructType(destinationPtr)
+
+	groupKey = groupKey + ":" + getGroupKey(scanContext, row, structType)
+
+	objPtr, ok := scanContext.uniqueObjectsMap[groupKey]
+
+	if ok {
+		err = mapRowToStruct(scanContext, groupKey, columnProcessed, row, objPtr)
+		if err != nil {
+			return err
+		}
+	} else {
+		destinationStructPtr := newElemForSlice(destinationPtr)
+
+		err = mapRowToStruct(scanContext, groupKey, columnProcessed, row, destinationStructPtr)
+
+		if err != nil {
+			return err
+		}
+
+		elemPtr := appendElemToSlice(destinationPtr, destinationStructPtr)
+		scanContext.uniqueObjectsMap[groupKey] = elemPtr
+	}
+
+	return err
+}
+
+func appendElemToSlice(slice interface{}, objPtr interface{}) interface{} {
+	sliceValue := reflect.ValueOf(slice).Elem()
+	elemType := sliceValue.Type().Elem()
+
+	if elemType.Kind() == reflect.Ptr {
+		sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(objPtr)))
+		return sliceValue.Index(sliceValue.Len() - 1).Interface()
+	}
+
+	sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(objPtr).Elem()))
+
+	return sliceValue.Index(sliceValue.Len() - 1).Addr().Interface()
 }
 
 func newElemForSlice(destinationSlicePtr interface{}) interface{} {
 	destinationSliceType := reflect.TypeOf(destinationSlicePtr).Elem()
+	elemType := destinationSliceType.Elem()
 
-	return reflect.New(destinationSliceType.Elem()).Interface()
+	if elemType.Kind() == reflect.Ptr {
+		return reflect.New(elemType.Elem()).Interface()
+	}
+
+	return reflect.New(elemType).Interface()
 }
 
-func mapValuesToStruct(columnNames []string, row []interface{}, destination interface{}) error {
+func mapRowToDestinationValue(scanContext *scanContext, groupKey string, columnProcessed []bool, row []interface{}, dest reflect.Value) error {
+	if dest.Kind() == reflect.Struct {
+		err := mapRowToStruct(scanContext, groupKey, columnProcessed, row, dest.Addr().Interface())
+		if err != nil {
+			return err
+		}
+	} else if dest.Kind() == reflect.Slice {
+		err := mapRowToSlice(scanContext, groupKey, columnProcessed, row, dest.Addr().Interface())
+		if err != nil {
+			return err
+		}
+	} else if dest.Kind() == reflect.Ptr {
+		elemType := dest.Type().Elem()
+
+		if elemType.Kind() == reflect.Struct {
+			var structValuePtr reflect.Value
+
+			if dest.IsNil() {
+				structValuePtr = reflect.New(elemType)
+			} else {
+				return nil
+			}
+
+			err := mapRowToStruct(scanContext, groupKey, columnProcessed, row, structValuePtr.Interface())
+			if err != nil {
+				return err
+			}
+
+			if structValuePtr.Elem().Interface() != reflect.New(elemType).Elem().Interface() {
+				dest.Set(structValuePtr)
+			}
+
+		} else if elemType.Kind() == reflect.Slice {
+			var sliceValuePtr reflect.Value
+
+			if dest.IsNil() {
+				sliceValuePtr = reflect.New(elemType)
+			} else {
+				sliceValuePtr = dest
+			}
+
+			err := mapRowToSlice(scanContext, groupKey, columnProcessed, row, sliceValuePtr.Interface())
+			if err != nil {
+				return err
+			}
+
+			if sliceValuePtr.Elem().Len() > 0 {
+				dest.Set(sliceValuePtr)
+			}
+
+		} else {
+			return errors.New("Unsuported field type: " + dest.Type().Name())
+		}
+	} else {
+		return errors.New("Unsuported field type: " + dest.Type().Name())
+	}
+
+	return nil
+}
+
+func mapRowToStruct(scanContext *scanContext, groupKey string, columnProcessed []bool, row []interface{}, destination interface{}) error {
+	if allProcessed(columnProcessed) {
+		return nil
+	}
+
 	structType := reflect.TypeOf(destination).Elem()
 	structValue := reflect.ValueOf(destination).Elem()
 	structName := structType.Name()
@@ -91,48 +285,54 @@ func mapValuesToStruct(columnNames []string, row []interface{}, destination inte
 		//fieldTypeName := fieldType.Name
 		fieldValue := structValue.Field(i)
 		//fmt.Println("---------------", fieldTypeName)
-		//spew.Dump(fieldType.Type)
+		////spew.Dump(fieldType.Type)
+
+		fieldName := fieldType.Name
 
 		if !isDbBaseType(fieldType.Type) {
-			if fieldType.Type.Kind() == reflect.Struct {
-				err := mapValuesToStruct(columnNames, row, fieldValue.Addr().Interface())
-				if err != nil {
-					return err
-				}
-			} else if fieldType.Type.Kind() == reflect.Ptr {
-				newStructValue := reflect.New(fieldType.Type.Elem())
-				err := mapValuesToStruct(columnNames, row, newStructValue.Interface())
-				if err != nil {
-					return err
-				}
+			//var fieldValueInterface interface{}
+			err := mapRowToDestinationValue(scanContext, groupKey, columnProcessed, row, fieldValue)
 
-				if newStructValue.Elem().Interface() != reflect.New(fieldType.Type.Elem()).Elem().Interface() {
-					fieldValue.Set(newStructValue)
-				}
+			if err != nil {
+				return err
 			}
 		} else {
-			fieldName := fieldType.Name
-
 			columnName := snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName)
 			//columnName := snaker.CamelToSnake(fieldName)
 
-			//fmt.Println(columnName)
-			rowIndex := getIndex(columnNames, columnName)
+			////fmt.Println(columnName)
+			rowIndex := getIndex(scanContext.columnNames, columnName)
 
-			if rowIndex < 0 {
+			if rowIndex < 0 || columnProcessed[rowIndex] {
 				continue
 			}
-
-			//spew.Dump(row[rowIndex])
+			////spew.Dump(row[rowIndex])
 
 			rowColumnValue := reflect.ValueOf(row[rowIndex])
 
 			//spew.Dump(rowColumnValue, fieldValue)
 			setReflectValue(rowColumnValue, fieldValue)
+
+			columnProcessed[rowIndex] = true
 		}
 	}
 
 	return nil
+}
+
+func reflectValueToString(value reflect.Value) string {
+	var valueInterface interface{}
+	if value.Kind() == reflect.Ptr {
+		valueInterface = value.Elem().Interface()
+	} else {
+		valueInterface = value.Interface()
+	}
+
+	if t, ok := valueInterface.(time.Time); ok {
+		return t.String()
+	}
+
+	return fmt.Sprintf("%#v", valueInterface)
 }
 
 var timeType = reflect.TypeOf(time.Now())
@@ -147,9 +347,8 @@ func isDbBaseType(objType reflect.Type) bool {
 	typeStr := objType.String()
 
 	switch typeStr {
-	case "string", "int32", "int16", "float64", "time.Time":
-		return true
-	case "*string", "*int32", "*int16", "*float64", "*time.Time":
+	case "string", "int32", "int16", "float64", "time.Time", "bool",
+		"*string", "*int32", "*int16", "*float64", "*time.Time", "*bool":
 		return true
 	}
 
@@ -199,7 +398,7 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 
 func getScanType(columnType *sql.ColumnType) reflect.Type {
 	scanType := columnType.ScanType()
-	//fmt.Println(scanType.String())
+	//////fmt.Println(scanType.String())
 	if scanType.String() != "interface {}" {
 		return scanType
 	}
