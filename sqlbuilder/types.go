@@ -32,6 +32,33 @@ type Projection interface {
 	SerializeSqlForColumnList(out *bytes.Buffer) error
 }
 
+type ColumnList []NonAliasColumn
+
+func (cl ColumnList) SerializeSql(out *bytes.Buffer) error {
+	for i, column := range cl {
+		column.SerializeSql(out)
+
+		if i != len(cl)-1 {
+			out.WriteString(", ")
+		}
+	}
+	return nil
+}
+
+func (cl ColumnList) isProjectionType() {
+}
+
+func (cl ColumnList) SerializeSqlForColumnList(out *bytes.Buffer) error {
+	for i, column := range cl {
+		column.SerializeSqlForColumnList(out)
+
+		if i != len(cl)-1 {
+			out.WriteString(", ")
+		}
+	}
+	return nil
+}
+
 //
 // Boiler plates ...
 //

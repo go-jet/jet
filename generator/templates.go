@@ -12,7 +12,7 @@ type {{.ToGoStructName}} struct {
 	{{.ToGoFieldName}} sqlbuilder.NonAliasColumn
 {{- end}}
 
-	All       []sqlbuilder.Projection
+	AllColumns sqlbuilder.ColumnList
 }
 
 var {{.ToGoVarName}} = &{{.ToGoStructName}}{
@@ -23,7 +23,7 @@ var {{.ToGoVarName}} = &{{.ToGoStructName}}{
 	{{.ToGoFieldName}}: {{.ToGoVarName}},
 {{- end}}
 
-	All: []sqlbuilder.Projection{ {{.ToGoColumnFieldList ", "}} },
+	AllColumns: sqlbuilder.ColumnList{ {{.ToGoColumnFieldList ", "}} },
 }
 
 var (
