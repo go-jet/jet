@@ -4,6 +4,7 @@ package sqlbuilder
 
 import (
 	"bytes"
+	"github.com/dropbox/godropbox/database/sqltypes"
 	"regexp"
 
 	"github.com/dropbox/godropbox/errors"
@@ -14,6 +15,7 @@ import (
 // Representation of a table for query generation
 type Column interface {
 	isProjectionInterface
+	isExpressionInterface
 
 	Name() string
 	// Serialization for use in column lists
@@ -24,6 +26,14 @@ type Column interface {
 	// Internal function for tracking table that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string) error
+
+	Eq(rhs Expression) BoolExpression
+
+	Gte(rhs Expression) BoolExpression
+	GteLiteral(rhs interface{}) BoolExpression
+
+	Lte(rhs Expression) BoolExpression
+	LteLiteral(rhs interface{}) BoolExpression
 }
 
 type NullableColumn bool
@@ -37,7 +47,6 @@ const (
 type NonAliasColumn interface {
 	Column
 	isOrderByClauseInterface
-	isExpressionInterface
 }
 
 type Collation string
@@ -92,6 +101,26 @@ func (c *baseColumn) SerializeSql(out *bytes.Buffer) error {
 	_, _ = out.WriteString(c.name)
 
 	return nil
+}
+
+func (c *baseColumn) Eq(rhs Expression) BoolExpression {
+	return Eq(c, rhs)
+}
+
+func (c *baseColumn) Gte(rhs Expression) BoolExpression {
+	return Gte(c, rhs)
+}
+
+func (c *baseColumn) GteLiteral(rhs interface{}) BoolExpression {
+	return Gte(c, Literal(rhs))
+}
+
+func (c *baseColumn) Lte(rhs Expression) BoolExpression {
+	return Lte(c, rhs)
+}
+
+func (c *baseColumn) LteLiteral(literal interface{}) BoolExpression {
+	return Lte(c, Literal(literal))
 }
 
 type bytesColumn struct {
@@ -304,4 +333,28 @@ func (c *deferredLookupColumn) setTableName(table string) error {
 	return errors.Newf(
 		"Lookup column '%s' should never have setTableName called on it",
 		c.colName)
+}
+
+func (c *deferredLookupColumn) Eq(rhs Expression) BoolExpression {
+	lit, ok := rhs.(*literalExpression)
+	if ok && sqltypes.Value(lit.value).IsNull() {
+		return newBoolExpression(c, rhs, []byte(" IS "))
+	}
+	return newBoolExpression(c, rhs, []byte(" = "))
+}
+
+func (c *deferredLookupColumn) Gte(rhs Expression) BoolExpression {
+	return Gte(c, rhs)
+}
+
+func (c *deferredLookupColumn) GteLiteral(rhs interface{}) BoolExpression {
+	return Gte(c, Literal(rhs))
+}
+
+func (c *deferredLookupColumn) Lte(rhs Expression) BoolExpression {
+	return Lte(c, rhs)
+}
+
+func (c *deferredLookupColumn) LteLiteral(literal interface{}) BoolExpression {
+	return Lte(c, Literal(literal))
 }

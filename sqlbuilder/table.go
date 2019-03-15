@@ -26,6 +26,8 @@ type ReadableTable interface {
 	// Creates a inner join table expression using onCondition.
 	InnerJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
+	InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable
+
 	// Creates a left join table expression using onCondition.
 	LeftJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
@@ -170,6 +172,14 @@ func (t *Table) InnerJoinOn(
 	return InnerJoinOn(t, table, onCondition)
 }
 
+func (t *Table) InnerJoinUsing(
+	table ReadableTable,
+	col1 Column,
+	col2 Column) ReadableTable {
+
+	return InnerJoinOn(t, table, col1.Eq(col2))
+}
+
 // Creates a left join table expression using onCondition.
 func (t *Table) LeftJoinOn(
 	table ReadableTable,
@@ -306,6 +316,14 @@ func (t *joinTable) InnerJoinOn(
 	onCondition BoolExpression) ReadableTable {
 
 	return InnerJoinOn(t, table, onCondition)
+}
+
+func (t *joinTable) InnerJoinUsing(
+	table ReadableTable,
+	col1 Column,
+	col2 Column) ReadableTable {
+
+	return InnerJoinOn(t, table, col1.Eq(col2))
 }
 
 func (t *joinTable) LeftJoinOn(

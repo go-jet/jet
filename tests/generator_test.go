@@ -134,11 +134,11 @@ func TestSelect_ScanToSlice(t *testing.T) {
 func TestJoinQueryStruct(t *testing.T) {
 
 	query := FilmActor.
-		InnerJoinOn(Actor, sqlbuilder.Eq(FilmActor.ActorID, Actor.ActorID)).
-		InnerJoinOn(Film, sqlbuilder.Eq(FilmActor.FilmID, Film.FilmID)).
-		InnerJoinOn(Language, sqlbuilder.Eq(Film.LanguageID, Language.LanguageID)).
+		InnerJoinUsing(Actor, FilmActor.ActorID, Actor.ActorID).
+		InnerJoinUsing(Film, FilmActor.FilmID, Film.FilmID).
+		InnerJoinUsing(Language, Film.LanguageID, Language.LanguageID).
 		Select(FilmActor.AllColumns, Film.AllColumns, Language.AllColumns, Actor.AllColumns).
-		Where(sqlbuilder.And(sqlbuilder.Gte(FilmActor.ActorID, sqlbuilder.Literal(1)), sqlbuilder.Lte(FilmActor.ActorID, sqlbuilder.Literal(2))))
+		Where(sqlbuilder.And(FilmActor.ActorID.GteLiteral(1), FilmActor.ActorID.LteLiteral(2)))
 
 	queryStr, err := query.String()
 	assert.NilError(t, err)
@@ -165,7 +165,7 @@ func TestJoinQuerySlice(t *testing.T) {
 	filmsPerLanguage := []FilmsPerLanguage{}
 	limit := 15
 
-	query := Film.InnerJoinOn(Language, sqlbuilder.Eq(Film.LanguageID, Language.LanguageID)).
+	query := Film.InnerJoinUsing(Language, Film.LanguageID, Language.LanguageID).
 		Select(Language.AllColumns, Film.AllColumns).
 		Limit(15)
 
@@ -205,7 +205,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 
 	limit := int64(3)
 
-	query := Film.InnerJoinOn(Language, sqlbuilder.Eq(Film.LanguageID, Language.LanguageID)).
+	query := Film.InnerJoinUsing(Language, Film.LanguageID, Language.LanguageID).
 		Select(Language.AllColumns, Film.AllColumns).
 		Limit(limit)
 
