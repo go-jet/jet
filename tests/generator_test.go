@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
-	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
@@ -138,7 +137,7 @@ func TestJoinQueryStruct(t *testing.T) {
 		InnerJoinUsing(Film, FilmActor.FilmID, Film.FilmID).
 		InnerJoinUsing(Language, Film.LanguageID, Language.LanguageID).
 		Select(FilmActor.AllColumns, Film.AllColumns, Language.AllColumns, Actor.AllColumns).
-		Where(sqlbuilder.And(FilmActor.ActorID.GteLiteral(1), FilmActor.ActorID.LteLiteral(2)))
+		Where(FilmActor.ActorID.GteLiteral(1).And(FilmActor.ActorID.LteLiteral(2)))
 
 	queryStr, err := query.String()
 	assert.NilError(t, err)

@@ -23,6 +23,9 @@ type Expression interface {
 type BoolExpression interface {
 	Clause
 	isBoolExpressionInterface
+
+	And(expression BoolExpression) BoolExpression
+	Or(expression BoolExpression) BoolExpression
 }
 
 // A clause that is selectable.

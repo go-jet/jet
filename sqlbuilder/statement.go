@@ -25,10 +25,10 @@ type SelectStatement interface {
 	GroupBy(expressions ...Expression) SelectStatement
 	OrderBy(clauses ...OrderByClause) SelectStatement
 	Limit(limit int64) SelectStatement
+	Offset(offset int64) SelectStatement
 	Distinct() SelectStatement
 	WithSharedLock() SelectStatement
 	ForUpdate() SelectStatement
-	Offset(offset int64) SelectStatement
 	Comment(comment string) SelectStatement
 	Copy() SelectStatement
 }
