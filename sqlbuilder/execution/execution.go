@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/serenize/snaker"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -36,6 +37,7 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 	rowData := createScanValue(columnTypes)
 
 	scanContext := &scanContext{
+
 		columnNames:      columnNames,
 		uniqueObjectsMap: make(map[string]interface{}),
 	}
@@ -46,6 +48,8 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 		if err != nil {
 			return err
 		}
+
+		scanContext.rowNum++
 
 		columnProcessed := make([]bool, len(columnTypes))
 
@@ -70,6 +74,7 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 }
 
 type scanContext struct {
+	rowNum           int
 	columnNames      []string
 	uniqueObjectsMap map[string]interface{}
 }
@@ -107,13 +112,13 @@ func getGroupKey(scanContext *scanContext, row []interface{}, structType reflect
 			columnName := snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName)
 
 			//fmt.Println(fieldName)
-			rowIndex := getIndex(scanContext.columnNames, columnName)
+			index := getIndex(scanContext.columnNames, columnName)
 
-			if rowIndex < 0 {
+			if index < 0 {
 				continue
 			}
 
-			rowValue := reflect.ValueOf(row[rowIndex])
+			rowValue := reflect.ValueOf(row[index])
 
 			groupKey = groupKey + reflectValueToString(rowValue)
 		} else if !isDbBaseType(fieldType.Type) {
@@ -161,7 +166,13 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, columnProcessed []
 
 	structType := getSliceStructType(destinationPtr)
 
-	groupKey = groupKey + ":" + getGroupKey(scanContext, row, structType)
+	structGroupKey := getGroupKey(scanContext, row, structType)
+
+	if structGroupKey == "" {
+		structGroupKey = strconv.Itoa(scanContext.rowNum)
+	}
+
+	groupKey = groupKey + ":" + structGroupKey
 
 	objPtr, ok := scanContext.uniqueObjectsMap[groupKey]
 

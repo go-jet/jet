@@ -219,6 +219,68 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 	assert.Equal(t, len(*filmsPerLanguageWithPtrs[0].Films), int(limit))
 }
 
+func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
+	query := Customer.Select(Customer.FirstName, Customer.LastName, Customer.Email)
+
+	customers := []model.Customer{}
+
+	err := query.Execute(db, &customers)
+
+	assert.NilError(t, err)
+
+	//spew.Dump(customers)
+
+	assert.Equal(t, len(customers), 599)
+}
+
+func TestSelectOrderByAscDesc(t *testing.T) {
+	customersAsc := []model.Customer{}
+
+	err := Customer.Select(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		OrderBy(Customer.FirstName.Asc()).
+		Execute(db, &customersAsc)
+
+	assert.NilError(t, err)
+
+	firstCustomerAsc := customersAsc[0]
+	lastCustomerAsc := customersAsc[len(customersAsc)-1]
+
+	customersDesc := []model.Customer{}
+	err = Customer.Select(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		OrderBy(Customer.FirstName.Desc()).
+		Execute(db, &customersDesc)
+
+	assert.NilError(t, err)
+
+	firstCustomerDesc := customersDesc[0]
+	lastCustomerDesc := customersDesc[len(customersAsc)-1]
+
+	assert.DeepEqual(t, firstCustomerAsc, lastCustomerDesc)
+	assert.DeepEqual(t, lastCustomerAsc, firstCustomerDesc)
+
+	customersAscDesc := []model.Customer{}
+	err = Customer.Select(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		OrderBy(Customer.FirstName.Asc(), Customer.LastName.Desc()).
+		Execute(db, &customersAscDesc)
+
+	assert.NilError(t, err)
+
+	customerAscDesc326 := model.Customer{
+		CustomerID: 67,
+		FirstName:  "Kelly",
+		LastName:   "Torres",
+	}
+
+	customerAscDesc327 := model.Customer{
+		CustomerID: 546,
+		FirstName:  "Kelly",
+		LastName:   "Knott",
+	}
+
+	assert.DeepEqual(t, customerAscDesc326, customersAscDesc[326])
+	assert.DeepEqual(t, customerAscDesc327, customersAscDesc[327])
+}
+
 func int32Ptr(i int32) *int32 {
 	return &i
 }

@@ -97,12 +97,12 @@ func (t *Table) getColumn(name string) (NonAliasColumn, error) {
 
 // Returns a pseudo column representation of the column name.  Error checking
 // is deferred to SerializeSql.
-func (t *Table) C(name string) NonAliasColumn {
-	return &deferredLookupColumn{
-		table:   t,
-		colName: name,
-	}
-}
+//func (t *Table) C(name string) NonAliasColumn {
+//	return &deferredLookupColumn{
+//		table:   t,
+//		colName: name,
+//	}
+//}
 
 // Returns all columns for a table as a slice of projections
 func (t *Table) Projections() []Projection {

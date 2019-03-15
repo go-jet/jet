@@ -4,7 +4,6 @@ package sqlbuilder
 
 import (
 	"bytes"
-	"github.com/dropbox/godropbox/database/sqltypes"
 	"regexp"
 
 	"github.com/dropbox/godropbox/errors"
@@ -34,6 +33,9 @@ type Column interface {
 
 	Lte(rhs Expression) BoolExpression
 	LteLiteral(rhs interface{}) BoolExpression
+
+	Asc() OrderByClause
+	Desc() OrderByClause
 }
 
 type NullableColumn bool
@@ -93,7 +95,7 @@ func (c *baseColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
 	return nil
 }
 
-func (c *baseColumn) SerializeSql(out *bytes.Buffer) error {
+func (c baseColumn) SerializeSql(out *bytes.Buffer) error {
 	if c.table != "" {
 		_, _ = out.WriteString(c.table)
 		_, _ = out.WriteString(".")
@@ -121,6 +123,14 @@ func (c *baseColumn) Lte(rhs Expression) BoolExpression {
 
 func (c *baseColumn) LteLiteral(literal interface{}) BoolExpression {
 	return Lte(c, Literal(literal))
+}
+
+func (c *baseColumn) Asc() OrderByClause {
+	return Asc(c)
+}
+
+func (c *baseColumn) Desc() OrderByClause {
+	return Desc(c)
 }
 
 type bytesColumn struct {
@@ -295,66 +305,75 @@ func validIdentifierName(name string) bool {
 	return validIdentifierRegexp.MatchString(name)
 }
 
-// Pseudo Column type returned by table.C(name)
-type deferredLookupColumn struct {
-	isProjection
-	isExpression
-	table   *Table
-	colName string
-
-	cachedColumn NonAliasColumn
-}
-
-func (c *deferredLookupColumn) Name() string {
-	return c.colName
-}
-
-func (c *deferredLookupColumn) SerializeSqlForColumnList(
-	out *bytes.Buffer) error {
-
-	return c.SerializeSql(out)
-}
-
-func (c *deferredLookupColumn) SerializeSql(out *bytes.Buffer) error {
-	if c.cachedColumn != nil {
-		return c.cachedColumn.SerializeSql(out)
-	}
-
-	col, err := c.table.getColumn(c.colName)
-	if err != nil {
-		return err
-	}
-
-	c.cachedColumn = col
-	return col.SerializeSql(out)
-}
-
-func (c *deferredLookupColumn) setTableName(table string) error {
-	return errors.Newf(
-		"Lookup column '%s' should never have setTableName called on it",
-		c.colName)
-}
-
-func (c *deferredLookupColumn) Eq(rhs Expression) BoolExpression {
-	lit, ok := rhs.(*literalExpression)
-	if ok && sqltypes.Value(lit.value).IsNull() {
-		return newBoolExpression(c, rhs, []byte(" IS "))
-	}
-	return newBoolExpression(c, rhs, []byte(" = "))
-}
-
-func (c *deferredLookupColumn) Gte(rhs Expression) BoolExpression {
-	return Gte(c, rhs)
-}
-
-func (c *deferredLookupColumn) GteLiteral(rhs interface{}) BoolExpression {
-	return Gte(c, Literal(rhs))
-}
-
-func (c *deferredLookupColumn) Lte(rhs Expression) BoolExpression {
-	return Lte(c, rhs)
-}
-
-func (c *deferredLookupColumn) LteLiteral(literal interface{}) BoolExpression {
-	return Lte(c, Literal(literal))
-}
+//
+//// Pseudo Column type returned by table.C(name)
+//type deferredLookupColumn struct {
+//	isProjection
+//	isExpression
+//	table   *Table
+//	colName string
+//
+//	cachedColumn NonAliasColumn
+//}
+//
+//func (c *deferredLookupColumn) Name() string {
+//	return c.colName
+//}
+//
+//func (c *deferredLookupColumn) SerializeSqlForColumnList(
+//	out *bytes.Buffer) error {
+//
+//	return c.SerializeSql(out)
+//}
+//
+//func (c *deferredLookupColumn) SerializeSql(out *bytes.Buffer) error {
+//	if c.cachedColumn != nil {
+//		return c.cachedColumn.SerializeSql(out)
+//	}
+//
+//	col, err := c.table.getColumn(c.colName)
+//	if err != nil {
+//		return err
+//	}
+//
+//	c.cachedColumn = col
+//	return col.SerializeSql(out)
+//}
+//
+//func (c *deferredLookupColumn) setTableName(table string) error {
+//	return errors.Newf(
+//		"Lookup column '%s' should never have setTableName called on it",
+//		c.colName)
+//}
+//
+//func (c *deferredLookupColumn) Eq(rhs Expression) BoolExpression {
+//	lit, ok := rhs.(*literalExpression)
+//	if ok && sqltypes.Value(lit.value).IsNull() {
+//		return newBoolExpression(c, rhs, []byte(" IS "))
+//	}
+//	return newBoolExpression(c, rhs, []byte(" = "))
+//}
+//
+//func (c *deferredLookupColumn) Gte(rhs Expression) BoolExpression {
+//	return Gte(c, rhs)
+//}
+//
+//func (c *deferredLookupColumn) GteLiteral(rhs interface{}) BoolExpression {
+//	return Gte(c, Literal(rhs))
+//}
+//
+//func (c *deferredLookupColumn) Lte(rhs Expression) BoolExpression {
+//	return Lte(c, rhs)
+//}
+//
+//func (c *deferredLookupColumn) LteLiteral(literal interface{}) BoolExpression {
+//	return Lte(c, Literal(literal))
+//}
+//
+//func (c *deferredLookupColumn) Asc() OrderByClause {
+//	return sqlbuilder.Asc(c)
+//}
+//
+//func (c *deferredLookupColumn) Desc() OrderByClause {
+//	return sqlbuilder.Desc(c)
+//}
