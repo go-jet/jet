@@ -74,54 +74,14 @@ func TestSelect_ScanToStruct(t *testing.T) {
 func TestSelect_ScanToSlice(t *testing.T) {
 	customers := []model.Customer{}
 
-	query := Customer.Select(Customer.AllColumns)
+	query := Customer.Select(Customer.AllColumns).OrderBy(Customer.CustomerID.Asc())
 
 	queryStr, err := query.String()
-
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active" FROM dvds.customer`)
+	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active" FROM dvds.customer ORDER BY customer.customer_id ASC`)
+
 	err = query.Execute(db, &customers)
-
 	assert.NilError(t, err)
-
-	customer0 := model.Customer{
-		CustomerID: 524,
-		StoreID:    1,
-		FirstName:  "Jared",
-		LastName:   "Ely",
-		Email:      stringPtr("austin.cintron@sakilacustomer.org"),
-		Address:    nil,
-		Activebool: true,
-		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
-		Active:     int32Ptr(1),
-	}
-
-	customer1 := model.Customer{
-		CustomerID: 1,
-		StoreID:    1,
-		FirstName:  "Mary",
-		LastName:   "Smith",
-		Email:      stringPtr("austin.cintron@sakilacustomer.org"),
-		Address:    nil,
-		Activebool: true,
-		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
-		Active:     int32Ptr(1),
-	}
-
-	lastCustomer := model.Customer{
-		CustomerID: 599,
-		StoreID:    2,
-		FirstName:  "Austin",
-		LastName:   "Cintron",
-		Email:      stringPtr("austin.cintron@sakilacustomer.org"),
-		Address:    nil,
-		Activebool: true,
-		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
-		Active:     int32Ptr(1),
-	}
 
 	assert.Equal(t, len(customers), 599)
 
@@ -280,6 +240,56 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 	assert.DeepEqual(t, customerAscDesc327, customersAscDesc[327])
 }
 
+func TestSelectFullJoin(t *testing.T) {
+	query := Customer.
+		FullJoin(Address, Customer.AddressID, Address.AddressID).
+		Select(Customer.AllColumns, Address.AllColumns).
+		OrderBy(Customer.CustomerID.Asc())
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active",address.address_id AS "address.address_id", address.address AS "address.address", address.address2 AS "address.address2", address.district AS "address.district", address.city_id AS "address.city_id", address.postal_code AS "address.postal_code", address.phone AS "address.phone", address.last_update AS "address.last_update" FROM dvds.customer FULL JOIN dvds.address ON customer.address_id = address.address_id ORDER BY customer.customer_id ASC`)
+
+	allCustomersAndAddress := []struct {
+		Address  *model.Address
+		Customer *model.Customer
+	}{}
+
+	err = query.Execute(db, &allCustomersAndAddress)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(allCustomersAndAddress), 603)
+
+	assert.DeepEqual(t, allCustomersAndAddress[0].Customer, &customer0)
+	assert.Assert(t, allCustomersAndAddress[0].Address != nil)
+
+	lastCustomerAddress := allCustomersAndAddress[len(allCustomersAndAddress)-1]
+
+	assert.Assert(t, lastCustomerAddress.Customer == nil)
+	assert.Assert(t, lastCustomerAddress.Address != nil)
+
+}
+
+func TestSelectFullCrossJoin(t *testing.T) {
+	query := Customer.
+		CrossJoin(Address).
+		Select(Customer.AllColumns, Address.AllColumns).
+		OrderBy(Customer.CustomerID.Asc()).
+		Limit(1000)
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active",address.address_id AS "address.address_id", address.address AS "address.address", address.address2 AS "address.address2", address.district AS "address.district", address.city_id AS "address.city_id", address.postal_code AS "address.postal_code", address.phone AS "address.phone", address.last_update AS "address.last_update" FROM dvds.customer CROSS JOIN dvds.address ORDER BY customer.customer_id ASC LIMIT 1000`)
+
+	customerAddresCrosJoined := []model.Customer{}
+
+	err = query.Execute(db, &customerAddresCrosJoined)
+
+	assert.NilError(t, err)
+}
 func int32Ptr(i int32) *int32 {
 	return &i
 }
@@ -296,4 +306,43 @@ func timeWithoutTimeZone(t string) *time.Time {
 	}
 
 	return &time
+}
+
+var customer0 = model.Customer{
+	CustomerID: 1,
+	StoreID:    1,
+	FirstName:  "Mary",
+	LastName:   "Smith",
+	Email:      stringPtr("mary.smith@sakilacustomer.org"),
+	Address:    nil,
+	Activebool: true,
+	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
+	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+	Active:     int32Ptr(1),
+}
+
+var customer1 = model.Customer{
+	CustomerID: 2,
+	StoreID:    1,
+	FirstName:  "Patricia",
+	LastName:   "Johnson",
+	Email:      stringPtr("patricia.johnson@sakilacustomer.org"),
+	Address:    nil,
+	Activebool: true,
+	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
+	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+	Active:     int32Ptr(1),
+}
+
+var lastCustomer = model.Customer{
+	CustomerID: 599,
+	StoreID:    2,
+	FirstName:  "Austin",
+	LastName:   "Cintron",
+	Email:      stringPtr("austin.cintron@sakilacustomer.org"),
+	Address:    nil,
+	Activebool: true,
+	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
+	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+	Active:     int32Ptr(1),
 }
