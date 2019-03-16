@@ -3,6 +3,7 @@ package tests
 import (
 	"database/sql"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
 	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
@@ -290,6 +291,42 @@ func TestSelectFullCrossJoin(t *testing.T) {
 
 	assert.NilError(t, err)
 }
+
+func TestSelectSelfJoin(t *testing.T) {
+
+	f1 := Film.As("f1")
+
+	//spew.Dump(f1)
+	f2 := Film.As("f2")
+
+	query := f1.
+		InnerJoinOn(f2, f1.FilmID.Neq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
+		Select(f1.AllColumns, f2.AllColumns).
+		OrderBy(f1.FilmID)
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+	type F1 model.Film
+	type F2 model.Film
+
+	theSameLengthFilms := []struct {
+		F1 F1
+		F2 F2
+	}{}
+
+	err = query.Execute(db, &theSameLengthFilms)
+
+	assert.NilError(t, err)
+
+	spew.Dump(theSameLengthFilms[0])
+
+	assert.Equal(t, len(theSameLengthFilms), 6972)
+}
+
 func int32Ptr(i int32) *int32 {
 	return &i
 }

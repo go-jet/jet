@@ -23,7 +23,7 @@ func (c ColumnInfo) IsUnique() bool {
 }
 
 func (c ColumnInfo) ToGoVarName() string {
-	return snaker.SnakeToCamelLower(c.TableInfo.Name) + snaker.SnakeToCamel(c.Name) + "Column"
+	return snaker.SnakeToCamel(c.Name) + "Column"
 }
 
 func (c ColumnInfo) ToGoType() string {

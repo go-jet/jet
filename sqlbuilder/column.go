@@ -27,6 +27,7 @@ type Column interface {
 	setTableName(table string) error
 
 	Eq(rhs Expression) BoolExpression
+	Neq(rhs Expression) BoolExpression
 
 	Gte(rhs Expression) BoolExpression
 	GteLiteral(rhs interface{}) BoolExpression
@@ -107,6 +108,10 @@ func (c baseColumn) SerializeSql(out *bytes.Buffer) error {
 
 func (c *baseColumn) Eq(rhs Expression) BoolExpression {
 	return Eq(c, rhs)
+}
+
+func (c *baseColumn) Neq(rhs Expression) BoolExpression {
+	return Neq(c, rhs)
 }
 
 func (c *baseColumn) Gte(rhs Expression) BoolExpression {
@@ -198,7 +203,7 @@ type IntegerColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func IntColumn(name string, nullable NullableColumn) NonAliasColumn {
+func IntColumn(name string, nullable NullableColumn) *IntegerColumn {
 	if !validIdentifierName(name) {
 		panic("Invalid column name in int column")
 	}

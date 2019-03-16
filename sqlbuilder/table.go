@@ -5,7 +5,6 @@ package sqlbuilder
 import (
 	"bytes"
 	"fmt"
-
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -85,6 +84,7 @@ func NewTable(schemaName, name string, columns ...NonAliasColumn) *Table {
 type Table struct {
 	schemaName   string
 	name         string
+	alias        string
 	columns      []NonAliasColumn
 	columnLookup map[string]NonAliasColumn
 	// If not empty, the name of the index to force
@@ -119,6 +119,17 @@ func (t *Table) Projections() []Projection {
 	return result
 }
 
+func (t *Table) SetAlias(alias string) {
+	t.alias = alias
+
+	for _, c := range t.columns {
+		err := c.setTableName(alias)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 // Returns the table's name in the database
 func (t *Table) Name() string {
 	return t.name
@@ -150,6 +161,11 @@ func (t *Table) SerializeSql(out *bytes.Buffer) error {
 	_, _ = out.WriteString(t.schemaName)
 	_, _ = out.WriteString(".")
 	_, _ = out.WriteString(t.Name())
+
+	if len(t.alias) > 0 {
+		out.WriteString(" AS ")
+		out.WriteString(t.alias)
+	}
 
 	if t.forcedIndex != "" {
 		if !validIdentifierName(t.forcedIndex) {
