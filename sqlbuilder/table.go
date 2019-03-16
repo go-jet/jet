@@ -33,6 +33,10 @@ type ReadableTable interface {
 
 	// Creates a right join table expression using onCondition.
 	RightJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
+
+	FullJoin(table ReadableTable, col1 Column, col2 Column) ReadableTable
+
+	CrossJoin(table ReadableTable) ReadableTable
 }
 
 // The sql table write interface.
@@ -196,6 +200,14 @@ func (t *Table) RightJoinOn(
 	return RightJoinOn(t, table, onCondition)
 }
 
+func (t *Table) FullJoin(table ReadableTable, col1, col2 Column) ReadableTable {
+	return FullJoin(t, table, col1.Eq(col2))
+}
+
+func (t *Table) CrossJoin(table ReadableTable) ReadableTable {
+	return CrossJoin(t, table)
+}
+
 func (t *Table) Insert(columns ...NonAliasColumn) InsertStatement {
 	return newInsertStatement(t, columns...)
 }
@@ -214,6 +226,8 @@ const (
 	INNER_JOIN joinType = iota
 	LEFT_JOIN
 	RIGHT_JOIN
+	FULL_JOIN
+	CROSS_JOIN
 )
 
 // Join expressions are pseudo readable tables.
@@ -262,6 +276,21 @@ func RightJoinOn(
 	return newJoinTable(lhs, rhs, RIGHT_JOIN, onCondition)
 }
 
+func FullJoin(
+	lhs ReadableTable,
+	rhs ReadableTable,
+	onCondition BoolExpression) ReadableTable {
+
+	return newJoinTable(lhs, rhs, FULL_JOIN, onCondition)
+}
+
+func CrossJoin(
+	lhs ReadableTable,
+	rhs ReadableTable) ReadableTable {
+
+	return newJoinTable(lhs, rhs, CROSS_JOIN, nil)
+}
+
 func (t *joinTable) Columns() []NonAliasColumn {
 	columns := make([]NonAliasColumn, 0)
 	columns = append(columns, t.lhs.Columns()...)
@@ -278,7 +307,7 @@ func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 	if t.rhs == nil {
 		return errors.Newf("nil rhs.  Generated sql: %s", out.String())
 	}
-	if t.onCondition == nil {
+	if t.onCondition == nil && t.join_type != CROSS_JOIN {
 		return errors.Newf("nil onCondition.  Generated sql: %s", out.String())
 	}
 
@@ -293,15 +322,21 @@ func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 		_, _ = out.WriteString(" LEFT JOIN ")
 	case RIGHT_JOIN:
 		_, _ = out.WriteString(" RIGHT JOIN ")
+	case FULL_JOIN:
+		out.WriteString(" FULL JOIN ")
+	case CROSS_JOIN:
+		out.WriteString(" CROSS JOIN ")
 	}
 
 	if err = t.rhs.SerializeSql(out); err != nil {
 		return
 	}
 
-	_, _ = out.WriteString(" ON ")
-	if err = t.onCondition.SerializeSql(out); err != nil {
-		return
+	if t.onCondition != nil {
+		_, _ = out.WriteString(" ON ")
+		if err = t.onCondition.SerializeSql(out); err != nil {
+			return
+		}
 	}
 
 	return nil
@@ -331,6 +366,14 @@ func (t *joinTable) LeftJoinOn(
 	onCondition BoolExpression) ReadableTable {
 
 	return LeftJoinOn(t, table, onCondition)
+}
+
+func (t *joinTable) FullJoin(table ReadableTable, col1 Column, col2 Column) ReadableTable {
+	return FullJoin(t, table, col1.Eq(col2))
+}
+
+func (t *joinTable) CrossJoin(table ReadableTable) ReadableTable {
+	return CrossJoin(t, table)
 }
 
 func (t *joinTable) RightJoinOn(

@@ -2,6 +2,7 @@ package execution
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"github.com/serenize/snaker"
@@ -37,7 +38,6 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 	rowData := createScanValue(columnTypes)
 
 	scanContext := &scanContext{
-
 		columnNames:      columnNames,
 		uniqueObjectsMap: make(map[string]interface{}),
 	}
@@ -69,6 +69,8 @@ func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	fmt.Println(strconv.Itoa(scanContext.rowNum) + " ROWS PROCESSED")
 
 	return nil
 }
@@ -118,9 +120,10 @@ func getGroupKey(scanContext *scanContext, row []interface{}, structType reflect
 				continue
 			}
 
-			rowValue := reflect.ValueOf(row[index])
+			cellValue := cellValue(row, index)
 
-			groupKey = groupKey + reflectValueToString(rowValue)
+			groupKey = groupKey + reflectValueToString(cellValue)
+
 		} else if !isDbBaseType(fieldType.Type) {
 			var structType reflect.Type
 			if fieldType.Type.Kind() == reflect.Struct {
@@ -143,6 +146,30 @@ func getGroupKey(scanContext *scanContext, row []interface{}, structType reflect
 
 	//fmt.Println(groupKey)
 	return groupKey
+}
+
+func cellValue(row []interface{}, index int) interface{} {
+	//spew.Dump(row[index])
+
+	valuer, ok := row[index].(driver.Valuer)
+
+	if !ok {
+		//fmt.Println("____________________")
+		//spew.Dump(row[index])
+		panic("Scan value doesn't implement driver.Valuer")
+	}
+
+	//spew.Dump(valuer)
+
+	value, err := valuer.Value()
+
+	if err != nil {
+		panic(err)
+	}
+
+	//spew.Dump(value)
+
+	return value
 }
 
 func getSliceStructType(slicePtr interface{}) reflect.Type {
@@ -312,26 +339,38 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, columnProcessed [
 			//columnName := snaker.CamelToSnake(fieldName)
 
 			////fmt.Println(columnName)
-			rowIndex := getIndex(scanContext.columnNames, columnName)
+			index := getIndex(scanContext.columnNames, columnName)
 
-			if rowIndex < 0 || columnProcessed[rowIndex] {
+			if index < 0 || columnProcessed[index] {
 				continue
 			}
-			////spew.Dump(row[rowIndex])
+			////spew.Dump(row[index])
 
-			rowColumnValue := reflect.ValueOf(row[rowIndex])
+			cellValue := cellValue(row, index)
+			//spew.Dump(cellValue)
 
 			//spew.Dump(rowColumnValue, fieldValue)
-			setReflectValue(rowColumnValue, fieldValue)
+			if cellValue != nil {
+				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+			}
 
-			columnProcessed[rowIndex] = true
+			columnProcessed[index] = true
 		}
 	}
 
 	return nil
 }
 
-func reflectValueToString(value reflect.Value) string {
+func reflectValueToString(val interface{}) string {
+	//spew.Dump(val)
+
+	if val == nil {
+		return ""
+	}
+
+	value := reflect.ValueOf(val)
+
+	//if !value.IsValid()
 	var valueInterface interface{}
 	if value.Kind() == reflect.Ptr {
 		valueInterface = value.Elem().Interface()
@@ -372,7 +411,9 @@ func setReflectValue(source, destination reflect.Value) {
 		if source.Kind() == reflect.Ptr {
 			destination.Set(source)
 		} else {
-			destination.Set(source.Addr())
+			newDestination := reflect.New(destination.Type().Elem())
+			newDestination.Elem().Set(source)
+			destination.Set(newDestination)
 		}
 	} else {
 		if source.Kind() == reflect.Ptr {
@@ -397,7 +438,7 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	values := make([]interface{}, len(columnTypes))
 
 	for i, sqlColumnType := range columnTypes {
-		columnType := getScanType(sqlColumnType)
+		columnType := newScanType(sqlColumnType)
 
 		columnValue := reflect.New(columnType)
 
@@ -407,17 +448,32 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	return values
 }
 
-func getScanType(columnType *sql.ColumnType) reflect.Type {
-	scanType := columnType.ScanType()
-	//////fmt.Println(scanType.String())
-	if scanType.String() != "interface {}" {
-		return scanType
-	}
+var nullFloatType = reflect.TypeOf(sql.NullFloat64{})
+var nullInt16Type = reflect.TypeOf(NullInt16{})
+var nullInt32Type = reflect.TypeOf(NullInt32{})
+var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
+var nullStringType = reflect.TypeOf(sql.NullString{})
+var nullBoolType = reflect.TypeOf(sql.NullBool{})
+var nullTimeType = reflect.TypeOf(NullTime{})
 
+func newScanType(columnType *sql.ColumnType) reflect.Type {
+	//spew.Dump(columnType)
 	switch columnType.DatabaseTypeName() {
+	case "INT2":
+		return nullInt16Type
+	case "INT4":
+		return nullInt32Type
+	case "INT8":
+		return nullInt64Type
+	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR":
+		return nullStringType
 	case "FLOAT4":
-		return floatType
+		return nullFloatType
+	case "BOOL":
+		return nullBoolType
+	case "DATE", "TIMESTAMP":
+		return nullTimeType
 	default:
-		return stringType
+		panic("Unknown column database type " + columnType.DatabaseTypeName())
 	}
 }
