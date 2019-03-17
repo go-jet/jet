@@ -16,6 +16,8 @@ type Column interface {
 	isProjectionInterface
 	isExpressionInterface
 
+	As(alias string) Column
+
 	Name() string
 	// Serialization for use in column lists
 	SerializeSqlForColumnList(out *bytes.Buffer) error
@@ -74,6 +76,14 @@ type baseColumn struct {
 	name     string
 	nullable NullableColumn
 	table    string
+	alias    string
+}
+
+func (c *baseColumn) As(alias string) Column {
+	newBaseColumn := *c
+	newBaseColumn.alias = alias
+
+	return &newBaseColumn
 }
 
 func (c *baseColumn) Name() string {
@@ -89,7 +99,9 @@ func (c *baseColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
 
 	c.SerializeSql(out)
 
-	if c.table != "" {
+	if c.alias != "" {
+		_, _ = out.WriteString(" AS \"" + c.alias + "\"")
+	} else if c.table != "" {
 		_, _ = out.WriteString(" AS \"" + c.table + "." + c.name + "\"")
 	}
 

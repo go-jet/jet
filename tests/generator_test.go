@@ -328,6 +328,42 @@ func TestSelectSelfJoin(t *testing.T) {
 	assert.Equal(t, len(theSameLengthFilms), 6972)
 }
 
+func TestSelectAliasColumn(t *testing.T) {
+	f1 := Film.As("f1")
+	f2 := Film.As("f2")
+
+	type thesameLengthFilms struct {
+		Title1 string
+		Title2 string
+		Length int16
+	}
+
+	query := f1.
+		InnerJoinOn(f2, f1.FilmID.Neq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
+		Select(f1.Title.As("thesame_length_films.title1"),
+			f2.Title.As("thesame_length_films.title2"),
+			f1.Length.As("thesame_length_films.length")).
+		OrderBy(f1.Length.Asc()).
+		Limit(1000)
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+	films := []thesameLengthFilms{}
+
+	err = query.Execute(db, &films)
+
+	assert.NilError(t, err)
+
+	//spew.Dump(films)
+
+	assert.Equal(t, len(films), 1000)
+	assert.DeepEqual(t, films[0], thesameLengthFilms{"Ridgemont Submarine", "Iron Moon", 46})
+}
+
 func int32Ptr(i int32) *int32 {
 	return &i
 }
