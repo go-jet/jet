@@ -102,29 +102,13 @@ func allProcessed(arr []bool) bool {
 
 func getGroupKey(scanContext *scanContext, row []interface{}, structType reflect.Type) string {
 	structName := structType.Name()
-	groupKey := ""
+	groupKeys := []string{}
 
 	for i := 0; i < structType.NumField(); i++ {
 		fieldType := structType.Field(i)
 
 		////fmt.Println(fieldType.Tag)
-
-		if fieldType.Tag == `sql:"unique"` {
-			fieldName := fieldType.Name
-			columnName := snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName)
-
-			//fmt.Println(fieldName)
-			index := getIndex(scanContext.columnNames, columnName)
-
-			if index < 0 {
-				continue
-			}
-
-			cellValue := cellValue(row, index)
-
-			groupKey = groupKey + reflectValueToString(cellValue)
-
-		} else if !isDbBaseType(fieldType.Type) {
+		if !isDbBaseType(fieldType.Type) {
 			var structType reflect.Type
 			if fieldType.Type.Kind() == reflect.Struct {
 				structType = fieldType.Type
@@ -140,12 +124,34 @@ func getGroupKey(scanContext *scanContext, row []interface{}, structType reflect
 
 			//groupKey = strings.Join([]string{structGroupKey, groupKey}, ":")
 
-			groupKey = groupKey + structGroupKey
+			if structGroupKey != "" {
+				groupKeys = append(groupKeys, structGroupKey)
+			}
+		} else if fieldType.Tag == `sql:"unique"` {
+			fieldName := fieldType.Name
+			columnName := snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName)
+
+			//fmt.Println(fieldName)
+			index := getIndex(scanContext.columnNames, columnName)
+
+			if index < 0 {
+				continue
+			}
+
+			cellValue := cellValue(row, index)
+			subKey := reflectValueToString(cellValue)
+
+			if subKey != "" {
+				groupKeys = append(groupKeys, subKey)
+			}
 		}
 	}
 
-	//fmt.Println(groupKey)
-	return groupKey
+	if len(groupKeys) == 0 {
+		return ""
+	}
+
+	return "|" + structType.Name() + "(" + strings.Join(groupKeys, ", ") + ")|"
 }
 
 func cellValue(row []interface{}, index int) interface{} {
@@ -196,10 +202,12 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, columnProcessed []
 	structGroupKey := getGroupKey(scanContext, row, structType)
 
 	if structGroupKey == "" {
-		structGroupKey = strconv.Itoa(scanContext.rowNum)
+		structGroupKey = "|ROW: " + strconv.Itoa(scanContext.rowNum) + "|"
 	}
 
 	groupKey = groupKey + ":" + structGroupKey
+
+	//fmt.Println(groupKey)
 
 	objPtr, ok := scanContext.uniqueObjectsMap[groupKey]
 

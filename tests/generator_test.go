@@ -154,7 +154,6 @@ func TestJoinQuerySlice(t *testing.T) {
 	assert.NilError(t, err)
 	assert.Equal(t, len(filmsPerLanguage), 1)
 	assert.Equal(t, len(*filmsPerLanguage[0].Films), limit)
-
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
@@ -288,6 +287,8 @@ func TestSelectFullCrossJoin(t *testing.T) {
 	customerAddresCrosJoined := []model.Customer{}
 
 	err = query.Execute(db, &customerAddresCrosJoined)
+
+	assert.Equal(t, len(customerAddresCrosJoined), 1000)
 
 	assert.NilError(t, err)
 }
