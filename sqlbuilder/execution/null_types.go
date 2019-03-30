@@ -87,3 +87,32 @@ func (n NullInt16) Value() (driver.Value, error) {
 	}
 	return n.Int16, nil
 }
+
+type NullFloat32 struct {
+	Float32 float32
+	Valid   bool // Valid is true if Int64 is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (n *NullFloat32) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case float64:
+		n.Float32, n.Valid = float32(v), true
+		return nil
+	case float32:
+		n.Float32, n.Valid = v, true
+		return nil
+	}
+
+	n.Valid = false
+
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (n NullFloat32) Value() (driver.Value, error) {
+	if !n.Valid {
+		return nil, nil
+	}
+	return n.Float32, nil
+}

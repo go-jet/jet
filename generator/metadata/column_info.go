@@ -54,7 +54,9 @@ func (c ColumnInfo) GoBaseType() string {
 			return "[]byte"
 		case "text":
 			return "string"
-		case "numeric", "real":
+		case "real":
+			return "float32"
+		case "numeric", "double precision":
 			return "float64"
 		default:
 			return "string"
