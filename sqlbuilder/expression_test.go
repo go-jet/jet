@@ -262,7 +262,7 @@ func (s *ExprSuite) TestLtExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestLteExpr(c *gc.C) {
-	expr := LteL(table1Col1, "foo\"';drop user table;")
+	expr := LteL(table1Col1, "foo\"';drop user tableName;")
 
 	buf := &bytes.Buffer{}
 
@@ -273,7 +273,7 @@ func (s *ExprSuite) TestLteExpr(c *gc.C) {
 	c.Assert(
 		sql,
 		gc.Equals,
-		"table1.col1<='foo\\\"\\';drop user table;'")
+		"table1.col1<='foo\\\"\\';drop user tableName;'")
 }
 
 func (s *ExprSuite) TestGtExpr(c *gc.C) {

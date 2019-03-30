@@ -3,8 +3,8 @@ package tests
 import (
 	"database/sql"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
+	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
@@ -79,6 +79,7 @@ func TestSelect_ScanToSlice(t *testing.T) {
 
 	queryStr, err := query.String()
 	assert.NilError(t, err)
+	fmt.Println(queryStr)
 	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active" FROM dvds.customer ORDER BY customer.customer_id ASC`)
 
 	err = query.Execute(db, &customers)
@@ -119,7 +120,7 @@ func TestJoinQueryStruct(t *testing.T) {
 func TestJoinQuerySlice(t *testing.T) {
 	type FilmsPerLanguage struct {
 		Language *model.Language
-		Films    *[]model.Film
+		Film     *[]model.Film
 	}
 
 	filmsPerLanguage := []FilmsPerLanguage{}
@@ -143,8 +144,10 @@ func TestJoinQuerySlice(t *testing.T) {
 	//fmt.Println("--------------- result --------------- ")
 	//spew.Dump(filmsPerLanguage)
 
+	//spew.Dump(filmsPerLanguage)
+
 	assert.Equal(t, len(filmsPerLanguage), 1)
-	assert.Equal(t, len(*filmsPerLanguage[0].Films), limit)
+	assert.Equal(t, len(*filmsPerLanguage[0].Film), limit)
 
 	//spew.Dump(filmsPerLanguage)
 
@@ -153,13 +156,13 @@ func TestJoinQuerySlice(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(filmsPerLanguage), 1)
-	assert.Equal(t, len(*filmsPerLanguage[0].Films), limit)
+	assert.Equal(t, len(*filmsPerLanguage[0].Film), limit)
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
 	type FilmsPerLanguage struct {
 		Language model.Language
-		Films    *[]*model.Film
+		Film     *[]*model.Film
 	}
 
 	limit := int64(3)
@@ -175,7 +178,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(filmsPerLanguageWithPtrs), 1)
-	assert.Equal(t, len(*filmsPerLanguageWithPtrs[0].Films), int(limit))
+	assert.Equal(t, len(*filmsPerLanguageWithPtrs[0].Film), int(limit))
 }
 
 func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
@@ -323,7 +326,7 @@ func TestSelectSelfJoin(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	spew.Dump(theSameLengthFilms[0])
+	//spew.Dump(theSameLengthFilms[0])
 
 	assert.Equal(t, len(theSameLengthFilms), 6972)
 }
@@ -343,7 +346,7 @@ func TestSelectAliasColumn(t *testing.T) {
 		Select(f1.Title.As("thesame_length_films.title1"),
 			f2.Title.As("thesame_length_films.title2"),
 			f1.Length.As("thesame_length_films.length")).
-		OrderBy(f1.Length.Asc()).
+		OrderBy(f1.Length.Asc(), f1.Title.Asc(), f2.Title.Asc()).
 		Limit(1000)
 
 	queryStr, err := query.String()
@@ -361,7 +364,227 @@ func TestSelectAliasColumn(t *testing.T) {
 	//spew.Dump(films)
 
 	assert.Equal(t, len(films), 1000)
-	assert.DeepEqual(t, films[0], thesameLengthFilms{"Ridgemont Submarine", "Iron Moon", 46})
+	assert.DeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
+}
+
+type Manager staff
+
+type staff struct {
+	StaffID   int32 `sql:"unique"`
+	FirstName string
+	LastName  string
+	//Address    *model.Address
+	//Email      *string
+	//StoreID    int16
+	//Active     bool
+	//Username   string
+	//Password   *string
+	//LastUpdate time.Time
+	*Manager //`sqlbuilder:"manager"`
+}
+
+func TestSelectSelfReferenceType(t *testing.T) {
+
+	manager := Staff.As("manager")
+
+	query := Staff.
+		InnerJoinUsing(Address, Staff.AddressID, Address.AddressID).
+		InnerJoinUsing(manager, Staff.StaffID, manager.StaffID).
+		Select(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName)
+
+	queryStr, err := query.String()
+	assert.NilError(t, err)
+	fmt.Println(queryStr)
+
+	staffs := []staff{}
+
+	err = query.Execute(db, &staffs)
+
+	assert.NilError(t, err)
+
+	//spew.Dump(staffs)
+}
+
+func TestSubQuery(t *testing.T) {
+
+	//selectStmtTable := Actor.Select(Actor.FirstName, Actor.LastName).AsTable("table_expression")
+	//
+	//query := selectStmtTable.Select(
+	//	selectStmtTable.ColumnFrom(Actor.FirstName).As("nesto"),
+	//	selectStmtTable.Column("actor.last_name").As("nesto2"),
+	//	)
+	//
+	//queryStr, err := query.String()
+	//
+	//assert.NilError(t, err)
+	//
+	//fmt.Println(queryStr)
+
+	//avrgCustomer := Customer.Select(Customer.LastName).Limit(1).AsExpression()
+	//
+	//Customer.
+	//	InnerJoinUsing(selectStmtTable, Customer.LastName, selectStmtTable.Column("first_name")).
+	//	Select(Customer.AllColumns, selectStmtTable.Column("first_name")).
+	//	Where(Actor.LastName.Neq(avrgCustomer))
+
+	rFilmsOnly := Film.Select(Film.FilmID, Film.Title, Film.Rating).
+		Where(Film.Rating.Eq(sqlbuilder.Literal("R"))).
+		AsTable("films")
+
+	query := Actor.InnerJoinUsing(FilmActor, Actor.ActorID, FilmActor.FilmID).
+		InnerJoinUsing(rFilmsOnly, FilmActor.FilmID, rFilmsOnly.ColumnFrom(Film.FilmID)).
+		Select(
+			Actor.AllColumns,
+			FilmActor.AllColumns,
+			rFilmsOnly.ColumnFrom(Film.Title).As("film.title"),
+			rFilmsOnly.ColumnFrom(Film.Rating).As("film.rating"),
+		)
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+}
+
+func TestSelectFunctions(t *testing.T) {
+	query := Film.Select(sqlbuilder.MAX(Film.RentalRate).As("max_film_rate"))
+
+	str, err := query.String()
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, str, `SELECT MAX(film.rental_rate) AS "max_film_rate" FROM dvds.film`)
+
+	fmt.Println(str)
+}
+
+func TestSelectQueryScalar(t *testing.T) {
+
+	maxFilmRentalRate := Film.Select(sqlbuilder.MAX(Film.RentalRate))
+
+	query := Film.Select(Film.AllColumns).
+		Where(Film.RentalRate.Eq(maxFilmRentalRate)).
+		OrderBy(Film.FilmID)
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+	maxRentalRateFilms := []model.Film{}
+	err = query.Execute(db, &maxRentalRateFilms)
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(maxRentalRateFilms), 336)
+
+	assert.DeepEqual(t, maxRentalRateFilms[0], model.Film{
+		FilmID:          2,
+		Title:           "Ace Goldfinger",
+		Description:     stringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
+		ReleaseYear:     int32Ptr(2006),
+		Language:        nil,
+		RentalRate:      4.99,
+		Length:          int16Ptr(48),
+		ReplacementCost: 12.99,
+		Rating:          stringPtr("G"),
+		RentalDuration:  3,
+		LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951 +0000"),
+		SpecialFeatures: stringPtr("{Trailers,\"Deleted Scenes\"}"),
+		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
+	})
+
+	//spew.Dump(maxRentalRateFilms[0])
+}
+
+func TestSelectGroupByHaving(t *testing.T) {
+	customersPaymentQuery := Payment.
+		Select(
+			Payment.CustomerID.As("customer_payment_sum.customer_id"),
+			sqlbuilder.SUM(Payment.Amount).As("customer_payment_sum.amount_sum"),
+		).
+		GroupBy(Payment.CustomerID).
+		OrderBy(sqlbuilder.SUM(Payment.Amount)).
+		HAVING(sqlbuilder.Gt(sqlbuilder.SUM(Payment.Amount), sqlbuilder.Literal(100)))
+
+	queryStr, err := customersPaymentQuery.String()
+
+	assert.NilError(t, err)
+	fmt.Println(queryStr)
+
+	assert.Equal(t, queryStr, `SELECT payment.customer_id AS "customer_payment_sum.customer_id",SUM(payment.amount) AS "customer_payment_sum.amount_sum" FROM dvds.payment GROUP BY payment.customer_id HAVING SUM(payment.amount)>100 ORDER BY SUM(payment.amount)`)
+
+	type CustomerPaymentSum struct {
+		CustomerID int16
+		AmountSum  float64
+	}
+
+	customerPaymentSum := []CustomerPaymentSum{}
+
+	err = customersPaymentQuery.Execute(db, &customerPaymentSum)
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(customerPaymentSum), 296)
+	assert.DeepEqual(t, customerPaymentSum[0], CustomerPaymentSum{
+		CustomerID: 135,
+		AmountSum:  100.72,
+	})
+}
+
+func TestSelectGroupBy2(t *testing.T) {
+	type CustomerWithAmounts struct {
+		Customer  *model.Customer
+		AmountSum float64
+	}
+	customersWithAmounts := []CustomerWithAmounts{}
+
+	customersPaymentSubQuery := Payment.
+		Select(
+			Payment.CustomerID,
+			sqlbuilder.SUM(Payment.Amount).As("amount_sum"),
+		).
+		GroupBy(Payment.CustomerID)
+
+	customersPaymentTable := customersPaymentSubQuery.AsTable("customer_payment_sum")
+	amountSumColumn := customersPaymentTable.Column("amount_sum")
+
+	query := Customer.
+		InnerJoinUsing(customersPaymentTable, Customer.CustomerID, customersPaymentTable.ColumnFrom(Payment.CustomerID)).
+		Select(Customer.AllColumns, amountSumColumn.As("customer_with_amounts.amount_sum")).
+		OrderBy(amountSumColumn)
+
+	queryStr, err := query.String()
+	assert.NilError(t, err)
+	fmt.Println(queryStr)
+
+	err = query.Execute(db, &customersWithAmounts)
+	assert.NilError(t, err)
+	//spew.Dump(customersWithAmounts)
+
+	assert.Equal(t, len(customersWithAmounts), 599)
+
+	assert.DeepEqual(t, customersWithAmounts[0].Customer, &model.Customer{
+		CustomerID: 318,
+		StoreID:    1,
+		FirstName:  "Brian",
+		LastName:   "Wyman",
+		Email:      stringPtr("brian.wyman@sakilacustomer.org"),
+		Activebool: true,
+		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
+		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+		Active:     int32Ptr(1),
+	})
+
+	assert.Equal(t, customersWithAmounts[0].AmountSum, 27.93)
+
+}
+
+func int16Ptr(i int16) *int16 {
+	return &i
 }
 
 func int32Ptr(i int32) *int32 {

@@ -29,7 +29,7 @@ func (s *ColumnSuite) TestRealColumnName(c *gc.C) {
 func (s *ColumnSuite) TestRealColumnSerializeSqlForColumnList(c *gc.C) {
 	col := IntColumn("col", Nullable)
 
-	// Without table name
+	// Without tableName name
 	buf := &bytes.Buffer{}
 
 	err := col.SerializeSqlForColumnList(buf)
@@ -38,7 +38,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSqlForColumnList(c *gc.C) {
 	sql := buf.String()
 	c.Assert(sql, gc.Equals, "col")
 
-	// With table name
+	// With tableName name
 	err = col.setTableName("foo")
 	c.Assert(err, gc.IsNil)
 
@@ -54,7 +54,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSqlForColumnList(c *gc.C) {
 func (s *ColumnSuite) TestRealColumnSerializeSql(c *gc.C) {
 	col := IntColumn("col", Nullable)
 
-	// Without table name
+	// Without tableName name
 	buf := &bytes.Buffer{}
 
 	err := col.SerializeSql(buf)
@@ -63,7 +63,7 @@ func (s *ColumnSuite) TestRealColumnSerializeSql(c *gc.C) {
 	sql := buf.String()
 	c.Assert(sql, gc.Equals, "col")
 
-	// With table name
+	// With tableName name
 	err = col.setTableName("foo")
 	c.Assert(err, gc.IsNil)
 

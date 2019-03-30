@@ -32,6 +32,8 @@ type BoolExpression interface {
 type Projection interface {
 	Clause
 	isProjectionInterface
+
+	As(alias string) Projection
 	SerializeSqlForColumnList(out *bytes.Buffer) error
 }
 
@@ -49,6 +51,10 @@ func (cl ColumnList) SerializeSql(out *bytes.Buffer) error {
 }
 
 func (cl ColumnList) isProjectionType() {
+}
+
+func (cl ColumnList) As(name string) Projection {
+	panic("Unallowed operation ")
 }
 
 func (cl ColumnList) SerializeSqlForColumnList(out *bytes.Buffer) error {

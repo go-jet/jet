@@ -52,7 +52,7 @@ func (s *TableSuite) TestValidForcedIndex(c *gc.C) {
 	sql := buf.String()
 	c.Assert(sql, gc.Equals, "db.table1 FORCE INDEX (foo)")
 
-	// Ensure the original table is unchanged
+	// Ensure the original tableName is unchanged
 	buf = &bytes.Buffer{}
 	err = table1.SerializeSql(buf)
 	c.Assert(err, gc.IsNil)

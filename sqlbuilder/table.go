@@ -8,29 +8,31 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// The sql table read interface.  NOTE: NATURAL JOINs, and join "USING" clause
+// The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
 // are not supported.
 type ReadableTable interface {
-	// Returns the list of columns that are in the current table expression.
+	// Returns the list of columns that are in the current tableName expression.
 	Columns() []NonAliasColumn
 
-	// Generates the sql string for the current table expression.  Note: the
+	Column(name string) NonAliasColumn
+
+	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
-	// The database is the name of the database the table is on
+	// The database is the name of the database the tableName is on
 	SerializeSql(out *bytes.Buffer) error
 
-	// Generates a select query on the current table.
+	// Generates a select query on the current tableName.
 	Select(projections ...Projection) SelectStatement
 
-	// Creates a inner join table expression using onCondition.
+	// Creates a inner join tableName expression using onCondition.
 	InnerJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable
 
-	// Creates a left join table expression using onCondition.
+	// Creates a left join tableName expression using onCondition.
 	LeftJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	// Creates a right join table expression using onCondition.
+	// Creates a right join tableName expression using onCondition.
 	RightJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	FullJoin(table ReadableTable, col1 Column, col2 Column) ReadableTable
@@ -38,14 +40,14 @@ type ReadableTable interface {
 	CrossJoin(table ReadableTable) ReadableTable
 }
 
-// The sql table write interface.
+// The sql tableName write interface.
 type WritableTable interface {
-	// Returns the list of columns that are in the table.
+	// Returns the list of columns that are in the tableName.
 	Columns() []NonAliasColumn
 
-	// Generates the sql string for the current table expression.  Note: the
+	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
-	// The database is the name of the database the table is on
+	// The database is the name of the database the tableName is on
 	SerializeSql(out *bytes.Buffer) error
 
 	Insert(columns ...NonAliasColumn) InsertStatement
@@ -53,11 +55,11 @@ type WritableTable interface {
 	Delete() DeleteStatement
 }
 
-// Defines a physical table in the database that is both readable and writable.
+// Defines a physical tableName in the database that is both readable and writable.
 // This function will panic if name is not valid
 func NewTable(schemaName, name string, columns ...NonAliasColumn) *Table {
 	if !validIdentifierName(name) {
-		panic("Invalid table name")
+		panic("Invalid tableName name")
 	}
 
 	t := &Table{
@@ -91,28 +93,28 @@ type Table struct {
 	forcedIndex string
 }
 
-// Returns the specified column, or errors if it doesn't exist in the table
+// Returns the specified column, or errors if it doesn't exist in the tableName
 func (t *Table) getColumn(name string) (NonAliasColumn, error) {
 	if c, ok := t.columnLookup[name]; ok {
 		return c, nil
 	}
-	return nil, errors.Newf("No such column '%s' in table '%s'", name, t.name)
+	return nil, errors.Newf("No such column '%s' in tableName '%s'", name, t.name)
 }
 
-// Returns a pseudo column representation of the column name.  Error checking
-// is deferred to SerializeSql.
-//func (t *Table) C(name string) NonAliasColumn {
-//	return &deferredLookupColumn{
-//		table:   t,
-//		colName: name,
-//	}
-//}
+func (t *Table) Column(name string) NonAliasColumn {
+	return &baseColumn{
+		name:      name,
+		nullable:  NotNullable,
+		tableName: t.name,
+	}
+}
 
-// Returns all columns for a table as a slice of projections
+// Returns all columns for a tableName as a slice of projections
 func (t *Table) Projections() []Projection {
 	result := make([]Projection, 0)
 
 	for _, col := range t.columns {
+		col.Asc()
 		result = append(result, col)
 	}
 
@@ -130,7 +132,7 @@ func (t *Table) SetAlias(alias string) {
 	}
 }
 
-// Returns the table's name in the database
+// Returns the tableName's name in the database
 func (t *Table) Name() string {
 	return t.name
 }
@@ -139,19 +141,19 @@ func (t *Table) SchemaName() string {
 	return t.schemaName
 }
 
-// Returns a list of the table's columns
+// Returns a list of the tableName's columns
 func (t *Table) Columns() []NonAliasColumn {
 	return t.columns
 }
 
-// Returns a copy of this table, but with the specified index forced.
+// Returns a copy of this tableName, but with the specified index forced.
 func (t *Table) ForceIndex(index string) *Table {
 	newTable := *t
 	newTable.forcedIndex = index
 	return &newTable
 }
 
-// Generates the sql string for the current table expression.  Note: the
+// Generates the sql string for the current tableName expression.  Note: the
 // generated string may not be a valid/executable sql statement.
 func (t *Table) SerializeSql(out *bytes.Buffer) error {
 	if !validIdentifierName(t.schemaName) {
@@ -179,12 +181,12 @@ func (t *Table) SerializeSql(out *bytes.Buffer) error {
 	return nil
 }
 
-// Generates a select query on the current table.
+// Generates a select query on the current tableName.
 func (t *Table) Select(projections ...Projection) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
-// Creates a inner join table expression using onCondition.
+// Creates a inner join tableName expression using onCondition.
 func (t *Table) InnerJoinOn(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
@@ -200,7 +202,7 @@ func (t *Table) InnerJoinUsing(
 	return InnerJoinOn(t, table, col1.Eq(col2))
 }
 
-// Creates a left join table expression using onCondition.
+// Creates a left join tableName expression using onCondition.
 func (t *Table) LeftJoinOn(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
@@ -208,7 +210,7 @@ func (t *Table) LeftJoinOn(
 	return LeftJoinOn(t, table, onCondition)
 }
 
-// Creates a right join table expression using onCondition.
+// Creates a right join tableName expression using onCondition.
 func (t *Table) RightJoinOn(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
@@ -313,6 +315,10 @@ func (t *joinTable) Columns() []NonAliasColumn {
 	columns = append(columns, t.rhs.Columns()...)
 
 	return columns
+}
+
+func (t *joinTable) Column(name string) NonAliasColumn {
+	panic("Not implemented")
 }
 
 func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {

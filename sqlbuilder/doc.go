@@ -9,7 +9,7 @@
 //
 // Known limitations for SELECT queries:
 //  - does not support subqueries (since mysql is bad at it)
-//  - does not currently support join table alias (and hence self join)
+//  - does not currently support join tableName alias (and hence self join)
 //  - does not support NATURAL joins and join USING
 //
 // Known limitation for INSERT statements:
@@ -17,9 +17,9 @@
 //
 // Known limitation for UPDATE statements:
 //  - does not support update without a WHERE clause (since it is dangerous)
-//  - does not support multi-table update
+//  - does not support multi-tableName update
 //
 // Known limitation for DELETE statements:
 //  - does not support delete without a WHERE clause (since it is dangerous)
-//  - does not support multi-table delete
+//  - does not support multi-tableName delete
 package sqlbuilder

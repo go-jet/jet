@@ -5,26 +5,29 @@ package sqlbuilder
 import (
 	"bytes"
 	"regexp"
+	"strings"
 
 	"github.com/dropbox/godropbox/errors"
 )
 
 // XXX: Maybe add UIntColumn
 
-// Representation of a table for query generation
+// Representation of a tableName for query generation
 type Column interface {
 	isProjectionInterface
 	isExpressionInterface
 
-	As(alias string) Column
+	As(alias string) Projection
 
 	Name() string
+
+	TableName() string
 	// Serialization for use in column lists
 	SerializeSqlForColumnList(out *bytes.Buffer) error
 	// Serialization for use in an expression (Clause)
 	SerializeSql(out *bytes.Buffer) error
 
-	// Internal function for tracking table that a column belongs to
+	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string) error
 
@@ -73,13 +76,13 @@ const (
 type baseColumn struct {
 	isProjection
 	isExpression
-	name     string
-	nullable NullableColumn
-	table    string
-	alias    string
+	name      string
+	nullable  NullableColumn
+	tableName string
+	alias     string
 }
 
-func (c *baseColumn) As(alias string) Column {
+func (c *baseColumn) As(alias string) Projection {
 	newBaseColumn := *c
 	newBaseColumn.alias = alias
 
@@ -90,8 +93,12 @@ func (c *baseColumn) Name() string {
 	return c.name
 }
 
+func (c *baseColumn) TableName() string {
+	return c.tableName
+}
+
 func (c *baseColumn) setTableName(table string) error {
-	c.table = table
+	c.tableName = table
 	return nil
 }
 
@@ -101,19 +108,27 @@ func (c *baseColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
 
 	if c.alias != "" {
 		_, _ = out.WriteString(" AS \"" + c.alias + "\"")
-	} else if c.table != "" {
-		_, _ = out.WriteString(" AS \"" + c.table + "." + c.name + "\"")
+	} else if c.tableName != "" {
+		_, _ = out.WriteString(" AS \"" + c.tableName + "." + c.name + "\"")
 	}
 
 	return nil
 }
 
 func (c baseColumn) SerializeSql(out *bytes.Buffer) error {
-	if c.table != "" {
-		_, _ = out.WriteString(c.table)
+	if c.tableName != "" {
+		_, _ = out.WriteString(c.tableName)
 		_, _ = out.WriteString(".")
 	}
+	containsDot := strings.Contains(c.name, ".")
+
+	if containsDot {
+		out.WriteString("\"")
+	}
 	_, _ = out.WriteString(c.name)
+	if containsDot {
+		out.WriteString("\"")
+	}
 
 	return nil
 }
@@ -323,11 +338,11 @@ func validIdentifierName(name string) bool {
 }
 
 //
-//// Pseudo Column type returned by table.C(name)
+//// Pseudo Column type returned by tableName.C(name)
 //type deferredLookupColumn struct {
 //	isProjection
 //	isExpression
-//	table   *Table
+//	tableName   *Table
 //	colName string
 //
 //	cachedColumn NonAliasColumn
@@ -348,7 +363,7 @@ func validIdentifierName(name string) bool {
 //		return c.cachedColumn.SerializeSql(out)
 //	}
 //
-//	col, err := c.table.getColumn(c.colName)
+//	col, err := c.tableName.getColumn(c.colName)
 //	if err != nil {
 //		return err
 //	}
@@ -357,7 +372,7 @@ func validIdentifierName(name string) bool {
 //	return col.SerializeSql(out)
 //}
 //
-//func (c *deferredLookupColumn) setTableName(table string) error {
+//func (c *deferredLookupColumn) setTableName(tableName string) error {
 //	return errors.Newf(
 //		"Lookup column '%s' should never have setTableName called on it",
 //		c.colName)
