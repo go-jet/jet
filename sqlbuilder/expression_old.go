@@ -17,7 +17,7 @@ type orderByClause struct {
 	ascent     bool
 }
 
-func (o *orderByClause) SerializeSql(out *bytes.Buffer) error {
+func (o *orderByClause) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	if o.expression == nil {
 		return errors.Newf(
 			"nil order by clause.  Generated sql: %s",
@@ -82,7 +82,7 @@ type arithmeticExpression struct {
 	operator    []byte
 }
 
-func (arith *arithmeticExpression) SerializeSql(out *bytes.Buffer) (err error) {
+func (arith *arithmeticExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
 	if len(arith.expressions) == 0 {
 		return errors.Newf(
 			"Empty arithmetic expression.  Generated sql: %s",
@@ -115,7 +115,7 @@ type tupleExpression struct {
 	elements listClause
 }
 
-func (tuple *tupleExpression) SerializeSql(out *bytes.Buffer) error {
+func (tuple *tupleExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	if len(tuple.elements.clauses) < 1 {
 		return errors.Newf("Tuples must include at least one element")
 	}
@@ -141,7 +141,7 @@ type listClause struct {
 	includeParentheses bool
 }
 
-func (list *listClause) SerializeSql(out *bytes.Buffer) error {
+func (list *listClause) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	if list.includeParentheses {
 		_ = out.WriteByte('(')
 	}
@@ -162,7 +162,7 @@ type funcExpression struct {
 	args     *listClause
 }
 
-func (c *funcExpression) SerializeSql(out *bytes.Buffer) (err error) {
+func (c *funcExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
 	if !validIdentifierName(c.funcName) {
 		return errors.Newf(
 			"Invalid function name: %s.  Generated sql: %s",
@@ -205,7 +205,7 @@ type intervalExpression struct {
 
 var intervalSep = ":"
 
-func (c *intervalExpression) SerializeSql(out *bytes.Buffer) (err error) {
+func (c *intervalExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
 	hours := c.duration / time.Hour
 	minutes := (c.duration % time.Hour) / time.Minute
 	sec := (c.duration % time.Minute) / time.Second
@@ -336,7 +336,7 @@ type ifExpression struct {
 	falseExpression Expression
 }
 
-func (exp *ifExpression) SerializeSql(out *bytes.Buffer) error {
+func (exp *ifExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	_, _ = out.WriteString("IF(")
 	_ = exp.conditional.SerializeSql(out)
 	_, _ = out.WriteString(",")

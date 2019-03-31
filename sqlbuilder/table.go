@@ -12,22 +12,21 @@ import (
 // are not supported.
 type ReadableTable interface {
 	// Returns the list of columns that are in the current tableName expression.
-	Columns() []NonAliasColumn
+	Columns() []Column
 
-	Column(name string) NonAliasColumn
+	Column(name string) Column
 
 	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
-	// The database is the name of the database the tableName is on
 	SerializeSql(out *bytes.Buffer) error
 
 	// Generates a select query on the current tableName.
-	Select(projections ...Projection) SelectStatement
+	Select(projections ...Expression) SelectStatement
 
 	// Creates a inner join tableName expression using onCondition.
 	InnerJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable
+	//InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable
 
 	// Creates a left join tableName expression using onCondition.
 	LeftJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
@@ -35,7 +34,7 @@ type ReadableTable interface {
 	// Creates a right join tableName expression using onCondition.
 	RightJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	FullJoin(table ReadableTable, col1 Column, col2 Column) ReadableTable
+	FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	CrossJoin(table ReadableTable) ReadableTable
 }
@@ -43,21 +42,21 @@ type ReadableTable interface {
 // The sql tableName write interface.
 type WritableTable interface {
 	// Returns the list of columns that are in the tableName.
-	Columns() []NonAliasColumn
+	Columns() []Column
 
 	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
 	// The database is the name of the database the tableName is on
 	SerializeSql(out *bytes.Buffer) error
 
-	Insert(columns ...NonAliasColumn) InsertStatement
+	Insert(columns ...Column) InsertStatement
 	Update() UpdateStatement
 	Delete() DeleteStatement
 }
 
 // Defines a physical tableName in the database that is both readable and writable.
 // This function will panic if name is not valid
-func NewTable(schemaName, name string, columns ...NonAliasColumn) *Table {
+func NewTable(schemaName, name string, columns ...Column) *Table {
 	if !validIdentifierName(name) {
 		panic("Invalid tableName name")
 	}
@@ -66,7 +65,7 @@ func NewTable(schemaName, name string, columns ...NonAliasColumn) *Table {
 		schemaName:   schemaName,
 		name:         name,
 		columns:      columns,
-		columnLookup: make(map[string]NonAliasColumn),
+		columnLookup: make(map[string]Column),
 	}
 	for _, c := range columns {
 		err := c.setTableName(name)
@@ -87,21 +86,21 @@ type Table struct {
 	schemaName   string
 	name         string
 	alias        string
-	columns      []NonAliasColumn
-	columnLookup map[string]NonAliasColumn
+	columns      []Column
+	columnLookup map[string]Column
 	// If not empty, the name of the index to force
 	forcedIndex string
 }
 
 // Returns the specified column, or errors if it doesn't exist in the tableName
-func (t *Table) getColumn(name string) (NonAliasColumn, error) {
+func (t *Table) getColumn(name string) (Column, error) {
 	if c, ok := t.columnLookup[name]; ok {
 		return c, nil
 	}
 	return nil, errors.Newf("No such column '%s' in tableName '%s'", name, t.name)
 }
 
-func (t *Table) Column(name string) NonAliasColumn {
+func (t *Table) Column(name string) Column {
 	return &baseColumn{
 		name:      name,
 		nullable:  NotNullable,
@@ -109,9 +108,9 @@ func (t *Table) Column(name string) NonAliasColumn {
 	}
 }
 
-// Returns all columns for a tableName as a slice of projections
-func (t *Table) Projections() []Projection {
-	result := make([]Projection, 0)
+// Returns all expresssion for a tableName as a slice of projections
+func (t *Table) Projections() []Expression {
+	result := make([]Expression, 0)
 
 	for _, col := range t.columns {
 		col.Asc()
@@ -142,7 +141,7 @@ func (t *Table) SchemaName() string {
 }
 
 // Returns a list of the tableName's columns
-func (t *Table) Columns() []NonAliasColumn {
+func (t *Table) Columns() []Column {
 	return t.columns
 }
 
@@ -182,7 +181,7 @@ func (t *Table) SerializeSql(out *bytes.Buffer) error {
 }
 
 // Generates a select query on the current tableName.
-func (t *Table) Select(projections ...Projection) SelectStatement {
+func (t *Table) Select(projections ...Expression) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
@@ -194,13 +193,13 @@ func (t *Table) InnerJoinOn(
 	return InnerJoinOn(t, table, onCondition)
 }
 
-func (t *Table) InnerJoinUsing(
-	table ReadableTable,
-	col1 Column,
-	col2 Column) ReadableTable {
-
-	return InnerJoinOn(t, table, col1.Eq(col2))
-}
+//func (t *Table) InnerJoinUsing(
+//	table ReadableTable,
+//	col1 Column,
+//	col2 Column) ReadableTable {
+//
+//	return InnerJoinOn(t, table, col1.Eq(col2))
+//}
 
 // Creates a left join tableName expression using onCondition.
 func (t *Table) LeftJoinOn(
@@ -218,15 +217,15 @@ func (t *Table) RightJoinOn(
 	return RightJoinOn(t, table, onCondition)
 }
 
-func (t *Table) FullJoin(table ReadableTable, col1, col2 Column) ReadableTable {
-	return FullJoin(t, table, col1.Eq(col2))
+func (t *Table) FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return FullJoin(t, table, onCondition)
 }
 
 func (t *Table) CrossJoin(table ReadableTable) ReadableTable {
 	return CrossJoin(t, table)
 }
 
-func (t *Table) Insert(columns ...NonAliasColumn) InsertStatement {
+func (t *Table) Insert(columns ...Column) InsertStatement {
 	return newInsertStatement(t, columns...)
 }
 
@@ -309,15 +308,15 @@ func CrossJoin(
 	return newJoinTable(lhs, rhs, CROSS_JOIN, nil)
 }
 
-func (t *joinTable) Columns() []NonAliasColumn {
-	columns := make([]NonAliasColumn, 0)
+func (t *joinTable) Columns() []Column {
+	columns := make([]Column, 0)
 	columns = append(columns, t.lhs.Columns()...)
 	columns = append(columns, t.rhs.Columns()...)
 
 	return columns
 }
 
-func (t *joinTable) Column(name string) NonAliasColumn {
+func (t *joinTable) Column(name string) Column {
 	panic("Not implemented")
 }
 
@@ -364,7 +363,7 @@ func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 	return nil
 }
 
-func (t *joinTable) Select(projections ...Projection) SelectStatement {
+func (t *joinTable) Select(projections ...Expression) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
@@ -375,14 +374,6 @@ func (t *joinTable) InnerJoinOn(
 	return InnerJoinOn(t, table, onCondition)
 }
 
-func (t *joinTable) InnerJoinUsing(
-	table ReadableTable,
-	col1 Column,
-	col2 Column) ReadableTable {
-
-	return InnerJoinOn(t, table, col1.Eq(col2))
-}
-
 func (t *joinTable) LeftJoinOn(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
@@ -390,8 +381,8 @@ func (t *joinTable) LeftJoinOn(
 	return LeftJoinOn(t, table, onCondition)
 }
 
-func (t *joinTable) FullJoin(table ReadableTable, col1 Column, col2 Column) ReadableTable {
-	return FullJoin(t, table, col1.Eq(col2))
+func (t *joinTable) FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return FullJoin(t, table, onCondition)
 }
 
 func (t *joinTable) CrossJoin(table ReadableTable) ReadableTable {

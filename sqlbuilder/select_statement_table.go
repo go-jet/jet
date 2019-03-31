@@ -4,22 +4,22 @@ import "bytes"
 
 type SelectStatementTable struct {
 	statement SelectStatement
-	columns   []NonAliasColumn
+	columns   []Column
 	alias     string
 }
 
-func (s *SelectStatementTable) Columns() []NonAliasColumn {
+func (s *SelectStatementTable) Columns() []Column {
 	return s.columns
 }
 
-func (s *SelectStatementTable) Column(name string) NonAliasColumn {
+func (s *SelectStatementTable) Column(name string) Column {
 	return &baseColumn{
 		name:      name,
 		tableName: s.alias,
 	}
 }
 
-func (s *SelectStatementTable) ColumnFrom(column NonAliasColumn) NonAliasColumn {
+func (s *SelectStatementTable) ColumnFrom(column Column) Column {
 	return &baseColumn{
 		name:      column.TableName() + "." + column.Name(),
 		tableName: s.alias,
@@ -43,7 +43,7 @@ func (s *SelectStatementTable) SerializeSql(out *bytes.Buffer) error {
 }
 
 // Generates a select query on the current tableName.
-func (s *SelectStatementTable) Select(projections ...Projection) SelectStatement {
+func (s *SelectStatementTable) Select(projections ...Expression) SelectStatement {
 	return newSelectStatement(s, projections)
 }
 
@@ -52,9 +52,9 @@ func (s *SelectStatementTable) InnerJoinOn(table ReadableTable, onCondition Bool
 	return InnerJoinOn(s, table, onCondition)
 }
 
-func (s *SelectStatementTable) InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable {
-	return InnerJoinOn(s, table, col1.Eq(col2))
-}
+//func (s *SelectStatementTable) InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable {
+//	return InnerJoinOn(s, table, col1.Eq(col2))
+//}
 
 // Creates a left join tableName expression using onCondition.
 func (s *SelectStatementTable) LeftJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable {
@@ -66,8 +66,8 @@ func (s *SelectStatementTable) RightJoinOn(table ReadableTable, onCondition Bool
 	return RightJoinOn(s, table, onCondition)
 }
 
-func (s *SelectStatementTable) FullJoin(table ReadableTable, col1 Column, col2 Column) ReadableTable {
-	return FullJoin(s, table, col1.Eq(col2))
+func (s *SelectStatementTable) FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return FullJoin(s, table, onCondition)
 }
 
 func (s *SelectStatementTable) CrossJoin(table ReadableTable) ReadableTable {

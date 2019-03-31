@@ -3,15 +3,13 @@ package sqlbuilder
 import "bytes"
 
 type FuncExpression struct {
-	isProjection
-
 	name       string
 	expression Expression
 
 	alias string
 }
 
-func (f *FuncExpression) As(alias string) Projection {
+func (f *FuncExpression) As(alias string) Clause {
 	newFuncExpression := *f
 
 	newFuncExpression.alias = alias
@@ -19,7 +17,7 @@ func (f *FuncExpression) As(alias string) Projection {
 	return &newFuncExpression
 }
 
-func (f *FuncExpression) SerializeSql(out *bytes.Buffer) error {
+func (f *FuncExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	out.WriteString(f.name)
 	out.WriteString("(")
 	err := f.expression.SerializeSql(out)
@@ -37,9 +35,9 @@ func (f *FuncExpression) SerializeSql(out *bytes.Buffer) error {
 	return nil
 }
 
-func (f *FuncExpression) SerializeSqlForColumnList(out *bytes.Buffer) error {
-	return f.SerializeSql(out)
-}
+//func (f *FuncExpression) SerializeSqlForColumnList(out *bytes.Buffer) error {
+//	return f.SerializeSql(out)
+//}
 
 func MAX(expression Expression) *FuncExpression {
 	return &FuncExpression{

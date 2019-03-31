@@ -6,8 +6,6 @@ import (
 	"bytes"
 	"regexp"
 	"strings"
-
-	"github.com/dropbox/godropbox/errors"
 )
 
 // XXX: Maybe add UIntColumn
@@ -15,29 +13,27 @@ import (
 // Representation of a tableName for query generation
 type Column interface {
 	Expression
-	isProjectionInterface
 
 	Name() string
-
 	TableName() string
-	// Serialization for use in column lists
-	SerializeSqlForColumnList(out *bytes.Buffer) error
-
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string) error
 
-	Eq(rhs Expression) BoolExpression
-	Neq(rhs Expression) BoolExpression
-
-	Gte(rhs Expression) BoolExpression
-	GteLiteral(rhs interface{}) BoolExpression
-
-	Lte(rhs Expression) BoolExpression
-	LteLiteral(rhs interface{}) BoolExpression
-
 	Asc() OrderByClause
 	Desc() OrderByClause
+}
+
+type columnInterfaceImpl struct {
+	parent Column
+}
+
+func (c *columnInterfaceImpl) Asc() OrderByClause {
+	return &orderByClause{expression: c.parent, ascent: true}
+}
+
+func (c *columnInterfaceImpl) Desc() OrderByClause {
+	return &orderByClause{expression: c.parent, ascent: false}
 }
 
 type NullableColumn bool
@@ -47,10 +43,10 @@ const (
 	NotNullable NullableColumn = false
 )
 
-// A column that can be refer to outside of the projection list
-type NonAliasColumn interface {
-	Column
-}
+//// A column that can be refer to outside of the projection list
+//type NonAliasColumn interface {
+//	Column
+//}
 
 type Collation string
 
@@ -70,19 +66,25 @@ const (
 // The base type for real materialized columns.
 type baseColumn struct {
 	expressionInterfaceImpl
-	isProjection
+	columnInterfaceImpl
+
 	name      string
 	nullable  NullableColumn
 	tableName string
-	alias     string
 }
 
-//func (c *baseColumn) As(alias string) Projection {
-//	newBaseColumn := *c
-//	newBaseColumn.alias = alias
-//
-//	return &newBaseColumn
-//}
+func newBaseColumn(name string, nullable NullableColumn, tableName string, parent Column) baseColumn {
+	bc := baseColumn{
+		name:      name,
+		nullable:  nullable,
+		tableName: tableName,
+	}
+
+	bc.expressionInterfaceImpl.parent = parent
+	bc.columnInterfaceImpl.parent = parent
+
+	return bc
+}
 
 func (c *baseColumn) Name() string {
 	return c.name
@@ -97,20 +99,7 @@ func (c *baseColumn) setTableName(table string) error {
 	return nil
 }
 
-func (c *baseColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
-
-	c.SerializeSql(out)
-
-	if c.alias != "" {
-		_, _ = out.WriteString(" AS \"" + c.alias + "\"")
-	} else if c.tableName != "" {
-		_, _ = out.WriteString(" AS \"" + c.tableName + "." + c.name + "\"")
-	}
-
-	return nil
-}
-
-func (c baseColumn) SerializeSql(out *bytes.Buffer) error {
+func (c baseColumn) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	if c.tableName != "" {
 		_, _ = out.WriteString(c.tableName)
 		_, _ = out.WriteString(".")
@@ -125,190 +114,163 @@ func (c baseColumn) SerializeSql(out *bytes.Buffer) error {
 		out.WriteString("\"")
 	}
 
+	if contains(options, FOR_PROJECTION) && !contains(options, ALIASED) && c.tableName != "" {
+		_, _ = out.WriteString(" AS \"" + c.tableName + "." + c.name + "\"")
+	}
+
 	return nil
 }
 
-func (c *baseColumn) Eq(rhs Expression) BoolExpression {
-	return Eq(c, rhs)
-}
+//
+//type bytesColumn struct {
+//	baseColumn
+//}
+//
+//// Representation of VARBINARY/BLOB columns
+//// This function will panic if name is not valid
+//func BytesColumn(name string, nullable NullableColumn) Column {
+//	if !validIdentifierName(name) {
+//		panic("Invalid column name in bytes column")
+//	}
+//	bc := &bytesColumn{}
+//	bc.name = name
+//	bc.nullable = nullable
+//	return bc
+//}
+//
+//type stringColumn struct {
+//	baseColumn
+//	charset   Charset
+//	collation Collation
+//}
+//
+//// Representation of VARCHAR/TEXT columns
+//// This function will panic if name is not valid
+//func StrColumn(
+//	name string,
+//	charset Charset,
+//	collation Collation,
+//	nullable NullableColumn) Column {
+//
+//	if !validIdentifierName(name) {
+//		panic("Invalid column name in str column")
+//	}
+//	sc := &stringColumn{charset: charset, collation: collation}
+//	sc.name = name
+//	sc.nullable = nullable
+//	return sc
+//}
+//
+//type dateTimeColumn struct {
+//	baseColumn
+//}
+//
+//// Representation of DateTime columns
+//// This function will panic if name is not valid
+//func DateTimeColumn(name string, nullable NullableColumn) Column {
+//	if !validIdentifierName(name) {
+//		panic("Invalid column name in datetime column")
+//	}
+//	dc := &dateTimeColumn{}
+//	dc.name = name
+//	dc.nullable = nullable
+//	return dc
+//}
 
-func (c *baseColumn) Neq(rhs Expression) BoolExpression {
-	return Neq(c, rhs)
-}
+//type IntegerColumn struct {
+//	baseColumn
+//}
+//
+//// Representation of any integer column
+//// This function will panic if name is not valid
+//func IntColumn(name string, nullable NullableColumn) *IntegerColumn {
+//	if !validIdentifierName(name) {
+//		panic("Invalid column name in int column")
+//	}
+//	ic := &IntegerColumn{}
+//	ic.name = name
+//	ic.nullable = nullable
+//	return ic
+//}
 
-func (c *baseColumn) Gte(rhs Expression) BoolExpression {
-	return Gte(c, rhs)
-}
-
-func (c *baseColumn) GteLiteral(rhs interface{}) BoolExpression {
-	return Gte(c, Literal(rhs))
-}
-
-func (c *baseColumn) Lte(rhs Expression) BoolExpression {
-	return Lte(c, rhs)
-}
-
-func (c *baseColumn) LteLiteral(literal interface{}) BoolExpression {
-	return Lte(c, Literal(literal))
-}
-
-func (c *baseColumn) Asc() OrderByClause {
-	return Asc(c)
-}
-
-func (c *baseColumn) Desc() OrderByClause {
-	return Desc(c)
-}
-
-type bytesColumn struct {
-	baseColumn
-}
-
-// Representation of VARBINARY/BLOB columns
-// This function will panic if name is not valid
-func BytesColumn(name string, nullable NullableColumn) NonAliasColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name in bytes column")
-	}
-	bc := &bytesColumn{}
-	bc.name = name
-	bc.nullable = nullable
-	return bc
-}
-
-type stringColumn struct {
-	baseColumn
-	charset   Charset
-	collation Collation
-}
-
-// Representation of VARCHAR/TEXT columns
-// This function will panic if name is not valid
-func StrColumn(
-	name string,
-	charset Charset,
-	collation Collation,
-	nullable NullableColumn) NonAliasColumn {
-
-	if !validIdentifierName(name) {
-		panic("Invalid column name in str column")
-	}
-	sc := &stringColumn{charset: charset, collation: collation}
-	sc.name = name
-	sc.nullable = nullable
-	return sc
-}
-
-type dateTimeColumn struct {
-	baseColumn
-}
-
-// Representation of DateTime columns
-// This function will panic if name is not valid
-func DateTimeColumn(name string, nullable NullableColumn) NonAliasColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name in datetime column")
-	}
-	dc := &dateTimeColumn{}
-	dc.name = name
-	dc.nullable = nullable
-	return dc
-}
-
-type IntegerColumn struct {
-	baseColumn
-}
-
-// Representation of any integer column
-// This function will panic if name is not valid
-func IntColumn(name string, nullable NullableColumn) *IntegerColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name in int column")
-	}
-	ic := &IntegerColumn{}
-	ic.name = name
-	ic.nullable = nullable
-	return ic
-}
-
-type doubleColumn struct {
-	baseColumn
-}
-
-// Representation of any double column
-// This function will panic if name is not valid
-func DoubleColumn(name string, nullable NullableColumn) NonAliasColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name in int column")
-	}
-	ic := &doubleColumn{}
-	ic.name = name
-	ic.nullable = nullable
-	return ic
-}
-
-type booleanColumn struct {
-	baseColumn
-
-	// XXX: Maybe allow isBoolExpression (for now, not included because
-	// the deferred lookup equivalent can never be isBoolExpression)
-}
+//type doubleColumn struct {
+//	baseColumn
+//}
+//
+//// Representation of any double column
+//// This function will panic if name is not valid
+//func DoubleColumn(name string, nullable NullableColumn) Column {
+//	if !validIdentifierName(name) {
+//		panic("Invalid column name in int column")
+//	}
+//	ic := &doubleColumn{}
+//	ic.name = name
+//	ic.nullable = nullable
+//	return ic
+//}
+//
+//type booleanColumn struct {
+//	baseColumn
+//
+//	// XXX: Maybe allow isBoolExpression (for now, not included because
+//	// the deferred lookup equivalent can never be isBoolExpression)
+//}
 
 // Representation of TINYINT used as a bool
 // This function will panic if name is not valid
-func BoolColumn(name string, nullable NullableColumn) NonAliasColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name in bool column")
-	}
-	bc := &booleanColumn{}
-	bc.name = name
-	bc.nullable = nullable
-	return bc
-}
+//func NewBoolColumn(name string, nullable NullableColumn) Column {
+//	if !validIdentifierName(name) {
+//		panic("Invalid column name in bool column")
+//	}
+//	bc := &booleanColumn{}
+//	bc.name = name
+//	bc.nullable = nullable
+//	return bc
+//}
+//
+//type aliasColumn struct {
+//	baseColumn
+//	expression Expression
+//}
+//
+//func (c *aliasColumn) SerializeSql(out *bytes.Buffer) error {
+//	_ = out.WriteByte('`')
+//	_, _ = out.WriteString(c.name)
+//	_ = out.WriteByte('`')
+//	return nil
+//}
+//
+//func (c *aliasColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
+//	if !validIdentifierName(c.name) {
+//		return errors.Newf(
+//			"Invalid alias name `%s`.  Generated sql: %s",
+//			c.name,
+//			out.String())
+//	}
+//	if c.expression == nil {
+//		return errors.Newf(
+//			"Cannot alias a nil expression.  Generated sql: %s",
+//			out.String())
+//	}
+//
+//	_ = out.WriteByte('(')
+//	if c.expression == nil {
+//		return errors.Newf("nil alias clause.  Generate sql: %s", out.String())
+//	}
+//	if err := c.expression.SerializeSql(out); err != nil {
+//		return err
+//	}
+//	_, _ = out.WriteString(") AS \"")
+//	_, _ = out.WriteString(c.name)
+//	_ = out.WriteByte('"')
+//	return nil
+//}
 
-type aliasColumn struct {
-	baseColumn
-	expression Expression
-}
-
-func (c *aliasColumn) SerializeSql(out *bytes.Buffer) error {
-	_ = out.WriteByte('`')
-	_, _ = out.WriteString(c.name)
-	_ = out.WriteByte('`')
-	return nil
-}
-
-func (c *aliasColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
-	if !validIdentifierName(c.name) {
-		return errors.Newf(
-			"Invalid alias name `%s`.  Generated sql: %s",
-			c.name,
-			out.String())
-	}
-	if c.expression == nil {
-		return errors.Newf(
-			"Cannot alias a nil expression.  Generated sql: %s",
-			out.String())
-	}
-
-	_ = out.WriteByte('(')
-	if c.expression == nil {
-		return errors.Newf("nil alias clause.  Generate sql: %s", out.String())
-	}
-	if err := c.expression.SerializeSql(out); err != nil {
-		return err
-	}
-	_, _ = out.WriteString(") AS \"")
-	_, _ = out.WriteString(c.name)
-	_ = out.WriteByte('"')
-	return nil
-}
-
-func (c *aliasColumn) setTableName(table string) error {
-	return errors.Newf(
-		"Alias column '%s' should never have setTableName called on it",
-		c.name)
-}
+//func (c *aliasColumn) setTableName(table string) error {
+//	return errors.Newf(
+//		"Alias column '%s' should never have setTableName called on it",
+//		c.name)
+//}
 
 // Representation of aliased clauses (expression AS name)
 //func Alias(name string, c Expression) Column {

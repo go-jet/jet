@@ -97,7 +97,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 }
 
 func TestBoolLiteral(t *testing.T) {
-	literal := NewBoolLiteralExpression(true)
+	literal := newBoolLiteralExpression(true)
 
 	out := bytes.Buffer{}
 	err := literal.SerializeSql(&out)

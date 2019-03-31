@@ -1,3 +1,5 @@
+// +build disabled
+
 package sqlbuilder
 
 var table1Col1 = IntColumn("col1", Nullable)

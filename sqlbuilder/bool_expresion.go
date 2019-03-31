@@ -11,6 +11,11 @@ import (
 type BoolExpression interface {
 	Expression
 
+	Eq(expression BoolExpression) BoolExpression
+	NotEq(expression BoolExpression) BoolExpression
+	GtEq(rhs Expression) BoolExpression
+	LtEq(rhs Expression) BoolExpression
+
 	And(expression BoolExpression) BoolExpression
 	Or(expression BoolExpression) BoolExpression
 	IsTrue() BoolExpression
@@ -19,6 +24,22 @@ type BoolExpression interface {
 
 type boolInterfaceImpl struct {
 	parent BoolExpression
+}
+
+func (b *boolInterfaceImpl) Eq(expression BoolExpression) BoolExpression {
+	return Eq(b.parent, expression)
+}
+
+func (b *boolInterfaceImpl) NotEq(expression BoolExpression) BoolExpression {
+	return Neq(b.parent, expression)
+}
+
+func (b *boolInterfaceImpl) GtEq(rhs Expression) BoolExpression {
+	return Gte(b.parent, rhs)
+}
+
+func (b *boolInterfaceImpl) LtEq(rhs Expression) BoolExpression {
+	return Lte(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) And(expression BoolExpression) BoolExpression {
@@ -42,7 +63,7 @@ type boolLiteralExpression struct {
 	literalExpression
 }
 
-func NewBoolLiteralExpression(value bool) BoolExpression {
+func newBoolLiteralExpression(value bool) BoolExpression {
 	boolLiteralExpression := boolLiteralExpression{}
 
 	sqlValue, err := sqltypes.BuildValue(value)
@@ -57,15 +78,17 @@ func NewBoolLiteralExpression(value bool) BoolExpression {
 
 //---------------------------------------------------//
 type binaryBoolExpression struct {
+	expressionInterfaceImpl
 	boolInterfaceImpl
 
 	binaryExpression
 }
 
-func NewBinaryBoolExpression(lhs, rhs Expression, operator []byte) BoolExpression {
+func newBinaryBoolExpression(lhs, rhs Expression, operator []byte) BoolExpression {
 	boolExpression := binaryBoolExpression{}
 
-	boolExpression.binaryExpression = *NewBinaryExpression(lhs, rhs, operator, &boolExpression)
+	boolExpression.binaryExpression = newBinaryExpression(lhs, rhs, operator)
+	boolExpression.expressionInterfaceImpl.parent = &boolExpression
 	boolExpression.boolInterfaceImpl.parent = &boolExpression
 
 	return &boolExpression
@@ -73,15 +96,17 @@ func NewBinaryBoolExpression(lhs, rhs Expression, operator []byte) BoolExpressio
 
 //---------------------------------------------------//
 type prefixBoolExpression struct {
+	expressionInterfaceImpl
 	boolInterfaceImpl
 
 	prefixExpression
 }
 
-func NewPrefixBoolExpression(expression Expression, operator []byte) BoolExpression {
+func newPrefixBoolExpression(expression Expression, operator []byte) BoolExpression {
 	boolExpression := prefixBoolExpression{}
-	boolExpression.prefixExpression = *NewPrefixExpression(expression, operator, &boolExpression)
+	boolExpression.prefixExpression = newPrefixExpression(expression, operator)
 
+	boolExpression.expressionInterfaceImpl.parent = &boolExpression
 	boolExpression.boolInterfaceImpl.parent = &boolExpression
 
 	return &boolExpression
@@ -89,6 +114,7 @@ func NewPrefixBoolExpression(expression Expression, operator []byte) BoolExpress
 
 //---------------------------------------------------//
 type conjunctBoolExpression struct {
+	expressionInterfaceImpl
 	boolInterfaceImpl
 
 	conjunctExpression
@@ -103,8 +129,8 @@ func NewConjunctBoolExpression(operator []byte, expressions ...BoolExpression) B
 		},
 	}
 
-	//boolExpression.expressionInterfaceImpl.parent = &boolExpression
-	//boolExpression.boolInterfaceImpl.parent = &boolExpression
+	boolExpression.expressionInterfaceImpl.parent = &boolExpression
+	boolExpression.boolInterfaceImpl.parent = &boolExpression
 
 	return &boolExpression
 }
@@ -120,7 +146,7 @@ type inExpression struct {
 	err error
 }
 
-func (c *inExpression) SerializeSql(out *bytes.Buffer) error {
+func (c *inExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	if c.err != nil {
 		return errors.Wrap(c.err, "Invalid IN expression")
 	}
@@ -159,9 +185,9 @@ func (c *inExpression) SerializeSql(out *bytes.Buffer) error {
 func Eq(lhs, rhs Expression) BoolExpression {
 	lit, ok := rhs.(*literalExpression)
 	if ok && sqltypes.Value(lit.value).IsNull() {
-		return NewBinaryBoolExpression(lhs, rhs, []byte(" IS "))
+		return newBinaryBoolExpression(lhs, rhs, []byte(" IS "))
 	}
-	return NewBinaryBoolExpression(lhs, rhs, []byte(" = "))
+	return newBinaryBoolExpression(lhs, rhs, []byte(" = "))
 }
 
 // Returns a representation of "a=b", where b is a literal
@@ -173,9 +199,9 @@ func EqL(lhs Expression, val interface{}) BoolExpression {
 func Neq(lhs, rhs Expression) BoolExpression {
 	lit, ok := rhs.(*literalExpression)
 	if ok && sqltypes.Value(lit.value).IsNull() {
-		return NewBinaryBoolExpression(lhs, rhs, []byte(" IS NOT "))
+		return newBinaryBoolExpression(lhs, rhs, []byte(" IS NOT "))
 	}
-	return NewBinaryBoolExpression(lhs, rhs, []byte("!="))
+	return newBinaryBoolExpression(lhs, rhs, []byte("!="))
 }
 
 // Returns a representation of "a!=b", where b is a literal
@@ -185,7 +211,7 @@ func NeqL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "a<b"
 func Lt(lhs Expression, rhs Expression) BoolExpression {
-	return NewBinaryBoolExpression(lhs, rhs, []byte("<"))
+	return newBinaryBoolExpression(lhs, rhs, []byte("<"))
 }
 
 // Returns a representation of "a<b", where b is a literal
@@ -195,7 +221,7 @@ func LtL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "a<=b"
 func Lte(lhs, rhs Expression) BoolExpression {
-	return NewBinaryBoolExpression(lhs, rhs, []byte("<="))
+	return newBinaryBoolExpression(lhs, rhs, []byte("<="))
 }
 
 // Returns a representation of "a<=b", where b is a literal
@@ -205,7 +231,7 @@ func LteL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "a>b"
 func Gt(lhs, rhs Expression) BoolExpression {
-	return NewBinaryBoolExpression(lhs, rhs, []byte(">"))
+	return newBinaryBoolExpression(lhs, rhs, []byte(">"))
 }
 
 // Returns a representation of "a>b", where b is a literal
@@ -215,7 +241,7 @@ func GtL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "a>=b"
 func Gte(lhs, rhs Expression) BoolExpression {
-	return NewBinaryBoolExpression(lhs, rhs, []byte(">="))
+	return newBinaryBoolExpression(lhs, rhs, []byte(">="))
 }
 
 // Returns a representation of "a>=b", where b is a literal
@@ -225,11 +251,11 @@ func GteL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "not expr"
 func Not(expr BoolExpression) BoolExpression {
-	return NewPrefixBoolExpression(expr, []byte(" NOT "))
+	return newPrefixBoolExpression(expr, []byte(" NOT "))
 }
 
 func IsTrue(expr BoolExpression) BoolExpression {
-	return NewPrefixBoolExpression(expr, []byte(" IS TRUE "))
+	return newPrefixBoolExpression(expr, []byte(" IS TRUE "))
 }
 
 // Returns a representation of "c[0] AND ... AND c[n-1]" for c in clauses
@@ -243,7 +269,7 @@ func Or(expressions ...BoolExpression) BoolExpression {
 }
 
 func Like(lhs, rhs Expression) BoolExpression {
-	return NewBinaryBoolExpression(lhs, rhs, []byte(" LIKE "))
+	return newBinaryBoolExpression(lhs, rhs, []byte(" LIKE "))
 }
 
 func LikeL(lhs Expression, val string) BoolExpression {
@@ -251,7 +277,7 @@ func LikeL(lhs Expression, val string) BoolExpression {
 }
 
 func Regexp(lhs, rhs Expression) BoolExpression {
-	return NewBinaryBoolExpression(lhs, rhs, []byte(" REGEXP "))
+	return newBinaryBoolExpression(lhs, rhs, []byte(" REGEXP "))
 }
 
 func RegexpL(lhs Expression, val string) BoolExpression {

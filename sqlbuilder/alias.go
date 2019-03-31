@@ -20,9 +20,9 @@ func NewAlias(expression Expression, alias string) *Alias {
 	}
 }
 
-func (a *Alias) SerializeSql(out *bytes.Buffer) error {
+func (a *Alias) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 
-	err := a.expression.SerializeSql(out)
+	err := a.expression.SerializeSql(out, ALIASED)
 
 	if err != nil {
 		return err

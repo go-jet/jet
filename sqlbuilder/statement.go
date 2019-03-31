@@ -20,7 +20,7 @@ type InsertStatement interface {
 
 	// Add a row of values to the insert statement.
 	Add(row ...Expression) InsertStatement
-	AddOnDuplicateKeyUpdate(col NonAliasColumn, expr Expression) InsertStatement
+	AddOnDuplicateKeyUpdate(col Column, expr Expression) InsertStatement
 	Comment(comment string) InsertStatement
 	IgnoreDuplicates(ignore bool) InsertStatement
 }
@@ -48,7 +48,7 @@ type UnionStatement interface {
 type UpdateStatement interface {
 	Statement
 
-	Set(column NonAliasColumn, expression Expression) UpdateStatement
+	Set(column Column, expression Expression) UpdateStatement
 	Where(expression BoolExpression) UpdateStatement
 	OrderBy(clauses ...OrderByClause) UpdateStatement
 	Limit(limit int64) UpdateStatement
@@ -178,7 +178,7 @@ func (us *unionStatementImpl) String() (sql string, err error) {
 	}
 
 	// Union statements in MySQL require that the same number of columns in each subquery
-	var projections []Projection
+	var projections []Expression
 
 	for _, statement := range us.selects {
 		// do a type assertion to get at the underlying struct
@@ -267,7 +267,7 @@ func (us *unionStatementImpl) String() (sql string, err error) {
 
 func newInsertStatement(
 	t WritableTable,
-	columns ...NonAliasColumn) InsertStatement {
+	columns ...Column) InsertStatement {
 
 	return &insertStatementImpl{
 		table:                 t,
@@ -278,13 +278,13 @@ func newInsertStatement(
 }
 
 type columnAssignment struct {
-	col  NonAliasColumn
+	col  Column
 	expr Expression
 }
 
 type insertStatementImpl struct {
 	table                 WritableTable
-	columns               []NonAliasColumn
+	columns               []Column
 	rows                  [][]Expression
 	onDuplicateKeyUpdates []columnAssignment
 	comment               string
@@ -303,7 +303,7 @@ func (s *insertStatementImpl) Add(
 }
 
 func (s *insertStatementImpl) AddOnDuplicateKeyUpdate(
-	col NonAliasColumn,
+	col Column,
 	expr Expression) InsertStatement {
 
 	s.onDuplicateKeyUpdates = append(
@@ -361,7 +361,7 @@ func (s *insertStatementImpl) String() (sql string, err error) {
 				buf.String())
 		}
 
-		if err = col.SerializeSqlForColumnList(buf); err != nil {
+		if err = col.SerializeSql(buf, FOR_PROJECTION); err != nil {
 			return
 		}
 	}
@@ -413,12 +413,11 @@ func (s *insertStatementImpl) String() (sql string, err error) {
 
 			if colExpr.col == nil {
 				return "", errors.Newf(
-					("nil column in on duplicate key update list.  " +
-						"Generated sql: %s"),
+					"nil column in on duplicate key update list.  "+"Generated sql: %s",
 					buf.String())
 			}
 
-			if err = colExpr.col.SerializeSqlForColumnList(buf); err != nil {
+			if err = colExpr.col.SerializeSql(buf, FOR_PROJECTION); err != nil {
 				return
 			}
 
@@ -426,8 +425,7 @@ func (s *insertStatementImpl) String() (sql string, err error) {
 
 			if colExpr.expr == nil {
 				return "", errors.Newf(
-					("nil expression in on duplicate key update list.  " +
-						"Generated sql: %s"),
+					"nil expression in on duplicate key update list.  "+"Generated sql: %s",
 					buf.String())
 			}
 
@@ -447,14 +445,14 @@ func (s *insertStatementImpl) String() (sql string, err error) {
 func newUpdateStatement(table WritableTable) UpdateStatement {
 	return &updateStatementImpl{
 		table:        table,
-		updateValues: make(map[NonAliasColumn]Expression),
+		updateValues: make(map[Column]Expression),
 		limit:        -1,
 	}
 }
 
 type updateStatementImpl struct {
 	table        WritableTable
-	updateValues map[NonAliasColumn]Expression
+	updateValues map[Column]Expression
 	where        BoolExpression
 	order        *listClause
 	limit        int64
@@ -466,7 +464,7 @@ func (u *updateStatementImpl) Execute(db *sql.DB, data interface{}) error {
 }
 
 func (u *updateStatementImpl) Set(
-	column NonAliasColumn,
+	column Column,
 	expression Expression) UpdateStatement {
 
 	u.updateValues[column] = expression

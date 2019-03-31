@@ -12,7 +12,7 @@ type Expression interface {
 
 	As(alias string) Clause
 	IsDistinct(expression Expression) BoolExpression
-	IsNull(expression Expression) BoolExpression
+	IsNull() BoolExpression
 }
 
 type expressionInterfaceImpl struct {
@@ -27,31 +27,27 @@ func (e *expressionInterfaceImpl) IsDistinct(expression Expression) BoolExpressi
 	return nil
 }
 
-func (e *expressionInterfaceImpl) IsNull(expression Expression) BoolExpression {
+func (e *expressionInterfaceImpl) IsNull() BoolExpression {
 	return nil
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
 type binaryExpression struct {
-	expressionInterfaceImpl
 	lhs, rhs Expression
 	operator []byte
 }
 
-func NewBinaryExpression(lhs, rhs Expression, operator []byte, parent ...Expression) *binaryExpression {
+func newBinaryExpression(lhs, rhs Expression, operator []byte, parent ...Expression) binaryExpression {
 	binaryExpression := binaryExpression{
 		lhs:      lhs,
 		rhs:      rhs,
 		operator: operator,
 	}
-	if len(parent) > 0 {
-		binaryExpression.parent = parent[0]
-	}
 
-	return &binaryExpression
+	return binaryExpression
 }
 
-func (c *binaryExpression) SerializeSql(out *bytes.Buffer) (err error) {
+func (c *binaryExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.  Generated sql: %s", out.String())
 	}
@@ -73,25 +69,20 @@ func (c *binaryExpression) SerializeSql(out *bytes.Buffer) (err error) {
 
 // A not expression which negates a expression value
 type prefixExpression struct {
-	expressionInterfaceImpl
-
 	expression Expression
 	operator   []byte
 }
 
-func NewPrefixExpression(expression Expression, operator []byte, parent ...Expression) *prefixExpression {
+func newPrefixExpression(expression Expression, operator []byte) prefixExpression {
 	prefixExpression := prefixExpression{
 		expression: expression,
 		operator:   operator,
 	}
-	if len(parent) > 0 {
-		prefixExpression.parent = parent[0]
-	}
 
-	return &prefixExpression
+	return prefixExpression
 }
 
-func (p *prefixExpression) SerializeSql(out *bytes.Buffer) (err error) {
+func (p *prefixExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
 	_, _ = out.Write(p.operator)
 
 	if p.expression == nil {
@@ -106,12 +97,11 @@ func (p *prefixExpression) SerializeSql(out *bytes.Buffer) (err error) {
 
 // Representation of n-ary conjunctions (AND/OR)
 type conjunctExpression struct {
-	expressionInterfaceImpl
 	expressions []BoolExpression
 	conjunction []byte
 }
 
-func (conj *conjunctExpression) SerializeSql(out *bytes.Buffer) (err error) {
+func (conj *conjunctExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
 	if len(conj.expressions) == 0 {
 		return errors.Newf(
 			"Empty conjunction.  Generated sql: %s",
@@ -154,7 +144,38 @@ func NewLiteralExpression(value sqltypes.Value) *literalExpression {
 	return &exp
 }
 
-func (c literalExpression) SerializeSql(out *bytes.Buffer) error {
+func (c literalExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
 	sqltypes.Value(c.value).EncodeSql(out)
 	return nil
+}
+
+//------------------------------------------------------//
+// Dummy type for select *
+type ColumnList []Column
+
+func (cl ColumnList) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+	for i, column := range cl {
+		err := column.SerializeSql(out)
+
+		if err != nil {
+			return err
+		}
+
+		if i != len(cl)-1 {
+			out.WriteString(", ")
+		}
+	}
+	return nil
+}
+
+func (e ColumnList) As(alias string) Clause {
+	panic("Invalid usage")
+}
+
+func (e ColumnList) IsDistinct(expression Expression) BoolExpression {
+	panic("Invalid usage")
+}
+
+func (e ColumnList) IsNull(expression Expression) BoolExpression {
+	panic("Invalid usage")
 }
