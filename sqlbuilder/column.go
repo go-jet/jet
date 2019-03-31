@@ -14,18 +14,14 @@ import (
 
 // Representation of a tableName for query generation
 type Column interface {
+	Expression
 	isProjectionInterface
-	isExpressionInterface
-
-	As(alias string) Projection
 
 	Name() string
 
 	TableName() string
 	// Serialization for use in column lists
 	SerializeSqlForColumnList(out *bytes.Buffer) error
-	// Serialization for use in an expression (Clause)
-	SerializeSql(out *bytes.Buffer) error
 
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
@@ -54,7 +50,6 @@ const (
 // A column that can be refer to outside of the projection list
 type NonAliasColumn interface {
 	Column
-	isOrderByClauseInterface
 }
 
 type Collation string
@@ -74,20 +69,20 @@ const (
 
 // The base type for real materialized columns.
 type baseColumn struct {
+	expressionInterfaceImpl
 	isProjection
-	isExpression
 	name      string
 	nullable  NullableColumn
 	tableName string
 	alias     string
 }
 
-func (c *baseColumn) As(alias string) Projection {
-	newBaseColumn := *c
-	newBaseColumn.alias = alias
-
-	return &newBaseColumn
-}
+//func (c *baseColumn) As(alias string) Projection {
+//	newBaseColumn := *c
+//	newBaseColumn.alias = alias
+//
+//	return &newBaseColumn
+//}
 
 func (c *baseColumn) Name() string {
 	return c.name
@@ -167,7 +162,6 @@ func (c *baseColumn) Desc() OrderByClause {
 
 type bytesColumn struct {
 	baseColumn
-	isExpression
 }
 
 // Representation of VARBINARY/BLOB columns
@@ -184,7 +178,6 @@ func BytesColumn(name string, nullable NullableColumn) NonAliasColumn {
 
 type stringColumn struct {
 	baseColumn
-	isExpression
 	charset   Charset
 	collation Collation
 }
@@ -208,7 +201,6 @@ func StrColumn(
 
 type dateTimeColumn struct {
 	baseColumn
-	isExpression
 }
 
 // Representation of DateTime columns
@@ -225,7 +217,6 @@ func DateTimeColumn(name string, nullable NullableColumn) NonAliasColumn {
 
 type IntegerColumn struct {
 	baseColumn
-	isExpression
 }
 
 // Representation of any integer column
@@ -242,7 +233,6 @@ func IntColumn(name string, nullable NullableColumn) *IntegerColumn {
 
 type doubleColumn struct {
 	baseColumn
-	isExpression
 }
 
 // Representation of any double column
@@ -259,7 +249,6 @@ func DoubleColumn(name string, nullable NullableColumn) NonAliasColumn {
 
 type booleanColumn struct {
 	baseColumn
-	isExpression
 
 	// XXX: Maybe allow isBoolExpression (for now, not included because
 	// the deferred lookup equivalent can never be isBoolExpression)
@@ -322,12 +311,12 @@ func (c *aliasColumn) setTableName(table string) error {
 }
 
 // Representation of aliased clauses (expression AS name)
-func Alias(name string, c Expression) Column {
-	ac := &aliasColumn{}
-	ac.name = name
-	ac.expression = c
-	return ac
-}
+//func Alias(name string, c Expression) Column {
+//	ac := &aliasColumn{}
+//	ac.name = name
+//	ac.expression = c
+//	return ac
+//}
 
 // This is a strict subset of the actual allowed identifiers
 var validIdentifierRegexp = regexp.MustCompile("^[a-zA-Z_]\\w*$")

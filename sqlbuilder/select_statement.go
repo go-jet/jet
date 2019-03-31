@@ -33,7 +33,8 @@ type SelectStatement interface {
 // NOTE: SelectStatement purposely does not implement the Table interface since
 // mysql's subquery performance is horrible.
 type selectStatementImpl struct {
-	isExpression
+	expressionInterfaceImpl
+
 	table          ReadableTable
 	projections    []Projection
 	where          BoolExpression

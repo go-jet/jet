@@ -3,7 +3,6 @@ package sqlbuilder
 import "bytes"
 
 type FuncExpression struct {
-	isExpression
 	isProjection
 
 	name       string
