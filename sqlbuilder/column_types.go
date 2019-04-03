@@ -77,7 +77,25 @@ func NewStringColumn(name string, nullable NullableColumn) *StringColumn {
 	stringColumn := &StringColumn{}
 
 	stringColumn.stringInterfaceImpl.parent = stringColumn
-	stringColumn.stringInterfaceImpl.parent = stringColumn
+
+	stringColumn.baseColumn = newBaseColumn(name, nullable, "", stringColumn)
+
+	return stringColumn
+}
+
+//------------------------------------------------------//
+type TimeColumn struct {
+	timeInterfaceImpl
+
+	baseColumn
+}
+
+// Representation of any integer column
+// This function will panic if name is not valid
+func NewTimeColumn(name string, nullable NullableColumn) *TimeColumn {
+	stringColumn := &TimeColumn{}
+
+	stringColumn.timeInterfaceImpl.parent = stringColumn
 
 	stringColumn.baseColumn = newBaseColumn(name, nullable, "", stringColumn)
 

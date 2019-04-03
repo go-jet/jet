@@ -411,10 +411,11 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, typesProcessed ma
 
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
-		//fieldTypeName := field.Name
+
 		fieldValue := structValue.Field(i)
-		//fmt.Println("---------------", fieldTypeName)
-		////spew.Dump(field.Type)
+		//fieldTypeName := field.Name
+		//fmt.Println("---------------", fieldTypeName,)
+		//spew.Dump(field.Type)
 
 		fieldName := field.Name
 
@@ -486,8 +487,8 @@ func isDbBaseType(objType reflect.Type) bool {
 	typeStr := objType.String()
 
 	switch typeStr {
-	case "string", "int32", "int16", "float32", "float64", "time.Time", "bool",
-		"*string", "*int32", "*int16", "*float32", "*float64", "*time.Time", "*bool":
+	case "string", "int32", "int16", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
+		"*string", "*int32", "*int16", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
 		return true
 	}
 

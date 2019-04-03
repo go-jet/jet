@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/serenize/snaker"
 )
 
@@ -37,16 +38,15 @@ func (c ColumnInfo) ToSqlBuilderColumnType() string {
 	case "bigint":
 		return "IntegerColumn"
 	case "date", "timestamp without time zone", "timestamp with time zone":
-		return "StringColumn"
-	case "bytea":
-		return "StringColumn"
-	case "text":
+		return "TimeColumn"
+	case "text", "character", "character varying", "bytea":
 		return "StringColumn"
 	case "real":
 		return "NumericColumn"
 	case "numeric", "double precision":
 		return "NumericColumn"
 	default:
+		fmt.Println("Unknownl type: " + c.DataType + ", using string instead.")
 		return "StringColumn"
 	}
 }
@@ -77,13 +77,14 @@ func (c ColumnInfo) GoBaseType() string {
 			return "time.Time"
 		case "bytea":
 			return "[]byte"
-		case "text":
+		case "text", "character", "character varying":
 			return "string"
 		case "real":
 			return "float32"
 		case "numeric", "double precision":
 			return "float64"
 		default:
+			fmt.Println("Unknown go map type: " + c.DataType + ", using string instead.")
 			return "string"
 		}
 	}

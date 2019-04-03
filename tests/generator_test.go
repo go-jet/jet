@@ -9,6 +9,7 @@ import (
 	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -27,6 +28,7 @@ var connectString = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%
 var db *sql.DB
 
 //go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema dvds -path .test_files
+//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema test_sample -path .test_files
 
 func TestMain(m *testing.M) {
 	fmt.Println("Begin")
@@ -74,7 +76,7 @@ func TestSelect_ScanToStruct(t *testing.T) {
 		ActorID:    1,
 		FirstName:  "Penelope",
 		LastName:   "Guiness",
-		LastUpdate: *timeWithoutTimeZone("2013-05-26 14:47:57.62 +0000"),
+		LastUpdate: *timeWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 	}
 
 	assert.DeepEqual(t, actor, expectedActor)
@@ -501,7 +503,7 @@ func TestSelectQueryScalar(t *testing.T) {
 		ReplacementCost: 12.99,
 		Rating:          stringPtr("G"),
 		RentalDuration:  3,
-		LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951 +0000"),
+		LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 		SpecialFeatures: stringPtr("{Trailers,\"Deleted Scenes\"}"),
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
@@ -582,13 +584,39 @@ func TestSelectGroupBy2(t *testing.T) {
 		LastName:   "Wyman",
 		Email:      stringPtr("brian.wyman@sakilacustomer.org"),
 		Activebool: true,
-		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
+		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
 		Active:     int32Ptr(1),
 	})
 
 	assert.Equal(t, customersWithAmounts[0].AmountSum, 27.93)
+}
 
+func TestSelectTimeColumns(t *testing.T) {
+	query := Payment.SELECT(Payment.AllColumns).
+		Where(Payment.PaymentDate.LtEqL("2007-02-14 22:16:01")).
+		OrderBy(Payment.PaymentDate.Asc())
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+	payments := []model.Payment{}
+
+	err = query.Execute(db, &payments)
+
+	assert.NilError(t, err)
+
+	//spew.Dump(payments)
+
+	assert.Equal(t, len(payments), 9)
+	assert.DeepEqual(t, payments[0], model.Payment{
+		PaymentID:   17793,
+		Amount:      2.99,
+		PaymentDate: *timeWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
+	})
 }
 
 func int16Ptr(i int16) *int16 {
@@ -603,8 +631,15 @@ func stringPtr(s string) *string {
 	return &s
 }
 
-func timeWithoutTimeZone(t string) *time.Time {
-	time, err := time.Parse("2006-01-02 15:04:05 -0700", t)
+func timeWithoutTimeZone(t string, precision int) *time.Time {
+
+	precisionStr := ""
+
+	if precision > 0 {
+		precisionStr = "." + strings.Repeat("9", precision)
+	}
+
+	time, err := time.Parse("2006-01-02 15:04:05"+precisionStr+" +0000", t+" +0000")
 
 	if err != nil {
 		panic(err)
@@ -621,8 +656,8 @@ var customer0 = model.Customer{
 	Email:      stringPtr("mary.smith@sakilacustomer.org"),
 	Address:    nil,
 	Activebool: true,
-	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
 	Active:     int32Ptr(1),
 }
 
@@ -634,8 +669,8 @@ var customer1 = model.Customer{
 	Email:      stringPtr("patricia.johnson@sakilacustomer.org"),
 	Address:    nil,
 	Activebool: true,
-	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
 	Active:     int32Ptr(1),
 }
 
@@ -647,7 +682,7 @@ var lastCustomer = model.Customer{
 	Email:      stringPtr("austin.cintron@sakilacustomer.org"),
 	Address:    nil,
 	Activebool: true,
-	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00 +0000"),
-	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738 +0000"),
+	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
 	Active:     int32Ptr(1),
 }

@@ -16,6 +16,7 @@ type DbConnectInfo struct {
 }
 
 func Generate(folderPath string, connectString string, databaseName, schemaName string) error {
+
 	err := cleanUpGeneratedFiles(path.Join(folderPath, databaseName, schemaName))
 
 	if err != nil {
