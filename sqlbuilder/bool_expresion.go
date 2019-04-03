@@ -31,15 +31,15 @@ func (b *boolInterfaceImpl) Eq(expression BoolExpression) BoolExpression {
 }
 
 func (b *boolInterfaceImpl) NotEq(expression BoolExpression) BoolExpression {
-	return Neq(b.parent, expression)
+	return NotEq(b.parent, expression)
 }
 
 func (b *boolInterfaceImpl) GtEq(rhs Expression) BoolExpression {
-	return Gte(b.parent, rhs)
+	return GtEq(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) LtEq(rhs Expression) BoolExpression {
-	return Lte(b.parent, rhs)
+	return LtEq(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) And(expression BoolExpression) BoolExpression {
@@ -196,7 +196,7 @@ func EqL(lhs Expression, val interface{}) BoolExpression {
 }
 
 // Returns a representation of "a!=b"
-func Neq(lhs, rhs Expression) BoolExpression {
+func NotEq(lhs, rhs Expression) BoolExpression {
 	lit, ok := rhs.(*literalExpression)
 	if ok && sqltypes.Value(lit.value).IsNull() {
 		return newBinaryBoolExpression(lhs, rhs, []byte(" IS NOT "))
@@ -206,7 +206,7 @@ func Neq(lhs, rhs Expression) BoolExpression {
 
 // Returns a representation of "a!=b", where b is a literal
 func NeqL(lhs Expression, val interface{}) BoolExpression {
-	return Neq(lhs, Literal(val))
+	return NotEq(lhs, Literal(val))
 }
 
 // Returns a representation of "a<b"
@@ -220,13 +220,13 @@ func LtL(lhs Expression, val interface{}) BoolExpression {
 }
 
 // Returns a representation of "a<=b"
-func Lte(lhs, rhs Expression) BoolExpression {
+func LtEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, []byte("<="))
 }
 
 // Returns a representation of "a<=b", where b is a literal
 func LteL(lhs Expression, val interface{}) BoolExpression {
-	return Lte(lhs, Literal(val))
+	return LtEq(lhs, Literal(val))
 }
 
 // Returns a representation of "a>b"
@@ -240,13 +240,13 @@ func GtL(lhs Expression, val interface{}) BoolExpression {
 }
 
 // Returns a representation of "a>=b"
-func Gte(lhs, rhs Expression) BoolExpression {
+func GtEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, []byte(">="))
 }
 
 // Returns a representation of "a>=b", where b is a literal
 func GteL(lhs Expression, val interface{}) BoolExpression {
-	return Gte(lhs, Literal(val))
+	return GtEq(lhs, Literal(val))
 }
 
 // Returns a representation of "not expr"

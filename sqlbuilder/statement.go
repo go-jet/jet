@@ -178,7 +178,7 @@ func (us *unionStatementImpl) String() (sql string, err error) {
 	}
 
 	// Union statements in MySQL require that the same number of columns in each subquery
-	var projections []Expression
+	var projections []Projection
 
 	for _, statement := range us.selects {
 		// do a type assertion to get at the underlying struct

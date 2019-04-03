@@ -19,21 +19,6 @@ type Column interface {
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string) error
-
-	Asc() OrderByClause
-	Desc() OrderByClause
-}
-
-type columnInterfaceImpl struct {
-	parent Column
-}
-
-func (c *columnInterfaceImpl) Asc() OrderByClause {
-	return &orderByClause{expression: c.parent, ascent: true}
-}
-
-func (c *columnInterfaceImpl) Desc() OrderByClause {
-	return &orderByClause{expression: c.parent, ascent: false}
 }
 
 type NullableColumn bool
@@ -66,7 +51,6 @@ const (
 // The base type for real materialized columns.
 type baseColumn struct {
 	expressionInterfaceImpl
-	columnInterfaceImpl
 
 	name      string
 	nullable  NullableColumn
@@ -81,7 +65,6 @@ func newBaseColumn(name string, nullable NullableColumn, tableName string, paren
 	}
 
 	bc.expressionInterfaceImpl.parent = parent
-	bc.columnInterfaceImpl.parent = parent
 
 	return bc
 }

@@ -9,17 +9,20 @@ import (
 // An expression
 type Expression interface {
 	Clause
+	Projection
 
-	As(alias string) Clause
+	As(alias string) Projection
 	IsDistinct(expression Expression) BoolExpression
 	IsNull() BoolExpression
+	Asc() OrderByClause
+	Desc() OrderByClause
 }
 
 type expressionInterfaceImpl struct {
 	parent Expression
 }
 
-func (e *expressionInterfaceImpl) As(alias string) Clause {
+func (e *expressionInterfaceImpl) As(alias string) Projection {
 	return NewAlias(e.parent, alias)
 }
 
@@ -29,6 +32,18 @@ func (e *expressionInterfaceImpl) IsDistinct(expression Expression) BoolExpressi
 
 func (e *expressionInterfaceImpl) IsNull() BoolExpression {
 	return nil
+}
+
+func (e *expressionInterfaceImpl) Asc() OrderByClause {
+	return &orderByClause{expression: e.parent, ascent: true}
+}
+
+func (e *expressionInterfaceImpl) Desc() OrderByClause {
+	return &orderByClause{expression: e.parent, ascent: false}
+}
+
+func (e *expressionInterfaceImpl) SerializeForProjection(out *bytes.Buffer) error {
+	return e.parent.SerializeSql(out, FOR_PROJECTION)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -150,32 +165,32 @@ func (c literalExpression) SerializeSql(out *bytes.Buffer, options ...serializeO
 }
 
 //------------------------------------------------------//
-// Dummy type for select *
-type ColumnList []Column
-
-func (cl ColumnList) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
-	for i, column := range cl {
-		err := column.SerializeSql(out)
-
-		if err != nil {
-			return err
-		}
-
-		if i != len(cl)-1 {
-			out.WriteString(", ")
-		}
-	}
-	return nil
-}
-
-func (e ColumnList) As(alias string) Clause {
-	panic("Invalid usage")
-}
-
-func (e ColumnList) IsDistinct(expression Expression) BoolExpression {
-	panic("Invalid usage")
-}
-
-func (e ColumnList) IsNull(expression Expression) BoolExpression {
-	panic("Invalid usage")
-}
+//// Dummy type for select *
+//type ColumnList []Column
+//
+//func (cl ColumnList) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+//	for i, column := range cl {
+//		err := column.SerializeSql(out)
+//
+//		if err != nil {
+//			return err
+//		}
+//
+//		if i != len(cl)-1 {
+//			out.WriteString(", ")
+//		}
+//	}
+//	return nil
+//}
+//
+//func (e ColumnList) As(alias string) Clause {
+//	panic("Invalid usage")
+//}
+//
+//func (e ColumnList) IsDistinct(expression Expression) BoolExpression {
+//	panic("Invalid usage")
+//}
+//
+//func (e ColumnList) IsNull(expression Expression) BoolExpression {
+//	panic("Invalid usage")
+//}

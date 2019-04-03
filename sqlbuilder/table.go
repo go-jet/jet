@@ -14,17 +14,17 @@ type ReadableTable interface {
 	// Returns the list of columns that are in the current tableName expression.
 	Columns() []Column
 
-	Column(name string) Column
+	//Column(name string) Column
 
 	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
 	SerializeSql(out *bytes.Buffer) error
 
 	// Generates a select query on the current tableName.
-	Select(projections ...Expression) SelectStatement
+	SELECT(projections ...Projection) SelectStatement
 
 	// Creates a inner join tableName expression using onCondition.
-	InnerJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
+	INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	//InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable
 
@@ -34,7 +34,7 @@ type ReadableTable interface {
 	// Creates a right join tableName expression using onCondition.
 	RightJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable
+	FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	CrossJoin(table ReadableTable) ReadableTable
 }
@@ -181,12 +181,12 @@ func (t *Table) SerializeSql(out *bytes.Buffer) error {
 }
 
 // Generates a select query on the current tableName.
-func (t *Table) Select(projections ...Expression) SelectStatement {
+func (t *Table) SELECT(projections ...Projection) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
 // Creates a inner join tableName expression using onCondition.
-func (t *Table) InnerJoinOn(
+func (t *Table) INNER_JOIN(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
 
@@ -198,7 +198,7 @@ func (t *Table) InnerJoinOn(
 //	col1 Column,
 //	col2 Column) ReadableTable {
 //
-//	return InnerJoinOn(t, table, col1.Eq(col2))
+//	return INNER_JOIN(t, table, col1.Eq(col2))
 //}
 
 // Creates a left join tableName expression using onCondition.
@@ -217,7 +217,7 @@ func (t *Table) RightJoinOn(
 	return RightJoinOn(t, table, onCondition)
 }
 
-func (t *Table) FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable {
+func (t *Table) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return FullJoin(t, table, onCondition)
 }
 
@@ -363,11 +363,11 @@ func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 	return nil
 }
 
-func (t *joinTable) Select(projections ...Expression) SelectStatement {
+func (t *joinTable) SELECT(projections ...Projection) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
-func (t *joinTable) InnerJoinOn(
+func (t *joinTable) INNER_JOIN(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
 
@@ -381,7 +381,7 @@ func (t *joinTable) LeftJoinOn(
 	return LeftJoinOn(t, table, onCondition)
 }
 
-func (t *joinTable) FullJoin(table ReadableTable, onCondition BoolExpression) ReadableTable {
+func (t *joinTable) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return FullJoin(t, table, onCondition)
 }
 

@@ -36,7 +36,7 @@ type selectStatementImpl struct {
 	expressionInterfaceImpl
 
 	table          ReadableTable
-	projections    []Expression
+	projections    []Projection
 	where          BoolExpression
 	group          *listClause
 	having         BoolExpression
@@ -50,7 +50,7 @@ type selectStatementImpl struct {
 
 func newSelectStatement(
 	table ReadableTable,
-	projections []Expression) SelectStatement {
+	projections []Projection) SelectStatement {
 
 	return &selectStatementImpl{
 		table:          table,
@@ -210,7 +210,7 @@ func (q *selectStatementImpl) String() (sql string, err error) {
 				"nil column selected.  Generated sql: %s",
 				buf.String())
 		}
-		if err = col.SerializeSql(buf, FOR_PROJECTION); err != nil {
+		if err = col.SerializeForProjection(buf); err != nil {
 			return
 		}
 	}
@@ -266,4 +266,8 @@ func (q *selectStatementImpl) String() (sql string, err error) {
 	}
 
 	return buf.String(), nil
+}
+
+func NumExp(statement SelectStatement) NumericExpression {
+	return newNumericExpressionWrap(statement)
 }

@@ -11,7 +11,7 @@ type {{.ToGoStructName}} struct {
 	
 	//Columns
 {{- range .Columns}}
-	{{.ToGoFieldName}} sqlbuilder.NonAliasColumn
+	{{.ToGoFieldName}} *sqlbuilder.{{.ToSqlBuilderColumnType}}
 {{- end}}
 
 	AllColumns sqlbuilder.ColumnList
@@ -22,7 +22,7 @@ var {{.ToGoVarName}} = new{{.ToGoStructName}}()
 func new{{.ToGoStructName}}() *{{.ToGoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{.ToGoVarName}} = sqlbuilder.IntColumn("{{.Name}}", {{if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}})
+		{{.ToGoVarName}} = sqlbuilder.New{{.ToSqlBuilderColumnType}}("{{.Name}}", {{if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}})
 	{{- end}}
 	)
 

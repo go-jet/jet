@@ -50,10 +50,6 @@ type IntegerColumn struct {
 // Representation of any integer column
 // This function will panic if name is not valid
 func NewIntegerColumn(name string, nullable NullableColumn) *IntegerColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name")
-	}
-
 	integerColumn := &IntegerColumn{}
 
 	integerColumn.numericInterfaceImpl.parent = integerColumn
@@ -62,4 +58,28 @@ func NewIntegerColumn(name string, nullable NullableColumn) *IntegerColumn {
 	integerColumn.baseColumn = newBaseColumn(name, nullable, "", integerColumn)
 
 	return integerColumn
+}
+
+//------------------------------------------------------//
+type StringColumn struct {
+	stringInterfaceImpl
+
+	baseColumn
+}
+
+// Representation of any integer column
+// This function will panic if name is not valid
+func NewStringColumn(name string, nullable NullableColumn) *StringColumn {
+	if !validIdentifierName(name) {
+		panic("Invalid column name")
+	}
+
+	stringColumn := &StringColumn{}
+
+	stringColumn.stringInterfaceImpl.parent = stringColumn
+	stringColumn.stringInterfaceImpl.parent = stringColumn
+
+	stringColumn.baseColumn = newBaseColumn(name, nullable, "", stringColumn)
+
+	return stringColumn
 }
