@@ -130,7 +130,7 @@ func TestSelect_ScanToSlice(t *testing.T) {
 func TestJoinQuerySlice(t *testing.T) {
 	type FilmsPerLanguage struct {
 		Language *model.Language
-		Film     *[]model.Film
+		Film     []model.Film
 	}
 
 	filmsPerLanguage := []FilmsPerLanguage{}
@@ -139,13 +139,13 @@ func TestJoinQuerySlice(t *testing.T) {
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
+		Where(Film.Rating.EqL(string(model.MpaaRating_NC17))).
 		Limit(15)
 
 	queryStr, err := query.String()
 
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `SELECT language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext" FROM dvds.film JOIN dvds.language ON film.language_id = language.language_id LIMIT 15`)
-
+	assert.Equal(t, queryStr, `SELECT language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext" FROM dvds.film JOIN dvds.language ON film.language_id = language.language_id WHERE film.rating = 'NC-17' LIMIT 15`)
 	//fmt.Println(queryStr)
 
 	err = query.Execute(db, &filmsPerLanguage)
@@ -158,7 +158,11 @@ func TestJoinQuerySlice(t *testing.T) {
 	//spew.Dump(filmsPerLanguage)
 
 	assert.Equal(t, len(filmsPerLanguage), 1)
-	assert.Equal(t, len(*filmsPerLanguage[0].Film), limit)
+	assert.Equal(t, len(filmsPerLanguage[0].Film), limit)
+
+	englishFilms := filmsPerLanguage[0]
+
+	assert.Equal(t, *englishFilms.Film[0].Rating, model.MpaaRating_NC17)
 
 	//spew.Dump(filmsPerLanguage)
 
@@ -167,7 +171,7 @@ func TestJoinQuerySlice(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(filmsPerLanguage), 1)
-	assert.Equal(t, len(*filmsPerLanguage[0].Film), limit)
+	assert.Equal(t, len(filmsPerLanguage[0].Film), limit)
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
@@ -492,6 +496,8 @@ func TestSelectQueryScalar(t *testing.T) {
 
 	assert.Equal(t, len(maxRentalRateFilms), 336)
 
+	gRating := model.MpaaRating_G
+
 	assert.DeepEqual(t, maxRentalRateFilms[0], model.Film{
 		FilmID:          2,
 		Title:           "Ace Goldfinger",
@@ -501,7 +507,7 @@ func TestSelectQueryScalar(t *testing.T) {
 		RentalRate:      4.99,
 		Length:          int16Ptr(48),
 		ReplacementCost: 12.99,
-		Rating:          stringPtr("G"),
+		Rating:          &gRating,
 		RentalDuration:  3,
 		LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 		SpecialFeatures: stringPtr("{Trailers,\"Deleted Scenes\"}"),

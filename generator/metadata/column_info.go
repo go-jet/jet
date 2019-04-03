@@ -10,6 +10,7 @@ type ColumnInfo struct {
 	Name       string
 	IsNullable bool
 	DataType   string
+	EnumName   string
 	TableInfo  *TableInfo
 }
 
@@ -65,6 +66,8 @@ func (c ColumnInfo) GoBaseType() string {
 		return snaker.SnakeToCamel(forignKeyTable)
 	} else {
 		switch c.DataType {
+		case "USER-DEFINED":
+			return c.EnumName
 		case "boolean":
 			return "bool"
 		case "smallint":
@@ -105,7 +108,7 @@ func (c ColumnInfo) ToGoFieldName() string {
 func fetchColumnInfos(db *sql.DB, tableInfo *TableInfo) ([]ColumnInfo, error) {
 
 	query := `
-SELECT column_name, is_nullable, data_type 
+SELECT column_name, is_nullable, data_type, udt_name
 FROM information_schema.columns
 where table_schema = $1 and table_name = $2
 order by ordinal_position;`
@@ -124,7 +127,7 @@ order by ordinal_position;`
 	for rows.Next() {
 		columnInfo := ColumnInfo{}
 		var isNullable string
-		err := rows.Scan(&columnInfo.Name, &isNullable, &columnInfo.DataType)
+		err := rows.Scan(&columnInfo.Name, &isNullable, &columnInfo.DataType, &columnInfo.EnumName)
 
 		columnInfo.IsNullable = isNullable == "YES"
 

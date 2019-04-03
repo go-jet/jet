@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 )
 
@@ -50,7 +51,7 @@ func generateTemplate(templateText string, templateData interface{}) ([]byte, er
 
 	t, err := template.New("SqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"camelize": func(txt string) string {
-			return snaker.SnakeToCamel(txt)
+			return snaker.SnakeToCamel(strings.Replace(txt, "-", "_", -1))
 		},
 	}).Parse(templateText)
 

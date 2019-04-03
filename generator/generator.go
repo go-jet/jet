@@ -53,5 +53,11 @@ func Generate(folderPath string, connectString string, databaseName, schemaName 
 		return err
 	}
 
+	err = generateEnumTypes(databaseInfo, folderPath)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

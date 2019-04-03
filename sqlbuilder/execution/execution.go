@@ -419,7 +419,23 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, typesProcessed ma
 
 		fieldName := field.Name
 
-		if !isDbBaseType(field.Type) {
+		if _, ok := fieldValue.Interface().(sql.Scanner); ok {
+			cellValue := getCellValue(scanContext, tableName, fieldName, row)
+
+			if cellValue == nil {
+				continue
+			}
+
+			initializeValue(fieldValue)
+
+			scanner := fieldValue.Interface().(sql.Scanner)
+
+			err := scanner.Scan(cellValue)
+
+			if err != nil {
+				return err
+			}
+		} else if !isDbBaseType(field.Type) {
 			//var fieldValueInterface interface{}
 			err := mapRowToDestinationValue(scanContext, groupKey, typesProcessed, row, fieldValue, &field)
 
@@ -427,18 +443,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, typesProcessed ma
 				return err
 			}
 		} else {
-			columnName := tableName + "." + snaker.CamelToSnake(fieldName)
-			//columnName := snaker.CamelToSnake(fieldName)
-
-			////fmt.Println(columnName)
-			index := getIndex(scanContext.columnNames, columnName)
-
-			if index < 0 {
-				continue
-			}
-			////spew.Dump(row[index])
-
-			cellValue := cellValue(row, index)
+			cellValue := getCellValue(scanContext, tableName, fieldName, row)
 			//spew.Dump(cellValue)
 
 			//spew.Dump(rowColumnValue, fieldValue)
@@ -449,6 +454,29 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, typesProcessed ma
 	}
 
 	return nil
+}
+
+func initializeValue(value reflect.Value) {
+	newValuePtr := reflect.New(value.Type().Elem())
+	if value.Kind() == reflect.Ptr {
+		value.Set(newValuePtr)
+	} else {
+		value.Set(newValuePtr.Elem())
+	}
+}
+
+func getCellValue(scanContext *scanContext, tableName, fieldName string, row []interface{}) interface{} {
+	columnName := tableName + "." + snaker.CamelToSnake(fieldName)
+	//columnName := snaker.CamelToSnake(fieldName)
+
+	////fmt.Println(columnName)
+	index := getIndex(scanContext.columnNames, columnName)
+
+	if index < 0 {
+		return nil
+	}
+
+	return cellValue(row, index)
 }
 
 func reflectValueToString(val interface{}) string {
@@ -549,6 +577,7 @@ var nullTimeType = reflect.TypeOf(NullTime{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
 	//spew.Dump(columnType)
+	//fmt.Println(columnType.DatabaseTypeName())
 	switch columnType.DatabaseTypeName() {
 	case "INT2":
 		return nullInt16Type

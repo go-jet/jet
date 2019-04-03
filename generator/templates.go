@@ -61,3 +61,34 @@ type {{.ToGoModelStructName}} struct {
 {{- end}}
 }
 `
+
+var EnumModelTemplate = `package model
+
+import "errors"
+
+type {{.Name}} string
+
+const (
+{{- range $index, $element := .Values}}
+	{{camelize $.Name}}_{{camelize $element}} {{$.Name}} = "{{$element}}"
+{{- end}}
+)
+
+func (e *{{$.Name}}) Scan(value interface{}) error {
+	if v, ok := value.(string); !ok {
+		return errors.New("Invalid data for {{$.Name}} enum")
+	} else {
+		switch string(v) {
+{{- range $index, $element := .Values}}
+		case "{{$element}}":
+			*e = {{camelize $.Name}}_{{camelize $element}}
+{{- end}}
+		default:
+			return errors.New("Inavlid data " + string(v) + "for {{$.Name}} enum")
+		}
+
+		return nil
+	}
+}
+
+`

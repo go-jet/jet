@@ -30,3 +30,29 @@ func generateDataModel(databaseInfo *metadata.DatabaseInfo, dirPath string) erro
 
 	return nil
 }
+
+func generateEnumTypes(databaseInfo *metadata.DatabaseInfo, dirPath string) error {
+	modelDirPath := filepath.Join(dirPath, databaseInfo.DatabaseName, databaseInfo.SchemaName, "model")
+
+	err := ensureDirPath(modelDirPath)
+
+	if err != nil {
+		return err
+	}
+
+	for _, enumInfo := range databaseInfo.EnumInfos {
+		text, err := generateTemplate(EnumModelTemplate, enumInfo)
+
+		if err != nil {
+			return err
+		}
+
+		err = saveGoFile(modelDirPath, enumInfo.Name, text)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
