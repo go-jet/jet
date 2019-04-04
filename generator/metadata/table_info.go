@@ -21,8 +21,11 @@ func (t TableInfo) GetImports() []string {
 	for _, column := range t.Columns {
 		columnType := column.GoBaseType()
 
-		if columnType == "time.Time" {
+		switch columnType {
+		case "time.Time":
 			imports["time.Time"] = "time"
+		case "uuid.UUID":
+			imports["uuid.UUID"] = "github.com/google/uuid"
 		}
 	}
 

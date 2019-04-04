@@ -66,17 +66,17 @@ var EnumModelTemplate = `package model
 
 import "errors"
 
-type {{.Name}} string
+type {{camelize $.Name}} string
 
 const (
 {{- range $index, $element := .Values}}
-	{{camelize $.Name}}_{{camelize $element}} {{$.Name}} = "{{$element}}"
+	{{camelize $.Name}}_{{camelize $element}} {{camelize $.Name}} = "{{$element}}"
 {{- end}}
 )
 
-func (e *{{$.Name}}) Scan(value interface{}) error {
+func (e *{{camelize $.Name}}) Scan(value interface{}) error {
 	if v, ok := value.(string); !ok {
-		return errors.New("Invalid data for {{$.Name}} enum")
+		return errors.New("Invalid data for {{camelize $.Name}} enum")
 	} else {
 		switch string(v) {
 {{- range $index, $element := .Values}}
@@ -84,7 +84,7 @@ func (e *{{$.Name}}) Scan(value interface{}) error {
 			*e = {{camelize $.Name}}_{{camelize $element}}
 {{- end}}
 		default:
-			return errors.New("Inavlid data " + string(v) + "for {{$.Name}} enum")
+			return errors.New("Inavlid data " + string(v) + "for {{camelize $.Name}} enum")
 		}
 
 		return nil

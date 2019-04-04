@@ -40,14 +40,14 @@ func (c ColumnInfo) ToSqlBuilderColumnType() string {
 		return "IntegerColumn"
 	case "date", "timestamp without time zone", "timestamp with time zone":
 		return "TimeColumn"
-	case "text", "character", "character varying", "bytea":
+	case "text", "character", "character varying", "bytea", "uuid":
 		return "StringColumn"
 	case "real":
 		return "NumericColumn"
 	case "numeric", "double precision":
 		return "NumericColumn"
 	default:
-		fmt.Println("Unknownl type: " + c.DataType + ", using string instead.")
+		fmt.Println("Unknownl type: " + c.DataType + ", using string column instead.")
 		return "StringColumn"
 	}
 }
@@ -67,7 +67,7 @@ func (c ColumnInfo) GoBaseType() string {
 	} else {
 		switch c.DataType {
 		case "USER-DEFINED":
-			return c.EnumName
+			return snaker.SnakeToCamel(c.EnumName)
 		case "boolean":
 			return "bool"
 		case "smallint":
@@ -86,8 +86,10 @@ func (c ColumnInfo) GoBaseType() string {
 			return "float32"
 		case "numeric", "double precision":
 			return "float64"
+		case "uuid":
+			return "uuid.UUID"
 		default:
-			fmt.Println("Unknown go map type: " + c.DataType + ", using string instead.")
+			fmt.Println("Unknown go map type: " + c.DataType + ", " + c.EnumName + ", using string instead.")
 			return "string"
 		}
 	}
