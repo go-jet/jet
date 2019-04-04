@@ -51,9 +51,14 @@ func (a *{{.ToGoStructName}}) As(alias string) *{{.ToGoStructName}} {
 
 var DataModelTemplate = `package model
 
-{{range .GetImports}}
-	import "{{.}}"
+{{ if .GetImports }}
+import (
+{{- range .GetImports}}
+	"{{.}}"
+{{- end}}
+)
 {{end}}
+
 
 type {{.ToGoModelStructName}} struct {
 {{- range .Columns}}

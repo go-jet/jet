@@ -88,6 +88,8 @@ func (c ColumnInfo) GoBaseType() string {
 			return "float64"
 		case "uuid":
 			return "uuid.UUID"
+		case "json", "jsonb":
+			return "types.JSONText"
 		default:
 			fmt.Println("Unknown go map type: " + c.DataType + ", " + c.EnumName + ", using string instead.")
 			return "string"

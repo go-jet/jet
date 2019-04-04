@@ -26,6 +26,8 @@ func (t TableInfo) GetImports() []string {
 			imports["time.Time"] = "time"
 		case "uuid.UUID":
 			imports["uuid.UUID"] = "github.com/google/uuid"
+		case "types.JSONText":
+			imports["types.JSONText"] = "github.com/sub0Zero/go-sqlbuilder/types"
 		}
 	}
 

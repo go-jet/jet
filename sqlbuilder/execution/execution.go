@@ -600,7 +600,7 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullInt32Type
 	case "INT8":
 		return nullInt64Type
-	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "BYTEA", "UUID":
+	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "BYTEA", "UUID", "JSON", "JSONB":
 		return nullStringType
 	case "FLOAT4":
 		return nullFloatType
