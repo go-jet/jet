@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/serenize/snaker"
+	"github.com/sub0Zero/go-sqlbuilder/types"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"time"
 )
 
-func Execute(db *sql.DB, query string, destinationPtr interface{}) error {
+func Execute(db types.Db, query string, destinationPtr interface{}) error {
 	if db == nil {
 		return errors.New("db is nil")
 	}

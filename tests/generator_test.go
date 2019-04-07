@@ -1,51 +1,16 @@
 package tests
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/sub0Zero/go-sqlbuilder/generator"
 	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
-	"os"
 	"strings"
 	"testing"
 	"time"
 )
-
-const (
-	folderPath = ".test_files/"
-	host       = "localhost"
-	port       = 5432
-	user       = "postgres"
-	password   = "postgres"
-	dbname     = "dvd_rental"
-	schemaName = "dvds"
-)
-
-var connectString = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-var db *sql.DB
-
-//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema dvds -path .test_files
-//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema test_sample -path .test_files
-
-func TestMain(m *testing.M) {
-	fmt.Println("Begin")
-	var err error
-	db, err = sql.Open("postgres", connectString)
-	if err != nil {
-		panic("Failed to connect to test db")
-	}
-	defer db.Close()
-
-	ret := m.Run()
-
-	db.Close()
-	fmt.Println("END")
-
-	os.Exit(ret)
-}
 
 func TestGenerateModel(t *testing.T) {
 

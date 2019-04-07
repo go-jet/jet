@@ -19,7 +19,7 @@ func TestBinaryExpression(t *testing.T) {
 		alias := boolExpression.As("alias_eq_expression")
 
 		out := bytes.Buffer{}
-		err := alias.SerializeSql(&out)
+		err := alias.SerializeForProjection(&out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.String(), `2 = 3 AS "alias_eq_expression"`)
@@ -59,7 +59,7 @@ func TestUnaryExpression(t *testing.T) {
 		alias := notExpression.As("alias_not_expression")
 
 		out := bytes.Buffer{}
-		err := alias.SerializeSql(&out)
+		err := alias.SerializeForProjection(&out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.String(), ` NOT 2 = 1 AS "alias_not_expression"`)

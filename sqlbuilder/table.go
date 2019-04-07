@@ -8,25 +8,26 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
-// are not supported.
-type ReadableTable interface {
+type TableInterface interface {
+	SchemaName() string
+	TableName() string
 	// Returns the list of columns that are in the current tableName expression.
 	Columns() []Column
-
-	//Column(name string) Column
-
 	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
 	SerializeSql(out *bytes.Buffer) error
+}
+
+// The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
+// are not supported.
+type ReadableTable interface {
+	TableInterface
 
 	// Generates a select query on the current tableName.
 	SELECT(projections ...Projection) SelectStatement
 
 	// Creates a inner join tableName expression using onCondition.
 	INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
-
-	//InnerJoinUsing(table ReadableTable, col1 Column, col2 Column) ReadableTable
 
 	// Creates a left join tableName expression using onCondition.
 	LeftJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
@@ -41,15 +42,9 @@ type ReadableTable interface {
 
 // The sql tableName write interface.
 type WritableTable interface {
-	// Returns the list of columns that are in the tableName.
-	Columns() []Column
+	TableInterface
 
-	// Generates the sql string for the current tableName expression.  Note: the
-	// generated string may not be a valid/executable sql statement.
-	// The database is the name of the database the tableName is on
-	SerializeSql(out *bytes.Buffer) error
-
-	Insert(columns ...Column) InsertStatement
+	INSERT(columns ...Column) InsertStatement
 	Update() UpdateStatement
 	Delete() DeleteStatement
 }
@@ -72,7 +67,7 @@ func NewTable(schemaName, name string, columns ...Column) *Table {
 		if err != nil {
 			panic(err)
 		}
-		t.columnLookup[c.Name()] = c
+		t.columnLookup[c.TableName()] = c
 	}
 
 	if len(columns) == 0 {
@@ -132,11 +127,16 @@ func (t *Table) SetAlias(alias string) {
 }
 
 // Returns the tableName's name in the database
-func (t *Table) Name() string {
+func (t *Table) SchemaName() string {
+	return t.schemaName
+}
+
+// Returns the tableName's name in the database
+func (t *Table) TableName() string {
 	return t.name
 }
 
-func (t *Table) SchemaName() string {
+func (t *Table) SchemaTableName() string {
 	return t.schemaName
 }
 
@@ -161,7 +161,7 @@ func (t *Table) SerializeSql(out *bytes.Buffer) error {
 
 	_, _ = out.WriteString(t.schemaName)
 	_, _ = out.WriteString(".")
-	_, _ = out.WriteString(t.Name())
+	_, _ = out.WriteString(t.TableName())
 
 	if len(t.alias) > 0 {
 		out.WriteString(" AS ")
@@ -225,7 +225,7 @@ func (t *Table) CrossJoin(table ReadableTable) ReadableTable {
 	return CrossJoin(t, table)
 }
 
-func (t *Table) Insert(columns ...Column) InsertStatement {
+func (t *Table) INSERT(columns ...Column) InsertStatement {
 	return newInsertStatement(t, columns...)
 }
 
@@ -306,6 +306,15 @@ func CrossJoin(
 	rhs ReadableTable) ReadableTable {
 
 	return newJoinTable(lhs, rhs, CROSS_JOIN, nil)
+}
+
+// Returns the tableName's name in the database
+func (t *joinTable) SchemaName() string {
+	return ""
+}
+
+func (t *joinTable) TableName() string {
+	return ""
 }
 
 func (t *joinTable) Columns() []Column {

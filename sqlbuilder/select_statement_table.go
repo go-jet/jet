@@ -8,6 +8,15 @@ type SelectStatementTable struct {
 	alias     string
 }
 
+// Returns the tableName's name in the database
+func (t *SelectStatementTable) SchemaName() string {
+	return ""
+}
+
+func (s *SelectStatementTable) TableName() string {
+	return s.alias
+}
+
 func (s *SelectStatementTable) Columns() []Column {
 	return s.columns
 }

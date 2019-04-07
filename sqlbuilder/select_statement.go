@@ -2,10 +2,10 @@ package sqlbuilder
 
 import (
 	"bytes"
-	"database/sql"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder/execution"
+	"github.com/sub0Zero/go-sqlbuilder/types"
 	"reflect"
 )
 
@@ -28,6 +28,9 @@ type SelectStatement interface {
 	Copy() SelectStatement
 
 	AsTable(alias string) *SelectStatementTable
+
+	Execute(db types.Db, destination interface{}) error
+	//ExecuteInTx(tx *sql.Tx, destination interface{}) error
 }
 
 // NOTE: SelectStatement purposely does not implement the Table interface since
@@ -84,7 +87,7 @@ func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
 	}
 }
 
-func (s *selectStatementImpl) Execute(db *sql.DB, destination interface{}) error {
+func (s *selectStatementImpl) Execute(db types.Db, destination interface{}) error {
 	destinationType := reflect.TypeOf(destination)
 
 	if destinationType.Kind() == reflect.Ptr && destinationType.Elem().Kind() == reflect.Struct {
