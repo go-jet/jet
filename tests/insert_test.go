@@ -2,6 +2,8 @@ package tests
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
@@ -9,11 +11,11 @@ import (
 )
 
 func TestInsertValues(t *testing.T) {
-	insertQuery := table.Link.INSERT(table.Link.URL, table.Link.Name).
-		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial").
-		VALUES("http://www.google.com", "Google").
-		VALUES("http://www.yahoo.com", "Yahoo").
-		VALUES("http://www.bing.com", "Bing").
+	insertQuery := table.Link.INSERT(table.Link.URL, table.Link.Name, table.Link.Rel).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", sqlbuilder.DEFAULT).
+		VALUES("http://www.google.com", "Google", sqlbuilder.DEFAULT).
+		VALUES("http://www.yahoo.com", "Yahoo", sqlbuilder.DEFAULT).
+		VALUES("http://www.bing.com", "Bing", sqlbuilder.DEFAULT).
 		RETURNING(table.Link.ID)
 
 	insertQueryStr, err := insertQuery.String()
@@ -22,7 +24,7 @@ func TestInsertValues(t *testing.T) {
 
 	fmt.Println(insertQueryStr)
 
-	assert.Equal(t, insertQueryStr, `INSERT INTO test_sample.link (url,name) VALUES ('http://www.postgresqltutorial.com','PostgreSQL Tutorial'), ('http://www.google.com','Google'), ('http://www.yahoo.com','Yahoo'), ('http://www.bing.com','Bing') RETURNING link.id;`)
+	assert.Equal(t, insertQueryStr, `INSERT INTO test_sample.link (url,name,rel) VALUES ('http://www.postgresqltutorial.com','PostgreSQL Tutorial',DEFAULT), ('http://www.google.com','Google',DEFAULT), ('http://www.yahoo.com','Yahoo',DEFAULT), ('http://www.bing.com','Bing',DEFAULT) RETURNING link.id;`)
 	res, err := insertQuery.Execute(db)
 
 	assert.NilError(t, err)
@@ -62,7 +64,8 @@ func TestInsertDataObject(t *testing.T) {
 		Rel:  nil,
 	}
 
-	query := table.Link.INSERT(table.Link.URL, table.Link.Name).
+	query := table.Link.
+		INSERT(table.Link.URL, table.Link.Name).
 		VALUES_MAPPING(linkData)
 
 	queryStr, err := query.String()
@@ -76,4 +79,32 @@ func TestInsertDataObject(t *testing.T) {
 	assert.NilError(t, err)
 
 	fmt.Println(result)
+}
+
+func TestInsertQuery(t *testing.T) {
+
+	_, err := table.Link.INSERT(table.Link.URL, table.Link.Name).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial").Execute(db)
+
+	assert.NilError(t, err)
+
+	query := table.Link.
+		INSERT(table.Link.URL, table.Link.Name).
+		QUERY(table.Link.SELECT(table.Link.URL, table.Link.Name))
+
+	queryStr, err := query.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+
+	_, err = query.Execute(db)
+
+	assert.NilError(t, err)
+
+	allLinks := []model.Link{}
+	err = table.Link.SELECT(table.Link.AllColumns).Execute(db, &allLinks)
+	assert.NilError(t, err)
+
+	spew.Dump(allLinks)
 }

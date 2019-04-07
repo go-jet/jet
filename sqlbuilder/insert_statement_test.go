@@ -123,3 +123,26 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 	fmt.Println(err)
 	assert.Assert(t, err != nil)
 }
+
+func TestInsertQuery(t *testing.T) {
+
+	stmt := table1.INSERT(table1Col1).
+		QUERY(table1.SELECT(table1Col1))
+
+	stmtStr, err := stmt.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(stmtStr)
+}
+
+func TestInsertDefaultValue(t *testing.T) {
+	stmt := table1.INSERT(table1Col1, table1Col2).
+		VALUES(DEFAULT, "two")
+
+	stmtStr, err := stmt.String()
+
+	assert.NilError(t, err)
+
+	fmt.Println(stmtStr)
+}

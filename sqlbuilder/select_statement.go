@@ -73,7 +73,7 @@ func (s *selectStatementImpl) SerializeSql(out *bytes.Buffer, options ...seriali
 		return err
 	}
 
-	out.WriteString("( ")
+	out.WriteString("(")
 	out.WriteString(str)
 	out.WriteString(")")
 
