@@ -3,7 +3,7 @@ package generator
 var SqlBuilderTableTemplate = `package table
 
 import (
-	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 )
 
 type {{.ToGoStructName}} struct {

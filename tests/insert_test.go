@@ -2,8 +2,8 @@ package tests
 
 import (
 	"fmt"
-	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
-	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
+	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
+	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )

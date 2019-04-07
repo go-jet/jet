@@ -3,7 +3,7 @@ package generator
 import (
 	"database/sql"
 	_ "github.com/lib/pq"
-	"github.com/sub0Zero/go-sqlbuilder/generator/metadata"
+	"github.com/sub0zero/go-sqlbuilder/generator/metadata"
 	"path"
 )
 

@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder/execution"
-	"github.com/sub0Zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
+	"github.com/sub0zero/go-sqlbuilder/types"
 	"reflect"
 )
 

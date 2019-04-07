@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/serenize/snaker"
-	"github.com/sub0Zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/types"
 	"reflect"
 	"regexp"
 	"strconv"

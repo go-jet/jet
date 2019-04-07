@@ -2,10 +2,10 @@ package tests
 
 import (
 	"fmt"
-	"github.com/sub0Zero/go-sqlbuilder/generator"
-	"github.com/sub0Zero/go-sqlbuilder/sqlbuilder"
-	"github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
-	. "github.com/sub0Zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
+	"github.com/sub0zero/go-sqlbuilder/generator"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
+	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
+	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
 	"strings"
 	"testing"
