@@ -45,7 +45,7 @@ type WritableTable interface {
 	TableInterface
 
 	INSERT(columns ...Column) InsertStatement
-	Update() UpdateStatement
+	UPDATE(columns ...Column) UpdateStatement
 	Delete() DeleteStatement
 }
 
@@ -229,8 +229,8 @@ func (t *Table) INSERT(columns ...Column) InsertStatement {
 	return newInsertStatement(t, columns...)
 }
 
-func (t *Table) Update() UpdateStatement {
-	return newUpdateStatement(t)
+func (t *Table) UPDATE(columns ...Column) UpdateStatement {
+	return newUpdateStatement(t, columns)
 }
 
 func (t *Table) Delete() DeleteStatement {

@@ -18,7 +18,7 @@ type InsertStatement interface {
 	// Map or stracture mapped to column names
 	VALUES_MAPPING(data interface{}) InsertStatement
 
-	RETURNING(column ...Expression) InsertStatement
+	RETURNING(projections ...Projection) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
 
@@ -27,10 +27,8 @@ type InsertStatement interface {
 
 func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
 	return &insertStatementImpl{
-		table:     t,
-		columns:   columns,
-		rows:      make([][]Clause, 0, 1),
-		returning: make([]Expression, 0, 1),
+		table:   t,
+		columns: columns,
 	}
 }
 
@@ -44,7 +42,7 @@ type insertStatementImpl struct {
 	columns   []Column
 	rows      [][]Clause
 	query     SelectStatement
-	returning []Expression
+	returning []Projection
 
 	errors []string
 }
@@ -114,8 +112,8 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 	return i
 }
 
-func (i *insertStatementImpl) RETURNING(column ...Expression) InsertStatement {
-	i.returning = column
+func (i *insertStatementImpl) RETURNING(projections ...Projection) InsertStatement {
+	i.returning = projections
 
 	return i
 }
@@ -217,16 +215,10 @@ func (s *insertStatementImpl) String() (sql string, err error) {
 	if len(s.returning) > 0 {
 		buf.WriteString(" RETURNING ")
 
-		for i, column := range s.returning {
-			if i > 0 {
-				buf.WriteString(",")
-			}
+		err = serializeProjectionList(s.returning, buf)
 
-			err = column.SerializeSql(buf)
-
-			if err != nil {
-				return
-			}
+		if err != nil {
+			return
 		}
 	}
 

@@ -34,16 +34,6 @@ type UnionStatement interface {
 	Offset(offset int64) UnionStatement
 }
 
-type UpdateStatement interface {
-	Statement
-
-	Set(column Column, expression Expression) UpdateStatement
-	Where(expression BoolExpression) UpdateStatement
-	OrderBy(clauses ...OrderByClause) UpdateStatement
-	Limit(limit int64) UpdateStatement
-	Comment(comment string) UpdateStatement
-}
-
 type DeleteStatement interface {
 	Statement
 
@@ -251,151 +241,6 @@ func (us *unionStatementImpl) String() (sql string, err error) {
 }
 
 //
-// UPDATE statement ===========================================================
-//
-
-func newUpdateStatement(table WritableTable) UpdateStatement {
-	return &updateStatementImpl{
-		table:        table,
-		updateValues: make(map[Column]Expression),
-		limit:        -1,
-	}
-}
-
-type updateStatementImpl struct {
-	table        WritableTable
-	updateValues map[Column]Expression
-	where        BoolExpression
-	order        *listClause
-	limit        int64
-	comment      string
-}
-
-func (u *updateStatementImpl) Execute(db *sql.DB, data interface{}) error {
-	return nil
-}
-
-func (u *updateStatementImpl) Set(
-	column Column,
-	expression Expression) UpdateStatement {
-
-	u.updateValues[column] = expression
-	return u
-}
-
-func (u *updateStatementImpl) Where(expression BoolExpression) UpdateStatement {
-	u.where = expression
-	return u
-}
-
-func (u *updateStatementImpl) OrderBy(
-	clauses ...OrderByClause) UpdateStatement {
-
-	u.order = newOrderByListClause(clauses...)
-	return u
-}
-
-func (u *updateStatementImpl) Limit(limit int64) UpdateStatement {
-	u.limit = limit
-	return u
-}
-
-func (u *updateStatementImpl) Comment(comment string) UpdateStatement {
-	u.comment = comment
-	return u
-}
-
-func (u *updateStatementImpl) String() (sql string, err error) {
-	buf := new(bytes.Buffer)
-	_, _ = buf.WriteString("UPDATE ")
-
-	if err = writeComment(u.comment, buf); err != nil {
-		return
-	}
-
-	if u.table == nil {
-		return "", errors.Newf("nil tableName.  Generated sql: %s", buf.String())
-	}
-
-	if err = u.table.SerializeSql(buf); err != nil {
-		return
-	}
-
-	if len(u.updateValues) == 0 {
-		return "", errors.Newf(
-			"No column updated.  Generated sql: %s",
-			buf.String())
-	}
-
-	_, _ = buf.WriteString(" SET ")
-	addComma := false
-
-	// Sorting is too hard in go, just create a second map ...
-	updateValues := make(map[string]Expression)
-	for col, expr := range u.updateValues {
-		if col == nil {
-			return "", errors.Newf(
-				"nil column.  Generated sql: %s",
-				buf.String())
-		}
-
-		updateValues[col.Name()] = expr
-	}
-
-	for _, col := range u.table.Columns() {
-		val, inMap := updateValues[col.Name()]
-		if !inMap {
-			continue
-		}
-
-		if addComma {
-			_, _ = buf.WriteString(", ")
-		}
-
-		if val == nil {
-			return "", errors.Newf(
-				"nil value.  Generated sql: %s",
-				buf.String())
-		}
-
-		if err = col.SerializeSql(buf); err != nil {
-			return
-		}
-
-		_ = buf.WriteByte('=')
-		if err = val.SerializeSql(buf); err != nil {
-			return
-		}
-
-		addComma = true
-	}
-
-	if u.where == nil {
-		return "", errors.Newf(
-			"Updating without a WHERE clause.  Generated sql: %s",
-			buf.String())
-	}
-
-	_, _ = buf.WriteString(" WHERE ")
-	if err = u.where.SerializeSql(buf); err != nil {
-		return
-	}
-
-	if u.order != nil {
-		_, _ = buf.WriteString(" ORDER BY ")
-		if err = u.order.SerializeSql(buf); err != nil {
-			return
-		}
-	}
-
-	if u.limit >= 0 {
-		_, _ = buf.WriteString(fmt.Sprintf(" LIMIT %d", u.limit))
-	}
-
-	return buf.String(), nil
-}
-
-//
 // DELETE statement ===========================================================
 //
 
@@ -565,7 +410,7 @@ func (s *unlockStatementImpl) String() (sql string, err error) {
 	return "UNLOCK TABLES", nil
 }
 
-// Set GTID_NEXT statement returns a SQL statement that can be used to explicitly set the next GTID.
+// SET GTID_NEXT statement returns a SQL statement that can be used to explicitly set the next GTID.
 func NewGtidNextStatement(sid []byte, gno uint64) GtidNextStatement {
 	return &gtidNextStatementImpl{
 		sid: sid,

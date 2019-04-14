@@ -3,6 +3,7 @@ package tests
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"os"
 	"testing"
 )
@@ -19,7 +20,8 @@ const (
 
 var connectString = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
 var db *sql.DB
-var tx *sql.Tx
+
+//var tx *sql.Tx
 
 //go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema dvds -path .test_files
 //go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema test_sample -path .test_files
@@ -32,7 +34,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		panic("Failed to connect to test db")
 	}
-	tx, _ = db.Begin()
+	//tx, _ = db.Begin()
 	defer cleanUp()
 
 	dbInit()
@@ -48,7 +50,7 @@ func TestMain(m *testing.M) {
 func cleanUp() {
 	fmt.Println("CLEAN UP")
 
-	tx.Rollback()
+	//tx.Rollback()
 	db.Close()
 }
 

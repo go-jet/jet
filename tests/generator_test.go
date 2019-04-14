@@ -25,13 +25,13 @@ func TestGenerateModel(t *testing.T) {
 
 func TestSelect_ScanToStruct(t *testing.T) {
 	actor := model.Actor{}
-	query := Actor.SELECT(Actor.AllColumns)
+	query := Actor.SELECT(Actor.AllColumns).OrderBy(Actor.ActorID.Asc())
 
 	queryStr, err := query.String()
 
 	fmt.Println(queryStr)
 
-	assert.Equal(t, queryStr, `SELECT actor.actor_id AS "actor.actor_id", actor.first_name AS "actor.first_name", actor.last_name AS "actor.last_name", actor.last_update AS "actor.last_update" FROM dvds.actor`)
+	assert.Equal(t, queryStr, `SELECT actor.actor_id AS "actor.actor_id", actor.first_name AS "actor.first_name", actor.last_name AS "actor.last_name", actor.last_update AS "actor.last_update" FROM dvds.actor ORDER BY actor.actor_id ASC`)
 
 	err = query.Execute(db, &actor)
 
@@ -74,7 +74,7 @@ func TestSelect_ScanToSlice(t *testing.T) {
 //		INNER_JOIN(Film, FilmActor.FilmID.Eq(Film.FilmID)).
 //		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 //		SELECT(FilmActor.AllColumns, Film.AllColumns, Language.AllColumns, Actor.AllColumns).
-//		Where(FilmActor.ActorID.GtEq(1).And(FilmActor.ActorID.LteLiteral(2)))
+//		WHERE(FilmActor.ActorID.GtEq(1).And(FilmActor.ActorID.LteLiteral(2)))
 //
 //	queryStr, err := query.String()
 //	assert.NilError(t, err)
@@ -405,7 +405,7 @@ func TestSubQuery(t *testing.T) {
 	//Customer.
 	//	INNER_JOIN(selectStmtTable, Customer.LastName.Eq(selectStmtTable.RefStringColumn(Actor.FirstName))).
 	//	SELECT(Customer.AllColumns, selectStmtTable.RefIntColumnName("first_name")).
-	//	Where(Actor.LastName.Neq(avrgCustomer))
+	//	WHERE(Actor.LastName.Neq(avrgCustomer))
 
 	rFilmsOnly := Film.SELECT(Film.FilmID, Film.Title, Film.Rating).
 		Where(Film.Rating.EqL("R")).

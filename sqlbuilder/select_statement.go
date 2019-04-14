@@ -6,7 +6,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 	"github.com/sub0zero/go-sqlbuilder/types"
-	"reflect"
 )
 
 type SelectStatement interface {
@@ -88,12 +87,6 @@ func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
 }
 
 func (s *selectStatementImpl) Execute(db types.Db, destination interface{}) error {
-	destinationType := reflect.TypeOf(destination)
-
-	if destinationType.Kind() == reflect.Ptr && destinationType.Elem().Kind() == reflect.Struct {
-		s.Limit(1)
-	}
-
 	query, err := s.String()
 
 	if err != nil {
