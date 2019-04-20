@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
@@ -14,9 +13,6 @@ type UpdateStatement interface {
 	SET(values ...interface{}) UpdateStatement
 	WHERE(expression BoolExpression) UpdateStatement
 	RETURNING(projections ...Projection) UpdateStatement
-
-	Query(db types.Db, destination interface{}) error
-	Execute(db types.Db) (sql.Result, error)
 }
 
 func newUpdateStatement(table WritableTable, columns []Column) UpdateStatement {
@@ -35,25 +31,11 @@ type updateStatementImpl struct {
 }
 
 func (u *updateStatementImpl) Query(db types.Db, destination interface{}) error {
-	query, err := u.String()
-
-	if err != nil {
-		return err
-	}
-
-	return execution.Execute(db, query, destination)
+	return Query(u, db, destination)
 }
 
 func (u *updateStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	query, err := u.String()
-
-	if err != nil {
-		return
-	}
-
-	res, err = db.Exec(query)
-
-	return
+	return Execute(u, db)
 }
 
 func (u *updateStatementImpl) SET(values ...interface{}) UpdateStatement {

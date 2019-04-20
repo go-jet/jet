@@ -33,7 +33,7 @@ func TestSelect_ScanToStruct(t *testing.T) {
 
 	assert.Equal(t, queryStr, `SELECT actor.actor_id AS "actor.actor_id", actor.first_name AS "actor.first_name", actor.last_name AS "actor.last_name", actor.last_update AS "actor.last_update" FROM dvds.actor ORDER BY actor.actor_id ASC`)
 
-	err = query.Execute(db, &actor)
+	err = query.Query(db, &actor)
 
 	assert.NilError(t, err)
 
@@ -57,7 +57,7 @@ func TestSelect_ScanToSlice(t *testing.T) {
 	fmt.Println(queryStr)
 	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active" FROM dvds.customer ORDER BY customer.customer_id ASC`)
 
-	err = query.Execute(db, &customers)
+	err = query.Query(db, &customers)
 	assert.NilError(t, err)
 
 	assert.Equal(t, len(customers), 599)
@@ -113,7 +113,7 @@ func TestJoinQuerySlice(t *testing.T) {
 	assert.Equal(t, queryStr, `SELECT language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext" FROM dvds.film JOIN dvds.language ON film.language_id = language.language_id WHERE film.rating = 'NC-17' LIMIT 15`)
 	//fmt.Println(queryStr)
 
-	err = query.Execute(db, &filmsPerLanguage)
+	err = query.Query(db, &filmsPerLanguage)
 
 	assert.NilError(t, err)
 
@@ -132,7 +132,7 @@ func TestJoinQuerySlice(t *testing.T) {
 	//spew.Dump(filmsPerLanguage)
 
 	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
-	err = query.Execute(db, &filmsPerLanguageWithPtrs)
+	err = query.Query(db, &filmsPerLanguageWithPtrs)
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(filmsPerLanguage), 1)
@@ -152,7 +152,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 		Limit(limit)
 
 	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
-	err := query.Execute(db, &filmsPerLanguageWithPtrs)
+	err := query.Query(db, &filmsPerLanguageWithPtrs)
 
 	//spew.Dump(filmsPerLanguageWithPtrs)
 
@@ -166,7 +166,7 @@ func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
 
 	customers := []model.Customer{}
 
-	err := query.Execute(db, &customers)
+	err := query.Query(db, &customers)
 
 	assert.NilError(t, err)
 
@@ -180,7 +180,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 
 	err := Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
 		OrderBy(Customer.FirstName.Asc()).
-		Execute(db, &customersAsc)
+		Query(db, &customersAsc)
 
 	assert.NilError(t, err)
 
@@ -190,7 +190,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 	customersDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
 		OrderBy(Customer.FirstName.Desc()).
-		Execute(db, &customersDesc)
+		Query(db, &customersDesc)
 
 	assert.NilError(t, err)
 
@@ -203,7 +203,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 	customersAscDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
 		OrderBy(Customer.FirstName.Asc(), Customer.LastName.Desc()).
-		Execute(db, &customersAscDesc)
+		Query(db, &customersAscDesc)
 
 	assert.NilError(t, err)
 
@@ -240,7 +240,7 @@ func TestSelectFullJoin(t *testing.T) {
 		Customer *model.Customer
 	}{}
 
-	err = query.Execute(db, &allCustomersAndAddress)
+	err = query.Query(db, &allCustomersAndAddress)
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(allCustomersAndAddress), 603)
@@ -269,7 +269,7 @@ func TestSelectFullCrossJoin(t *testing.T) {
 
 	customerAddresCrosJoined := []model.Customer{}
 
-	err = query.Execute(db, &customerAddresCrosJoined)
+	err = query.Query(db, &customerAddresCrosJoined)
 
 	assert.Equal(t, len(customerAddresCrosJoined), 1000)
 
@@ -302,7 +302,7 @@ func TestSelectSelfJoin(t *testing.T) {
 		F2 F2
 	}{}
 
-	err = query.Execute(db, &theSameLengthFilms)
+	err = query.Query(db, &theSameLengthFilms)
 
 	assert.NilError(t, err)
 
@@ -337,7 +337,7 @@ func TestSelectAliasColumn(t *testing.T) {
 
 	films := []thesameLengthFilms{}
 
-	err = query.Execute(db, &films)
+	err = query.Query(db, &films)
 
 	assert.NilError(t, err)
 
@@ -378,7 +378,7 @@ func TestSelectSelfReferenceType(t *testing.T) {
 
 	staffs := []staff{}
 
-	err = query.Execute(db, &staffs)
+	err = query.Query(db, &staffs)
 
 	assert.NilError(t, err)
 
@@ -455,7 +455,7 @@ func TestSelectQueryScalar(t *testing.T) {
 	fmt.Println(queryStr)
 
 	maxRentalRateFilms := []model.Film{}
-	err = query.Execute(db, &maxRentalRateFilms)
+	err = query.Query(db, &maxRentalRateFilms)
 
 	assert.NilError(t, err)
 
@@ -505,7 +505,7 @@ func TestSelectGroupByHaving(t *testing.T) {
 
 	customerPaymentSum := []CustomerPaymentSum{}
 
-	err = customersPaymentQuery.Execute(db, &customerPaymentSum)
+	err = customersPaymentQuery.Query(db, &customerPaymentSum)
 
 	assert.NilError(t, err)
 
@@ -542,7 +542,7 @@ func TestSelectGroupBy2(t *testing.T) {
 	assert.NilError(t, err)
 	fmt.Println(queryStr)
 
-	err = query.Execute(db, &customersWithAmounts)
+	err = query.Query(db, &customersWithAmounts)
 	assert.NilError(t, err)
 	//spew.Dump(customersWithAmounts)
 
@@ -576,7 +576,7 @@ func TestSelectTimeColumns(t *testing.T) {
 
 	payments := []model.Payment{}
 
-	err = query.Execute(db, &payments)
+	err = query.Query(db, &payments)
 
 	assert.NilError(t, err)
 

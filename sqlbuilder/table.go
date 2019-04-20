@@ -155,10 +155,9 @@ func (t *Table) ForceIndex(index string) *Table {
 // Generates the sql string for the current tableName expression.  Note: the
 // generated string may not be a valid/executable sql statement.
 func (t *Table) SerializeSql(out *bytes.Buffer) error {
-	if !validIdentifierName(t.schemaName) {
-		return errors.New("Invalid database name specified")
+	if t == nil {
+		return errors.Newf("nil tableName.  Generated sql: %s", out.String())
 	}
-
 	_, _ = out.WriteString(t.schemaName)
 	_, _ = out.WriteString(".")
 	_, _ = out.WriteString(t.TableName())

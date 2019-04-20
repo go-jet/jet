@@ -21,8 +21,6 @@ type InsertStatement interface {
 	RETURNING(projections ...Projection) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
-
-	Execute(db types.Db) (sql.Result, error)
 }
 
 func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
@@ -47,16 +45,12 @@ type insertStatementImpl struct {
 	errors []string
 }
 
-func (i *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	query, err := i.String()
+func (s *insertStatementImpl) Query(db types.Db, destination interface{}) error {
+	return Query(s, db, destination)
+}
 
-	if err != nil {
-		return
-	}
-
-	res, err = db.Exec(query)
-
-	return
+func (u *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(u, db)
 }
 
 func (s *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {

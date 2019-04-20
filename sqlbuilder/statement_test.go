@@ -386,49 +386,6 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateMulti(c *gc.C) {
 }
 
 //
-// DELETE statement tests =====================================================
-//
-
-func (s *StmtSuite) TestDeleteUnconditionally(c *gc.C) {
-	_, err := table1.Delete().String()
-	c.Assert(err, gc.NotNil)
-}
-
-func (s *StmtSuite) TestDeleteWithWhere(c *gc.C) {
-	sql, err := table1.Delete().Where(EqL(table1Col1, 1)).String()
-	c.Assert(err, gc.IsNil)
-
-	c.Assert(
-		sql,
-		gc.Equals,
-		"DELETE FROM db.table1 WHERE table1.col1=1")
-}
-
-func (s *StmtSuite) TestDeleteWithOrderBy(c *gc.C) {
-	stmt := table1.Delete().Where(EqL(table1Col1, 1)).OrderBy(table1Col1)
-	sql, err := stmt.String()
-	c.Assert(err, gc.IsNil)
-
-	c.Assert(
-		sql,
-		gc.Equals,
-		"DELETE FROM db.table1 "+
-			"WHERE table1.col1=1 "+
-			"ORDER BY table1.col1")
-}
-
-func (s *StmtSuite) TestDeleteWithLimit(c *gc.C) {
-	stmt := table1.Delete().Where(EqL(table1Col1, 1)).Limit(5)
-	sql, err := stmt.String()
-	c.Assert(err, gc.IsNil)
-
-	c.Assert(
-		sql,
-		gc.Equals,
-		"DELETE FROM db.table1 WHERE table1.col1=1 LIMIT 5")
-}
-
-//
 // LOCK/UNLOCK statement tests ================================================
 //
 

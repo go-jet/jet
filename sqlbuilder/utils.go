@@ -1,6 +1,11 @@
 package sqlbuilder
 
-import "bytes"
+import (
+	"bytes"
+	"database/sql"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
+	"github.com/sub0zero/go-sqlbuilder/types"
+)
 
 func serializeExpressionList(expressions []Expression, buf *bytes.Buffer) error {
 	for i, value := range expressions {
@@ -32,4 +37,26 @@ func serializeProjectionList(projections []Projection, buf *bytes.Buffer) error 
 	}
 
 	return nil
+}
+
+func Query(statement Statement, db types.Db, destination interface{}) error {
+	query, err := statement.String()
+
+	if err != nil {
+		return err
+	}
+
+	return execution.Execute(db, query, destination)
+}
+
+func Execute(statement Statement, db types.Db) (res sql.Result, err error) {
+	query, err := statement.String()
+
+	if err != nil {
+		return
+	}
+
+	res, err = db.Exec(query)
+
+	return
 }

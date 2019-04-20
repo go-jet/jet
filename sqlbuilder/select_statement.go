@@ -2,9 +2,9 @@ package sqlbuilder
 
 import (
 	"bytes"
+	"database/sql"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
@@ -13,7 +13,6 @@ type SelectStatement interface {
 	Expression
 
 	Where(expression BoolExpression) SelectStatement
-	AndWhere(expression BoolExpression) SelectStatement
 	GroupBy(expressions ...Expression) SelectStatement
 	HAVING(expressions BoolExpression) SelectStatement
 
@@ -27,9 +26,6 @@ type SelectStatement interface {
 	Copy() SelectStatement
 
 	AsTable(alias string) *SelectStatementTable
-
-	Execute(db types.Db, destination interface{}) error
-	//ExecuteInTx(tx *sql.Tx, destination interface{}) error
 }
 
 // NOTE: SelectStatement purposely does not implement the Table interface since
@@ -86,30 +82,17 @@ func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
 	}
 }
 
-func (s *selectStatementImpl) Execute(db types.Db, destination interface{}) error {
-	query, err := s.String()
+func (s *selectStatementImpl) Query(db types.Db, destination interface{}) error {
+	return Query(s, db, destination)
+}
 
-	if err != nil {
-		return err
-	}
-
-	return execution.Execute(db, query, destination)
+func (u *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(u, db)
 }
 
 func (s *selectStatementImpl) Copy() SelectStatement {
 	ret := *s
 	return &ret
-}
-
-// Further filter the query, instead of replacing the filter
-func (q *selectStatementImpl) AndWhere(
-	expression BoolExpression) SelectStatement {
-
-	if q.where == nil {
-		return q.Where(expression)
-	}
-	q.where = And(q.where, expression)
-	return q
 }
 
 func (q *selectStatementImpl) Where(expression BoolExpression) SelectStatement {

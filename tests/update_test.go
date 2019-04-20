@@ -39,7 +39,7 @@ func TestUpdateValues(t *testing.T) {
 
 	err = table.Link.SELECT(table.Link.AllColumns).
 		Where(table.Link.Name.EqL("Bong")).
-		Execute(db, &links)
+		Query(db, &links)
 
 	assert.NilError(t, err)
 

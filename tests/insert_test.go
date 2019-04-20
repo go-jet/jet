@@ -36,7 +36,7 @@ func TestInsertValues(t *testing.T) {
 
 	link := []model.Link{}
 
-	err = table.Link.SELECT(table.Link.AllColumns).Execute(db, &link)
+	err = table.Link.SELECT(table.Link.AllColumns).Query(db, &link)
 
 	assert.NilError(t, err)
 
@@ -103,7 +103,7 @@ func TestInsertQuery(t *testing.T) {
 	assert.NilError(t, err)
 
 	allLinks := []model.Link{}
-	err = table.Link.SELECT(table.Link.AllColumns).Execute(db, &allLinks)
+	err = table.Link.SELECT(table.Link.AllColumns).Query(db, &allLinks)
 	assert.NilError(t, err)
 
 	spew.Dump(allLinks)
