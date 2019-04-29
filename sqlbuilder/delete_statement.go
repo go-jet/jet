@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/sub0zero/go-sqlbuilder/types"
@@ -38,33 +37,35 @@ func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 	return d
 }
 
-func (d *deleteStatementImpl) String() (sql string, err error) {
-	buf := new(bytes.Buffer)
-	_, _ = buf.WriteString("DELETE FROM ")
+func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
+	queryData := &queryData{}
+
+	queryData.WriteString("DELETE FROM ")
 
 	if d.table == nil {
-		return "", errors.Newf("nil tableName.  Generated sql: %s", buf.String())
+		return "", nil, errors.New("nil tableName.")
 	}
 
-	if err = d.table.SerializeSql(buf); err != nil {
+	if err = d.table.SerializeSql(queryData); err != nil {
 		return
 	}
 
 	if d.where == nil {
-		return "", errors.Newf("Deleting without a WHERE clause.  Generated sql: %s", buf.String())
+		return "", nil, errors.New("Deleting without a WHERE clause.")
 	}
 
-	_, _ = buf.WriteString(" WHERE ")
-	if err = d.where.SerializeSql(buf); err != nil {
+	queryData.WriteString(" WHERE ")
+
+	if err = d.where.Serialize(queryData); err != nil {
 		return
 	}
 
 	if d.order != nil {
-		_, _ = buf.WriteString(" ORDER BY ")
-		if err = d.order.SerializeSql(buf); err != nil {
+		queryData.WriteString(" ORDER BY ")
+		if err = d.order.Serialize(queryData); err != nil {
 			return
 		}
 	}
 
-	return buf.String() + ";", nil
+	return queryData.queryBuff.String() + ";", queryData.args, nil
 }

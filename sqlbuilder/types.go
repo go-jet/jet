@@ -1,10 +1,6 @@
 package sqlbuilder
 
-// A clause that can be used in order by
-type OrderByClause interface {
-	Clause
-	isOrderByClauseInterface
-}
+// A clause that can be used in orderBy by
 
 // A clause that is selectable.
 //type Projection interface {
@@ -16,9 +12,9 @@ type OrderByClause interface {
 
 //type ColumnList []Column
 //
-//func (cl ColumnList) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+//func (cl ColumnList) Serialize(out *bytes.Buffer, options ...serializeOption) error {
 //	for i, column := range cl {
-//		column.SerializeSql(out)
+//		column.Serialize(out)
 //
 //		if i != len(cl)-1 {
 //			out.WriteString(", ")
@@ -48,16 +44,6 @@ type OrderByClause interface {
 //
 // Boiler plates ...
 //
-
-type isOrderByClauseInterface interface {
-	isOrderByClauseType()
-}
-
-type isOrderByClause struct {
-}
-
-func (o *isOrderByClause) isOrderByClauseType() {
-}
 
 //
 //type isProjectionInterface interface {

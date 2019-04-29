@@ -18,13 +18,14 @@ func TestInsertValues(t *testing.T) {
 		VALUES("http://www.bing.com", "Bing", sqlbuilder.DEFAULT).
 		RETURNING(table.Link.ID)
 
-	insertQueryStr, err := insertQuery.String()
+	insertQueryStr, args, err := insertQuery.Sql()
 
 	assert.NilError(t, err)
+	assert.Equal(t, len(args), 8)
 
 	fmt.Println(insertQueryStr)
 
-	assert.Equal(t, insertQueryStr, `INSERT INTO test_sample.link (url,name,rel) VALUES ('http://www.postgresqltutorial.com','PostgreSQL Tutorial',DEFAULT), ('http://www.google.com','Google',DEFAULT), ('http://www.yahoo.com','Yahoo',DEFAULT), ('http://www.bing.com','Bing',DEFAULT) RETURNING link.id AS "link.id";`)
+	assert.Equal(t, insertQueryStr, `INSERT INTO test_sample.link (url,name,rel) VALUES ($1, $2, DEFAULT), ($3, $4, DEFAULT), ($5, $6, DEFAULT), ($7, $8, DEFAULT) RETURNING link.id AS "link.id";`)
 	res, err := insertQuery.Execute(db)
 
 	assert.NilError(t, err)
@@ -68,9 +69,10 @@ func TestInsertDataObject(t *testing.T) {
 		INSERT(table.Link.URL, table.Link.Name).
 		VALUES_MAPPING(linkData)
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
+	assert.Equal(t, len(args), 2)
 
 	fmt.Println(queryStr)
 
@@ -92,9 +94,10 @@ func TestInsertQuery(t *testing.T) {
 		INSERT(table.Link.URL, table.Link.Name).
 		QUERY(table.Link.SELECT(table.Link.URL, table.Link.Name))
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
+	assert.Equal(t, len(args), 0)
 
 	fmt.Println(queryStr)
 

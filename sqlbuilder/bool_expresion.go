@@ -66,11 +66,7 @@ type boolLiteralExpression struct {
 func newBoolLiteralExpression(value bool) BoolExpression {
 	boolLiteralExpression := boolLiteralExpression{}
 
-	sqlValue, err := sqltypes.BuildValue(value)
-	if err != nil {
-		panic(errors.Wrap(err, "Invalid literal value"))
-	}
-	boolLiteralExpression.literalExpression = *NewLiteralExpression(sqlValue)
+	boolLiteralExpression.literalExpression = *Literal(value)
 	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
 
 	return &boolLiteralExpression
@@ -113,27 +109,27 @@ func newPrefixBoolExpression(expression Expression, operator []byte) BoolExpress
 }
 
 //---------------------------------------------------//
-type conjunctBoolExpression struct {
-	expressionInterfaceImpl
-	boolInterfaceImpl
-
-	conjunctExpression
-	name string
-}
-
-func NewConjunctBoolExpression(operator []byte, expressions ...BoolExpression) BoolExpression {
-	boolExpression := conjunctBoolExpression{
-		conjunctExpression: conjunctExpression{
-			expressions: expressions,
-			conjunction: operator,
-		},
-	}
-
-	boolExpression.expressionInterfaceImpl.parent = &boolExpression
-	boolExpression.boolInterfaceImpl.parent = &boolExpression
-
-	return &boolExpression
-}
+//type conjunctBoolExpression struct {
+//	expressionInterfaceImpl
+//	boolInterfaceImpl
+//
+//	conjunctExpression
+//	name string
+//}
+//
+//func NewConjunctBoolExpression(operator []byte, expressions ...BoolExpression) BoolExpression {
+//	boolExpression := conjunctBoolExpression{
+//		conjunctExpression: conjunctExpression{
+//			expressions: expressions,
+//			conjunction: operator,
+//		},
+//	}
+//
+//	boolExpression.expressionInterfaceImpl.parent = &boolExpression
+//	boolExpression.boolInterfaceImpl.parent = &boolExpression
+//
+//	return &boolExpression
+//}
 
 //---------------------------------------------------//
 type inExpression struct {
@@ -146,34 +142,33 @@ type inExpression struct {
 	err error
 }
 
-func (c *inExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+func (c *inExpression) Serialize(out *queryData, options ...serializeOption) error {
 	if c.err != nil {
 		return errors.Wrap(c.err, "Invalid IN expression")
 	}
 
 	if c.lhs == nil {
-		return errors.Newf(
-			"lhs of in expression is nil.  Generated sql: %s",
-			out.String())
+		return errors.Newf("lhs of in expression is nil.")
 	}
 
 	// We'll serialize the lhs even if we don't need it to ensure no error
 	buf := &bytes.Buffer{}
 
-	err := c.lhs.SerializeSql(buf)
+	err := c.lhs.Serialize(out, options...)
 	if err != nil {
 		return err
 	}
 
 	if c.rhs == nil {
-		_, _ = out.WriteString("FALSE")
+		out.WriteString("FALSE")
 		return nil
 	}
 
-	_, _ = out.WriteString(buf.String())
-	_, _ = out.WriteString(" IN ")
+	out.WriteString(buf.String())
+	out.WriteString(" IN ")
 
-	err = c.rhs.SerializeSql(out)
+	err = c.rhs.Serialize(out)
+
 	if err != nil {
 		return err
 	}
@@ -183,10 +178,6 @@ func (c *inExpression) SerializeSql(out *bytes.Buffer, options ...serializeOptio
 
 // Returns a representation of "a=b"
 func Eq(lhs, rhs Expression) BoolExpression {
-	lit, ok := rhs.(*literalExpression)
-	if ok && sqltypes.Value(lit.value).IsNull() {
-		return newBinaryBoolExpression(lhs, rhs, []byte(" IS "))
-	}
 	return newBinaryBoolExpression(lhs, rhs, []byte(" = "))
 }
 
@@ -197,10 +188,6 @@ func EqL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "a!=b"
 func NotEq(lhs, rhs Expression) BoolExpression {
-	lit, ok := rhs.(*literalExpression)
-	if ok && sqltypes.Value(lit.value).IsNull() {
-		return newBinaryBoolExpression(lhs, rhs, []byte(" IS NOT "))
-	}
 	return newBinaryBoolExpression(lhs, rhs, []byte("!="))
 }
 
@@ -258,14 +245,13 @@ func IsTrue(expr BoolExpression) BoolExpression {
 	return newPrefixBoolExpression(expr, []byte(" IS TRUE "))
 }
 
-// Returns a representation of "c[0] AND ... AND c[n-1]" for c in clauses
-func And(expressions ...BoolExpression) BoolExpression {
-	return NewConjunctBoolExpression([]byte(" AND "), expressions...)
+func And(lhs, rhs Expression) BoolExpression {
+	return newBinaryBoolExpression(lhs, rhs, []byte(" AND "))
 }
 
 // Returns a representation of "c[0] OR ... OR c[n-1]" for c in clauses
-func Or(expressions ...BoolExpression) BoolExpression {
-	return NewConjunctBoolExpression([]byte(" OR "), expressions...)
+func Or(lhs, rhs Expression) BoolExpression {
+	return newBinaryBoolExpression(lhs, rhs, []byte(" OR "))
 }
 
 func Like(lhs, rhs Expression) BoolExpression {

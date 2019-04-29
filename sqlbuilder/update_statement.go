@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/sub0zero/go-sqlbuilder/types"
@@ -61,60 +60,64 @@ func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStateme
 	return u
 }
 
-func (u *updateStatementImpl) String() (sql string, err error) {
-	buf := new(bytes.Buffer)
-	_, _ = buf.WriteString("UPDATE ")
+func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
+	out := &queryData{}
+	out.WriteString("UPDATE ")
 
 	if u.table == nil {
-		return "", errors.Newf("nil tableName.  Generated sql: %s", buf.String())
+		return "", nil, errors.New("nil tableName.")
 	}
 
-	if err = u.table.SerializeSql(buf); err != nil {
+	if err = u.table.SerializeSql(out); err != nil {
 		return
 	}
 
 	if len(u.updateValues) == 0 {
-		return "", errors.Newf(
-			"No column updated.  Generated sql: %s",
-			buf.String())
+		return "", nil, errors.New("No column updated.")
 	}
 
-	_, _ = buf.WriteString(" SET")
+	out.WriteString(" SET")
 
 	if len(u.columns) > 1 {
-		buf.WriteString(" ( ")
+		out.WriteString(" ( ")
 	} else {
-		buf.WriteString(" ")
+		out.WriteString(" ")
 	}
 
-	for i, column := range u.columns {
-		if i > 0 {
-			buf.WriteString(", ")
-		}
+	//for i, column := range u.columns {
+	//	if i > 0 {
+	//		out.WriteString(", ")
+	//	}
+	//
+	//	out.WriteString(column.Name())
+	//
+	//	if err != nil {
+	//		return
+	//	}
+	//}
 
-		buf.WriteString(column.Name())
+	err = serializeColumnList(u.columns, out)
 
-		if err != nil {
-			return
-		}
+	if err != nil {
+		return "", nil, err
 	}
 
 	if len(u.columns) > 1 {
-		buf.WriteString(" )")
+		out.WriteString(" )")
 	}
 
-	buf.WriteString(" =")
+	out.WriteString(" =")
 
 	if len(u.updateValues) > 1 {
-		buf.WriteString(" (")
+		out.WriteString(" (")
 	}
 
 	for i, value := range u.updateValues {
 		if i > 0 {
-			buf.WriteString(", ")
+			out.WriteString(", ")
 		}
 
-		err = value.SerializeSql(buf)
+		err = value.Serialize(out)
 
 		if err != nil {
 			return
@@ -122,29 +125,27 @@ func (u *updateStatementImpl) String() (sql string, err error) {
 	}
 
 	if len(u.updateValues) > 1 {
-		buf.WriteString(" )")
+		out.WriteString(" )")
 	}
 
 	if u.where == nil {
-		return "", errors.Newf(
-			"Updating without a WHERE clause.  Generated sql: %s",
-			buf.String())
+		return "", nil, errors.New("Updating without a WHERE clause.")
 	}
 
-	_, _ = buf.WriteString(" WHERE ")
-	if err = u.where.SerializeSql(buf); err != nil {
+	out.WriteString(" WHERE ")
+	if err = u.where.Serialize(out); err != nil {
 		return
 	}
 
 	if len(u.returning) > 0 {
-		buf.WriteString(" RETURNING ")
+		out.WriteString(" RETURNING ")
 
-		err = serializeProjectionList(u.returning, buf)
+		err = serializeProjectionList(u.returning, out)
 
 		if err != nil {
 			return
 		}
 	}
 
-	return buf.String() + ";", nil
+	return out.queryBuff.String(), out.args, nil
 }

@@ -1,9 +1,7 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"database/sql"
-	"fmt"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
@@ -12,17 +10,17 @@ type SelectStatement interface {
 	Statement
 	Expression
 
-	Where(expression BoolExpression) SelectStatement
-	GroupBy(expressions ...Expression) SelectStatement
-	HAVING(expressions BoolExpression) SelectStatement
+	DISTINCT() SelectStatement
+	WHERE(expression BoolExpression) SelectStatement
+	GROUP_BY(expressions ...Clause) SelectStatement
+	HAVING(boolExpression BoolExpression) SelectStatement
+	ORDER_BY(clauses ...OrderByClause) SelectStatement
 
-	OrderBy(clauses ...OrderByClause) SelectStatement
-	Limit(limit int64) SelectStatement
-	Offset(offset int64) SelectStatement
-	Distinct() SelectStatement
-	WithSharedLock() SelectStatement
-	ForUpdate() SelectStatement
-	Comment(comment string) SelectStatement
+	LIMIT(limit int64) SelectStatement
+	OFFSET(offset int64) SelectStatement
+
+	FOR_UPDATE() SelectStatement
+
 	Copy() SelectStatement
 
 	AsTable(alias string) *SelectStatementTable
@@ -33,17 +31,17 @@ type SelectStatement interface {
 type selectStatementImpl struct {
 	expressionInterfaceImpl
 
-	table          ReadableTable
-	projections    []Projection
-	where          BoolExpression
-	group          *listClause
-	having         BoolExpression
-	order          *listClause
-	comment        string
-	limit, offset  int64
-	withSharedLock bool
-	forUpdate      bool
-	distinct       bool
+	table       ReadableTable
+	distinct    bool
+	projections []Projection
+	where       BoolExpression
+	groupBy     []Clause
+	having      BoolExpression
+	orderBy     []OrderByClause
+
+	limit, offset int64
+
+	forUpdate bool
 }
 
 func newSelectStatement(
@@ -51,28 +49,117 @@ func newSelectStatement(
 	projections []Projection) SelectStatement {
 
 	return &selectStatementImpl{
-		table:          table,
-		projections:    projections,
-		limit:          -1,
-		offset:         -1,
-		withSharedLock: false,
-		forUpdate:      false,
-		distinct:       false,
+		table:       table,
+		projections: projections,
+		limit:       -1,
+		offset:      -1,
+		forUpdate:   false,
+		distinct:    false,
 	}
 }
 
-func (s *selectStatementImpl) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
-	str, err := s.String()
+func (s *selectStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
+
+	out.WriteString("(")
+
+	err := s.serializeImpl(out, options...)
 
 	if err != nil {
 		return err
 	}
 
-	out.WriteString("(")
-	out.WriteString(str)
 	out.WriteString(")")
 
 	return nil
+}
+
+func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serializeOption) error {
+
+	out.WriteString("SELECT ")
+
+	if s.distinct {
+		out.WriteString("DISTINCT ")
+	}
+
+	if s.projections == nil || len(s.projections) == 0 {
+		return errors.New("No column selected for projection.")
+	}
+
+	err := serializeProjectionList(s.projections, out)
+
+	if err != nil {
+		return err
+	}
+
+	out.WriteString(" FROM ")
+
+	if s.table == nil {
+		return errors.Newf("nil tableName.")
+	}
+
+	if err := s.table.SerializeSql(out); err != nil {
+		return err
+	}
+
+	if s.where != nil {
+		out.WriteString(" WHERE ")
+		if err := s.where.Serialize(out); err != nil {
+			return err
+		}
+	}
+
+	if s.groupBy != nil && len(s.groupBy) > 0 {
+		out.WriteString(" GROUP BY ")
+
+		err := serializeClauseList(s.groupBy, out)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if s.having != nil {
+		out.WriteString(" HAVING ")
+		if err = s.having.Serialize(out); err != nil {
+			return err
+		}
+	}
+
+	if s.orderBy != nil {
+		out.WriteString(" ORDER BY ")
+		if err := serializeOrderByClauseList(s.orderBy, out); err != nil {
+			return err
+		}
+	}
+
+	if s.limit >= 0 {
+		out.WriteString(" LIMIT ")
+		out.InsertArgument(s.limit)
+	}
+
+	if s.offset >= 0 {
+		out.WriteString(" OFFSET ")
+		out.InsertArgument(s.offset)
+	}
+
+	if s.forUpdate {
+		out.WriteString(" FOR UPDATE")
+	}
+
+	return nil
+}
+
+// Return the properly escaped SQL statement, against the specified database
+func (q *selectStatementImpl) Sql() (query string, args []interface{}, err error) {
+	queryData := queryData{}
+
+	err = q.serializeImpl(&queryData)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	return queryData.queryBuff.String(), queryData.args, nil
 }
 
 func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
@@ -95,23 +182,14 @@ func (s *selectStatementImpl) Copy() SelectStatement {
 	return &ret
 }
 
-func (q *selectStatementImpl) Where(expression BoolExpression) SelectStatement {
+func (q *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
 	q.where = expression
 	return q
 }
 
-func (q *selectStatementImpl) GroupBy(
-	expressions ...Expression) SelectStatement {
-
-	q.group = &listClause{
-		clauses:            make([]Clause, len(expressions), len(expressions)),
-		includeParentheses: false,
-	}
-
-	for i, e := range expressions {
-		q.group.clauses[i] = e
-	}
-	return q
+func (s *selectStatementImpl) GROUP_BY(cluases ...Clause) SelectStatement {
+	s.groupBy = cluases
+	return s
 }
 
 func (q *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement {
@@ -119,132 +197,31 @@ func (q *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement 
 	return q
 }
 
-func (q *selectStatementImpl) OrderBy(
-	clauses ...OrderByClause) SelectStatement {
+func (q *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
 
-	q.order = newOrderByListClause(clauses...)
+	q.orderBy = clauses
+
 	return q
 }
 
-func (q *selectStatementImpl) Limit(limit int64) SelectStatement {
-	q.limit = limit
-	return q
-}
-
-func (q *selectStatementImpl) Distinct() SelectStatement {
-	q.distinct = true
-	return q
-}
-
-func (q *selectStatementImpl) WithSharedLock() SelectStatement {
-	// We don't need to grab a read lock if we're going to grab a write one
-	if !q.forUpdate {
-		q.withSharedLock = true
-	}
-	return q
-}
-
-func (q *selectStatementImpl) ForUpdate() SelectStatement {
-	// Clear a request for a shared lock if we're asking for a write one
-	q.withSharedLock = false
-	q.forUpdate = true
-	return q
-}
-
-func (q *selectStatementImpl) Offset(offset int64) SelectStatement {
+func (q *selectStatementImpl) OFFSET(offset int64) SelectStatement {
 	q.offset = offset
 	return q
 }
 
-func (q *selectStatementImpl) Comment(comment string) SelectStatement {
-	q.comment = comment
+func (q *selectStatementImpl) LIMIT(limit int64) SelectStatement {
+	q.limit = limit
 	return q
 }
 
-// Return the properly escaped SQL statement, against the specified database
-func (q *selectStatementImpl) String() (sql string, err error) {
-	buf := new(bytes.Buffer)
-	_, _ = buf.WriteString("SELECT ")
+func (q *selectStatementImpl) DISTINCT() SelectStatement {
+	q.distinct = true
+	return q
+}
 
-	if err = writeComment(q.comment, buf); err != nil {
-		return
-	}
-
-	if q.distinct {
-		_, _ = buf.WriteString("DISTINCT ")
-	}
-
-	if q.projections == nil || len(q.projections) == 0 {
-		return "", errors.Newf(
-			"No column selected.  Generated sql: %s",
-			buf.String())
-	}
-
-	for i, col := range q.projections {
-		if i > 0 {
-			_ = buf.WriteByte(',')
-		}
-		if col == nil {
-			return "", errors.Newf(
-				"nil column selected.  Generated sql: %s",
-				buf.String())
-		}
-		if err = col.SerializeForProjection(buf); err != nil {
-			return
-		}
-	}
-
-	_, _ = buf.WriteString(" FROM ")
-	if q.table == nil {
-		return "", errors.Newf("nil tableName.  Generated sql: %s", buf.String())
-	}
-	if err = q.table.SerializeSql(buf); err != nil {
-		return
-	}
-
-	if q.where != nil {
-		_, _ = buf.WriteString(" WHERE ")
-		if err = q.where.SerializeSql(buf); err != nil {
-			return
-		}
-	}
-
-	if q.group != nil {
-		_, _ = buf.WriteString(" GROUP BY ")
-		if err = q.group.SerializeSql(buf); err != nil {
-			return
-		}
-	}
-
-	if q.having != nil {
-		buf.WriteString(" HAVING ")
-		if err = q.having.SerializeSql(buf); err != nil {
-			return
-		}
-	}
-
-	if q.order != nil {
-		_, _ = buf.WriteString(" ORDER BY ")
-		if err = q.order.SerializeSql(buf); err != nil {
-			return
-		}
-	}
-
-	if q.limit >= 0 {
-		if q.offset >= 0 {
-			_, _ = buf.WriteString(fmt.Sprintf(" LIMIT %d, %d", q.offset, q.limit))
-		} else {
-			_, _ = buf.WriteString(fmt.Sprintf(" LIMIT %d", q.limit))
-		}
-	}
-
-	if q.forUpdate {
-		_, _ = buf.WriteString(" FOR UPDATE")
-	} else if q.withSharedLock {
-		_, _ = buf.WriteString(" LOCK IN SHARE MODE")
-	}
-
-	return buf.String(), nil
+func (q *selectStatementImpl) FOR_UPDATE() SelectStatement {
+	q.forUpdate = true
+	return q
 }
 
 func NumExp(statement SelectStatement) NumericExpression {

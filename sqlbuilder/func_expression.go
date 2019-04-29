@@ -1,7 +1,5 @@
 package sqlbuilder
 
-import "bytes"
-
 type FuncExpression interface {
 	Expression
 }
@@ -26,10 +24,10 @@ func NewNumericFunc(name string, expression Expression) NumericExpression {
 	return numericFunc
 }
 
-func (f *numericFunc) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+func (f *numericFunc) Serialize(out *queryData, options ...serializeOption) error {
 	out.WriteString(f.name)
 	out.WriteString("(")
-	err := f.expression.SerializeSql(out)
+	err := f.expression.Serialize(out)
 	if err != nil {
 		return err
 	}
@@ -39,7 +37,7 @@ func (f *numericFunc) SerializeSql(out *bytes.Buffer, options ...serializeOption
 }
 
 //func (f *FuncExpression) SerializeSqlForColumnList(out *bytes.Buffer) error {
-//	return f.SerializeSql(out)
+//	return f.Serialize(out)
 //}
 
 func MAX(expression NumericExpression) NumericExpression {

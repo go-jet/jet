@@ -1,7 +1,5 @@
 package sqlbuilder
 
-import "bytes"
-
 type Alias struct {
 	expression Expression
 	alias      string
@@ -14,9 +12,9 @@ func NewAlias(expression Expression, alias string) *Alias {
 	}
 }
 
-func (a *Alias) SerializeForProjection(out *bytes.Buffer) error {
+func (a *Alias) SerializeForProjection(out *queryData) error {
 
-	err := a.expression.SerializeSql(out, ALIASED)
+	err := a.expression.Serialize(out, SKIP_DEFAULT_ALIASING)
 
 	if err != nil {
 		return err

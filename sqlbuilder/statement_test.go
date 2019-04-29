@@ -475,14 +475,14 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 		"All inner selects in Union statement must select the "+
 			"same number of columns.  For sanity, you probably "+
 			"want to select the same tableName columns in the same "+
-			"order.  If you are selecting on multiple tables, "+
+			"orderBy.  If you are selecting on multiple tables, "+
 			"use Null to pad to the right number of fields.")
 }
 
 func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 
-	// tests on outer statement: Group By, Order By, Limit
-	// on inner statement: AndWhere, WHERE (with And), Order By, Limit
+	// tests on outer statement: Group By, Order By, LIMIT
+	// on inner statement: AndWhere, WHERE (with And), Order By, LIMIT
 	select_queries := make([]SelectStatement, 0, 3)
 
 	// We're not trying to write a SQL parser, so we won't warn if you do something silly like

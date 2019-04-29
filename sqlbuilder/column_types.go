@@ -8,9 +8,7 @@ type BoolColumn struct {
 }
 
 func NewBoolColumn(name string, nullable NullableColumn) *BoolColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name in bool column")
-	}
+
 	boolColumn := &BoolColumn{}
 	boolColumn.baseColumn = newBaseColumn(name, nullable, "", boolColumn)
 
@@ -26,9 +24,6 @@ type NumericColumn struct {
 }
 
 func NewNumericColumn(name string, nullable NullableColumn) *NumericColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name")
-	}
 
 	numericColumn := &NumericColumn{}
 
@@ -70,9 +65,6 @@ type StringColumn struct {
 // Representation of any integer column
 // This function will panic if name is not valid
 func NewStringColumn(name string, nullable NullableColumn) *StringColumn {
-	if !validIdentifierName(name) {
-		panic("Invalid column name")
-	}
 
 	stringColumn := &StringColumn{}
 

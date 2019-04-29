@@ -1,18 +1,16 @@
 package sqlbuilder
 
-import "bytes"
-
 type Projection interface {
-	SerializeForProjection(out *bytes.Buffer) error
+	SerializeForProjection(out *queryData) error
 }
 
 //------------------------------------------------------//
 // Dummy type for select * AllColumns
 type ColumnList []Column
 
-func (cl ColumnList) SerializeForProjection(out *bytes.Buffer) error {
+func (cl ColumnList) SerializeForProjection(out *queryData) error {
 	for i, column := range cl {
-		err := column.SerializeSql(out, FOR_PROJECTION)
+		err := column.Serialize(out, FOR_PROJECTION)
 
 		if err != nil {
 			return err

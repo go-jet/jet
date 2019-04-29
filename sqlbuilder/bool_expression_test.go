@@ -10,7 +10,7 @@ func TestBinaryExpression(t *testing.T) {
 	boolExpression := Eq(Literal(2), Literal(3))
 
 	out := bytes.Buffer{}
-	err := boolExpression.SerializeSql(&out)
+	err := boolExpression.Serialize(&out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.String(), "2 = 3")
@@ -29,7 +29,7 @@ func TestBinaryExpression(t *testing.T) {
 		exp := boolExpression.And(Eq(Literal(4), Literal(5)))
 
 		out := bytes.Buffer{}
-		err := exp.SerializeSql(&out)
+		err := exp.Serialize(&out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.String(), `(2 = 3 AND 4 = 5)`)
@@ -39,7 +39,7 @@ func TestBinaryExpression(t *testing.T) {
 		exp := boolExpression.Or(Eq(Literal(4), Literal(5)))
 
 		out := bytes.Buffer{}
-		err := exp.SerializeSql(&out)
+		err := exp.Serialize(&out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.String(), `(2 = 3 OR 4 = 5)`)
@@ -50,7 +50,7 @@ func TestUnaryExpression(t *testing.T) {
 	notExpression := Not(Eq(Literal(2), Literal(1)))
 
 	out := bytes.Buffer{}
-	err := notExpression.SerializeSql(&out)
+	err := notExpression.Serialize(&out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.String(), " NOT 2 = 1")
@@ -69,7 +69,7 @@ func TestUnaryExpression(t *testing.T) {
 		exp := notExpression.And(Eq(Literal(4), Literal(5)))
 
 		out := bytes.Buffer{}
-		err := exp.SerializeSql(&out)
+		err := exp.Serialize(&out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.String(), `( NOT 2 = 1 AND 4 = 5)`)
@@ -80,7 +80,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 	notExpression := IsTrue(Eq(Literal(2), Literal(1)))
 
 	out := bytes.Buffer{}
-	err := notExpression.SerializeSql(&out)
+	err := notExpression.Serialize(&out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.String(), " IS TRUE 2 = 1")
@@ -89,7 +89,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 		exp := notExpression.And(Eq(Literal(4), Literal(5)))
 
 		out := bytes.Buffer{}
-		err := exp.SerializeSql(&out)
+		err := exp.Serialize(&out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.String(), `( IS TRUE 2 = 1 AND 4 = 5)`)
@@ -100,7 +100,7 @@ func TestBoolLiteral(t *testing.T) {
 	literal := newBoolLiteralExpression(true)
 
 	out := bytes.Buffer{}
-	err := literal.SerializeSql(&out)
+	err := literal.Serialize(&out)
 
 	assert.NilError(t, err)
 

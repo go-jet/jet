@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/serenize/snaker"
@@ -53,6 +52,7 @@ func (u *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
 	return Execute(u, db)
 }
 
+// expression or default keyword
 func (s *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
 	literalRow := []Clause{}
 
@@ -122,84 +122,92 @@ func (i *insertStatementImpl) addError(err string) {
 	i.errors = append(i.errors, err)
 }
 
-func (s *insertStatementImpl) String() (sql string, err error) {
-	buf := new(bytes.Buffer)
-	_, _ = buf.WriteString("INSERT ")
-	_, _ = buf.WriteString("INTO ")
-
+func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
 	if len(s.errors) > 0 {
-		return "", errors.New("sql builder errors: " + strings.Join(s.errors, ", "))
+		return "", nil, errors.New("sql builder errors: " + strings.Join(s.errors, ", "))
 	}
+
+	queryData := &queryData{}
+	queryData.WriteString("INSERT INTO ")
 
 	if s.table == nil {
-		return "", errors.Newf("nil tableName.  Generated sql: %s", buf.String())
+		return "", nil, errors.Newf("nil tableName.")
 	}
 
-	buf.WriteString(s.table.SchemaName() + "." + s.table.TableName())
+	err = s.table.SerializeSql(queryData)
+
+	if err != nil {
+		return "", nil, err
+	}
 
 	if len(s.columns) > 0 {
-		_, _ = buf.WriteString(" (")
-		for i, col := range s.columns {
-			if i > 0 {
-				_ = buf.WriteByte(',')
-			}
+		queryData.WriteString(" (")
 
-			if col == nil {
-				return "", errors.Newf(
-					"nil column in columns list.  Generated sql: %s",
-					buf.String())
-			}
+		//for i, col := range s.columns {
+		//	if i > 0 {
+		//		queryData.WriteByte(',')
+		//	}
+		//
+		//	if col == nil {
+		//		return "", nil, errors.New("nil column in columns list.")
+		//	}
+		//
+		//	queryData.WriteString(col.Name())
+		//}
 
-			buf.WriteString(col.Name())
+		err = serializeColumnList(s.columns, queryData)
+
+		if err != nil {
+			return "", nil, err
 		}
 
-		buf.WriteString(") ")
+		queryData.WriteString(") ")
 	}
 
 	if len(s.rows) == 0 && s.query == nil {
-		return "", errors.Newf("No row or query  specified.  Generated sql: %s", buf.String())
+		return "", nil, errors.New("No row or query  specified.")
 	}
 
 	if len(s.rows) > 0 && s.query != nil {
-		return "", errors.Newf("Only new rows or query has to be specified.  Generated sql: %s", buf.String())
+		return "", nil, errors.New("Only new rows or query has to be specified.")
 	}
 
 	if len(s.rows) > 0 {
-		_, _ = buf.WriteString("VALUES (")
+		queryData.WriteString("VALUES (")
 		for row_i, row := range s.rows {
 			if row_i > 0 {
-				_, _ = buf.WriteString(", (")
+				queryData.WriteString(", (")
 			}
 
 			if len(row) != len(s.columns) {
-				return "", errors.Newf(
-					"# of values does not match # of columns.  Generated sql: %s",
-					buf.String())
+				return "", nil, errors.New("# of values does not match # of columns.")
 			}
 
-			for col_i, value := range row {
-				if col_i > 0 {
-					_ = buf.WriteByte(',')
-				}
+			err = serializeClauseList(row, queryData)
 
-				if value == nil {
-					return "", errors.Newf(
-						"nil value in row %d col %d.  Generated sql: %s",
-						row_i,
-						col_i,
-						buf.String())
-				}
-
-				if err = value.SerializeSql(buf); err != nil {
-					return
-				}
+			if err != nil {
+				return "", nil, err
 			}
-			_ = buf.WriteByte(')')
+
+			//for col_i, value := range row {
+			//	if col_i > 0 {
+			//		queryData.WriteByte(',')
+			//	}
+			//
+			//	if value == nil {
+			//		return "", nil, errors.Newf("nil value in row %d col %d.", row_i, col_i)
+			//	}
+			//
+			//	if err = value.Serialize(queryData); err != nil {
+			//		return
+			//	}
+			//}
+			queryData.WriteByte(')')
 		}
 	}
 
 	if s.query != nil {
-		err = s.query.SerializeSql(buf)
+		err = s.query.Serialize(queryData)
 
 		if err != nil {
 			return
@@ -207,16 +215,16 @@ func (s *insertStatementImpl) String() (sql string, err error) {
 	}
 
 	if len(s.returning) > 0 {
-		buf.WriteString(" RETURNING ")
+		queryData.WriteString(" RETURNING ")
 
-		err = serializeProjectionList(s.returning, buf)
+		err = serializeProjectionList(s.returning, queryData)
 
 		if err != nil {
 			return
 		}
 	}
 
-	buf.WriteByte(';')
+	queryData.WriteByte(';')
 
-	return buf.String(), nil
+	return queryData.queryBuff.String(), queryData.args, nil
 }

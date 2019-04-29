@@ -1,7 +1,5 @@
 package sqlbuilder
 
-import "bytes"
-
 type SelectStatementTable struct {
 	statement SelectStatement
 	columns   []Column
@@ -41,15 +39,13 @@ func (s *SelectStatementTable) RefStringColumn(column Column) *StringColumn {
 	return strColumn
 }
 
-func (s *SelectStatementTable) SerializeSql(out *bytes.Buffer) error {
+func (s *SelectStatementTable) SerializeSql(out *queryData) error {
 	out.WriteString("( ")
-	statementStr, err := s.statement.String()
+	err := s.statement.Serialize(out)
 
 	if err != nil {
 		return err
 	}
-
-	out.WriteString(statementStr)
 
 	out.WriteString(" ) AS ")
 	out.WriteString(s.alias)

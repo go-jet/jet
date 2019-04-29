@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func Execute(db types.Db, query string, destinationPtr interface{}) error {
+func Query(db types.Db, query string, args []interface{}, destinationPtr interface{}) error {
 	if db == nil {
 		return errors.New("db is nil")
 	}
@@ -28,7 +28,7 @@ func Execute(db types.Db, query string, destinationPtr interface{}) error {
 		return errors.New("Destination has to be a pointer to slice or pointer to struct ")
 	}
 
-	rows, err := db.Query(query)
+	rows, err := db.Query(query, args...)
 
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func Execute(db types.Db, query string, destinationPtr interface{}) error {
 		return err
 	}
 
-	fmt.Println(strconv.Itoa(scanContext.rowNum) + " ROWS PROCESSED")
+	fmt.Println(strconv.Itoa(scanContext.rowNum) + " ROW(S) PROCESSED")
 
 	return nil
 }

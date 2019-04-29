@@ -1,11 +1,5 @@
 package sqlbuilder
 
-import (
-	"bytes"
-	"github.com/dropbox/godropbox/database/sqltypes"
-	"github.com/pkg/errors"
-)
-
 type NumericExpression interface {
 	Expression
 
@@ -13,8 +7,11 @@ type NumericExpression interface {
 	EqL(literal interface{}) BoolExpression
 	NotEq(expression NumericExpression) BoolExpression
 	NotEqL(literal interface{}) BoolExpression
+
+	Gt(rhs NumericExpression) BoolExpression
 	GtEq(rhs NumericExpression) BoolExpression
 	GtEqL(literal interface{}) BoolExpression
+
 	LtEq(rhs NumericExpression) BoolExpression
 	LtEqL(literal interface{}) BoolExpression
 
@@ -42,6 +39,10 @@ func (n *numericInterfaceImpl) NotEq(expression NumericExpression) BoolExpressio
 
 func (n *numericInterfaceImpl) NotEqL(literal interface{}) BoolExpression {
 	return NotEq(n.parent, Literal(literal))
+}
+
+func (n *numericInterfaceImpl) Gt(expression NumericExpression) BoolExpression {
+	return Gt(n.parent, expression)
 }
 
 func (n *numericInterfaceImpl) GtEq(expression NumericExpression) BoolExpression {
@@ -84,12 +85,8 @@ type numericLiteral struct {
 
 func NewNumericLiteral(value interface{}) NumericExpression {
 	numericLiteral := numericLiteral{}
+	numericLiteral.literalExpression = *Literal(value)
 
-	sqlValue, err := sqltypes.BuildValue(value)
-	if err != nil {
-		panic(errors.Wrap(err, "Invalid literal value"))
-	}
-	numericLiteral.literalExpression = *NewLiteralExpression(sqlValue)
 	numericLiteral.numericInterfaceImpl.parent = &numericLiteral
 
 	return &numericLiteral
@@ -133,10 +130,10 @@ func newNumericExpressionWrap(expression Expression) NumericExpression {
 	return &numericExpressionWrap
 }
 
-func (c *numericExpressionWrapper) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
+func (c *numericExpressionWrapper) Serialize(out *queryData, options ...serializeOption) error {
 	out.WriteString("(")
-	err = c.expression.SerializeSql(out, options...)
+	err := c.expression.Serialize(out, options...)
 	out.WriteString(")")
 
-	return nil
+	return err
 }

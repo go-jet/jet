@@ -83,7 +83,7 @@ func TestUpdate(t *testing.T) {
 //func (s *StmtSuite) TestUpdateWithOrderBy(c *gc.C) {
 //	stmt := table1.UPDATE().SET(table1Col1, Literal(1))
 //	stmt.WHERE(EqL(table1Col2, 2))
-//	stmt.OrderBy(table1Col2)
+//	stmt.ORDER_BY(table1Col2)
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)
 //
@@ -99,7 +99,7 @@ func TestUpdate(t *testing.T) {
 //func (s *StmtSuite) TestUpdateWithLimit(c *gc.C) {
 //	stmt := table1.UPDATE().SET(table1Col1, Literal(1))
 //	stmt.WHERE(EqL(table1Col2, 2))
-//	stmt.Limit(5)
+//	stmt.LIMIT(5)
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)
 //

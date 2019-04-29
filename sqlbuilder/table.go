@@ -3,7 +3,6 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -15,7 +14,7 @@ type TableInterface interface {
 	Columns() []Column
 	// Generates the sql string for the current tableName expression.  Note: the
 	// generated string may not be a valid/executable sql statement.
-	SerializeSql(out *bytes.Buffer) error
+	SerializeSql(out *queryData) error
 }
 
 // The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
@@ -52,9 +51,6 @@ type WritableTable interface {
 // Defines a physical tableName in the database that is both readable and writable.
 // This function will panic if name is not valid
 func NewTable(schemaName, name string, columns ...Column) *Table {
-	if !validIdentifierName(name) {
-		panic("Invalid tableName name")
-	}
 
 	t := &Table{
 		schemaName:   schemaName,
@@ -154,26 +150,18 @@ func (t *Table) ForceIndex(index string) *Table {
 
 // Generates the sql string for the current tableName expression.  Note: the
 // generated string may not be a valid/executable sql statement.
-func (t *Table) SerializeSql(out *bytes.Buffer) error {
+func (t *Table) SerializeSql(out *queryData) error {
 	if t == nil {
-		return errors.Newf("nil tableName.  Generated sql: %s", out.String())
+		return errors.Newf("nil tableName.")
 	}
-	_, _ = out.WriteString(t.schemaName)
-	_, _ = out.WriteString(".")
-	_, _ = out.WriteString(t.TableName())
+
+	out.WriteString(t.schemaName)
+	out.WriteString(".")
+	out.WriteString(t.TableName())
 
 	if len(t.alias) > 0 {
 		out.WriteString(" AS ")
 		out.WriteString(t.alias)
-	}
-
-	if t.forcedIndex != "" {
-		if !validIdentifierName(t.forcedIndex) {
-			return errors.Newf("'%s' is not a valid identifier for an index", t.forcedIndex)
-		}
-		_, _ = out.WriteString(" FORCE INDEX (")
-		_, _ = out.WriteString(t.forcedIndex)
-		_, _ = out.WriteString(")")
 	}
 
 	return nil
@@ -307,7 +295,6 @@ func CrossJoin(
 	return newJoinTable(lhs, rhs, CROSS_JOIN, nil)
 }
 
-// Returns the tableName's name in the database
 func (t *joinTable) SchemaName() string {
 	return ""
 }
@@ -328,16 +315,16 @@ func (t *joinTable) Column(name string) Column {
 	panic("Not implemented")
 }
 
-func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
+func (t *joinTable) SerializeSql(out *queryData) (err error) {
 
 	if t.lhs == nil {
-		return errors.Newf("nil lhs.  Generated sql: %s", out.String())
+		return errors.Newf("nil lhs.")
 	}
 	if t.rhs == nil {
-		return errors.Newf("nil rhs.  Generated sql: %s", out.String())
+		return errors.Newf("nil rhs.")
 	}
 	if t.onCondition == nil && t.join_type != CROSS_JOIN {
-		return errors.Newf("nil onCondition.  Generated sql: %s", out.String())
+		return errors.Newf("nil onCondition.")
 	}
 
 	if err = t.lhs.SerializeSql(out); err != nil {
@@ -346,11 +333,11 @@ func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 
 	switch t.join_type {
 	case INNER_JOIN:
-		_, _ = out.WriteString(" JOIN ")
+		out.WriteString(" JOIN ")
 	case LEFT_JOIN:
-		_, _ = out.WriteString(" LEFT JOIN ")
+		out.WriteString(" LEFT JOIN ")
 	case RIGHT_JOIN:
-		_, _ = out.WriteString(" RIGHT JOIN ")
+		out.WriteString(" RIGHT JOIN ")
 	case FULL_JOIN:
 		out.WriteString(" FULL JOIN ")
 	case CROSS_JOIN:
@@ -362,8 +349,8 @@ func (t *joinTable) SerializeSql(out *bytes.Buffer) (err error) {
 	}
 
 	if t.onCondition != nil {
-		_, _ = out.WriteString(" ON ")
-		if err = t.onCondition.SerializeSql(out); err != nil {
+		out.WriteString(" ON ")
+		if err = t.onCondition.Serialize(out); err != nil {
 			return
 		}
 	}

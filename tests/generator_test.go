@@ -25,13 +25,14 @@ func TestGenerateModel(t *testing.T) {
 
 func TestSelect_ScanToStruct(t *testing.T) {
 	actor := model.Actor{}
-	query := Actor.SELECT(Actor.AllColumns).OrderBy(Actor.ActorID.Asc())
+	query := Actor.SELECT(Actor.AllColumns).ORDER_BY(Actor.ActorID.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	fmt.Println(queryStr)
 
 	assert.Equal(t, queryStr, `SELECT actor.actor_id AS "actor.actor_id", actor.first_name AS "actor.first_name", actor.last_name AS "actor.last_name", actor.last_update AS "actor.last_update" FROM dvds.actor ORDER BY actor.actor_id ASC`)
+	assert.Equal(t, len(args), 0)
 
 	err = query.Query(db, &actor)
 
@@ -50,12 +51,14 @@ func TestSelect_ScanToStruct(t *testing.T) {
 func TestSelect_ScanToSlice(t *testing.T) {
 	customers := []model.Customer{}
 
-	query := Customer.SELECT(Customer.AllColumns).OrderBy(Customer.CustomerID.Asc())
+	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 	fmt.Println(queryStr)
+
 	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active" FROM dvds.customer ORDER BY customer.customer_id ASC`)
+	assert.Equal(t, len(args), 0)
 
 	err = query.Query(db, &customers)
 	assert.NilError(t, err)
@@ -76,7 +79,7 @@ func TestSelect_ScanToSlice(t *testing.T) {
 //		SELECT(FilmActor.AllColumns, Film.AllColumns, Language.AllColumns, Actor.AllColumns).
 //		WHERE(FilmActor.ActorID.GtEq(1).And(FilmActor.ActorID.LteLiteral(2)))
 //
-//	queryStr, err := query.String()
+//	queryStr, args, err := query.Sql()
 //	assert.NilError(t, err)
 //	assert.Equal(t, queryStr, `SELECT film_actor.actor_id AS "film_actor.actor_id", film_actor.film_id AS "film_actor.film_id", film_actor.last_update AS "film_actor.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext",language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",actor.actor_id AS "actor.actor_id", actor.first_name AS "actor.first_name", actor.last_name AS "actor.last_name", actor.last_update AS "actor.last_update" FROM dvds.film_actor JOIN dvds.actor ON film_actor.actor_id = actor.actor_id JOIN dvds.film ON film_actor.film_id = film.film_id JOIN dvds.language ON film.language_id = language.language_id WHERE (film_actor.actor_id>=1 AND film_actor.actor_id<=2)`)
 //
@@ -104,14 +107,18 @@ func TestJoinQuerySlice(t *testing.T) {
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		Where(Film.Rating.EqL(string(model.MpaaRating_NC17))).
-		Limit(15)
+		WHERE(Film.Rating.EqL(string(model.MpaaRating_NC17))).
+		LIMIT(15)
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `SELECT language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext" FROM dvds.film JOIN dvds.language ON film.language_id = language.language_id WHERE film.rating = 'NC-17' LIMIT 15`)
-	//fmt.Println(queryStr)
+	fmt.Println(queryStr)
+	assert.Equal(t, queryStr, `SELECT language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext" FROM dvds.film JOIN dvds.language ON film.language_id = language.language_id WHERE film.rating = $1 LIMIT $2`)
+
+	assert.Equal(t, len(args), 2)
+	assert.Equal(t, args[0], string(model.MpaaRating_NC17))
+	assert.Equal(t, args[1], int64(15))
 
 	err = query.Query(db, &filmsPerLanguage)
 
@@ -149,7 +156,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 
 	query := Film.INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		Limit(limit)
+		LIMIT(limit)
 
 	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
 	err := query.Query(db, &filmsPerLanguageWithPtrs)
@@ -179,7 +186,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 	customersAsc := []model.Customer{}
 
 	err := Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		OrderBy(Customer.FirstName.Asc()).
+		ORDER_BY(Customer.FirstName.Asc()).
 		Query(db, &customersAsc)
 
 	assert.NilError(t, err)
@@ -189,7 +196,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 
 	customersDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		OrderBy(Customer.FirstName.Desc()).
+		ORDER_BY(Customer.FirstName.Desc()).
 		Query(db, &customersDesc)
 
 	assert.NilError(t, err)
@@ -202,7 +209,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 
 	customersAscDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		OrderBy(Customer.FirstName.Asc(), Customer.LastName.Desc()).
+		ORDER_BY(Customer.FirstName.Asc(), Customer.LastName.Desc()).
 		Query(db, &customersAscDesc)
 
 	assert.NilError(t, err)
@@ -227,13 +234,14 @@ func TestSelectFullJoin(t *testing.T) {
 	query := Customer.
 		FULL_JOIN(Address, Customer.AddressID.Eq(Address.AddressID)).
 		SELECT(Customer.AllColumns, Address.AllColumns).
-		OrderBy(Customer.CustomerID.Asc())
+		ORDER_BY(Customer.CustomerID.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
 
 	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active",address.address_id AS "address.address_id", address.address AS "address.address", address.address2 AS "address.address2", address.district AS "address.district", address.city_id AS "address.city_id", address.postal_code AS "address.postal_code", address.phone AS "address.phone", address.last_update AS "address.last_update" FROM dvds.customer FULL JOIN dvds.address ON customer.address_id = address.address_id ORDER BY customer.customer_id ASC`)
+	assert.Equal(t, len(args), 0)
 
 	allCustomersAndAddress := []struct {
 		Address  *model.Address
@@ -259,13 +267,14 @@ func TestSelectFullCrossJoin(t *testing.T) {
 	query := Customer.
 		CrossJoin(Address).
 		SELECT(Customer.AllColumns, Address.AllColumns).
-		OrderBy(Customer.CustomerID.Asc()).
-		Limit(1000)
+		ORDER_BY(Customer.CustomerID.Asc()).
+		LIMIT(1000)
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active",address.address_id AS "address.address_id", address.address AS "address.address", address.address2 AS "address.address2", address.district AS "address.district", address.city_id AS "address.city_id", address.postal_code AS "address.postal_code", address.phone AS "address.phone", address.last_update AS "address.last_update" FROM dvds.customer CROSS JOIN dvds.address ORDER BY customer.customer_id ASC LIMIT 1000`)
+	assert.Equal(t, queryStr, `SELECT customer.customer_id AS "customer.customer_id", customer.store_id AS "customer.store_id", customer.first_name AS "customer.first_name", customer.last_name AS "customer.last_name", customer.email AS "customer.email", customer.address_id AS "customer.address_id", customer.activebool AS "customer.activebool", customer.create_date AS "customer.create_date", customer.last_update AS "customer.last_update", customer.active AS "customer.active",address.address_id AS "address.address_id", address.address AS "address.address", address.address2 AS "address.address2", address.district AS "address.district", address.city_id AS "address.city_id", address.postal_code AS "address.postal_code", address.phone AS "address.phone", address.last_update AS "address.last_update" FROM dvds.customer CROSS JOIN dvds.address ORDER BY customer.customer_id ASC LIMIT $1`)
+	assert.Equal(t, len(args), 1)
 
 	customerAddresCrosJoined := []model.Customer{}
 
@@ -286,9 +295,10 @@ func TestSelectSelfJoin(t *testing.T) {
 	query := f1.
 		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
 		SELECT(f1.AllColumns, f2.AllColumns).
-		OrderBy(f1.FilmID.Asc())
+		ORDER_BY(f1.FilmID.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
+	assert.Equal(t, len(args), 0)
 
 	assert.NilError(t, err)
 
@@ -326,10 +336,11 @@ func TestSelectAliasColumn(t *testing.T) {
 		SELECT(f1.Title.As("thesame_length_films.title1"),
 			f2.Title.As("thesame_length_films.title2"),
 			f1.Length.As("thesame_length_films.length")).
-		OrderBy(f1.Length.Asc(), f1.Title.Asc(), f2.Title.Asc()).
-		Limit(1000)
+		ORDER_BY(f1.Length.Asc(), f1.Title.Asc(), f2.Title.Asc()).
+		LIMIT(1000)
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
+	assert.Equal(t, len(args), 1)
 
 	assert.NilError(t, err)
 
@@ -372,9 +383,10 @@ func TestSelectSelfReferenceType(t *testing.T) {
 		INNER_JOIN(manager, Staff.StaffID.Eq(manager.StaffID)).
 		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName)
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 	fmt.Println(queryStr)
+	assert.Equal(t, len(args), 0)
 
 	staffs := []staff{}
 
@@ -394,13 +406,13 @@ func TestSubQuery(t *testing.T) {
 	//	selectStmtTable.RefIntColumnName("actor.last_name").As("nesto2"),
 	//	)
 	//
-	//queryStr, err := query.String()
+	//queryStr, args, err := query.Sql()
 	//
 	//assert.NilError(t, err)
 	//
 	//fmt.Println(queryStr)
 	//
-	//avrgCustomer := sqlbuilder.NumExp(Customer.SELECT(Customer.LastName).Limit(1))
+	//avrgCustomer := sqlbuilder.NumExp(Customer.SELECT(Customer.LastName).LIMIT(1))
 	//
 	//Customer.
 	//	INNER_JOIN(selectStmtTable, Customer.LastName.Eq(selectStmtTable.RefStringColumn(Actor.FirstName))).
@@ -408,7 +420,7 @@ func TestSubQuery(t *testing.T) {
 	//	WHERE(Actor.LastName.Neq(avrgCustomer))
 
 	rFilmsOnly := Film.SELECT(Film.FilmID, Film.Title, Film.Rating).
-		Where(Film.Rating.EqL("R")).
+		WHERE(Film.Rating.EqL("R")).
 		AsTable("films")
 
 	query := Actor.INNER_JOIN(FilmActor, Actor.ActorID.Eq(FilmActor.FilmID)).
@@ -420,10 +432,10 @@ func TestSubQuery(t *testing.T) {
 			rFilmsOnly.RefStringColumn(Film.Rating).As("film.rating"),
 		)
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
-
+	assert.Equal(t, len(args), 1)
 	fmt.Println(queryStr)
 
 }
@@ -431,12 +443,12 @@ func TestSubQuery(t *testing.T) {
 func TestSelectFunctions(t *testing.T) {
 	query := Film.SELECT(sqlbuilder.MAX(Film.RentalRate).As("max_film_rate"))
 
-	str, err := query.String()
+	str, args, err := query.Sql()
 
 	assert.NilError(t, err)
 
 	assert.Equal(t, str, `SELECT MAX(film.rental_rate) AS "max_film_rate" FROM dvds.film`)
-
+	assert.Equal(t, len(args), 0)
 	fmt.Println(str)
 }
 
@@ -445,13 +457,13 @@ func TestSelectQueryScalar(t *testing.T) {
 	maxFilmRentalRate := sqlbuilder.NumExp(Film.SELECT(sqlbuilder.MAX(Film.RentalRate)))
 
 	query := Film.SELECT(Film.AllColumns).
-		Where(Film.RentalRate.Eq(maxFilmRentalRate)).
-		OrderBy(Film.FilmID.Asc())
+		WHERE(Film.RentalRate.Eq(maxFilmRentalRate)).
+		ORDER_BY(Film.FilmID.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
-
+	assert.Equal(t, len(args), 0)
 	fmt.Println(queryStr)
 
 	maxRentalRateFilms := []model.Film{}
@@ -488,16 +500,17 @@ func TestSelectGroupByHaving(t *testing.T) {
 			Payment.CustomerID.As("customer_payment_sum.customer_id"),
 			sqlbuilder.SUM(Payment.Amount).As("customer_payment_sum.amount_sum"),
 		).
-		GroupBy(Payment.CustomerID).
-		OrderBy(sqlbuilder.SUM(Payment.Amount).Asc()).
-		HAVING(sqlbuilder.Gt(sqlbuilder.SUM(Payment.Amount), sqlbuilder.Literal(100)))
+		GROUP_BY(Payment.CustomerID).
+		ORDER_BY(sqlbuilder.SUM(Payment.Amount).Asc()).
+		HAVING(sqlbuilder.SUM(Payment.Amount).Gt(sqlbuilder.NewNumericLiteral(100)))
 
-	queryStr, err := customersPaymentQuery.String()
+	queryStr, args, err := customersPaymentQuery.Sql()
 
 	assert.NilError(t, err)
 	fmt.Println(queryStr)
+	assert.Equal(t, len(args), 1)
+	assert.Equal(t, queryStr, `SELECT payment.customer_id AS "customer_payment_sum.customer_id",SUM(payment.amount) AS "customer_payment_sum.amount_sum" FROM dvds.payment GROUP BY payment.customer_id HAVING SUM(payment.amount)>$1 ORDER BY SUM(payment.amount) ASC`)
 
-	assert.Equal(t, queryStr, `SELECT payment.customer_id AS "customer_payment_sum.customer_id",SUM(payment.amount) AS "customer_payment_sum.amount_sum" FROM dvds.payment GROUP BY payment.customer_id HAVING SUM(payment.amount)>100 ORDER BY SUM(payment.amount) ASC`)
 	type CustomerPaymentSum struct {
 		CustomerID int16
 		AmountSum  float64
@@ -528,7 +541,7 @@ func TestSelectGroupBy2(t *testing.T) {
 			Payment.CustomerID,
 			sqlbuilder.SUM(Payment.Amount).As("amount_sum"),
 		).
-		GroupBy(Payment.CustomerID)
+		GROUP_BY(Payment.CustomerID)
 
 	customersPaymentTable := customersPaymentSubQuery.AsTable("customer_payment_sum")
 	amountSumColumn := customersPaymentTable.RefIntColumnName("amount_sum")
@@ -536,11 +549,12 @@ func TestSelectGroupBy2(t *testing.T) {
 	query := Customer.
 		INNER_JOIN(customersPaymentTable, Customer.CustomerID.Eq(customersPaymentTable.RefIntColumn(Payment.CustomerID))).
 		SELECT(Customer.AllColumns, amountSumColumn.As("customer_with_amounts.amount_sum")).
-		OrderBy(amountSumColumn.Asc())
+		ORDER_BY(amountSumColumn.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 	fmt.Println(queryStr)
+	assert.Equal(t, len(args), 0)
 
 	err = query.Query(db, &customersWithAmounts)
 	assert.NilError(t, err)
@@ -565,13 +579,13 @@ func TestSelectGroupBy2(t *testing.T) {
 
 func TestSelectTimeColumns(t *testing.T) {
 	query := Payment.SELECT(Payment.AllColumns).
-		Where(Payment.PaymentDate.LtEqL("2007-02-14 22:16:01")).
-		OrderBy(Payment.PaymentDate.Asc())
+		WHERE(Payment.PaymentDate.LtEqL("2007-02-14 22:16:01")).
+		ORDER_BY(Payment.PaymentDate.Asc())
 
-	queryStr, err := query.String()
+	queryStr, args, err := query.Sql()
 
 	assert.NilError(t, err)
-
+	assert.Equal(t, len(args), 1)
 	fmt.Println(queryStr)
 
 	payments := []model.Payment{}

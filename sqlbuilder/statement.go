@@ -1,17 +1,13 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"database/sql"
 	"github.com/sub0zero/go-sqlbuilder/types"
-	"regexp"
-
-	"github.com/dropbox/godropbox/errors"
 )
 
 type Statement interface {
 	// String returns generated SQL as string.
-	String() (sql string, err error)
+	Sql() (query string, args []interface{}, err error)
 
 	Query(db types.Db, destination interface{}) error
 	Execute(db types.Db) (sql.Result, error)
@@ -88,10 +84,10 @@ type Statement interface {
 //
 //	for idx, lock := range s.locks {
 //		if lock.t == nil {
-//			return "", errors.Newf("nil tableName.  Generated sql: %s", buf.String())
+//			return "", errors.Newf("nil tableName.", buf.String())
 //		}
 //
-//		if err = lock.t.SerializeSql(buf); err != nil {
+//		if err = lock.t.Serialize(buf); err != nil {
 //			return
 //		}
 //
@@ -162,23 +158,23 @@ type Statement interface {
 //
 
 // Once again, teisenberger is lazy.  Here's a quick filter on comments
-var validCommentRegexp *regexp.Regexp = regexp.MustCompile("^[\\w .?]*$")
-
-func isValidComment(comment string) bool {
-	return validCommentRegexp.MatchString(comment)
-}
-
-func writeComment(comment string, buf *bytes.Buffer) error {
-	if comment != "" {
-		_, _ = buf.WriteString("/* ")
-		if !isValidComment(comment) {
-			return errors.Newf("Invalid comment: %s", comment)
-		}
-		_, _ = buf.WriteString(comment)
-		_, _ = buf.WriteString(" */")
-	}
-	return nil
-}
+//var validCommentRegexp *regexp.Regexp = regexp.MustCompile("^[\\w .?]*$")
+//
+//func isValidComment(comment string) bool {
+//	return validCommentRegexp.MatchString(comment)
+//}
+//
+//func writeComment(comment string, buf *bytes.Buffer) error {
+//	if comment != "" {
+//		_, _ = buf.WriteString("/* ")
+//		if !isValidComment(comment) {
+//			return errors.Newf("Invalid comment: %s", comment)
+//		}
+//		_, _ = buf.WriteString(comment)
+//		_, _ = buf.WriteString(" */")
+//	}
+//	return nil
+//}
 
 func newOrderByListClause(clauses ...OrderByClause) *listClause {
 	ret := &listClause{

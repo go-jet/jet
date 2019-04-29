@@ -1,8 +1,6 @@
 package sqlbuilder
 
 import (
-	"bytes"
-	"github.com/dropbox/godropbox/database/sqltypes"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -42,8 +40,8 @@ func (e *expressionInterfaceImpl) Desc() OrderByClause {
 	return &orderByClause{expression: e.parent, ascent: false}
 }
 
-func (e *expressionInterfaceImpl) SerializeForProjection(out *bytes.Buffer) error {
-	return e.parent.SerializeSql(out, FOR_PROJECTION)
+func (e *expressionInterfaceImpl) SerializeForProjection(out *queryData) error {
+	return e.parent.Serialize(out, FOR_PROJECTION)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -62,21 +60,21 @@ func newBinaryExpression(lhs, rhs Expression, operator []byte, parent ...Express
 	return binaryExpression
 }
 
-func (c *binaryExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
+func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption) error {
 	if c.lhs == nil {
-		return errors.Newf("nil lhs.  Generated sql: %s", out.String())
+		return errors.Newf("nil lhs.")
 	}
-	if err = c.lhs.SerializeSql(out); err != nil {
-		return
+	if err := c.lhs.Serialize(out); err != nil {
+		return err
 	}
 
-	_, _ = out.Write(c.operator)
+	out.Write(c.operator)
 
 	if c.rhs == nil {
-		return errors.Newf("nil rhs.  Generated sql: %s", out.String())
+		return errors.Newf("nil rhs.")
 	}
-	if err = c.rhs.SerializeSql(out); err != nil {
-		return
+	if err := c.rhs.Serialize(out); err != nil {
+		return err
 	}
 
 	return nil
@@ -97,80 +95,61 @@ func newPrefixExpression(expression Expression, operator []byte) prefixExpressio
 	return prefixExpression
 }
 
-func (p *prefixExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
-	_, _ = out.Write(p.operator)
+func (p *prefixExpression) Serialize(out *queryData, options ...serializeOption) error {
+	out.Write(p.operator)
 
 	if p.expression == nil {
-		return errors.Newf("nil prefix expression.  Generated sql: %s", out.String())
+		return errors.Newf("nil prefix expression.")
 	}
-	if err = p.expression.SerializeSql(out); err != nil {
-		return
-	}
-
-	return nil
-}
-
-// Representation of n-ary conjunctions (AND/OR)
-type conjunctExpression struct {
-	expressions []BoolExpression
-	conjunction []byte
-}
-
-func (conj *conjunctExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) (err error) {
-	if len(conj.expressions) == 0 {
-		return errors.Newf(
-			"Empty conjunction.  Generated sql: %s",
-			out.String())
-	}
-
-	clauses := make([]Clause, len(conj.expressions), len(conj.expressions))
-	for i, expr := range conj.expressions {
-		clauses[i] = expr
-	}
-
-	useParentheses := len(clauses) > 1
-	if useParentheses {
-		_ = out.WriteByte('(')
-	}
-
-	if err = serializeClauses(clauses, conj.conjunction, out); err != nil {
-		return
-	}
-
-	if useParentheses {
-		_ = out.WriteByte(')')
+	if err := p.expression.Serialize(out); err != nil {
+		return err
 	}
 
 	return nil
 }
+
+//
+//// Representation of n-ary conjunctions (AND/OR)
+//type conjunctExpression struct {
+//	expressions []Expression
+//	conjunction []byte
+//}
+//
+//func (conj *conjunctExpression) Serialize(out *queryData, options ...serializeOption) error {
+//	if len(conj.expressions) == 0 {
+//		return errors.New("Empty conjunction.")
+//	}
+//
+//	//clauses := make([]Clause, len(conj.expressions), len(conj.expressions))
+//	//for i, expr := range conj.expressions {
+//	//	clauses[i] = expr
+//	//}
+//
+//	useParentheses := len(conj.expressions) > 1
+//	if useParentheses {
+//		out.WriteByte('(')
+//	}
+//
+//	if err := serializeExpressionList(conj.expressions, string(conj.conjunction), out); err != nil {
+//		return err
+//	}
+//
+//	if useParentheses {
+//		out.WriteByte(')')
+//	}
+//
+//	return nil
+//}
 
 //--------------------------------------------------------------
-
-// Representation of an escaped literal
-type literalExpression struct {
-	expressionInterfaceImpl
-	value sqltypes.Value
-}
-
-func NewLiteralExpression(value sqltypes.Value) *literalExpression {
-	exp := literalExpression{value: value}
-	exp.expressionInterfaceImpl.parent = &exp
-
-	return &exp
-}
-
-func (c literalExpression) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
-	sqltypes.Value(c.value).EncodeSql(out)
-	return nil
-}
 
 //------------------------------------------------------//
 //// Dummy type for select *
 //type ColumnList []Column
 //
-//func (cl ColumnList) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+//func (cl ColumnList) Serialize(out *bytes.Buffer, options ...serializeOption) error {
 //	for i, column := range cl {
-//		err := column.SerializeSql(out)
+//		err := column.Serialize(out)
 //
 //		if err != nil {
 //			return err

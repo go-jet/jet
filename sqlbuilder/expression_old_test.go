@@ -19,7 +19,7 @@ func (s *ExprSuite) TestConjunctExprEmptyList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -28,7 +28,7 @@ func (s *ExprSuite) TestConjunctExprNilInList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -37,7 +37,7 @@ func (s *ExprSuite) TestConjunctExprSingleElement(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -48,11 +48,11 @@ func (s *ExprSuite) TestTupleExpr(c *gc.C) {
 
 	expr := Tuple()
 	buf := &bytes.Buffer{}
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 
 	expr = Tuple(table1Col1, Literal(1), Literal("five"))
-	err = expr.SerializeSql(buf)
+	err = expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -68,7 +68,7 @@ func (s *ExprSuite) TestLikeExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -84,7 +84,7 @@ func (s *ExprSuite) TestRegexExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -100,7 +100,7 @@ func (s *ExprSuite) TestAndExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -115,7 +115,7 @@ func (s *ExprSuite) TestOrExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -130,7 +130,7 @@ func (s *ExprSuite) TestAddExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -142,7 +142,7 @@ func (s *ExprSuite) TestSubExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -154,7 +154,7 @@ func (s *ExprSuite) TestMulExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -166,7 +166,7 @@ func (s *ExprSuite) TestDivExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -178,7 +178,7 @@ func (s *ExprSuite) TestBinaryExprNilLHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -187,7 +187,7 @@ func (s *ExprSuite) TestNegateExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -199,7 +199,7 @@ func (s *ExprSuite) TestBinaryExprNilRHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -208,7 +208,7 @@ func (s *ExprSuite) TestEqExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -220,7 +220,7 @@ func (s *ExprSuite) TestEqExprNilLHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -232,7 +232,7 @@ func (s *ExprSuite) TestNeqExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -244,7 +244,7 @@ func (s *ExprSuite) TestNeqExprNilLHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -256,7 +256,7 @@ func (s *ExprSuite) TestLtExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -268,7 +268,7 @@ func (s *ExprSuite) TestLteExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -283,7 +283,7 @@ func (s *ExprSuite) TestGtExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -295,7 +295,7 @@ func (s *ExprSuite) TestGteExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -308,7 +308,7 @@ func (s *ExprSuite) TestInExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -321,7 +321,7 @@ func (s *ExprSuite) TestInExprEmptyList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -333,7 +333,7 @@ func (s *ExprSuite) TestSqlFuncExprNilInArgList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -342,7 +342,7 @@ func (s *ExprSuite) TestSqlFuncExprEmptyArgList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -354,7 +354,7 @@ func (s *ExprSuite) TestSqlFuncExprNonEmptyArgList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.SerializeSql(buf)
+	err := expr.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -366,7 +366,7 @@ func (s *ExprSuite) TestOrderByClauseNilExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := clause.SerializeSql(buf)
+	err := clause.Serialize(buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -375,7 +375,7 @@ func (s *ExprSuite) TestAsc(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := clause.SerializeSql(buf)
+	err := clause.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -387,7 +387,7 @@ func (s *ExprSuite) TestDesc(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := clause.SerializeSql(buf)
+	err := clause.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -400,7 +400,7 @@ func (s *ExprSuite) TestIf(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := clause.SerializeSql(buf)
+	err := clause.Serialize(buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -538,7 +538,7 @@ func (s *ExprSuite) TestInterval(c *gc.C) {
 
 	for i, tt := range testTable {
 		buf.Reset()
-		err := Interval(tt.interval).SerializeSql(buf)
+		err := Interval(tt.interval).Serialize(buf)
 		c.Assert(err, gc.Equals, tt.expectedErr,
 			gc.Commentf("experiment #%d", i))
 		if err == nil {

@@ -3,14 +3,9 @@
 package sqlbuilder
 
 import (
-	"bytes"
-	"regexp"
 	"strings"
 )
 
-// XXX: Maybe add UIntColumn
-
-// Representation of a tableName for query generation
 type Column interface {
 	Expression
 
@@ -27,11 +22,6 @@ const (
 	Nullable    NullableColumn = true
 	NotNullable NullableColumn = false
 )
-
-//// A column that can be refer to outside of the projection list
-//type NonAliasColumn interface {
-//	Column
-//}
 
 type Collation string
 
@@ -82,194 +72,39 @@ func (c *baseColumn) setTableName(table string) error {
 	return nil
 }
 
-func (c baseColumn) SerializeSql(out *bytes.Buffer, options ...serializeOption) error {
+func (c baseColumn) Serialize(out *queryData, options ...serializeOption) error {
 	if c.tableName != "" {
-		_, _ = out.WriteString(c.tableName)
-		_, _ = out.WriteString(".")
+		out.WriteString(c.tableName)
+		out.WriteString(".")
 	}
+
 	containsDot := strings.Contains(c.name, ".")
 
 	if containsDot {
-		out.WriteString("\"")
-	}
-	_, _ = out.WriteString(c.name)
-	if containsDot {
-		out.WriteString("\"")
+		out.WriteString(`"`)
 	}
 
-	if contains(options, FOR_PROJECTION) && !contains(options, ALIASED) && c.tableName != "" {
-		_, _ = out.WriteString(" AS \"" + c.tableName + "." + c.name + "\"")
+	out.WriteString(c.name)
+
+	if containsDot {
+		out.WriteString(`"`)
+	}
+
+	if contains(options, FOR_PROJECTION) && !contains(options, SKIP_DEFAULT_ALIASING) && c.tableName != "" {
+		out.WriteString(" AS \"" + c.tableName + "." + c.name + "\"")
 	}
 
 	return nil
 }
 
 //
-//type bytesColumn struct {
-//	baseColumn
-//}
+//// This is a strict subset of the actual allowed identifiers
+//var validIdentifierRegexp = regexp.MustCompile("^[a-zA-Z_]\\w*$")
 //
-//// Representation of VARBINARY/BLOB columns
-//// This function will panic if name is not valid
-//func BytesColumn(name string, nullable NullableColumn) Column {
-//	if !validIdentifierName(name) {
-//		panic("Invalid column name in bytes column")
-//	}
-//	bc := &bytesColumn{}
-//	bc.name = name
-//	bc.nullable = nullable
-//	return bc
+//// Returns true if the given string is suitable as an identifier.
+//func validIdentifierName(name string) bool {
+//	return validIdentifierRegexp.MatchString(name)
 //}
-//
-//type stringColumn struct {
-//	baseColumn
-//	charset   Charset
-//	collation Collation
-//}
-//
-//// Representation of VARCHAR/TEXT columns
-//// This function will panic if name is not valid
-//func StrColumn(
-//	name string,
-//	charset Charset,
-//	collation Collation,
-//	nullable NullableColumn) Column {
-//
-//	if !validIdentifierName(name) {
-//		panic("Invalid column name in str column")
-//	}
-//	sc := &stringColumn{charset: charset, collation: collation}
-//	sc.name = name
-//	sc.nullable = nullable
-//	return sc
-//}
-//
-//type dateTimeColumn struct {
-//	baseColumn
-//}
-//
-//// Representation of DateTime columns
-//// This function will panic if name is not valid
-//func DateTimeColumn(name string, nullable NullableColumn) Column {
-//	if !validIdentifierName(name) {
-//		panic("Invalid column name in datetime column")
-//	}
-//	dc := &dateTimeColumn{}
-//	dc.name = name
-//	dc.nullable = nullable
-//	return dc
-//}
-
-//type IntegerColumn struct {
-//	baseColumn
-//}
-//
-//// Representation of any integer column
-//// This function will panic if name is not valid
-//func IntColumn(name string, nullable NullableColumn) *IntegerColumn {
-//	if !validIdentifierName(name) {
-//		panic("Invalid column name in int column")
-//	}
-//	ic := &IntegerColumn{}
-//	ic.name = name
-//	ic.nullable = nullable
-//	return ic
-//}
-
-//type doubleColumn struct {
-//	baseColumn
-//}
-//
-//// Representation of any double column
-//// This function will panic if name is not valid
-//func DoubleColumn(name string, nullable NullableColumn) Column {
-//	if !validIdentifierName(name) {
-//		panic("Invalid column name in int column")
-//	}
-//	ic := &doubleColumn{}
-//	ic.name = name
-//	ic.nullable = nullable
-//	return ic
-//}
-//
-//type booleanColumn struct {
-//	baseColumn
-//
-//	// XXX: Maybe allow isBoolExpression (for now, not included because
-//	// the deferred lookup equivalent can never be isBoolExpression)
-//}
-
-// Representation of TINYINT used as a bool
-// This function will panic if name is not valid
-//func NewBoolColumn(name string, nullable NullableColumn) Column {
-//	if !validIdentifierName(name) {
-//		panic("Invalid column name in bool column")
-//	}
-//	bc := &booleanColumn{}
-//	bc.name = name
-//	bc.nullable = nullable
-//	return bc
-//}
-//
-//type aliasColumn struct {
-//	baseColumn
-//	expression Expression
-//}
-//
-//func (c *aliasColumn) SerializeSql(out *bytes.Buffer) error {
-//	_ = out.WriteByte('`')
-//	_, _ = out.WriteString(c.name)
-//	_ = out.WriteByte('`')
-//	return nil
-//}
-//
-//func (c *aliasColumn) SerializeSqlForColumnList(out *bytes.Buffer) error {
-//	if !validIdentifierName(c.name) {
-//		return errors.Newf(
-//			"Invalid alias name `%s`.  Generated sql: %s",
-//			c.name,
-//			out.String())
-//	}
-//	if c.expression == nil {
-//		return errors.Newf(
-//			"Cannot alias a nil expression.  Generated sql: %s",
-//			out.String())
-//	}
-//
-//	_ = out.WriteByte('(')
-//	if c.expression == nil {
-//		return errors.Newf("nil alias clause.  Generate sql: %s", out.String())
-//	}
-//	if err := c.expression.SerializeSql(out); err != nil {
-//		return err
-//	}
-//	_, _ = out.WriteString(") AS \"")
-//	_, _ = out.WriteString(c.name)
-//	_ = out.WriteByte('"')
-//	return nil
-//}
-
-//func (c *aliasColumn) setTableName(table string) error {
-//	return errors.Newf(
-//		"Alias column '%s' should never have setTableName called on it",
-//		c.name)
-//}
-
-// Representation of aliased clauses (expression AS name)
-//func Alias(name string, c Expression) Column {
-//	ac := &aliasColumn{}
-//	ac.name = name
-//	ac.expression = c
-//	return ac
-//}
-
-// This is a strict subset of the actual allowed identifiers
-var validIdentifierRegexp = regexp.MustCompile("^[a-zA-Z_]\\w*$")
-
-// Returns true if the given string is suitable as an identifier.
-func validIdentifierName(name string) bool {
-	return validIdentifierRegexp.MatchString(name)
-}
 
 //
 //// Pseudo Column type returned by tableName.C(name)
@@ -289,12 +124,12 @@ func validIdentifierName(name string) bool {
 //func (c *deferredLookupColumn) SerializeSqlForColumnList(
 //	out *bytes.Buffer) error {
 //
-//	return c.SerializeSql(out)
+//	return c.Serialize(out)
 //}
 //
-//func (c *deferredLookupColumn) SerializeSql(out *bytes.Buffer) error {
+//func (c *deferredLookupColumn) Serialize(out *bytes.Buffer) error {
 //	if c.cachedColumn != nil {
-//		return c.cachedColumn.SerializeSql(out)
+//		return c.cachedColumn.Serialize(out)
 //	}
 //
 //	col, err := c.tableName.getColumn(c.colName)
@@ -303,7 +138,7 @@ func validIdentifierName(name string) bool {
 //	}
 //
 //	c.cachedColumn = col
-//	return col.SerializeSql(out)
+//	return col.Serialize(out)
 //}
 //
 //func (c *deferredLookupColumn) setTableName(tableName string) error {
