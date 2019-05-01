@@ -11,6 +11,7 @@ type serializeOption int
 const (
 	SKIP_DEFAULT_ALIASING = iota
 	FOR_PROJECTION
+	NO_TABLE_NAME
 )
 
 type Clause interface {
@@ -18,27 +19,27 @@ type Clause interface {
 }
 
 type queryData struct {
-	queryBuff bytes.Buffer
-	args      []interface{}
+	buff bytes.Buffer
+	args []interface{}
 }
 
 func (q *queryData) Write(data []byte) {
-	q.queryBuff.Write(data)
+	q.buff.Write(data)
 }
 
 func (q *queryData) WriteString(str string) {
-	q.queryBuff.WriteString(str)
+	q.buff.WriteString(str)
 }
 
 func (q *queryData) WriteByte(b byte) {
-	q.queryBuff.WriteByte(b)
+	q.buff.WriteByte(b)
 }
 
 func (q *queryData) InsertArgument(arg interface{}) {
 	q.args = append(q.args, arg)
 	argPlaceholder := "$" + strconv.Itoa(len(q.args))
 
-	q.queryBuff.WriteString(argPlaceholder)
+	q.buff.WriteString(argPlaceholder)
 }
 
 func argToString(value interface{}) (string, error) {

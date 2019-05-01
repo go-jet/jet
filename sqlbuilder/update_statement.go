@@ -147,5 +147,5 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		}
 	}
 
-	return out.queryBuff.String(), out.args, nil
+	return out.buff.String(), out.args, nil
 }

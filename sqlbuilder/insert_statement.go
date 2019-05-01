@@ -226,5 +226,5 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 
 	queryData.WriteByte(';')
 
-	return queryData.queryBuff.String(), queryData.args, nil
+	return queryData.buff.String(), queryData.args, nil
 }

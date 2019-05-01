@@ -67,5 +67,5 @@ func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error
 		}
 	}
 
-	return queryData.queryBuff.String() + ";", queryData.args, nil
+	return queryData.buff.String() + ";", queryData.args, nil
 }

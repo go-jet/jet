@@ -73,7 +73,7 @@ func (c *baseColumn) setTableName(table string) error {
 }
 
 func (c baseColumn) Serialize(out *queryData, options ...serializeOption) error {
-	if c.tableName != "" {
+	if c.tableName != "" && !contains(options, NO_TABLE_NAME) {
 		out.WriteString(c.tableName)
 		out.WriteString(".")
 	}

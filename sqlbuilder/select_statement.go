@@ -21,8 +21,6 @@ type SelectStatement interface {
 
 	FOR_UPDATE() SelectStatement
 
-	Copy() SelectStatement
-
 	AsTable(alias string) *SelectStatementTable
 }
 
@@ -159,7 +157,7 @@ func (q *selectStatementImpl) Sql() (query string, args []interface{}, err error
 		return "", nil, err
 	}
 
-	return queryData.queryBuff.String(), queryData.args, nil
+	return queryData.buff.String(), queryData.args, nil
 }
 
 func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
@@ -167,19 +165,6 @@ func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
 		statement: s,
 		alias:     alias,
 	}
-}
-
-func (s *selectStatementImpl) Query(db types.Db, destination interface{}) error {
-	return Query(s, db, destination)
-}
-
-func (u *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	return Execute(u, db)
-}
-
-func (s *selectStatementImpl) Copy() SelectStatement {
-	ret := *s
-	return &ret
 }
 
 func (q *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
@@ -222,6 +207,14 @@ func (q *selectStatementImpl) DISTINCT() SelectStatement {
 func (q *selectStatementImpl) FOR_UPDATE() SelectStatement {
 	q.forUpdate = true
 	return q
+}
+
+func (s *selectStatementImpl) Query(db types.Db, destination interface{}) error {
+	return Query(s, db, destination)
+}
+
+func (u *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(u, db)
 }
 
 func NumExp(statement SelectStatement) NumericExpression {

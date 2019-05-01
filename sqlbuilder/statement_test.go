@@ -463,8 +463,8 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 
 	q := Union(select_queries...)
 	q = q.Where(And(LtL(table1Col1, 1000), GtL(table1Col1, 15)))
-	q = q.OrderBy(Desc(table1Col4), Asc(table1Col3))
-	q = q.Limit(5)
+	q = q.ORDER_BY(Desc(table1Col4), Asc(table1Col3))
+	q = q.LIMIT(5)
 
 	_, err := q.String()
 
@@ -502,8 +502,8 @@ func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 	q := Union(select_queries...)
 	q = q.Where(And(LtL(table1Col1, 1000), GtL(table1Col1, 15)))
 
-	q = q.OrderBy(Desc(table1Col4), Asc(table1Col3))
-	q = q.Limit(5)
+	q = q.ORDER_BY(Desc(table1Col4), Asc(table1Col3))
+	q = q.LIMIT(5)
 	q = q.GroupBy(table1Col4)
 
 	sql, err := q.String()
