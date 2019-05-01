@@ -414,7 +414,7 @@ func (s *StmtSuite) TestUnionSelectStatement(c *gc.C) {
 		table1.Select(table1Col1).Where(LtL(table1Col1, 23)),
 	)
 
-	q := Union(select_queries...)
+	q := UNION(select_queries...)
 
 	sql, err := q.String()
 
@@ -436,7 +436,7 @@ func (s *StmtSuite) TestUnionLimitWithoutOrderBy(c *gc.C) {
 		table1.Select(table1Col1).Where(LtL(table1Col1, 23)),
 	)
 
-	q := Union(select_queries...)
+	q := UNION(select_queries...)
 
 	_, err := q.String()
 
@@ -444,7 +444,7 @@ func (s *StmtSuite) TestUnionLimitWithoutOrderBy(c *gc.C) {
 	c.Assert(
 		errors.GetMessage(err),
 		gc.Equals,
-		"All inner selects in Union statement must have LIMIT if they have ORDER BY")
+		"All inner selects in UNION statement must have LIMIT if they have ORDER BY")
 }
 
 func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
@@ -461,7 +461,7 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 		table1.Select(table1Col1).Where(LtL(table1Col1, 23)).OrderBy(table1Col4).Limit(20),
 	)
 
-	q := Union(select_queries...)
+	q := UNION(select_queries...)
 	q = q.Where(And(LtL(table1Col1, 1000), GtL(table1Col1, 15)))
 	q = q.ORDER_BY(Desc(table1Col4), Asc(table1Col3))
 	q = q.LIMIT(5)
@@ -472,7 +472,7 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 	c.Assert(
 		errors.GetMessage(err),
 		gc.Equals,
-		"All inner selects in Union statement must select the "+
+		"All inner selects in UNION statement must select the "+
 			"same number of columns.  For sanity, you probably "+
 			"want to select the same tableName columns in the same "+
 			"orderBy.  If you are selecting on multiple tables, "+
@@ -499,7 +499,7 @@ func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 		).Where(LtL(table1Col1, 23)).OrderBy(table1Col4).Limit(20),
 	)
 
-	q := Union(select_queries...)
+	q := UNION(select_queries...)
 	q = q.Where(And(LtL(table1Col1, 1000), GtL(table1Col1, 15)))
 
 	q = q.ORDER_BY(Desc(table1Col4), Asc(table1Col3))
