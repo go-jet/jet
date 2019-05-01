@@ -42,6 +42,11 @@ func (q *queryData) InsertArgument(arg interface{}) {
 	q.buff.WriteString(argPlaceholder)
 }
 
+func (q *queryData) Reset() {
+	q.buff.Reset()
+	q.args = []interface{}{}
+}
+
 func argToString(value interface{}) (string, error) {
 	switch bindVal := value.(type) {
 	case bool:

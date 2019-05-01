@@ -15,7 +15,7 @@ func TestUpdate(t *testing.T) {
 		SET(table1.SELECT(table1Col2)).
 		WHERE(table1Col1.EqL(2))
 
-	stmtStr, err := stmt.String()
+	stmtStr, _, err := stmt.Sql()
 
 	assert.NilError(t, err)
 

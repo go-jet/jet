@@ -54,6 +54,10 @@ func (u *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
 
 // expression or default keyword
 func (s *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
+	if len(values) == 0 {
+		return s
+	}
+
 	literalRow := []Clause{}
 
 	for _, value := range values {

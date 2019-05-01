@@ -45,7 +45,7 @@ type WritableTable interface {
 
 	INSERT(columns ...Column) InsertStatement
 	UPDATE(columns ...Column) UpdateStatement
-	Delete() DeleteStatement
+	DELETE() DeleteStatement
 }
 
 // Defines a physical tableName in the database that is both readable and writable.
@@ -220,7 +220,7 @@ func (t *Table) UPDATE(columns ...Column) UpdateStatement {
 	return newUpdateStatement(t, columns)
 }
 
-func (t *Table) Delete() DeleteStatement {
+func (t *Table) DELETE() DeleteStatement {
 	return newDeleteStatement(t)
 }
 

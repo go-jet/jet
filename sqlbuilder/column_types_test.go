@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"bytes"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -9,23 +8,23 @@ import (
 func TestNewBoolColumn(t *testing.T) {
 	boolColumn := NewBoolColumn("col", Nullable)
 
-	out := bytes.Buffer{}
+	out := queryData{}
 	err := boolColumn.Serialize(&out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), "col")
+	assert.Equal(t, out.buff.String(), "col")
 
 	out.Reset()
 	err = boolColumn.Serialize(&out, FOR_PROJECTION)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), "col")
+	assert.Equal(t, out.buff.String(), "col")
 
 	out.Reset()
 	err = boolColumn.setTableName("table1")
 	assert.NilError(t, err)
 	err = boolColumn.Serialize(&out, FOR_PROJECTION)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), `table1.col AS "table1.col"`)
+	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
 
 	out.Reset()
 	err = boolColumn.setTableName("table1")
@@ -33,29 +32,29 @@ func TestNewBoolColumn(t *testing.T) {
 	aliasedBoolColumn := boolColumn.As("alias1")
 	err = aliasedBoolColumn.SerializeForProjection(&out)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), `table1.col AS "alias1"`)
+	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }
 
 func TestNewIntColumn(t *testing.T) {
 	integerColumn := NewIntegerColumn("col", Nullable)
 
-	out := bytes.Buffer{}
+	out := queryData{}
 	err := integerColumn.Serialize(&out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), "col")
+	assert.Equal(t, out.buff.String(), "col")
 
 	out.Reset()
 	err = integerColumn.Serialize(&out, FOR_PROJECTION)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), "col")
+	assert.Equal(t, out.buff.String(), "col")
 
 	out.Reset()
 	err = integerColumn.setTableName("table1")
 	assert.NilError(t, err)
 	err = integerColumn.Serialize(&out, FOR_PROJECTION)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), `table1.col AS "table1.col"`)
+	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
 
 	out.Reset()
 	err = integerColumn.setTableName("table1")
@@ -63,29 +62,29 @@ func TestNewIntColumn(t *testing.T) {
 	aliasedBoolColumn := integerColumn.As("alias1")
 	err = aliasedBoolColumn.SerializeForProjection(&out)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), `table1.col AS "alias1"`)
+	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }
 
 func TestNewNumericColumnColumn(t *testing.T) {
 	numericColumn := NewNumericColumn("col", Nullable)
 
-	out := bytes.Buffer{}
+	out := queryData{}
 	err := numericColumn.Serialize(&out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), "col")
+	assert.Equal(t, out.buff.String(), "col")
 
 	out.Reset()
 	err = numericColumn.Serialize(&out)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), "col")
+	assert.Equal(t, out.buff.String(), "col")
 
 	out.Reset()
 	err = numericColumn.setTableName("table1")
 	assert.NilError(t, err)
 	err = numericColumn.Serialize(&out, FOR_PROJECTION)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), `table1.col AS "table1.col"`)
+	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
 
 	out.Reset()
 	err = numericColumn.setTableName("table1")
@@ -93,5 +92,5 @@ func TestNewNumericColumnColumn(t *testing.T) {
 	aliasedBoolColumn := numericColumn.As("alias1")
 	err = aliasedBoolColumn.SerializeForProjection(&out)
 	assert.NilError(t, err)
-	assert.Equal(t, out.String(), `table1.col AS "alias1"`)
+	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }

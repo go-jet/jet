@@ -64,17 +64,29 @@ func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption)
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.")
 	}
+	if c.rhs == nil {
+		return errors.Newf("nil rhs.")
+	}
+
+	_, literalLeft := c.lhs.(*literalExpression)
+	_, literalRight := c.rhs.(*literalExpression)
+
+	if !literalLeft && !literalRight {
+		out.WriteString("(")
+	}
+
 	if err := c.lhs.Serialize(out); err != nil {
 		return err
 	}
 
 	out.Write(c.operator)
 
-	if c.rhs == nil {
-		return errors.Newf("nil rhs.")
-	}
 	if err := c.rhs.Serialize(out); err != nil {
 		return err
+	}
+
+	if !literalLeft && !literalRight {
+		out.WriteString(")")
 	}
 
 	return nil
