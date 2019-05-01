@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	_ "github.com/lib/pq"
+	"github.com/sub0zero/go-sqlbuilder/generator"
+	"gotest.tools/assert"
 	"os"
 	"testing"
 )
@@ -74,4 +76,15 @@ CREATE TABLE IF NOT EXISTS test_sample.link (
 
 	fmt.Println(result)
 
+}
+
+func TestGenerateModel(t *testing.T) {
+
+	err := generator.Generate(folderPath, connectString, dbname, schemaName)
+
+	assert.NilError(t, err)
+
+	//err = generator.Generate(folderPath, connectString, dbname, "sport")
+	//
+	//assert.NilError(t, err)
 }

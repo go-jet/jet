@@ -2,7 +2,6 @@ package tests
 
 import (
 	"fmt"
-	"github.com/sub0zero/go-sqlbuilder/generator"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
@@ -11,17 +10,6 @@ import (
 	"testing"
 	"time"
 )
-
-func TestGenerateModel(t *testing.T) {
-
-	err := generator.Generate(folderPath, connectString, dbname, schemaName)
-
-	assert.NilError(t, err)
-
-	//err = generator.Generate(folderPath, connectString, dbname, "sport")
-	//
-	//assert.NilError(t, err)
-}
 
 func TestSelect_ScanToStruct(t *testing.T) {
 	actor := model.Actor{}

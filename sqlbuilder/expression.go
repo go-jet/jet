@@ -60,6 +60,20 @@ func newBinaryExpression(lhs, rhs Expression, operator []byte, parent ...Express
 	return binaryExpression
 }
 
+func isSimpleOperand(expression Expression) bool {
+	if _, ok := expression.(*literalExpression); ok {
+		return true
+	}
+	if _, ok := expression.(Column); ok {
+		return true
+	}
+	if _, ok := expression.(FuncExpression); ok {
+		return true
+	}
+
+	return false
+}
+
 func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption) error {
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.")
@@ -68,10 +82,9 @@ func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption)
 		return errors.Newf("nil rhs.")
 	}
 
-	_, literalLeft := c.lhs.(*literalExpression)
-	_, literalRight := c.rhs.(*literalExpression)
+	wrap := !isSimpleOperand(c.lhs) && !isSimpleOperand(c.rhs)
 
-	if !literalLeft && !literalRight {
+	if wrap {
 		out.WriteString("(")
 	}
 
@@ -85,7 +98,7 @@ func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption)
 		return err
 	}
 
-	if !literalLeft && !literalRight {
+	if wrap {
 		out.WriteString(")")
 	}
 

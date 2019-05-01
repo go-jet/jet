@@ -81,8 +81,8 @@ func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
 }
 
 func (us *setStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
-	if len(us.selects) == 0 {
-		return errors.Newf("UNION statement must have at least one SELECT")
+	if len(us.selects) < 2 {
+		return errors.Newf("UNION statement must have at least two SELECT statements.")
 	}
 
 	out.WriteString("(")
