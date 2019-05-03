@@ -22,3 +22,14 @@ func (cl ColumnList) SerializeForProjection(out *queryData) error {
 	}
 	return nil
 }
+
+func (cl ColumnList) DefaultAlias() []Projection {
+	newColumnList := []Projection{}
+
+	for _, column := range cl {
+		newColumn := column.DefaultAlias()
+		newColumnList = append(newColumnList, newColumn)
+	}
+
+	return newColumnList
+}

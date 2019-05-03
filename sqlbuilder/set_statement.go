@@ -48,7 +48,7 @@ func EXCEPT_ALL(selects ...SelectStatement) SetStatement {
 type setStatementImpl struct {
 	operator      string
 	selects       []SelectStatement
-	order         *listClause
+	orderBy       []OrderByClause
 	limit, offset int64
 	// True if results of the union should be deduped.
 	all bool
@@ -64,9 +64,9 @@ func newSetStatementImpl(operator string, all bool, selects ...SelectStatement) 
 	}
 }
 
-func (us *setStatementImpl) ORDER_BY(clauses ...OrderByClause) SetStatement {
+func (us *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
 
-	us.order = newOrderByListClause(clauses...)
+	us.orderBy = orderBy
 	return us
 }
 
@@ -80,18 +80,19 @@ func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
 	return us
 }
 
-func (us *setStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
-	if len(us.selects) < 2 {
+func (s *setStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
+
+	if len(s.selects) < 2 {
 		return errors.Newf("UNION statement must have at least two SELECT statements.")
 	}
 
 	out.WriteString("(")
 
-	for i, selectStmt := range us.selects {
+	for i, selectStmt := range s.selects {
 		if i > 0 {
-			out.WriteString(" " + us.operator + " ")
+			out.WriteString(" " + s.operator + " ")
 
-			if us.all {
+			if s.all {
 				out.WriteString(" ALL ")
 			}
 		}
@@ -105,21 +106,23 @@ func (us *setStatementImpl) Serialize(out *queryData, options ...serializeOption
 
 	out.WriteString(")")
 
-	if us.order != nil {
-		out.WriteString(" ORDER BY ")
-		if err := us.order.Serialize(out, NO_TABLE_NAME); err != nil {
+	out.statementType = set_statement
+
+	if s.orderBy != nil {
+		err := out.WriteOrderBy(s.orderBy)
+		if err != nil {
 			return err
 		}
 	}
 
-	if us.limit >= 0 {
+	if s.limit >= 0 {
 		out.WriteString(" LIMIT ")
-		out.InsertArgument(us.limit)
+		out.InsertArgument(s.limit)
 	}
 
-	if us.offset >= 0 {
+	if s.offset >= 0 {
 		out.WriteString(" OFFSET ")
-		out.InsertArgument(us.offset)
+		out.InsertArgument(s.offset)
 	}
 
 	return nil

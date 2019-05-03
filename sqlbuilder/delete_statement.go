@@ -21,15 +21,6 @@ func newDeleteStatement(table WritableTable) DeleteStatement {
 type deleteStatementImpl struct {
 	table WritableTable
 	where BoolExpression
-	order *listClause
-}
-
-func (u *deleteStatementImpl) Query(db types.Db, destination interface{}) error {
-	return Query(u, db, destination)
-}
-
-func (u *deleteStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	return Execute(u, db)
 }
 
 func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
@@ -39,6 +30,7 @@ func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 
 func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
 	queryData := &queryData{}
+	queryData.statementType = delete_statement
 
 	queryData.WriteString("DELETE FROM ")
 
@@ -54,18 +46,17 @@ func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error
 		return "", nil, errors.New("Deleting without a WHERE clause.")
 	}
 
-	queryData.WriteString(" WHERE ")
-
-	if err = d.where.Serialize(queryData); err != nil {
+	if err = queryData.WriteWhere(d.where); err != nil {
 		return
 	}
 
-	if d.order != nil {
-		queryData.WriteString(" ORDER BY ")
-		if err = d.order.Serialize(queryData); err != nil {
-			return
-		}
-	}
-
 	return queryData.buff.String() + ";", queryData.args, nil
+}
+
+func (u *deleteStatementImpl) Query(db types.Db, destination interface{}) error {
+	return Query(u, db, destination)
+}
+
+func (u *deleteStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(u, db)
 }

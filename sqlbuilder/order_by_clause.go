@@ -13,6 +13,15 @@ type isOrderByClause struct {
 func (o *isOrderByClause) isOrderByClauseType() {
 }
 
+type ColumnNameOrderBy string
+
+func (o *ColumnNameOrderBy) isOrderByClauseType() {
+}
+
+func (o *ColumnNameOrderBy) Serialize(out *queryData, options ...serializeOption) error {
+	return nil
+}
+
 type orderByClause struct {
 	isOrderByClause
 	expression Expression
@@ -24,7 +33,7 @@ func (o *orderByClause) Serialize(out *queryData, options ...serializeOption) er
 		return errors.Newf("nil orderBy by clause.")
 	}
 
-	if err := o.expression.Serialize(out); err != nil {
+	if err := o.expression.Serialize(out, UNION_ORDER_BY); err != nil {
 		return err
 	}
 

@@ -67,7 +67,7 @@ func isSimpleOperand(expression Expression) bool {
 	if _, ok := expression.(Column); ok {
 		return true
 	}
-	if _, ok := expression.(FuncExpression); ok {
+	if _, ok := expression.(*numericFunc); ok {
 		return true
 	}
 

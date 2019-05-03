@@ -11,6 +11,8 @@ type Column interface {
 
 	Name() string
 	TableName() string
+
+	DefaultAlias() Projection
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string) error
@@ -72,26 +74,41 @@ func (c *baseColumn) setTableName(table string) error {
 	return nil
 }
 
+func (c *baseColumn) DefaultAlias() Projection {
+	return c.As(c.tableName + "." + c.name)
+}
+
 func (c baseColumn) Serialize(out *queryData, options ...serializeOption) error {
-	if c.tableName != "" && !contains(options, NO_TABLE_NAME) {
+
+	setOrderBy := out.statementType == set_statement && out.clauseType == order_by_clause
+
+	if setOrderBy {
+		out.WriteString(`"`)
+	}
+
+	if c.tableName != "" {
 		out.WriteString(c.tableName)
 		out.WriteString(".")
 	}
 
-	containsDot := strings.Contains(c.name, ".")
+	wrapColumnName := strings.Contains(c.name, ".") && !setOrderBy
 
-	if containsDot {
+	if wrapColumnName {
 		out.WriteString(`"`)
 	}
 
 	out.WriteString(c.name)
 
-	if containsDot {
+	if wrapColumnName {
 		out.WriteString(`"`)
 	}
 
-	if contains(options, FOR_PROJECTION) && !contains(options, SKIP_DEFAULT_ALIASING) && c.tableName != "" {
-		out.WriteString(" AS \"" + c.tableName + "." + c.name + "\"")
+	//if contains(options, FOR_PROJECTION) && !contains(options, SKIP_DEFAULT_ALIASING) && c.tableName != "" {
+	//	out.WriteString(" AS \"" + c.tableName + "." + c.name + `"`)
+	//}
+
+	if setOrderBy {
+		out.WriteString(`"`)
 	}
 
 	return nil

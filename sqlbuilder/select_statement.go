@@ -33,7 +33,7 @@ type selectStatementImpl struct {
 	distinct    bool
 	projections []Projection
 	where       BoolExpression
-	groupBy     []Clause
+	groupBy     []Clause //can be ROLLUP, ... so clause for now
 	having      BoolExpression
 	orderBy     []OrderByClause
 
@@ -42,13 +42,27 @@ type selectStatementImpl struct {
 	forUpdate bool
 }
 
-func newSelectStatement(
-	table ReadableTable,
-	projections []Projection) SelectStatement {
+func defaultProjectionAliasing(projections []Projection) []Projection {
+	aliasedProjections := []Projection{}
+
+	for _, projection := range projections {
+		if column, ok := projection.(Column); ok {
+			aliasedProjections = append(aliasedProjections, column.DefaultAlias())
+		} else if columnList, ok := projection.(ColumnList); ok {
+			aliasedProjections = append(aliasedProjections, columnList.DefaultAlias()...)
+		} else {
+			aliasedProjections = append(aliasedProjections, projection)
+		}
+	}
+
+	return aliasedProjections
+}
+
+func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 
 	return &selectStatementImpl{
 		table:       table,
-		projections: projections,
+		projections: defaultProjectionAliasing(projections),
 		limit:       -1,
 		offset:      -1,
 		forUpdate:   false,
@@ -74,6 +88,7 @@ func (s *selectStatementImpl) Serialize(out *queryData, options ...serializeOpti
 func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serializeOption) error {
 
 	out.WriteString("SELECT ")
+	out.statementType = select_statement
 
 	if s.distinct {
 		out.WriteString("DISTINCT ")
@@ -83,7 +98,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serialize
 		return errors.New("No column selected for projection.")
 	}
 
-	err := serializeProjectionList(s.projections, out)
+	err := out.WriteProjection(s.projections)
 
 	if err != nil {
 		return err
@@ -100,16 +115,15 @@ func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serialize
 	}
 
 	if s.where != nil {
-		out.WriteString(" WHERE ")
-		if err := s.where.Serialize(out); err != nil {
-			return err
+		err := out.WriteWhere(s.where)
+
+		if err != nil {
+			return nil
 		}
 	}
 
 	if s.groupBy != nil && len(s.groupBy) > 0 {
-		out.WriteString(" GROUP BY ")
-
-		err := serializeClauseList(s.groupBy, out)
+		err := out.WriteGroupBy(s.groupBy)
 
 		if err != nil {
 			return err
@@ -117,15 +131,17 @@ func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serialize
 	}
 
 	if s.having != nil {
-		out.WriteString(" HAVING ")
-		if err = s.having.Serialize(out); err != nil {
+		err := out.WriteHaving(s.having)
+
+		if err != nil {
 			return err
 		}
 	}
 
 	if s.orderBy != nil {
-		out.WriteString(" ORDER BY ")
-		if err := serializeOrderByClauseList(s.orderBy, out); err != nil {
+		err := out.WriteOrderBy(s.orderBy)
+
+		if err != nil {
 			return err
 		}
 	}

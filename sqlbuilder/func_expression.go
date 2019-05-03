@@ -1,8 +1,8 @@
 package sqlbuilder
 
-type FuncExpression interface {
-	Expression
-}
+//type FuncExpression interface {
+//	Expression
+//}
 
 type numericFunc struct {
 	expressionInterfaceImpl

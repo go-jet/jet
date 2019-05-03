@@ -29,14 +29,6 @@ type updateStatementImpl struct {
 	returning    []Projection
 }
 
-func (u *updateStatementImpl) Query(db types.Db, destination interface{}) error {
-	return Query(u, db, destination)
-}
-
-func (u *updateStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	return Execute(u, db)
-}
-
 func (u *updateStatementImpl) SET(values ...interface{}) UpdateStatement {
 
 	for _, value := range values {
@@ -56,12 +48,14 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 }
 
 func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStatement {
-	u.returning = projections
+	u.returning = defaultProjectionAliasing(projections)
 	return u
 }
 
 func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
 	out := &queryData{}
+	out.statementType = update_statement
+
 	out.WriteString("UPDATE ")
 
 	if u.table == nil {
@@ -83,18 +77,6 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	} else {
 		out.WriteString(" ")
 	}
-
-	//for i, column := range u.columns {
-	//	if i > 0 {
-	//		out.WriteString(", ")
-	//	}
-	//
-	//	out.WriteString(column.Name())
-	//
-	//	if err != nil {
-	//		return
-	//	}
-	//}
 
 	err = serializeColumnList(u.columns, out)
 
@@ -132,8 +114,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return "", nil, errors.New("Updating without a WHERE clause.")
 	}
 
-	out.WriteString(" WHERE ")
-	if err = u.where.Serialize(out); err != nil {
+	if err = out.WriteWhere(u.where); err != nil {
 		return
 	}
 
@@ -148,4 +129,12 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	return out.buff.String(), out.args, nil
+}
+
+func (u *updateStatementImpl) Query(db types.Db, destination interface{}) error {
+	return Query(u, db, destination)
+}
+
+func (u *updateStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(u, db)
 }

@@ -63,7 +63,7 @@ func serializeExpressionList(expressions []Expression, separator string, out *qu
 func serializeProjectionList(projections []Projection, out *queryData) error {
 	for i, col := range projections {
 		if i > 0 {
-			out.WriteByte(',')
+			out.WriteString(", ")
 		}
 		if col == nil {
 			return errors.New("Projection expression is nil.")

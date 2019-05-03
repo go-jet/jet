@@ -93,3 +93,15 @@ func NewTimeColumn(name string, nullable NullableColumn) *TimeColumn {
 
 	return stringColumn
 }
+
+// ------------------------------------------------------//
+type refColumn struct {
+	baseColumn
+}
+
+func RefColumn(name string) *refColumn {
+	refColumn := &refColumn{}
+	refColumn.baseColumn = newBaseColumn(name, false, "", refColumn)
+
+	return refColumn
+}

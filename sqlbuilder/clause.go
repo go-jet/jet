@@ -11,6 +11,7 @@ type serializeOption int
 const (
 	SKIP_DEFAULT_ALIASING = iota
 	FOR_PROJECTION
+	UNION_ORDER_BY
 	NO_TABLE_NAME
 )
 
@@ -21,6 +22,56 @@ type Clause interface {
 type queryData struct {
 	buff bytes.Buffer
 	args []interface{}
+
+	statementType int
+	clauseType    int
+}
+
+const (
+	select_statement = iota
+	insert_statement
+	update_statement
+	delete_statement
+	set_statement
+)
+
+const (
+	projection_clause = iota
+	where_clause
+	order_by_clause
+	group_by_clause
+	having_clause
+)
+
+func (q *queryData) WriteProjection(projections []Projection) error {
+	q.clauseType = projection_clause
+	return serializeProjectionList(projections, q)
+}
+
+func (q *queryData) WriteWhere(where Expression) error {
+	q.clauseType = where_clause
+	q.WriteString(" WHERE ")
+	return where.Serialize(q)
+}
+
+func (q *queryData) WriteGroupBy(groupBy []Clause) error {
+	q.clauseType = group_by_clause
+	q.WriteString(" GROUP BY ")
+
+	return serializeClauseList(groupBy, q)
+}
+
+func (q *queryData) WriteOrderBy(orderBy []OrderByClause) error {
+	q.clauseType = order_by_clause
+	q.WriteString(" ORDER BY ")
+	return serializeOrderByClauseList(orderBy, q)
+}
+
+func (q *queryData) WriteHaving(having Expression) error {
+	q.clauseType = having_clause
+	q.WriteString(" HAVING ")
+	return having.Serialize(q)
+
 }
 
 func (q *queryData) Write(data []byte) {

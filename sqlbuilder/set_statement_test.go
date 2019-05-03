@@ -7,11 +7,11 @@ import (
 )
 
 func TestUnionNoSelect(t *testing.T) {
-	query, args, err := UNION().Sql()
+	_, _, err := UNION().Sql()
 
 	assert.Assert(t, err != nil)
 	//fmt.Println(err.Error())
-	fmt.Print(query, args)
+	//fmt.Print(query, args)
 }
 
 func TestUnionOneSelect(t *testing.T) {
@@ -55,7 +55,7 @@ func TestUnionWithOrderBy(t *testing.T) {
 	).ORDER_BY(table1Col1.Asc()).Sql()
 
 	assert.NilError(t, err)
-	assert.Equal(t, query, `((SELECT table1.col1 AS "table1.col1" FROM db.table1) UNION (SELECT table2.col3 AS "table2.col3" FROM db.table2)) ORDER BY table1.col1 ASC`)
+	assert.Equal(t, query, `((SELECT table1.col1 AS "table1.col1" FROM db.table1) UNION (SELECT table2.col3 AS "table2.col3" FROM db.table2)) ORDER BY "table1.col1" ASC`)
 	assert.Equal(t, len(args), 0)
 }
 

@@ -111,7 +111,7 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 }
 
 func (i *insertStatementImpl) RETURNING(projections ...Projection) InsertStatement {
-	i.returning = projections
+	i.returning = defaultProjectionAliasing(projections)
 
 	return i
 }
@@ -132,6 +132,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	queryData := &queryData{}
+	queryData.statementType = insert_statement
 	queryData.WriteString("INSERT INTO ")
 
 	if s.table == nil {
@@ -146,18 +147,6 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 
 	if len(s.columns) > 0 {
 		queryData.WriteString(" (")
-
-		//for i, col := range s.columns {
-		//	if i > 0 {
-		//		queryData.WriteByte(',')
-		//	}
-		//
-		//	if col == nil {
-		//		return "", nil, errors.New("nil column in columns list.")
-		//	}
-		//
-		//	queryData.WriteString(col.Name())
-		//}
 
 		err = serializeColumnList(s.columns, queryData)
 
@@ -193,19 +182,6 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 				return "", nil, err
 			}
 
-			//for col_i, value := range row {
-			//	if col_i > 0 {
-			//		queryData.WriteByte(',')
-			//	}
-			//
-			//	if value == nil {
-			//		return "", nil, errors.Newf("nil value in row %d col %d.", row_i, col_i)
-			//	}
-			//
-			//	if err = value.Serialize(queryData); err != nil {
-			//		return
-			//	}
-			//}
 			queryData.WriteByte(')')
 		}
 	}
@@ -221,7 +197,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	if len(s.returning) > 0 {
 		queryData.WriteString(" RETURNING ")
 
-		err = serializeProjectionList(s.returning, queryData)
+		err = queryData.WriteProjection(s.returning)
 
 		if err != nil {
 			return
