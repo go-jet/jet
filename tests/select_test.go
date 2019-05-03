@@ -592,6 +592,45 @@ func TestSelectTimeColumns(t *testing.T) {
 	})
 }
 
+func TestUnion(t *testing.T) {
+	query := sqlbuilder.UNION(
+		Payment.
+			SELECT(Payment.PaymentID.As("payment.payment_id"), Payment.Amount).
+			WHERE(Payment.Amount.LtEqL(100)),
+		Payment.
+			SELECT(Payment.PaymentID, Payment.Amount).
+			WHERE(Payment.Amount.GtEqL(200)),
+	).
+		ORDER_BY(sqlbuilder.RefColumn("payment.payment_id").Asc(), Payment.Amount.Desc()).
+		LIMIT(10).OFFSET(20)
+
+	queryStr, args, err := query.Sql()
+
+	assert.NilError(t, err)
+
+	fmt.Println(queryStr)
+	fmt.Println(args)
+
+	dest := []model.Payment{}
+
+	err = query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 10)
+	assert.DeepEqual(t, dest[0], model.Payment{
+		PaymentID: 17523,
+		Amount:    4.99,
+	})
+	assert.DeepEqual(t, dest[1], model.Payment{
+		PaymentID: 17524,
+		Amount:    0.99,
+	})
+	assert.DeepEqual(t, dest[9], model.Payment{
+		PaymentID: 17532,
+		Amount:    8.99,
+	})
+}
+
 func int16Ptr(i int16) *int16 {
 	return &i
 }
