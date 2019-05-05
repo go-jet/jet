@@ -72,6 +72,11 @@ func Query(db types.Db, query string, args []interface{}, destinationPtr interfa
 		return err
 	}
 
+	err = rows.Close()
+	if err != nil {
+		return err
+	}
+
 	fmt.Println(strconv.Itoa(scanContext.rowNum) + " ROW(S) PROCESSED")
 
 	return nil

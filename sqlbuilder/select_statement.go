@@ -11,6 +11,7 @@ type SelectStatement interface {
 	Expression
 
 	DISTINCT() SelectStatement
+	FROM(table ReadableTable) SelectStatement
 	WHERE(expression BoolExpression) SelectStatement
 	GROUP_BY(expressions ...Clause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
@@ -21,7 +22,11 @@ type SelectStatement interface {
 
 	FOR_UPDATE() SelectStatement
 
-	AsTable(alias string) *SelectStatementTable
+	AsTable(alias string) ExpressionTable
+}
+
+var SELECT = func(projection ...Projection) SelectStatement {
+	return newSelectStatement(nil, projection)
 }
 
 // NOTE: SelectStatement purposely does not implement the Table interface since
@@ -59,8 +64,7 @@ func defaultProjectionAliasing(projections []Projection) []Projection {
 }
 
 func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
-
-	return &selectStatementImpl{
+	newSelect := &selectStatementImpl{
 		table:       table,
 		projections: defaultProjectionAliasing(projections),
 		limit:       -1,
@@ -68,6 +72,15 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 		forUpdate:   false,
 		distinct:    false,
 	}
+
+	newSelect.expressionInterfaceImpl.parent = newSelect
+
+	return newSelect
+}
+
+func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
+	s.table = table
+	return s
 }
 
 func (s *selectStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
@@ -176,8 +189,8 @@ func (q *selectStatementImpl) Sql() (query string, args []interface{}, err error
 	return queryData.buff.String(), queryData.args, nil
 }
 
-func (s *selectStatementImpl) AsTable(alias string) *SelectStatementTable {
-	return &SelectStatementTable{
+func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
+	return &expressionTableImpl{
 		statement: s,
 		alias:     alias,
 	}

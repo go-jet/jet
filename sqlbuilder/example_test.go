@@ -32,7 +32,7 @@ func Example() {
 	filename := t2.C("filename")
 
 	in := []int32{1, 2, 3}
-	join := t2.LeftJoinOn(t1, Eq(ns_id1, ns_id2))
+	join := t2.LEFT_JOIN(t1, Eq(ns_id1, ns_id2))
 	q := join.Select(ns_id2, sjid, prefix, filename).Where(
 		And(EqL(ns_id2, 456), In(sjid, in)))
 	text, _ := q.String()

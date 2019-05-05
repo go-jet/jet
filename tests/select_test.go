@@ -36,6 +36,25 @@ func TestSelect_ScanToStruct(t *testing.T) {
 	assert.DeepEqual(t, actor, expectedActor)
 }
 
+func TestClassicSelect(t *testing.T) {
+	query := sqlbuilder.SELECT(Payment.AllColumns, Customer.AllColumns).
+		FROM(Payment.INNER_JOIN(Customer, Payment.CustomerID.Eq(Customer.CustomerID))).
+		ORDER_BY(Payment.PaymentID.Asc()).
+		LIMIT(30)
+
+	queryStr, args, err := query.Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(queryStr)
+	fmt.Println(args)
+
+	dest := []model.Payment{}
+
+	err = query.Query(db, &dest)
+
+	assert.NilError(t, err)
+}
+
 func TestSelect_ScanToSlice(t *testing.T) {
 	customers := []model.Customer{}
 
@@ -56,6 +75,23 @@ func TestSelect_ScanToSlice(t *testing.T) {
 	assert.DeepEqual(t, customer0, customers[0])
 	assert.DeepEqual(t, customer1, customers[1])
 	assert.DeepEqual(t, lastCustomer, customers[598])
+}
+
+func TestSelectAndUnionInProjection(t *testing.T) {
+
+	query := Payment.
+		SELECT(
+			Payment.PaymentID,
+			Customer.SELECT(Customer.CustomerID).LIMIT(1),
+			sqlbuilder.UNION(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10), Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).LIMIT(1),
+		).
+		LIMIT(12)
+
+	queryStr, args, err := query.Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(queryStr)
+	fmt.Println(args)
 }
 
 //func TestJoinQueryStruct(t *testing.T) {
@@ -253,7 +289,7 @@ func TestSelectFullJoin(t *testing.T) {
 
 func TestSelectFullCrossJoin(t *testing.T) {
 	query := Customer.
-		CrossJoin(Address).
+		CROSS_JOIN(Address).
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.Asc()).
 		LIMIT(1000)

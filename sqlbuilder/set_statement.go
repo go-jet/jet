@@ -14,10 +14,13 @@ const (
 
 type SetStatement interface {
 	Statement
+	Expression
 
 	ORDER_BY(clauses ...OrderByClause) SetStatement
 	LIMIT(limit int64) SetStatement
 	OFFSET(offset int64) SetStatement
+
+	AsTable(alias string) ExpressionTable
 }
 
 func UNION(selects ...SelectStatement) SetStatement {
@@ -46,6 +49,8 @@ func EXCEPT_ALL(selects ...SelectStatement) SetStatement {
 
 // Similar to selectStatementImpl, but less complete
 type setStatementImpl struct {
+	expressionInterfaceImpl
+
 	operator      string
 	selects       []SelectStatement
 	orderBy       []OrderByClause
@@ -54,14 +59,18 @@ type setStatementImpl struct {
 	all bool
 }
 
-func newSetStatementImpl(operator string, all bool, selects ...SelectStatement) *setStatementImpl {
-	return &setStatementImpl{
+func newSetStatementImpl(operator string, all bool, selects ...SelectStatement) SetStatement {
+	setStatement := &setStatementImpl{
 		operator: operator,
 		selects:  selects,
 		limit:    -1,
 		offset:   -1,
 		all:      all,
 	}
+
+	setStatement.expressionInterfaceImpl.parent = setStatement
+
+	return setStatement
 }
 
 func (us *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
@@ -80,7 +89,32 @@ func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
 	return us
 }
 
+func (us *setStatementImpl) AsTable(alias string) ExpressionTable {
+	return &expressionTableImpl{
+		statement: us,
+		alias:     alias,
+	}
+}
+
 func (s *setStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
+	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
+		out.WriteString("(")
+	}
+
+	err := s.serializeImpl(out)
+
+	if err != nil {
+		return err
+	}
+
+	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
+		out.WriteString(")")
+	}
+
+	return nil
+}
+
+func (s *setStatementImpl) serializeImpl(out *queryData, options ...serializeOption) error {
 
 	if len(s.selects) < 2 {
 		return errors.Newf("UNION statement must have at least two SELECT statements.")
@@ -131,7 +165,7 @@ func (s *setStatementImpl) Serialize(out *queryData, options ...serializeOption)
 func (us *setStatementImpl) Sql() (query string, args []interface{}, err error) {
 	queryData := &queryData{}
 
-	err = us.Serialize(queryData)
+	err = us.serializeImpl(queryData)
 
 	if err != nil {
 		return

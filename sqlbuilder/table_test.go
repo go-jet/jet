@@ -112,7 +112,7 @@ func (s *TableSuite) TestInnerJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestLeftJoin(c *gc.C) {
-	join := table1.LeftJoinOn(table2, Eq(table1Col3, table2Col3))
+	join := table1.LEFT_JOIN(table2, Eq(table1Col3, table2Col3))
 
 	buf := &bytes.Buffer{}
 
@@ -128,7 +128,7 @@ func (s *TableSuite) TestLeftJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestRightJoin(c *gc.C) {
-	join := table1.RightJoinOn(table2, Eq(table1Col3, table2Col3))
+	join := table1.RIGHT_JOIN(table2, Eq(table1Col3, table2Col3))
 
 	buf := &bytes.Buffer{}
 
@@ -144,7 +144,7 @@ func (s *TableSuite) TestRightJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestJoinColumns(c *gc.C) {
-	join := table1.RightJoinOn(table2, Eq(table1Col3, table2Col3))
+	join := table1.RIGHT_JOIN(table2, Eq(table1Col3, table2Col3))
 
 	cols := join.Columns()
 	c.Assert(len(cols), gc.Equals, 6)

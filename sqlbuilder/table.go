@@ -29,14 +29,14 @@ type ReadableTable interface {
 	INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	// Creates a left join tableName expression using onCondition.
-	LeftJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
+	LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	// Creates a right join tableName expression using onCondition.
-	RightJoinOn(table ReadableTable, onCondition BoolExpression) ReadableTable
+	RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
 	FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	CrossJoin(table ReadableTable) ReadableTable
+	CROSS_JOIN(table ReadableTable) ReadableTable
 }
 
 // The sql tableName write interface.
@@ -189,7 +189,7 @@ func (t *Table) INNER_JOIN(
 //}
 
 // Creates a left join tableName expression using onCondition.
-func (t *Table) LeftJoinOn(
+func (t *Table) LEFT_JOIN(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
 
@@ -197,7 +197,7 @@ func (t *Table) LeftJoinOn(
 }
 
 // Creates a right join tableName expression using onCondition.
-func (t *Table) RightJoinOn(
+func (t *Table) RIGHT_JOIN(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
 
@@ -208,7 +208,7 @@ func (t *Table) FULL_JOIN(table ReadableTable, onCondition BoolExpression) Reada
 	return FullJoin(t, table, onCondition)
 }
 
-func (t *Table) CrossJoin(table ReadableTable) ReadableTable {
+func (t *Table) CROSS_JOIN(table ReadableTable) ReadableTable {
 	return CrossJoin(t, table)
 }
 
@@ -369,7 +369,7 @@ func (t *joinTable) INNER_JOIN(
 	return InnerJoinOn(t, table, onCondition)
 }
 
-func (t *joinTable) LeftJoinOn(
+func (t *joinTable) LEFT_JOIN(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
 
@@ -380,11 +380,11 @@ func (t *joinTable) FULL_JOIN(table ReadableTable, onCondition BoolExpression) R
 	return FullJoin(t, table, onCondition)
 }
 
-func (t *joinTable) CrossJoin(table ReadableTable) ReadableTable {
+func (t *joinTable) CROSS_JOIN(table ReadableTable) ReadableTable {
 	return CrossJoin(t, table)
 }
 
-func (t *joinTable) RightJoinOn(
+func (t *joinTable) RIGHT_JOIN(
 	table ReadableTable,
 	onCondition BoolExpression) ReadableTable {
 
