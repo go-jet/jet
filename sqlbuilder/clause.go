@@ -9,8 +9,7 @@ import (
 type serializeOption int
 
 const (
-	SKIP_DEFAULT_ALIASING = iota
-	FOR_PROJECTION
+	FOR_PROJECTION = iota
 	UNION_ORDER_BY
 	NO_TABLE_NAME
 )

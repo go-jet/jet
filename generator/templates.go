@@ -39,7 +39,7 @@ func new{{.ToGoStructName}}() *{{.ToGoStructName}} {
 }
 
 
-func (a *{{.ToGoStructName}}) As(alias string) *{{.ToGoStructName}} {
+func (a *{{.ToGoStructName}}) AS(alias string) *{{.ToGoStructName}} {
 	aliasTable := new{{.ToGoStructName}}()
 
 	aliasTable.Table.SetAlias(alias)

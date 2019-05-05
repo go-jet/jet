@@ -175,16 +175,3 @@ type Statement interface {
 //	}
 //	return nil
 //}
-
-func newOrderByListClause(clauses ...OrderByClause) *listClause {
-	ret := &listClause{
-		clauses:            make([]Clause, len(clauses), len(clauses)),
-		includeParentheses: false,
-	}
-
-	for i, c := range clauses {
-		ret.clauses[i] = c
-	}
-
-	return ret
-}

@@ -17,7 +17,7 @@ func TestBinaryExpression(t *testing.T) {
 	assert.Equal(t, len(out.args), 2)
 
 	t.Run("alias", func(t *testing.T) {
-		alias := boolExpression.As("alias_eq_expression")
+		alias := boolExpression.AS("alias_eq_expression")
 
 		out := queryData{}
 		err := alias.SerializeForProjection(&out)
@@ -57,7 +57,7 @@ func TestUnaryExpression(t *testing.T) {
 	assert.Equal(t, out.buff.String(), " NOT $1 = $2")
 
 	t.Run("alias", func(t *testing.T) {
-		alias := notExpression.As("alias_not_expression")
+		alias := notExpression.AS("alias_not_expression")
 
 		out := queryData{}
 		err := alias.SerializeForProjection(&out)
@@ -106,4 +106,36 @@ func TestBoolLiteral(t *testing.T) {
 	assert.NilError(t, err)
 
 	assert.Equal(t, out.buff.String(), "$1")
+}
+
+func TestExists(t *testing.T) {
+	query := EXISTS(
+		table2.
+			SELECT(Literal(1)).
+			WHERE(table1Col1.Eq(table2Col3)),
+	)
+
+	out := queryData{}
+	err := query.Serialize(&out)
+
+	assert.NilError(t, err)
+	assert.Equal(t, out.buff.String(), "EXISTS (SELECT $1 FROM db.table2 WHERE table1.col1 = table2.col3)")
+}
+
+func TestIn(t *testing.T) {
+	query := Literal(1.11).IN(table1.SELECT(table1Col1))
+
+	out := queryData{}
+	err := query.Serialize(&out)
+
+	assert.NilError(t, err)
+	assert.Equal(t, out.buff.String(), `$1 IN (SELECT table1.col1 AS "table1.col1" FROM db.table1)`)
+
+	query2 := ROW(Literal(12), table1Col1).IN(table2.SELECT(table2Col3, table3Col1))
+
+	out = queryData{}
+	err = query2.Serialize(&out)
+
+	assert.NilError(t, err)
+	assert.Equal(t, out.buff.String(), `(ROW($1, table1.col1) IN (SELECT table2.col3 AS "table2.col3", table3.col1 AS "table3.col1" FROM db.table2))`)
 }

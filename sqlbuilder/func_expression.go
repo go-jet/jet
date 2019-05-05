@@ -1,39 +1,55 @@
 package sqlbuilder
 
-//type FuncExpression interface {
-//	Expression
-//}
-
-type numericFunc struct {
+type funcExpressionImpl struct {
 	expressionInterfaceImpl
-	numericInterfaceImpl
 
 	name       string
-	expression Expression
+	expression []Expression
 }
 
-func NewNumericFunc(name string, expression Expression) NumericExpression {
-	numericFunc := &numericFunc{
+func ROW(expressions ...Expression) Expression {
+	return newFunc("ROW", expressions, nil)
+}
+
+func newFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
+	funcExp := &funcExpressionImpl{
 		name:       name,
-		expression: expression,
+		expression: expressions,
 	}
 
-	numericFunc.expressionInterfaceImpl.parent = numericFunc
-	numericFunc.numericInterfaceImpl.parent = numericFunc
+	if parent != nil {
+		funcExp.expressionInterfaceImpl.parent = parent
+	} else {
+		funcExp.expressionInterfaceImpl.parent = funcExp
+	}
 
-	return numericFunc
+	return funcExp
 }
 
-func (f *numericFunc) Serialize(out *queryData, options ...serializeOption) error {
+func (f *funcExpressionImpl) Serialize(out *queryData, options ...serializeOption) error {
 	out.WriteString(f.name)
 	out.WriteString("(")
-	err := f.expression.Serialize(out)
+	err := serializeExpressionList(f.expression, ", ", out)
 	if err != nil {
 		return err
 	}
 	out.WriteString(")")
 
 	return nil
+}
+
+type numericFunc struct {
+	funcExpressionImpl
+	numericInterfaceImpl
+}
+
+func NewNumericFunc(name string, expressions ...Expression) NumericExpression {
+	numericFunc := &numericFunc{}
+
+	numericFunc.funcExpressionImpl = *newFunc(name, expressions, numericFunc)
+	numericFunc.numericInterfaceImpl.parent = numericFunc
+
+	return numericFunc
 }
 
 //func (f *FuncExpression) SerializeSqlForColumnList(out *bytes.Buffer) error {

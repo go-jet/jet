@@ -62,19 +62,19 @@ func (n *numericInterfaceImpl) LtEqL(literal interface{}) BoolExpression {
 }
 
 func (n *numericInterfaceImpl) Add(expression NumericExpression) NumericExpression {
-	return newBinaryNumericExpression(n.parent, expression, []byte(" + "))
+	return newBinaryNumericExpression(n.parent, expression, " + ")
 }
 
 func (n *numericInterfaceImpl) Sub(expression NumericExpression) NumericExpression {
-	return newBinaryNumericExpression(n.parent, expression, []byte(" - "))
+	return newBinaryNumericExpression(n.parent, expression, " - ")
 }
 
 func (n *numericInterfaceImpl) Mul(expression NumericExpression) NumericExpression {
-	return newBinaryNumericExpression(n.parent, expression, []byte(" * "))
+	return newBinaryNumericExpression(n.parent, expression, " * ")
 }
 
 func (n *numericInterfaceImpl) Div(expression NumericExpression) NumericExpression {
-	return newBinaryNumericExpression(n.parent, expression, []byte(" / "))
+	return newBinaryNumericExpression(n.parent, expression, " / ")
 }
 
 //---------------------------------------------------//
@@ -100,7 +100,7 @@ type binaryNumericExpression struct {
 	binaryExpression
 }
 
-func newBinaryNumericExpression(lhs, rhs Expression, operator []byte) NumericExpression {
+func newBinaryNumericExpression(lhs, rhs Expression, operator string) NumericExpression {
 	numericExpression := binaryNumericExpression{}
 
 	numericExpression.binaryExpression = newBinaryExpression(lhs, rhs, operator)

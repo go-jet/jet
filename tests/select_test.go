@@ -13,7 +13,7 @@ import (
 
 func TestSelect_ScanToStruct(t *testing.T) {
 	actor := model.Actor{}
-	query := Actor.SELECT(Actor.AllColumns).ORDER_BY(Actor.ActorID.Asc())
+	query := Actor.SELECT(Actor.AllColumns).ORDER_BY(Actor.ActorID.ASC())
 
 	queryStr, args, err := query.Sql()
 
@@ -39,7 +39,7 @@ func TestSelect_ScanToStruct(t *testing.T) {
 func TestClassicSelect(t *testing.T) {
 	query := sqlbuilder.SELECT(Payment.AllColumns, Customer.AllColumns).
 		FROM(Payment.INNER_JOIN(Customer, Payment.CustomerID.Eq(Customer.CustomerID))).
-		ORDER_BY(Payment.PaymentID.Asc()).
+		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
 	queryStr, args, err := query.Sql()
@@ -58,7 +58,7 @@ func TestClassicSelect(t *testing.T) {
 func TestSelect_ScanToSlice(t *testing.T) {
 	customers := []model.Customer{}
 
-	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.Asc())
+	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
 	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
@@ -210,7 +210,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 	customersAsc := []model.Customer{}
 
 	err := Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		ORDER_BY(Customer.FirstName.Asc()).
+		ORDER_BY(Customer.FirstName.ASC()).
 		Query(db, &customersAsc)
 
 	assert.NilError(t, err)
@@ -220,7 +220,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 
 	customersDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		ORDER_BY(Customer.FirstName.Desc()).
+		ORDER_BY(Customer.FirstName.DESC()).
 		Query(db, &customersDesc)
 
 	assert.NilError(t, err)
@@ -233,7 +233,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 
 	customersAscDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		ORDER_BY(Customer.FirstName.Asc(), Customer.LastName.Desc()).
+		ORDER_BY(Customer.FirstName.ASC(), Customer.LastName.DESC()).
 		Query(db, &customersAscDesc)
 
 	assert.NilError(t, err)
@@ -258,7 +258,7 @@ func TestSelectFullJoin(t *testing.T) {
 	query := Customer.
 		FULL_JOIN(Address, Customer.AddressID.Eq(Address.AddressID)).
 		SELECT(Customer.AllColumns, Address.AllColumns).
-		ORDER_BY(Customer.CustomerID.Asc())
+		ORDER_BY(Customer.CustomerID.ASC())
 
 	queryStr, args, err := query.Sql()
 
@@ -291,7 +291,7 @@ func TestSelectFullCrossJoin(t *testing.T) {
 	query := Customer.
 		CROSS_JOIN(Address).
 		SELECT(Customer.AllColumns, Address.AllColumns).
-		ORDER_BY(Customer.CustomerID.Asc()).
+		ORDER_BY(Customer.CustomerID.ASC()).
 		LIMIT(1000)
 
 	queryStr, args, err := query.Sql()
@@ -311,15 +311,15 @@ func TestSelectFullCrossJoin(t *testing.T) {
 
 func TestSelectSelfJoin(t *testing.T) {
 
-	f1 := Film.As("f1")
+	f1 := Film.AS("f1")
 
 	//spew.Dump(f1)
-	f2 := Film.As("f2")
+	f2 := Film.AS("f2")
 
 	query := f1.
 		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
 		SELECT(f1.AllColumns, f2.AllColumns).
-		ORDER_BY(f1.FilmID.Asc())
+		ORDER_BY(f1.FilmID.ASC())
 
 	queryStr, args, err := query.Sql()
 	assert.Equal(t, len(args), 0)
@@ -346,8 +346,8 @@ func TestSelectSelfJoin(t *testing.T) {
 }
 
 func TestSelectAliasColumn(t *testing.T) {
-	f1 := Film.As("f1")
-	f2 := Film.As("f2")
+	f1 := Film.AS("f1")
+	f2 := Film.AS("f2")
 
 	type thesameLengthFilms struct {
 		Title1 string
@@ -357,10 +357,10 @@ func TestSelectAliasColumn(t *testing.T) {
 
 	query := f1.
 		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
-		SELECT(f1.Title.As("thesame_length_films.title1"),
-			f2.Title.As("thesame_length_films.title2"),
-			f1.Length.As("thesame_length_films.length")).
-		ORDER_BY(f1.Length.Asc(), f1.Title.Asc(), f2.Title.Asc()).
+		SELECT(f1.Title.AS("thesame_length_films.title1"),
+			f2.Title.AS("thesame_length_films.title2"),
+			f1.Length.AS("thesame_length_films.length")).
+		ORDER_BY(f1.Length.ASC(), f1.Title.ASC(), f2.Title.ASC()).
 		LIMIT(1000)
 
 	queryStr, args, err := query.Sql()
@@ -399,7 +399,7 @@ type staff struct {
 
 func TestSelectSelfReferenceType(t *testing.T) {
 
-	manager := Staff.As("manager")
+	manager := Staff.AS("manager")
 
 	query := Staff.
 		INNER_JOIN(Address, Staff.AddressID.Eq(Address.AddressID)).
@@ -425,8 +425,8 @@ func TestSubQuery(t *testing.T) {
 	//selectStmtTable := Actor.SELECT(Actor.FirstName, Actor.LastName).AsTable("table_expression")
 	//
 	//query := selectStmtTable.SELECT(
-	//	selectStmtTable.RefStringColumn(Actor.FirstName).As("nesto"),
-	//	selectStmtTable.RefIntColumnName("actor.last_name").As("nesto2"),
+	//	selectStmtTable.RefStringColumn(Actor.FirstName).AS("nesto"),
+	//	selectStmtTable.RefIntColumnName("actor.last_name").AS("nesto2"),
 	//	)
 	//
 	//queryStr, args, err := query.Sql()
@@ -451,8 +451,8 @@ func TestSubQuery(t *testing.T) {
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
-			rFilmsOnly.RefStringColumn(Film.Title).As("film.title"),
-			rFilmsOnly.RefStringColumn(Film.Rating).As("film.rating"),
+			rFilmsOnly.RefStringColumn(Film.Title).AS("film.title"),
+			rFilmsOnly.RefStringColumn(Film.Rating).AS("film.rating"),
 		)
 
 	queryStr, args, err := query.Sql()
@@ -464,7 +464,7 @@ func TestSubQuery(t *testing.T) {
 }
 
 func TestSelectFunctions(t *testing.T) {
-	query := Film.SELECT(sqlbuilder.MAX(Film.RentalRate).As("max_film_rate"))
+	query := Film.SELECT(sqlbuilder.MAX(Film.RentalRate).AS("max_film_rate"))
 
 	str, args, err := query.Sql()
 
@@ -481,7 +481,7 @@ func TestSelectQueryScalar(t *testing.T) {
 
 	query := Film.SELECT(Film.AllColumns).
 		WHERE(Film.RentalRate.Eq(maxFilmRentalRate)).
-		ORDER_BY(Film.FilmID.Asc())
+		ORDER_BY(Film.FilmID.ASC())
 
 	queryStr, args, err := query.Sql()
 
@@ -520,11 +520,11 @@ func TestSelectQueryScalar(t *testing.T) {
 func TestSelectGroupByHaving(t *testing.T) {
 	customersPaymentQuery := Payment.
 		SELECT(
-			Payment.CustomerID.As("customer_payment_sum.customer_id"),
-			sqlbuilder.SUM(Payment.Amount).As("customer_payment_sum.amount_sum"),
+			Payment.CustomerID.AS("customer_payment_sum.customer_id"),
+			sqlbuilder.SUM(Payment.Amount).AS("customer_payment_sum.amount_sum"),
 		).
 		GROUP_BY(Payment.CustomerID).
-		ORDER_BY(sqlbuilder.SUM(Payment.Amount).Asc()).
+		ORDER_BY(sqlbuilder.SUM(Payment.Amount).ASC()).
 		HAVING(sqlbuilder.SUM(Payment.Amount).Gt(sqlbuilder.NewNumericLiteral(100)))
 
 	queryStr, args, err := customersPaymentQuery.Sql()
@@ -562,7 +562,7 @@ func TestSelectGroupBy2(t *testing.T) {
 	customersPaymentSubQuery := Payment.
 		SELECT(
 			Payment.CustomerID,
-			sqlbuilder.SUM(Payment.Amount).As("amount_sum"),
+			sqlbuilder.SUM(Payment.Amount).AS("amount_sum"),
 		).
 		GROUP_BY(Payment.CustomerID)
 
@@ -571,8 +571,8 @@ func TestSelectGroupBy2(t *testing.T) {
 
 	query := Customer.
 		INNER_JOIN(customersPaymentTable, Customer.CustomerID.Eq(customersPaymentTable.RefIntColumn(Payment.CustomerID))).
-		SELECT(Customer.AllColumns, amountSumColumn.As("customer_with_amounts.amount_sum")).
-		ORDER_BY(amountSumColumn.Asc())
+		SELECT(Customer.AllColumns, amountSumColumn.AS("customer_with_amounts.amount_sum")).
+		ORDER_BY(amountSumColumn.ASC())
 
 	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
@@ -603,7 +603,7 @@ func TestSelectGroupBy2(t *testing.T) {
 func TestSelectTimeColumns(t *testing.T) {
 	query := Payment.SELECT(Payment.AllColumns).
 		WHERE(Payment.PaymentDate.LtEqL("2007-02-14 22:16:01")).
-		ORDER_BY(Payment.PaymentDate.Asc())
+		ORDER_BY(Payment.PaymentDate.ASC())
 
 	queryStr, args, err := query.Sql()
 
@@ -630,13 +630,13 @@ func TestSelectTimeColumns(t *testing.T) {
 func TestUnion(t *testing.T) {
 	query := sqlbuilder.UNION(
 		Payment.
-			SELECT(Payment.PaymentID.As("payment.payment_id"), Payment.Amount).
+			SELECT(Payment.PaymentID.AS("payment.payment_id"), Payment.Amount).
 			WHERE(Payment.Amount.LtEqL(100)),
 		Payment.
 			SELECT(Payment.PaymentID, Payment.Amount).
 			WHERE(Payment.Amount.GtEqL(200)),
 	).
-		ORDER_BY(sqlbuilder.RefColumn("payment.payment_id").Asc(), Payment.Amount.Desc()).
+		ORDER_BY(sqlbuilder.RefColumn("payment.payment_id").ASC(), Payment.Amount.DESC()).
 		LIMIT(10).OFFSET(20)
 
 	queryStr, args, err := query.Sql()

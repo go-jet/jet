@@ -52,7 +52,7 @@ func TestUnionWithOrderBy(t *testing.T) {
 	query, args, err := UNION(
 		table1.SELECT(table1Col1),
 		table2.SELECT(table2Col3),
-	).ORDER_BY(table1Col1.Asc()).Sql()
+	).ORDER_BY(table1Col1.ASC()).Sql()
 
 	assert.NilError(t, err)
 	assert.Equal(t, query, `((SELECT table1.col1 AS "table1.col1" FROM db.table1) UNION (SELECT table2.col3 AS "table2.col3" FROM db.table2)) ORDER BY "table1.col1" ASC`)

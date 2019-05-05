@@ -27,7 +27,7 @@ func TestNewBoolColumn(t *testing.T) {
 
 	out.Reset()
 	boolColumn.setTableName("table1")
-	aliasedBoolColumn := boolColumn.As("alias1")
+	aliasedBoolColumn := boolColumn.AS("alias1")
 	err = aliasedBoolColumn.SerializeForProjection(&out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
@@ -55,7 +55,7 @@ func TestNewIntColumn(t *testing.T) {
 
 	out.Reset()
 	integerColumn.setTableName("table1")
-	aliasedBoolColumn := integerColumn.As("alias1")
+	aliasedBoolColumn := integerColumn.AS("alias1")
 	err = aliasedBoolColumn.SerializeForProjection(&out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
@@ -83,7 +83,7 @@ func TestNewNumericColumnColumn(t *testing.T) {
 
 	out.Reset()
 	numericColumn.setTableName("table1")
-	aliasedBoolColumn := numericColumn.As("alias1")
+	aliasedBoolColumn := numericColumn.AS("alias1")
 	err = aliasedBoolColumn.SerializeForProjection(&out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)

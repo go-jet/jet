@@ -14,17 +14,17 @@ type stringInterfaceImpl struct {
 }
 
 func (b *stringInterfaceImpl) Eq(expression StringExpression) BoolExpression {
-	return newBinaryBoolExpression(b.parent, expression, []byte(" = "))
+	return newBinaryBoolExpression(b.parent, expression, " = ")
 }
 
 func (b *stringInterfaceImpl) EqL(value string) BoolExpression {
-	return newBinaryBoolExpression(b.parent, Literal(value), []byte(" = "))
+	return newBinaryBoolExpression(b.parent, Literal(value), " = ")
 }
 
 func (b *stringInterfaceImpl) NotEq(expression StringExpression) BoolExpression {
-	return newBinaryBoolExpression(b.parent, expression, []byte(" != "))
+	return newBinaryBoolExpression(b.parent, expression, " != ")
 }
 
 func (b *stringInterfaceImpl) NotEqL(value string) BoolExpression {
-	return newBinaryBoolExpression(b.parent, Literal(value), []byte(" != "))
+	return newBinaryBoolExpression(b.parent, Literal(value), " != ")
 }

@@ -26,7 +26,7 @@ package sqlbuilder
 //func (cl ColumnList) isProjectionType() {
 //}
 //
-//func (cl ColumnList) As(name string) Clause {
+//func (cl ColumnList) AS(name string) Clause {
 //	panic("Unallowed operation ")
 //}
 

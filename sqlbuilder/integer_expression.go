@@ -56,7 +56,7 @@ func NewBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) Int
 	integerExpression.numericInterfaceImpl.parent = &integerExpression
 	integerExpression.integerInterfaceImpl.parent = &integerExpression
 
-	integerExpression.binaryExpression = newBinaryExpression(lhs, rhs, []byte(operator))
+	integerExpression.binaryExpression = newBinaryExpression(lhs, rhs, operator)
 
 	return &integerExpression
 }
@@ -72,7 +72,7 @@ type prefixIntegerExpression struct {
 
 func NewPrefixIntegerExpression(expression IntegerExpression, operator string) IntegerExpression {
 	integerExpression := prefixIntegerExpression{}
-	integerExpression.prefixExpression = newPrefixExpression(expression, []byte(operator))
+	integerExpression.prefixExpression = newPrefixExpression(expression, operator)
 
 	integerExpression.expressionInterfaceImpl.parent = &integerExpression
 	integerExpression.numericInterfaceImpl.parent = &integerExpression

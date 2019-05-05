@@ -5,120 +5,28 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/dropbox/godropbox/errors"
 )
 
-//func serializeClauses(
-//	clauses []Clause,
-//	separator []byte,
-//	out *bytes.Buffer) (err error) {
-//
-//	if clauses == nil || len(clauses) == 0 {
-//		return errors.Newf("Empty clauses.")
-//	}
-//
-//	if clauses[0] == nil {
-//		return errors.Newf("nil clause.")
-//	}
-//	if err = clauses[0].Serialize(out); err != nil {
-//		return
-//	}
-//
-//	for _, c := range clauses[1:] {
-//		_, _ = out.Write(separator)
-//
-//		if c == nil {
-//			return errors.Newf("nil clause.")
-//		}
-//		if err = c.Serialize(out); err != nil {
-//			return
-//		}
-//	}
-//
-//	return nil
-//}
-//
-//// Representation of n-ary arithmetic (+ - * /)
-//type arithmeticExpression struct {
-//	expressionInterfaceImpl
-//	expressions []Expression
-//	operator    []byte
-//}
-//
-//func (arith *arithmeticExpression) Serialize(out *queryData, options ...serializeOption) error {
-//	if len(arith.expressions) == 0 {
-//		return errors.Newf(
-//			"Empty arithmetic expression.")
-//	}
-//
-//	clauses := make([]Clause, len(arith.expressions), len(arith.expressions))
-//	for i, expr := range arith.expressions {
-//		clauses[i] = expr
-//	}
-//
-//	useParentheses := len(clauses) > 1
-//	if useParentheses {
-//		_ = out.WriteByte('(')
-//	}
-//
-//	if err = serializeClauses(clauses, arith.operator, out); err != nil {
-//		return
-//	}
-//
-//	if useParentheses {
-//		_ = out.WriteByte(')')
-//	}
-//
-//	return nil
-//}
-//
-
-type tupleExpression struct {
-	expressionInterfaceImpl
-	elements listClause
-}
-
-func (tuple *tupleExpression) Serialize(out *queryData, options ...serializeOption) error {
-	if len(tuple.elements.clauses) == 0 {
-		return errors.Newf("Tuples must include at least one element")
-	}
-	return tuple.elements.Serialize(out)
-}
-
-func Tuple(exprs ...Expression) Expression {
-	clauses := make([]Clause, 0, len(exprs))
-	for _, expr := range exprs {
-		clauses = append(clauses, expr)
-	}
-	return &tupleExpression{
-		elements: listClause{
-			clauses:            clauses,
-			includeParentheses: true,
-		},
-	}
-}
-
 // Representation of a tuple enclosed, comma separated list of clauses
-type listClause struct {
-	clauses            []Clause
-	includeParentheses bool
-}
-
-func (list *listClause) Serialize(out *queryData, options ...serializeOption) error {
-	if list.includeParentheses {
-		out.WriteByte('(')
-	}
-
-	if err := serializeClauseList(list.clauses, out); err != nil {
-		return err
-	}
-
-	if list.includeParentheses {
-		out.WriteByte(')')
-	}
-	return nil
-}
+//type listClause struct {
+//	clauses            []Clause
+//	includeParentheses bool
+//}
+//
+//func (list *listClause) Serialize(out *queryData, options ...serializeOption) error {
+//	if list.includeParentheses {
+//		out.WriteByte('(')
+//	}
+//
+//	if err := serializeClauseList(list.clauses, out); err != nil {
+//		return err
+//	}
+//
+//	if list.includeParentheses {
+//		out.WriteByte(')')
+//	}
+//	return nil
+//}
 
 //
 //type funcExpression struct {
