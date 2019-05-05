@@ -67,8 +67,6 @@ type Table struct {
 	name       string
 	alias      string
 	columns    []Column
-	// If not empty, the name of the index to force
-	forcedIndex string
 }
 
 func (t *Table) Column(name string) Column {
@@ -104,13 +102,6 @@ func (t *Table) SchemaTableName() string {
 // Returns a list of the tableName's columns
 func (t *Table) Columns() []Column {
 	return t.columns
-}
-
-// Returns a copy of this tableName, but with the specified index forced.
-func (t *Table) ForceIndex(index string) *Table {
-	newTable := *t
-	newTable.forcedIndex = index
-	return &newTable
 }
 
 // Generates the sql string for the current tableName expression.  Note: the
