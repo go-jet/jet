@@ -15,7 +15,7 @@ type Column interface {
 	DefaultAlias() Projection
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
-	setTableName(table string) error
+	setTableName(table string)
 }
 
 type NullableColumn bool
@@ -69,9 +69,8 @@ func (c *baseColumn) TableName() string {
 	return c.tableName
 }
 
-func (c *baseColumn) setTableName(table string) error {
+func (c *baseColumn) setTableName(table string) {
 	c.tableName = table
-	return nil
 }
 
 func (c *baseColumn) DefaultAlias() Projection {

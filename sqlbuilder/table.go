@@ -3,24 +3,22 @@
 package sqlbuilder
 
 import (
-	"fmt"
 	"github.com/dropbox/godropbox/errors"
 )
 
-type TableInterface interface {
+type tableInterface interface {
 	SchemaName() string
 	TableName() string
-	// Returns the list of columns that are in the current tableName expression.
+
 	Columns() []Column
-	// Generates the sql string for the current tableName expression.  Note: the
-	// generated string may not be a valid/executable sql statement.
+	// Generates the sql string for the current tableName expression.
 	SerializeSql(out *queryData) error
 }
 
 // The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
 // are not supported.
 type ReadableTable interface {
-	TableInterface
+	tableInterface
 
 	// Generates a select query on the current tableName.
 	SELECT(projections ...Projection) SelectStatement
@@ -41,7 +39,7 @@ type ReadableTable interface {
 
 // The sql tableName write interface.
 type WritableTable interface {
-	TableInterface
+	tableInterface
 
 	INSERT(columns ...Column) InsertStatement
 	UPDATE(columns ...Column) UpdateStatement
@@ -53,42 +51,24 @@ type WritableTable interface {
 func NewTable(schemaName, name string, columns ...Column) *Table {
 
 	t := &Table{
-		schemaName:   schemaName,
-		name:         name,
-		columns:      columns,
-		columnLookup: make(map[string]Column),
+		schemaName: schemaName,
+		name:       name,
+		columns:    columns,
 	}
 	for _, c := range columns {
-		err := c.setTableName(name)
-		if err != nil {
-			panic(err)
-		}
-		t.columnLookup[c.TableName()] = c
-	}
-
-	if len(columns) == 0 {
-		panic(fmt.Sprintf("Table %s has no columns", name))
+		c.setTableName(name)
 	}
 
 	return t
 }
 
 type Table struct {
-	schemaName   string
-	name         string
-	alias        string
-	columns      []Column
-	columnLookup map[string]Column
+	schemaName string
+	name       string
+	alias      string
+	columns    []Column
 	// If not empty, the name of the index to force
 	forcedIndex string
-}
-
-// Returns the specified column, or errors if it doesn't exist in the tableName
-func (t *Table) getColumn(name string) (Column, error) {
-	if c, ok := t.columnLookup[name]; ok {
-		return c, nil
-	}
-	return nil, errors.Newf("No such column '%s' in tableName '%s'", name, t.name)
 }
 
 func (t *Table) Column(name string) Column {
@@ -99,26 +79,11 @@ func (t *Table) Column(name string) Column {
 	}
 }
 
-// Returns all expresssion for a tableName as a slice of projections
-func (t *Table) Projections() []Expression {
-	result := make([]Expression, 0)
-
-	for _, col := range t.columns {
-		col.Asc()
-		result = append(result, col)
-	}
-
-	return result
-}
-
 func (t *Table) SetAlias(alias string) {
 	t.alias = alias
 
 	for _, c := range t.columns {
-		err := c.setTableName(alias)
-		if err != nil {
-			panic(err)
-		}
+		c.setTableName(alias)
 	}
 }
 
@@ -179,14 +144,6 @@ func (t *Table) INNER_JOIN(
 
 	return InnerJoinOn(t, table, onCondition)
 }
-
-//func (t *Table) InnerJoinUsing(
-//	table ReadableTable,
-//	col1 Column,
-//	col2 Column) ReadableTable {
-//
-//	return INNER_JOIN(t, table, col1.Eq(col2))
-//}
 
 // Creates a left join tableName expression using onCondition.
 func (t *Table) LEFT_JOIN(
@@ -312,7 +269,10 @@ func (t *joinTable) Columns() []Column {
 }
 
 func (t *joinTable) Column(name string) Column {
-	panic("Not implemented")
+	return &baseColumn{
+		name:     name,
+		nullable: NotNullable,
+	}
 }
 
 func (t *joinTable) SerializeSql(out *queryData) (err error) {
