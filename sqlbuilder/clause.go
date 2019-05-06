@@ -10,8 +10,6 @@ type serializeOption int
 
 const (
 	FOR_PROJECTION = iota
-	UNION_ORDER_BY
-	NO_TABLE_NAME
 )
 
 type Clause interface {

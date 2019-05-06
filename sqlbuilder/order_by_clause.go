@@ -33,7 +33,7 @@ func (o *orderByClause) Serialize(out *queryData, options ...serializeOption) er
 		return errors.Newf("nil orderBy by clause.")
 	}
 
-	if err := o.expression.Serialize(out, UNION_ORDER_BY); err != nil {
+	if err := o.expression.Serialize(out); err != nil {
 		return err
 	}
 

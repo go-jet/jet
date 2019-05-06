@@ -27,7 +27,7 @@ func TestBinaryExpression(t *testing.T) {
 	})
 
 	t.Run("and", func(t *testing.T) {
-		exp := boolExpression.And(Eq(Literal(4), Literal(5)))
+		exp := boolExpression.AND(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.Serialize(&out)
@@ -37,7 +37,7 @@ func TestBinaryExpression(t *testing.T) {
 	})
 
 	t.Run("or", func(t *testing.T) {
-		exp := boolExpression.Or(Eq(Literal(4), Literal(5)))
+		exp := boolExpression.OR(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.Serialize(&out)
@@ -54,7 +54,7 @@ func TestUnaryExpression(t *testing.T) {
 	err := notExpression.Serialize(&out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), " NOT $1 = $2")
+	assert.Equal(t, out.buff.String(), "NOT $1 = $2")
 
 	t.Run("alias", func(t *testing.T) {
 		alias := notExpression.AS("alias_not_expression")
@@ -63,17 +63,17 @@ func TestUnaryExpression(t *testing.T) {
 		err := alias.SerializeForProjection(&out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), ` NOT $1 = $2 AS "alias_not_expression"`)
+		assert.Equal(t, out.buff.String(), `NOT $1 = $2 AS "alias_not_expression"`)
 	})
 
 	t.Run("and", func(t *testing.T) {
-		exp := notExpression.And(Eq(Literal(4), Literal(5)))
+		exp := notExpression.AND(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.Serialize(&out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `( NOT $1 = $2 AND $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `(NOT $1 = $2 AND $3 = $4)`)
 	})
 }
 
@@ -84,16 +84,16 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 	err := notExpression.Serialize(&out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), " IS TRUE $1 = $2")
+	assert.Equal(t, out.buff.String(), "IS TRUE $1 = $2")
 
 	t.Run("and", func(t *testing.T) {
-		exp := notExpression.And(Eq(Literal(4), Literal(5)))
+		exp := notExpression.AND(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.Serialize(&out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `( IS TRUE $1 = $2 AND $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `(IS TRUE $1 = $2 AND $3 = $4)`)
 	})
 }
 

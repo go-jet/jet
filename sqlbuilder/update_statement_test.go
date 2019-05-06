@@ -42,7 +42,7 @@ func TestUpdate(t *testing.T) {
 //
 //func (s *StmtSuite) TestUpdateSingleValue(c *gc.C) {
 //	stmt := table1.UPDATE().SET(table1Col1, Literal(1))
-//	stmt.WHERE(EqL(table1Col2, 2))
+//	stmt.WHERE(EqString(table1Col2, 2))
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)
 //
@@ -54,7 +54,7 @@ func TestUpdate(t *testing.T) {
 //
 //func (s *StmtSuite) TestUpdateUsingDeferredLookupColumns(c *gc.C) {
 //	stmt := table1.UPDATE().SET(table1.C("col1"), Literal(1))
-//	stmt.WHERE(EqL(table1Col2, 2))
+//	stmt.WHERE(EqString(table1Col2, 2))
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)
 //
@@ -68,7 +68,7 @@ func TestUpdate(t *testing.T) {
 //	stmt := table1.UPDATE()
 //	stmt.SET(table1Col1, Literal(1))
 //	stmt.SET(table1Col2, Literal(2))
-//	stmt.WHERE(EqL(table1Col2, 3))
+//	stmt.WHERE(EqString(table1Col2, 3))
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)
 //
@@ -82,7 +82,7 @@ func TestUpdate(t *testing.T) {
 //
 //func (s *StmtSuite) TestUpdateWithOrderBy(c *gc.C) {
 //	stmt := table1.UPDATE().SET(table1Col1, Literal(1))
-//	stmt.WHERE(EqL(table1Col2, 2))
+//	stmt.WHERE(EqString(table1Col2, 2))
 //	stmt.ORDER_BY(table1Col2)
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)
@@ -98,7 +98,7 @@ func TestUpdate(t *testing.T) {
 //
 //func (s *StmtSuite) TestUpdateWithLimit(c *gc.C) {
 //	stmt := table1.UPDATE().SET(table1Col1, Literal(1))
-//	stmt.WHERE(EqL(table1Col2, 2))
+//	stmt.WHERE(EqString(table1Col2, 2))
 //	stmt.LIMIT(5)
 //	sql, err := stmt.String()
 //	c.Assert(err, gc.IsNil)

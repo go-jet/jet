@@ -482,7 +482,7 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 
 	// tests on outer statement: Group By, Order By, LIMIT
-	// on inner statement: AndWhere, WHERE (with And), Order By, LIMIT
+	// on inner statement: AndWhere, WHERE (with AND), Order By, LIMIT
 	select_queries := make([]SelectStatement, 0, 3)
 
 	// We're not trying to write a SQL parser, so we won't warn if you do something silly like

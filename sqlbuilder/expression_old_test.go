@@ -375,22 +375,6 @@ func (s *ExprSuite) TestDesc(c *gc.C) {
 	c.Assert(sql, gc.Equals, "table1.col1 DESC")
 }
 
-func (s *ExprSuite) TestIf(c *gc.C) {
-	test := GtL(table1Col1, 1.1)
-	clause := If(test, table1Col1, table1Col2)
-
-	buf := &bytes.Buffer{}
-
-	err := clause.Serialize(buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"IF(table1.col1>1.1,table1.col1,table1.col2)")
-}
-
 func (s *ExprSuite) TestColumnValue(c *gc.C) {
 	clause := ColumnValue(table1Col1)
 

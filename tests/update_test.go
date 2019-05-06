@@ -21,7 +21,7 @@ func TestUpdateValues(t *testing.T) {
 	query := table.Link.
 		UPDATE(table.Link.Name, table.Link.URL).
 		SET("Bong", "http://bong.com").
-		WHERE(table.Link.Name.EqL("Bing"))
+		WHERE(table.Link.Name.EqString("Bing"))
 
 	queryStr, args, err := query.Sql()
 
@@ -38,7 +38,7 @@ func TestUpdateValues(t *testing.T) {
 	links := []model.Link{}
 
 	err = table.Link.SELECT(table.Link.AllColumns).
-		WHERE(table.Link.Name.EqL("Bong")).
+		WHERE(table.Link.Name.EqString("Bong")).
 		Query(db, &links)
 
 	assert.NilError(t, err)
@@ -60,7 +60,7 @@ func TestUpdateAndReturning(t *testing.T) {
 	stmt := table.Link.
 		UPDATE(table.Link.Name, table.Link.URL).
 		SET("DuckDuckGo", "http://www.duckduckgo.com").
-		WHERE(table.Link.Name.EqL("Ask")).
+		WHERE(table.Link.Name.EqString("Ask")).
 		RETURNING(table.Link.AllColumns)
 
 	stmtStr, args, err := stmt.Sql()

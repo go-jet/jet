@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
@@ -101,7 +102,7 @@ func TestSelectAndUnionInProjection(t *testing.T) {
 //		INNER_JOIN(Film, FilmActor.FilmID.Eq(Film.FilmID)).
 //		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 //		SELECT(FilmActor.AllColumns, Film.AllColumns, Language.AllColumns, Actor.AllColumns).
-//		WHERE(FilmActor.ActorID.GtEq(1).And(FilmActor.ActorID.LteLiteral(2)))
+//		WHERE(FilmActor.ActorID.GtEq(1).AND(FilmActor.ActorID.LteLiteral(2)))
 //
 //	queryStr, args, err := query.Sql()
 //	assert.NilError(t, err)
@@ -131,7 +132,7 @@ func TestJoinQuerySlice(t *testing.T) {
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		WHERE(Film.Rating.EqL(string(model.MpaaRating_NC17))).
+		WHERE(Film.Rating.EqString(string(model.MpaaRating_NC17))).
 		LIMIT(15)
 
 	queryStr, args, err := query.Sql()
@@ -317,7 +318,7 @@ func TestSelectSelfJoin(t *testing.T) {
 	f2 := Film.AS("f2")
 
 	query := f1.
-		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
+		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).AND(f1.Length.Eq(f2.Length))).
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
@@ -356,7 +357,7 @@ func TestSelectAliasColumn(t *testing.T) {
 	}
 
 	query := f1.
-		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).And(f1.Length.Eq(f2.Length))).
+		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).AND(f1.Length.Eq(f2.Length))).
 		SELECT(f1.Title.AS("thesame_length_films.title1"),
 			f2.Title.AS("thesame_length_films.title2"),
 			f1.Length.AS("thesame_length_films.length")).
@@ -443,7 +444,7 @@ func TestSubQuery(t *testing.T) {
 	//	WHERE(Actor.LastName.Neq(avrgCustomer))
 
 	rFilmsOnly := Film.SELECT(Film.FilmID, Film.Title, Film.Rating).
-		WHERE(Film.Rating.EqL("R")).
+		WHERE(Film.Rating.EqString("R")).
 		AsTable("films")
 
 	query := Actor.INNER_JOIN(FilmActor, Actor.ActorID.Eq(FilmActor.FilmID)).
@@ -532,7 +533,7 @@ func TestSelectGroupByHaving(t *testing.T) {
 	assert.NilError(t, err)
 	fmt.Println(queryStr)
 	assert.Equal(t, len(args), 1)
-	assert.Equal(t, queryStr, `SELECT payment.customer_id AS "customer_payment_sum.customer_id", SUM(payment.amount) AS "customer_payment_sum.amount_sum" FROM dvds.payment GROUP BY payment.customer_id HAVING SUM(payment.amount)>$1 ORDER BY SUM(payment.amount) ASC`)
+	assert.Equal(t, queryStr, `SELECT payment.customer_id AS "customer_payment_sum.customer_id", SUM(payment.amount) AS "customer_payment_sum.amount_sum" FROM dvds.payment GROUP BY payment.customer_id HAVING SUM(payment.amount) > $1 ORDER BY SUM(payment.amount) ASC`)
 
 	type CustomerPaymentSum struct {
 		CustomerID int16
@@ -664,6 +665,38 @@ func TestUnion(t *testing.T) {
 		PaymentID: 17532,
 		Amount:    8.99,
 	})
+}
+
+func TestSelectWithCase(t *testing.T) {
+	query := Payment.SELECT(
+		sqlbuilder.CASE(Payment.StaffID).
+			WHEN(sqlbuilder.IntLiteral(1)).THEN(sqlbuilder.Literal("ONE")).
+			WHEN(sqlbuilder.IntLiteral(2)).THEN(sqlbuilder.Literal("TWO")).
+			WHEN(sqlbuilder.IntLiteral(3)).THEN(sqlbuilder.Literal("THREE")).
+			ELSE(sqlbuilder.Literal("OTHER")).AS("staff_id_num"),
+	).
+		ORDER_BY(Payment.PaymentID.ASC()).
+		LIMIT(20)
+
+	queryStr, args, err := query.Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(queryStr)
+	fmt.Println(args)
+
+	dest := []struct {
+		StaffIdNum string
+	}{}
+
+	err = query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 20)
+	assert.Equal(t, dest[0].StaffIdNum, "TWO")
+	assert.Equal(t, dest[1].StaffIdNum, "ONE")
+
+	spew.Dump(dest)
+
 }
 
 func int16Ptr(i int16) *int16 {

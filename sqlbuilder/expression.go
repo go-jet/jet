@@ -24,11 +24,11 @@ type expressionInterfaceImpl struct {
 }
 
 func (e *expressionInterfaceImpl) IN(subQuery SelectStatement) BoolExpression {
-	return newBinaryBoolExpression(e.parent, subQuery, " IN ")
+	return newBinaryBoolExpression(e.parent, subQuery, "IN")
 }
 
 func (e *expressionInterfaceImpl) NOT_IN(subQuery SelectStatement) BoolExpression {
-	return newBinaryBoolExpression(e.parent, subQuery, " NOT_IN ")
+	return newBinaryBoolExpression(e.parent, subQuery, "NOT_IN")
 }
 
 func (e *expressionInterfaceImpl) AS(alias string) Projection {
@@ -103,7 +103,7 @@ func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption)
 		return err
 	}
 
-	out.WriteString(c.operator)
+	out.WriteString(" " + c.operator + " ")
 
 	if err := c.rhs.Serialize(out); err != nil {
 		return err

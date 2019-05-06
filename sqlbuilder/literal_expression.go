@@ -20,3 +20,19 @@ func (l literalExpression) Serialize(out *queryData, options ...serializeOption)
 
 	return nil
 }
+
+type numLiteralExpression struct {
+	literalExpression
+	numericInterfaceImpl
+}
+
+func IntLiteral(value int) NumericExpression {
+	numLiteral := &numLiteralExpression{}
+
+	numLiteral.literalExpression = *Literal(value)
+	numLiteral.literalExpression.parent = numLiteral
+
+	numLiteral.numericInterfaceImpl.parent = numLiteral
+
+	return numLiteral
+}

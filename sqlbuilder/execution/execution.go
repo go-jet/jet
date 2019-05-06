@@ -487,7 +487,14 @@ func initializePtrValue(value reflect.Value) {
 }
 
 func getCellValue(scanContext *scanContext, tableName, fieldName string) interface{} {
-	columnName := tableName + "." + snaker.CamelToSnake(fieldName)
+	columnName := ""
+
+	if tableName == "" {
+		columnName = snaker.CamelToSnake(fieldName)
+	} else {
+		columnName = tableName + "." + snaker.CamelToSnake(fieldName)
+	}
+
 	//columnName := snaker.CamelToSnake(fieldName)
 
 	////fmt.Println(columnName)

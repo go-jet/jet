@@ -8,10 +8,10 @@ type BoolExpression interface {
 	GtEq(rhs Expression) BoolExpression
 	LtEq(rhs Expression) BoolExpression
 
-	And(expression BoolExpression) BoolExpression
-	Or(expression BoolExpression) BoolExpression
-	IsTrue() BoolExpression
-	IsFalse() BoolExpression
+	AND(expression BoolExpression) BoolExpression
+	OR(expression BoolExpression) BoolExpression
+	IS_TRUE() BoolExpression
+	IS_FALSE() BoolExpression
 }
 
 type boolInterfaceImpl struct {
@@ -34,18 +34,18 @@ func (b *boolInterfaceImpl) LtEq(rhs Expression) BoolExpression {
 	return LtEq(b.parent, rhs)
 }
 
-func (b *boolInterfaceImpl) And(expression BoolExpression) BoolExpression {
+func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
 	return And(b.parent, expression)
 }
 
-func (b *boolInterfaceImpl) Or(expression BoolExpression) BoolExpression {
+func (b *boolInterfaceImpl) OR(expression BoolExpression) BoolExpression {
 	return Or(b.parent, expression)
 }
-func (b *boolInterfaceImpl) IsTrue() BoolExpression {
+func (b *boolInterfaceImpl) IS_TRUE() BoolExpression {
 	return IsTrue(b.parent)
 }
 
-func (b *boolInterfaceImpl) IsFalse() BoolExpression {
+func (b *boolInterfaceImpl) IS_FALSE() BoolExpression {
 	return nil
 }
 
@@ -106,7 +106,7 @@ func EXISTS(subQuery SelectStatement) BoolExpression {
 
 // Returns a representation of "a=b"
 func Eq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, " = ")
+	return newBinaryBoolExpression(lhs, rhs, "=")
 }
 
 // Returns a representation of "a=b", where b is a literal
@@ -166,24 +166,24 @@ func GteL(lhs Expression, val interface{}) BoolExpression {
 
 // Returns a representation of "not expr"
 func Not(expr BoolExpression) BoolExpression {
-	return newPrefixBoolExpression(expr, " NOT")
+	return newPrefixBoolExpression(expr, "NOT")
 }
 
 func IsTrue(expr BoolExpression) BoolExpression {
-	return newPrefixBoolExpression(expr, " IS TRUE")
+	return newPrefixBoolExpression(expr, "IS TRUE")
 }
 
 func And(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, " AND ")
+	return newBinaryBoolExpression(lhs, rhs, "AND")
 }
 
 // Returns a representation of "c[0] OR ... OR c[n-1]" for c in clauses
 func Or(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, " OR ")
+	return newBinaryBoolExpression(lhs, rhs, "OR")
 }
 
 func Like(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, " LIKE ")
+	return newBinaryBoolExpression(lhs, rhs, "LIKE")
 }
 
 func LikeL(lhs Expression, val string) BoolExpression {
@@ -191,7 +191,7 @@ func LikeL(lhs Expression, val string) BoolExpression {
 }
 
 func Regexp(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, " REGEXP ")
+	return newBinaryBoolExpression(lhs, rhs, "REGEXP")
 }
 
 func RegexpL(lhs Expression, val string) BoolExpression {

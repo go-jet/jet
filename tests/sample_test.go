@@ -12,7 +12,7 @@ import (
 func TestUUIDType(t *testing.T) {
 	query := table.AllTypes.
 		SELECT(table.AllTypes.AllColumns).
-		WHERE(table.AllTypes.UUID.EqL("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+		WHERE(table.AllTypes.UUID.EqString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 
 	queryStr, args, err := query.Sql()
 

@@ -4,9 +4,9 @@ type StringExpression interface {
 	Expression
 
 	Eq(expression StringExpression) BoolExpression
-	EqL(value string) BoolExpression
+	EqString(value string) BoolExpression
 	NotEq(expression StringExpression) BoolExpression
-	NotEqL(value string) BoolExpression
+	NotEqString(value string) BoolExpression
 }
 
 type stringInterfaceImpl struct {
@@ -14,17 +14,17 @@ type stringInterfaceImpl struct {
 }
 
 func (b *stringInterfaceImpl) Eq(expression StringExpression) BoolExpression {
-	return newBinaryBoolExpression(b.parent, expression, " = ")
+	return Eq(b.parent, expression)
 }
 
-func (b *stringInterfaceImpl) EqL(value string) BoolExpression {
-	return newBinaryBoolExpression(b.parent, Literal(value), " = ")
+func (b *stringInterfaceImpl) EqString(value string) BoolExpression {
+	return EqL(b.parent, value)
 }
 
 func (b *stringInterfaceImpl) NotEq(expression StringExpression) BoolExpression {
-	return newBinaryBoolExpression(b.parent, expression, " != ")
+	return NotEq(b.parent, expression)
 }
 
-func (b *stringInterfaceImpl) NotEqL(value string) BoolExpression {
-	return newBinaryBoolExpression(b.parent, Literal(value), " != ")
+func (b *stringInterfaceImpl) NotEqString(value string) BoolExpression {
+	return NotEq(b.parent, Literal(value))
 }
