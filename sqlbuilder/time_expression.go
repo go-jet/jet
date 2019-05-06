@@ -48,3 +48,25 @@ func (t *timeInterfaceImpl) LtEq(expression TimeExpression) BoolExpression {
 func (t *timeInterfaceImpl) LtEqL(literal string) BoolExpression {
 	return LtEq(t.parent, Literal(literal))
 }
+
+//---------------------------------------------------//
+type prefixTimeExpression struct {
+	expressionInterfaceImpl
+	timeInterfaceImpl
+
+	prefixExpression
+}
+
+func newPrefixTimeExpression(expression Expression, operator string) TimeExpression {
+	timeExpr := prefixTimeExpression{}
+	timeExpr.prefixExpression = newPrefixExpression(expression, operator)
+
+	timeExpr.expressionInterfaceImpl.parent = &timeExpr
+	timeExpr.timeInterfaceImpl.parent = &timeExpr
+
+	return &timeExpr
+}
+
+func INTERVAL(interval string) Expression {
+	return newPrefixTimeExpression(Literal(interval), "INTERVAL")
+}

@@ -2,7 +2,6 @@ package tests
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
@@ -678,11 +677,10 @@ func TestSelectWithCase(t *testing.T) {
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)
 
-	queryStr, args, err := query.Sql()
+	queryStr, _, err := query.Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(queryStr)
-	fmt.Println(args)
+	assert.Equal(t, queryStr, `SELECT (CASE payment.staff_id WHEN $1 THEN $2 WHEN $3 THEN $4 WHEN $5 THEN $6 ELSE $7 END) AS "staff_id_num" FROM dvds.payment ORDER BY payment.payment_id ASC LIMIT $8`)
 
 	dest := []struct {
 		StaffIdNum string
@@ -694,9 +692,6 @@ func TestSelectWithCase(t *testing.T) {
 	assert.Equal(t, len(dest), 20)
 	assert.Equal(t, dest[0].StaffIdNum, "TWO")
 	assert.Equal(t, dest[1].StaffIdNum, "ONE")
-
-	spew.Dump(dest)
-
 }
 
 func int16Ptr(i int16) *int16 {

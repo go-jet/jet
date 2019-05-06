@@ -10,20 +10,25 @@ import (
 type intervalExpression struct {
 	expressionInterfaceImpl
 	duration time.Duration
-	negative bool
 }
 
-var intervalSep = ":"
+const intervalSep = ":"
 
 func (c *intervalExpression) Serialize(out *queryData, options ...serializeOption) error {
-	hours := c.duration / time.Hour
-	minutes := (c.duration % time.Hour) / time.Minute
-	sec := (c.duration % time.Minute) / time.Second
-	msec := (c.duration % time.Second) / time.Microsecond
 	out.WriteString("INTERVAL '")
-	if c.negative {
+
+	duration := c.duration
+
+	if duration < 0 {
+		duration = -duration
 		out.WriteString("-")
 	}
+
+	hours := duration / time.Hour
+	minutes := (duration % time.Hour) / time.Minute
+	sec := (duration % time.Minute) / time.Second
+	msec := (duration % time.Second) / time.Microsecond
+
 	out.WriteString(strconv.FormatInt(int64(hours), 10))
 	out.WriteString(intervalSep)
 	out.WriteString(strconv.FormatInt(int64(minutes), 10))
@@ -36,19 +41,16 @@ func (c *intervalExpression) Serialize(out *queryData, options ...serializeOptio
 	return nil
 }
 
-// Interval returns a representation of duration
-// in a form "INTERVAL `hour:min:sec:microsec` HOUR_MICROSECOND"
-func Interval(duration time.Duration) Expression {
-	negative := false
-	if duration < 0 {
-		negative = true
-		duration = -duration
-	}
-	return &intervalExpression{
-		duration: duration,
-		negative: negative,
-	}
-}
+//// Interval returns a representation of duration
+//func Interval(duration time.Duration) Expression {
+//	intervalExp := &intervalExpression{
+//		duration: duration,
+//	}
+//
+//	intervalExp.expressionInterfaceImpl.parent = intervalExp
+//
+//	return intervalExp
+//}
 
 var likeEscaper = strings.NewReplacer("_", "\\_", "%", "\\%")
 
