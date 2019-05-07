@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -15,14 +14,11 @@ func TestUnionNoSelect(t *testing.T) {
 }
 
 func TestUnionOneSelect(t *testing.T) {
-	query, args, err := UNION(
+	_, _, err := UNION(
 		table1.SELECT(table1Col1),
 	).Sql()
 
 	assert.Assert(t, err != nil)
-	fmt.Println(err.Error())
-	fmt.Println(query)
-	fmt.Println(args)
 }
 
 func TestUnionTwoSelect(t *testing.T) {

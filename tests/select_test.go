@@ -694,6 +694,21 @@ func TestSelectWithCase(t *testing.T) {
 	assert.Equal(t, dest[1].StaffIdNum, "ONE")
 }
 
+func TestLockTable(t *testing.T) {
+	query := Address.LOCK().IN(sqlbuilder.LOCK_EXCLUSIVE).NOWAIT()
+
+	queryStr, _, err := query.Sql()
+
+	assert.NilError(t, err)
+	assert.Equal(t, queryStr, `LOCK TABLE dvds.address IN EXCLUSIVE MODE NOWAIT`)
+
+	tx, _ := db.Begin()
+
+	_, err = query.Execute(tx)
+
+	assert.NilError(t, err)
+}
+
 func int16Ptr(i int16) *int16 {
 	return &i
 }

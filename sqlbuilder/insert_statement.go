@@ -29,11 +29,6 @@ func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
 	}
 }
 
-type columnAssignment struct {
-	col  Column
-	expr Expression
-}
-
 type insertStatementImpl struct {
 	table     WritableTable
 	columns   []Column

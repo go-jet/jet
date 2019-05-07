@@ -14,8 +14,6 @@ func Literal(value interface{}) *literalExpression {
 }
 
 func (l literalExpression) Serialize(out *queryData, options ...serializeOption) error {
-	//sqltypes.Value(c.value).EncodeSql(out)
-
 	out.InsertArgument(l.value)
 
 	return nil

@@ -44,6 +44,8 @@ type WritableTable interface {
 	INSERT(columns ...Column) InsertStatement
 	UPDATE(columns ...Column) UpdateStatement
 	DELETE() DeleteStatement
+
+	LOCK() lockStatement
 }
 
 // Defines a physical tableName in the database that is both readable and writable.
@@ -170,6 +172,10 @@ func (t *Table) UPDATE(columns ...Column) UpdateStatement {
 
 func (t *Table) DELETE() DeleteStatement {
 	return newDeleteStatement(t)
+}
+
+func (t *Table) LOCK() lockStatement {
+	return LOCK(t)
 }
 
 type joinType int
