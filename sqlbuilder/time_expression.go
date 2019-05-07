@@ -1,51 +1,51 @@
 package sqlbuilder
 
-type TimeExpression interface {
-	Expression
+type timeExpression interface {
+	expression
 
-	Eq(expression TimeExpression) BoolExpression
-	EqL(literal string) BoolExpression
-	NotEq(expression TimeExpression) BoolExpression
-	NotEqL(literal string) BoolExpression
-	GtEq(rhs TimeExpression) BoolExpression
-	GtEqL(literal string) BoolExpression
-	LtEq(rhs TimeExpression) BoolExpression
-	LtEqL(literal string) BoolExpression
+	Eq(expression timeExpression) boolExpression
+	EqL(literal string) boolExpression
+	NotEq(expression timeExpression) boolExpression
+	NotEqL(literal string) boolExpression
+	GtEq(rhs timeExpression) boolExpression
+	GtEqL(literal string) boolExpression
+	LtEq(rhs timeExpression) boolExpression
+	LtEqL(literal string) boolExpression
 }
 
 type timeInterfaceImpl struct {
-	parent TimeExpression
+	parent timeExpression
 }
 
-func (t *timeInterfaceImpl) Eq(expression TimeExpression) BoolExpression {
+func (t *timeInterfaceImpl) Eq(expression timeExpression) boolExpression {
 	return Eq(t.parent, expression)
 }
 
-func (t *timeInterfaceImpl) EqL(literal string) BoolExpression {
+func (t *timeInterfaceImpl) EqL(literal string) boolExpression {
 	return Eq(t.parent, Literal(literal))
 }
 
-func (t *timeInterfaceImpl) NotEq(expression TimeExpression) BoolExpression {
+func (t *timeInterfaceImpl) NotEq(expression timeExpression) boolExpression {
 	return NotEq(t.parent, expression)
 }
 
-func (t *timeInterfaceImpl) NotEqL(literal string) BoolExpression {
+func (t *timeInterfaceImpl) NotEqL(literal string) boolExpression {
 	return NotEq(t.parent, Literal(literal))
 }
 
-func (t *timeInterfaceImpl) GtEq(expression TimeExpression) BoolExpression {
+func (t *timeInterfaceImpl) GtEq(expression timeExpression) boolExpression {
 	return GtEq(t.parent, expression)
 }
 
-func (t *timeInterfaceImpl) GtEqL(literal string) BoolExpression {
+func (t *timeInterfaceImpl) GtEqL(literal string) boolExpression {
 	return GtEq(t.parent, Literal(literal))
 }
 
-func (t *timeInterfaceImpl) LtEq(expression TimeExpression) BoolExpression {
+func (t *timeInterfaceImpl) LtEq(expression timeExpression) boolExpression {
 	return LtEq(t.parent, expression)
 }
 
-func (t *timeInterfaceImpl) LtEqL(literal string) BoolExpression {
+func (t *timeInterfaceImpl) LtEqL(literal string) boolExpression {
 	return LtEq(t.parent, Literal(literal))
 }
 
@@ -57,7 +57,7 @@ type prefixTimeExpression struct {
 	prefixExpression
 }
 
-func newPrefixTimeExpression(expression Expression, operator string) TimeExpression {
+func newPrefixTimeExpression(expression expression, operator string) timeExpression {
 	timeExpr := prefixTimeExpression{}
 	timeExpr.prefixExpression = newPrefixExpression(expression, operator)
 
@@ -67,6 +67,6 @@ func newPrefixTimeExpression(expression Expression, operator string) TimeExpress
 	return &timeExpr
 }
 
-func INTERVAL(interval string) Expression {
+func INTERVAL(interval string) expression {
 	return newPrefixTimeExpression(Literal(interval), "INTERVAL")
 }

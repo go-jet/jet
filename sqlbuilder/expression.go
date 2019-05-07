@@ -5,63 +5,68 @@ import (
 )
 
 // An expression
-type Expression interface {
-	Clause
-	Projection
+type expression interface {
+	clause
+	projection
+	groupByClause
 
-	IN(subQuery SelectStatement) BoolExpression
-	NOT_IN(subQuery SelectStatement) BoolExpression
+	IN(subQuery selectStatement) boolExpression
+	NOT_IN(subQuery selectStatement) boolExpression
 
-	AS(alias string) Projection
-	IS_DISTINCT_FROM(expression Expression) BoolExpression
-	IS_NULL() BoolExpression
-	ASC() OrderByClause
-	DESC() OrderByClause
+	AS(alias string) projection
+	IS_DISTINCT_FROM(expression expression) boolExpression
+	IS_NULL() boolExpression
+	ASC() orderByClause
+	DESC() orderByClause
 }
 
 type expressionInterfaceImpl struct {
-	parent Expression
+	parent expression
 }
 
-func (e *expressionInterfaceImpl) IN(subQuery SelectStatement) BoolExpression {
+func (e *expressionInterfaceImpl) IN(subQuery selectStatement) boolExpression {
 	return newBinaryBoolExpression(e.parent, subQuery, "IN")
 }
 
-func (e *expressionInterfaceImpl) NOT_IN(subQuery SelectStatement) BoolExpression {
+func (e *expressionInterfaceImpl) NOT_IN(subQuery selectStatement) boolExpression {
 	return newBinaryBoolExpression(e.parent, subQuery, "NOT_IN")
 }
 
-func (e *expressionInterfaceImpl) AS(alias string) Projection {
+func (e *expressionInterfaceImpl) AS(alias string) projection {
 	return NewAlias(e.parent, alias)
 }
 
-func (e *expressionInterfaceImpl) IS_DISTINCT_FROM(expression Expression) BoolExpression {
+func (e *expressionInterfaceImpl) IS_DISTINCT_FROM(expression expression) boolExpression {
 	return newBinaryBoolExpression(e.parent, expression, "IS DISTINCT FROM")
 }
 
-func (e *expressionInterfaceImpl) IS_NULL() BoolExpression {
+func (e *expressionInterfaceImpl) IS_NULL() boolExpression {
 	return nil
 }
 
-func (e *expressionInterfaceImpl) ASC() OrderByClause {
-	return &orderByClause{expression: e.parent, ascent: true}
+func (e *expressionInterfaceImpl) ASC() orderByClause {
+	return &orderByClauseImpl{expression: e.parent, ascent: true}
 }
 
-func (e *expressionInterfaceImpl) DESC() OrderByClause {
-	return &orderByClause{expression: e.parent, ascent: false}
+func (e *expressionInterfaceImpl) DESC() orderByClause {
+	return &orderByClauseImpl{expression: e.parent, ascent: false}
 }
 
-func (e *expressionInterfaceImpl) SerializeForProjection(out *queryData) error {
-	return e.parent.Serialize(out, FOR_PROJECTION)
+func (e *expressionInterfaceImpl) serializeForGroupBy(out *queryData) error {
+	return e.parent.serialize(out)
+}
+
+func (e *expressionInterfaceImpl) serializeForProjection(out *queryData) error {
+	return e.parent.serialize(out)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
 type binaryExpression struct {
-	lhs, rhs Expression
+	lhs, rhs expression
 	operator string
 }
 
-func newBinaryExpression(lhs, rhs Expression, operator string, parent ...Expression) binaryExpression {
+func newBinaryExpression(lhs, rhs expression, operator string, parent ...expression) binaryExpression {
 	binaryExpression := binaryExpression{
 		lhs:      lhs,
 		rhs:      rhs,
@@ -71,11 +76,11 @@ func newBinaryExpression(lhs, rhs Expression, operator string, parent ...Express
 	return binaryExpression
 }
 
-func isSimpleOperand(expression Expression) bool {
+func isSimpleOperand(expression expression) bool {
 	if _, ok := expression.(*literalExpression); ok {
 		return true
 	}
-	if _, ok := expression.(Column); ok {
+	if _, ok := expression.(column); ok {
 		return true
 	}
 	if _, ok := expression.(*numericFunc); ok {
@@ -85,7 +90,7 @@ func isSimpleOperand(expression Expression) bool {
 	return false
 }
 
-func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption) error {
+func (c *binaryExpression) serialize(out *queryData) error {
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.")
 	}
@@ -99,13 +104,13 @@ func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption)
 		out.WriteString("(")
 	}
 
-	if err := c.lhs.Serialize(out); err != nil {
+	if err := c.lhs.serialize(out); err != nil {
 		return err
 	}
 
 	out.WriteString(" " + c.operator + " ")
 
-	if err := c.rhs.Serialize(out); err != nil {
+	if err := c.rhs.serialize(out); err != nil {
 		return err
 	}
 
@@ -118,11 +123,11 @@ func (c *binaryExpression) Serialize(out *queryData, options ...serializeOption)
 
 // A not expression which negates a expression value
 type prefixExpression struct {
-	expression Expression
+	expression expression
 	operator   string
 }
 
-func newPrefixExpression(expression Expression, operator string) prefixExpression {
+func newPrefixExpression(expression expression, operator string) prefixExpression {
 	prefixExpression := prefixExpression{
 		expression: expression,
 		operator:   operator,
@@ -131,13 +136,13 @@ func newPrefixExpression(expression Expression, operator string) prefixExpressio
 	return prefixExpression
 }
 
-func (p *prefixExpression) Serialize(out *queryData, options ...serializeOption) error {
+func (p *prefixExpression) serialize(out *queryData) error {
 	out.WriteString(p.operator + " ")
 
 	if p.expression == nil {
 		return errors.Newf("nil prefix expression.")
 	}
-	if err := p.expression.Serialize(out); err != nil {
+	if err := p.expression.serialize(out); err != nil {
 		return err
 	}
 

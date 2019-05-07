@@ -6,24 +6,24 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
-type DeleteStatement interface {
-	Statement
+type deleteStatement interface {
+	statement
 
-	WHERE(expression BoolExpression) DeleteStatement
+	WHERE(expression boolExpression) deleteStatement
 }
 
-func newDeleteStatement(table WritableTable) DeleteStatement {
+func newDeleteStatement(table writableTable) deleteStatement {
 	return &deleteStatementImpl{
 		table: table,
 	}
 }
 
 type deleteStatementImpl struct {
-	table WritableTable
-	where BoolExpression
+	table writableTable
+	where boolExpression
 }
 
-func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
+func (d *deleteStatementImpl) WHERE(expression boolExpression) deleteStatement {
 	d.where = expression
 	return d
 }
@@ -38,7 +38,7 @@ func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error
 		return "", nil, errors.New("nil tableName.")
 	}
 
-	if err = d.table.SerializeSql(queryData); err != nil {
+	if err = d.table.serializeSql(queryData); err != nil {
 		return
 	}
 

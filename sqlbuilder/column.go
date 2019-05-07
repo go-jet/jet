@@ -6,13 +6,13 @@ import (
 	"strings"
 )
 
-type Column interface {
-	Expression
+type column interface {
+	expression
 
 	Name() string
 	TableName() string
 
-	DefaultAlias() Projection
+	DefaultAlias() projection
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string)
@@ -49,7 +49,7 @@ type baseColumn struct {
 	tableName string
 }
 
-func newBaseColumn(name string, nullable NullableColumn, tableName string, parent Column) baseColumn {
+func newBaseColumn(name string, nullable NullableColumn, tableName string, parent column) baseColumn {
 	bc := baseColumn{
 		name:      name,
 		nullable:  nullable,
@@ -73,11 +73,11 @@ func (c *baseColumn) setTableName(table string) {
 	c.tableName = table
 }
 
-func (c *baseColumn) DefaultAlias() Projection {
+func (c *baseColumn) DefaultAlias() projection {
 	return c.AS(c.tableName + "." + c.name)
 }
 
-func (c baseColumn) Serialize(out *queryData, options ...serializeOption) error {
+func (c baseColumn) serialize(out *queryData) error {
 
 	setOrderBy := out.statementType == set_statement && out.clauseType == order_by_clause
 

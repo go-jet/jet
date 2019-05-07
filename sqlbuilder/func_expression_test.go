@@ -12,7 +12,7 @@ func TestCase1(t *testing.T) {
 
 	queryData := &queryData{}
 
-	err := query.Serialize(queryData)
+	err := query.serialize(queryData)
 
 	assert.NilError(t, err)
 	assert.Equal(t, queryData.buff.String(), `(CASE WHEN table3.col1 = $1 THEN table3.col1 + $2 WHEN table3.col1 = $3 THEN table3.col1 + $4 END)`)
@@ -26,7 +26,7 @@ func TestCase2(t *testing.T) {
 
 	queryData := &queryData{}
 
-	err := query.Serialize(queryData)
+	err := query.serialize(queryData)
 
 	assert.NilError(t, err)
 	assert.Equal(t, queryData.buff.String(), `(CASE table3.col1 WHEN $1 THEN table3.col1 + $2 WHEN $3 THEN table3.col1 + $4 ELSE $5 END)`)
@@ -37,7 +37,7 @@ func TestInterval(t *testing.T) {
 
 	queryData := &queryData{}
 
-	err := query.Serialize(queryData)
+	err := query.serialize(queryData)
 
 	assert.NilError(t, err)
 	assert.Equal(t, queryData.buff.String(), `INTERVAL $1`)

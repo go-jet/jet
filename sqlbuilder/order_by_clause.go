@@ -2,8 +2,8 @@ package sqlbuilder
 
 import "github.com/dropbox/godropbox/errors"
 
-type OrderByClause interface {
-	Clause
+type orderByClause interface {
+	clause
 	isOrderByClauseType()
 }
 
@@ -13,27 +13,18 @@ type isOrderByClause struct {
 func (o *isOrderByClause) isOrderByClauseType() {
 }
 
-type ColumnNameOrderBy string
-
-func (o *ColumnNameOrderBy) isOrderByClauseType() {
-}
-
-func (o *ColumnNameOrderBy) Serialize(out *queryData, options ...serializeOption) error {
-	return nil
-}
-
-type orderByClause struct {
+type orderByClauseImpl struct {
 	isOrderByClause
-	expression Expression
+	expression expression
 	ascent     bool
 }
 
-func (o *orderByClause) Serialize(out *queryData, options ...serializeOption) error {
+func (o *orderByClauseImpl) serialize(out *queryData) error {
 	if o.expression == nil {
 		return errors.Newf("nil orderBy by clause.")
 	}
 
-	if err := o.expression.Serialize(out); err != nil {
+	if err := o.expression.serialize(out); err != nil {
 		return err
 	}
 
@@ -46,10 +37,10 @@ func (o *orderByClause) Serialize(out *queryData, options ...serializeOption) er
 	return nil
 }
 
-func Asc(expression Expression) OrderByClause {
-	return &orderByClause{expression: expression, ascent: true}
+func ASC(expression expression) orderByClause {
+	return &orderByClauseImpl{expression: expression, ascent: true}
 }
 
-func Desc(expression Expression) OrderByClause {
-	return &orderByClause{expression: expression, ascent: false}
+func DESC(expression expression) orderByClause {
+	return &orderByClauseImpl{expression: expression, ascent: false}
 }

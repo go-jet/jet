@@ -9,20 +9,20 @@ import (
 	"strings"
 )
 
-type InsertStatement interface {
-	Statement
+type insertStatement interface {
+	statement
 
 	// Add a row of values to the insert statement.
-	VALUES(values ...interface{}) InsertStatement
+	VALUES(values ...interface{}) insertStatement
 	// Map or stracture mapped to column names
-	VALUES_MAPPING(data interface{}) InsertStatement
+	VALUES_MAPPING(data interface{}) insertStatement
 
-	RETURNING(projections ...Projection) InsertStatement
+	RETURNING(projections ...projection) insertStatement
 
-	QUERY(selectStatement SelectStatement) InsertStatement
+	QUERY(selectStatement selectStatement) insertStatement
 }
 
-func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
+func newInsertStatement(t writableTable, columns ...column) insertStatement {
 	return &insertStatementImpl{
 		table:   t,
 		columns: columns,
@@ -30,11 +30,11 @@ func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
 }
 
 type insertStatementImpl struct {
-	table     WritableTable
-	columns   []Column
-	rows      [][]Clause
-	query     SelectStatement
-	returning []Projection
+	table     writableTable
+	columns   []column
+	rows      [][]clause
+	query     selectStatement
+	returning []projection
 
 	errors []string
 }
@@ -48,15 +48,15 @@ func (u *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
 }
 
 // expression or default keyword
-func (s *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
+func (s *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
 	if len(values) == 0 {
 		return s
 	}
 
-	literalRow := []Clause{}
+	literalRow := []clause{}
 
 	for _, value := range values {
-		if clause, ok := value.(Clause); ok {
+		if clause, ok := value.(clause); ok {
 			literalRow = append(literalRow, clause)
 		} else {
 			literalRow = append(literalRow, Literal(value))
@@ -67,7 +67,7 @@ func (s *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
 	return s
 }
 
-func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
+func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
 	if data == nil {
 		i.addError("Add method data is nil.")
 		return i
@@ -84,7 +84,7 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 		return i
 	}
 
-	rowValues := []Clause{}
+	rowValues := []clause{}
 
 	for _, column := range i.columns {
 		columnName := column.Name()
@@ -105,13 +105,13 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 	return i
 }
 
-func (i *insertStatementImpl) RETURNING(projections ...Projection) InsertStatement {
+func (i *insertStatementImpl) RETURNING(projections ...projection) insertStatement {
 	i.returning = defaultProjectionAliasing(projections)
 
 	return i
 }
 
-func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
+func (i *insertStatementImpl) QUERY(selectStatement selectStatement) insertStatement {
 	i.query = selectStatement
 
 	return i
@@ -134,7 +134,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return "", nil, errors.Newf("nil tableName.")
 	}
 
-	err = s.table.SerializeSql(queryData)
+	err = s.table.serializeSql(queryData)
 
 	if err != nil {
 		return "", nil, err
@@ -182,7 +182,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if s.query != nil {
-		err = s.query.Serialize(queryData)
+		err = s.query.serialize(queryData)
 
 		if err != nil {
 			return

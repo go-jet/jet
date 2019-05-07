@@ -13,7 +13,7 @@ func Literal(value interface{}) *literalExpression {
 	return &exp
 }
 
-func (l literalExpression) Serialize(out *queryData, options ...serializeOption) error {
+func (l literalExpression) serialize(out *queryData) error {
 	out.InsertArgument(l.value)
 
 	return nil
@@ -24,7 +24,7 @@ type numLiteralExpression struct {
 	numericInterfaceImpl
 }
 
-func IntLiteral(value int) NumericExpression {
+func IntLiteral(value int) numericExpression {
 	numLiteral := &numLiteralExpression{}
 
 	numLiteral.literalExpression = *Literal(value)

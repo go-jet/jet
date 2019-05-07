@@ -6,14 +6,8 @@ import (
 	"strconv"
 )
 
-type serializeOption int
-
-const (
-	FOR_PROJECTION = iota
-)
-
-type Clause interface {
-	Serialize(out *queryData, options ...serializeOption) error
+type clause interface {
+	serialize(out *queryData) error
 }
 
 type queryData struct {
@@ -40,34 +34,34 @@ const (
 	having_clause
 )
 
-func (q *queryData) WriteProjection(projections []Projection) error {
+func (q *queryData) WriteProjection(projections []projection) error {
 	q.clauseType = projection_clause
 	return serializeProjectionList(projections, q)
 }
 
-func (q *queryData) WriteWhere(where Expression) error {
+func (q *queryData) WriteWhere(where expression) error {
 	q.clauseType = where_clause
 	q.WriteString(" WHERE ")
-	return where.Serialize(q)
+	return where.serialize(q)
 }
 
-func (q *queryData) WriteGroupBy(groupBy []Clause) error {
+func (q *queryData) WriteGroupBy(groupBy []groupByClause) error {
 	q.clauseType = group_by_clause
 	q.WriteString(" GROUP BY ")
 
-	return serializeClauseList(groupBy, q)
+	return serializeGroupByClauseList(groupBy, q)
 }
 
-func (q *queryData) WriteOrderBy(orderBy []OrderByClause) error {
+func (q *queryData) WriteOrderBy(orderBy []orderByClause) error {
 	q.clauseType = order_by_clause
 	q.WriteString(" ORDER BY ")
 	return serializeOrderByClauseList(orderBy, q)
 }
 
-func (q *queryData) WriteHaving(having Expression) error {
+func (q *queryData) WriteHaving(having expression) error {
 	q.clauseType = having_clause
 	q.WriteString(" HAVING ")
-	return having.Serialize(q)
+	return having.serialize(q)
 
 }
 
@@ -140,13 +134,4 @@ func argToString(value interface{}) (string, error) {
 	default:
 		return "", errors.New("Unsupported literal type. ")
 	}
-}
-
-func contains(s []serializeOption, e serializeOption) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
 }

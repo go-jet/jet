@@ -1,16 +1,18 @@
 package sqlbuilder
 
-type Projection interface {
-	SerializeForProjection(out *queryData) error
+type projection interface {
+	serializeForProjection(out *queryData) error
 }
 
 //------------------------------------------------------//
 // Dummy type for select * AllColumns
-type ColumnList []Column
+type ColumnList []column
 
-func (cl ColumnList) SerializeForProjection(out *queryData) error {
+func (cl ColumnList) isProjectionType() {}
+
+func (cl ColumnList) serializeForProjection(out *queryData) error {
 	for i, column := range cl {
-		err := column.Serialize(out, FOR_PROJECTION)
+		err := column.serializeForProjection(out)
 
 		if err != nil {
 			return err
@@ -23,8 +25,8 @@ func (cl ColumnList) SerializeForProjection(out *queryData) error {
 	return nil
 }
 
-func (cl ColumnList) DefaultAlias() []Projection {
-	newColumnList := []Projection{}
+func (cl ColumnList) DefaultAlias() []projection {
+	newColumnList := []projection{}
 
 	for _, column := range cl {
 		newColumn := column.DefaultAlias()

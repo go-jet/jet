@@ -7,14 +7,14 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
-func serializeOrderByClauseList(orderByClauses []OrderByClause, out *queryData) error {
+func serializeOrderByClauseList(orderByClauses []orderByClause, out *queryData) error {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
 			out.WriteString(", ")
 		}
 
-		err := value.Serialize(out)
+		err := value.serialize(out)
 
 		if err != nil {
 			return err
@@ -24,7 +24,7 @@ func serializeOrderByClauseList(orderByClauses []OrderByClause, out *queryData) 
 	return nil
 }
 
-func serializeClauseList(clauses []Clause, out *queryData) (err error) {
+func serializeGroupByClauseList(clauses []groupByClause, out *queryData) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -35,7 +35,7 @@ func serializeClauseList(clauses []Clause, out *queryData) (err error) {
 			return errors.New("nil clause.")
 		}
 
-		if err = c.Serialize(out); err != nil {
+		if err = c.serializeForGroupBy(out); err != nil {
 			return
 		}
 	}
@@ -43,14 +43,33 @@ func serializeClauseList(clauses []Clause, out *queryData) (err error) {
 	return nil
 }
 
-func serializeExpressionList(expressions []Expression, separator string, out *queryData) error {
+func serializeClauseList(clauses []clause, out *queryData) (err error) {
+
+	for i, c := range clauses {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if c == nil {
+			return errors.New("nil clause.")
+		}
+
+		if err = c.serialize(out); err != nil {
+			return
+		}
+	}
+
+	return nil
+}
+
+func serializeExpressionList(expressions []expression, separator string, out *queryData) error {
 
 	for i, value := range expressions {
 		if i > 0 {
 			out.WriteString(separator)
 		}
 
-		err := value.Serialize(out)
+		err := value.serialize(out)
 
 		if err != nil {
 			return err
@@ -60,16 +79,16 @@ func serializeExpressionList(expressions []Expression, separator string, out *qu
 	return nil
 }
 
-func serializeProjectionList(projections []Projection, out *queryData) error {
+func serializeProjectionList(projections []projection, out *queryData) error {
 	for i, col := range projections {
 		if i > 0 {
 			out.WriteString(", ")
 		}
 		if col == nil {
-			return errors.New("Projection expression is nil.")
+			return errors.New("projection expression is nil.")
 		}
 
-		if err := col.SerializeForProjection(out); err != nil {
+		if err := col.serializeForProjection(out); err != nil {
 			return err
 		}
 	}
@@ -77,7 +96,7 @@ func serializeProjectionList(projections []Projection, out *queryData) error {
 	return nil
 }
 
-func serializeColumnList(columns []Column, out *queryData) error {
+func serializeColumnList(columns []column, out *queryData) error {
 	for i, col := range columns {
 		if i > 0 {
 			out.WriteByte(',')
@@ -93,7 +112,7 @@ func serializeColumnList(columns []Column, out *queryData) error {
 	return nil
 }
 
-func Query(statement Statement, db types.Db, destination interface{}) error {
+func Query(statement statement, db types.Db, destination interface{}) error {
 	query, args, err := statement.Sql()
 
 	if err != nil {
@@ -103,7 +122,7 @@ func Query(statement Statement, db types.Db, destination interface{}) error {
 	return execution.Query(db, query, args, destination)
 }
 
-func Execute(statement Statement, db types.Db) (res sql.Result, err error) {
+func Execute(statement statement, db types.Db) (res sql.Result, err error) {
 	query, args, err := statement.Sql()
 
 	if err != nil {

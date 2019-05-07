@@ -1,42 +1,42 @@
 package sqlbuilder
 
-type IntegerExpression interface {
-	NumericExpression
+type integerExpression interface {
+	numericExpression
 
-	//AddInt(value int) IntegerExpression
-	//AddInt64(value int) IntegerExpression
+	//AddInt(value int) integerExpression
+	//AddInt64(value int) integerExpression
 
-	BitAnd(expression IntegerExpression) IntegerExpression
-	BitOr(expression IntegerExpression) IntegerExpression
-	BitXor(expression IntegerExpression) IntegerExpression
-	BitNot() IntegerExpression
+	BitAnd(expression integerExpression) integerExpression
+	BitOr(expression integerExpression) integerExpression
+	BitXor(expression integerExpression) integerExpression
+	BitNot() integerExpression
 }
 
 type integerInterfaceImpl struct {
-	parent IntegerExpression
+	parent integerExpression
 }
 
-//func (i *integerInterfaceImpl) AddInt(expression IntegerExpression) IntegerExpression {
+//func (i *integerInterfaceImpl) AddInt(expression integerExpression) integerExpression {
 //	return NewBinaryIntegerExpression(i.parent, expression, " & ")
 //}
 //
-//func (i *integerInterfaceImpl) AddInt64(expression IntegerExpression) IntegerExpression {
+//func (i *integerInterfaceImpl) AddInt64(expression integerExpression) integerExpression {
 //	return NewBinaryIntegerExpression(i.parent, expression, " & ")
 //}
 
-func (i *integerInterfaceImpl) BitAnd(expression IntegerExpression) IntegerExpression {
+func (i *integerInterfaceImpl) BitAnd(expression integerExpression) integerExpression {
 	return NewBinaryIntegerExpression(i.parent, expression, " & ")
 }
 
-func (i *integerInterfaceImpl) BitOr(expression IntegerExpression) IntegerExpression {
+func (i *integerInterfaceImpl) BitOr(expression integerExpression) integerExpression {
 	return NewBinaryIntegerExpression(i.parent, expression, " | ")
 }
 
-func (i *integerInterfaceImpl) BitXor(expression IntegerExpression) IntegerExpression {
+func (i *integerInterfaceImpl) BitXor(expression integerExpression) integerExpression {
 	return NewBinaryIntegerExpression(i.parent, expression, " # ")
 }
 
-func (i *integerInterfaceImpl) BitNot() IntegerExpression {
+func (i *integerInterfaceImpl) BitNot() integerExpression {
 	return NewPrefixIntegerExpression(i.parent, " ~")
 }
 
@@ -49,7 +49,7 @@ type binaryIntegerExpression struct {
 	binaryExpression
 }
 
-func NewBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
+func NewBinaryIntegerExpression(lhs, rhs integerExpression, operator string) integerExpression {
 	integerExpression := binaryIntegerExpression{}
 
 	integerExpression.expressionInterfaceImpl.parent = &integerExpression
@@ -70,7 +70,7 @@ type prefixIntegerExpression struct {
 	prefixExpression
 }
 
-func NewPrefixIntegerExpression(expression IntegerExpression, operator string) IntegerExpression {
+func NewPrefixIntegerExpression(expression integerExpression, operator string) integerExpression {
 	integerExpression := prefixIntegerExpression{}
 	integerExpression.prefixExpression = newPrefixExpression(expression, operator)
 

@@ -12,38 +12,38 @@ const (
 	except    = "EXCEPT"
 )
 
-type SetStatement interface {
-	Statement
-	Expression
+type setStatement interface {
+	statement
+	expression
 
-	ORDER_BY(clauses ...OrderByClause) SetStatement
-	LIMIT(limit int64) SetStatement
-	OFFSET(offset int64) SetStatement
+	ORDER_BY(clauses ...orderByClause) setStatement
+	LIMIT(limit int64) setStatement
+	OFFSET(offset int64) setStatement
 
-	AsTable(alias string) ExpressionTable
+	AsTable(alias string) expressionTable
 }
 
-func UNION(selects ...SelectStatement) SetStatement {
+func UNION(selects ...selectStatement) setStatement {
 	return newSetStatementImpl(union, false, selects...)
 }
 
-func UNION_ALL(selects ...SelectStatement) SetStatement {
+func UNION_ALL(selects ...selectStatement) setStatement {
 	return newSetStatementImpl(union, true, selects...)
 }
 
-func INTERSECT(selects ...SelectStatement) SetStatement {
+func INTERSECT(selects ...selectStatement) setStatement {
 	return newSetStatementImpl(intersect, false, selects...)
 }
 
-func INTERSECT_ALL(selects ...SelectStatement) SetStatement {
+func INTERSECT_ALL(selects ...selectStatement) setStatement {
 	return newSetStatementImpl(intersect, true, selects...)
 }
 
-func EXCEPT(selects ...SelectStatement) SetStatement {
+func EXCEPT(selects ...selectStatement) setStatement {
 	return newSetStatementImpl(except, false, selects...)
 }
 
-func EXCEPT_ALL(selects ...SelectStatement) SetStatement {
+func EXCEPT_ALL(selects ...selectStatement) setStatement {
 	return newSetStatementImpl(except, true, selects...)
 }
 
@@ -52,14 +52,14 @@ type setStatementImpl struct {
 	expressionInterfaceImpl
 
 	operator      string
-	selects       []SelectStatement
-	orderBy       []OrderByClause
+	selects       []selectStatement
+	orderBy       []orderByClause
 	limit, offset int64
 	// True if results of the union should be deduped.
 	all bool
 }
 
-func newSetStatementImpl(operator string, all bool, selects ...SelectStatement) SetStatement {
+func newSetStatementImpl(operator string, all bool, selects ...selectStatement) setStatement {
 	setStatement := &setStatementImpl{
 		operator: operator,
 		selects:  selects,
@@ -73,30 +73,30 @@ func newSetStatementImpl(operator string, all bool, selects ...SelectStatement) 
 	return setStatement
 }
 
-func (us *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
+func (us *setStatementImpl) ORDER_BY(orderBy ...orderByClause) setStatement {
 
 	us.orderBy = orderBy
 	return us
 }
 
-func (us *setStatementImpl) LIMIT(limit int64) SetStatement {
+func (us *setStatementImpl) LIMIT(limit int64) setStatement {
 	us.limit = limit
 	return us
 }
 
-func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
+func (us *setStatementImpl) OFFSET(offset int64) setStatement {
 	us.offset = offset
 	return us
 }
 
-func (us *setStatementImpl) AsTable(alias string) ExpressionTable {
+func (us *setStatementImpl) AsTable(alias string) expressionTable {
 	return &expressionTableImpl{
 		statement: us,
 		alias:     alias,
 	}
 }
 
-func (s *setStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
+func (s *setStatementImpl) serialize(out *queryData) error {
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
 		out.WriteString("(")
 	}
@@ -114,7 +114,7 @@ func (s *setStatementImpl) Serialize(out *queryData, options ...serializeOption)
 	return nil
 }
 
-func (s *setStatementImpl) serializeImpl(out *queryData, options ...serializeOption) error {
+func (s *setStatementImpl) serializeImpl(out *queryData) error {
 
 	if len(s.selects) < 2 {
 		return errors.Newf("UNION statement must have at least two SELECT statements.")
@@ -131,7 +131,7 @@ func (s *setStatementImpl) serializeImpl(out *queryData, options ...serializeOpt
 			}
 		}
 
-		err := selectStmt.Serialize(out, options...)
+		err := selectStmt.serialize(out)
 
 		if err != nil {
 			return err

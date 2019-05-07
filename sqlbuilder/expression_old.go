@@ -14,7 +14,7 @@ type intervalExpression struct {
 
 const intervalSep = ":"
 
-func (c *intervalExpression) Serialize(out *queryData, options ...serializeOption) error {
+func (c *intervalExpression) serialize(out *queryData) error {
 	out.WriteString("INTERVAL '")
 
 	duration := c.duration
@@ -42,7 +42,7 @@ func (c *intervalExpression) Serialize(out *queryData, options ...serializeOptio
 }
 
 //// Interval returns a representation of duration
-//func Interval(duration time.Duration) Expression {
+//func Interval(duration time.Duration) expression {
 //	intervalExp := &intervalExpression{
 //		duration: duration,
 //	}

@@ -1,20 +1,20 @@
 package sqlbuilder
 
 type Alias struct {
-	expression Expression
+	expression expression
 	alias      string
 }
 
-func NewAlias(expression Expression, alias string) *Alias {
+func NewAlias(expression expression, alias string) *Alias {
 	return &Alias{
 		expression: expression,
 		alias:      alias,
 	}
 }
 
-func (a *Alias) SerializeForProjection(out *queryData) error {
+func (a *Alias) serializeForProjection(out *queryData) error {
 
-	err := a.expression.Serialize(out)
+	err := a.expression.serialize(out)
 
 	if err != nil {
 		return err

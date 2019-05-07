@@ -6,7 +6,7 @@ const (
 
 type keywordClause string
 
-func (k keywordClause) Serialize(out *queryData, options ...serializeOption) error {
+func (k keywordClause) serialize(out *queryData) error {
 	out.WriteString(string(k))
 
 	return nil

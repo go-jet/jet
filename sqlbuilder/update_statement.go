@@ -6,15 +6,15 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
-type UpdateStatement interface {
-	Statement
+type updateStatement interface {
+	statement
 
-	SET(values ...interface{}) UpdateStatement
-	WHERE(expression BoolExpression) UpdateStatement
-	RETURNING(projections ...Projection) UpdateStatement
+	SET(values ...interface{}) updateStatement
+	WHERE(expression boolExpression) updateStatement
+	RETURNING(projections ...projection) updateStatement
 }
 
-func newUpdateStatement(table WritableTable, columns []Column) UpdateStatement {
+func newUpdateStatement(table writableTable, columns []column) updateStatement {
 	return &updateStatementImpl{
 		table:   table,
 		columns: columns,
@@ -22,17 +22,17 @@ func newUpdateStatement(table WritableTable, columns []Column) UpdateStatement {
 }
 
 type updateStatementImpl struct {
-	table        WritableTable
-	columns      []Column
-	updateValues []Clause
-	where        BoolExpression
-	returning    []Projection
+	table        writableTable
+	columns      []column
+	updateValues []clause
+	where        boolExpression
+	returning    []projection
 }
 
-func (u *updateStatementImpl) SET(values ...interface{}) UpdateStatement {
+func (u *updateStatementImpl) SET(values ...interface{}) updateStatement {
 
 	for _, value := range values {
-		if clause, ok := value.(Clause); ok {
+		if clause, ok := value.(clause); ok {
 			u.updateValues = append(u.updateValues, clause)
 		} else {
 			u.updateValues = append(u.updateValues, Literal(value))
@@ -42,12 +42,12 @@ func (u *updateStatementImpl) SET(values ...interface{}) UpdateStatement {
 	return u
 }
 
-func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
+func (u *updateStatementImpl) WHERE(expression boolExpression) updateStatement {
 	u.where = expression
 	return u
 }
 
-func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStatement {
+func (u *updateStatementImpl) RETURNING(projections ...projection) updateStatement {
 	u.returning = defaultProjectionAliasing(projections)
 	return u
 }
@@ -62,7 +62,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return "", nil, errors.New("nil tableName.")
 	}
 
-	if err = u.table.SerializeSql(out); err != nil {
+	if err = u.table.serializeSql(out); err != nil {
 		return
 	}
 
@@ -99,7 +99,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			out.WriteString(", ")
 		}
 
-		err = value.Serialize(out)
+		err = value.serialize(out)
 
 		if err != nil {
 			return

@@ -20,7 +20,7 @@ const (
 )
 
 type lockStatement interface {
-	Statement
+	statement
 
 	IN(lockMode lockMode) lockStatement
 	NOWAIT() lockStatement
@@ -66,7 +66,7 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 			out.WriteString(", ")
 		}
 
-		err := table.SerializeSql(out)
+		err := table.serializeSql(out)
 
 		if err != nil {
 			return "", nil, err

@@ -6,14 +6,14 @@ type funcExpressionImpl struct {
 	expressionInterfaceImpl
 
 	name       string
-	expression []Expression
+	expression []expression
 }
 
-func ROW(expressions ...Expression) Expression {
+func ROW(expressions ...expression) expression {
 	return newFunc("ROW", expressions, nil)
 }
 
-func newFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
+func newFunc(name string, expressions []expression, parent expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:       name,
 		expression: expressions,
@@ -28,7 +28,7 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	return funcExp
 }
 
-func (f *funcExpressionImpl) Serialize(out *queryData, options ...serializeOption) error {
+func (f *funcExpressionImpl) serialize(out *queryData) error {
 	out.WriteString(f.name)
 	out.WriteString("(")
 	err := serializeExpressionList(f.expression, ", ", out)
@@ -45,7 +45,7 @@ type numericFunc struct {
 	numericInterfaceImpl
 }
 
-func NewNumericFunc(name string, expressions ...Expression) NumericExpression {
+func NewNumericFunc(name string, expressions ...expression) numericExpression {
 	numericFunc := &numericFunc{}
 
 	numericFunc.funcExpressionImpl = *newFunc(name, expressions, numericFunc)
@@ -55,35 +55,35 @@ func NewNumericFunc(name string, expressions ...Expression) NumericExpression {
 }
 
 //func (f *FuncExpression) SerializeSqlForColumnList(out *bytes.Buffer) error {
-//	return f.Serialize(out)
+//	return f.serialize(out)
 //}
 
-func MAX(expression NumericExpression) NumericExpression {
+func MAX(expression numericExpression) numericExpression {
 	return NewNumericFunc("MAX", expression)
 }
 
-func SUM(expression NumericExpression) NumericExpression {
+func SUM(expression numericExpression) numericExpression {
 	return NewNumericFunc("SUM", expression)
 }
 
 type caseInterface interface {
-	Expression
+	expression
 
-	WHEN(condition Expression) caseInterface
-	THEN(then Expression) caseInterface
-	ELSE(els Expression) caseInterface
+	WHEN(condition expression) caseInterface
+	THEN(then expression) caseInterface
+	ELSE(els expression) caseInterface
 }
 
 type caseExpression struct {
 	expressionInterfaceImpl
 
-	expression Expression
-	when       []Expression
-	then       []Expression
-	els        Expression
+	expression expression
+	when       []expression
+	then       []expression
+	els        expression
 }
 
-func CASE(expression ...Expression) caseInterface {
+func CASE(expression ...expression) caseInterface {
 	caseExp := &caseExpression{}
 
 	if len(expression) == 1 {
@@ -95,28 +95,28 @@ func CASE(expression ...Expression) caseInterface {
 	return caseExp
 }
 
-func (c *caseExpression) WHEN(when Expression) caseInterface {
+func (c *caseExpression) WHEN(when expression) caseInterface {
 	c.when = append(c.when, when)
 	return c
 }
 
-func (c *caseExpression) THEN(then Expression) caseInterface {
+func (c *caseExpression) THEN(then expression) caseInterface {
 	c.then = append(c.then, then)
 	return c
 }
 
-func (c *caseExpression) ELSE(els Expression) caseInterface {
+func (c *caseExpression) ELSE(els expression) caseInterface {
 	c.els = els
 
 	return c
 }
 
-func (c *caseExpression) Serialize(out *queryData, options ...serializeOption) error {
+func (c *caseExpression) serialize(out *queryData) error {
 	out.WriteString("(CASE")
 
 	if c.expression != nil {
 		out.WriteString(" ")
-		err := c.expression.Serialize(out)
+		err := c.expression.serialize(out)
 
 		if err != nil {
 			return err
@@ -133,14 +133,14 @@ func (c *caseExpression) Serialize(out *queryData, options ...serializeOption) e
 
 	for i, when := range c.when {
 		out.WriteString(" WHEN ")
-		err := when.Serialize(out)
+		err := when.serialize(out)
 
 		if err != nil {
 			return err
 		}
 
 		out.WriteString(" THEN ")
-		err = c.then[i].Serialize(out)
+		err = c.then[i].serialize(out)
 
 		if err != nil {
 			return err
@@ -149,7 +149,7 @@ func (c *caseExpression) Serialize(out *queryData, options ...serializeOption) e
 
 	if c.els != nil {
 		out.WriteString(" ELSE ")
-		err := c.els.Serialize(out)
+		err := c.els.serialize(out)
 
 		if err != nil {
 			return err

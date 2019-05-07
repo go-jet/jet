@@ -6,52 +6,52 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
-type SelectStatement interface {
-	Statement
-	Expression
+type selectStatement interface {
+	statement
+	expression
 
-	DISTINCT() SelectStatement
-	FROM(table ReadableTable) SelectStatement
-	WHERE(expression BoolExpression) SelectStatement
-	GROUP_BY(expressions ...Clause) SelectStatement
-	HAVING(boolExpression BoolExpression) SelectStatement
-	ORDER_BY(clauses ...OrderByClause) SelectStatement
+	DISTINCT() selectStatement
+	FROM(table readableTable) selectStatement
+	WHERE(expression boolExpression) selectStatement
+	GROUP_BY(groupByClauses ...groupByClause) selectStatement
+	HAVING(boolExpression boolExpression) selectStatement
+	ORDER_BY(orderByClauses ...orderByClause) selectStatement
 
-	LIMIT(limit int64) SelectStatement
-	OFFSET(offset int64) SelectStatement
+	LIMIT(limit int64) selectStatement
+	OFFSET(offset int64) selectStatement
 
-	FOR_UPDATE() SelectStatement
+	FOR_UPDATE() selectStatement
 
-	AsTable(alias string) ExpressionTable
+	AsTable(alias string) expressionTable
 }
 
-var SELECT = func(projection ...Projection) SelectStatement {
+var SELECT = func(projection ...projection) selectStatement {
 	return newSelectStatement(nil, projection)
 }
 
-// NOTE: SelectStatement purposely does not implement the Table interface since
+// NOTE: selectStatement purposely does not implement the Table interface since
 // mysql's subquery performance is horrible.
 type selectStatementImpl struct {
 	expressionInterfaceImpl
 
-	table       ReadableTable
+	table       readableTable
 	distinct    bool
-	projections []Projection
-	where       BoolExpression
-	groupBy     []Clause //can be ROLLUP, ... so clause for now
-	having      BoolExpression
-	orderBy     []OrderByClause
+	projections []projection
+	where       boolExpression
+	groupBy     []groupByClause
+	having      boolExpression
+	orderBy     []orderByClause
 
 	limit, offset int64
 
 	forUpdate bool
 }
 
-func defaultProjectionAliasing(projections []Projection) []Projection {
-	aliasedProjections := []Projection{}
+func defaultProjectionAliasing(projections []projection) []projection {
+	aliasedProjections := []projection{}
 
 	for _, projection := range projections {
-		if column, ok := projection.(Column); ok {
+		if column, ok := projection.(column); ok {
 			aliasedProjections = append(aliasedProjections, column.DefaultAlias())
 		} else if columnList, ok := projection.(ColumnList); ok {
 			aliasedProjections = append(aliasedProjections, columnList.DefaultAlias()...)
@@ -63,7 +63,7 @@ func defaultProjectionAliasing(projections []Projection) []Projection {
 	return aliasedProjections
 }
 
-func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
+func newSelectStatement(table readableTable, projections []projection) selectStatement {
 	newSelect := &selectStatementImpl{
 		table:       table,
 		projections: defaultProjectionAliasing(projections),
@@ -78,16 +78,16 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 	return newSelect
 }
 
-func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
+func (s *selectStatementImpl) FROM(table readableTable) selectStatement {
 	s.table = table
 	return s
 }
 
-func (s *selectStatementImpl) Serialize(out *queryData, options ...serializeOption) error {
+func (s *selectStatementImpl) serialize(out *queryData) error {
 
 	out.WriteString("(")
 
-	err := s.serializeImpl(out, options...)
+	err := s.serializeImpl(out)
 
 	if err != nil {
 		return err
@@ -98,7 +98,7 @@ func (s *selectStatementImpl) Serialize(out *queryData, options ...serializeOpti
 	return nil
 }
 
-func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serializeOption) error {
+func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 
 	out.WriteString("SELECT ")
 	out.statementType = select_statement
@@ -123,7 +123,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData, options ...serialize
 		return errors.Newf("nil tableName.")
 	}
 
-	if err := s.table.SerializeSql(out); err != nil {
+	if err := s.table.serializeSql(out); err != nil {
 		return err
 	}
 
@@ -189,51 +189,51 @@ func (q *selectStatementImpl) Sql() (query string, args []interface{}, err error
 	return queryData.buff.String(), queryData.args, nil
 }
 
-func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
+func (s *selectStatementImpl) AsTable(alias string) expressionTable {
 	return &expressionTableImpl{
 		statement: s,
 		alias:     alias,
 	}
 }
 
-func (q *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
+func (q *selectStatementImpl) WHERE(expression boolExpression) selectStatement {
 	q.where = expression
 	return q
 }
 
-func (s *selectStatementImpl) GROUP_BY(cluases ...Clause) SelectStatement {
-	s.groupBy = cluases
+func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) selectStatement {
+	s.groupBy = groupByClauses
 	return s
 }
 
-func (q *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement {
+func (q *selectStatementImpl) HAVING(expression boolExpression) selectStatement {
 	q.having = expression
 	return q
 }
 
-func (q *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
+func (q *selectStatementImpl) ORDER_BY(clauses ...orderByClause) selectStatement {
 
 	q.orderBy = clauses
 
 	return q
 }
 
-func (q *selectStatementImpl) OFFSET(offset int64) SelectStatement {
+func (q *selectStatementImpl) OFFSET(offset int64) selectStatement {
 	q.offset = offset
 	return q
 }
 
-func (q *selectStatementImpl) LIMIT(limit int64) SelectStatement {
+func (q *selectStatementImpl) LIMIT(limit int64) selectStatement {
 	q.limit = limit
 	return q
 }
 
-func (q *selectStatementImpl) DISTINCT() SelectStatement {
+func (q *selectStatementImpl) DISTINCT() selectStatement {
 	q.distinct = true
 	return q
 }
 
-func (q *selectStatementImpl) FOR_UPDATE() SelectStatement {
+func (q *selectStatementImpl) FOR_UPDATE() selectStatement {
 	q.forUpdate = true
 	return q
 }
@@ -246,6 +246,6 @@ func (u *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
 	return Execute(u, db)
 }
 
-func NumExp(statement SelectStatement) NumericExpression {
+func NumExp(statement selectStatement) numericExpression {
 	return newNumericExpressionWrap(statement)
 }
