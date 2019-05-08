@@ -13,7 +13,9 @@ import (
 
 func TestSelect_ScanToStruct(t *testing.T) {
 	actor := model.Actor{}
-	query := Actor.SELECT(Actor.AllColumns).ORDER_BY(Actor.ActorID.ASC())
+	query := Actor.
+		SELECT(Actor.AllColumns).
+		ORDER_BY(Actor.ActorID.ASC())
 
 	queryStr, args, err := query.Sql()
 

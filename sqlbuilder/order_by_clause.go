@@ -3,28 +3,20 @@ package sqlbuilder
 import "github.com/dropbox/godropbox/errors"
 
 type orderByClause interface {
-	clause
-	isOrderByClauseType()
-}
-
-type isOrderByClause struct {
-}
-
-func (o *isOrderByClause) isOrderByClauseType() {
+	serializeAsOrderBy(out *queryData) error
 }
 
 type orderByClauseImpl struct {
-	isOrderByClause
 	expression expression
 	ascent     bool
 }
 
-func (o *orderByClauseImpl) serialize(out *queryData) error {
+func (o *orderByClauseImpl) serializeAsOrderBy(out *queryData) error {
 	if o.expression == nil {
 		return errors.Newf("nil orderBy by clause.")
 	}
 
-	if err := o.expression.serialize(out); err != nil {
+	if err := o.expression.serializeAsOrderBy(out); err != nil {
 		return err
 	}
 

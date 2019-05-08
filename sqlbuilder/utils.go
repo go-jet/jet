@@ -14,7 +14,7 @@ func serializeOrderByClauseList(orderByClauses []orderByClause, out *queryData) 
 			out.WriteString(", ")
 		}
 
-		err := value.serialize(out)
+		err := value.serializeAsOrderBy(out)
 
 		if err != nil {
 			return err

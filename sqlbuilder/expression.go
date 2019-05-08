@@ -9,6 +9,7 @@ type expression interface {
 	clause
 	projection
 	groupByClause
+	orderByClause
 
 	IN(subQuery selectStatement) boolExpression
 	NOT_IN(subQuery selectStatement) boolExpression
@@ -57,6 +58,10 @@ func (e *expressionInterfaceImpl) serializeForGroupBy(out *queryData) error {
 }
 
 func (e *expressionInterfaceImpl) serializeForProjection(out *queryData) error {
+	return e.parent.serialize(out)
+}
+
+func (e *expressionInterfaceImpl) serializeAsOrderBy(out *queryData) error {
 	return e.parent.serialize(out)
 }
 

@@ -77,20 +77,33 @@ func (c *baseColumn) DefaultAlias() projection {
 	return c.AS(c.tableName + "." + c.name)
 }
 
-func (c baseColumn) serialize(out *queryData) error {
-
-	setOrderBy := out.statementType == set_statement && out.clauseType == order_by_clause
-
-	if setOrderBy {
+func (c *baseColumn) serializeAsOrderBy(out *queryData) error {
+	if out.statementType == set_statement {
+		// set statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.WriteString(`"`)
+
+		if c.tableName != "" {
+			out.WriteString(c.tableName)
+			out.WriteString(".")
+		}
+
+		out.WriteString(c.name)
+
+		out.WriteString(`"`)
+
+		return nil
 	}
 
+	return c.serialize(out)
+}
+
+func (c baseColumn) serialize(out *queryData) error {
 	if c.tableName != "" {
 		out.WriteString(c.tableName)
 		out.WriteString(".")
 	}
 
-	wrapColumnName := strings.Contains(c.name, ".") && !setOrderBy
+	wrapColumnName := strings.Contains(c.name, ".")
 
 	if wrapColumnName {
 		out.WriteString(`"`)
@@ -99,10 +112,6 @@ func (c baseColumn) serialize(out *queryData) error {
 	out.WriteString(c.name)
 
 	if wrapColumnName {
-		out.WriteString(`"`)
-	}
-
-	if setOrderBy {
 		out.WriteString(`"`)
 	}
 

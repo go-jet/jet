@@ -15,7 +15,6 @@ type queryData struct {
 	args []interface{}
 
 	statementType int
-	clauseType    int
 }
 
 const (
@@ -26,43 +25,29 @@ const (
 	set_statement
 )
 
-const (
-	projection_clause = iota
-	where_clause
-	order_by_clause
-	group_by_clause
-	having_clause
-)
-
 func (q *queryData) WriteProjection(projections []projection) error {
-	q.clauseType = projection_clause
 	return serializeProjectionList(projections, q)
 }
 
 func (q *queryData) WriteWhere(where expression) error {
-	q.clauseType = where_clause
 	q.WriteString(" WHERE ")
 	return where.serialize(q)
 }
 
 func (q *queryData) WriteGroupBy(groupBy []groupByClause) error {
-	q.clauseType = group_by_clause
 	q.WriteString(" GROUP BY ")
 
 	return serializeGroupByClauseList(groupBy, q)
 }
 
 func (q *queryData) WriteOrderBy(orderBy []orderByClause) error {
-	q.clauseType = order_by_clause
 	q.WriteString(" ORDER BY ")
 	return serializeOrderByClauseList(orderBy, q)
 }
 
 func (q *queryData) WriteHaving(having expression) error {
-	q.clauseType = having_clause
 	q.WriteString(" HAVING ")
 	return having.serialize(q)
-
 }
 
 func (q *queryData) Write(data []byte) {

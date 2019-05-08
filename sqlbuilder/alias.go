@@ -14,7 +14,7 @@ func NewAlias(expression expression, alias string) *Alias {
 
 func (a *Alias) serializeForProjection(out *queryData) error {
 
-	err := a.expression.serialize(out)
+	err := a.expression.serializeForProjection(out)
 
 	if err != nil {
 		return err
