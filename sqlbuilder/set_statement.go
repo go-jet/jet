@@ -96,9 +96,9 @@ func (us *setStatementImpl) AsTable(alias string) expressionTable {
 	}
 }
 
-func (s *setStatementImpl) serialize(out *queryData) error {
+func (s *setStatementImpl) serialize(statement statementType, out *queryData) error {
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
-		out.WriteString("(")
+		out.writeString("(")
 	}
 
 	err := s.serializeImpl(out)
@@ -108,7 +108,7 @@ func (s *setStatementImpl) serialize(out *queryData) error {
 	}
 
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
-		out.WriteString(")")
+		out.writeString(")")
 	}
 
 	return nil
@@ -120,43 +120,41 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 		return errors.Newf("UNION statement must have at least two SELECT statements.")
 	}
 
-	out.WriteString("(")
+	out.writeString("(")
 
 	for i, selectStmt := range s.selects {
 		if i > 0 {
-			out.WriteString(" " + s.operator + " ")
+			out.writeString(" " + s.operator + " ")
 
 			if s.all {
-				out.WriteString(" ALL ")
+				out.writeString(" ALL ")
 			}
 		}
 
-		err := selectStmt.serialize(out)
+		err := selectStmt.serialize(set_statement, out)
 
 		if err != nil {
 			return err
 		}
 	}
 
-	out.WriteString(")")
-
-	out.statementType = set_statement
+	out.writeString(")")
 
 	if s.orderBy != nil {
-		err := out.WriteOrderBy(s.orderBy)
+		err := out.writeOrderBy(set_statement, s.orderBy)
 		if err != nil {
 			return err
 		}
 	}
 
 	if s.limit >= 0 {
-		out.WriteString(" LIMIT ")
-		out.InsertArgument(s.limit)
+		out.writeString(" LIMIT ")
+		out.insertArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.WriteString(" OFFSET ")
-		out.InsertArgument(s.offset)
+		out.writeString(" OFFSET ")
+		out.insertArgument(s.offset)
 	}
 
 	return nil

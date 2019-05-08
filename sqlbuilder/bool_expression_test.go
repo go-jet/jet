@@ -9,7 +9,7 @@ func TestBinaryExpression(t *testing.T) {
 	boolExpression := Eq(Literal(2), Literal(3))
 
 	out := queryData{}
-	err := boolExpression.serialize(&out)
+	err := boolExpression.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 
@@ -20,7 +20,7 @@ func TestBinaryExpression(t *testing.T) {
 		alias := boolExpression.AS("alias_eq_expression")
 
 		out := queryData{}
-		err := alias.serializeForProjection(&out)
+		err := alias.serializeForProjection(select_statement, &out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.buff.String(), `$1 = $2 AS "alias_eq_expression"`)
@@ -30,7 +30,7 @@ func TestBinaryExpression(t *testing.T) {
 		exp := boolExpression.AND(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
-		err := exp.serialize(&out)
+		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.buff.String(), `($1 = $2 AND $3 = $4)`)
@@ -40,7 +40,7 @@ func TestBinaryExpression(t *testing.T) {
 		exp := boolExpression.OR(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
-		err := exp.serialize(&out)
+		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.buff.String(), `($1 = $2 OR $3 = $4)`)
@@ -51,7 +51,7 @@ func TestUnaryExpression(t *testing.T) {
 	notExpression := Not(Eq(Literal(2), Literal(1)))
 
 	out := queryData{}
-	err := notExpression.serialize(&out)
+	err := notExpression.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "NOT $1 = $2")
@@ -60,7 +60,7 @@ func TestUnaryExpression(t *testing.T) {
 		alias := notExpression.AS("alias_not_expression")
 
 		out := queryData{}
-		err := alias.serializeForProjection(&out)
+		err := alias.serializeForProjection(select_statement, &out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.buff.String(), `NOT $1 = $2 AS "alias_not_expression"`)
@@ -70,7 +70,7 @@ func TestUnaryExpression(t *testing.T) {
 		exp := notExpression.AND(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
-		err := exp.serialize(&out)
+		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.buff.String(), `(NOT $1 = $2 AND $3 = $4)`)
@@ -81,7 +81,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 	notExpression := IsTrue(Eq(Literal(2), Literal(1)))
 
 	out := queryData{}
-	err := notExpression.serialize(&out)
+	err := notExpression.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "IS TRUE $1 = $2")
@@ -90,7 +90,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 		exp := notExpression.AND(Eq(Literal(4), Literal(5)))
 
 		out := queryData{}
-		err := exp.serialize(&out)
+		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
 		assert.Equal(t, out.buff.String(), `(IS TRUE $1 = $2 AND $3 = $4)`)
@@ -101,7 +101,7 @@ func TestBoolLiteral(t *testing.T) {
 	literal := newBoolLiteralExpression(true)
 
 	out := queryData{}
-	err := literal.serialize(&out)
+	err := literal.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 
@@ -116,7 +116,7 @@ func TestExists(t *testing.T) {
 	)
 
 	out := queryData{}
-	err := query.serialize(&out)
+	err := query.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "EXISTS (SELECT $1 FROM db.table2 WHERE table1.col1 = table2.col3)")
@@ -126,7 +126,7 @@ func TestIn(t *testing.T) {
 	query := Literal(1.11).IN(table1.SELECT(table1Col1))
 
 	out := queryData{}
-	err := query.serialize(&out)
+	err := query.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `$1 IN (SELECT table1.col1 AS "table1.col1" FROM db.table1)`)
@@ -134,7 +134,7 @@ func TestIn(t *testing.T) {
 	query2 := ROW(Literal(12), table1Col1).IN(table2.SELECT(table2Col3, table3Col1))
 
 	out = queryData{}
-	err = query2.serialize(&out)
+	err = query2.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `(ROW($1, table1.col1) IN (SELECT table2.col3 AS "table2.col3", table3.col1 AS "table3.col1" FROM db.table2))`)

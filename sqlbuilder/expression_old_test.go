@@ -19,7 +19,7 @@ func (s *ExprSuite) TestConjunctExprEmptyList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -28,7 +28,7 @@ func (s *ExprSuite) TestConjunctExprNilInList(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -37,7 +37,7 @@ func (s *ExprSuite) TestConjunctExprSingleElement(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -49,7 +49,7 @@ func (s *ExprSuite) TestLikeExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -65,7 +65,7 @@ func (s *ExprSuite) TestRegexExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -81,7 +81,7 @@ func (s *ExprSuite) TestAndExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -96,7 +96,7 @@ func (s *ExprSuite) TestOrExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -159,7 +159,7 @@ func (s *ExprSuite) TestBinaryExprNilLHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -168,7 +168,7 @@ func (s *ExprSuite) TestNegateExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -180,7 +180,7 @@ func (s *ExprSuite) TestBinaryExprNilRHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -189,7 +189,7 @@ func (s *ExprSuite) TestEqExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -201,7 +201,7 @@ func (s *ExprSuite) TestEqExprNilLHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -213,7 +213,7 @@ func (s *ExprSuite) TestNeqExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -225,7 +225,7 @@ func (s *ExprSuite) TestNeqExprNilLHS(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -237,7 +237,7 @@ func (s *ExprSuite) TestLtExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -249,7 +249,7 @@ func (s *ExprSuite) TestLteExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -264,7 +264,7 @@ func (s *ExprSuite) TestGtExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -276,7 +276,7 @@ func (s *ExprSuite) TestGteExpr(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := expr.serialize(buf)
+	err := expr.serialize(0, buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()

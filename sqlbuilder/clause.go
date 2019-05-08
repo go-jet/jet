@@ -7,69 +7,70 @@ import (
 )
 
 type clause interface {
-	serialize(out *queryData) error
+	serialize(statement statementType, out *queryData) error
 }
 
 type queryData struct {
 	buff bytes.Buffer
 	args []interface{}
-
-	statementType int
 }
+
+type statementType string
 
 const (
-	select_statement = iota
-	insert_statement
-	update_statement
-	delete_statement
-	set_statement
+	select_statement statementType = "SELECT"
+	insert_statement statementType = "INSERT"
+	update_statement statementType = "UPDATE"
+	delete_statement statementType = "DELETE"
+	set_statement    statementType = "SET"
+	lock_statement   statementType = "LOCK"
 )
 
-func (q *queryData) WriteProjection(projections []projection) error {
-	return serializeProjectionList(projections, q)
+func (q *queryData) writeProjection(statement statementType, projections []projection) error {
+	return serializeProjectionList(statement, projections, q)
 }
 
-func (q *queryData) WriteWhere(where expression) error {
-	q.WriteString(" WHERE ")
-	return where.serialize(q)
+func (q *queryData) writeWhere(statement statementType, where expression) error {
+	q.writeString(" WHERE ")
+	return where.serialize(statement, q)
 }
 
-func (q *queryData) WriteGroupBy(groupBy []groupByClause) error {
-	q.WriteString(" GROUP BY ")
+func (q *queryData) writeGroupBy(statement statementType, groupBy []groupByClause) error {
+	q.writeString(" GROUP BY ")
 
-	return serializeGroupByClauseList(groupBy, q)
+	return serializeGroupByClauseList(statement, groupBy, q)
 }
 
-func (q *queryData) WriteOrderBy(orderBy []orderByClause) error {
-	q.WriteString(" ORDER BY ")
-	return serializeOrderByClauseList(orderBy, q)
+func (q *queryData) writeOrderBy(statement statementType, orderBy []orderByClause) error {
+	q.writeString(" ORDER BY ")
+	return serializeOrderByClauseList(statement, orderBy, q)
 }
 
-func (q *queryData) WriteHaving(having expression) error {
-	q.WriteString(" HAVING ")
-	return having.serialize(q)
+func (q *queryData) writeHaving(statement statementType, having expression) error {
+	q.writeString(" HAVING ")
+	return having.serialize(statement, q)
 }
 
-func (q *queryData) Write(data []byte) {
+func (q *queryData) write(data []byte) {
 	q.buff.Write(data)
 }
 
-func (q *queryData) WriteString(str string) {
+func (q *queryData) writeString(str string) {
 	q.buff.WriteString(str)
 }
 
-func (q *queryData) WriteByte(b byte) {
+func (q *queryData) writeByte(b byte) {
 	q.buff.WriteByte(b)
 }
 
-func (q *queryData) InsertArgument(arg interface{}) {
+func (q *queryData) insertArgument(arg interface{}) {
 	q.args = append(q.args, arg)
 	argPlaceholder := "$" + strconv.Itoa(len(q.args))
 
 	q.buff.WriteString(argPlaceholder)
 }
 
-func (q *queryData) Reset() {
+func (q *queryData) reset() {
 	q.buff.Reset()
 	q.args = []interface{}{}
 }

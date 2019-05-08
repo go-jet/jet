@@ -28,14 +28,14 @@ func newFunc(name string, expressions []expression, parent expression) *funcExpr
 	return funcExp
 }
 
-func (f *funcExpressionImpl) serialize(out *queryData) error {
-	out.WriteString(f.name)
-	out.WriteString("(")
-	err := serializeExpressionList(f.expression, ", ", out)
+func (f *funcExpressionImpl) serialize(statement statementType, out *queryData) error {
+	out.writeString(f.name)
+	out.writeString("(")
+	err := serializeExpressionList(statement, f.expression, ", ", out)
 	if err != nil {
 		return err
 	}
-	out.WriteString(")")
+	out.writeString(")")
 
 	return nil
 }
@@ -53,10 +53,6 @@ func NewNumericFunc(name string, expressions ...expression) numericExpression {
 
 	return numericFunc
 }
-
-//func (f *FuncExpression) SerializeSqlForColumnList(out *bytes.Buffer) error {
-//	return f.serialize(out)
-//}
 
 func MAX(expression numericExpression) numericExpression {
 	return NewNumericFunc("MAX", expression)
@@ -111,12 +107,12 @@ func (c *caseExpression) ELSE(els expression) caseInterface {
 	return c
 }
 
-func (c *caseExpression) serialize(out *queryData) error {
-	out.WriteString("(CASE")
+func (c *caseExpression) serialize(statement statementType, out *queryData) error {
+	out.writeString("(CASE")
 
 	if c.expression != nil {
-		out.WriteString(" ")
-		err := c.expression.serialize(out)
+		out.writeString(" ")
+		err := c.expression.serialize(statement, out)
 
 		if err != nil {
 			return err
@@ -132,15 +128,15 @@ func (c *caseExpression) serialize(out *queryData) error {
 	}
 
 	for i, when := range c.when {
-		out.WriteString(" WHEN ")
-		err := when.serialize(out)
+		out.writeString(" WHEN ")
+		err := when.serialize(statement, out)
 
 		if err != nil {
 			return err
 		}
 
-		out.WriteString(" THEN ")
-		err = c.then[i].serialize(out)
+		out.writeString(" THEN ")
+		err = c.then[i].serialize(statement, out)
 
 		if err != nil {
 			return err
@@ -148,15 +144,15 @@ func (c *caseExpression) serialize(out *queryData) error {
 	}
 
 	if c.els != nil {
-		out.WriteString(" ELSE ")
-		err := c.els.serialize(out)
+		out.writeString(" ELSE ")
+		err := c.els.serialize(statement, out)
 
 		if err != nil {
 			return err
 		}
 	}
 
-	out.WriteString(" END)")
+	out.writeString(" END)")
 
 	return nil
 }

@@ -30,15 +30,14 @@ func (d *deleteStatementImpl) WHERE(expression boolExpression) deleteStatement {
 
 func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
 	queryData := &queryData{}
-	queryData.statementType = delete_statement
 
-	queryData.WriteString("DELETE FROM ")
+	queryData.writeString("DELETE FROM ")
 
 	if d.table == nil {
 		return "", nil, errors.New("nil tableName.")
 	}
 
-	if err = d.table.serializeSql(queryData); err != nil {
+	if err = d.table.serialize(delete_statement, queryData); err != nil {
 		return
 	}
 
@@ -46,7 +45,7 @@ func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error
 		return "", nil, errors.New("Deleting without a WHERE clause.")
 	}
 
-	if err = queryData.WriteWhere(d.where); err != nil {
+	if err = queryData.writeWhere(delete_statement, d.where); err != nil {
 		return
 	}
 

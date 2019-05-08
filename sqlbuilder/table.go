@@ -7,12 +7,11 @@ import (
 )
 
 type tableInterface interface {
+	clause
 	SchemaName() string
 	TableName() string
 
 	Columns() []column
-	// Generates the sql string for the current tableName expression.
-	serializeSql(out *queryData) error
 }
 
 // The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
@@ -108,18 +107,18 @@ func (t *Table) Columns() []column {
 
 // Generates the sql string for the current tableName expression.  Note: the
 // generated string may not be a valid/executable sql statement.
-func (t *Table) serializeSql(out *queryData) error {
+func (t *Table) serialize(statement statementType, out *queryData) error {
 	if t == nil {
 		return errors.Newf("nil tableName.")
 	}
 
-	out.WriteString(t.schemaName)
-	out.WriteString(".")
-	out.WriteString(t.TableName())
+	out.writeString(t.schemaName)
+	out.writeString(".")
+	out.writeString(t.TableName())
 
 	if len(t.alias) > 0 {
-		out.WriteString(" AS ")
-		out.WriteString(t.alias)
+		out.writeString(" AS ")
+		out.writeString(t.alias)
 	}
 
 	return nil
@@ -272,7 +271,7 @@ func (t *joinTable) Column(name string) column {
 	}
 }
 
-func (t *joinTable) serializeSql(out *queryData) (err error) {
+func (t *joinTable) serialize(statement statementType, out *queryData) (err error) {
 
 	if t.lhs == nil {
 		return errors.Newf("nil lhs.")
@@ -284,30 +283,30 @@ func (t *joinTable) serializeSql(out *queryData) (err error) {
 		return errors.Newf("nil onCondition.")
 	}
 
-	if err = t.lhs.serializeSql(out); err != nil {
+	if err = t.lhs.serialize(statement, out); err != nil {
 		return
 	}
 
 	switch t.join_type {
 	case INNER_JOIN:
-		out.WriteString(" JOIN ")
+		out.writeString(" JOIN ")
 	case LEFT_JOIN:
-		out.WriteString(" LEFT JOIN ")
+		out.writeString(" LEFT JOIN ")
 	case RIGHT_JOIN:
-		out.WriteString(" RIGHT JOIN ")
+		out.writeString(" RIGHT JOIN ")
 	case FULL_JOIN:
-		out.WriteString(" FULL JOIN ")
+		out.writeString(" FULL JOIN ")
 	case CROSS_JOIN:
-		out.WriteString(" CROSS JOIN ")
+		out.writeString(" CROSS JOIN ")
 	}
 
-	if err = t.rhs.serializeSql(out); err != nil {
+	if err = t.rhs.serialize(statement, out); err != nil {
 		return
 	}
 
 	if t.onCondition != nil {
-		out.WriteString(" ON ")
-		if err = t.onCondition.serialize(out); err != nil {
+		out.writeString(" ON ")
+		if err = t.onCondition.serialize(statement, out); err != nil {
 			return
 		}
 	}

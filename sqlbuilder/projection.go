@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type projection interface {
-	serializeForProjection(out *queryData) error
+	serializeForProjection(statement statementType, out *queryData) error
 }
 
 //------------------------------------------------------//
@@ -10,16 +10,16 @@ type ColumnList []column
 
 func (cl ColumnList) isProjectionType() {}
 
-func (cl ColumnList) serializeForProjection(out *queryData) error {
+func (cl ColumnList) serializeForProjection(statement statementType, out *queryData) error {
 	for i, column := range cl {
-		err := column.serializeForProjection(out)
+		err := column.serializeForProjection(statement, out)
 
 		if err != nil {
 			return err
 		}
 
 		if i != len(cl)-1 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 	}
 	return nil

@@ -9,26 +9,26 @@ func TestNewBoolColumn(t *testing.T) {
 	boolColumn := NewBoolColumn("col", Nullable)
 
 	out := queryData{}
-	err := boolColumn.serialize(&out)
+	err := boolColumn.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "col")
 
-	out.Reset()
-	err = boolColumn.serialize(&out)
+	out.reset()
+	err = boolColumn.serialize(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "col")
 
-	out.Reset()
+	out.reset()
 	boolColumn.setTableName("table1")
-	err = boolColumn.DefaultAlias().serializeForProjection(&out)
+	err = boolColumn.DefaultAlias().serializeForProjection(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
 
-	out.Reset()
+	out.reset()
 	boolColumn.setTableName("table1")
 	aliasedBoolColumn := boolColumn.AS("alias1")
-	err = aliasedBoolColumn.serializeForProjection(&out)
+	err = aliasedBoolColumn.serializeForProjection(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }
@@ -37,26 +37,26 @@ func TestNewIntColumn(t *testing.T) {
 	integerColumn := NewIntegerColumn("col", Nullable)
 
 	out := queryData{}
-	err := integerColumn.serialize(&out)
+	err := integerColumn.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "col")
 
-	out.Reset()
-	err = integerColumn.serialize(&out)
+	out.reset()
+	err = integerColumn.serialize(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "col")
 
-	out.Reset()
+	out.reset()
 	integerColumn.setTableName("table1")
-	err = integerColumn.DefaultAlias().serializeForProjection(&out)
+	err = integerColumn.DefaultAlias().serializeForProjection(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
 
-	out.Reset()
+	out.reset()
 	integerColumn.setTableName("table1")
 	aliasedBoolColumn := integerColumn.AS("alias1")
-	err = aliasedBoolColumn.serializeForProjection(&out)
+	err = aliasedBoolColumn.serializeForProjection(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }
@@ -65,26 +65,26 @@ func TestNewNumericColumnColumn(t *testing.T) {
 	numericColumn := NewNumericColumn("col", Nullable)
 
 	out := queryData{}
-	err := numericColumn.serialize(&out)
+	err := numericColumn.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "col")
 
-	out.Reset()
-	err = numericColumn.serialize(&out)
+	out.reset()
+	err = numericColumn.serialize(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), "col")
 
-	out.Reset()
+	out.reset()
 	numericColumn.setTableName("table1")
-	err = numericColumn.DefaultAlias().serializeForProjection(&out)
+	err = numericColumn.DefaultAlias().serializeForProjection(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
 
-	out.Reset()
+	out.reset()
 	numericColumn.setTableName("table1")
 	aliasedBoolColumn := numericColumn.AS("alias1")
-	err = aliasedBoolColumn.serializeForProjection(&out)
+	err = aliasedBoolColumn.serializeForProjection(select_statement, &out)
 	assert.NilError(t, err)
 	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }

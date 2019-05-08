@@ -77,42 +77,42 @@ func (c *baseColumn) DefaultAlias() projection {
 	return c.AS(c.tableName + "." + c.name)
 }
 
-func (c *baseColumn) serializeAsOrderBy(out *queryData) error {
-	if out.statementType == set_statement {
+func (c *baseColumn) serializeAsOrderBy(statement statementType, out *queryData) error {
+	if statement == set_statement {
 		// set statement (UNION, EXCEPT ...) can reference only select projections in order by clause
-		out.WriteString(`"`)
+		out.writeString(`"`)
 
 		if c.tableName != "" {
-			out.WriteString(c.tableName)
-			out.WriteString(".")
+			out.writeString(c.tableName)
+			out.writeString(".")
 		}
 
-		out.WriteString(c.name)
+		out.writeString(c.name)
 
-		out.WriteString(`"`)
+		out.writeString(`"`)
 
 		return nil
 	}
 
-	return c.serialize(out)
+	return c.serialize(statement, out)
 }
 
-func (c baseColumn) serialize(out *queryData) error {
+func (c baseColumn) serialize(statement statementType, out *queryData) error {
 	if c.tableName != "" {
-		out.WriteString(c.tableName)
-		out.WriteString(".")
+		out.writeString(c.tableName)
+		out.writeString(".")
 	}
 
 	wrapColumnName := strings.Contains(c.name, ".")
 
 	if wrapColumnName {
-		out.WriteString(`"`)
+		out.writeString(`"`)
 	}
 
-	out.WriteString(c.name)
+	out.writeString(c.name)
 
 	if wrapColumnName {
-		out.WriteString(`"`)
+		out.writeString(`"`)
 	}
 
 	return nil

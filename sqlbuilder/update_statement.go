@@ -54,15 +54,14 @@ func (u *updateStatementImpl) RETURNING(projections ...projection) updateStateme
 
 func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
 	out := &queryData{}
-	out.statementType = update_statement
 
-	out.WriteString("UPDATE ")
+	out.writeString("UPDATE ")
 
 	if u.table == nil {
 		return "", nil, errors.New("nil tableName.")
 	}
 
-	if err = u.table.serializeSql(out); err != nil {
+	if err = u.table.serialize(update_statement, out); err != nil {
 		return
 	}
 
@@ -70,36 +69,36 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return "", nil, errors.New("No column updated.")
 	}
 
-	out.WriteString(" SET")
+	out.writeString(" SET")
 
 	if len(u.columns) > 1 {
-		out.WriteString(" ( ")
+		out.writeString(" ( ")
 	} else {
-		out.WriteString(" ")
+		out.writeString(" ")
 	}
 
-	err = serializeColumnList(u.columns, out)
+	err = serializeColumnList(update_statement, u.columns, out)
 
 	if err != nil {
 		return "", nil, err
 	}
 
 	if len(u.columns) > 1 {
-		out.WriteString(" )")
+		out.writeString(" )")
 	}
 
-	out.WriteString(" =")
+	out.writeString(" =")
 
 	if len(u.updateValues) > 1 {
-		out.WriteString(" (")
+		out.writeString(" (")
 	}
 
 	for i, value := range u.updateValues {
 		if i > 0 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 
-		err = value.serialize(out)
+		err = value.serialize(update_statement, out)
 
 		if err != nil {
 			return
@@ -107,21 +106,21 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(u.updateValues) > 1 {
-		out.WriteString(" )")
+		out.writeString(" )")
 	}
 
 	if u.where == nil {
 		return "", nil, errors.New("Updating without a WHERE clause.")
 	}
 
-	if err = out.WriteWhere(u.where); err != nil {
+	if err = out.writeWhere(update_statement, u.where); err != nil {
 		return
 	}
 
 	if len(u.returning) > 0 {
-		out.WriteString(" RETURNING ")
+		out.writeString(" RETURNING ")
 
-		err = serializeProjectionList(u.returning, out)
+		err = serializeProjectionList(update_statement, u.returning, out)
 
 		if err != nil {
 			return

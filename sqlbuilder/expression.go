@@ -53,16 +53,16 @@ func (e *expressionInterfaceImpl) DESC() orderByClause {
 	return &orderByClauseImpl{expression: e.parent, ascent: false}
 }
 
-func (e *expressionInterfaceImpl) serializeForGroupBy(out *queryData) error {
-	return e.parent.serialize(out)
+func (e *expressionInterfaceImpl) serializeForGroupBy(statement statementType, out *queryData) error {
+	return e.parent.serialize(statement, out)
 }
 
-func (e *expressionInterfaceImpl) serializeForProjection(out *queryData) error {
-	return e.parent.serialize(out)
+func (e *expressionInterfaceImpl) serializeForProjection(statement statementType, out *queryData) error {
+	return e.parent.serialize(statement, out)
 }
 
-func (e *expressionInterfaceImpl) serializeAsOrderBy(out *queryData) error {
-	return e.parent.serialize(out)
+func (e *expressionInterfaceImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
+	return e.parent.serialize(statement, out)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -95,7 +95,7 @@ func isSimpleOperand(expression expression) bool {
 	return false
 }
 
-func (c *binaryExpression) serialize(out *queryData) error {
+func (c *binaryExpression) serialize(statement statementType, out *queryData) error {
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.")
 	}
@@ -106,21 +106,21 @@ func (c *binaryExpression) serialize(out *queryData) error {
 	wrap := !isSimpleOperand(c.lhs) && !isSimpleOperand(c.rhs)
 
 	if wrap {
-		out.WriteString("(")
+		out.writeString("(")
 	}
 
-	if err := c.lhs.serialize(out); err != nil {
+	if err := c.lhs.serialize(statement, out); err != nil {
 		return err
 	}
 
-	out.WriteString(" " + c.operator + " ")
+	out.writeString(" " + c.operator + " ")
 
-	if err := c.rhs.serialize(out); err != nil {
+	if err := c.rhs.serialize(statement, out); err != nil {
 		return err
 	}
 
 	if wrap {
-		out.WriteString(")")
+		out.writeString(")")
 	}
 
 	return nil
@@ -141,13 +141,13 @@ func newPrefixExpression(expression expression, operator string) prefixExpressio
 	return prefixExpression
 }
 
-func (p *prefixExpression) serialize(out *queryData) error {
-	out.WriteString(p.operator + " ")
+func (p *prefixExpression) serialize(statement statementType, out *queryData) error {
+	out.writeString(p.operator + " ")
 
 	if p.expression == nil {
 		return errors.Newf("nil prefix expression.")
 	}
-	if err := p.expression.serialize(out); err != nil {
+	if err := p.expression.serialize(statement, out); err != nil {
 		return err
 	}
 

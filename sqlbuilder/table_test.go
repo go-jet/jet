@@ -51,7 +51,7 @@ func (s *TableSuite) TestJoinNilLeftTable(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.serializeSql(buf)
+	err := join.serialize("", buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -60,7 +60,7 @@ func (s *TableSuite) TestJoinNilRightTable(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.serializeSql(buf)
+	err := join.serialize("", buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -69,7 +69,7 @@ func (s *TableSuite) TestJoinNilOnCondition(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.serializeSql(buf)
+	err := join.serialize("", buf)
 	c.Assert(err, gc.NotNil)
 }
 
@@ -93,7 +93,7 @@ func (s *TableSuite) TestLeftJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.serializeSql(buf)
+	err := join.serialize("", buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()
@@ -109,7 +109,7 @@ func (s *TableSuite) TestRightJoin(c *gc.C) {
 
 	buf := &bytes.Buffer{}
 
-	err := join.serializeSql(buf)
+	err := join.serialize("", buf)
 	c.Assert(err, gc.IsNil)
 
 	sql := buf.String()

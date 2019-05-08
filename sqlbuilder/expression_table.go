@@ -47,16 +47,16 @@ func (s *expressionTableImpl) RefStringColumn(column column) *StringColumn {
 	return strColumn
 }
 
-func (s *expressionTableImpl) serializeSql(out *queryData) error {
-	out.WriteString("( ")
-	err := s.statement.serialize(out)
+func (s *expressionTableImpl) serialize(statement statementType, out *queryData) error {
+	out.writeString("( ")
+	err := s.statement.serialize(statement, out)
 
 	if err != nil {
 		return err
 	}
 
-	out.WriteString(" ) AS ")
-	out.WriteString(s.alias)
+	out.writeString(" ) AS ")
+	out.writeString(s.alias)
 
 	return nil
 }

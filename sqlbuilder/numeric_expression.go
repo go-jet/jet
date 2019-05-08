@@ -130,10 +130,10 @@ func newNumericExpressionWrap(expression expression) numericExpression {
 	return &numericExpressionWrap
 }
 
-func (c *numericExpressionWrapper) serialize(out *queryData) error {
-	out.WriteString("(")
-	err := c.expression.serialize(out)
-	out.WriteString(")")
+func (c *numericExpressionWrapper) serialize(statement statementType, out *queryData) error {
+	out.writeString("(")
+	err := c.expression.serialize(statement, out)
+	out.writeString(")")
 
 	return err
 }

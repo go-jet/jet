@@ -59,14 +59,14 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 
 	out := &queryData{}
 
-	out.WriteString("LOCK TABLE ")
+	out.writeString("LOCK TABLE ")
 
 	for i, table := range l.tables {
 		if i > 0 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 
-		err := table.serializeSql(out)
+		err := table.serialize(lock_statement, out)
 
 		if err != nil {
 			return "", nil, err
@@ -74,13 +74,13 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 	}
 
 	if l.lockMode != "" {
-		out.WriteString(" IN ")
-		out.WriteString(string(l.lockMode))
-		out.WriteString(" MODE")
+		out.writeString(" IN ")
+		out.writeString(string(l.lockMode))
+		out.writeString(" MODE")
 	}
 
 	if l.nowait {
-		out.WriteString(" NOWAIT")
+		out.writeString(" NOWAIT")
 	}
 
 	return out.buff.String(), out.args, nil

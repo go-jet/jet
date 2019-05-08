@@ -13,8 +13,8 @@ func Literal(value interface{}) *literalExpression {
 	return &exp
 }
 
-func (l literalExpression) serialize(out *queryData) error {
-	out.InsertArgument(l.value)
+func (l literalExpression) serialize(statement statementType, out *queryData) error {
+	out.insertArgument(l.value)
 
 	return nil
 }

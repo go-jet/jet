@@ -7,14 +7,14 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
-func serializeOrderByClauseList(orderByClauses []orderByClause, out *queryData) error {
+func serializeOrderByClauseList(statement statementType, orderByClauses []orderByClause, out *queryData) error {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 
-		err := value.serializeAsOrderBy(out)
+		err := value.serializeAsOrderBy(statement, out)
 
 		if err != nil {
 			return err
@@ -24,18 +24,18 @@ func serializeOrderByClauseList(orderByClauses []orderByClause, out *queryData) 
 	return nil
 }
 
-func serializeGroupByClauseList(clauses []groupByClause, out *queryData) (err error) {
+func serializeGroupByClauseList(statement statementType, clauses []groupByClause, out *queryData) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 
 		if c == nil {
 			return errors.New("nil clause.")
 		}
 
-		if err = c.serializeForGroupBy(out); err != nil {
+		if err = c.serializeForGroupBy(statement, out); err != nil {
 			return
 		}
 	}
@@ -43,18 +43,18 @@ func serializeGroupByClauseList(clauses []groupByClause, out *queryData) (err er
 	return nil
 }
 
-func serializeClauseList(clauses []clause, out *queryData) (err error) {
+func serializeClauseList(statement statementType, clauses []clause, out *queryData) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 
 		if c == nil {
 			return errors.New("nil clause.")
 		}
 
-		if err = c.serialize(out); err != nil {
+		if err = c.serialize(statement, out); err != nil {
 			return
 		}
 	}
@@ -62,14 +62,14 @@ func serializeClauseList(clauses []clause, out *queryData) (err error) {
 	return nil
 }
 
-func serializeExpressionList(expressions []expression, separator string, out *queryData) error {
+func serializeExpressionList(statement statementType, expressions []expression, separator string, out *queryData) error {
 
 	for i, value := range expressions {
 		if i > 0 {
-			out.WriteString(separator)
+			out.writeString(separator)
 		}
 
-		err := value.serialize(out)
+		err := value.serialize(statement, out)
 
 		if err != nil {
 			return err
@@ -79,16 +79,16 @@ func serializeExpressionList(expressions []expression, separator string, out *qu
 	return nil
 }
 
-func serializeProjectionList(projections []projection, out *queryData) error {
+func serializeProjectionList(statement statementType, projections []projection, out *queryData) error {
 	for i, col := range projections {
 		if i > 0 {
-			out.WriteString(", ")
+			out.writeString(", ")
 		}
 		if col == nil {
 			return errors.New("projection expression is nil.")
 		}
 
-		if err := col.serializeForProjection(out); err != nil {
+		if err := col.serializeForProjection(statement, out); err != nil {
 			return err
 		}
 	}
@@ -96,17 +96,17 @@ func serializeProjectionList(projections []projection, out *queryData) error {
 	return nil
 }
 
-func serializeColumnList(columns []column, out *queryData) error {
+func serializeColumnList(statement statementType, columns []column, out *queryData) error {
 	for i, col := range columns {
 		if i > 0 {
-			out.WriteByte(',')
+			out.writeByte(',')
 		}
 
 		if col == nil {
 			return errors.New("nil column in columns list.")
 		}
 
-		out.WriteString(col.Name())
+		out.writeString(col.Name())
 	}
 
 	return nil

@@ -3,7 +3,7 @@ package sqlbuilder
 import "github.com/dropbox/godropbox/errors"
 
 type orderByClause interface {
-	serializeAsOrderBy(out *queryData) error
+	serializeAsOrderBy(statement statementType, out *queryData) error
 }
 
 type orderByClauseImpl struct {
@@ -11,19 +11,19 @@ type orderByClauseImpl struct {
 	ascent     bool
 }
 
-func (o *orderByClauseImpl) serializeAsOrderBy(out *queryData) error {
+func (o *orderByClauseImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
 	if o.expression == nil {
 		return errors.Newf("nil orderBy by clause.")
 	}
 
-	if err := o.expression.serializeAsOrderBy(out); err != nil {
+	if err := o.expression.serializeAsOrderBy(statement, out); err != nil {
 		return err
 	}
 
 	if o.ascent {
-		out.WriteString(" ASC")
+		out.writeString(" ASC")
 	} else {
-		out.WriteString(" DESC")
+		out.writeString(" DESC")
 	}
 
 	return nil

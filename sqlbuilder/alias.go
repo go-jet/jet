@@ -12,15 +12,15 @@ func NewAlias(expression expression, alias string) *Alias {
 	}
 }
 
-func (a *Alias) serializeForProjection(out *queryData) error {
+func (a *Alias) serializeForProjection(statement statementType, out *queryData) error {
 
-	err := a.expression.serializeForProjection(out)
+	err := a.expression.serializeForProjection(statement, out)
 
 	if err != nil {
 		return err
 	}
 
-	out.WriteString(" AS \"" + a.alias + "\"")
+	out.writeString(" AS \"" + a.alias + "\"")
 
 	return nil
 }

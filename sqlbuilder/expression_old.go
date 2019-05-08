@@ -14,14 +14,14 @@ type intervalExpression struct {
 
 const intervalSep = ":"
 
-func (c *intervalExpression) serialize(out *queryData) error {
-	out.WriteString("INTERVAL '")
+func (c *intervalExpression) serialize(statement statementType, out *queryData) error {
+	out.writeString("INTERVAL '")
 
 	duration := c.duration
 
 	if duration < 0 {
 		duration = -duration
-		out.WriteString("-")
+		out.writeString("-")
 	}
 
 	hours := duration / time.Hour
@@ -29,14 +29,14 @@ func (c *intervalExpression) serialize(out *queryData) error {
 	sec := (duration % time.Minute) / time.Second
 	msec := (duration % time.Second) / time.Microsecond
 
-	out.WriteString(strconv.FormatInt(int64(hours), 10))
-	out.WriteString(intervalSep)
-	out.WriteString(strconv.FormatInt(int64(minutes), 10))
-	out.WriteString(intervalSep)
-	out.WriteString(strconv.FormatInt(int64(sec), 10))
-	out.WriteString(intervalSep)
-	out.WriteString(strconv.FormatInt(int64(msec), 10))
-	out.WriteString("' HOUR_MICROSECOND")
+	out.writeString(strconv.FormatInt(int64(hours), 10))
+	out.writeString(intervalSep)
+	out.writeString(strconv.FormatInt(int64(minutes), 10))
+	out.writeString(intervalSep)
+	out.writeString(strconv.FormatInt(int64(sec), 10))
+	out.writeString(intervalSep)
+	out.writeString(strconv.FormatInt(int64(msec), 10))
+	out.writeString("' HOUR_MICROSECOND")
 
 	return nil
 }

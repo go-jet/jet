@@ -127,29 +127,28 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	queryData := &queryData{}
-	queryData.statementType = insert_statement
-	queryData.WriteString("INSERT INTO ")
+	queryData.writeString("INSERT INTO ")
 
 	if s.table == nil {
 		return "", nil, errors.Newf("nil tableName.")
 	}
 
-	err = s.table.serializeSql(queryData)
+	err = s.table.serialize(insert_statement, queryData)
 
 	if err != nil {
 		return "", nil, err
 	}
 
 	if len(s.columns) > 0 {
-		queryData.WriteString(" (")
+		queryData.writeString(" (")
 
-		err = serializeColumnList(s.columns, queryData)
+		err = serializeColumnList(insert_statement, s.columns, queryData)
 
 		if err != nil {
 			return "", nil, err
 		}
 
-		queryData.WriteString(") ")
+		queryData.writeString(") ")
 	}
 
 	if len(s.rows) == 0 && s.query == nil {
@@ -161,28 +160,28 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(s.rows) > 0 {
-		queryData.WriteString("VALUES (")
+		queryData.writeString("VALUES (")
 		for row_i, row := range s.rows {
 			if row_i > 0 {
-				queryData.WriteString(", (")
+				queryData.writeString(", (")
 			}
 
 			if len(row) != len(s.columns) {
 				return "", nil, errors.New("# of values does not match # of columns.")
 			}
 
-			err = serializeClauseList(row, queryData)
+			err = serializeClauseList(insert_statement, row, queryData)
 
 			if err != nil {
 				return "", nil, err
 			}
 
-			queryData.WriteByte(')')
+			queryData.writeByte(')')
 		}
 	}
 
 	if s.query != nil {
-		err = s.query.serialize(queryData)
+		err = s.query.serialize(insert_statement, queryData)
 
 		if err != nil {
 			return
@@ -190,16 +189,16 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(s.returning) > 0 {
-		queryData.WriteString(" RETURNING ")
+		queryData.writeString(" RETURNING ")
 
-		err = queryData.WriteProjection(s.returning)
+		err = queryData.writeProjection(insert_statement, s.returning)
 
 		if err != nil {
 			return
 		}
 	}
 
-	queryData.WriteByte(';')
+	queryData.writeByte(';')
 
 	return queryData.buff.String(), queryData.args, nil
 }

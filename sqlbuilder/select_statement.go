@@ -25,7 +25,7 @@ type selectStatement interface {
 	AsTable(alias string) expressionTable
 }
 
-var SELECT = func(projection ...projection) selectStatement {
+func SELECT(projection ...projection) selectStatement {
 	return newSelectStatement(nil, projection)
 }
 
@@ -83,9 +83,9 @@ func (s *selectStatementImpl) FROM(table readableTable) selectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) serialize(out *queryData) error {
+func (s *selectStatementImpl) serialize(statement statementType, out *queryData) error {
 
-	out.WriteString("(")
+	out.writeString("(")
 
 	err := s.serializeImpl(out)
 
@@ -93,42 +93,41 @@ func (s *selectStatementImpl) serialize(out *queryData) error {
 		return err
 	}
 
-	out.WriteString(")")
+	out.writeString(")")
 
 	return nil
 }
 
 func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 
-	out.WriteString("SELECT ")
-	out.statementType = select_statement
+	out.writeString("SELECT ")
 
 	if s.distinct {
-		out.WriteString("DISTINCT ")
+		out.writeString("DISTINCT ")
 	}
 
 	if s.projections == nil || len(s.projections) == 0 {
 		return errors.New("No column selected for projection.")
 	}
 
-	err := out.WriteProjection(s.projections)
+	err := out.writeProjection(select_statement, s.projections)
 
 	if err != nil {
 		return err
 	}
 
-	out.WriteString(" FROM ")
+	out.writeString(" FROM ")
 
 	if s.table == nil {
 		return errors.Newf("nil tableName.")
 	}
 
-	if err := s.table.serializeSql(out); err != nil {
+	if err := s.table.serialize(select_statement, out); err != nil {
 		return err
 	}
 
 	if s.where != nil {
-		err := out.WriteWhere(s.where)
+		err := out.writeWhere(select_statement, s.where)
 
 		if err != nil {
 			return nil
@@ -136,7 +135,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.groupBy != nil && len(s.groupBy) > 0 {
-		err := out.WriteGroupBy(s.groupBy)
+		err := out.writeGroupBy(select_statement, s.groupBy)
 
 		if err != nil {
 			return err
@@ -144,7 +143,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.having != nil {
-		err := out.WriteHaving(s.having)
+		err := out.writeHaving(select_statement, s.having)
 
 		if err != nil {
 			return err
@@ -152,7 +151,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.orderBy != nil {
-		err := out.WriteOrderBy(s.orderBy)
+		err := out.writeOrderBy(select_statement, s.orderBy)
 
 		if err != nil {
 			return err
@@ -160,17 +159,17 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.limit >= 0 {
-		out.WriteString(" LIMIT ")
-		out.InsertArgument(s.limit)
+		out.writeString(" LIMIT ")
+		out.insertArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.WriteString(" OFFSET ")
-		out.InsertArgument(s.offset)
+		out.writeString(" OFFSET ")
+		out.insertArgument(s.offset)
 	}
 
 	if s.forUpdate {
-		out.WriteString(" FOR UPDATE")
+		out.writeString(" FOR UPDATE")
 	}
 
 	return nil
