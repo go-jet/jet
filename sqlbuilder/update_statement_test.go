@@ -7,19 +7,30 @@ import (
 )
 
 //
-// UPDATE statement tests =====================================================
+// UPDATE Statement tests =====================================================
 //
 
 func TestUpdate(t *testing.T) {
 	stmt := table1.UPDATE(table1Col1, table1Col2).
-		SET(table1.SELECT(table1Col2)).
-		WHERE(table1Col1.EqL(2))
+		SET(table1.SELECT(table1Col2, table2Col3)).
+		WHERE(table1Col1.EqL(2)).
+		RETURNING(table1Col1)
 
 	stmtStr, _, err := stmt.Sql()
 
 	assert.NilError(t, err)
 
 	fmt.Println(stmtStr)
+
+	assert.Equal(t, stmtStr, `
+UPDATE db.table1 SET (col1,col2) = (
+     SELECT table1.col2 AS "table1.col2",
+          table2.col3 AS "table2.col3"
+     FROM db.table1
+)
+WHERE table1.col1 = $1
+RETURNING table1.col1 AS "table1.col1";
+`)
 }
 
 //func (s *StmtSuite) TestUpdateNilColumn(c *gc.C) {

@@ -7,7 +7,7 @@ import (
 )
 
 type selectStatement interface {
-	statement
+	Statement
 	expression
 
 	DISTINCT() selectStatement
@@ -84,15 +84,17 @@ func (s *selectStatementImpl) FROM(table readableTable) selectStatement {
 }
 
 func (s *selectStatementImpl) serialize(statement statementType, out *queryData) error {
-
 	out.writeString("(")
 
+	out.increaseIdent()
 	err := s.serializeImpl(out)
+	out.decreaseIdent()
 
 	if err != nil {
 		return err
 	}
 
+	out.nextLine()
 	out.writeString(")")
 
 	return nil
@@ -100,10 +102,11 @@ func (s *selectStatementImpl) serialize(statement statementType, out *queryData)
 
 func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 
-	out.writeString("SELECT ")
+	out.nextLine()
+	out.writeString("SELECT")
 
 	if s.distinct {
-		out.writeString("DISTINCT ")
+		out.writeString("DISTINCT")
 	}
 
 	if s.projections == nil || len(s.projections) == 0 {
@@ -116,15 +119,17 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 		return err
 	}
 
-	out.writeString(" FROM ")
-
 	if s.table == nil {
 		return errors.Newf("nil tableName.")
 	}
 
-	if err := s.table.serialize(select_statement, out); err != nil {
+	if err := out.writeFrom(select_statement, s.table); err != nil {
 		return err
 	}
+
+	//if err := s.table.serialize(select_statement, out); err != nil {
+	//	return err
+	//}
 
 	if s.where != nil {
 		err := out.writeWhere(select_statement, s.where)
@@ -159,33 +164,42 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.limit >= 0 {
-		out.writeString(" LIMIT ")
+		out.nextLine()
+		out.writeString("LIMIT")
 		out.insertArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.writeString(" OFFSET ")
+		out.nextLine()
+		out.writeString("OFFSET")
 		out.insertArgument(s.offset)
 	}
 
 	if s.forUpdate {
-		out.writeString(" FOR UPDATE")
+		out.nextLine()
+		out.writeString("FOR UPDATE")
 	}
 
 	return nil
 }
 
-// Return the properly escaped SQL statement, against the specified database
-func (q *selectStatementImpl) Sql() (query string, args []interface{}, err error) {
+// Return the properly escaped SQL Statement, against the specified database
+func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error) {
 	queryData := queryData{}
 
-	err = q.serializeImpl(&queryData)
+	err = s.serializeImpl(&queryData)
 
 	if err != nil {
 		return "", nil, err
 	}
 
-	return queryData.buff.String(), queryData.args, nil
+	query, args = queryData.finalize()
+
+	return
+}
+
+func (s *selectStatementImpl) DebugSql() (query string, err error) {
+	return DebugSql(s)
 }
 
 func (s *selectStatementImpl) AsTable(alias string) expressionTable {
@@ -195,9 +209,9 @@ func (s *selectStatementImpl) AsTable(alias string) expressionTable {
 	}
 }
 
-func (q *selectStatementImpl) WHERE(expression boolExpression) selectStatement {
-	q.where = expression
-	return q
+func (s *selectStatementImpl) WHERE(expression boolExpression) selectStatement {
+	s.where = expression
+	return s
 }
 
 func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) selectStatement {
@@ -205,46 +219,46 @@ func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) selectSt
 	return s
 }
 
-func (q *selectStatementImpl) HAVING(expression boolExpression) selectStatement {
-	q.having = expression
-	return q
+func (s *selectStatementImpl) HAVING(expression boolExpression) selectStatement {
+	s.having = expression
+	return s
 }
 
-func (q *selectStatementImpl) ORDER_BY(clauses ...orderByClause) selectStatement {
+func (s *selectStatementImpl) ORDER_BY(clauses ...orderByClause) selectStatement {
 
-	q.orderBy = clauses
+	s.orderBy = clauses
 
-	return q
+	return s
 }
 
-func (q *selectStatementImpl) OFFSET(offset int64) selectStatement {
-	q.offset = offset
-	return q
+func (s *selectStatementImpl) OFFSET(offset int64) selectStatement {
+	s.offset = offset
+	return s
 }
 
-func (q *selectStatementImpl) LIMIT(limit int64) selectStatement {
-	q.limit = limit
-	return q
+func (s *selectStatementImpl) LIMIT(limit int64) selectStatement {
+	s.limit = limit
+	return s
 }
 
-func (q *selectStatementImpl) DISTINCT() selectStatement {
-	q.distinct = true
-	return q
+func (s *selectStatementImpl) DISTINCT() selectStatement {
+	s.distinct = true
+	return s
 }
 
-func (q *selectStatementImpl) FOR_UPDATE() selectStatement {
-	q.forUpdate = true
-	return q
+func (s *selectStatementImpl) FOR_UPDATE() selectStatement {
+	s.forUpdate = true
+	return s
 }
 
 func (s *selectStatementImpl) Query(db types.Db, destination interface{}) error {
 	return Query(s, db, destination)
 }
 
-func (u *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	return Execute(u, db)
+func (s *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(s, db)
 }
 
-func NumExp(statement selectStatement) numericExpression {
-	return newNumericExpressionWrap(statement)
+func NumExp(expression expression) numericExpression {
+	return newNumericExpressionWrap(expression)
 }

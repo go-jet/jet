@@ -82,8 +82,10 @@ func serializeExpressionList(statement statementType, expressions []expression, 
 func serializeProjectionList(statement statementType, projections []projection, out *queryData) error {
 	for i, col := range projections {
 		if i > 0 {
-			out.writeString(", ")
+			out.writeString(",")
+			out.nextLine()
 		}
+
 		if col == nil {
 			return errors.New("projection expression is nil.")
 		}
@@ -112,7 +114,7 @@ func serializeColumnList(statement statementType, columns []column, out *queryDa
 	return nil
 }
 
-func Query(statement statement, db types.Db, destination interface{}) error {
+func Query(statement Statement, db types.Db, destination interface{}) error {
 	query, args, err := statement.Sql()
 
 	if err != nil {
@@ -122,7 +124,7 @@ func Query(statement statement, db types.Db, destination interface{}) error {
 	return execution.Query(db, query, args, destination)
 }
 
-func Execute(statement statement, db types.Db) (res sql.Result, err error) {
+func Execute(statement Statement, db types.Db) (res sql.Result, err error) {
 	query, args, err := statement.Sql()
 
 	if err != nil {

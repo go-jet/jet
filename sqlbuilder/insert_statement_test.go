@@ -29,7 +29,10 @@ func TestInsertColumnLengthMismatch(t *testing.T) {
 func TestInsertNilValue(t *testing.T) {
 	query, args, err := table1.INSERT(table1Col1).VALUES(nil).Sql()
 
-	assert.Equal(t, query, "INSERT INTO db.table1 (col1) VALUES ($1);")
+	assert.Equal(t, query, `
+INSERT INTO db.table1 (col1) VALUES
+     ($1);
+`)
 	assert.Equal(t, len(args), 1)
 	assert.NilError(t, err)
 }
@@ -44,7 +47,10 @@ func TestInsertSingleValue(t *testing.T) {
 	sql, _, err := table1.INSERT(table1Col1).VALUES(1).Sql()
 	assert.NilError(t, err)
 
-	assert.Equal(t, sql, "INSERT INTO db.table1 (col1) VALUES ($1);")
+	assert.Equal(t, sql, `
+INSERT INTO db.table1 (col1) VALUES
+     ($1);
+`)
 }
 
 func TestInsertDate(t *testing.T) {
@@ -53,7 +59,10 @@ func TestInsertDate(t *testing.T) {
 	sql, _, err := table1.INSERT(table1Col4).VALUES(date).Sql()
 	assert.NilError(t, err)
 
-	assert.Equal(t, sql, "INSERT INTO db.table1 (col4) VALUES ($1);")
+	assert.Equal(t, sql, `
+INSERT INTO db.table1 (col4) VALUES
+     ($1);
+`)
 }
 
 func TestInsertMultipleValues(t *testing.T) {
@@ -63,7 +72,14 @@ func TestInsertMultipleValues(t *testing.T) {
 	sql, _, err := stmt.Sql()
 	assert.NilError(t, err)
 
-	assert.Equal(t, sql, "INSERT INTO db.table1 (col1,col2,col3) VALUES ($1, $2, $3);")
+	fmt.Println(sql)
+
+	expectedSql := `
+INSERT INTO db.table1 (col1,col2,col3) VALUES
+     ($1, $2, $3);
+`
+
+	assert.Equal(t, sql, expectedSql)
 }
 
 func TestInsertMultipleRows(t *testing.T) {
@@ -75,7 +91,16 @@ func TestInsertMultipleRows(t *testing.T) {
 	sql, _, err := stmt.Sql()
 	assert.NilError(t, err)
 
-	assert.Equal(t, sql, "INSERT INTO db.table1 (col1,col2) VALUES ($1, $2), ($3, $4), ($5, $6);")
+	fmt.Println(sql)
+
+	expectedSql := `
+INSERT INTO db.table1 (col1,col2) VALUES
+     ($1, $2),
+     ($3, $4),
+     ($5, $6);
+`
+
+	assert.Equal(t, sql, expectedSql)
 }
 
 func TestInsertValuesFromModel(t *testing.T) {
@@ -98,7 +123,10 @@ func TestInsertValuesFromModel(t *testing.T) {
 
 	fmt.Println(sql)
 
-	assert.Equal(t, sql, `INSERT INTO db.table1 (col1,col2) VALUES ($1, $2);`)
+	assert.Equal(t, sql, `
+INSERT INTO db.table1 (col1,col2) VALUES
+     ($1, $2);
+`)
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {

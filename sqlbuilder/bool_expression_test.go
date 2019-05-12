@@ -1,6 +1,7 @@
 package sqlbuilder
 
 import (
+	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -118,8 +119,17 @@ func TestExists(t *testing.T) {
 	out := queryData{}
 	err := query.serialize(select_statement, &out)
 
+	fmt.Println(out.buff.String())
+
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "EXISTS (SELECT $1 FROM db.table2 WHERE table1.col1 = table2.col3)")
+
+	expectedSql :=
+		`EXISTS (
+     SELECT $1
+     FROM db.table2
+     WHERE table1.col1 = table2.col3
+)`
+	assert.Equal(t, out.buff.String(), expectedSql)
 }
 
 func TestIn(t *testing.T) {
@@ -129,7 +139,11 @@ func TestIn(t *testing.T) {
 	err := query.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `$1 IN (SELECT table1.col1 AS "table1.col1" FROM db.table1)`)
+	fmt.Println(out.buff.String())
+	assert.Equal(t, out.buff.String(), `$1 IN (
+     SELECT table1.col1 AS "table1.col1"
+     FROM db.table1
+)`)
 
 	query2 := ROW(Literal(12), table1Col1).IN(table2.SELECT(table2Col3, table3Col1))
 
@@ -137,5 +151,10 @@ func TestIn(t *testing.T) {
 	err = query2.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `(ROW($1, table1.col1) IN (SELECT table2.col3 AS "table2.col3", table3.col1 AS "table3.col1" FROM db.table2))`)
+	fmt.Println(out.buff.String())
+	assert.Equal(t, out.buff.String(), `(ROW($1, table1.col1) IN (
+     SELECT table2.col3 AS "table2.col3",
+          table3.col1 AS "table3.col1"
+     FROM db.table2
+))`)
 }

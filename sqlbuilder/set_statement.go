@@ -13,7 +13,7 @@ const (
 )
 
 type setStatement interface {
-	statement
+	Statement
 	expression
 
 	ORDER_BY(clauses ...orderByClause) setStatement
@@ -97,8 +97,10 @@ func (us *setStatementImpl) AsTable(alias string) expressionTable {
 }
 
 func (s *setStatementImpl) serialize(statement statementType, out *queryData) error {
+
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
 		out.writeString("(")
+		out.increaseIdent()
 	}
 
 	err := s.serializeImpl(out)
@@ -108,6 +110,8 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData) er
 	}
 
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
+		out.decreaseIdent()
+		out.nextLine()
 		out.writeString(")")
 	}
 
@@ -117,18 +121,22 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData) er
 func (s *setStatementImpl) serializeImpl(out *queryData) error {
 
 	if len(s.selects) < 2 {
-		return errors.Newf("UNION statement must have at least two SELECT statements.")
+		return errors.Newf("UNION Statement must have at least two SELECT statements.")
 	}
 
+	out.nextLine()
 	out.writeString("(")
+	out.increaseIdent()
 
 	for i, selectStmt := range s.selects {
+		out.nextLine()
 		if i > 0 {
-			out.writeString(" " + s.operator + " ")
+			out.writeString(s.operator)
 
 			if s.all {
-				out.writeString(" ALL ")
+				out.writeString("ALL")
 			}
+			out.nextLine()
 		}
 
 		err := selectStmt.serialize(set_statement, out)
@@ -138,6 +146,8 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 		}
 	}
 
+	out.decreaseIdent()
+	out.nextLine()
 	out.writeString(")")
 
 	if s.orderBy != nil {
@@ -148,12 +158,14 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.limit >= 0 {
-		out.writeString(" LIMIT ")
+		out.nextLine()
+		out.writeString("LIMIT")
 		out.insertArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.writeString(" OFFSET ")
+		out.nextLine()
+		out.writeString("OFFSET")
 		out.insertArgument(s.offset)
 	}
 
@@ -169,7 +181,12 @@ func (us *setStatementImpl) Sql() (query string, args []interface{}, err error) 
 		return
 	}
 
-	return queryData.buff.String(), queryData.args, nil
+	query, args = queryData.finalize()
+	return
+}
+
+func (s *setStatementImpl) DebugSql() (query string, err error) {
+	return DebugSql(s)
 }
 
 func (s *setStatementImpl) Query(db types.Db, destination interface{}) error {

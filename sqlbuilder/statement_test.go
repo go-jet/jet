@@ -18,7 +18,7 @@ var _ = gc.Suite(&StmtSuite{})
 // NOTE: tables / columns are defined in test_utils.go
 
 //
-// SELECT statement tests
+// SELECT Statement tests
 //
 
 func (s *StmtSuite) TestSelectEmptyProjection(c *gc.C) {
@@ -233,7 +233,7 @@ func (s *StmtSuite) TestSelectDistinct(c *gc.C) {
 }
 
 //
-// INSERT statement tests
+// INSERT Statement tests
 //
 
 func (s *StmtSuite) TestInsertNoColumn(c *gc.C) {
@@ -386,7 +386,7 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateMulti(c *gc.C) {
 }
 
 //
-// LOCK/UNLOCK statement tests ================================================
+// LOCK/UNLOCK Statement tests ================================================
 //
 
 func (s *StmtSuite) TestLockStatement(c *gc.C) {
@@ -444,7 +444,7 @@ func (s *StmtSuite) TestUnionLimitWithoutOrderBy(c *gc.C) {
 	c.Assert(
 		errors.GetMessage(err),
 		gc.Equals,
-		"All inner selects in UNION statement must have LIMIT if they have ORDER BY")
+		"All inner selects in UNION Statement must have LIMIT if they have ORDER BY")
 }
 
 func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
@@ -472,7 +472,7 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 	c.Assert(
 		errors.GetMessage(err),
 		gc.Equals,
-		"All inner selects in UNION statement must select the "+
+		"All inner selects in UNION Statement must select the "+
 			"same number of columns.  For sanity, you probably "+
 			"want to select the same tableName columns in the same "+
 			"orderBy.  If you are selecting on multiple tables, "+
@@ -481,8 +481,8 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 
 func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 
-	// tests on outer statement: Group By, Order By, LIMIT
-	// on inner statement: AndWhere, WHERE (with AND), Order By, LIMIT
+	// tests on outer Statement: Group By, Order By, LIMIT
+	// on inner Statement: AndWhere, WHERE (with AND), Order By, LIMIT
 	select_queries := make([]selectStatement, 0, 3)
 
 	// We're not trying to write a SQL parser, so we won't warn if you do something silly like

@@ -20,7 +20,7 @@ func (a *Alias) serializeForProjection(statement statementType, out *queryData) 
 		return err
 	}
 
-	out.writeString(" AS \"" + a.alias + "\"")
+	out.writeString(`AS "` + a.alias + `"`)
 
 	return nil
 }

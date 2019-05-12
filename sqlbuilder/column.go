@@ -79,17 +79,16 @@ func (c *baseColumn) DefaultAlias() projection {
 
 func (c *baseColumn) serializeAsOrderBy(statement statementType, out *queryData) error {
 	if statement == set_statement {
-		// set statement (UNION, EXCEPT ...) can reference only select projections in order by clause
-		out.writeString(`"`)
+		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
+		columnRef := ""
 
 		if c.tableName != "" {
-			out.writeString(c.tableName)
-			out.writeString(".")
+			columnRef += c.tableName + "."
 		}
 
-		out.writeString(c.name)
+		columnRef += c.name
 
-		out.writeString(`"`)
+		out.writeString(`"` + columnRef + `"`)
 
 		return nil
 	}
@@ -98,22 +97,26 @@ func (c *baseColumn) serializeAsOrderBy(statement statementType, out *queryData)
 }
 
 func (c baseColumn) serialize(statement statementType, out *queryData) error {
+
+	columnRef := ""
+
 	if c.tableName != "" {
-		out.writeString(c.tableName)
-		out.writeString(".")
+		columnRef += c.tableName + "."
 	}
 
 	wrapColumnName := strings.Contains(c.name, ".")
 
 	if wrapColumnName {
-		out.writeString(`"`)
+		columnRef += `"`
 	}
 
-	out.writeString(c.name)
+	columnRef += c.name
 
 	if wrapColumnName {
-		out.writeString(`"`)
+		columnRef += `"`
 	}
+
+	out.writeString(columnRef)
 
 	return nil
 }

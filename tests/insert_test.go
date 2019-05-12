@@ -25,7 +25,14 @@ func TestInsertValues(t *testing.T) {
 
 	fmt.Println(insertQueryStr)
 
-	assert.Equal(t, insertQueryStr, `INSERT INTO test_sample.link (url,name,rel) VALUES ($1, $2, DEFAULT), ($3, $4, DEFAULT), ($5, $6, DEFAULT), ($7, $8, DEFAULT) RETURNING link.id AS "link.id";`)
+	assert.Equal(t, insertQueryStr, `
+INSERT INTO test_sample.link (url,name,rel) VALUES
+     ($1, $2, DEFAULT),
+     ($3, $4, DEFAULT),
+     ($5, $6, DEFAULT),
+     ($7, $8, DEFAULT)
+RETURNING link.id AS "link.id";
+`)
 	res, err := insertQuery.Execute(db)
 
 	assert.NilError(t, err)

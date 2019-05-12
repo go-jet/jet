@@ -131,9 +131,9 @@ func newNumericExpressionWrap(expression expression) numericExpression {
 }
 
 func (c *numericExpressionWrapper) serialize(statement statementType, out *queryData) error {
-	out.writeString("(")
+	//out.writeString("(")
 	err := c.expression.serialize(statement, out)
-	out.writeString(")")
+	//out.writeString(")")
 
 	return err
 }

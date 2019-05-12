@@ -20,7 +20,7 @@ const (
 )
 
 type lockStatement interface {
-	statement
+	Statement
 
 	IN(lockMode lockMode) lockStatement
 	NOWAIT() lockStatement
@@ -48,9 +48,13 @@ func (l *lockStatementImpl) NOWAIT() lockStatement {
 	return l
 }
 
+func (l *lockStatementImpl) DebugSql() (query string, err error) {
+	return DebugSql(l)
+}
+
 func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) {
 	if l == nil {
-		return "", nil, errors.New("nil statement.")
+		return "", nil, errors.New("nil Statement.")
 	}
 
 	if len(l.tables) == 0 {
@@ -59,7 +63,8 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 
 	out := &queryData{}
 
-	out.writeString("LOCK TABLE ")
+	out.nextLine()
+	out.writeString("LOCK TABLE")
 
 	for i, table := range l.tables {
 		if i > 0 {
@@ -74,16 +79,17 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 	}
 
 	if l.lockMode != "" {
-		out.writeString(" IN ")
+		out.writeString("IN")
 		out.writeString(string(l.lockMode))
-		out.writeString(" MODE")
+		out.writeString("MODE")
 	}
 
 	if l.nowait {
-		out.writeString(" NOWAIT")
+		out.writeString("NOWAIT")
 	}
 
-	return out.buff.String(), out.args, nil
+	query, args = out.finalize()
+	return
 }
 
 func (l *lockStatementImpl) Query(db types.Db, destination interface{}) error {

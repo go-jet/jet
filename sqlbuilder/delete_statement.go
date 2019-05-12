@@ -7,7 +7,7 @@ import (
 )
 
 type deleteStatement interface {
-	statement
+	Statement
 
 	WHERE(expression boolExpression) deleteStatement
 }
@@ -28,28 +28,44 @@ func (d *deleteStatementImpl) WHERE(expression boolExpression) deleteStatement {
 	return d
 }
 
-func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := &queryData{}
-
-	queryData.writeString("DELETE FROM ")
+func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
+	out.nextLine()
+	out.writeString("DELETE FROM")
 
 	if d.table == nil {
-		return "", nil, errors.New("nil tableName.")
+		return errors.New("nil tableName.")
 	}
 
-	if err = d.table.serialize(delete_statement, queryData); err != nil {
-		return
+	if err := d.table.serialize(delete_statement, out); err != nil {
+		return err
 	}
 
 	if d.where == nil {
-		return "", nil, errors.New("Deleting without a WHERE clause.")
+		return errors.New("Deleting without a WHERE clause.")
 	}
 
-	if err = queryData.writeWhere(delete_statement, d.where); err != nil {
+	if err := out.writeWhere(delete_statement, d.where); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
+	queryData := &queryData{}
+
+	err = d.serializeImpl(queryData)
+
+	if err != nil {
 		return
 	}
 
-	return queryData.buff.String() + ";", queryData.args, nil
+	query, args = queryData.finalize()
+	return
+}
+
+func (d *deleteStatementImpl) DebugSql() (query string, err error) {
+	return DebugSql(d)
 }
 
 func (u *deleteStatementImpl) Query(db types.Db, destination interface{}) error {

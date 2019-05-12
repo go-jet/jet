@@ -106,7 +106,7 @@ func (t *Table) Columns() []column {
 }
 
 // Generates the sql string for the current tableName expression.  Note: the
-// generated string may not be a valid/executable sql statement.
+// generated string may not be a valid/executable sql Statement.
 func (t *Table) serialize(statement statementType, out *queryData) error {
 	if t == nil {
 		return errors.Newf("nil tableName.")
@@ -287,17 +287,19 @@ func (t *joinTable) serialize(statement statementType, out *queryData) (err erro
 		return
 	}
 
+	out.nextLine()
+
 	switch t.join_type {
 	case INNER_JOIN:
-		out.writeString(" JOIN ")
+		out.writeString("JOIN")
 	case LEFT_JOIN:
-		out.writeString(" LEFT JOIN ")
+		out.writeString("LEFT JOIN")
 	case RIGHT_JOIN:
-		out.writeString(" RIGHT JOIN ")
+		out.writeString("RIGHT JOIN")
 	case FULL_JOIN:
-		out.writeString(" FULL JOIN ")
+		out.writeString("FULL JOIN")
 	case CROSS_JOIN:
-		out.writeString(" CROSS JOIN ")
+		out.writeString("CROSS JOIN")
 	}
 
 	if err = t.rhs.serialize(statement, out); err != nil {

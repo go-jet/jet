@@ -30,7 +30,7 @@ func (e *expressionInterfaceImpl) IN(subQuery selectStatement) boolExpression {
 }
 
 func (e *expressionInterfaceImpl) NOT_IN(subQuery selectStatement) boolExpression {
-	return newBinaryBoolExpression(e.parent, subQuery, "NOT_IN")
+	return newBinaryBoolExpression(e.parent, subQuery, "NOT IN")
 }
 
 func (e *expressionInterfaceImpl) AS(alias string) projection {

@@ -29,8 +29,8 @@ func newFunc(name string, expressions []expression, parent expression) *funcExpr
 }
 
 func (f *funcExpressionImpl) serialize(statement statementType, out *queryData) error {
-	out.writeString(f.name)
-	out.writeString("(")
+	out.writeString(f.name + "(")
+
 	err := serializeExpressionList(statement, f.expression, ", ", out)
 	if err != nil {
 		return err
@@ -111,7 +111,6 @@ func (c *caseExpression) serialize(statement statementType, out *queryData) erro
 	out.writeString("(CASE")
 
 	if c.expression != nil {
-		out.writeString(" ")
 		err := c.expression.serialize(statement, out)
 
 		if err != nil {
@@ -120,7 +119,7 @@ func (c *caseExpression) serialize(statement statementType, out *queryData) erro
 	}
 
 	if len(c.when) == 0 || len(c.then) == 0 {
-		return errors.New("Invalid case statement. There should be at least one when/then expression pair. ")
+		return errors.New("Invalid case Statement. There should be at least one when/then expression pair. ")
 	}
 
 	if len(c.when) != len(c.then) {
@@ -128,14 +127,14 @@ func (c *caseExpression) serialize(statement statementType, out *queryData) erro
 	}
 
 	for i, when := range c.when {
-		out.writeString(" WHEN ")
+		out.writeString("WHEN")
 		err := when.serialize(statement, out)
 
 		if err != nil {
 			return err
 		}
 
-		out.writeString(" THEN ")
+		out.writeString("THEN")
 		err = c.then[i].serialize(statement, out)
 
 		if err != nil {
@@ -144,7 +143,7 @@ func (c *caseExpression) serialize(statement statementType, out *queryData) erro
 	}
 
 	if c.els != nil {
-		out.writeString(" ELSE ")
+		out.writeString("ELSE")
 		err := c.els.serialize(statement, out)
 
 		if err != nil {
@@ -152,7 +151,7 @@ func (c *caseExpression) serialize(statement statementType, out *queryData) erro
 		}
 	}
 
-	out.writeString(" END)")
+	out.writeString("END)")
 
 	return nil
 }

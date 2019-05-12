@@ -10,9 +10,9 @@ import (
 )
 
 type insertStatement interface {
-	statement
+	Statement
 
-	// Add a row of values to the insert statement.
+	// Add a row of values to the insert Statement.
 	VALUES(values ...interface{}) insertStatement
 	// Map or stracture mapped to column names
 	VALUES_MAPPING(data interface{}) insertStatement
@@ -48,9 +48,9 @@ func (u *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
 }
 
 // expression or default keyword
-func (s *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
+func (i *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
 	if len(values) == 0 {
-		return s
+		return i
 	}
 
 	literalRow := []clause{}
@@ -63,8 +63,8 @@ func (s *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
 		}
 	}
 
-	s.rows = append(s.rows, literalRow)
-	return s
+	i.rows = append(i.rows, literalRow)
+	return i
 }
 
 func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
@@ -121,13 +121,19 @@ func (i *insertStatementImpl) addError(err string) {
 	i.errors = append(i.errors, err)
 }
 
+func (i *insertStatementImpl) DebugSql() (query string, err error) {
+	return DebugSql(i)
+}
+
 func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
 	if len(s.errors) > 0 {
 		return "", nil, errors.New("sql builder errors: " + strings.Join(s.errors, ", "))
 	}
 
 	queryData := &queryData{}
-	queryData.writeString("INSERT INTO ")
+
+	queryData.nextLine()
+	queryData.writeString("INSERT INTO")
 
 	if s.table == nil {
 		return "", nil, errors.Newf("nil tableName.")
@@ -135,12 +141,14 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 
 	err = s.table.serialize(insert_statement, queryData)
 
+	queryData.writeByte(' ')
+
 	if err != nil {
 		return "", nil, err
 	}
 
 	if len(s.columns) > 0 {
-		queryData.writeString(" (")
+		queryData.writeString("(")
 
 		err = serializeColumnList(insert_statement, s.columns, queryData)
 
@@ -148,7 +156,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			return "", nil, err
 		}
 
-		queryData.writeString(") ")
+		queryData.writeString(")")
 	}
 
 	if len(s.rows) == 0 && s.query == nil {
@@ -160,11 +168,16 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(s.rows) > 0 {
-		queryData.writeString("VALUES (")
+		queryData.writeString("VALUES")
+
 		for row_i, row := range s.rows {
 			if row_i > 0 {
-				queryData.writeString(", (")
+				queryData.writeString(",")
 			}
+
+			queryData.increaseIdent()
+			queryData.nextLine()
+			queryData.writeString("(")
 
 			if len(row) != len(s.columns) {
 				return "", nil, errors.New("# of values does not match # of columns.")
@@ -177,6 +190,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			}
 
 			queryData.writeByte(')')
+			queryData.decreaseIdent()
 		}
 	}
 
@@ -189,7 +203,8 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(s.returning) > 0 {
-		queryData.writeString(" RETURNING ")
+		queryData.nextLine()
+		queryData.writeString("RETURNING")
 
 		err = queryData.writeProjection(insert_statement, s.returning)
 
@@ -198,7 +213,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		}
 	}
 
-	queryData.writeByte(';')
+	sql, args = queryData.finalize()
 
-	return queryData.buff.String(), queryData.args, nil
+	return
 }

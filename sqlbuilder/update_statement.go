@@ -7,7 +7,7 @@ import (
 )
 
 type updateStatement interface {
-	statement
+	Statement
 
 	SET(values ...interface{}) updateStatement
 	WHERE(expression boolExpression) updateStatement
@@ -55,7 +55,8 @@ func (u *updateStatementImpl) RETURNING(projections ...projection) updateStateme
 func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
 	out := &queryData{}
 
-	out.writeString("UPDATE ")
+	out.nextLine()
+	out.writeString("UPDATE")
 
 	if u.table == nil {
 		return "", nil, errors.New("nil tableName.")
@@ -69,12 +70,10 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return "", nil, errors.New("No column updated.")
 	}
 
-	out.writeString(" SET")
+	out.writeString("SET")
 
 	if len(u.columns) > 1 {
-		out.writeString(" ( ")
-	} else {
-		out.writeString(" ")
+		out.writeString("(")
 	}
 
 	err = serializeColumnList(update_statement, u.columns, out)
@@ -84,13 +83,13 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(u.columns) > 1 {
-		out.writeString(" )")
+		out.writeString(")")
 	}
 
-	out.writeString(" =")
+	out.writeString("=")
 
 	if len(u.updateValues) > 1 {
-		out.writeString(" (")
+		out.writeString("(")
 	}
 
 	for i, value := range u.updateValues {
@@ -106,7 +105,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(u.updateValues) > 1 {
-		out.writeString(" )")
+		out.writeString(")")
 	}
 
 	if u.where == nil {
@@ -118,7 +117,8 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(u.returning) > 0 {
-		out.writeString(" RETURNING ")
+		out.nextLine()
+		out.writeString("RETURNING")
 
 		err = serializeProjectionList(update_statement, u.returning, out)
 
@@ -127,7 +127,12 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		}
 	}
 
-	return out.buff.String(), out.args, nil
+	sql, args = out.finalize()
+	return
+}
+
+func (u *updateStatementImpl) DebugSql() (query string, err error) {
+	return DebugSql(u)
 }
 
 func (u *updateStatementImpl) Query(db types.Db, destination interface{}) error {

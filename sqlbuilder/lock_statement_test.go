@@ -11,7 +11,9 @@ func TestLockSingleTable(t *testing.T) {
 	queryStr, _, err := lock.Sql()
 
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `LOCK TABLE db.table1 IN ROW SHARE MODE`)
+	assert.Equal(t, queryStr, `
+LOCK TABLE db.table1 IN ROW SHARE MODE;
+`)
 }
 
 func TestLockMultipleTable(t *testing.T) {
@@ -20,5 +22,7 @@ func TestLockMultipleTable(t *testing.T) {
 	queryStr, _, err := lock.Sql()
 
 	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `LOCK TABLE db.table2, db.table1 IN ACCESS EXCLUSIVE MODE NOWAIT`)
+	assert.Equal(t, queryStr, `
+LOCK TABLE db.table2, db.table1 IN ACCESS EXCLUSIVE MODE NOWAIT;
+`)
 }

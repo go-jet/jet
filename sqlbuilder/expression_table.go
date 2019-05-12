@@ -10,7 +10,6 @@ type expressionTable interface {
 
 type expressionTableImpl struct {
 	statement expression
-	columns   []column
 	alias     string
 }
 
@@ -24,7 +23,7 @@ func (s *expressionTableImpl) TableName() string {
 }
 
 func (s *expressionTableImpl) Columns() []column {
-	return s.columns
+	return []column{}
 }
 
 func (s *expressionTableImpl) RefIntColumnName(name string) *IntegerColumn {
@@ -42,20 +41,20 @@ func (s *expressionTableImpl) RefIntColumn(column column) *IntegerColumn {
 }
 
 func (s *expressionTableImpl) RefStringColumn(column column) *StringColumn {
-	strColumn := NewStringColumn(column.Name(), NotNullable)
-	strColumn.setTableName(column.TableName())
+	strColumn := NewStringColumn(column.TableName()+"."+column.Name(), NotNullable)
+	strColumn.setTableName(s.alias)
 	return strColumn
 }
 
 func (s *expressionTableImpl) serialize(statement statementType, out *queryData) error {
-	out.writeString("( ")
+	//out.writeString("( ")
 	err := s.statement.serialize(statement, out)
 
 	if err != nil {
 		return err
 	}
 
-	out.writeString(" ) AS ")
+	out.writeString("AS")
 	out.writeString(s.alias)
 
 	return nil

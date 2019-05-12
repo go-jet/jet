@@ -543,8 +543,8 @@ func isDbBaseType(objType reflect.Type) bool {
 	typeStr := objType.String()
 
 	switch typeStr {
-	case "string", "int32", "int16", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
-		"*string", "*int32", "*int16", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
+	case "string", "int", "int32", "int16", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
+		"*string", "*int", "*int32", "*int16", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
 		return true
 	}
 
