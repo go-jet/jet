@@ -1,5 +1,14 @@
 package sqlbuilder
 
+type rowsType interface {
+	clause
+	hasRows()
+}
+
+type isRowsType struct{}
+
+func (i *isRowsType) hasRows() {}
+
 // A clause that can be used in orderBy by
 
 // A clause that is selectable.

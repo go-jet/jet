@@ -126,3 +126,39 @@ OFFSET $2;
 `)
 	assert.Equal(t, len(args), 2)
 }
+
+func TestUnionInUnion(t *testing.T) {
+	expectedSql := `
+(
+     (
+          SELECT table2.col3 AS "table2.col3",
+               table2.col3 AS "table2.col3"
+          FROM db.table2
+     )
+     UNION
+     
+     (
+          (
+               SELECT table1.col1 AS "table1.col1"
+               FROM db.table1
+          )
+          UNION ALL
+          (
+               SELECT table2.col3 AS "table2.col3"
+               FROM db.table2
+          )
+     )
+);
+`
+	query := UNION(
+		SELECT(table2Col3, table2Col3).FROM(table2),
+		UNION_ALL(table1.SELECT(table1Col1), table2.SELECT(table2Col3)),
+	)
+
+	queryStr, args, err := query.Sql()
+
+	fmt.Println(queryStr)
+	assert.NilError(t, err)
+	assert.Equal(t, len(args), 0)
+	assert.Equal(t, queryStr, expectedSql)
+}

@@ -15,6 +15,7 @@ const (
 type setStatement interface {
 	Statement
 	expression
+	hasRows()
 
 	ORDER_BY(clauses ...orderByClause) setStatement
 	LIMIT(limit int64) setStatement
@@ -23,43 +24,44 @@ type setStatement interface {
 	AsTable(alias string) expressionTable
 }
 
-func UNION(selects ...selectStatement) setStatement {
+func UNION(selects ...rowsType) setStatement {
 	return newSetStatementImpl(union, false, selects...)
 }
 
-func UNION_ALL(selects ...selectStatement) setStatement {
+func UNION_ALL(selects ...rowsType) setStatement {
 	return newSetStatementImpl(union, true, selects...)
 }
 
-func INTERSECT(selects ...selectStatement) setStatement {
+func INTERSECT(selects ...rowsType) setStatement {
 	return newSetStatementImpl(intersect, false, selects...)
 }
 
-func INTERSECT_ALL(selects ...selectStatement) setStatement {
+func INTERSECT_ALL(selects ...rowsType) setStatement {
 	return newSetStatementImpl(intersect, true, selects...)
 }
 
-func EXCEPT(selects ...selectStatement) setStatement {
+func EXCEPT(selects ...rowsType) setStatement {
 	return newSetStatementImpl(except, false, selects...)
 }
 
-func EXCEPT_ALL(selects ...selectStatement) setStatement {
+func EXCEPT_ALL(selects ...rowsType) setStatement {
 	return newSetStatementImpl(except, true, selects...)
 }
 
 // Similar to selectStatementImpl, but less complete
 type setStatementImpl struct {
 	expressionInterfaceImpl
+	isRowsType
 
 	operator      string
-	selects       []selectStatement
+	selects       []rowsType
 	orderBy       []orderByClause
 	limit, offset int64
 	// True if results of the union should be deduped.
 	all bool
 }
 
-func newSetStatementImpl(operator string, all bool, selects ...selectStatement) setStatement {
+func newSetStatementImpl(operator string, all bool, selects ...rowsType) setStatement {
 	setStatement := &setStatementImpl{
 		operator: operator,
 		selects:  selects,

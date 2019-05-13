@@ -9,6 +9,7 @@ import (
 type selectStatement interface {
 	Statement
 	expression
+	hasRows()
 
 	DISTINCT() selectStatement
 	FROM(table readableTable) selectStatement
@@ -33,6 +34,7 @@ func SELECT(projection ...projection) selectStatement {
 // mysql's subquery performance is horrible.
 type selectStatementImpl struct {
 	expressionInterfaceImpl
+	isRowsType
 
 	table       readableTable
 	distinct    bool
