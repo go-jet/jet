@@ -86,6 +86,9 @@ func (s *selectStatementImpl) FROM(table readableTable) selectStatement {
 }
 
 func (s *selectStatementImpl) serialize(statement statementType, out *queryData) error {
+	if s == nil {
+		return errors.New("Select statement is nil. ")
+	}
 	out.writeString("(")
 
 	out.increaseIdent()
@@ -103,6 +106,9 @@ func (s *selectStatementImpl) serialize(statement statementType, out *queryData)
 }
 
 func (s *selectStatementImpl) serializeImpl(out *queryData) error {
+	if s == nil {
+		return errors.New("Select statement is nil. ")
+	}
 
 	out.nextLine()
 	out.writeString("SELECT")

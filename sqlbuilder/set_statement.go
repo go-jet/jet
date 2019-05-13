@@ -6,12 +6,6 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
-const (
-	union     = "UNION"
-	intersect = "INTERSECT"
-	except    = "EXCEPT"
-)
-
 type setStatement interface {
 	Statement
 	expression
@@ -23,6 +17,12 @@ type setStatement interface {
 
 	AsTable(alias string) expressionTable
 }
+
+const (
+	union     = "UNION"
+	intersect = "INTERSECT"
+	except    = "EXCEPT"
+)
 
 func UNION(selects ...rowsType) setStatement {
 	return newSetStatementImpl(union, false, selects...)
@@ -99,6 +99,9 @@ func (us *setStatementImpl) AsTable(alias string) expressionTable {
 }
 
 func (s *setStatementImpl) serialize(statement statementType, out *queryData) error {
+	if s == nil {
+		return errors.New("Set statement is nil. ")
+	}
 
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
 		out.writeString("(")
@@ -121,6 +124,9 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData) er
 }
 
 func (s *setStatementImpl) serializeImpl(out *queryData) error {
+	if s == nil {
+		return errors.New("Set statement is nil. ")
+	}
 
 	if len(s.selects) < 2 {
 		return errors.Newf("UNION Statement must have at least two SELECT statements.")

@@ -96,6 +96,9 @@ func isSimpleOperand(expression expression) bool {
 }
 
 func (c *binaryExpression) serialize(statement statementType, out *queryData) error {
+	if c == nil {
+		return errors.New("Binary expression is nil.")
+	}
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.")
 	}
@@ -142,6 +145,10 @@ func newPrefixExpression(expression expression, operator string) prefixExpressio
 }
 
 func (p *prefixExpression) serialize(statement statementType, out *queryData) error {
+	if p == nil {
+		return errors.New("Prefix expression is nil.")
+	}
+
 	out.writeString(p.operator + " ")
 
 	if p.expression == nil {

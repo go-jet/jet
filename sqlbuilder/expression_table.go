@@ -1,5 +1,7 @@
 package sqlbuilder
 
+import "errors"
+
 type expressionTable interface {
 	readableTable
 
@@ -14,60 +16,63 @@ type expressionTableImpl struct {
 }
 
 // Returns the tableName's name in the database
-func (t *expressionTableImpl) SchemaName() string {
+func (e *expressionTableImpl) SchemaName() string {
 	return ""
 }
 
-func (s *expressionTableImpl) TableName() string {
-	return s.alias
+func (e *expressionTableImpl) TableName() string {
+	return e.alias
 }
 
-func (s *expressionTableImpl) Columns() []column {
+func (e *expressionTableImpl) Columns() []column {
 	return []column{}
 }
 
-func (s *expressionTableImpl) RefIntColumnName(name string) *IntegerColumn {
+func (e *expressionTableImpl) RefIntColumnName(name string) *IntegerColumn {
 	intColumn := NewIntegerColumn(name, NotNullable)
-	intColumn.setTableName(s.alias)
+	intColumn.setTableName(e.alias)
 
 	return intColumn
 }
 
-func (s *expressionTableImpl) RefIntColumn(column column) *IntegerColumn {
+func (e *expressionTableImpl) RefIntColumn(column column) *IntegerColumn {
 	intColumn := NewIntegerColumn(column.TableName()+"."+column.Name(), NotNullable)
-	intColumn.setTableName(s.alias)
+	intColumn.setTableName(e.alias)
 
 	return intColumn
 }
 
-func (s *expressionTableImpl) RefStringColumn(column column) *StringColumn {
+func (e *expressionTableImpl) RefStringColumn(column column) *StringColumn {
 	strColumn := NewStringColumn(column.TableName()+"."+column.Name(), NotNullable)
-	strColumn.setTableName(s.alias)
+	strColumn.setTableName(e.alias)
 	return strColumn
 }
 
-func (s *expressionTableImpl) serialize(statement statementType, out *queryData) error {
+func (e *expressionTableImpl) serialize(statement statementType, out *queryData) error {
+	if e == nil {
+		return errors.New("Expression table is nil. ")
+	}
 	//out.writeString("( ")
-	err := s.statement.serialize(statement, out)
+	err := e.statement.serialize(statement, out)
 
 	if err != nil {
 		return err
 	}
 
 	out.writeString("AS")
-	out.writeString(s.alias)
+	out.writeString(e.alias)
 
 	return nil
 }
 
 // Generates a select query on the current tableName.
-func (s *expressionTableImpl) SELECT(projections ...projection) selectStatement {
-	return newSelectStatement(s, projections)
+func (e *expressionTableImpl) SELECT(projections ...projection) selectStatement {
+	return newSelectStatement(e, projections)
 }
 
 // Creates a inner join tableName expression using onCondition.
-func (s *expressionTableImpl) INNER_JOIN(table readableTable, onCondition boolExpression) readableTable {
-	return InnerJoinOn(s, table, onCondition)
+func (e *expressionTableImpl) INNER_JOIN(table readableTable, onCondition boolExpression) readableTable {
+	return InnerJoinOn(e, table, onCondition)
 }
 
 //func (s *expressionTableImpl) InnerJoinUsing(table readableTable, col1 column, col2 column) readableTable {
@@ -75,19 +80,19 @@ func (s *expressionTableImpl) INNER_JOIN(table readableTable, onCondition boolEx
 //}
 
 // Creates a left join tableName expression using onCondition.
-func (s *expressionTableImpl) LEFT_JOIN(table readableTable, onCondition boolExpression) readableTable {
-	return LeftJoinOn(s, table, onCondition)
+func (e *expressionTableImpl) LEFT_JOIN(table readableTable, onCondition boolExpression) readableTable {
+	return LeftJoinOn(e, table, onCondition)
 }
 
 // Creates a right join tableName expression using onCondition.
-func (s *expressionTableImpl) RIGHT_JOIN(table readableTable, onCondition boolExpression) readableTable {
-	return RightJoinOn(s, table, onCondition)
+func (e *expressionTableImpl) RIGHT_JOIN(table readableTable, onCondition boolExpression) readableTable {
+	return RightJoinOn(e, table, onCondition)
 }
 
-func (s *expressionTableImpl) FULL_JOIN(table readableTable, onCondition boolExpression) readableTable {
-	return FullJoin(s, table, onCondition)
+func (e *expressionTableImpl) FULL_JOIN(table readableTable, onCondition boolExpression) readableTable {
+	return FullJoin(e, table, onCondition)
 }
 
-func (s *expressionTableImpl) CROSS_JOIN(table readableTable) readableTable {
-	return CrossJoin(s, table)
+func (e *expressionTableImpl) CROSS_JOIN(table readableTable) readableTable {
+	return CrossJoin(e, table)
 }

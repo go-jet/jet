@@ -29,6 +29,10 @@ func newFunc(name string, expressions []expression, parent expression) *funcExpr
 }
 
 func (f *funcExpressionImpl) serialize(statement statementType, out *queryData) error {
+	if f == nil {
+		return errors.New("Function expression is nil. ")
+	}
+
 	out.writeString(f.name + "(")
 
 	err := serializeExpressionList(statement, f.expression, ", ", out)
@@ -108,6 +112,10 @@ func (c *caseExpression) ELSE(els expression) caseInterface {
 }
 
 func (c *caseExpression) serialize(statement statementType, out *queryData) error {
+	if c == nil {
+		return errors.New("Case expression is nil. ")
+	}
+
 	out.writeString("(CASE")
 
 	if c.expression != nil {

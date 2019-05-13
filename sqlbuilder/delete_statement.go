@@ -29,6 +29,9 @@ func (d *deleteStatementImpl) WHERE(expression boolExpression) deleteStatement {
 }
 
 func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
+	if d == nil {
+		return errors.New("Delete statement. ")
+	}
 	out.nextLine()
 	out.writeString("DELETE FROM")
 
@@ -68,10 +71,10 @@ func (d *deleteStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(d)
 }
 
-func (u *deleteStatementImpl) Query(db types.Db, destination interface{}) error {
-	return Query(u, db, destination)
+func (d *deleteStatementImpl) Query(db types.Db, destination interface{}) error {
+	return Query(d, db, destination)
 }
 
-func (u *deleteStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
-	return Execute(u, db)
+func (d *deleteStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+	return Execute(d, db)
 }

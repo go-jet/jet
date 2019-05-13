@@ -1,5 +1,7 @@
 package sqlbuilder
 
+import "errors"
+
 type numericExpression interface {
 	expression
 
@@ -130,9 +132,12 @@ func newNumericExpressionWrap(expression expression) numericExpression {
 	return &numericExpressionWrap
 }
 
-func (c *numericExpressionWrapper) serialize(statement statementType, out *queryData) error {
+func (n *numericExpressionWrapper) serialize(statement statementType, out *queryData) error {
+	if n == nil {
+		return errors.New("Numeric expression wrapper is nil. ")
+	}
 	//out.writeString("(")
-	err := c.expression.serialize(statement, out)
+	err := n.expression.serialize(statement, out)
 	//out.writeString(")")
 
 	return err

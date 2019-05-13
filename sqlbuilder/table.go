@@ -109,7 +109,7 @@ func (t *Table) Columns() []column {
 // generated string may not be a valid/executable sql Statement.
 func (t *Table) serialize(statement statementType, out *queryData) error {
 	if t == nil {
-		return errors.Newf("nil tableName.")
+		return errors.Newf("Table is nil. ")
 	}
 
 	out.writeString(t.schemaName)
@@ -272,7 +272,9 @@ func (t *joinTable) Column(name string) column {
 }
 
 func (t *joinTable) serialize(statement statementType, out *queryData) (err error) {
-
+	if t == nil {
+		return errors.New("Join table is nil. ")
+	}
 	if t.lhs == nil {
 		return errors.Newf("nil lhs.")
 	}
