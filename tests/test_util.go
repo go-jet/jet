@@ -17,7 +17,7 @@ func assertQuery(t *testing.T, query sqlbuilder.Statement, expectedQuery string,
 
 	debuqSql, err := query.DebugSql()
 	assert.NilError(t, err)
-	assert.Equal(t, debuqSql, expectedQuery, args)
+	assert.Equal(t, debuqSql, expectedQuery)
 }
 
 func int16Ptr(i int16) *int16 {
@@ -55,7 +55,7 @@ var customer0 = model.Customer{
 	FirstName:  "Mary",
 	LastName:   "Smith",
 	Email:      stringPtr("mary.smith@sakilacustomer.org"),
-	Address:    nil,
+	AddressID:  5,
 	Activebool: true,
 	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
@@ -68,7 +68,7 @@ var customer1 = model.Customer{
 	FirstName:  "Patricia",
 	LastName:   "Johnson",
 	Email:      stringPtr("patricia.johnson@sakilacustomer.org"),
-	Address:    nil,
+	AddressID:  6,
 	Activebool: true,
 	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
@@ -81,7 +81,7 @@ var lastCustomer = model.Customer{
 	FirstName:  "Austin",
 	LastName:   "Cintron",
 	Email:      stringPtr("austin.cintron@sakilacustomer.org"),
-	Address:    nil,
+	AddressID:  605,
 	Activebool: true,
 	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),

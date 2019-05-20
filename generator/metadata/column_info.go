@@ -54,7 +54,7 @@ func (c ColumnInfo) ToSqlBuilderColumnType() string {
 
 func (c ColumnInfo) ToGoType() string {
 	typeStr := c.GoBaseType()
-	if c.IsNullable || c.TableInfo.IsForeignKey(c.Name) {
+	if c.IsNullable {
 		return "*" + typeStr
 	}
 
@@ -62,47 +62,40 @@ func (c ColumnInfo) ToGoType() string {
 }
 
 func (c ColumnInfo) GoBaseType() string {
-	if forignKeyTable, ok := c.TableInfo.ForeignTableMap[c.Name]; ok {
-		return snaker.SnakeToCamel(forignKeyTable)
-	} else {
-		switch c.DataType {
-		case "USER-DEFINED":
-			return snaker.SnakeToCamel(c.EnumName)
-		case "boolean":
-			return "bool"
-		case "smallint":
-			return "int16"
-		case "integer":
-			return "int32"
-		case "bigint":
-			return "int64"
-		case "date", "timestamp without time zone", "timestamp with time zone":
-			return "time.Time"
-		case "bytea":
-			return "[]byte"
-		case "text", "character", "character varying":
-			return "string"
-		case "real":
-			return "float32"
-		case "numeric", "double precision":
-			return "float64"
-		case "uuid":
-			return "uuid.UUID"
-		case "json", "jsonb":
-			return "types.JSONText"
-		default:
-			fmt.Println("Unknown go map type: " + c.DataType + ", " + c.EnumName + ", using string instead.")
-			return "string"
-		}
+	switch c.DataType {
+	case "USER-DEFINED":
+		return snaker.SnakeToCamel(c.EnumName)
+	case "boolean":
+		return "bool"
+	case "smallint":
+		return "int16"
+	case "integer":
+		return "int32"
+	case "bigint":
+		return "int64"
+	case "date", "timestamp without time zone", "timestamp with time zone":
+		return "time.Time"
+	case "bytea":
+		return "[]byte"
+	case "text", "character", "character varying":
+		return "string"
+	case "real":
+		return "float32"
+	case "numeric", "double precision":
+		return "float64"
+	case "uuid":
+		return "uuid.UUID"
+	case "json", "jsonb":
+		return "types.JSONText"
+	default:
+		fmt.Println("Unknown go map type: " + c.DataType + ", " + c.EnumName + ", using string instead.")
+		return "string"
 	}
 }
 
 func (c ColumnInfo) ToGoDMFieldName() string {
-	if forignKeyTable, ok := c.TableInfo.ForeignTableMap[c.Name]; ok {
-		return snaker.SnakeToCamel(forignKeyTable)
-	} else {
-		return snaker.SnakeToCamel(c.Name)
-	}
+	return snaker.SnakeToCamel(c.Name)
+
 }
 
 func (c ColumnInfo) ToGoFieldName() string {

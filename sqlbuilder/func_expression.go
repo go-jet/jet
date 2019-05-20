@@ -58,6 +58,10 @@ func NewNumericFunc(name string, expressions ...expression) numericExpression {
 	return numericFunc
 }
 
+func COUNT(expression numericExpression) numericExpression {
+	return NewNumericFunc("COUNT", expression)
+}
+
 func MAX(expression numericExpression) numericExpression {
 	return NewNumericFunc("MAX", expression)
 }

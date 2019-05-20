@@ -14,6 +14,7 @@ type numericExpression interface {
 	GtEq(rhs numericExpression) boolExpression
 	GtEqL(literal interface{}) boolExpression
 
+	Lt(rhs numericExpression) boolExpression
 	LtEq(rhs numericExpression) boolExpression
 	LtEqL(literal interface{}) boolExpression
 
@@ -53,6 +54,10 @@ func (n *numericInterfaceImpl) GtEq(expression numericExpression) boolExpression
 
 func (n *numericInterfaceImpl) GtEqL(literal interface{}) boolExpression {
 	return GtEq(n.parent, Literal(literal))
+}
+
+func (n *numericInterfaceImpl) Lt(expression numericExpression) boolExpression {
+	return Lt(n.parent, expression)
 }
 
 func (n *numericInterfaceImpl) LtEq(expression numericExpression) boolExpression {

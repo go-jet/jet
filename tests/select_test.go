@@ -5,6 +5,8 @@ import (
 	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
+	model2 "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
+	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -16,14 +18,12 @@ SELECT actor.actor_id AS "actor.actor_id",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update"
 FROM dvds.actor
-WHERE actor.actor_id = 1
-ORDER BY actor.actor_id ASC;
+WHERE actor.actor_id = 1;
 `
 
 	query := Actor.
 		SELECT(Actor.AllColumns).
-		WHERE(Actor.ActorID.EqL(1)).
-		ORDER_BY(Actor.ActorID.ASC())
+		WHERE(Actor.ActorID.EqL(1))
 
 	assertQuery(t, query, expectedSql, 1)
 
@@ -79,8 +79,6 @@ LIMIT 30;
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 30)
-
-	//spew.Dump(dest)
 }
 
 func TestSelect_ScanToSlice(t *testing.T) {
@@ -159,30 +157,99 @@ LIMIT 12;
 	assertQuery(t, query, expectedSql, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 }
 
-//func TestJoinQueryStruct(t *testing.T) {
-//
-//	query := FilmActor.
-//		INNER_JOIN(Actor, FilmActor.ActorID.Eq(Actor.ActorID)).
-//		INNER_JOIN(Film, FilmActor.FilmID.Eq(Film.FilmID)).
-//		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
-//		SELECT(FilmActor.AllColumns, Film.AllColumns, Language.AllColumns, Actor.AllColumns).
-//		WHERE(FilmActor.ActorID.GtEq(1).AND(FilmActor.ActorID.LteLiteral(2)))
-//
-//	queryStr, args, err := query.Sql()
-//	assert.NilError(t, err)
-//	assert.Equal(t, queryStr, `SELECT film_actor.actor_id AS "film_actor.actor_id", film_actor.film_id AS "film_actor.film_id", film_actor.last_update AS "film_actor.last_update",film.film_id AS "film.film_id", film.title AS "film.title", film.description AS "film.description", film.release_year AS "film.release_year", film.language_id AS "film.language_id", film.rental_duration AS "film.rental_duration", film.rental_rate AS "film.rental_rate", film.length AS "film.length", film.replacement_cost AS "film.replacement_cost", film.rating AS "film.rating", film.last_update AS "film.last_update", film.special_features AS "film.special_features", film.fulltext AS "film.fulltext",language.language_id AS "language.language_id", language.name AS "language.name", language.last_update AS "language.last_update",actor.actor_id AS "actor.actor_id", actor.first_name AS "actor.first_name", actor.last_name AS "actor.last_name", actor.last_update AS "actor.last_update" FROM dvds.film_actor JOIN dvds.actor ON film_actor.actor_id = actor.actor_id JOIN dvds.film ON film_actor.film_id = film.film_id JOIN dvds.language ON film.language_id = language.language_id WHERE (film_actor.actor_id>=1 AND film_actor.actor_id<=2)`)
-//
-//	//fmt.Println(queryStr)
-//
-//	filmActor := []model.FilmActor{}
-//
-//	err = query.Execute(db, &filmActor)
-//
-//	assert.NilError(t, err)
-//
-//	//fmt.Println("ACTORS: --------------------")
-//	//spew.Dump(filmActor)
-//}
+func TestJoinQueryStruct(t *testing.T) {
+
+	expectedSql := `
+SELECT film_actor.actor_id AS "film_actor.actor_id",
+     film_actor.film_id AS "film_actor.film_id",
+     film_actor.last_update AS "film_actor.last_update",
+     film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     film.description AS "film.description",
+     film.release_year AS "film.release_year",
+     film.language_id AS "film.language_id",
+     film.rental_duration AS "film.rental_duration",
+     film.rental_rate AS "film.rental_rate",
+     film.length AS "film.length",
+     film.replacement_cost AS "film.replacement_cost",
+     film.rating AS "film.rating",
+     film.last_update AS "film.last_update",
+     film.special_features AS "film.special_features",
+     film.fulltext AS "film.fulltext",
+     language.language_id AS "language.language_id",
+     language.name AS "language.name",
+     language.last_update AS "language.last_update",
+     actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update",
+     inventory.inventory_id AS "inventory.inventory_id",
+     inventory.film_id AS "inventory.film_id",
+     inventory.store_id AS "inventory.store_id",
+     inventory.last_update AS "inventory.last_update",
+     rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.film_actor
+     JOIN dvds.actor ON film_actor.actor_id = actor.actor_id
+     JOIN dvds.film ON film_actor.film_id = film.film_id
+     JOIN dvds.language ON film.language_id = language.language_id
+     JOIN dvds.inventory ON inventory.film_id = film.film_id
+     JOIN dvds.rental ON rental.inventory_id = inventory.inventory_id
+ORDER BY film.film_id ASC
+LIMIT 50;
+`
+	for i := 0; i < 1; i++ {
+		query := FilmActor.
+			INNER_JOIN(Actor, FilmActor.ActorID.Eq(Actor.ActorID)).
+			INNER_JOIN(Film, FilmActor.FilmID.Eq(Film.FilmID)).
+			INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
+			INNER_JOIN(Inventory, Inventory.FilmID.Eq(Film.FilmID)).
+			INNER_JOIN(Rental, Rental.InventoryID.Eq(Inventory.InventoryID)).
+			SELECT(
+				FilmActor.AllColumns,
+				Film.AllColumns,
+				Language.AllColumns,
+				Actor.AllColumns,
+				Inventory.AllColumns,
+				Rental.AllColumns,
+			).
+			//WHERE(FilmActor.ActorID.GtEqL(1).AND(FilmActor.ActorID.LtEqL(2))).
+			ORDER_BY(Film.FilmID.ASC()).
+			LIMIT(50)
+
+		assertQuery(t, query, expectedSql, int64(50))
+
+		var languageActorFilm []struct {
+			model.Language
+
+			Films []struct {
+				model.Film
+				Actors []struct {
+					model.Actor
+				}
+
+				Inventory []struct {
+					model.Inventory
+
+					Rental []model.Rental
+				}
+			}
+		}
+
+		err := query.Query(db, &languageActorFilm)
+
+		assert.NilError(t, err)
+		assert.Equal(t, len(languageActorFilm), 1)
+		assert.Equal(t, len(languageActorFilm[0].Films), 1)
+		assert.Equal(t, len(languageActorFilm[0].Films[0].Actors), 10)
+	}
+
+}
 
 func TestJoinQuerySlice(t *testing.T) {
 	expectedSql := `
@@ -408,13 +475,67 @@ LIMIT 1000;
 
 	assertQuery(t, query, expectedSql, int64(1000))
 
-	customerAddresCrosJoined := []model.Customer{}
+	var customerAddresCrosJoined []struct {
+		model.Customer
+		model.Address
+	}
 
 	err := query.Query(db, &customerAddresCrosJoined)
 
 	assert.Equal(t, len(customerAddresCrosJoined), 1000)
 
 	assert.NilError(t, err)
+}
+
+func TestSelecSelfJoin1(t *testing.T) {
+
+	var expectedSql = `
+SELECT employee.employee_id AS "employee.employee_id",
+     employee.first_name AS "employee.first_name",
+     employee.last_name AS "employee.last_name",
+     employee.manager_id AS "employee.manager_id",
+     manager.employee_id AS "manager.employee_id",
+     manager.first_name AS "manager.first_name",
+     manager.last_name AS "manager.last_name",
+     manager.manager_id AS "manager.manager_id"
+FROM test_sample.employee
+     LEFT JOIN test_sample.employee AS manager ON manager.employee_id = employee.manager_id
+ORDER BY employee.employee_id;
+`
+
+	manager := Employee.AS("manager")
+	query := Employee.
+		LEFT_JOIN(manager, manager.EmployeeID.Eq(Employee.ManagerID)).
+		SELECT(Employee.AllColumns, manager.AllColumns).
+		ORDER_BY(Employee.EmployeeID)
+
+	assertQuery(t, query, expectedSql)
+
+	var dest []struct {
+		model2.Employee
+
+		Manager *model2.Employee
+	}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 8)
+	assert.DeepEqual(t, dest[0].Employee, model2.Employee{
+		EmployeeID: 1,
+		FirstName:  "Windy",
+		LastName:   "Hays",
+		ManagerID:  nil,
+	})
+
+	assert.Assert(t, dest[0].Manager == nil)
+
+	assert.DeepEqual(t, dest[7].Employee, model2.Employee{
+		EmployeeID: 8,
+		FirstName:  "Salley",
+		LastName:   "Lester",
+		ManagerID:  int32Ptr(3),
+	})
 }
 
 func TestSelectSelfJoin(t *testing.T) {
@@ -446,21 +567,19 @@ SELECT f1.film_id AS "f1.film_id",
      f2.special_features AS "f2.special_features",
      f2.fulltext AS "f2.fulltext"
 FROM dvds.film AS f1
-     JOIN dvds.film AS f2 ON (f1.film_id != f2.film_id AND f1.length = f2.length)
-ORDER BY f1.film_id ASC
-LIMIT 100;
+     JOIN dvds.film AS f2 ON (f1.film_id < f2.film_id AND f1.length = f2.length)
+ORDER BY f1.film_id ASC;
 `
 	f1 := Film.AS("f1")
 
 	f2 := Film.AS("f2")
 
 	query := f1.
-		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).AND(f1.Length.Eq(f2.Length))).
+		INNER_JOIN(f2, f1.FilmID.Lt(f2.FilmID).AND(f1.Length.Eq(f2.Length))).
 		SELECT(f1.AllColumns, f2.AllColumns).
-		ORDER_BY(f1.FilmID.ASC()).
-		LIMIT(100)
+		ORDER_BY(f1.FilmID.ASC())
 
-	assertQuery(t, query, expectedSql, int64(100))
+	assertQuery(t, query, expectedSql)
 
 	type F1 model.Film
 	type F2 model.Film
@@ -474,7 +593,9 @@ LIMIT 100;
 
 	assert.NilError(t, err)
 
-	assert.Equal(t, len(theSameLengthFilms), 100)
+	//spew.Dump(theSameLengthFilms)
+
+	//assert.Equal(t, len(theSameLengthFilms), 100)
 }
 
 func TestSelectAliasColumn(t *testing.T) {
@@ -517,61 +638,62 @@ LIMIT 1000;
 	assert.DeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
 }
 
-type Manager staff
-
-type staff struct {
-	StaffID   int32 `sql:"unique"`
-	FirstName string
-	LastName  string
-	//Address    *model.Address
-	//Email      *string
-	//StoreID    int16
-	//Active     bool
-	//Username   string
-	//Password   *string
-	//LastUpdate time.Time
-	*Manager //`sqlbuilder:"manager"`
-}
-
-func TestSelectSelfReferenceType(t *testing.T) {
-
-	expectedSql := `
-SELECT DISTINCT staff.staff_id AS "staff.staff_id",
-     staff.first_name AS "staff.first_name",
-     staff.last_name AS "staff.last_name",
-     address.address_id AS "address.address_id",
-     address.address AS "address.address",
-     address.address2 AS "address.address2",
-     address.district AS "address.district",
-     address.city_id AS "address.city_id",
-     address.postal_code AS "address.postal_code",
-     address.phone AS "address.phone",
-     address.last_update AS "address.last_update",
-     manager.staff_id AS "manager.staff_id",
-     manager.first_name AS "manager.first_name"
-FROM dvds.staff
-     JOIN dvds.address ON staff.address_id = address.address_id
-     JOIN dvds.staff AS manager ON staff.staff_id = manager.staff_id;
-`
-	manager := Staff.AS("manager")
-
-	query := Staff.
-		INNER_JOIN(Address, Staff.AddressID.Eq(Address.AddressID)).
-		INNER_JOIN(manager, Staff.StaffID.Eq(manager.StaffID)).
-		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName).
-		DISTINCT()
-
-	assertQuery(t, query, expectedSql)
-
-	staffs := []staff{}
-
-	err := query.Query(db, &staffs)
-
-	assert.NilError(t, err)
-
-	fmt.Println(query.DebugSql())
-	//spew.Dump(staffs)
-}
+//
+//type Manager staff
+//
+//type staff struct {
+//	StaffID   int32 `sql:"unique"`
+//	FirstName string
+//	LastName  string
+//	//Address    *model.Address
+//	//Email      *string
+//	//StoreID    int16
+//	//Active     bool
+//	//Username   string
+//	//Password   *string
+//	//LastUpdate time.Time
+//	*Manager //`sqlbuilder:"manager"`
+//}
+//
+//func TestSelectSelfReferenceType(t *testing.T) {
+//
+//	expectedSql := `
+//SELECT DISTINCT staff.staff_id AS "staff.staff_id",
+//     staff.first_name AS "staff.first_name",
+//     staff.last_name AS "staff.last_name",
+//     address.address_id AS "address.address_id",
+//     address.address AS "address.address",
+//     address.address2 AS "address.address2",
+//     address.district AS "address.district",
+//     address.city_id AS "address.city_id",
+//     address.postal_code AS "address.postal_code",
+//     address.phone AS "address.phone",
+//     address.last_update AS "address.last_update",
+//     manager.staff_id AS "manager.staff_id",
+//     manager.first_name AS "manager.first_name"
+//FROM dvds.staff
+//     JOIN dvds.address ON staff.address_id = address.address_id
+//     JOIN dvds.staff AS manager ON staff.staff_id = manager.staff_id;
+//`
+//	manager := Staff.AS("manager")
+//
+//	query := Staff.
+//		INNER_JOIN(Address, Staff.AddressID.Eq(Address.AddressID)).
+//		INNER_JOIN(manager, Staff.StaffID.Eq(manager.StaffID)).
+//		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName).
+//		DISTINCT()
+//
+//	assertQuery(t, query, expectedSql)
+//
+//	staffs := []staff{}
+//
+//	err := query.Query(db, &staffs)
+//
+//	assert.NilError(t, err)
+//
+//	fmt.Println(query.DebugSql())
+//	//spew.Dump(staffs)
+//}
 
 func TestSubQuery(t *testing.T) {
 
@@ -684,7 +806,8 @@ ORDER BY film.film_id ASC;
 
 	maxFilmRentalRate := NumExp(Film.SELECT(MAX(Film.RentalRate)))
 
-	query := Film.SELECT(Film.AllColumns).
+	query := Film.
+		SELECT(Film.AllColumns).
 		WHERE(Film.RentalRate.Eq(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
@@ -705,7 +828,7 @@ ORDER BY film.film_id ASC;
 		Title:           "Ace Goldfinger",
 		Description:     stringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
 		ReleaseYear:     int32Ptr(2006),
-		Language:        nil,
+		LanguageID:      1,
 		RentalRate:      4.99,
 		Length:          int16Ptr(48),
 		ReplacementCost: 12.99,
@@ -810,6 +933,7 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 		StoreID:    1,
 		FirstName:  "Brian",
 		LastName:   "Wyman",
+		AddressID:  323,
 		Email:      stringPtr("brian.wyman@sakilacustomer.org"),
 		Activebool: true,
 		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
@@ -851,6 +975,9 @@ ORDER BY payment.payment_date ASC;
 	assert.Equal(t, len(payments), 9)
 	assert.DeepEqual(t, payments[0], model.Payment{
 		PaymentID:   17793,
+		CustomerID:  416,
+		StaffID:     2,
+		RentalID:    1158,
 		Amount:      2.99,
 		PaymentDate: *timeWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
 	})

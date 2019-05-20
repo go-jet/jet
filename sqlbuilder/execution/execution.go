@@ -8,24 +8,64 @@ import (
 	"github.com/serenize/snaker"
 	"github.com/sub0zero/go-sqlbuilder/types"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
 func Query(db types.Db, query string, args []interface{}, destinationPtr interface{}) error {
+
+	if destinationPtr == nil {
+		return errors.New("Destination is nil. ")
+	}
+
+	destinationPtrType := reflect.TypeOf(destinationPtr)
+	if destinationPtrType.Kind() != reflect.Ptr {
+		return errors.New("Destination has to be a pointer to slice or pointer to struct. ")
+	}
+
+	if destinationPtrType.Elem().Kind() == reflect.Slice {
+		return queryToSlice(db, query, args, destinationPtr)
+	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
+		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
+		tempSliceValue := tempSlicePtrValue.Elem()
+
+		err := queryToSlice(db, query, args, tempSlicePtrValue.Interface())
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("TEMP SLICE SIZE: ", tempSliceValue.Len())
+
+		if tempSliceValue.Len() == 0 {
+			return nil
+		}
+
+		structValue := reflect.ValueOf(destinationPtr).Elem()
+		firstTempStruct := tempSliceValue.Index(0).Elem()
+
+		if structValue.Type().AssignableTo(firstTempStruct.Type()) {
+			structValue.Set(tempSliceValue.Index(0).Elem())
+		}
+		return nil
+	} else {
+		return errors.New("Unsupported destination type. ")
+	}
+}
+
+func queryToSlice(db types.Db, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
 		return errors.New("db is nil")
 	}
 
-	if destinationPtr == nil {
-		return errors.New("Destination is nil ")
+	if slicePtr == nil {
+		return errors.New("Destination is nil. ")
 	}
 
-	destinationType := reflect.TypeOf(destinationPtr)
-	if destinationType.Kind() != reflect.Ptr {
-		return errors.New("Destination has to be a pointer to slice or pointer to struct ")
+	destinationType := reflect.TypeOf(slicePtr)
+	if destinationType.Kind() != reflect.Ptr && destinationType.Elem().Kind() != reflect.Slice {
+		return errors.New("Destination has to be a pointer to slice. ")
 	}
 
 	rows, err := db.Query(query, args...)
@@ -35,16 +75,17 @@ func Query(db types.Db, query string, args []interface{}, destinationPtr interfa
 	}
 	defer rows.Close()
 
-	columnNames, _ := rows.Columns()
-	columnTypes, _ := rows.ColumnTypes()
+	scanContext, err := newScanContext(rows)
 
-	scanContext := &scanContext{
-		row:              createScanValue(columnTypes),
-		columnNames:      columnNames,
-		uniqueObjectsMap: make(map[string]interface{}),
+	if err != nil {
+		return err
 	}
 
-	//spew.Dump(columnTypes)
+	if len(scanContext.row) == 0 {
+		return nil
+	}
+
+	groupTime := time.Duration(0)
 
 	for rows.Next() {
 		err := rows.Scan(scanContext.row...)
@@ -55,16 +96,18 @@ func Query(db types.Db, query string, args []interface{}, destinationPtr interfa
 
 		scanContext.rowNum++
 
-		if destinationType.Elem().Kind() == reflect.Slice {
-			err := mapRowToSlice(scanContext, "", map[string]bool{}, destinationPtr, nil)
+		begin := time.Now()
 
-			if err != nil {
-				return err
-			}
-		} else if destinationType.Elem().Kind() == reflect.Struct {
-			return mapRowToStruct(scanContext, "", map[string]bool{}, destinationPtr, nil)
+		_, err = mapRowToSlice(scanContext, "", reflect.ValueOf(slicePtr), nil)
+
+		if err != nil {
+			return err
 		}
+
+		groupTime += time.Now().Sub(begin)
 	}
+
+	fmt.Println(groupTime.String())
 
 	err = rows.Err()
 
@@ -82,68 +125,78 @@ func Query(db types.Db, query string, args []interface{}, destinationPtr interfa
 	return nil
 }
 
-type scanContext struct {
-	rowNum      int
-	columnNames []string
+func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
 
-	row              []interface{}
-	uniqueObjectsMap map[string]interface{}
-}
+	sliceElemType := getSliceElemType(slicePtrValue)
 
-func getColumnTypeName(columnName string) (string, error) {
-	split := strings.Split(columnName, ".")
-	if len(split) != 2 {
-		return "", errors.New("Invalid column name")
+	if isGoBaseType(sliceElemType) {
+		index := 0
+		if structField != nil {
+			columnName := getRefTableNameFrom(structField)
+			index = getIndex(scanContext.columnNames, columnName)
+
+			if index < 0 {
+				return
+			}
+		}
+		rowElemPtr := scanContext.rowElemPtr(index)
+
+		if !rowElemPtr.IsNil() {
+			appendElemToSlice(slicePtrValue, rowElemPtr)
+		}
+
+		return
 	}
 
-	return split[0], nil
-}
+	if sliceElemType.Kind() != reflect.Struct {
+		return false, errors.New("Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+	}
 
-func allProcessed(arr []bool) bool {
-	for _, b := range arr {
-		if !b {
-			return false
+	structGroupKey := getGroupKey(scanContext, sliceElemType, structField)
+
+	if structGroupKey == "" {
+		structGroupKey = "|ROW: " + strconv.Itoa(scanContext.rowNum) + "|"
+	}
+
+	groupKey = groupKey + ":" + structGroupKey
+
+	index, ok := scanContext.uniqueObjectsMap[groupKey]
+
+	if ok {
+		structPtrValue := getSliceElemPtrAt(slicePtrValue, index)
+
+		return mapRowToStruct(scanContext, groupKey, structPtrValue, structField)
+	} else {
+		destinationStructPtr := newElemPtrValueForSlice(slicePtrValue)
+
+		updated, err = mapRowToStruct(scanContext, groupKey, destinationStructPtr, structField)
+
+		if err != nil {
+			return
+		}
+
+		if updated {
+			scanContext.uniqueObjectsMap[groupKey] = slicePtrValue.Elem().Len()
+			appendElemToSlice(slicePtrValue, destinationStructPtr)
 		}
 	}
 
-	return true
+	return
 }
 
-func getType(reflectType reflect.Type) string {
-	var structType reflect.Type
-	if reflectType.Kind() == reflect.Struct {
-		structType = reflectType
-	} else if reflectType.Kind() == reflect.Ptr && reflectType.Elem().Kind() == reflect.Struct {
-		structType = reflectType.Elem()
-	}
-
-	return structType.Name()
-}
-
-func getGroupKey(scanContext *scanContext, typesProcessed map[string]bool, structType reflect.Type, structField *reflect.StructField) string {
-	tableName := getTableAlias(structField)
-
-	//fmt.Println("Group: " + tableName)
+func getGroupKey(scanContext *scanContext, structType reflect.Type, structField *reflect.StructField) string {
+	tableName := getRefTableNameFrom(structField)
 
 	if tableName == "" {
 		tableName = snaker.CamelToSnake(structType.Name())
 	}
-
-	//fmt.Println(tableName)
-
-	if typesProcessed[tableName] {
-		return ""
-	}
-
-	typesProcessed[tableName] = true
 
 	groupKeys := []string{}
 
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
 
-		////fmt.Println(field.Tag)
-		if !isDbBaseType(field.Type) {
+		if !isGoBaseType(field.Type) {
 			var structType reflect.Type
 			if field.Type.Kind() == reflect.Struct {
 				structType = field.Type
@@ -153,11 +206,7 @@ func getGroupKey(scanContext *scanContext, typesProcessed map[string]bool, struc
 				continue
 			}
 
-			//spew.Dump(structType)
-
-			structGroupKey := getGroupKey(scanContext, typesProcessed, structType, &field)
-
-			//groupKey = strings.Join([]string{structGroupKey, groupKey}, ":")
+			structGroupKey := getGroupKey(scanContext, structType, &field)
 
 			if structGroupKey != "" {
 				groupKeys = append(groupKeys, structGroupKey)
@@ -166,15 +215,14 @@ func getGroupKey(scanContext *scanContext, typesProcessed map[string]bool, struc
 			fieldName := field.Name
 			columnName := tableName + "." + snaker.CamelToSnake(fieldName)
 
-			//fmt.Println(fieldName)
 			index := getIndex(scanContext.columnNames, columnName)
 
 			if index < 0 {
 				continue
 			}
 
-			cellValue := cellValue(scanContext.row, index)
-			subKey := reflectValueToString(cellValue)
+			cellValue := scanContext.rowElem(index)
+			subKey := valueToString(cellValue)
 
 			if subKey != "" {
 				groupKeys = append(groupKeys, subKey)
@@ -186,35 +234,13 @@ func getGroupKey(scanContext *scanContext, typesProcessed map[string]bool, struc
 		return ""
 	}
 
-	return "|" + structType.Name() + "(" + strings.Join(groupKeys, ", ") + ")|"
+	groupKey := "{" + structType.Name() + "(" + strings.Join(groupKeys, ",") + ")}"
+
+	return groupKey
 }
 
-func cellValue(row []interface{}, index int) interface{} {
-	//spew.Dump(row[index])
-
-	valuer, ok := row[index].(driver.Valuer)
-
-	if !ok {
-		//fmt.Println("____________________")
-		//spew.Dump(row[index])
-		panic("Scan value doesn't implement driver.Valuer")
-	}
-
-	//spew.Dump(valuer)
-
-	value, err := valuer.Value()
-
-	if err != nil {
-		panic(err)
-	}
-
-	//spew.Dump(value)
-
-	return value
-}
-
-func getSliceStructType(slicePtr interface{}) reflect.Type {
-	sliceTypePtr := reflect.TypeOf(slicePtr)
+func getSliceElemType(slicePtrValue reflect.Value) reflect.Type {
+	sliceTypePtr := slicePtrValue.Type()
 
 	elemType := sliceTypePtr.Elem().Elem()
 
@@ -225,148 +251,101 @@ func getSliceStructType(slicePtr interface{}) reflect.Type {
 	return elemType
 }
 
-func cloneProcessedMap(processedMap map[string]bool) map[string]bool {
-	newMap := make(map[string]bool, len(processedMap))
+func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
+	sliceValue := slicePtrValue.Elem()
+	elem := sliceValue.Index(index)
 
-	for k, v := range newMap {
-		newMap[k] = v
+	if elem.Kind() == reflect.Ptr {
+		return elem
 	}
 
-	return newMap
+	return elem.Addr()
 }
 
-func mapRowToSlice(scanContext *scanContext, groupKey string, typesProcessed map[string]bool, destinationPtr interface{}, structField *reflect.StructField) error {
-	var err error
+func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) {
+	if slicePtrValue.IsNil() {
+		panic("Slice is nil")
+	}
+	sliceValue := slicePtrValue.Elem()
+	sliceElemType := sliceValue.Type().Elem()
 
-	structType := getSliceStructType(destinationPtr)
+	newElemValue := objPtrValue
 
-	structGroupKey := getGroupKey(scanContext, cloneProcessedMap(typesProcessed), structType, structField)
-
-	if structGroupKey == "" {
-		structGroupKey = "|ROW: " + strconv.Itoa(scanContext.rowNum) + "|"
+	if sliceElemType.Kind() != reflect.Ptr {
+		newElemValue = objPtrValue.Elem()
 	}
 
-	groupKey = groupKey + ":" + structGroupKey
-
-	//fmt.Println(groupKey)
-
-	objPtr, ok := scanContext.uniqueObjectsMap[groupKey]
-
-	if ok {
-		err = mapRowToStruct(scanContext, groupKey, typesProcessed, objPtr, structField)
-		if err != nil {
-			return err
-		}
-	} else {
-		destinationStructPtr := newElemForSlice(destinationPtr)
-
-		err = mapRowToStruct(scanContext, groupKey, typesProcessed, destinationStructPtr, structField)
-
-		if err != nil {
-			return err
-		}
-
-		elemPtr := appendElemToSlice(destinationPtr, destinationStructPtr)
-		scanContext.uniqueObjectsMap[groupKey] = elemPtr
+	if newElemValue.Type().AssignableTo(sliceElemType) {
+		sliceValue.Set(reflect.Append(sliceValue, newElemValue))
 	}
-
-	return err
 }
 
-func appendElemToSlice(slice interface{}, objPtr interface{}) interface{} {
-	sliceValue := reflect.ValueOf(slice).Elem()
-	elemType := sliceValue.Type().Elem()
-
-	if elemType.Kind() == reflect.Ptr {
-		sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(objPtr)))
-		return sliceValue.Index(sliceValue.Len() - 1).Interface()
-	}
-
-	sliceValue.Set(reflect.Append(sliceValue, reflect.ValueOf(objPtr).Elem()))
-
-	return sliceValue.Index(sliceValue.Len() - 1).Addr().Interface()
-}
-
-func newElemForSlice(destinationSlicePtr interface{}) interface{} {
-	destinationSliceType := reflect.TypeOf(destinationSlicePtr).Elem()
+func newElemPtrValueForSlice(slicePtrValue reflect.Value) reflect.Value {
+	destinationSliceType := slicePtrValue.Type().Elem()
 	elemType := destinationSliceType.Elem()
 
 	if elemType.Kind() == reflect.Ptr {
-		return reflect.New(elemType.Elem()).Interface()
+		return reflect.New(elemType.Elem())
 	}
 
-	return reflect.New(elemType).Interface()
+	return reflect.New(elemType)
 }
 
-func mapRowToDestinationValue(scanContext *scanContext, groupKey string, typesProcessed map[string]bool, dest reflect.Value, structField *reflect.StructField) error {
-	if dest.Kind() == reflect.Struct {
-		err := mapRowToStruct(scanContext, groupKey, typesProcessed, dest.Addr().Interface(), structField)
-		if err != nil {
-			return err
-		}
-	} else if dest.Kind() == reflect.Slice {
-		err := mapRowToSlice(scanContext, groupKey, typesProcessed, dest.Addr().Interface(), structField)
-		if err != nil {
-			return err
-		}
+func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+
+	if destPtrValue.Kind() != reflect.Ptr {
+		return false, errors.New("Internal error. ")
+	}
+
+	destValueKind := destPtrValue.Elem().Kind()
+
+	if destValueKind == reflect.Struct {
+		return mapRowToStruct(scanContext, groupKey, destPtrValue, structField)
+	} else if destValueKind == reflect.Slice {
+		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
+	} else {
+		return false, errors.New("Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+	}
+}
+
+func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+
+	var destPtrValue reflect.Value
+
+	if dest.Kind() != reflect.Ptr {
+		destPtrValue = dest.Addr()
 	} else if dest.Kind() == reflect.Ptr {
-		elemType := dest.Type().Elem()
-
-		if elemType.Kind() == reflect.Struct {
-			var structValuePtr reflect.Value
-
-			if dest.IsNil() {
-				structValuePtr = reflect.New(elemType)
-			} else {
-				return nil
-			}
-
-			err := mapRowToStruct(scanContext, groupKey, typesProcessed, structValuePtr.Interface(), structField)
-			if err != nil {
-				return err
-			}
-
-			if structValuePtr.Elem().Interface() != reflect.New(elemType).Elem().Interface() {
-				dest.Set(structValuePtr)
-			}
-
-		} else if elemType.Kind() == reflect.Slice {
-			var sliceValuePtr reflect.Value
-
-			if dest.IsNil() {
-				sliceValuePtr = reflect.New(elemType)
-			} else {
-				sliceValuePtr = dest
-			}
-
-			err := mapRowToSlice(scanContext, groupKey, typesProcessed, sliceValuePtr.Interface(), structField)
-			if err != nil {
-				return err
-			}
-
-			if sliceValuePtr.Elem().Len() > 0 {
-				dest.Set(sliceValuePtr)
-			}
-
+		if dest.IsNil() {
+			destPtrValue = reflect.New(dest.Type().Elem())
 		} else {
-			return errors.New("Unsuported field type: " + dest.Type().Name())
+			destPtrValue = dest
 		}
 	} else {
-		return errors.New("Unsuported field type: " + dest.Type().Name())
+		return false, errors.New("Internal error. ")
 	}
 
-	return nil
+	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
+
+	if err != nil {
+		return
+	}
+
+	if dest.Kind() == reflect.Ptr && dest.IsNil() && updated {
+		dest.Set(destPtrValue)
+	}
+
+	return
 }
 
-func getTableAlias(structField *reflect.StructField) string {
+func getRefTableNameFrom(structField *reflect.StructField) string {
 	if structField == nil {
 		return ""
 	}
 
-	re := regexp.MustCompile(`sqlbuilder:"(.*?)"`)
-	tagMatch := re.FindStringSubmatch(string(structField.Tag))
-	if tagMatch != nil && len(tagMatch) == 2 && tagMatch[1] != "" {
-		return tagMatch[1]
+	tagOverwriteName := structField.Tag.Get("sqlbuilder")
+
+	if tagOverwriteName != "" {
+		return tagOverwriteName
 	}
 
 	if !structField.Anonymous {
@@ -398,33 +377,20 @@ func getTableAlias(structField *reflect.StructField) string {
 	return snaker.CamelToSnake(elemType)
 }
 
-func mapRowToStruct(scanContext *scanContext, groupKey string, typesProcessed map[string]bool, destinationPtr interface{}, structField *reflect.StructField) error {
-	structType := reflect.TypeOf(destinationPtr).Elem()
-	structValue := reflect.ValueOf(destinationPtr).Elem()
+func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+	structType := structPtrValue.Type().Elem()
+	structValue := structPtrValue.Elem()
 
-	tableName := getTableAlias(structField)
+	tableName := getRefTableNameFrom(structField)
 
 	if tableName == "" {
 		tableName = snaker.CamelToSnake(structType.Name())
 	}
 
-	//fmt.Println("map -", tableName)
-
-	if typesProcessed[tableName] {
-		//fmt.Println("Already processed")
-		return nil
-	}
-
-	typesProcessed[tableName] = true
-
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
 
 		fieldValue := structValue.Field(i)
-		//fieldTypeName := field.Name
-		//fmt.Println("---------------", fieldTypeName,)
-		//spew.Dump(field.Type)
-
 		fieldName := field.Name
 
 		if scannerValue, ok := implementsScanner(fieldValue); ok {
@@ -434,38 +400,53 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, typesProcessed ma
 				continue
 			}
 
-			//spew.Dump(scannerValue.Interface())
-
-			if scannerValue.IsNil() {
-				initializePtrValue(scannerValue)
-			}
+			initializeValueIfNil(fieldValue)
 
 			scanner := scannerValue.Interface().(sql.Scanner)
 
-			err := scanner.Scan(cellValue)
+			err = scanner.Scan(cellValue)
 
 			if err != nil {
-				return err
+				return
 			}
-		} else if !isDbBaseType(field.Type) {
-			//var fieldValueInterface interface{}
-			err := mapRowToDestinationValue(scanContext, groupKey, typesProcessed, fieldValue, &field)
+			updated = true
+		} else if !isGoBaseType(field.Type) {
+			var changed bool
+			changed, err = mapRowToDestinationValue(scanContext, groupKey, fieldValue, &field)
 
 			if err != nil {
-				return err
+				return
+			}
+
+			if changed {
+				updated = true
 			}
 		} else {
 			cellValue := getCellValue(scanContext, tableName, fieldName)
-			//spew.Dump(cellValue)
+			//spew.Dump(rowElem)
 
 			//spew.Dump(rowColumnValue, fieldValue)
 			if cellValue != nil {
+				updated = true
+				initializeValueIfNil(fieldValue)
 				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
 			}
 		}
 	}
 
-	return nil
+	return
+}
+
+func initializeValueIfNil(value reflect.Value) {
+	if !value.IsValid() || !value.CanSet() {
+		return
+	}
+
+	if value.Type().Kind() == reflect.Slice && value.IsNil() {
+		value.Set(reflect.New(value.Type()).Elem())
+	} else if value.Kind() == reflect.Ptr && value.IsNil() {
+		value.Set(reflect.New(value.Type().Elem()))
+	}
 }
 
 func implementsScanner(value reflect.Value) (reflect.Value, bool) {
@@ -480,12 +461,6 @@ func implementsScanner(value reflect.Value) (reflect.Value, bool) {
 	return value, false
 }
 
-func initializePtrValue(value reflect.Value) {
-	if value.Kind() == reflect.Ptr {
-		value.Set(reflect.New(value.Type().Elem()))
-	}
-}
-
 func getCellValue(scanContext *scanContext, tableName, fieldName string) interface{} {
 	columnName := ""
 
@@ -495,28 +470,22 @@ func getCellValue(scanContext *scanContext, tableName, fieldName string) interfa
 		columnName = tableName + "." + snaker.CamelToSnake(fieldName)
 	}
 
-	//columnName := snaker.CamelToSnake(fieldName)
-
-	////fmt.Println(columnName)
 	index := getIndex(scanContext.columnNames, columnName)
 
 	if index < 0 {
 		return nil
 	}
 
-	return cellValue(scanContext.row, index)
+	return scanContext.rowElem(index)
 }
 
-func reflectValueToString(val interface{}) string {
-	//spew.Dump(val)
-
+func valueToString(val interface{}) string {
 	if val == nil {
 		return ""
 	}
 
 	value := reflect.ValueOf(val)
 
-	//if !value.IsValid()
 	var valueInterface interface{}
 	if value.Kind() == reflect.Ptr {
 		valueInterface = value.Elem().Interface()
@@ -536,10 +505,7 @@ var floatType = reflect.TypeOf(1.0)
 var stringType = reflect.TypeOf("str")
 var intType = reflect.TypeOf(1)
 
-func isDbBaseType(objType reflect.Type) bool {
-	//isBaseType := objType == timeType || floatType == objType || stringType == objType || intType == objType
-	//isPtrToBaseType := objType.Kind() == reflect.Ptr && (objType.Elem() == timeType || floatType == objType.Elem() ||
-	//		stringType == objType.Elem() || intType == objType.Elem())
+func isGoBaseType(objType reflect.Type) bool {
 	typeStr := objType.String()
 
 	switch typeStr {
@@ -548,7 +514,6 @@ func isDbBaseType(objType reflect.Type) bool {
 		return true
 	}
 
-	//return isBaseType || isPtrToBaseType
 	return false
 }
 
@@ -604,8 +569,6 @@ var nullBoolType = reflect.TypeOf(sql.NullBool{})
 var nullTimeType = reflect.TypeOf(NullTime{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
-	//spew.Dump(columnType)
-	//fmt.Println(columnType.DatabaseTypeName())
 	switch columnType.DatabaseTypeName() {
 	case "INT2":
 		return nullInt16Type
@@ -626,4 +589,68 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 	default:
 		panic("Unknown column database type " + columnType.DatabaseTypeName())
 	}
+}
+
+type scanContext struct {
+	rowNum      int
+	columnNames []string
+
+	row              []interface{}
+	uniqueObjectsMap map[string]int
+	groupKeyMap      map[string]string
+}
+
+func newScanContext(rows *sql.Rows) (*scanContext, error) {
+	columnNames, err := rows.Columns()
+
+	if err != nil {
+		return nil, err
+	}
+
+	columnTypes, err := rows.ColumnTypes()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &scanContext{
+		row:              createScanValue(columnTypes),
+		columnNames:      columnNames,
+		uniqueObjectsMap: make(map[string]int),
+		groupKeyMap:      make(map[string]string),
+	}, nil
+}
+
+func (s *scanContext) rowElem(index int) interface{} {
+
+	valuer, ok := s.row[index].(driver.Valuer)
+
+	if !ok {
+		panic("Scan value doesn't implement driver.Valuer")
+	}
+
+	value, err := valuer.Value()
+
+	if err != nil {
+		panic(err)
+	}
+
+	return value
+}
+
+func (s *scanContext) rowElemPtr(index int) reflect.Value {
+	rowElem := s.rowElem(index)
+	rowElemValue := reflect.ValueOf(rowElem)
+
+	if rowElemValue.Kind() == reflect.Ptr {
+		return rowElemValue
+	}
+
+	if rowElemValue.CanAddr() {
+		return rowElemValue.Addr()
+	}
+
+	newElem := reflect.New(rowElemValue.Type())
+	newElem.Elem().Set(rowElemValue)
+	return newElem
 }
