@@ -286,10 +286,10 @@ LIMIT 15;
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		WHERE(Film.Rating.EqString(string(model.MpaaRating_NC17))).
+		WHERE(Film.Rating.EqString(model.MpaaRating_NC17.String())).
 		LIMIT(15)
 
-	assertQuery(t, query, expectedSql, string(model.MpaaRating_NC17), int64(15))
+	assertQuery(t, query, expectedSql, model.MpaaRating_NC17.String(), int64(15))
 
 	err := query.Query(db, &filmsPerLanguage)
 

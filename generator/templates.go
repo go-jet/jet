@@ -96,4 +96,8 @@ func (e *{{camelize $.Name}}) Scan(value interface{}) error {
 	}
 }
 
+func (e {{camelize $.Name}}) String() string {
+	return string(e)
+}
+
 `
