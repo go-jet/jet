@@ -139,7 +139,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 				return
 			}
 		}
-		rowElemPtr := scanContext.rowElemPtr(index)
+		rowElemPtr := scanContext.rowElemValuePtr(index)
 
 		if !rowElemPtr.IsNil() {
 			updated = true
@@ -411,7 +411,17 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				return
 			}
 			updated = true
-		} else if !isGoBaseType(field.Type) {
+		} else if isGoBaseType(field.Type) {
+			cellValue := getCellValue(scanContext, tableName, fieldName)
+			//spew.Dump(rowElem)
+
+			//spew.Dump(rowColumnValue, fieldValue)
+			if cellValue != nil {
+				updated = true
+				initializeValueIfNil(fieldValue)
+				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+			}
+		} else {
 			var changed bool
 			changed, err = mapRowToDestinationValue(scanContext, groupKey, fieldValue, &field)
 
@@ -421,16 +431,6 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 
 			if changed {
 				updated = true
-			}
-		} else {
-			cellValue := getCellValue(scanContext, tableName, fieldName)
-			//spew.Dump(rowElem)
-
-			//spew.Dump(rowColumnValue, fieldValue)
-			if cellValue != nil {
-				updated = true
-				initializeValueIfNil(fieldValue)
-				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
 			}
 		}
 	}
@@ -518,22 +518,36 @@ func isGoBaseType(objType reflect.Type) bool {
 	return false
 }
 
-func setReflectValue(source, destination reflect.Value) {
+func setReflectValue(source, destination reflect.Value) error {
+	var sourceElem reflect.Value
 	if destination.Kind() == reflect.Ptr {
 		if source.Kind() == reflect.Ptr {
-			destination.Set(source)
+			sourceElem = source
 		} else {
-			newDestination := reflect.New(destination.Type().Elem())
-			newDestination.Elem().Set(source)
-			destination.Set(newDestination)
+			if source.CanAddr() {
+				sourceElem = source.Addr()
+			} else {
+				newDestination := reflect.New(destination.Type().Elem())
+				newDestination.Elem().Set(source)
+
+				sourceElem = newDestination
+			}
 		}
 	} else {
 		if source.Kind() == reflect.Ptr {
-			destination.Set(source.Elem())
+			sourceElem = source.Elem()
 		} else {
-			destination.Set(source)
+			sourceElem = source
 		}
 	}
+
+	if !sourceElem.Type().AssignableTo(destination.Type()) {
+		return errors.New("Can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
+	}
+
+	destination.Set(sourceElem)
+
+	return nil
 }
 
 func getIndex(list []string, text string) int {
@@ -639,7 +653,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 	return value
 }
 
-func (s *scanContext) rowElemPtr(index int) reflect.Value {
+func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
 	rowElem := s.rowElem(index)
 	rowElemValue := reflect.ValueOf(rowElem)
 

@@ -133,6 +133,24 @@ func TestScanToStruct(t *testing.T) {
 		assert.Error(t, err, "Unsupported dest type: Inventory ***model.Inventory")
 	})
 
+	t.Run("custom struct", func(t *testing.T) {
+		type Inventory struct {
+			InventoryID *int32 `sql:"unique"`
+			FilmID      int16
+			StoreID     *int16
+		}
+
+		dest := Inventory{}
+
+		err := query.Query(db, &dest)
+
+		assert.NilError(t, err)
+
+		assert.Equal(t, *dest.InventoryID, int32(1))
+		assert.Equal(t, dest.FilmID, int16(1))
+		assert.Equal(t, *dest.StoreID, int16(1))
+	})
+
 }
 
 func TestScanToNestedStruct(t *testing.T) {
