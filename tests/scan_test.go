@@ -350,14 +350,25 @@ func TestScanToSlice(t *testing.T) {
 			ORDER_BY(Inventory.InventoryID).
 			LIMIT(10)
 
-		dest := []model.Inventory{}
+		t.Run("slice od inventory", func(t *testing.T) {
+			dest := []model.Inventory{}
 
-		err := query.Query(db, &dest)
+			err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
-		assert.Equal(t, len(dest), 10)
-		assert.DeepEqual(t, dest[0], inventory1)
-		assert.DeepEqual(t, dest[1], inventory2)
+			assert.NilError(t, err)
+			assert.Equal(t, len(dest), 10)
+			assert.DeepEqual(t, dest[0], inventory1)
+			assert.DeepEqual(t, dest[1], inventory2)
+		})
+
+		t.Run("slice of ints", func(t *testing.T) {
+			var dest []int32
+
+			err := query.Query(db, &dest)
+			assert.NilError(t, err)
+			assert.DeepEqual(t, dest, []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+
+		})
 	})
 
 	t.Run("slice of complex structs", func(t *testing.T) {
@@ -367,6 +378,52 @@ func TestScanToSlice(t *testing.T) {
 			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns).
 			ORDER_BY(Inventory.InventoryID).
 			LIMIT(10)
+
+		t.Run("struct with slice of ints", func(t *testing.T) {
+			var dest struct {
+				model.Film
+				IDs []int32 `sqlbuilder:"inventory.inventory_id"`
+			}
+
+			err := query.Query(db, &dest)
+
+			assert.NilError(t, err)
+			assert.DeepEqual(t, dest.Film, film1)
+			assert.DeepEqual(t, dest.IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
+		})
+
+		t.Run("slice of structs with slice of ints", func(t *testing.T) {
+			var dest []struct {
+				model.Film
+				IDs []int32 `sqlbuilder:"inventory.inventory_id"`
+			}
+
+			err := query.Query(db, &dest)
+
+			assert.NilError(t, err)
+			assert.Equal(t, len(dest), 2)
+			assert.DeepEqual(t, dest[0].Film, film1)
+			assert.DeepEqual(t, dest[0].IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
+			assert.DeepEqual(t, dest[1].Film, film2)
+			assert.DeepEqual(t, dest[1].IDs, []int32{9, 10})
+		})
+
+		t.Run("slice of structs with slice of pointer to ints", func(t *testing.T) {
+			var dest []struct {
+				model.Film
+				IDs []*int32 `sqlbuilder:"inventory.inventory_id"`
+			}
+
+			err := query.Query(db, &dest)
+
+			assert.NilError(t, err)
+			assert.Equal(t, len(dest), 2)
+			assert.DeepEqual(t, dest[0].Film, film1)
+			assert.DeepEqual(t, dest[0].IDs, []*int32{int32Ptr(1), int32Ptr(2), int32Ptr(3), int32Ptr(4),
+				int32Ptr(5), int32Ptr(6), int32Ptr(7), int32Ptr(8)})
+			assert.DeepEqual(t, dest[1].Film, film2)
+			assert.DeepEqual(t, dest[1].IDs, []*int32{int32Ptr(9), int32Ptr(10)})
+		})
 
 		t.Run("complex struct 1", func(t *testing.T) {
 			dest := []struct {
@@ -644,6 +701,22 @@ var film1 = model.Film{
 	Fulltext:        "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 }
 
+var film2 = model.Film{
+	FilmID:          2,
+	Title:           "Ace Goldfinger",
+	Description:     stringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
+	ReleaseYear:     int32Ptr(2006),
+	LanguageID:      1,
+	RentalDuration:  3,
+	RentalRate:      4.99,
+	Length:          int16Ptr(48),
+	ReplacementCost: 12.99,
+	Rating:          &gRating,
+	LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+	SpecialFeatures: stringPtr(`{Trailers,"Deleted Scenes"}`),
+	Fulltext:        `'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14`,
+}
+
 var store1 = model.Store{
 	StoreID:        1,
 	ManagerStaffID: 1,
@@ -652,6 +725,7 @@ var store1 = model.Store{
 }
 
 var pgRating = model.MpaaRating_PG
+var gRating = model.MpaaRating_G
 
 var language1 = model.Language{
 	LanguageID: 1,

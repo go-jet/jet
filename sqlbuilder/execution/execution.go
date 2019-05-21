@@ -142,6 +142,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 		rowElemPtr := scanContext.rowElemPtr(index)
 
 		if !rowElemPtr.IsNil() {
+			updated = true
 			appendElemToSlice(slicePtrValue, rowElemPtr)
 		}
 
