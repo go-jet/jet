@@ -143,7 +143,10 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 
 		if !rowElemPtr.IsNil() {
 			updated = true
-			appendElemToSlice(slicePtrValue, rowElemPtr)
+			err = appendElemToSlice(slicePtrValue, rowElemPtr)
+			if err != nil {
+				return
+			}
 		}
 
 		return
@@ -178,7 +181,11 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 
 		if updated {
 			scanContext.uniqueObjectsMap[groupKey] = slicePtrValue.Elem().Len()
-			appendElemToSlice(slicePtrValue, destinationStructPtr)
+			err = appendElemToSlice(slicePtrValue, destinationStructPtr)
+
+			if err != nil {
+				return
+			}
 		}
 	}
 
@@ -263,7 +270,7 @@ func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
 	return elem.Addr()
 }
 
-func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) {
+func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) error {
 	if slicePtrValue.IsNil() {
 		panic("Slice is nil")
 	}
@@ -276,9 +283,13 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) {
 		newElemValue = objPtrValue.Elem()
 	}
 
-	if newElemValue.Type().AssignableTo(sliceElemType) {
-		sliceValue.Set(reflect.Append(sliceValue, newElemValue))
+	if !newElemValue.Type().AssignableTo(sliceElemType) {
+		return fmt.Errorf("Scan: can't append %s to %s slice ", newElemValue.Type().String(), sliceValue.Type().String())
 	}
+
+	sliceValue.Set(reflect.Append(sliceValue, newElemValue))
+
+	return nil
 }
 
 func newElemPtrValueForSlice(slicePtrValue reflect.Value) reflect.Value {
@@ -408,6 +419,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 			err = scanner.Scan(cellValue)
 
 			if err != nil {
+				err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
 				return
 			}
 			updated = true
@@ -419,7 +431,12 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 			if cellValue != nil {
 				updated = true
 				initializeValueIfNil(fieldValue)
-				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+				err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+
+				if err != nil {
+					err = fmt.Errorf("Scan: %s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
+					return
+				}
 			}
 		} else {
 			var changed bool
@@ -542,7 +559,7 @@ func setReflectValue(source, destination reflect.Value) error {
 	}
 
 	if !sourceElem.Type().AssignableTo(destination.Type()) {
-		return errors.New("Can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
+		return errors.New("can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
 	}
 
 	destination.Set(sourceElem)

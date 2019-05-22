@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"fmt"
+	"github.com/google/uuid"
 	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
@@ -66,7 +68,13 @@ func TestScanToValidDestination(t *testing.T) {
 	})
 
 	t.Run("pointer to slice of strings", func(t *testing.T) {
-		err := query.Query(db, &[]string{})
+		err := query.Query(db, &[]int32{})
+
+		assert.NilError(t, err)
+	})
+
+	t.Run("pointer to slice of strings", func(t *testing.T) {
+		err := query.Query(db, &[]*int32{})
 
 		assert.NilError(t, err)
 	})
@@ -149,6 +157,36 @@ func TestScanToStruct(t *testing.T) {
 		assert.Equal(t, *dest.InventoryID, int32(1))
 		assert.Equal(t, dest.FilmID, int16(1))
 		assert.Equal(t, *dest.StoreID, int16(1))
+	})
+
+	t.Run("type mismatch base type", func(t *testing.T) {
+		type Inventory struct {
+			InventoryID int
+			FilmID      string
+		}
+
+		dest := Inventory{}
+
+		err := query.Query(db, &dest)
+
+		assert.Error(t, err, `Scan: can't set int32 to int, at struct field: InventoryID int of type tests.Inventory. `)
+
+		fmt.Println(err)
+	})
+
+	t.Run("type mismatch scanner type", func(t *testing.T) {
+		type Inventory struct {
+			InventoryID uuid.UUID
+			FilmID      string
+		}
+
+		dest := Inventory{}
+
+		err := query.Query(db, &dest)
+
+		assert.Error(t, err, `Scan: unable to scan type int32 into UUID, at struct field: InventoryID uuid.UUID of type tests.Inventory. `)
+
+		fmt.Println(err)
 	})
 
 }
@@ -386,6 +424,13 @@ func TestScanToSlice(t *testing.T) {
 			assert.NilError(t, err)
 			assert.DeepEqual(t, dest, []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
 
+		})
+
+		t.Run("slice type mismatch ", func(t *testing.T) {
+			var dest []int
+
+			err := query.Query(db, &dest)
+			assert.Error(t, err, `Scan: can't append int32 to []int slice `)
 		})
 	})
 
