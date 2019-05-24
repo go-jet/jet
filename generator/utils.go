@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+	"time"
 )
 
 func saveGoFile(dirPath, fileName string, text []byte) error {
@@ -49,9 +50,12 @@ func ensureDirPath(dirPath string) error {
 
 func generateTemplate(templateText string, templateData interface{}) ([]byte, error) {
 
-	t, err := template.New("SqlBuilderTableTemplate").Funcs(template.FuncMap{
+	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"camelize": func(txt string) string {
 			return snaker.SnakeToCamel(strings.Replace(txt, "-", "_", -1))
+		},
+		"now": func() string {
+			return time.Now().Format(time.RFC850)
 		},
 	}).Parse(templateText)
 

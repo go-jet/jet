@@ -1,4 +1,4 @@
-package metadata
+package postgres_metadata
 
 import (
 	"database/sql"
@@ -11,21 +11,6 @@ type ColumnInfo struct {
 	IsNullable bool
 	DataType   string
 	EnumName   string
-	TableInfo  *TableInfo
-}
-
-func (c ColumnInfo) IsUnique() bool {
-	for _, uniqueColumn := range c.TableInfo.PrimaryKeys {
-		if uniqueColumn == c.Name {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (c ColumnInfo) ToGoVarName() string {
-	return snaker.SnakeToCamel(c.Name) + "Column"
 }
 
 func (c ColumnInfo) ToSqlBuilderColumnType() string {
@@ -50,15 +35,6 @@ func (c ColumnInfo) ToSqlBuilderColumnType() string {
 		fmt.Println("Unknownl type: " + c.DataType + ", using string column instead.")
 		return "StringColumn"
 	}
-}
-
-func (c ColumnInfo) ToGoType() string {
-	typeStr := c.GoBaseType()
-	if c.IsNullable {
-		return "*" + typeStr
-	}
-
-	return typeStr
 }
 
 func (c ColumnInfo) GoBaseType() string {
@@ -93,26 +69,32 @@ func (c ColumnInfo) GoBaseType() string {
 	}
 }
 
-func (c ColumnInfo) ToGoDMFieldName() string {
-	return snaker.SnakeToCamel(c.Name)
+func (c ColumnInfo) ToGoType() string {
+	typeStr := c.GoBaseType()
+	if c.IsNullable {
+		return "*" + typeStr
+	}
 
+	return typeStr
 }
 
 func (c ColumnInfo) ToGoFieldName() string {
 	return snaker.SnakeToCamel(c.Name)
 }
 
-func fetchColumnInfos(db *sql.DB, tableInfo *TableInfo) ([]ColumnInfo, error) {
+func (c ColumnInfo) ToGoVarName() string {
+	return snaker.SnakeToCamel(c.Name) + "Column"
+}
+
+func getColumnInfos(db *sql.DB, dbName, schemaName, tableName string) ([]ColumnInfo, error) {
 
 	query := `
 SELECT column_name, is_nullable, data_type, udt_name
 FROM information_schema.columns
-where table_schema = $1 and table_name = $2
+where table_catalog = $1 and table_schema = $2 and table_name = $3
 order by ordinal_position;`
 
-	//fmt.Println(query)
-
-	rows, err := db.Query(query, tableInfo.DatabaseInfo.SchemaName, &tableInfo.Name)
+	rows, err := db.Query(query, dbName, schemaName, tableName)
 
 	if err != nil {
 		return nil, err
@@ -131,8 +113,6 @@ order by ordinal_position;`
 		if err != nil {
 			return nil, err
 		}
-
-		columnInfo.TableInfo = tableInfo
 
 		ret = append(ret, columnInfo)
 	}

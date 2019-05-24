@@ -1,20 +1,21 @@
-package metadata
+package postgres_metadata
 
 import (
 	"database/sql"
 	"fmt"
+	"github.com/sub0zero/go-sqlbuilder/generator/metadata"
 )
 
 type EnumInfo struct {
-	Name   string
+	name   string
 	Values []string
 }
 
-func (e *EnumInfo) goValueName(index int) {
-	return
+func (e EnumInfo) Name() string {
+	return e.name
 }
 
-func fetchEnumInfos(db *sql.DB, databaseInfo *DatabaseInfo) ([]EnumInfo, error) {
+func getEnumInfos(db *sql.DB, schemaName string) ([]metadata.MetaData, error) {
 	query := `
 SELECT t.typname,  
        e.enumlabel
@@ -24,9 +25,7 @@ FROM pg_catalog.pg_type t
 WHERE n.nspname = $1
 ORDER BY n.nspname, t.typname, e.enumsortorder;`
 
-	//fmt.Println(query, schemaName)
-
-	rows, err := db.Query(query, &databaseInfo.SchemaName)
+	rows, err := db.Query(query, schemaName)
 
 	if err != nil {
 		return nil, err
@@ -55,7 +54,7 @@ ORDER BY n.nspname, t.typname, e.enumsortorder;`
 		return nil, err
 	}
 
-	ret := []EnumInfo{}
+	ret := []metadata.MetaData{}
 
 	for enumName, enumValues := range enumsInfosMap {
 		ret = append(ret, EnumInfo{

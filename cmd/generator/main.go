@@ -7,25 +7,52 @@ import (
 	"os"
 )
 
-var genDirPath string
-var dbConnectionString string
-var dbName string
-var schemaName string
+var (
+	host       string
+	port       string
+	user       string
+	password   string
+	sslmode    string
+	params     string
+	dbName     string
+	schemaName string
+
+	destDir string
+)
 
 func init() {
-	flag.StringVar(&genDirPath, "path", "", "Destination for generated files.")
-	flag.StringVar(&dbConnectionString, "db", "", "Connection string to database server")
-	flag.StringVar(&dbName, "dbName", "", "Name of the database")
+	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
+	flag.StringVar(&port, "port", "", "Database port")
+	flag.StringVar(&user, "user", "", "Database user")
+	flag.StringVar(&password, "password", "", "The user’s password")
+	flag.StringVar(&sslmode, "sslmode", "disable", "Whether or not to use SSL")
+	flag.StringVar(&params, "params", "", "Additional connection string parameters.")
+
+	flag.StringVar(&dbName, "dbname", "", "name of the database")
 	flag.StringVar(&schemaName, "schema", "public", "Database schema name.")
+
+	flag.StringVar(&destDir, "path", "", "Destination dir for generated files.")
 
 	flag.Parse()
 }
 
 func main() {
 
-	fmt.Println(genDirPath, dbConnectionString, dbName, schemaName)
+	genData := generator.GeneratorData{
+		Host:     host,
+		Port:     port,
+		User:     user,
+		Password: password,
+		SslMode:  sslmode,
+		Params:   params,
 
-	err := generator.Generate(genDirPath, dbConnectionString, dbName, schemaName)
+		DbName:     dbName,
+		SchemaName: schemaName,
+	}
+
+	fmt.Println(destDir, genData)
+
+	err := generator.Generate(destDir, genData)
 
 	if err != nil {
 		fmt.Println(err.Error())

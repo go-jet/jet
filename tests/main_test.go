@@ -5,20 +5,19 @@ import (
 	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/pkg/profile"
-	"github.com/sub0zero/go-sqlbuilder/generator"
+	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	"gotest.tools/assert"
 	"os"
+	"reflect"
 	"testing"
 )
 
 const (
-	folderPath = ".test_files/"
-	host       = "localhost"
-	port       = 5432
-	user       = "postgres"
-	password   = "postgres"
-	dbname     = "dvd_rental"
-	schemaName = "dvds"
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "postgres"
+	dbname   = "dvd_rental"
 )
 
 var connectString = fmt.Sprintf("host=%s port=%d user=%s "+"password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
@@ -26,8 +25,8 @@ var db *sql.DB
 
 //var tx *sql.Tx
 
-//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema dvds -path .test_files
-//go:generate generator -db "host=localhost port=5432 user=postgres password=postgres dbname=dvd_rental sslmode=disable" -dbName dvd_rental -schema test_sample -path .test_files
+//go:generate generator -host=localhost -port=5432 -user=postgres -password=postgres -dbname=dvd_rental -schema dvds -path .test_files
+//go:generate generator -host=localhost -port=5432 -user=postgres -password=postgres -dbname=dvd_rental -sslmode=disable -schema test_sample -path .test_files
 
 func TestMain(m *testing.M) {
 	fmt.Println("Begin")
@@ -110,31 +109,32 @@ VALUES
 
 }
 
-func queryAll(t *testing.T, query string, args []interface{}) {
-	rows, err := db.Query(query, args...)
-
-	assert.NilError(t, err)
-
-	defer rows.Close()
-
-	for rows.Next() {
-		//err := rows.Scan(scanContext.row...)
-		//
-		//assert.NilError(t, err)
-	}
-
-	err = rows.Err()
-
-	assert.NilError(t, err)
-}
-
 func TestGenerateModel(t *testing.T) {
 
-	err := generator.Generate(folderPath, connectString, dbname, schemaName)
+	actor := model.Actor{}
 
-	assert.NilError(t, err)
+	assert.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
+	actorIDField, ok := reflect.TypeOf(actor).FieldByName("ActorID")
+	assert.Assert(t, ok)
+	assert.Equal(t, actorIDField.Tag.Get("sql"), "unique")
+	assert.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
+	assert.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
+	assert.Equal(t, reflect.TypeOf(actor.LastUpdate).String(), "time.Time")
 
-	//err = generator.Generate(folderPath, connectString, dbname, "sport")
-	//
-	//assert.NilError(t, err)
+	filmActor := model.FilmActor{}
+
+	assert.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
+	filmIDField, ok := reflect.TypeOf(filmActor).FieldByName("FilmID")
+	assert.Assert(t, ok)
+	assert.Equal(t, filmIDField.Tag.Get("sql"), "unique")
+
+	assert.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
+	actorIDField, ok = reflect.TypeOf(filmActor).FieldByName("ActorID")
+	assert.Assert(t, ok)
+	assert.Equal(t, filmIDField.Tag.Get("sql"), "unique")
+
+	staff := model.Staff{}
+
+	assert.Equal(t, reflect.TypeOf(staff.Email).String(), "*string")
+	assert.Equal(t, reflect.TypeOf(staff.Picture).String(), "*[]uint8")
 }
