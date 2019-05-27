@@ -3,7 +3,7 @@ package sqlbuilder
 import (
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
 type selectStatement interface {
@@ -259,11 +259,11 @@ func (s *selectStatementImpl) FOR_UPDATE() selectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) Query(db types.Db, destination interface{}) error {
+func (s *selectStatementImpl) Query(db execution.Db, destination interface{}) error {
 	return Query(s, db, destination)
 }
 
-func (s *selectStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+func (s *selectStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
 	return Execute(s, db)
 }
 

@@ -2,7 +2,7 @@ package sqlbuilder
 
 import (
 	"database/sql"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 	"strconv"
 	"strings"
 )
@@ -13,8 +13,8 @@ type Statement interface {
 
 	DebugSql() (query string, err error)
 
-	Query(db types.Db, destination interface{}) error
-	Execute(db types.Db) (sql.Result, error)
+	Query(db execution.Db, destination interface{}) error
+	Execute(db execution.Db) (sql.Result, error)
 }
 
 func DebugSql(statement Statement) (string, error) {

@@ -3,7 +3,7 @@ package sqlbuilder
 import (
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
 type deleteStatement interface {
@@ -71,10 +71,10 @@ func (d *deleteStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(d)
 }
 
-func (d *deleteStatementImpl) Query(db types.Db, destination interface{}) error {
+func (d *deleteStatementImpl) Query(db execution.Db, destination interface{}) error {
 	return Query(d, db, destination)
 }
 
-func (d *deleteStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+func (d *deleteStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
 	return Execute(d, db)
 }

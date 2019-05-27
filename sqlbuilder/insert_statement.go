@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/serenize/snaker"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 	"reflect"
 	"strings"
 )
@@ -39,11 +39,11 @@ type insertStatementImpl struct {
 	errors []string
 }
 
-func (s *insertStatementImpl) Query(db types.Db, destination interface{}) error {
+func (s *insertStatementImpl) Query(db execution.Db, destination interface{}) error {
 	return Query(s, db, destination)
 }
 
-func (u *insertStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+func (u *insertStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
 	return Execute(u, db)
 }
 

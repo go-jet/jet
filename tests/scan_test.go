@@ -185,8 +185,6 @@ func TestScanToStruct(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		assert.Error(t, err, `Scan: unable to scan type int32 into UUID, at struct field: InventoryID uuid.UUID of type tests.Inventory. `)
-
-		fmt.Println(err)
 	})
 
 }
@@ -681,7 +679,7 @@ var address256 = model.Address{
 	CityID:     312,
 	PostalCode: stringPtr("3433"),
 	Phone:      "246810237916",
-	LastUpdate: *timeWithoutTimeZone("2006-02-15 09:45:30", 0),
+	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:45:30", 0),
 }
 
 var addres517 = model.Address{
@@ -692,7 +690,7 @@ var addres517 = model.Address{
 	CityID:     312,
 	PostalCode: stringPtr("35653"),
 	Phone:      "879347453467",
-	LastUpdate: *timeWithoutTimeZone("2006-02-15 09:45:30", 0),
+	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:45:30", 0),
 }
 
 var customer256 = model.Customer{
@@ -703,8 +701,8 @@ var customer256 = model.Customer{
 	Email:      stringPtr("mattie.hoffman@sakilacustomer.org"),
 	AddressID:  256,
 	Activebool: true,
-	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
-	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 0),
+	CreateDate: *timestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: timestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
 	Active:     int32Ptr(1),
 }
 
@@ -716,36 +714,36 @@ var customer512 = model.Customer{
 	Email:      stringPtr("cecil.vines@sakilacustomer.org"),
 	AddressID:  517,
 	Activebool: true,
-	CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
-	LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 0),
+	CreateDate: *timestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: timestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
 	Active:     int32Ptr(1),
 }
 
 var countryUk = model.Country{
 	CountryID:  102,
 	Country:    "United Kingdom",
-	LastUpdate: *timeWithoutTimeZone("2006-02-15 09:44:00", 0),
+	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:44:00", 0),
 }
 
 var cityLondon = model.City{
 	CityID:     312,
 	City:       "London",
 	CountryID:  102,
-	LastUpdate: *timeWithoutTimeZone("2006-02-15 09:45:25", 0),
+	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:45:25", 0),
 }
 
 var inventory1 = model.Inventory{
 	InventoryID: 1,
 	FilmID:      1,
 	StoreID:     1,
-	LastUpdate:  *timeWithoutTimeZone("2006-02-15 10:09:17", 0),
+	LastUpdate:  *timestampWithoutTimeZone("2006-02-15 10:09:17", 0),
 }
 
 var inventory2 = model.Inventory{
 	InventoryID: 2,
 	FilmID:      1,
 	StoreID:     1,
-	LastUpdate:  *timeWithoutTimeZone("2006-02-15 10:09:17", 0),
+	LastUpdate:  *timestampWithoutTimeZone("2006-02-15 10:09:17", 0),
 }
 
 var film1 = model.Film{
@@ -759,7 +757,7 @@ var film1 = model.Film{
 	Length:          int16Ptr(86),
 	ReplacementCost: 20.99,
 	Rating:          &pgRating,
-	LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+	LastUpdate:      *timestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 	SpecialFeatures: stringPtr("{\"Deleted Scenes\",\"Behind the Scenes\"}"),
 	Fulltext:        "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 }
@@ -775,7 +773,7 @@ var film2 = model.Film{
 	Length:          int16Ptr(48),
 	ReplacementCost: 12.99,
 	Rating:          &gRating,
-	LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+	LastUpdate:      *timestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 	SpecialFeatures: stringPtr(`{Trailers,"Deleted Scenes"}`),
 	Fulltext:        `'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14`,
 }
@@ -784,7 +782,7 @@ var store1 = model.Store{
 	StoreID:        1,
 	ManagerStaffID: 1,
 	AddressID:      1,
-	LastUpdate:     *timeWithoutTimeZone("2006-02-15 09:57:12", 0),
+	LastUpdate:     *timestampWithoutTimeZone("2006-02-15 09:57:12", 0),
 }
 
 var pgRating = model.MpaaRating_PG
@@ -793,5 +791,5 @@ var gRating = model.MpaaRating_G
 var language1 = model.Language{
 	LanguageID: 1,
 	Name:       "English             ",
-	LastUpdate: *timeWithoutTimeZone("2006-02-15 10:02:19", 0),
+	LastUpdate: *timestampWithoutTimeZone("2006-02-15 10:02:19", 0),
 }

@@ -5,6 +5,27 @@ import (
 	"time"
 )
 
+// NullByteArray
+type NullByteArray struct {
+	ByteArray []byte
+	Valid     bool // Valid is true if Time is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (nb *NullByteArray) Scan(value interface{}) error {
+	nb.ByteArray, nb.Valid = value.([]byte)
+	return nil
+}
+
+// Value implements the driver Valuer interface.
+func (nb NullByteArray) Value() (driver.Value, error) {
+	if !nb.Valid {
+		return nil, nil
+	}
+	return nb.ByteArray, nil
+}
+
+//NullTime
 type NullTime struct {
 	Time  time.Time
 	Valid bool // Valid is true if Time is not NULL

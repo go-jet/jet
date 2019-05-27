@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/serenize/snaker"
+	"strings"
 )
 
 type ColumnInfo struct {
@@ -13,26 +14,21 @@ type ColumnInfo struct {
 	EnumName   string
 }
 
-func (c ColumnInfo) ToSqlBuilderColumnType() string {
+func (c ColumnInfo) SqlBuilderColumnType() string {
 	switch c.DataType {
 	case "boolean":
 		return "BoolColumn"
-	case "smallint":
+	case "smallint", "integer", "bigint":
 		return "IntegerColumn"
-	case "integer":
-		return "IntegerColumn"
-	case "bigint":
-		return "IntegerColumn"
-	case "date", "timestamp without time zone", "timestamp with time zone":
+	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone":
 		return "TimeColumn"
-	case "text", "character", "character varying", "bytea", "uuid":
+	case "USER-DEFINED", "text", "character", "character varying", "bytea", "uuid",
+		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY":
 		return "StringColumn"
-	case "real":
-		return "NumericColumn"
-	case "numeric", "double precision":
+	case "real", "numeric", "double precision":
 		return "NumericColumn"
 	default:
-		fmt.Println("Unknownl type: " + c.DataType + ", using string column instead.")
+		fmt.Println("Unknown sql type: " + c.DataType + ", using string column instead for sql builder.")
 		return "StringColumn"
 	}
 }
@@ -49,11 +45,12 @@ func (c ColumnInfo) GoBaseType() string {
 		return "int32"
 	case "bigint":
 		return "int64"
-	case "date", "timestamp without time zone", "timestamp with time zone":
+	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone":
 		return "time.Time"
 	case "bytea":
 		return "[]byte"
-	case "text", "character", "character varying":
+	case "text", "character", "character varying", "tsvector", "bit", "bit varying", "money", "json", "jsonb",
+		"xml", "point", "interval", "line", "ARRAY":
 		return "string"
 	case "real":
 		return "float32"
@@ -61,29 +58,19 @@ func (c ColumnInfo) GoBaseType() string {
 		return "float64"
 	case "uuid":
 		return "uuid.UUID"
-	case "json", "jsonb":
-		return "types.JSONText"
 	default:
-		fmt.Println("Unknown go map type: " + c.DataType + ", " + c.EnumName + ", using string instead.")
+		fmt.Println("Unknown sql type: " + c.DataType + ", " + c.EnumName + ", using string instead for model type.")
 		return "string"
 	}
 }
 
-func (c ColumnInfo) ToGoType() string {
+func (c ColumnInfo) GoModelType() string {
 	typeStr := c.GoBaseType()
-	if c.IsNullable {
+	if c.IsNullable && !strings.HasPrefix(typeStr, "[]") {
 		return "*" + typeStr
 	}
 
 	return typeStr
-}
-
-func (c ColumnInfo) ToGoFieldName() string {
-	return snaker.SnakeToCamel(c.Name)
-}
-
-func (c ColumnInfo) ToGoVarName() string {
-	return snaker.SnakeToCamel(c.Name) + "Column"
 }
 
 func getColumnInfos(db *sql.DB, dbName, schemaName, tableName string) ([]ColumnInfo, error) {

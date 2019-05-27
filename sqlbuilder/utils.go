@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
-	"github.com/sub0zero/go-sqlbuilder/types"
 )
 
 func serializeOrderByClauseList(statement statementType, orderByClauses []orderByClause, out *queryData) error {
@@ -114,7 +113,7 @@ func serializeColumnList(statement statementType, columns []column, out *queryDa
 	return nil
 }
 
-func Query(statement Statement, db types.Db, destination interface{}) error {
+func Query(statement Statement, db execution.Db, destination interface{}) error {
 	query, args, err := statement.Sql()
 
 	if err != nil {
@@ -124,7 +123,7 @@ func Query(statement Statement, db types.Db, destination interface{}) error {
 	return execution.Query(db, query, args, destination)
 }
 
-func Execute(statement Statement, db types.Db) (res sql.Result, err error) {
+func Execute(statement Statement, db execution.Db) (res sql.Result, err error) {
 	query, args, err := statement.Sql()
 
 	if err != nil {

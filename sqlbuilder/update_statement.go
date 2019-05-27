@@ -3,7 +3,7 @@ package sqlbuilder
 import (
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
 type updateStatement interface {
@@ -135,10 +135,10 @@ func (u *updateStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(u)
 }
 
-func (u *updateStatementImpl) Query(db types.Db, destination interface{}) error {
+func (u *updateStatementImpl) Query(db execution.Db, destination interface{}) error {
 	return Query(u, db, destination)
 }
 
-func (u *updateStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+func (u *updateStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
 	return Execute(u, db)
 }

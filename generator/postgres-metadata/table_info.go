@@ -3,7 +3,6 @@ package postgres_metadata
 import (
 	"database/sql"
 	"github.com/serenize/snaker"
-	"strings"
 )
 
 type TableInfo struct {
@@ -32,8 +31,6 @@ func (t TableInfo) GetImports() []string {
 			imports["time.Time"] = "time"
 		case "uuid.UUID":
 			imports["uuid.UUID"] = "github.com/google/uuid"
-		case "types.JSONText":
-			imports["types.JSONText"] = "github.com/sub0zero/go-sqlbuilder/types"
 		}
 	}
 
@@ -46,24 +43,8 @@ func (t TableInfo) GetImports() []string {
 	return ret
 }
 
-func (t TableInfo) ToGoModelStructName() string {
-	return snaker.SnakeToCamel(t.name)
-}
-
-func (t TableInfo) ToGoVarName() string {
-	return snaker.SnakeToCamel(t.name)
-}
-
-func (t TableInfo) ToGoStructName() string {
+func (t TableInfo) GoStructName() string {
 	return snaker.SnakeToCamel(t.name) + "Table"
-}
-
-func (t TableInfo) ToGoColumnFieldList(sep string) string {
-	columnNames := []string{}
-	for _, columnInfo := range t.Columns {
-		columnNames = append(columnNames, columnInfo.ToGoVarName())
-	}
-	return strings.Join(columnNames, sep)
 }
 
 func GetTableInfo(db *sql.DB, dbName, schemaName, tableName string) (tableInfo TableInfo, err error) {

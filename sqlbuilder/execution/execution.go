@@ -6,14 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"github.com/serenize/snaker"
-	"github.com/sub0zero/go-sqlbuilder/types"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func Query(db types.Db, query string, args []interface{}, destinationPtr interface{}) error {
+func Query(db Db, query string, args []interface{}, destinationPtr interface{}) error {
 
 	if destinationPtr == nil {
 		return errors.New("Destination is nil. ")
@@ -54,7 +53,7 @@ func Query(db types.Db, query string, args []interface{}, destinationPtr interfa
 	}
 }
 
-func queryToSlice(db types.Db, query string, args []interface{}, slicePtr interface{}) error {
+func queryToSlice(db Db, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
 		return errors.New("db is nil")
 	}
@@ -527,8 +526,8 @@ func isGoBaseType(objType reflect.Type) bool {
 	typeStr := objType.String()
 
 	switch typeStr {
-	case "string", "int", "int32", "int16", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
-		"*string", "*int", "*int32", "*int16", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
+	case "string", "int", "int16", "int32", "int64", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
+		"*string", "*int", "*int16", "*int32", "*int64", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
 		return true
 	}
 
@@ -544,10 +543,10 @@ func setReflectValue(source, destination reflect.Value) error {
 			if source.CanAddr() {
 				sourceElem = source.Addr()
 			} else {
-				newDestination := reflect.New(destination.Type().Elem())
-				newDestination.Elem().Set(source)
+				sourceCopy := reflect.New(source.Type())
+				sourceCopy.Elem().Set(source)
 
-				sourceElem = newDestination
+				sourceElem = sourceCopy
 			}
 		}
 	} else {
@@ -599,6 +598,7 @@ var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
 var nullStringType = reflect.TypeOf(sql.NullString{})
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
 var nullTimeType = reflect.TypeOf(NullTime{})
+var nullByteArrayType = reflect.TypeOf(NullByteArray{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
 	switch columnType.DatabaseTypeName() {
@@ -608,7 +608,7 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullInt32Type
 	case "INT8":
 		return nullInt64Type
-	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "BYTEA", "UUID", "JSON", "JSONB":
+	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "UUID", "JSON", "JSONB", "INTERVAL", "POINT", "BIT", "VARBIT", "XML":
 		return nullStringType
 	case "FLOAT4":
 		return nullFloatType
@@ -616,10 +616,13 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullFloat64Type
 	case "BOOL":
 		return nullBoolType
-	case "DATE", "TIMESTAMP", "TIMESTAMPTZ":
+	case "BYTEA":
+		return nullByteArrayType
+	case "DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
 		return nullTimeType
 	default:
-		panic("Unknown column database type " + columnType.DatabaseTypeName())
+		fmt.Println("Unknown column database type " + columnType.DatabaseTypeName() + " using string as default.")
+		return nullStringType
 	}
 }
 

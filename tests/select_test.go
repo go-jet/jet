@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
@@ -36,7 +37,7 @@ WHERE actor.actor_id = 1;
 		ActorID:    1,
 		FirstName:  "Penelope",
 		LastName:   "Guiness",
-		LastUpdate: *timeWithoutTimeZone("2013-05-26 14:47:57.62", 2),
+		LastUpdate: *timestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 	}
 
 	assert.DeepEqual(t, actor, expectedActor)
@@ -834,7 +835,7 @@ ORDER BY film.film_id ASC;
 		ReplacementCost: 12.99,
 		Rating:          &gRating,
 		RentalDuration:  3,
-		LastUpdate:      *timeWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+		LastUpdate:      *timestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 		SpecialFeatures: stringPtr("{Trailers,\"Deleted Scenes\"}"),
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
@@ -936,12 +937,22 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 		AddressID:  323,
 		Email:      stringPtr("brian.wyman@sakilacustomer.org"),
 		Activebool: true,
-		CreateDate: *timeWithoutTimeZone("2006-02-14 00:00:00", 0),
-		LastUpdate: timeWithoutTimeZone("2013-05-26 14:49:45.738", 3),
+		CreateDate: *timestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+		LastUpdate: timestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
 		Active:     int32Ptr(1),
 	})
 
 	assert.Equal(t, customersWithAmounts[0].AmountSum, 27.93)
+}
+
+func TestSelectStaff(t *testing.T) {
+	staffs := []model.Staff{}
+
+	err := Staff.SELECT(Staff.AllColumns).Query(db, &staffs)
+
+	assert.NilError(t, err)
+
+	spew.Dump(staffs)
 }
 
 func TestSelectTimeColumns(t *testing.T) {
@@ -979,7 +990,7 @@ ORDER BY payment.payment_date ASC;
 		StaffID:     2,
 		RentalID:    1158,
 		Amount:      2.99,
-		PaymentDate: *timeWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
+		PaymentDate: *timestampWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
 	})
 }
 

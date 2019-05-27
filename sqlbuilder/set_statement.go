@@ -3,7 +3,7 @@ package sqlbuilder
 import (
 	"database/sql"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
 type setStatement interface {
@@ -197,10 +197,10 @@ func (s *setStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(s)
 }
 
-func (s *setStatementImpl) Query(db types.Db, destination interface{}) error {
+func (s *setStatementImpl) Query(db execution.Db, destination interface{}) error {
 	return Query(s, db, destination)
 }
 
-func (u *setStatementImpl) Execute(db types.Db) (res sql.Result, err error) {
+func (u *setStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
 	return Execute(u, db)
 }

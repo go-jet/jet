@@ -3,7 +3,7 @@ package sqlbuilder
 import (
 	"database/sql"
 	"github.com/pkg/errors"
-	"github.com/sub0zero/go-sqlbuilder/types"
+	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
 type lockMode string
@@ -92,10 +92,10 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 	return
 }
 
-func (l *lockStatementImpl) Query(db types.Db, destination interface{}) error {
+func (l *lockStatementImpl) Query(db execution.Db, destination interface{}) error {
 	return Query(l, db, destination)
 }
 
-func (l *lockStatementImpl) Execute(db types.Db) (sql.Result, error) {
+func (l *lockStatementImpl) Execute(db execution.Db) (sql.Result, error) {
 	return Execute(l, db)
 }

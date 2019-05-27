@@ -13,47 +13,57 @@ var autoGenWarningTemplate = `
 
 `
 
-var sqlBuilderTableTemplate = `package table
+var sqlBuilderTableTemplate = ` 
+{{define "column-list" -}}
+	{{- range $i, $c := . }}
+		{{- if gt $i 0 }}, {{end}}{{camelize $c.Name}}Column
+	{{- end}}
+{{- end}}
+
+{{define "nullable" -}}
+ 	{{- if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}}
+{{- end}}
+
+package table
 
 import (
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 )
 
-type {{.ToGoStructName}} struct {
+type {{.GoStructName}} struct {
 	sqlbuilder.Table
 	
 	//Columns
 {{- range .Columns}}
-	{{.ToGoFieldName}} *sqlbuilder.{{.ToSqlBuilderColumnType}}
+	{{camelize .Name}} *sqlbuilder.{{.SqlBuilderColumnType}}
 {{- end}}
 
 	AllColumns sqlbuilder.ColumnList
 }
 
-var {{.ToGoVarName}} = new{{.ToGoStructName}}()
+var {{camelize .Name}} = new{{.GoStructName}}()
 
-func new{{.ToGoStructName}}() *{{.ToGoStructName}} {
+func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{.ToGoVarName}} = sqlbuilder.New{{.ToSqlBuilderColumnType}}("{{.Name}}", {{if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}})
+		{{camelize .Name}}Column = sqlbuilder.New{{.SqlBuilderColumnType}}("{{.Name}}", {{template "nullable" .}})
 	{{- end}}
 	)
 
-	return &{{.ToGoStructName}}{
-		Table: *sqlbuilder.NewTable("{{.SchemaName}}", "{{.Name}}", {{.ToGoColumnFieldList ", "}}),
+	return &{{.GoStructName}}{
+		Table: *sqlbuilder.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
 
 		//Columns
 {{- range .Columns}}
-		{{.ToGoFieldName}}: {{.ToGoVarName}},
+		{{camelize .Name}}: {{camelize .Name}}Column,
 {{- end}}
 
-		AllColumns: sqlbuilder.ColumnList{ {{.ToGoColumnFieldList ", "}} },
+		AllColumns: sqlbuilder.ColumnList{ {{template "column-list" .Columns}} },
 	}
 }
 
-
-func (a *{{.ToGoStructName}}) AS(alias string) *{{.ToGoStructName}} {
-	aliasTable := new{{.ToGoStructName}}()
+func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
+	aliasTable := new{{.GoStructName}}()
 
 	aliasTable.Table.SetAlias(alias)
 
@@ -73,9 +83,9 @@ import (
 {{end}}
 
 
-type {{.ToGoModelStructName}} struct {
+type {{camelize .Name}} struct {
 {{- range .Columns}}
-	{{.ToGoFieldName}} {{.ToGoType}} {{if $.IsUnique .Name}}` + "`sql:\"unique\"`" + ` {{end}}
+	{{camelize .Name}} {{.GoModelType}} {{if $.IsUnique .Name}}` + "`sql:\"unique\"`" + ` {{end}}
 {{- end}}
 }
 `
