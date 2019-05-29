@@ -155,7 +155,7 @@ func (s *ExprSuite) TestDivExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestBinaryExprNilLHS(c *gc.C) {
-	expr := Gt(nil, table1Col1)
+	expr := GT(nil, table1Col1)
 
 	buf := &bytes.Buffer{}
 
@@ -164,7 +164,7 @@ func (s *ExprSuite) TestBinaryExprNilLHS(c *gc.C) {
 }
 
 func (s *ExprSuite) TestNegateExpr(c *gc.C) {
-	expr := Not(EqL(table1Col1, 123))
+	expr := NOT(EqL(table1Col1, 123))
 
 	buf := &bytes.Buffer{}
 
@@ -176,7 +176,7 @@ func (s *ExprSuite) TestNegateExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestBinaryExprNilRHS(c *gc.C) {
-	expr := Lt(table1Col1, nil)
+	expr := LT(table1Col1, nil)
 
 	buf := &bytes.Buffer{}
 

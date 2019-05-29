@@ -7,8 +7,8 @@ import (
 
 func TestCase1(t *testing.T) {
 	query := CASE().
-		WHEN(table3Col1.EqL(1)).THEN(table3Col1.Add(IntLiteral(1))).
-		WHEN(table3Col1.EqL(2)).THEN(table3Col1.Add(IntLiteral(2)))
+		WHEN(table3Col1.EQ(Int(1))).THEN(table3Col1.ADD(Int(1))).
+		WHEN(table3Col1.EQ(Int(2))).THEN(table3Col1.ADD(Int(2)))
 
 	queryData := &queryData{}
 
@@ -20,9 +20,9 @@ func TestCase1(t *testing.T) {
 
 func TestCase2(t *testing.T) {
 	query := CASE(table3Col1).
-		WHEN(IntLiteral(1)).THEN(table3Col1.Add(IntLiteral(1))).
-		WHEN(IntLiteral(2)).THEN(table3Col1.Add(IntLiteral(2))).
-		ELSE(IntLiteral(0))
+		WHEN(Int(1)).THEN(table3Col1.ADD(Int(1))).
+		WHEN(Int(2)).THEN(table3Col1.ADD(Int(2))).
+		ELSE(Int(0))
 
 	queryData := &queryData{}
 

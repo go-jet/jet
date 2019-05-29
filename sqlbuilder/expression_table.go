@@ -76,7 +76,7 @@ func (e *expressionTableImpl) INNER_JOIN(table readableTable, onCondition boolEx
 }
 
 //func (s *expressionTableImpl) InnerJoinUsing(table readableTable, col1 column, col2 column) readableTable {
-//	return INNER_JOIN(s, table, col1.Eq(col2))
+//	return INNER_JOIN(s, table, col1.EQ(col2))
 //}
 
 // Creates a left join tableName expression using onCondition.

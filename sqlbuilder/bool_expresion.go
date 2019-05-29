@@ -3,35 +3,30 @@ package sqlbuilder
 type boolExpression interface {
 	expression
 
-	Eq(expression boolExpression) boolExpression
-	NotEq(expression boolExpression) boolExpression
-	GtEq(rhs expression) boolExpression
-	LtEq(rhs expression) boolExpression
+	EQ(expression boolExpression) boolExpression
+	NOT_EQ(expression boolExpression) boolExpression
+
+	IS_TRUE() boolExpression
+	IS_NOT_TRUE() boolExpression
+	IS_FALSE() boolExpression
+	IS_NOT_FALSE() boolExpression
+	IS_UNKNOWN() boolExpression
+	IS_NOT_UNKNOWN() boolExpression
 
 	AND(expression boolExpression) boolExpression
 	OR(expression boolExpression) boolExpression
-	IS_TRUE() boolExpression
-	IS_FALSE() boolExpression
 }
 
 type boolInterfaceImpl struct {
 	parent boolExpression
 }
 
-func (b *boolInterfaceImpl) Eq(expression boolExpression) boolExpression {
-	return Eq(b.parent, expression)
+func (b *boolInterfaceImpl) EQ(expression boolExpression) boolExpression {
+	return EQ(b.parent, expression)
 }
 
-func (b *boolInterfaceImpl) NotEq(expression boolExpression) boolExpression {
-	return NotEq(b.parent, expression)
-}
-
-func (b *boolInterfaceImpl) GtEq(rhs expression) boolExpression {
-	return GtEq(b.parent, rhs)
-}
-
-func (b *boolInterfaceImpl) LtEq(rhs expression) boolExpression {
-	return LtEq(b.parent, rhs)
+func (b *boolInterfaceImpl) NOT_EQ(expression boolExpression) boolExpression {
+	return NOT_EQ(b.parent, expression)
 }
 
 func (b *boolInterfaceImpl) AND(expression boolExpression) boolExpression {
@@ -41,27 +36,29 @@ func (b *boolInterfaceImpl) AND(expression boolExpression) boolExpression {
 func (b *boolInterfaceImpl) OR(expression boolExpression) boolExpression {
 	return Or(b.parent, expression)
 }
+
 func (b *boolInterfaceImpl) IS_TRUE() boolExpression {
-	return IsTrue(b.parent)
+	return IS_TRUE(b.parent)
+}
+
+func (b *boolInterfaceImpl) IS_NOT_TRUE() boolExpression {
+	return IS_NOT_TRUE(b.parent)
 }
 
 func (b *boolInterfaceImpl) IS_FALSE() boolExpression {
-	return nil
+	return IS_FALSE(b.parent)
 }
 
-//---------------------------------------------------//
-type boolLiteralExpression struct {
-	boolInterfaceImpl
-	literalExpression
+func (b *boolInterfaceImpl) IS_NOT_FALSE() boolExpression {
+	return IS_NOT_FALSE(b.parent)
 }
 
-func newBoolLiteralExpression(value bool) boolExpression {
-	boolLiteralExpression := boolLiteralExpression{}
+func (b *boolInterfaceImpl) IS_UNKNOWN() boolExpression {
+	return IS_UNKNOWN(b.parent)
+}
 
-	boolLiteralExpression.literalExpression = *Literal(value)
-	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
-
-	return &boolLiteralExpression
+func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() boolExpression {
+	return IS_NOT_UNKNOWN(b.parent)
 }
 
 //---------------------------------------------------//
@@ -69,13 +66,13 @@ type binaryBoolExpression struct {
 	expressionInterfaceImpl
 	boolInterfaceImpl
 
-	binaryExpression
+	binaryOpExpression
 }
 
 func newBinaryBoolExpression(lhs, rhs expression, operator string) boolExpression {
 	boolExpression := binaryBoolExpression{}
 
-	boolExpression.binaryExpression = newBinaryExpression(lhs, rhs, operator)
+	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
 	boolExpression.expressionInterfaceImpl.parent = &boolExpression
 	boolExpression.boolInterfaceImpl.parent = &boolExpression
 
@@ -87,113 +84,33 @@ type prefixBoolExpression struct {
 	expressionInterfaceImpl
 	boolInterfaceImpl
 
-	prefixExpression
+	prefixOpExpression
 }
 
 func newPrefixBoolExpression(expression expression, operator string) boolExpression {
-	boolExpression := prefixBoolExpression{}
-	boolExpression.prefixExpression = newPrefixExpression(expression, operator)
+	exp := prefixBoolExpression{}
+	exp.prefixOpExpression = newPrefixExpression(expression, operator)
 
-	boolExpression.expressionInterfaceImpl.parent = &boolExpression
-	boolExpression.boolInterfaceImpl.parent = &boolExpression
+	exp.expressionInterfaceImpl.parent = &exp
+	exp.boolInterfaceImpl.parent = &exp
 
-	return &boolExpression
+	return &exp
 }
 
-func EXISTS(subQuery selectStatement) boolExpression {
-	return newPrefixBoolExpression(subQuery, "EXISTS")
+//---------------------------------------------------//
+type postfixBoolOpExpression struct {
+	expressionInterfaceImpl
+	boolInterfaceImpl
+
+	postfixOpExpression
 }
 
-// Returns a representation of "a=b"
-func Eq(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "=")
-}
+func newPostifxBoolExpression(expression expression, operator string) boolExpression {
+	exp := postfixBoolOpExpression{}
+	exp.postfixOpExpression = newPostfixOpExpression(expression, operator)
 
-// Returns a representation of "a=b", where b is a literal
-func EqL(lhs expression, val interface{}) boolExpression {
-	return Eq(lhs, Literal(val))
-}
+	exp.expressionInterfaceImpl.parent = &exp
+	exp.boolInterfaceImpl.parent = &exp
 
-// Returns a representation of "a!=b"
-func NotEq(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "!=")
-}
-
-// Returns a representation of "a!=b", where b is a literal
-func NeqL(lhs expression, val interface{}) boolExpression {
-	return NotEq(lhs, Literal(val))
-}
-
-// Returns a representation of "a<b"
-func Lt(lhs expression, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "<")
-}
-
-// Returns a representation of "a<b", where b is a literal
-func LtL(lhs expression, val interface{}) boolExpression {
-	return Lt(lhs, Literal(val))
-}
-
-// Returns a representation of "a<=b"
-func LtEq(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "<=")
-}
-
-// Returns a representation of "a<=b", where b is a literal
-func LteL(lhs expression, val interface{}) boolExpression {
-	return LtEq(lhs, Literal(val))
-}
-
-// Returns a representation of "a>b"
-func Gt(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, ">")
-}
-
-// Returns a representation of "a>b", where b is a literal
-func GtL(lhs expression, val interface{}) boolExpression {
-	return Gt(lhs, Literal(val))
-}
-
-// Returns a representation of "a>=b"
-func GtEq(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, ">=")
-}
-
-// Returns a representation of "a>=b", where b is a literal
-func GteL(lhs expression, val interface{}) boolExpression {
-	return GtEq(lhs, Literal(val))
-}
-
-// Returns a representation of "not expr"
-func Not(expr boolExpression) boolExpression {
-	return newPrefixBoolExpression(expr, "NOT")
-}
-
-func IsTrue(expr boolExpression) boolExpression {
-	return newPrefixBoolExpression(expr, "IS TRUE")
-}
-
-func And(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "AND")
-}
-
-// Returns a representation of "c[0] OR ... OR c[n-1]" for c in clauses
-func Or(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "OR")
-}
-
-func Like(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "LIKE")
-}
-
-func LikeL(lhs expression, val string) boolExpression {
-	return Like(lhs, Literal(val))
-}
-
-func Regexp(lhs, rhs expression) boolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "REGEXP")
-}
-
-func RegexpL(lhs expression, val string) boolExpression {
-	return Regexp(lhs, Literal(val))
+	return &exp
 }

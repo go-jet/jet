@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
+	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
@@ -12,7 +13,7 @@ import (
 func TestUUIDType(t *testing.T) {
 	query := table.AllTypes.
 		SELECT(table.AllTypes.AllColumns).
-		WHERE(table.AllTypes.UUID.EqString("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+		WHERE(table.AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
 
 	queryStr, args, err := query.Sql()
 

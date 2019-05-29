@@ -12,7 +12,7 @@ func TestDeleteUnconditionally(t *testing.T) {
 }
 
 func TestDeleteWithWhere(t *testing.T) {
-	sql, _, err := table1.DELETE().WHERE(table1Col1.EqL(1)).Sql()
+	sql, _, err := table1.DELETE().WHERE(table1Col1.EQ(Int(1))).Sql()
 	assert.NilError(t, err)
 
 	fmt.Println(sql)

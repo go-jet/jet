@@ -1,5 +1,7 @@
 package sqlbuilder
 
+import "time"
+
 // Representation of an escaped literal
 type literalExpression struct {
 	expressionInterfaceImpl
@@ -24,7 +26,7 @@ type numLiteralExpression struct {
 	numericInterfaceImpl
 }
 
-func IntLiteral(value int) numericExpression {
+func Int(value int) numericExpression {
 	numLiteral := &numLiteralExpression{}
 
 	numLiteral.literalExpression = *Literal(value)
@@ -33,4 +35,64 @@ func IntLiteral(value int) numericExpression {
 	numLiteral.numericInterfaceImpl.parent = numLiteral
 
 	return numLiteral
+}
+
+//---------------------------------------------------//
+type boolLiteralExpression struct {
+	boolInterfaceImpl
+	literalExpression
+}
+
+func Bool(value bool) boolExpression {
+	boolLiteralExpression := boolLiteralExpression{}
+
+	boolLiteralExpression.literalExpression = *Literal(value)
+	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
+
+	return &boolLiteralExpression
+}
+
+//---------------------------------------------------//
+type numericLiteral struct {
+	numericInterfaceImpl
+	literalExpression
+}
+
+func Float(value float64) numericExpression {
+	numericLiteral := numericLiteral{}
+	numericLiteral.literalExpression = *Literal(value)
+
+	numericLiteral.numericInterfaceImpl.parent = &numericLiteral
+
+	return &numericLiteral
+}
+
+//---------------------------------------------------//
+type stringLiteral struct {
+	stringInterfaceImpl
+	literalExpression
+}
+
+func String(value string) stringExpression {
+	stringLiteral := stringLiteral{}
+	stringLiteral.literalExpression = *Literal(value)
+
+	stringLiteral.stringInterfaceImpl.parent = &stringLiteral
+
+	return &stringLiteral
+}
+
+//---------------------------------------------------//
+type timeLiteral struct {
+	timeInterfaceImpl
+	literalExpression
+}
+
+func Time(value time.Time) timeExpression {
+	timeLiteral := timeLiteral{}
+	timeLiteral.literalExpression = *Literal(value)
+
+	timeLiteral.timeInterfaceImpl.parent = &timeLiteral
+
+	return &timeLiteral
 }

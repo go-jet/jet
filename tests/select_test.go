@@ -24,7 +24,7 @@ WHERE actor.actor_id = 1;
 
 	query := Actor.
 		SELECT(Actor.AllColumns).
-		WHERE(Actor.ActorID.EqL(1))
+		WHERE(Actor.ActorID.EQ(Int(1)))
 
 	assertQuery(t, query, expectedSql, 1)
 
@@ -68,7 +68,7 @@ LIMIT 30;
 `
 
 	query := SELECT(Payment.AllColumns, Customer.AllColumns).
-		FROM(Payment.INNER_JOIN(Customer, Payment.CustomerID.Eq(Customer.CustomerID))).
+		FROM(Payment.INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID))).
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
@@ -206,11 +206,11 @@ LIMIT 50;
 `
 	for i := 0; i < 1; i++ {
 		query := FilmActor.
-			INNER_JOIN(Actor, FilmActor.ActorID.Eq(Actor.ActorID)).
-			INNER_JOIN(Film, FilmActor.FilmID.Eq(Film.FilmID)).
-			INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
-			INNER_JOIN(Inventory, Inventory.FilmID.Eq(Film.FilmID)).
-			INNER_JOIN(Rental, Rental.InventoryID.Eq(Inventory.InventoryID)).
+			INNER_JOIN(Actor, FilmActor.ActorID.EQ(Actor.ActorID)).
+			INNER_JOIN(Film, FilmActor.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
+			INNER_JOIN(Inventory, Inventory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Rental, Rental.InventoryID.EQ(Inventory.InventoryID)).
 			SELECT(
 				FilmActor.AllColumns,
 				Film.AllColumns,
@@ -285,9 +285,9 @@ LIMIT 15;
 	limit := 15
 
 	query := Film.
-		INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
+		INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		WHERE(Film.Rating.EqString(model.MpaaRating_NC17.String())).
+		WHERE(Film.Rating.EQ(String(model.MpaaRating_NC17.String()))).
 		LIMIT(15)
 
 	assertQuery(t, query, expectedSql, model.MpaaRating_NC17.String(), int64(15))
@@ -318,7 +318,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 
 	limit := int64(3)
 
-	query := Film.INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
+	query := Film.INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
 		LIMIT(limit)
 
@@ -417,7 +417,7 @@ FROM dvds.customer
 ORDER BY customer.customer_id ASC;
 `
 	query := Customer.
-		FULL_JOIN(Address, Customer.AddressID.Eq(Address.AddressID)).
+		FULL_JOIN(Address, Customer.AddressID.EQ(Address.AddressID)).
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC())
 
@@ -506,7 +506,7 @@ ORDER BY employee.employee_id;
 
 	manager := Employee.AS("manager")
 	query := Employee.
-		LEFT_JOIN(manager, manager.EmployeeID.Eq(Employee.ManagerID)).
+		LEFT_JOIN(manager, manager.EmployeeID.EQ(Employee.ManagerID)).
 		SELECT(Employee.AllColumns, manager.AllColumns).
 		ORDER_BY(Employee.EmployeeID)
 
@@ -576,7 +576,7 @@ ORDER BY f1.film_id ASC;
 	f2 := Film.AS("f2")
 
 	query := f1.
-		INNER_JOIN(f2, f1.FilmID.Lt(f2.FilmID).AND(f1.Length.Eq(f2.Length))).
+		INNER_JOIN(f2, f1.FilmID.LT(f2.FilmID).AND(f1.Length.EQ(f2.Length))).
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
@@ -612,8 +612,10 @@ LIMIT 1000;
 	f1 := Film.AS("f1")
 	f2 := Film.AS("f2")
 
+	f1.FilmID.EQ(Float(11))
+
 	query := f1.
-		INNER_JOIN(f2, f1.FilmID.NotEq(f2.FilmID).AND(f1.Length.Eq(f2.Length))).
+		INNER_JOIN(f2, f1.FilmID.NOT_EQ(f2.FilmID).AND(f1.Length.EQ(f2.Length))).
 		SELECT(f1.Title.AS("thesame_length_films.title1"),
 			f2.Title.AS("thesame_length_films.title2"),
 			f1.Length.AS("thesame_length_films.length")).
@@ -679,8 +681,8 @@ LIMIT 1000;
 //	manager := Staff.AS("manager")
 //
 //	query := Staff.
-//		INNER_JOIN(Address, Staff.AddressID.Eq(Address.AddressID)).
-//		INNER_JOIN(manager, Staff.StaffID.Eq(manager.StaffID)).
+//		INNER_JOIN(Address, Staff.AddressID.EQ(Address.AddressID)).
+//		INNER_JOIN(manager, Staff.StaffID.EQ(manager.StaffID)).
 //		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName).
 //		DISTINCT()
 //
@@ -714,7 +716,7 @@ func TestSubQuery(t *testing.T) {
 	//avrgCustomer := NumExp(Customer.SELECT(Customer.LastName).LIMIT(1))
 	//
 	//Customer.
-	//	INNER_JOIN(selectStmtTable, Customer.LastName.Eq(selectStmtTable.RefStringColumn(Actor.FirstName))).
+	//	INNER_JOIN(selectStmtTable, Customer.LastName.EQ(selectStmtTable.RefStringColumn(Actor.FirstName))).
 	//	SELECT(Customer.AllColumns, selectStmtTable.RefIntColumnName("first_name")).
 	//	WHERE(Actor.LastName.Neq(avrgCustomer))
 
@@ -740,11 +742,11 @@ FROM dvds.actor
 `
 
 	rFilmsOnly := Film.SELECT(Film.FilmID, Film.Title, Film.Rating).
-		WHERE(Film.Rating.EqString("R")).
+		WHERE(Film.Rating.EQ(String("R"))).
 		AsTable("films")
 
-	query := Actor.INNER_JOIN(FilmActor, Actor.ActorID.Eq(FilmActor.FilmID)).
-		INNER_JOIN(rFilmsOnly, FilmActor.FilmID.Eq(rFilmsOnly.RefIntColumn(Film.FilmID))).
+	query := Actor.INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
+		INNER_JOIN(rFilmsOnly, FilmActor.FilmID.EQ(rFilmsOnly.RefIntColumn(Film.FilmID))).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
@@ -809,7 +811,7 @@ ORDER BY film.film_id ASC;
 
 	query := Film.
 		SELECT(Film.AllColumns).
-		WHERE(Film.RentalRate.Eq(maxFilmRentalRate)).
+		WHERE(Film.RentalRate.EQ(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
 	fmt.Println(query.Sql())
@@ -856,8 +858,12 @@ ORDER BY SUM(payment.amount) ASC;
 			SUM(Payment.Amount).AS("customer_payment_sum.amount_sum"),
 		).
 		GROUP_BY(Payment.CustomerID).
-		ORDER_BY(SUM(Payment.Amount).ASC()).
-		HAVING(SUM(Payment.Amount).Gt(NewNumericLiteral(100)))
+		ORDER_BY(
+			SUM(Payment.Amount).ASC(),
+		).
+		HAVING(
+			SUM(Payment.Amount).GT(Int(100)),
+		)
 
 	assertQuery(t, customersPaymentQuery, expectedSql, 100)
 
@@ -913,7 +919,7 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 	amountSumColumn := customersPaymentTable.RefIntColumnName("amount_sum")
 
 	query := Customer.
-		INNER_JOIN(customersPaymentTable, Customer.CustomerID.Eq(customersPaymentTable.RefIntColumn(Payment.CustomerID))).
+		INNER_JOIN(customersPaymentTable, Customer.CustomerID.EQ(customersPaymentTable.RefIntColumn(Payment.CustomerID))).
 		SELECT(Customer.AllColumns, amountSumColumn.AS("customer_with_amounts.amount_sum")).
 		ORDER_BY(amountSumColumn.ASC())
 
@@ -1018,10 +1024,10 @@ OFFSET 20;
 	query := UNION_ALL(
 		Payment.
 			SELECT(Payment.PaymentID.AS("payment.payment_id"), Payment.Amount).
-			WHERE(Payment.Amount.LtEqL(100)),
+			WHERE(Payment.Amount.LT_EQ(Int(100))),
 		Payment.
 			SELECT(Payment.PaymentID, Payment.Amount).
-			WHERE(Payment.Amount.GtEqL(200)),
+			WHERE(Payment.Amount.GT_EQ(Int(200))),
 	).
 		ORDER_BY(RefColumn("payment.payment_id").ASC(), Payment.Amount.DESC()).
 		LIMIT(10).
@@ -1061,9 +1067,9 @@ LIMIT 20;
 `
 	query := Payment.SELECT(
 		CASE(Payment.StaffID).
-			WHEN(IntLiteral(1)).THEN(Literal("ONE")).
-			WHEN(IntLiteral(2)).THEN(Literal("TWO")).
-			WHEN(IntLiteral(3)).THEN(Literal("THREE")).
+			WHEN(Int(1)).THEN(Literal("ONE")).
+			WHEN(Int(2)).THEN(Literal("TWO")).
+			WHEN(Int(3)).THEN(Literal("THREE")).
 			ELSE(Literal("OTHER")).AS("staff_id_num"),
 	).
 		ORDER_BY(Payment.PaymentID.ASC()).

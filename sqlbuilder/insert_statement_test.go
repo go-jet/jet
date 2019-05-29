@@ -56,11 +56,11 @@ INSERT INTO db.table1 (col1) VALUES
 func TestInsertDate(t *testing.T) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	sql, _, err := table1.INSERT(table1Col4).VALUES(date).Sql()
+	sql, _, err := table1.INSERT(table1ColTime).VALUES(date).Sql()
 	assert.NilError(t, err)
 
 	assert.Equal(t, sql, `
-INSERT INTO db.table1 (col4) VALUES
+INSERT INTO db.table1 (colTime) VALUES
      ($1);
 `)
 }

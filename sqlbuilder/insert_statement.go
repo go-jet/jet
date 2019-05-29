@@ -69,7 +69,7 @@ func (i *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
 
 func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
 	if data == nil {
-		i.addError("Add method data is nil.")
+		i.addError("ADD method data is nil.")
 		return i
 	}
 
@@ -80,7 +80,7 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
 	}
 
 	if value.Kind() != reflect.Struct {
-		i.addError("Add method data is not struct or pointer to struct.")
+		i.addError("ADD method data is not struct or pointer to struct.")
 		return i
 	}
 
@@ -93,7 +93,7 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
 		structField := value.FieldByName(structFieldName)
 
 		if !structField.IsValid() {
-			i.addError("Add() : Data structure doesn't contain field : " + structFieldName + " for column " + columnName)
+			i.addError("ADD() : Data structure doesn't contain field : " + structFieldName + " for column " + columnName)
 			return i
 		}
 

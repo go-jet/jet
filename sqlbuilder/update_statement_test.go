@@ -13,7 +13,7 @@ import (
 func TestUpdate(t *testing.T) {
 	stmt := table1.UPDATE(table1Col1, table1Col2).
 		SET(table1.SELECT(table1Col2, table2Col3)).
-		WHERE(table1Col1.EqL(2)).
+		WHERE(table1Col1.EQ(Int(2))).
 		RETURNING(table1Col1)
 
 	stmtStr, _, err := stmt.Sql()

@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
+	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
@@ -11,9 +11,9 @@ import (
 
 func TestUpdateValues(t *testing.T) {
 	_, err := table.Link.INSERT(table.Link.URL, table.Link.Name, table.Link.Rel).
-		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", sqlbuilder.DEFAULT).
-		VALUES("http://www.yahoo.com", "Yahoo", sqlbuilder.DEFAULT).
-		VALUES("http://www.bing.com", "Bing", sqlbuilder.DEFAULT).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		VALUES("http://www.yahoo.com", "Yahoo", DEFAULT).
+		VALUES("http://www.bing.com", "Bing", DEFAULT).
 		RETURNING(table.Link.ID).Execute(db)
 
 	assert.NilError(t, err)
@@ -21,7 +21,7 @@ func TestUpdateValues(t *testing.T) {
 	query := table.Link.
 		UPDATE(table.Link.Name, table.Link.URL).
 		SET("Bong", "http://bong.com").
-		WHERE(table.Link.Name.EqString("Bing"))
+		WHERE(table.Link.Name.EQ(String("Bing")))
 
 	queryStr, args, err := query.Sql()
 
@@ -38,7 +38,7 @@ func TestUpdateValues(t *testing.T) {
 	links := []model.Link{}
 
 	err = table.Link.SELECT(table.Link.AllColumns).
-		WHERE(table.Link.Name.EqString("Bong")).
+		WHERE(table.Link.Name.EQ(String("Bong"))).
 		Query(db, &links)
 
 	assert.NilError(t, err)
@@ -48,11 +48,11 @@ func TestUpdateValues(t *testing.T) {
 
 func TestUpdateAndReturning(t *testing.T) {
 	_, err := table.Link.INSERT(table.Link.URL, table.Link.Name, table.Link.Rel).
-		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", sqlbuilder.DEFAULT).
-		VALUES("http://www.ask.com", "Ask", sqlbuilder.DEFAULT).
-		VALUES("http://www.ask.com", "Ask", sqlbuilder.DEFAULT).
-		VALUES("http://www.yahoo.com", "Yahoo", sqlbuilder.DEFAULT).
-		VALUES("http://www.bing.com", "Bing", sqlbuilder.DEFAULT).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		VALUES("http://www.ask.com", "Ask", DEFAULT).
+		VALUES("http://www.ask.com", "Ask", DEFAULT).
+		VALUES("http://www.yahoo.com", "Yahoo", DEFAULT).
+		VALUES("http://www.bing.com", "Bing", DEFAULT).
 		RETURNING(table.Link.ID).Execute(db)
 
 	assert.NilError(t, err)
@@ -60,7 +60,7 @@ func TestUpdateAndReturning(t *testing.T) {
 	stmt := table.Link.
 		UPDATE(table.Link.Name, table.Link.URL).
 		SET("DuckDuckGo", "http://www.duckduckgo.com").
-		WHERE(table.Link.Name.EqString("Ask")).
+		WHERE(table.Link.Name.EQ(String("Ask"))).
 		RETURNING(table.Link.AllColumns)
 
 	stmtStr, args, err := stmt.Sql()

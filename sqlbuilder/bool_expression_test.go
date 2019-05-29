@@ -6,8 +6,42 @@ import (
 	"testing"
 )
 
+func TestBoolExpressionEQ(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.EQ(table2ColBool)), "table1.colBool = table2.colBool")
+	assert.Equal(t, getTestSerialize(t, table1ColBool.AND(table2ColBool).EQ(table2ColBool)), "table1.colBool AND table2.colBool = table2.colBool")
+}
+
+func TestBoolExpressionNOT_EQ(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.NOT_EQ(table2ColBool)), "table1.colBool != table2.colBool")
+	assert.Equal(t, getTestSerialize(t, table1ColBool.AND(table2ColBool).NOT_EQ(table2ColBool)), "table1.colBool AND table2.colBool != table2.colBool")
+}
+
+func TestBoolExpressionIS_TRUE(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.IS_TRUE()), "table1.colBool IS TRUE")
+}
+
+func TestBoolExpressionIS_NOT_TRUE(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.IS_NOT_TRUE()), "table1.colBool IS NOT TRUE")
+}
+
+func TestBoolExpressionIS_FALSE(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.IS_FALSE()), "table1.colBool IS FALSE")
+}
+
+func TestBoolExpressionIS_NOT_FALSE(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.IS_NOT_FALSE()), "table1.colBool IS NOT FALSE")
+}
+
+func TestBoolExpressionIS_UNKNOWN(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.IS_UNKNOWN()), "table1.colBool IS UNKNOWN")
+}
+
+func TestBoolExpressionIS_NOT_UNKNOWN(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1ColBool.IS_NOT_UNKNOWN()), "table1.colBool IS NOT UNKNOWN")
+}
+
 func TestBinaryExpression(t *testing.T) {
-	boolExpression := Eq(Literal(2), Literal(3))
+	boolExpression := EQ(Literal(2), Literal(3))
 
 	out := queryData{}
 	err := boolExpression.serialize(select_statement, &out)
@@ -28,7 +62,7 @@ func TestBinaryExpression(t *testing.T) {
 	})
 
 	t.Run("and", func(t *testing.T) {
-		exp := boolExpression.AND(Eq(Literal(4), Literal(5)))
+		exp := boolExpression.AND(EQ(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.serialize(select_statement, &out)
@@ -38,7 +72,7 @@ func TestBinaryExpression(t *testing.T) {
 	})
 
 	t.Run("or", func(t *testing.T) {
-		exp := boolExpression.OR(Eq(Literal(4), Literal(5)))
+		exp := boolExpression.OR(EQ(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.serialize(select_statement, &out)
@@ -49,7 +83,7 @@ func TestBinaryExpression(t *testing.T) {
 }
 
 func TestUnaryExpression(t *testing.T) {
-	notExpression := Not(Eq(Literal(2), Literal(1)))
+	notExpression := NOT(EQ(Literal(2), Literal(1)))
 
 	out := queryData{}
 	err := notExpression.serialize(select_statement, &out)
@@ -68,7 +102,7 @@ func TestUnaryExpression(t *testing.T) {
 	})
 
 	t.Run("and", func(t *testing.T) {
-		exp := notExpression.AND(Eq(Literal(4), Literal(5)))
+		exp := notExpression.AND(EQ(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.serialize(select_statement, &out)
@@ -79,27 +113,27 @@ func TestUnaryExpression(t *testing.T) {
 }
 
 func TestUnaryIsTrueExpression(t *testing.T) {
-	notExpression := IsTrue(Eq(Literal(2), Literal(1)))
+	exp := IS_TRUE(EQ(Literal(2), Literal(1)))
 
 	out := queryData{}
-	err := notExpression.serialize(select_statement, &out)
+	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "IS TRUE $1 = $2")
+	assert.Equal(t, out.buff.String(), "$1 = $2 IS TRUE")
 
 	t.Run("and", func(t *testing.T) {
-		exp := notExpression.AND(Eq(Literal(4), Literal(5)))
+		exp := exp.AND(EQ(Literal(4), Literal(5)))
 
 		out := queryData{}
 		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `(IS TRUE $1 = $2 AND $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `($1 = $2 IS TRUE AND $3 = $4)`)
 	})
 }
 
 func TestBoolLiteral(t *testing.T) {
-	literal := newBoolLiteralExpression(true)
+	literal := Bool(true)
 
 	out := queryData{}
 	err := literal.serialize(select_statement, &out)
@@ -113,7 +147,7 @@ func TestExists(t *testing.T) {
 	query := EXISTS(
 		table2.
 			SELECT(Literal(1)).
-			WHERE(table1Col1.Eq(table2Col3)),
+			WHERE(table1Col1.EQ(table2Col3)),
 	)
 
 	out := queryData{}

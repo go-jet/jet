@@ -61,7 +61,7 @@ func (s *StmtSuite) TestSelectWhere(c *gc.C) {
 func (s *StmtSuite) TestSelectWhereDate(c *gc.C) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	q := table1.Select(table1Col1).Where(GtL(table1Col4, date))
+	q := table1.Select(table1Col1).Where(GtL(table1ColTime, date))
 	sql, err := q.String()
 
 	c.Assert(err, gc.IsNil)
@@ -196,7 +196,7 @@ func (s *StmtSuite) TestSelectMultiOrderBy(c *gc.C) {
 
 func (s *StmtSuite) TestSelectOnJoin(c *gc.C) {
 
-	join := table1.InnerJoinOn(table2, Eq(table1Col3, table2Col3))
+	join := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
 	sql, err := join.Select(table1Col1, table2Col4).String()
 
 	c.Assert(err, gc.IsNil)
@@ -279,7 +279,7 @@ func (s *StmtSuite) TestInsertSingleValue(c *gc.C) {
 func (s *StmtSuite) TestInsertDate(c *gc.C) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	sql, err := table1.INSERT(table1Col4).Add(Literal(date)).String()
+	sql, err := table1.INSERT(table1ColTime).Add(Literal(date)).String()
 	c.Assert(err, gc.IsNil)
 
 	c.Assert(
@@ -456,14 +456,14 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 			table1Col1,
 			table1Col2,
 			table1Col3,
-			table1Col4).AndWhere(GtL(table1Col1, 123)).AndWhere(LtL(table1Col1, 321)),
+			table1ColTime).AndWhere(GtL(table1Col1, 123)).AndWhere(LtL(table1Col1, 321)),
 		table1.Select(table1Col1).Where(And(GtL(table1Col1, 123), LtL(table1Col1, 321))),
-		table1.Select(table1Col1).Where(LtL(table1Col1, 23)).OrderBy(table1Col4).Limit(20),
+		table1.Select(table1Col1).Where(LtL(table1Col1, 23)).OrderBy(table1ColTime).Limit(20),
 	)
 
 	q := UNION(select_queries...)
 	q = q.Where(And(LtL(table1Col1, 1000), GtL(table1Col1, 15)))
-	q = q.ORDER_BY(DESC(table1Col4), ASC(table1Col3))
+	q = q.ORDER_BY(DESC(table1ColTime), ASC(table1Col3))
 	q = q.LIMIT(5)
 
 	_, err := q.String()
@@ -496,15 +496,15 @@ func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 		).Where(And(GtL(table1Col1, 456), LtL(table1Col1, 654))),
 		table1.Select(
 			table1Col1,
-		).Where(LtL(table1Col1, 23)).OrderBy(table1Col4).Limit(20),
+		).Where(LtL(table1Col1, 23)).OrderBy(table1ColTime).Limit(20),
 	)
 
 	q := UNION(select_queries...)
 	q = q.Where(And(LtL(table1Col1, 1000), GtL(table1Col1, 15)))
 
-	q = q.ORDER_BY(DESC(table1Col4), ASC(table1Col3))
+	q = q.ORDER_BY(DESC(table1ColTime), ASC(table1Col3))
 	q = q.LIMIT(5)
-	q = q.GroupBy(table1Col4)
+	q = q.GroupBy(table1ColTime)
 
 	sql, err := q.String()
 

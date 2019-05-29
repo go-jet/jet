@@ -5,98 +5,61 @@ import "errors"
 type numericExpression interface {
 	expression
 
-	Eq(expression numericExpression) boolExpression
-	EqL(literal interface{}) boolExpression
-	NotEq(expression numericExpression) boolExpression
-	NotEqL(literal interface{}) boolExpression
+	EQ(expression numericExpression) boolExpression
+	NOT_EQ(expression numericExpression) boolExpression
+	LT(rhs numericExpression) boolExpression
+	LT_EQ(rhs numericExpression) boolExpression
+	GT(rhs numericExpression) boolExpression
+	GT_EQ(rhs numericExpression) boolExpression
 
-	Gt(rhs numericExpression) boolExpression
-	GtEq(rhs numericExpression) boolExpression
-	GtEqL(literal interface{}) boolExpression
-
-	Lt(rhs numericExpression) boolExpression
-	LtEq(rhs numericExpression) boolExpression
-	LtEqL(literal interface{}) boolExpression
-
-	Add(expression numericExpression) numericExpression
-	Sub(expression numericExpression) numericExpression
-	Mul(expression numericExpression) numericExpression
-	Div(expression numericExpression) numericExpression
+	ADD(expression numericExpression) numericExpression
+	SUB(expression numericExpression) numericExpression
+	MUL(expression numericExpression) numericExpression
+	DIV(expression numericExpression) numericExpression
 }
 
 type numericInterfaceImpl struct {
 	parent numericExpression
 }
 
-func (n *numericInterfaceImpl) Eq(expression numericExpression) boolExpression {
-	return Eq(n.parent, expression)
+func (n *numericInterfaceImpl) EQ(expression numericExpression) boolExpression {
+	return EQ(n.parent, expression)
 }
 
-func (n *numericInterfaceImpl) EqL(literal interface{}) boolExpression {
-	return Eq(n.parent, Literal(literal))
+func (n *numericInterfaceImpl) NOT_EQ(expression numericExpression) boolExpression {
+	return NOT_EQ(n.parent, expression)
 }
 
-func (n *numericInterfaceImpl) NotEq(expression numericExpression) boolExpression {
-	return NotEq(n.parent, expression)
+func (n *numericInterfaceImpl) GT(expression numericExpression) boolExpression {
+	return GT(n.parent, expression)
 }
 
-func (n *numericInterfaceImpl) NotEqL(literal interface{}) boolExpression {
-	return NotEq(n.parent, Literal(literal))
+func (n *numericInterfaceImpl) GT_EQ(expression numericExpression) boolExpression {
+	return GT_EQ(n.parent, expression)
 }
 
-func (n *numericInterfaceImpl) Gt(expression numericExpression) boolExpression {
-	return Gt(n.parent, expression)
+func (n *numericInterfaceImpl) LT(expression numericExpression) boolExpression {
+	return LT(n.parent, expression)
 }
 
-func (n *numericInterfaceImpl) GtEq(expression numericExpression) boolExpression {
-	return GtEq(n.parent, expression)
+func (n *numericInterfaceImpl) LT_EQ(expression numericExpression) boolExpression {
+	return LT_EQ(n.parent, expression)
 }
 
-func (n *numericInterfaceImpl) GtEqL(literal interface{}) boolExpression {
-	return GtEq(n.parent, Literal(literal))
-}
-
-func (n *numericInterfaceImpl) Lt(expression numericExpression) boolExpression {
-	return Lt(n.parent, expression)
-}
-
-func (n *numericInterfaceImpl) LtEq(expression numericExpression) boolExpression {
-	return LtEq(n.parent, expression)
-}
-
-func (n *numericInterfaceImpl) LtEqL(literal interface{}) boolExpression {
-	return LtEq(n.parent, Literal(literal))
-}
-
-func (n *numericInterfaceImpl) Add(expression numericExpression) numericExpression {
+func (n *numericInterfaceImpl) ADD(expression numericExpression) numericExpression {
 	return newBinaryNumericExpression(n.parent, expression, "+")
 }
 
-func (n *numericInterfaceImpl) Sub(expression numericExpression) numericExpression {
+func (n *numericInterfaceImpl) SUB(expression numericExpression) numericExpression {
 	return newBinaryNumericExpression(n.parent, expression, "-")
 }
 
-func (n *numericInterfaceImpl) Mul(expression numericExpression) numericExpression {
+func (n *numericInterfaceImpl) MUL(expression numericExpression) numericExpression {
 	return newBinaryNumericExpression(n.parent, expression, "*")
 }
 
-func (n *numericInterfaceImpl) Div(expression numericExpression) numericExpression {
+func (n *numericInterfaceImpl) DIV(expression numericExpression) numericExpression {
 	return newBinaryNumericExpression(n.parent, expression, "/")
-}
-
-//---------------------------------------------------//
-type numericLiteral struct {
-	numericInterfaceImpl
-	literalExpression
-}
-
-func NewNumericLiteral(value interface{}) numericExpression {
-	numericLiteral := numericLiteral{}
-	numericLiteral.literalExpression = *Literal(value)
-
-	numericLiteral.numericInterfaceImpl.parent = &numericLiteral
-
-	return &numericLiteral
 }
 
 //---------------------------------------------------//
@@ -104,13 +67,13 @@ type binaryNumericExpression struct {
 	expressionInterfaceImpl
 	numericInterfaceImpl
 
-	binaryExpression
+	binaryOpExpression
 }
 
 func newBinaryNumericExpression(lhs, rhs expression, operator string) numericExpression {
 	numericExpression := binaryNumericExpression{}
 
-	numericExpression.binaryExpression = newBinaryExpression(lhs, rhs, operator)
+	numericExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
 
 	numericExpression.expressionInterfaceImpl.parent = &numericExpression
 	numericExpression.numericInterfaceImpl.parent = &numericExpression

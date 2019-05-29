@@ -191,10 +191,10 @@ func TestScanToStruct(t *testing.T) {
 
 func TestScanToNestedStruct(t *testing.T) {
 	query := Inventory.
-		INNER_JOIN(Film, Inventory.FilmID.Eq(Film.FilmID)).
-		INNER_JOIN(Store, Inventory.StoreID.Eq(Store.StoreID)).
+		INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
+		INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
 		SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns).
-		WHERE(Inventory.InventoryID.EqL(1))
+		WHERE(Inventory.InventoryID.EQ(Int(1)))
 
 	t.Run("embedded structs", func(t *testing.T) {
 		dest := struct {
@@ -267,10 +267,10 @@ func TestScanToNestedStruct(t *testing.T) {
 
 	t.Run("embedded pointer to selected column", func(t *testing.T) {
 		query := Inventory.
-			INNER_JOIN(Film, Inventory.FilmID.Eq(Film.FilmID)).
-			INNER_JOIN(Store, Inventory.StoreID.Eq(Store.StoreID)).
+			INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
 			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns, Literal("").AS("actor.first_name")).
-			WHERE(Inventory.InventoryID.EqL(1))
+			WHERE(Inventory.InventoryID.EQ(Int(1)))
 
 		dest := struct {
 			model.Inventory
@@ -358,11 +358,11 @@ func TestScanToNestedStruct(t *testing.T) {
 
 	t.Run("embedded structs", func(t *testing.T) {
 		query := Inventory.
-			INNER_JOIN(Film, Inventory.FilmID.Eq(Film.FilmID)).
-			INNER_JOIN(Store, Inventory.StoreID.Eq(Store.StoreID)).
-			INNER_JOIN(Language, Film.LanguageID.Eq(Language.LanguageID)).
+			INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
+			INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
 			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns, Language.AllColumns).
-			WHERE(Inventory.InventoryID.EqL(1))
+			WHERE(Inventory.InventoryID.EQ(Int(1)))
 
 		dest := struct {
 			model.Inventory
@@ -434,8 +434,8 @@ func TestScanToSlice(t *testing.T) {
 
 	t.Run("slice of complex structs", func(t *testing.T) {
 		query := Inventory.
-			INNER_JOIN(Film, Inventory.FilmID.Eq(Film.FilmID)).
-			INNER_JOIN(Store, Inventory.StoreID.Eq(Store.StoreID)).
+			INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
 			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns).
 			ORDER_BY(Inventory.InventoryID).
 			LIMIT(10)
@@ -589,9 +589,9 @@ func TestScanToSlice(t *testing.T) {
 
 	t.Run("slice of complex structs 2", func(t *testing.T) {
 		query := Country.
-			INNER_JOIN(City, City.CountryID.Eq(Country.CountryID)).
-			INNER_JOIN(Address, Address.CityID.Eq(City.CityID)).
-			INNER_JOIN(Customer, Customer.AddressID.Eq(Address.AddressID)).
+			INNER_JOIN(City, City.CountryID.EQ(Country.CountryID)).
+			INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+			INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
 			SELECT(Country.AllColumns, City.AllColumns, Address.AllColumns, Customer.AllColumns).
 			ORDER_BY(Country.CountryID.ASC(), City.CityID.ASC(), Address.AddressID.ASC(), Customer.CustomerID.ASC()).
 			LIMIT(1000)

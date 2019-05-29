@@ -22,7 +22,7 @@ func (s *TableSuite) TestBasicColumns(c *gc.C) {
 	c.Assert(cols[0], gc.Equals, table1Col1)
 	c.Assert(cols[1], gc.Equals, table1Col2)
 	c.Assert(cols[2], gc.Equals, table1Col3)
-	c.Assert(cols[3], gc.Equals, table1Col4)
+	c.Assert(cols[3], gc.Equals, table1ColTime)
 }
 
 func (s *TableSuite) TestCValidLookup(c *gc.C) {
@@ -74,7 +74,7 @@ func (s *TableSuite) TestJoinNilOnCondition(c *gc.C) {
 }
 
 func (s *TableSuite) TestInnerJoin(c *gc.C) {
-	join := table1.InnerJoinOn(table2, Eq(table1Col3, table2Col3))
+	join := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
 
 	buf := &bytes.Buffer{}
 
@@ -89,7 +89,7 @@ func (s *TableSuite) TestInnerJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestLeftJoin(c *gc.C) {
-	join := table1.LEFT_JOIN(table2, Eq(table1Col3, table2Col3))
+	join := table1.LEFT_JOIN(table2, EQ(table1Col3, table2Col3))
 
 	buf := &bytes.Buffer{}
 
@@ -105,7 +105,7 @@ func (s *TableSuite) TestLeftJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestRightJoin(c *gc.C) {
-	join := table1.RIGHT_JOIN(table2, Eq(table1Col3, table2Col3))
+	join := table1.RIGHT_JOIN(table2, EQ(table1Col3, table2Col3))
 
 	buf := &bytes.Buffer{}
 
@@ -121,21 +121,21 @@ func (s *TableSuite) TestRightJoin(c *gc.C) {
 }
 
 //func (s *TableSuite) TestJoinColumns(c *gc.C) {
-//	join := table1.RIGHT_JOIN(table2, Eq(table1Col3, table2Col3))
+//	join := table1.RIGHT_JOIN(table2, EQ(table1Col3, table2Col3))
 //
 //	cols := join.Columns()
 //	c.Assert(len(cols), gc.Equals, 6)
 //	c.Assert(cols[0], gc.Equals, table1Col1)
 //	c.Assert(cols[1], gc.Equals, table1Col2)
 //	c.Assert(cols[2], gc.Equals, table1Col3)
-//	c.Assert(cols[3], gc.Equals, table1Col4)
+//	c.Assert(cols[3], gc.Equals, table1ColTime)
 //	c.Assert(cols[4], gc.Equals, table2Col3)
 //	c.Assert(cols[5], gc.Equals, table2Col4)
 //}
 
 func (s *TableSuite) TestNestedInnerJoin(c *gc.C) {
-	join1 := table1.InnerJoinOn(table2, Eq(table1Col3, table2Col3))
-	join2 := join1.InnerJoinOn(table3, Eq(table1Col1, table3Col1))
+	join1 := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
+	join2 := join1.InnerJoinOn(table3, EQ(table1Col1, table3Col1))
 
 	buf := &bytes.Buffer{}
 
@@ -152,8 +152,8 @@ func (s *TableSuite) TestNestedInnerJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestNestedLeftJoin(c *gc.C) {
-	join1 := table1.InnerJoinOn(table2, Eq(table1Col3, table2Col3))
-	join2 := join1.LeftJoinOn(table3, Eq(table1Col1, table3Col1))
+	join1 := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
+	join2 := join1.LeftJoinOn(table3, EQ(table1Col1, table3Col1))
 
 	buf := &bytes.Buffer{}
 
@@ -170,8 +170,8 @@ func (s *TableSuite) TestNestedLeftJoin(c *gc.C) {
 }
 
 func (s *TableSuite) TestNestedRightJoin(c *gc.C) {
-	join1 := table1.InnerJoinOn(table2, Eq(table1Col3, table2Col3))
-	join2 := join1.RightJoinOn(table3, Eq(table1Col1, table3Col1))
+	join1 := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
+	join2 := join1.RightJoinOn(table3, EQ(table1Col1, table3Col1))
 
 	buf := &bytes.Buffer{}
 
