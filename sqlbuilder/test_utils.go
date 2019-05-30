@@ -22,7 +22,7 @@ var table1 = NewTable(
 
 var table2Col3 = NewIntegerColumn("col3", Nullable)
 var table2Col4 = NewIntegerColumn("col4", Nullable)
-var table2StrCol = NewStringColumn("col4", Nullable)
+var table2StrCol = NewStringColumn("colStr", Nullable)
 var table2ColBool = NewBoolColumn("colBool", Nullable)
 var table2ColTime = NewTimeColumn("colTime", Nullable)
 

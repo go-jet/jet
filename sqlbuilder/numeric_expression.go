@@ -5,37 +5,48 @@ import "errors"
 type numericExpression interface {
 	expression
 
-	EQ(expression numericExpression) boolExpression
-	NOT_EQ(expression numericExpression) boolExpression
+	EQ(rhs numericExpression) boolExpression
+	NOT_EQ(rhs numericExpression) boolExpression
+	IS_DISTINCT_FROM(rhs numericExpression) boolExpression
+	IS_NOT_DISTINCT_FROM(rhs numericExpression) boolExpression
+
 	LT(rhs numericExpression) boolExpression
 	LT_EQ(rhs numericExpression) boolExpression
 	GT(rhs numericExpression) boolExpression
 	GT_EQ(rhs numericExpression) boolExpression
 
-	ADD(expression numericExpression) numericExpression
-	SUB(expression numericExpression) numericExpression
-	MUL(expression numericExpression) numericExpression
-	DIV(expression numericExpression) numericExpression
+	ADD(rhs numericExpression) numericExpression
+	SUB(rhs numericExpression) numericExpression
+	MUL(rhs numericExpression) numericExpression
+	DIV(rhs numericExpression) numericExpression
 }
 
 type numericInterfaceImpl struct {
 	parent numericExpression
 }
 
-func (n *numericInterfaceImpl) EQ(expression numericExpression) boolExpression {
-	return EQ(n.parent, expression)
+func (n *numericInterfaceImpl) EQ(rhs numericExpression) boolExpression {
+	return EQ(n.parent, rhs)
 }
 
-func (n *numericInterfaceImpl) NOT_EQ(expression numericExpression) boolExpression {
-	return NOT_EQ(n.parent, expression)
+func (n *numericInterfaceImpl) NOT_EQ(rhs numericExpression) boolExpression {
+	return NOT_EQ(n.parent, rhs)
 }
 
-func (n *numericInterfaceImpl) GT(expression numericExpression) boolExpression {
-	return GT(n.parent, expression)
+func (n *numericInterfaceImpl) IS_DISTINCT_FROM(rhs numericExpression) boolExpression {
+	return IS_DISTINCT_FROM(n.parent, rhs)
 }
 
-func (n *numericInterfaceImpl) GT_EQ(expression numericExpression) boolExpression {
-	return GT_EQ(n.parent, expression)
+func (n *numericInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs numericExpression) boolExpression {
+	return IS_NOT_DISTINCT_FROM(n.parent, rhs)
+}
+
+func (n *numericInterfaceImpl) GT(rhs numericExpression) boolExpression {
+	return GT(n.parent, rhs)
+}
+
+func (n *numericInterfaceImpl) GT_EQ(rhs numericExpression) boolExpression {
+	return GT_EQ(n.parent, rhs)
 }
 
 func (n *numericInterfaceImpl) LT(expression numericExpression) boolExpression {

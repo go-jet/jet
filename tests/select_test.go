@@ -971,15 +971,15 @@ SELECT payment.payment_id AS "payment.payment_id",
      payment.amount AS "payment.amount",
      payment.payment_date AS "payment.payment_date"
 FROM dvds.payment
-WHERE payment.payment_date <= '2007-02-14 22:16:01'
+WHERE payment.payment_date < '2007-02-14 22:16:01.000'
 ORDER BY payment.payment_date ASC;
 `
 
 	query := Payment.SELECT(Payment.AllColumns).
-		WHERE(Payment.PaymentDate.LtEqL("2007-02-14 22:16:01")).
+		WHERE(Payment.PaymentDate.LT(Timestamp(2007, 02, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	assertQuery(t, query, expectedSql, "2007-02-14 22:16:01")
+	assertQuery(t, query, expectedSql, "2007-02-14 22:16:01.000")
 
 	payments := []model.Payment{}
 

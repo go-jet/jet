@@ -192,10 +192,8 @@ func ArgToString(value interface{}) string {
 	case string:
 		return `'` + bindVal + `'`
 	case []byte:
-		return string(bindVal)
+		return `'` + string(bindVal) + `'`
 		//TODO: implement
-	//case time.Time:
-	//	return bindVal.String())
 	default:
 		return "[Unknown type]"
 	}

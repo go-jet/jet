@@ -13,8 +13,6 @@ type expression interface {
 
 	IS_NULL() boolExpression
 	IS_NOT_NULL() boolExpression
-	IS_DISTINCT_FROM(expression expression) boolExpression
-	IS_NOT_DISTINCT_FROM(expression expression) boolExpression
 
 	IN(subQuery selectStatement) boolExpression
 	NOT_IN(subQuery selectStatement) boolExpression
@@ -35,14 +33,6 @@ func (e *expressionInterfaceImpl) IS_NULL() boolExpression {
 
 func (e *expressionInterfaceImpl) IS_NOT_NULL() boolExpression {
 	return newPostifxBoolExpression(e.parent, "IS NOT NULL")
-}
-
-func (e *expressionInterfaceImpl) IS_DISTINCT_FROM(expression expression) boolExpression {
-	return newBinaryBoolExpression(e.parent, expression, "IS DISTINCT FROM")
-}
-
-func (e *expressionInterfaceImpl) IS_NOT_DISTINCT_FROM(expression expression) boolExpression {
-	return newBinaryBoolExpression(e.parent, expression, "IS NOT DISTINCT FROM")
 }
 
 func (e *expressionInterfaceImpl) IN(subQuery selectStatement) boolExpression {

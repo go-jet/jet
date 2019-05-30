@@ -3,6 +3,7 @@ package tests
 import (
 	"fmt"
 	"github.com/google/uuid"
+	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
@@ -20,11 +21,159 @@ func TestAllTypesSelect(t *testing.T) {
 
 	assert.Equal(t, len(dest), 2)
 
-	assert.DeepEqual(t, dest[0], dest0)
-	assert.DeepEqual(t, dest[1], dest1)
+	assert.DeepEqual(t, dest[0], allTypesRow0)
+	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
 
-var dest0 = model.AllTypes{
+func TestStringOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Text.EQ(AllTypes.Character),
+		AllTypes.Text.EQ(String("Text")),
+		AllTypes.Text.NOT_EQ(AllTypes.CharacterVaryingPtr),
+		AllTypes.Text.NOT_EQ(String("Text")),
+		AllTypes.Text.GT(AllTypes.Text),
+		AllTypes.Text.GT(String("Text")),
+		AllTypes.Text.GT_EQ(AllTypes.TextPtr),
+		AllTypes.Text.GT_EQ(String("Text")),
+		AllTypes.Text.LT(AllTypes.Character),
+		AllTypes.Text.LT(String("Text")),
+		AllTypes.Text.LT_EQ(AllTypes.CharacterVaryingPtr),
+		AllTypes.Text.LT_EQ(String("Text")),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestExpressionOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Integer.IS_NULL(),
+		AllTypes.Timestamp.IS_NOT_NULL(),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestBoolOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Boolean.EQ(AllTypes.BooleanPtr),
+		AllTypes.Boolean.EQ(Bool(true)),
+		AllTypes.Boolean.NOT_EQ(AllTypes.BooleanPtr),
+		AllTypes.Boolean.NOT_EQ(Bool(false)),
+		AllTypes.Boolean.IS_DISTINCT_FROM(AllTypes.BooleanPtr),
+		AllTypes.Boolean.IS_DISTINCT_FROM(Bool(true)),
+		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(AllTypes.BooleanPtr),
+		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(Bool(true)),
+		AllTypes.Boolean.IS_TRUE(),
+		AllTypes.Boolean.IS_NOT_TRUE(),
+		AllTypes.Boolean.IS_NOT_FALSE(),
+		AllTypes.Boolean.IS_UNKNOWN(),
+		AllTypes.Boolean.IS_NOT_UNKNOWN(),
+
+		AllTypes.Boolean.AND(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)),
+		AllTypes.Boolean.OR(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestNumericOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Numeric.EQ(AllTypes.Numeric),
+		AllTypes.Decimal.EQ(Int(12)),
+		AllTypes.Real.EQ(Float(12.12)),
+		AllTypes.Smallint.NOT_EQ(AllTypes.Real),
+		AllTypes.Integer.NOT_EQ(Int(12)),
+		AllTypes.Bigint.NOT_EQ(Float(12)),
+		AllTypes.Numeric.IS_DISTINCT_FROM(AllTypes.Numeric),
+		AllTypes.Decimal.IS_DISTINCT_FROM(Int(12)),
+		AllTypes.Real.IS_DISTINCT_FROM(Float(12.12)),
+		AllTypes.Numeric.IS_NOT_DISTINCT_FROM(AllTypes.Numeric),
+		AllTypes.Decimal.IS_NOT_DISTINCT_FROM(Int(12)),
+		AllTypes.Real.IS_NOT_DISTINCT_FROM(Float(12.12)),
+		AllTypes.Numeric.LT(AllTypes.Integer),
+		AllTypes.Numeric.LT(Int(124)),
+		AllTypes.Numeric.LT(Float(34.56)),
+		AllTypes.Smallint.LT_EQ(AllTypes.Numeric),
+		AllTypes.Integer.LT_EQ(Int(45)),
+		AllTypes.Bigint.LT_EQ(Float(65)),
+		AllTypes.Numeric.GT(AllTypes.Smallint),
+		AllTypes.Numeric.GT(Int(124)),
+		AllTypes.Numeric.GT(Float(34.56)),
+		AllTypes.Smallint.GT_EQ(AllTypes.Numeric),
+		AllTypes.Integer.GT_EQ(Int(45)),
+		AllTypes.Bigint.GT_EQ(Float(65)),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestTimeOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Time.EQ(AllTypes.Time),
+		AllTypes.Time.EQ(Time(23, 6, 6, 1)),
+		AllTypes.Timez.EQ(AllTypes.TimezPtr),
+		AllTypes.Timez.EQ(Timez(23, 6, 6, 222, +200)),
+		AllTypes.Timestamp.EQ(AllTypes.TimestampPtr),
+		AllTypes.Timestamp.EQ(Timestamp(2010, 10, 21, 15, 30, 12, 333)),
+		AllTypes.Timestampz.EQ(AllTypes.TimestampzPtr),
+		AllTypes.Timestampz.EQ(Timestampz(2010, 10, 21, 15, 30, 12, 444, 0)),
+		AllTypes.Date.EQ(AllTypes.DatePtr),
+		AllTypes.Date.EQ(Date(2010, 12, 3)),
+
+		AllTypes.Time.NOT_EQ(AllTypes.Time),
+		AllTypes.Time.NOT_EQ(Time(23, 6, 6, 10)),
+		AllTypes.Timez.NOT_EQ(AllTypes.TimezPtr),
+		AllTypes.Timez.NOT_EQ(Timez(23, 6, 6, 555, +200)),
+		AllTypes.Timestamp.NOT_EQ(AllTypes.TimestampPtr),
+		AllTypes.Timestamp.NOT_EQ(Timestamp(2010, 10, 21, 15, 30, 12, 666)),
+		AllTypes.Timestampz.NOT_EQ(AllTypes.TimestampzPtr),
+		AllTypes.Timestampz.NOT_EQ(Timestampz(2010, 10, 21, 15, 30, 12, 777, 0)),
+		AllTypes.Date.NOT_EQ(AllTypes.DatePtr),
+		AllTypes.Date.NOT_EQ(Date(2010, 12, 3)),
+
+		AllTypes.Time.IS_DISTINCT_FROM(AllTypes.Time),
+		AllTypes.Time.IS_DISTINCT_FROM(Time(23, 6, 6, 100)),
+
+		AllTypes.Time.IS_NOT_DISTINCT_FROM(AllTypes.Time),
+		AllTypes.Time.IS_NOT_DISTINCT_FROM(Time(23, 6, 6, 200)),
+
+		AllTypes.Time.LT(AllTypes.Time),
+		AllTypes.Time.LT(Time(23, 6, 6, 22)),
+
+		AllTypes.Time.LT_EQ(AllTypes.Time),
+		AllTypes.Time.LT_EQ(Time(23, 6, 6, 33)),
+
+		AllTypes.Time.GT(AllTypes.Time),
+		AllTypes.Time.GT(Time(23, 6, 6, 0)),
+
+		AllTypes.Time.GT_EQ(AllTypes.Time),
+		AllTypes.Time.GT_EQ(Time(23, 6, 6, 1)),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+var allTypesRow0 = model.AllTypes{
 	SmallintPtr:        int16Ptr(1),
 	Smallint:           1,
 	IntegerPtr:         int32Ptr(300),
@@ -90,7 +239,7 @@ var dest0 = model.AllTypes{
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 }
 
-var dest1 = model.AllTypes{
+var allTypesRow1 = model.AllTypes{
 	SmallintPtr:        nil,
 	Smallint:           1,
 	IntegerPtr:         nil,

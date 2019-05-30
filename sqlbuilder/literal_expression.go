@@ -1,6 +1,6 @@
 package sqlbuilder
 
-import "time"
+import "fmt"
 
 // Representation of an escaped literal
 type literalExpression struct {
@@ -88,11 +88,78 @@ type timeLiteral struct {
 	literalExpression
 }
 
-func Time(value time.Time) timeExpression {
+func Time(hour, minute, second, milliseconds int) timeExpression {
 	timeLiteral := timeLiteral{}
-	timeLiteral.literalExpression = *Literal(value)
+	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
+	timeLiteral.literalExpression = *Literal(timeStr)
 
 	timeLiteral.timeInterfaceImpl.parent = &timeLiteral
 
 	return &timeLiteral
+}
+
+//---------------------------------------------------//
+type timezLiteral struct {
+	timezInterfaceImpl
+	literalExpression
+}
+
+func Timez(hour, minute, second, milliseconds, timezone int) timezExpression {
+	timezLiteral := timezLiteral{}
+	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
+	timezLiteral.literalExpression = *Literal(timeStr)
+
+	timezLiteral.timezInterfaceImpl.parent = &timezLiteral
+
+	return &timezLiteral
+}
+
+//---------------------------------------------------//
+type timestampLiteral struct {
+	timestampInterfaceImpl
+	literalExpression
+}
+
+func Timestamp(year, month, day, hour, minute, second, milliseconds int) TimestampExpression {
+	timestampLiteral := timestampLiteral{}
+	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d", year, month, day, hour, minute, second, milliseconds)
+	timestampLiteral.literalExpression = *Literal(timeStr)
+
+	timestampLiteral.timestampInterfaceImpl.parent = &timestampLiteral
+
+	return &timestampLiteral
+}
+
+//---------------------------------------------------//
+type timestampzLiteral struct {
+	timestampzInterfaceImpl
+	literalExpression
+}
+
+func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone int) TimestampzExpression {
+	timestampzLiteral := timestampzLiteral{}
+	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
+		year, month, day, hour, minute, second, milliseconds, timezone)
+
+	timestampzLiteral.literalExpression = *Literal(timeStr)
+
+	timestampzLiteral.timestampzInterfaceImpl.parent = &timestampzLiteral
+
+	return &timestampzLiteral
+}
+
+//---------------------------------------------------//
+type dateLiteral struct {
+	dateInterfaceImpl
+	literalExpression
+}
+
+func Date(year, month, day int) DateExpression {
+	dateLiteral := dateLiteral{}
+
+	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
+	dateLiteral.literalExpression = *Literal(timeStr)
+	dateLiteral.dateInterfaceImpl.parent = &dateLiteral
+
+	return &dateLiteral
 }

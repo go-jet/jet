@@ -19,6 +19,14 @@ func NOT_EQ(lhs, rhs expression) boolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "!=")
 }
 
+func IS_DISTINCT_FROM(lhs, rhs expression) boolExpression {
+	return newBinaryBoolExpression(lhs, rhs, "IS DISTINCT FROM")
+}
+
+func IS_NOT_DISTINCT_FROM(lhs, rhs expression) boolExpression {
+	return newBinaryBoolExpression(lhs, rhs, "IS NOT DISTINCT FROM")
+}
+
 // Returns a representation of "a<b"
 func LT(lhs expression, rhs expression) boolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "<")

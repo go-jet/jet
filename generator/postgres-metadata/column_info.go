@@ -20,8 +20,16 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 		return "BoolColumn"
 	case "smallint", "integer", "bigint":
 		return "IntegerColumn"
-	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone":
+	case "date":
+		return "DateColumn"
+	case "timestamp without time zone":
+		return "TimestampColumn"
+	case "timestamp with time zone":
+		return "TimestampzColumn"
+	case "time without time zone":
 		return "TimeColumn"
+	case "time with time zone":
+		return "TimezColumn"
 	case "USER-DEFINED", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY":
 		return "StringColumn"

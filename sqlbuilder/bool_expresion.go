@@ -5,6 +5,8 @@ type boolExpression interface {
 
 	EQ(expression boolExpression) boolExpression
 	NOT_EQ(expression boolExpression) boolExpression
+	IS_DISTINCT_FROM(rhs boolExpression) boolExpression
+	IS_NOT_DISTINCT_FROM(rhs boolExpression) boolExpression
 
 	IS_TRUE() boolExpression
 	IS_NOT_TRUE() boolExpression
@@ -27,6 +29,14 @@ func (b *boolInterfaceImpl) EQ(expression boolExpression) boolExpression {
 
 func (b *boolInterfaceImpl) NOT_EQ(expression boolExpression) boolExpression {
 	return NOT_EQ(b.parent, expression)
+}
+
+func (b *boolInterfaceImpl) IS_DISTINCT_FROM(rhs boolExpression) boolExpression {
+	return IS_DISTINCT_FROM(b.parent, rhs)
+}
+
+func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs boolExpression) boolExpression {
+	return IS_NOT_DISTINCT_FROM(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) AND(expression boolExpression) boolExpression {

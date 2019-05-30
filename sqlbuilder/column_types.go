@@ -85,13 +85,89 @@ type TimeColumn struct {
 // Representation of any integer column
 // This function will panic if name is not valid
 func NewTimeColumn(name string, nullable NullableColumn) *TimeColumn {
-	stringColumn := &TimeColumn{}
+	timeColumn := &TimeColumn{}
 
-	stringColumn.timeInterfaceImpl.parent = stringColumn
+	timeColumn.timeInterfaceImpl.parent = timeColumn
 
-	stringColumn.baseColumn = newBaseColumn(name, nullable, "", stringColumn)
+	timeColumn.baseColumn = newBaseColumn(name, nullable, "", timeColumn)
 
-	return stringColumn
+	return timeColumn
+}
+
+//------------------------------------------------------//
+type TimezColumn struct {
+	timezInterfaceImpl
+
+	baseColumn
+}
+
+// Representation of any integer column
+// This function will panic if name is not valid
+func NewTimezColumn(name string, nullable NullableColumn) *TimezColumn {
+	timezColumn := &TimezColumn{}
+
+	timezColumn.timezInterfaceImpl.parent = timezColumn
+
+	timezColumn.baseColumn = newBaseColumn(name, nullable, "", timezColumn)
+
+	return timezColumn
+}
+
+//------------------------------------------------------//
+type TimestampColumn struct {
+	timestampInterfaceImpl
+
+	baseColumn
+}
+
+// Representation of any integer column
+// This function will panic if name is not valid
+func NewTimestampColumn(name string, nullable NullableColumn) *TimestampColumn {
+	timestampColumn := &TimestampColumn{}
+
+	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
+
+	timestampColumn.baseColumn = newBaseColumn(name, nullable, "", timestampColumn)
+
+	return timestampColumn
+}
+
+//------------------------------------------------------//
+type TimestampzColumn struct {
+	timestampzInterfaceImpl
+
+	baseColumn
+}
+
+// Representation of any integer column
+// This function will panic if name is not valid
+func NewTimestampzColumn(name string, nullable NullableColumn) *TimestampzColumn {
+	timestampzColumn := &TimestampzColumn{}
+
+	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
+
+	timestampzColumn.baseColumn = newBaseColumn(name, nullable, "", timestampzColumn)
+
+	return timestampzColumn
+}
+
+//------------------------------------------------------//
+type DateColumn struct {
+	dateInterfaceImpl
+
+	baseColumn
+}
+
+// Representation of any integer column
+// This function will panic if name is not valid
+func NewDateColumn(name string, nullable NullableColumn) *DateColumn {
+	dateColumn := &DateColumn{}
+
+	dateColumn.dateInterfaceImpl.parent = dateColumn
+
+	dateColumn.baseColumn = newBaseColumn(name, nullable, "", dateColumn)
+
+	return dateColumn
 }
 
 // ------------------------------------------------------//
