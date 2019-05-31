@@ -149,7 +149,7 @@ func (c *caseOperatorImpl) ELSE(els expression) caseOperatorExpression {
 	return c
 }
 
-func (c *caseOperatorImpl) serialize(statement statementType, out *queryData) error {
+func (c *caseOperatorImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if c == nil {
 		return errors.New("Case expression is nil. ")
 	}
@@ -174,14 +174,14 @@ func (c *caseOperatorImpl) serialize(statement statementType, out *queryData) er
 
 	for i, when := range c.when {
 		out.writeString("WHEN")
-		err := when.serialize(statement, out)
+		err := when.serialize(statement, out, NO_WRAP)
 
 		if err != nil {
 			return err
 		}
 
 		out.writeString("THEN")
-		err = c.then[i].serialize(statement, out)
+		err = c.then[i].serialize(statement, out, NO_WRAP)
 
 		if err != nil {
 			return err
@@ -190,7 +190,7 @@ func (c *caseOperatorImpl) serialize(statement statementType, out *queryData) er
 
 	if c.els != nil {
 		out.writeString("ELSE")
-		err := c.els.serialize(statement, out)
+		err := c.els.serialize(statement, out, NO_WRAP)
 
 		if err != nil {
 			return err

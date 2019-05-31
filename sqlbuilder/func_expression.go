@@ -28,7 +28,7 @@ func newFunc(name string, expressions []expression, parent expression) *funcExpr
 	return funcExp
 }
 
-func (f *funcExpressionImpl) serialize(statement statementType, out *queryData) error {
+func (f *funcExpressionImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if f == nil {
 		return errors.New("Function expression is nil. ")
 	}

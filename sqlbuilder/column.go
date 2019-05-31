@@ -96,7 +96,7 @@ func (c *baseColumn) serializeAsOrderBy(statement statementType, out *queryData)
 	return c.serialize(statement, out)
 }
 
-func (c baseColumn) serialize(statement statementType, out *queryData) error {
+func (c baseColumn) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 
 	columnRef := ""
 

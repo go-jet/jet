@@ -6,7 +6,7 @@ const (
 
 type keywordClause string
 
-func (k keywordClause) serialize(statement statementType, out *queryData) error {
+func (k keywordClause) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	out.writeString(string(k))
 
 	return nil

@@ -7,13 +7,13 @@ import (
 )
 
 func TestBoolExpressionEQ(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColBool.EQ(table2ColBool)), "table1.colBool = table2.colBool")
-	assert.Equal(t, getTestSerialize(t, table1ColBool.AND(table2ColBool).EQ(table2ColBool)), "table1.colBool AND table2.colBool = table2.colBool")
+	assert.Equal(t, getTestSerialize(t, table1ColBool.EQ(table2ColBool)), "(table1.colBool = table2.colBool)")
+	assert.Equal(t, getTestSerialize(t, table1ColBool.AND(table2ColBool).EQ(table2ColBool)), "((table1.colBool AND table2.colBool) = table2.colBool)")
 }
 
 func TestBoolExpressionNOT_EQ(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColBool.NOT_EQ(table2ColBool)), "table1.colBool != table2.colBool")
-	assert.Equal(t, getTestSerialize(t, table1ColBool.AND(table2ColBool).NOT_EQ(table2ColBool)), "table1.colBool AND table2.colBool != table2.colBool")
+	assert.Equal(t, getTestSerialize(t, table1ColBool.NOT_EQ(table2ColBool)), "(table1.colBool != table2.colBool)")
+	assert.Equal(t, getTestSerialize(t, table1ColBool.AND(table2ColBool).NOT_EQ(table2ColBool)), "((table1.colBool AND table2.colBool) != table2.colBool)")
 }
 
 func TestBoolExpressionIS_TRUE(t *testing.T) {
@@ -48,7 +48,7 @@ func TestBinaryExpression(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	assert.Equal(t, out.buff.String(), "$1 = $2")
+	assert.Equal(t, out.buff.String(), "($1 = $2)")
 	assert.Equal(t, len(out.args), 2)
 
 	t.Run("alias", func(t *testing.T) {
@@ -58,7 +58,7 @@ func TestBinaryExpression(t *testing.T) {
 		err := alias.serializeForProjection(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `$1 = $2 AS "alias_eq_expression"`)
+		assert.Equal(t, out.buff.String(), `($1 = $2) AS "alias_eq_expression"`)
 	})
 
 	t.Run("and", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestBinaryExpression(t *testing.T) {
 		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `($1 = $2 AND $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `(($1 = $2) AND ($3 = $4))`)
 	})
 
 	t.Run("or", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestBinaryExpression(t *testing.T) {
 		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `($1 = $2 OR $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `(($1 = $2) OR ($3 = $4))`)
 	})
 }
 
@@ -89,7 +89,7 @@ func TestUnaryExpression(t *testing.T) {
 	err := notExpression.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "NOT $1 = $2")
+	assert.Equal(t, out.buff.String(), "NOT ($1 = $2)")
 
 	t.Run("alias", func(t *testing.T) {
 		alias := notExpression.AS("alias_not_expression")
@@ -98,7 +98,7 @@ func TestUnaryExpression(t *testing.T) {
 		err := alias.serializeForProjection(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `NOT $1 = $2 AS "alias_not_expression"`)
+		assert.Equal(t, out.buff.String(), `NOT ($1 = $2) AS "alias_not_expression"`)
 	})
 
 	t.Run("and", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestUnaryExpression(t *testing.T) {
 		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `(NOT $1 = $2 AND $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `(NOT ($1 = $2) AND ($3 = $4))`)
 	})
 }
 
@@ -119,7 +119,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "$1 = $2 IS TRUE")
+	assert.Equal(t, out.buff.String(), "($1 = $2) IS TRUE")
 
 	t.Run("and", func(t *testing.T) {
 		exp := exp.AND(EQ(Literal(4), Literal(5)))
@@ -128,7 +128,7 @@ func TestUnaryIsTrueExpression(t *testing.T) {
 		err := exp.serialize(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `($1 = $2 IS TRUE AND $3 = $4)`)
+		assert.Equal(t, out.buff.String(), `(($1 = $2) IS TRUE AND ($3 = $4))`)
 	})
 }
 
@@ -170,7 +170,7 @@ func TestIn(t *testing.T) {
 	query := Literal(1.11).IN(table1.SELECT(table1Col1))
 
 	out := queryData{}
-	err := query.serialize(select_statement, &out)
+	err := query.serialize(select_statement, &out, NO_WRAP)
 
 	assert.NilError(t, err)
 	fmt.Println(out.buff.String())

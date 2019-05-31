@@ -85,7 +85,7 @@ func (s *selectStatementImpl) FROM(table readableTable) selectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) serialize(statement statementType, out *queryData) error {
+func (s *selectStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if s == nil {
 		return errors.New("Select statement is nil. ")
 	}

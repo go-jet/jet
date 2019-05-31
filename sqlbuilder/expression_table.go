@@ -48,7 +48,7 @@ func (e *expressionTableImpl) RefStringColumn(column column) *StringColumn {
 	return strColumn
 }
 
-func (e *expressionTableImpl) serialize(statement statementType, out *queryData) error {
+func (e *expressionTableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if e == nil {
 		return errors.New("Expression table is nil. ")
 	}

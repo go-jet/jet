@@ -83,21 +83,7 @@ func newBinaryExpression(lhs, rhs expression, operator string, parent ...express
 	return binaryExpression
 }
 
-func isSimpleOperand(expression expression) bool {
-	if _, ok := expression.(*literalExpression); ok {
-		return true
-	}
-	if _, ok := expression.(column); ok {
-		return true
-	}
-	if _, ok := expression.(*floatFunc); ok {
-		return true
-	}
-
-	return false
-}
-
-func (c *binaryOpExpression) serialize(statement statementType, out *queryData) error {
+func (c *binaryOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if c == nil {
 		return errors.New("Binary expression is nil.")
 	}
@@ -108,7 +94,7 @@ func (c *binaryOpExpression) serialize(statement statementType, out *queryData) 
 		return errors.Newf("nil rhs.")
 	}
 
-	wrap := !isSimpleOperand(c.lhs) && !isSimpleOperand(c.rhs)
+	wrap := !contains(options, NO_WRAP)
 
 	if wrap {
 		out.writeString("(")
@@ -146,7 +132,7 @@ func newPrefixExpression(expression expression, operator string) prefixOpExpress
 	return prefixExpression
 }
 
-func (p *prefixOpExpression) serialize(statement statementType, out *queryData) error {
+func (p *prefixOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if p == nil {
 		return errors.New("Prefix expression is nil.")
 	}
@@ -178,7 +164,7 @@ func newPostfixOpExpression(expression expression, operator string) postfixOpExp
 	return postfixOpExpression
 }
 
-func (p *postfixOpExpression) serialize(statement statementType, out *queryData) error {
+func (p *postfixOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if p == nil {
 		return errors.New("Postifx operator expression is nil.")
 	}

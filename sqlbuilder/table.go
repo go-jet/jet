@@ -107,7 +107,7 @@ func (t *Table) Columns() []column {
 
 // Generates the sql string for the current tableName expression.  Note: the
 // generated string may not be a valid/executable sql Statement.
-func (t *Table) serialize(statement statementType, out *queryData) error {
+func (t *Table) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if t == nil {
 		return errors.Newf("Table is nil. ")
 	}
@@ -271,7 +271,7 @@ func (t *joinTable) Column(name string) column {
 	}
 }
 
-func (t *joinTable) serialize(statement statementType, out *queryData) (err error) {
+func (t *joinTable) serialize(statement statementType, out *queryData, options ...serializeOption) (err error) {
 	if t == nil {
 		return errors.New("Join table is nil. ")
 	}

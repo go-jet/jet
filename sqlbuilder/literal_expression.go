@@ -15,7 +15,7 @@ func Literal(value interface{}) *literalExpression {
 	return &exp
 }
 
-func (l literalExpression) serialize(statement statementType, out *queryData) error {
+func (l literalExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	out.insertArgument(l.value)
 
 	return nil

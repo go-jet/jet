@@ -5,8 +5,24 @@ import (
 	"strconv"
 )
 
+type serializeOption int
+
+const (
+	NO_WRAP serializeOption = iota
+)
+
 type clause interface {
-	serialize(statement statementType, out *queryData) error
+	serialize(statement statementType, out *queryData, options ...serializeOption) error
+}
+
+func contains(options []serializeOption, option serializeOption) bool {
+	for _, opt := range options {
+		if opt == option {
+			return true
+		}
+	}
+
+	return false
 }
 
 type queryData struct {
@@ -65,7 +81,7 @@ func (q *queryData) writeWhere(statement statementType, where expression) error 
 	q.writeString("WHERE")
 
 	q.increaseIdent()
-	err := where.serialize(statement, q)
+	err := where.serialize(statement, q, NO_WRAP)
 	q.decreaseIdent()
 
 	return err
@@ -98,7 +114,7 @@ func (q *queryData) writeHaving(statement statementType, having expression) erro
 	q.writeString("HAVING")
 
 	q.increaseIdent()
-	err := having.serialize(statement, q)
+	err := having.serialize(statement, q, NO_WRAP)
 	q.decreaseIdent()
 
 	return err

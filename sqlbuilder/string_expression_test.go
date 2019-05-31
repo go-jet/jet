@@ -12,7 +12,7 @@ func TestStringEQColumn(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 = table2.colStr")
+	assert.Equal(t, out.buff.String(), "(table3.col2 = table2.colStr)")
 }
 
 func TestStringEQString(t *testing.T) {
@@ -22,7 +22,7 @@ func TestStringEQString(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 = $1")
+	assert.Equal(t, out.buff.String(), "(table3.col2 = $1)")
 }
 
 func TestStringNOT_EQ(t *testing.T) {
@@ -32,7 +32,7 @@ func TestStringNOT_EQ(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 != table2.colStr")
+	assert.Equal(t, out.buff.String(), "(table3.col2 != table2.colStr)")
 }
 
 func TestStringGT(t *testing.T) {
@@ -42,7 +42,7 @@ func TestStringGT(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 > table2.colStr")
+	assert.Equal(t, out.buff.String(), "(table3.col2 > table2.colStr)")
 }
 
 func TestStringGT_EQ(t *testing.T) {
@@ -52,7 +52,7 @@ func TestStringGT_EQ(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 >= table2.colStr")
+	assert.Equal(t, out.buff.String(), "(table3.col2 >= table2.colStr)")
 }
 
 func TestStringLT(t *testing.T) {
@@ -62,7 +62,7 @@ func TestStringLT(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 < table2.colStr")
+	assert.Equal(t, out.buff.String(), "(table3.col2 < table2.colStr)")
 }
 
 func TestStringLT_EQ(t *testing.T) {
@@ -72,5 +72,5 @@ func TestStringLT_EQ(t *testing.T) {
 	err := exp.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "table3.col2 <= table2.colStr")
+	assert.Equal(t, out.buff.String(), "(table3.col2 <= table2.colStr)")
 }

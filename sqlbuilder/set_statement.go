@@ -98,7 +98,7 @@ func (us *setStatementImpl) AsTable(alias string) expressionTable {
 	}
 }
 
-func (s *setStatementImpl) serialize(statement statementType, out *queryData) error {
+func (s *setStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if s == nil {
 		return errors.New("Set statement is nil. ")
 	}

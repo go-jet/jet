@@ -111,7 +111,7 @@ func newFloatExpressionWrap(expression expression) FloatExpression {
 	return &floatExpressionWrap
 }
 
-func (n *floatExpressionWrapper) serialize(statement statementType, out *queryData) error {
+func (n *floatExpressionWrapper) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if n == nil {
 		return errors.New("Float expression wrapper is nil. ")
 	}
