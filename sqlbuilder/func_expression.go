@@ -44,126 +44,58 @@ func (f *funcExpressionImpl) serialize(statement statementType, out *queryData) 
 	return nil
 }
 
-type numericFunc struct {
+// ------------------- FLOAT FUNCTIONS --------------------------//
+
+type floatFunc struct {
 	funcExpressionImpl
-	numericInterfaceImpl
+	floatInterfaceImpl
 }
 
-func NewNumericFunc(name string, expressions ...expression) numericExpression {
-	numericFunc := &numericFunc{}
+func newFloatFunc(name string, expressions ...expression) FloatExpression {
+	floatFunc := &floatFunc{}
 
-	numericFunc.funcExpressionImpl = *newFunc(name, expressions, numericFunc)
-	numericFunc.numericInterfaceImpl.parent = numericFunc
+	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
+	floatFunc.floatInterfaceImpl.parent = floatFunc
 
-	return numericFunc
+	return floatFunc
 }
 
-func COUNT(expression numericExpression) numericExpression {
-	return NewNumericFunc("COUNT", expression)
+func COUNTf(floatExpression FloatExpression) FloatExpression {
+	return newFloatFunc("COUNT", floatExpression)
 }
 
-func MAX(expression numericExpression) numericExpression {
-	return NewNumericFunc("MAX", expression)
+func MAXf(floatExpression FloatExpression) FloatExpression {
+	return newFloatFunc("MAX", floatExpression)
 }
 
-func SUM(expression numericExpression) numericExpression {
-	return NewNumericFunc("SUM", expression)
+func SUMf(floatExpression FloatExpression) FloatExpression {
+	return newFloatFunc("SUM", floatExpression)
 }
 
-type caseInterface interface {
-	expression
+// ------------------- FLOAT FUNCTIONS --------------------------//
 
-	WHEN(condition expression) caseInterface
-	THEN(then expression) caseInterface
-	ELSE(els expression) caseInterface
+type integerFunc struct {
+	funcExpressionImpl
+	integerInterfaceImpl
 }
 
-type caseExpression struct {
-	expressionInterfaceImpl
+func newIntegerFunc(name string, expressions ...expression) IntegerExpression {
+	floatFunc := &integerFunc{}
 
-	expression expression
-	when       []expression
-	then       []expression
-	els        expression
+	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
+	floatFunc.integerInterfaceImpl.parent = floatFunc
+
+	return floatFunc
 }
 
-func CASE(expression ...expression) caseInterface {
-	caseExp := &caseExpression{}
-
-	if len(expression) == 1 {
-		caseExp.expression = expression[0]
-	}
-
-	caseExp.expressionInterfaceImpl.parent = caseExp
-
-	return caseExp
+func COUNTi(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("COUNT", integerExpression)
 }
 
-func (c *caseExpression) WHEN(when expression) caseInterface {
-	c.when = append(c.when, when)
-	return c
+func MAXi(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("MAX", integerExpression)
 }
 
-func (c *caseExpression) THEN(then expression) caseInterface {
-	c.then = append(c.then, then)
-	return c
-}
-
-func (c *caseExpression) ELSE(els expression) caseInterface {
-	c.els = els
-
-	return c
-}
-
-func (c *caseExpression) serialize(statement statementType, out *queryData) error {
-	if c == nil {
-		return errors.New("Case expression is nil. ")
-	}
-
-	out.writeString("(CASE")
-
-	if c.expression != nil {
-		err := c.expression.serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if len(c.when) == 0 || len(c.then) == 0 {
-		return errors.New("Invalid case Statement. There should be at least one when/then expression pair. ")
-	}
-
-	if len(c.when) != len(c.then) {
-		return errors.New("When and then expression count mismatch. ")
-	}
-
-	for i, when := range c.when {
-		out.writeString("WHEN")
-		err := when.serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
-
-		out.writeString("THEN")
-		err = c.then[i].serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	if c.els != nil {
-		out.writeString("ELSE")
-		err := c.els.serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	out.writeString("END)")
-
-	return nil
+func SUMi(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("SUM", integerExpression)
 }

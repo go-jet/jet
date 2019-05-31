@@ -6,7 +6,7 @@ import (
 )
 
 var table1Col1 = NewIntegerColumn("col1", Nullable)
-var table1Col2 = NewIntegerColumn("col2", Nullable)
+var table1ColFloat = NewFloatColumn("colFloat", Nullable)
 var table1Col3 = NewIntegerColumn("col3", Nullable)
 var table1ColTime = NewTimeColumn("colTime", Nullable)
 var table1ColBool = NewBoolColumn("colBool", Nullable)
@@ -15,7 +15,7 @@ var table1 = NewTable(
 	"db",
 	"table1",
 	table1Col1,
-	table1Col2,
+	table1ColFloat,
 	table1Col3,
 	table1ColTime,
 	table1ColBool)

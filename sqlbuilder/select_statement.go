@@ -13,9 +13,9 @@ type selectStatement interface {
 
 	DISTINCT() selectStatement
 	FROM(table readableTable) selectStatement
-	WHERE(expression boolExpression) selectStatement
+	WHERE(expression BoolExpression) selectStatement
 	GROUP_BY(groupByClauses ...groupByClause) selectStatement
-	HAVING(boolExpression boolExpression) selectStatement
+	HAVING(boolExpression BoolExpression) selectStatement
 	ORDER_BY(orderByClauses ...orderByClause) selectStatement
 
 	LIMIT(limit int64) selectStatement
@@ -39,9 +39,9 @@ type selectStatementImpl struct {
 	table       readableTable
 	distinct    bool
 	projections []projection
-	where       boolExpression
+	where       BoolExpression
 	groupBy     []groupByClause
-	having      boolExpression
+	having      BoolExpression
 	orderBy     []orderByClause
 
 	limit, offset int64
@@ -217,7 +217,7 @@ func (s *selectStatementImpl) AsTable(alias string) expressionTable {
 	}
 }
 
-func (s *selectStatementImpl) WHERE(expression boolExpression) selectStatement {
+func (s *selectStatementImpl) WHERE(expression BoolExpression) selectStatement {
 	s.where = expression
 	return s
 }
@@ -227,7 +227,7 @@ func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) selectSt
 	return s
 }
 
-func (s *selectStatementImpl) HAVING(expression boolExpression) selectStatement {
+func (s *selectStatementImpl) HAVING(expression BoolExpression) selectStatement {
 	s.having = expression
 	return s
 }
@@ -267,6 +267,6 @@ func (s *selectStatementImpl) Execute(db execution.Db) (res sql.Result, err erro
 	return Execute(s, db)
 }
 
-func NumExp(expression expression) numericExpression {
-	return newNumericExpressionWrap(expression)
+func NumExp(expression expression) FloatExpression {
+	return newFloatExpressionWrap(expression)
 }

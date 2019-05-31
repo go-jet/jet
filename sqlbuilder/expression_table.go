@@ -71,7 +71,7 @@ func (e *expressionTableImpl) SELECT(projections ...projection) selectStatement 
 }
 
 // Creates a inner join tableName expression using onCondition.
-func (e *expressionTableImpl) INNER_JOIN(table readableTable, onCondition boolExpression) readableTable {
+func (e *expressionTableImpl) INNER_JOIN(table readableTable, onCondition BoolExpression) readableTable {
 	return InnerJoinOn(e, table, onCondition)
 }
 
@@ -80,16 +80,16 @@ func (e *expressionTableImpl) INNER_JOIN(table readableTable, onCondition boolEx
 //}
 
 // Creates a left join tableName expression using onCondition.
-func (e *expressionTableImpl) LEFT_JOIN(table readableTable, onCondition boolExpression) readableTable {
+func (e *expressionTableImpl) LEFT_JOIN(table readableTable, onCondition BoolExpression) readableTable {
 	return LeftJoinOn(e, table, onCondition)
 }
 
 // Creates a right join tableName expression using onCondition.
-func (e *expressionTableImpl) RIGHT_JOIN(table readableTable, onCondition boolExpression) readableTable {
+func (e *expressionTableImpl) RIGHT_JOIN(table readableTable, onCondition BoolExpression) readableTable {
 	return RightJoinOn(e, table, onCondition)
 }
 
-func (e *expressionTableImpl) FULL_JOIN(table readableTable, onCondition boolExpression) readableTable {
+func (e *expressionTableImpl) FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable {
 	return FullJoin(e, table, onCondition)
 }
 

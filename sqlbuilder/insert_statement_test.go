@@ -20,7 +20,7 @@ func TestInsertNoRow(t *testing.T) {
 }
 
 func TestInsertColumnLengthMismatch(t *testing.T) {
-	_, _, err := table1.INSERT(table1Col1, table1Col2).VALUES(nil).Sql()
+	_, _, err := table1.INSERT(table1Col1, table1ColFloat).VALUES(nil).Sql()
 
 	//fmt.Println(err)
 	assert.Assert(t, err != nil)
@@ -66,7 +66,7 @@ INSERT INTO db.table1 (colTime) VALUES
 }
 
 func TestInsertMultipleValues(t *testing.T) {
-	stmt := table1.INSERT(table1Col1, table1Col2, table1Col3)
+	stmt := table1.INSERT(table1Col1, table1ColFloat, table1Col3)
 	stmt.VALUES(1, 2, 3)
 
 	sql, _, err := stmt.Sql()
@@ -75,7 +75,7 @@ func TestInsertMultipleValues(t *testing.T) {
 	fmt.Println(sql)
 
 	expectedSql := `
-INSERT INTO db.table1 (col1,col2,col3) VALUES
+INSERT INTO db.table1 (col1,colFloat,col3) VALUES
      ($1, $2, $3);
 `
 
@@ -83,7 +83,7 @@ INSERT INTO db.table1 (col1,col2,col3) VALUES
 }
 
 func TestInsertMultipleRows(t *testing.T) {
-	stmt := table1.INSERT(table1Col1, table1Col2).
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES(1, 2).
 		VALUES(11, 22).
 		VALUES(111, 222)
@@ -94,7 +94,7 @@ func TestInsertMultipleRows(t *testing.T) {
 	fmt.Println(sql)
 
 	expectedSql := `
-INSERT INTO db.table1 (col1,col2) VALUES
+INSERT INTO db.table1 (col1,colFloat) VALUES
      ($1, $2),
      ($3, $4),
      ($5, $6);
@@ -105,16 +105,16 @@ INSERT INTO db.table1 (col1,col2) VALUES
 
 func TestInsertValuesFromModel(t *testing.T) {
 	type Table1Model struct {
-		Col1 int
-		Col2 string
+		Col1     int
+		ColFloat float64
 	}
 
 	toInsert := Table1Model{
-		Col1: 1,
-		Col2: "one",
+		Col1:     1,
+		ColFloat: 1.11,
 	}
 
-	stmt := table1.INSERT(table1Col1, table1Col2).
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES_MAPPING(toInsert)
 
 	sql, _, err := stmt.Sql()
@@ -124,7 +124,7 @@ func TestInsertValuesFromModel(t *testing.T) {
 	fmt.Println(sql)
 
 	assert.Equal(t, sql, `
-INSERT INTO db.table1 (col1,col2) VALUES
+INSERT INTO db.table1 (col1,colFloat) VALUES
      ($1, $2);
 `)
 }
@@ -140,7 +140,7 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 		Col2:     "one",
 	}
 
-	stmt := table1.INSERT(table1Col1, table1Col2).
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES_MAPPING(toInsert)
 
 	_, _, err := stmt.Sql()
@@ -162,7 +162,7 @@ func TestInsertQuery(t *testing.T) {
 }
 
 func TestInsertDefaultValue(t *testing.T) {
-	stmt := table1.INSERT(table1Col1, table1Col2).
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES(DEFAULT, "two")
 
 	stmtStr, _, err := stmt.Sql()

@@ -20,7 +20,7 @@ func (s *TableSuite) TestBasicColumns(c *gc.C) {
 
 	c.Assert(len(cols), gc.Equals, 4)
 	c.Assert(cols[0], gc.Equals, table1Col1)
-	c.Assert(cols[1], gc.Equals, table1Col2)
+	c.Assert(cols[1], gc.Equals, table1ColFloat)
 	c.Assert(cols[2], gc.Equals, table1Col3)
 	c.Assert(cols[3], gc.Equals, table1ColTime)
 }
@@ -126,7 +126,7 @@ func (s *TableSuite) TestRightJoin(c *gc.C) {
 //	cols := join.Columns()
 //	c.Assert(len(cols), gc.Equals, 6)
 //	c.Assert(cols[0], gc.Equals, table1Col1)
-//	c.Assert(cols[1], gc.Equals, table1Col2)
+//	c.Assert(cols[1], gc.Equals, table1ColFloat)
 //	c.Assert(cols[2], gc.Equals, table1Col3)
 //	c.Assert(cols[3], gc.Equals, table1ColTime)
 //	c.Assert(cols[4], gc.Equals, table2Col3)

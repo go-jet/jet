@@ -62,7 +62,7 @@ func TestNewIntColumn(t *testing.T) {
 }
 
 func TestNewNumericColumnColumn(t *testing.T) {
-	numericColumn := NewNumericColumn("col", Nullable)
+	numericColumn := NewFloatColumn("col", Nullable)
 
 	out := queryData{}
 	err := numericColumn.serialize(select_statement, &out)

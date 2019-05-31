@@ -10,7 +10,7 @@ type updateStatement interface {
 	Statement
 
 	SET(values ...interface{}) updateStatement
-	WHERE(expression boolExpression) updateStatement
+	WHERE(expression BoolExpression) updateStatement
 	RETURNING(projections ...projection) updateStatement
 }
 
@@ -25,7 +25,7 @@ type updateStatementImpl struct {
 	table        writableTable
 	columns      []column
 	updateValues []clause
-	where        boolExpression
+	where        BoolExpression
 	returning    []projection
 }
 
@@ -42,7 +42,7 @@ func (u *updateStatementImpl) SET(values ...interface{}) updateStatement {
 	return u
 }
 
-func (u *updateStatementImpl) WHERE(expression boolExpression) updateStatement {
+func (u *updateStatementImpl) WHERE(expression BoolExpression) updateStatement {
 	u.where = expression
 	return u
 }

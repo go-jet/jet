@@ -77,7 +77,7 @@ func (s *ExprSuite) TestRegexExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestAndExpr(c *gc.C) {
-	expr := And(EqL(table1Col1, 1), EqL(table1Col2, 2), EqL(table1Col3, 3))
+	expr := And(EqL(table1Col1, 1), EqL(table1ColFloat, 2), EqL(table1Col3, 3))
 
 	buf := &bytes.Buffer{}
 
@@ -92,7 +92,7 @@ func (s *ExprSuite) TestAndExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestOrExpr(c *gc.C) {
-	expr := Or(EqL(table1Col1, 1), EqL(table1Col2, 2), EqL(table1Col3, 3))
+	expr := Or(EqL(table1Col1, 1), EqL(table1ColFloat, 2), EqL(table1Col3, 3))
 
 	buf := &bytes.Buffer{}
 
@@ -331,7 +331,7 @@ func (s *ExprSuite) TestSqlFuncExprEmptyArgList(c *gc.C) {
 }
 
 func (s *ExprSuite) TestSqlFuncExprNonEmptyArgList(c *gc.C) {
-	expr := SqlFunc("add", table1Col1, table1Col2)
+	expr := SqlFunc("add", table1Col1, table1ColFloat)
 
 	buf := &bytes.Buffer{}
 

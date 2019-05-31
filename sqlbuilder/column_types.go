@@ -18,25 +18,24 @@ func NewBoolColumn(name string, nullable NullableColumn) *BoolColumn {
 }
 
 //------------------------------------------------------//
-type NumericColumn struct {
-	numericInterfaceImpl
+type FloatColumn struct {
+	floatInterfaceImpl
 	baseColumn
 }
 
-func NewNumericColumn(name string, nullable NullableColumn) *NumericColumn {
+func NewFloatColumn(name string, nullable NullableColumn) *FloatColumn {
 
-	numericColumn := &NumericColumn{}
+	floatColumn := &FloatColumn{}
 
-	numericColumn.numericInterfaceImpl.parent = numericColumn
+	floatColumn.floatInterfaceImpl.parent = floatColumn
 
-	numericColumn.baseColumn = newBaseColumn(name, nullable, "", numericColumn)
+	floatColumn.baseColumn = newBaseColumn(name, nullable, "", floatColumn)
 
-	return numericColumn
+	return floatColumn
 }
 
 //------------------------------------------------------//
 type IntegerColumn struct {
-	numericInterfaceImpl
 	integerInterfaceImpl
 
 	baseColumn
@@ -47,7 +46,6 @@ type IntegerColumn struct {
 func NewIntegerColumn(name string, nullable NullableColumn) *IntegerColumn {
 	integerColumn := &IntegerColumn{}
 
-	integerColumn.numericInterfaceImpl.parent = integerColumn
 	integerColumn.integerInterfaceImpl.parent = integerColumn
 
 	integerColumn.baseColumn = newBaseColumn(name, nullable, "", integerColumn)

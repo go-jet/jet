@@ -21,18 +21,18 @@ func (l literalExpression) serialize(statement statementType, out *queryData) er
 	return nil
 }
 
-type numLiteralExpression struct {
+type integerLiteralExpression struct {
 	literalExpression
-	numericInterfaceImpl
+	integerInterfaceImpl
 }
 
-func Int(value int) numericExpression {
-	numLiteral := &numLiteralExpression{}
+func Int(value int) IntegerExpression {
+	numLiteral := &integerLiteralExpression{}
 
 	numLiteral.literalExpression = *Literal(value)
-	numLiteral.literalExpression.parent = numLiteral
 
-	numLiteral.numericInterfaceImpl.parent = numLiteral
+	numLiteral.literalExpression.parent = numLiteral
+	numLiteral.integerInterfaceImpl.parent = numLiteral
 
 	return numLiteral
 }
@@ -43,7 +43,7 @@ type boolLiteralExpression struct {
 	literalExpression
 }
 
-func Bool(value bool) boolExpression {
+func Bool(value bool) BoolExpression {
 	boolLiteralExpression := boolLiteralExpression{}
 
 	boolLiteralExpression.literalExpression = *Literal(value)
@@ -53,18 +53,18 @@ func Bool(value bool) boolExpression {
 }
 
 //---------------------------------------------------//
-type numericLiteral struct {
-	numericInterfaceImpl
+type floatLiteral struct {
+	floatInterfaceImpl
 	literalExpression
 }
 
-func Float(value float64) numericExpression {
-	numericLiteral := numericLiteral{}
-	numericLiteral.literalExpression = *Literal(value)
+func Float(value float64) FloatExpression {
+	floatLiteral := floatLiteral{}
+	floatLiteral.literalExpression = *Literal(value)
 
-	numericLiteral.numericInterfaceImpl.parent = &numericLiteral
+	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
 
-	return &numericLiteral
+	return &floatLiteral
 }
 
 //---------------------------------------------------//

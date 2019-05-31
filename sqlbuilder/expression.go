@@ -11,11 +11,11 @@ type expression interface {
 	groupByClause
 	orderByClause
 
-	IS_NULL() boolExpression
-	IS_NOT_NULL() boolExpression
+	IS_NULL() BoolExpression
+	IS_NOT_NULL() BoolExpression
 
-	IN(subQuery selectStatement) boolExpression
-	NOT_IN(subQuery selectStatement) boolExpression
+	IN(subQuery selectStatement) BoolExpression
+	NOT_IN(subQuery selectStatement) BoolExpression
 
 	AS(alias string) projection
 
@@ -27,19 +27,19 @@ type expressionInterfaceImpl struct {
 	parent expression
 }
 
-func (e *expressionInterfaceImpl) IS_NULL() boolExpression {
+func (e *expressionInterfaceImpl) IS_NULL() BoolExpression {
 	return newPostifxBoolExpression(e.parent, "IS NULL")
 }
 
-func (e *expressionInterfaceImpl) IS_NOT_NULL() boolExpression {
+func (e *expressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
 	return newPostifxBoolExpression(e.parent, "IS NOT NULL")
 }
 
-func (e *expressionInterfaceImpl) IN(subQuery selectStatement) boolExpression {
+func (e *expressionInterfaceImpl) IN(subQuery selectStatement) BoolExpression {
 	return newBinaryBoolExpression(e.parent, subQuery, "IN")
 }
 
-func (e *expressionInterfaceImpl) NOT_IN(subQuery selectStatement) boolExpression {
+func (e *expressionInterfaceImpl) NOT_IN(subQuery selectStatement) BoolExpression {
 	return newBinaryBoolExpression(e.parent, subQuery, "NOT IN")
 }
 
@@ -90,7 +90,7 @@ func isSimpleOperand(expression expression) bool {
 	if _, ok := expression.(column); ok {
 		return true
 	}
-	if _, ok := expression.(*numericFunc); ok {
+	if _, ok := expression.(*floatFunc); ok {
 		return true
 	}
 

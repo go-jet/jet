@@ -33,8 +33,8 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 	case "USER-DEFINED", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY":
 		return "StringColumn"
-	case "real", "numeric", "double precision":
-		return "NumericColumn"
+	case "real", "numeric", "decimal", "double precision":
+		return "FloatColumn"
 	default:
 		fmt.Println("Unknown sql type: " + c.DataType + ", using string column instead for sql builder.")
 		return "StringColumn"
@@ -62,7 +62,7 @@ func (c ColumnInfo) GoBaseType() string {
 		return "string"
 	case "real":
 		return "float32"
-	case "numeric", "double precision":
+	case "numeric", "decimal", "double precision":
 		return "float64"
 	case "uuid":
 		return "uuid.UUID"

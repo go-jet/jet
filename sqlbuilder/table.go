@@ -23,15 +23,15 @@ type readableTable interface {
 	SELECT(projections ...projection) selectStatement
 
 	// Creates a inner join tableName expression using onCondition.
-	INNER_JOIN(table readableTable, onCondition boolExpression) readableTable
+	INNER_JOIN(table readableTable, onCondition BoolExpression) readableTable
 
 	// Creates a left join tableName expression using onCondition.
-	LEFT_JOIN(table readableTable, onCondition boolExpression) readableTable
+	LEFT_JOIN(table readableTable, onCondition BoolExpression) readableTable
 
 	// Creates a right join tableName expression using onCondition.
-	RIGHT_JOIN(table readableTable, onCondition boolExpression) readableTable
+	RIGHT_JOIN(table readableTable, onCondition BoolExpression) readableTable
 
-	FULL_JOIN(table readableTable, onCondition boolExpression) readableTable
+	FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable
 
 	CROSS_JOIN(table readableTable) readableTable
 }
@@ -132,7 +132,7 @@ func (t *Table) SELECT(projections ...projection) selectStatement {
 // Creates a inner join tableName expression using onCondition.
 func (t *Table) INNER_JOIN(
 	table readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return InnerJoinOn(t, table, onCondition)
 }
@@ -140,7 +140,7 @@ func (t *Table) INNER_JOIN(
 // Creates a left join tableName expression using onCondition.
 func (t *Table) LEFT_JOIN(
 	table readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return LeftJoinOn(t, table, onCondition)
 }
@@ -148,12 +148,12 @@ func (t *Table) LEFT_JOIN(
 // Creates a right join tableName expression using onCondition.
 func (t *Table) RIGHT_JOIN(
 	table readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return RightJoinOn(t, table, onCondition)
 }
 
-func (t *Table) FULL_JOIN(table readableTable, onCondition boolExpression) readableTable {
+func (t *Table) FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable {
 	return FullJoin(t, table, onCondition)
 }
 
@@ -192,14 +192,14 @@ type joinTable struct {
 	lhs         readableTable
 	rhs         readableTable
 	join_type   joinType
-	onCondition boolExpression
+	onCondition BoolExpression
 }
 
 func newJoinTable(
 	lhs readableTable,
 	rhs readableTable,
 	join_type joinType,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return &joinTable{
 		lhs:         lhs,
@@ -212,7 +212,7 @@ func newJoinTable(
 func InnerJoinOn(
 	lhs readableTable,
 	rhs readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return newJoinTable(lhs, rhs, INNER_JOIN, onCondition)
 }
@@ -220,7 +220,7 @@ func InnerJoinOn(
 func LeftJoinOn(
 	lhs readableTable,
 	rhs readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return newJoinTable(lhs, rhs, LEFT_JOIN, onCondition)
 }
@@ -228,7 +228,7 @@ func LeftJoinOn(
 func RightJoinOn(
 	lhs readableTable,
 	rhs readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return newJoinTable(lhs, rhs, RIGHT_JOIN, onCondition)
 }
@@ -236,7 +236,7 @@ func RightJoinOn(
 func FullJoin(
 	lhs readableTable,
 	rhs readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return newJoinTable(lhs, rhs, FULL_JOIN, onCondition)
 }
@@ -324,19 +324,19 @@ func (t *joinTable) SELECT(projections ...projection) selectStatement {
 
 func (t *joinTable) INNER_JOIN(
 	table readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return InnerJoinOn(t, table, onCondition)
 }
 
 func (t *joinTable) LEFT_JOIN(
 	table readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return LeftJoinOn(t, table, onCondition)
 }
 
-func (t *joinTable) FULL_JOIN(table readableTable, onCondition boolExpression) readableTable {
+func (t *joinTable) FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable {
 	return FullJoin(t, table, onCondition)
 }
 
@@ -346,7 +346,7 @@ func (t *joinTable) CROSS_JOIN(table readableTable) readableTable {
 
 func (t *joinTable) RIGHT_JOIN(
 	table readableTable,
-	onCondition boolExpression) readableTable {
+	onCondition BoolExpression) readableTable {
 
 	return RightJoinOn(t, table, onCondition)
 }

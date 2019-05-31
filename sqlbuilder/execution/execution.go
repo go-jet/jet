@@ -612,7 +612,7 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullStringType
 	case "FLOAT4":
 		return nullFloatType
-	case "FLOAT8", "NUMERIC":
+	case "FLOAT8", "NUMERIC", "DECIMAL":
 		return nullFloat64Type
 	case "BOOL":
 		return nullBoolType

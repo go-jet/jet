@@ -3,49 +3,49 @@ package sqlbuilder
 type TimestampExpression interface {
 	expression
 
-	EQ(rhs TimestampExpression) boolExpression
-	NOT_EQ(rhs TimestampExpression) boolExpression
-	IS_DISTINCT_FROM(rhs TimestampExpression) boolExpression
-	IS_NOT_DISTINCT_FROM(rhs TimestampExpression) boolExpression
+	EQ(rhs TimestampExpression) BoolExpression
+	NOT_EQ(rhs TimestampExpression) BoolExpression
+	IS_DISTINCT_FROM(rhs TimestampExpression) BoolExpression
+	IS_NOT_DISTINCT_FROM(rhs TimestampExpression) BoolExpression
 
-	LT(rhs TimestampExpression) boolExpression
-	LT_EQ(rhs TimestampExpression) boolExpression
-	GT(rhs TimestampExpression) boolExpression
-	GT_EQ(rhs TimestampExpression) boolExpression
+	LT(rhs TimestampExpression) BoolExpression
+	LT_EQ(rhs TimestampExpression) BoolExpression
+	GT(rhs TimestampExpression) BoolExpression
+	GT_EQ(rhs TimestampExpression) BoolExpression
 }
 
 type timestampInterfaceImpl struct {
 	parent TimestampExpression
 }
 
-func (t *timestampInterfaceImpl) EQ(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) EQ(rhs TimestampExpression) BoolExpression {
 	return EQ(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) NOT_EQ(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) NOT_EQ(rhs TimestampExpression) BoolExpression {
 	return NOT_EQ(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) IS_DISTINCT_FROM(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) IS_DISTINCT_FROM(rhs TimestampExpression) BoolExpression {
 	return IS_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimestampExpression) BoolExpression {
 	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) LT(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) LT(rhs TimestampExpression) BoolExpression {
 	return LT(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) LT_EQ(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) LT_EQ(rhs TimestampExpression) BoolExpression {
 	return LT_EQ(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) BoolExpression {
 	return GT(t.parent, rhs)
 }
 
-func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) boolExpression {
+func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) BoolExpression {
 	return GT_EQ(t.parent, rhs)
 }

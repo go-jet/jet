@@ -38,7 +38,7 @@ func (s *StmtSuite) TestSelectSingleColumn(c *gc.C) {
 }
 
 func (s *StmtSuite) TestSelectMultiColumns(c *gc.C) {
-	sql, err := table1.Select(table1Col1, table1Col2).String()
+	sql, err := table1.Select(table1Col1, table1ColFloat).String()
 
 	c.Assert(err, gc.IsNil)
 	c.Assert(
@@ -130,9 +130,9 @@ func (s *StmtSuite) TestSelectLimitWithOffset(c *gc.C) {
 func (s *StmtSuite) TestSelectGroupBy(c *gc.C) {
 	q := table1.Select(
 		table1Col1,
-		table1Col2,
+		table1ColFloat,
 		Alias("total", SqlFunc("sum", table1Col3)))
-	q.GroupBy(table1Col1, table1Col2)
+	q.GroupBy(table1Col1, table1ColFloat)
 	sql, err := q.String()
 
 	c.Assert(err, gc.IsNil)
@@ -145,7 +145,7 @@ func (s *StmtSuite) TestSelectGroupBy(c *gc.C) {
 }
 
 func (s *StmtSuite) TestSelectSingleOrderBy(c *gc.C) {
-	q := table1.Select(table1Col1, table1Col2).OrderBy(table1Col2)
+	q := table1.Select(table1Col1, table1ColFloat).OrderBy(table1ColFloat)
 	sql, err := q.String()
 
 	c.Assert(err, gc.IsNil)
@@ -157,7 +157,7 @@ func (s *StmtSuite) TestSelectSingleOrderBy(c *gc.C) {
 }
 
 func (s *StmtSuite) TestSelectOrderByAsc(c *gc.C) {
-	q := table1.Select(table1Col1, table1Col2).OrderBy(ASC(table1Col2))
+	q := table1.Select(table1Col1, table1ColFloat).OrderBy(ASC(table1ColFloat))
 	sql, err := q.String()
 
 	c.Assert(err, gc.IsNil)
@@ -169,7 +169,7 @@ func (s *StmtSuite) TestSelectOrderByAsc(c *gc.C) {
 }
 
 func (s *StmtSuite) TestSelectOrderByDesc(c *gc.C) {
-	q := table1.Select(table1Col1, table1Col2).OrderBy(DESC(table1Col2))
+	q := table1.Select(table1Col1, table1ColFloat).OrderBy(DESC(table1ColFloat))
 	sql, err := q.String()
 
 	c.Assert(err, gc.IsNil)
@@ -181,8 +181,8 @@ func (s *StmtSuite) TestSelectOrderByDesc(c *gc.C) {
 }
 
 func (s *StmtSuite) TestSelectMultiOrderBy(c *gc.C) {
-	q := table1.Select(table1Col1, table1Col2)
-	q.OrderBy(table1Col2, table1Col1)
+	q := table1.Select(table1Col1, table1ColFloat)
+	q.OrderBy(table1ColFloat, table1Col1)
 	sql, err := q.String()
 
 	c.Assert(err, gc.IsNil)
@@ -249,7 +249,7 @@ func (s *StmtSuite) TestInsertNoRow(c *gc.C) {
 }
 
 func (s *StmtSuite) TestInsertColumnLengthMismatch(c *gc.C) {
-	_, err := table1.INSERT(table1Col1, table1Col2).Add(nil).String()
+	_, err := table1.INSERT(table1Col1, table1ColFloat).Add(nil).String()
 
 	c.Assert(err, gc.NotNil)
 }
@@ -301,7 +301,7 @@ func (s *StmtSuite) TestInsertIgnore(c *gc.C) {
 }
 
 func (s *StmtSuite) TestInsertMultipleValues(c *gc.C) {
-	stmt := table1.INSERT(table1Col1, table1Col2, table1Col3)
+	stmt := table1.INSERT(table1Col1, table1ColFloat, table1Col3)
 	stmt.Add(Literal(1), Literal(2), Literal(3))
 
 	sql, err := stmt.String()
@@ -316,7 +316,7 @@ func (s *StmtSuite) TestInsertMultipleValues(c *gc.C) {
 }
 
 func (s *StmtSuite) TestInsertMultipleRows(c *gc.C) {
-	stmt := table1.INSERT(table1Col1, table1Col2)
+	stmt := table1.INSERT(table1Col1, table1ColFloat)
 	stmt.Add(Literal(1), Literal(2))
 	stmt.Add(Literal(11), Literal(22))
 	stmt.Add(Literal(111), Literal(222))
@@ -333,7 +333,7 @@ func (s *StmtSuite) TestInsertMultipleRows(c *gc.C) {
 }
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateNilCol(c *gc.C) {
-	stmt := table1.INSERT(table1Col1, table1Col2)
+	stmt := table1.INSERT(table1Col1, table1ColFloat)
 	stmt.Add(Literal(1), Literal(2))
 	stmt.AddOnDuplicateKeyUpdate(nil, Literal(3))
 
@@ -342,7 +342,7 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateNilCol(c *gc.C) {
 }
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateNilExpr(c *gc.C) {
-	stmt := table1.INSERT(table1Col1, table1Col2)
+	stmt := table1.INSERT(table1Col1, table1ColFloat)
 	stmt.Add(Literal(1), Literal(2))
 	stmt.AddOnDuplicateKeyUpdate(table1Col1, nil)
 
@@ -351,7 +351,7 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateNilExpr(c *gc.C) {
 }
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateSingle(c *gc.C) {
-	stmt := table1.INSERT(table1Col1, table1Col2)
+	stmt := table1.INSERT(table1Col1, table1ColFloat)
 	stmt.Add(Literal(1), Literal(2))
 	stmt.AddOnDuplicateKeyUpdate(table1Col3, Literal(3))
 
@@ -368,10 +368,10 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateSingle(c *gc.C) {
 }
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateMulti(c *gc.C) {
-	stmt := table1.INSERT(table1Col1, table1Col2)
+	stmt := table1.INSERT(table1Col1, table1ColFloat)
 	stmt.Add(Literal(1), Literal(2))
 	stmt.AddOnDuplicateKeyUpdate(table1Col3, Literal(3))
-	stmt.AddOnDuplicateKeyUpdate(table1Col2, Literal(4))
+	stmt.AddOnDuplicateKeyUpdate(table1ColFloat, Literal(4))
 
 	sql, err := stmt.String()
 	c.Assert(err, gc.IsNil)
@@ -431,7 +431,7 @@ func (s *StmtSuite) TestUnionLimitWithoutOrderBy(c *gc.C) {
 	select_queries := make([]selectStatement, 0, 3)
 
 	select_queries = append(select_queries,
-		table1.Select(table1Col1).Where(GtL(table1Col1, 123)).OrderBy(table1Col2),
+		table1.Select(table1Col1).Where(GtL(table1Col1, 123)).OrderBy(table1ColFloat),
 		table1.Select(table1Col1).Where(GtL(table1Col1, 456)),
 		table1.Select(table1Col1).Where(LtL(table1Col1, 23)),
 	)
@@ -454,7 +454,7 @@ func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
 
 		table1.Select(
 			table1Col1,
-			table1Col2,
+			table1ColFloat,
 			table1Col3,
 			table1ColTime).AndWhere(GtL(table1Col1, 123)).AndWhere(LtL(table1Col1, 321)),
 		table1.Select(table1Col1).Where(And(GtL(table1Col1, 123), LtL(table1Col1, 321))),

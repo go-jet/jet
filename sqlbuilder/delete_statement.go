@@ -9,7 +9,7 @@ import (
 type deleteStatement interface {
 	Statement
 
-	WHERE(expression boolExpression) deleteStatement
+	WHERE(expression BoolExpression) deleteStatement
 }
 
 func newDeleteStatement(table writableTable) deleteStatement {
@@ -20,10 +20,10 @@ func newDeleteStatement(table writableTable) deleteStatement {
 
 type deleteStatementImpl struct {
 	table writableTable
-	where boolExpression
+	where BoolExpression
 }
 
-func (d *deleteStatementImpl) WHERE(expression boolExpression) deleteStatement {
+func (d *deleteStatementImpl) WHERE(expression BoolExpression) deleteStatement {
 	d.where = expression
 	return d
 }

@@ -5,34 +5,34 @@ import (
 	"testing"
 )
 
-func TestNumericEQColumn(t *testing.T) {
+func TestFloatExpressionEQColumn(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.EQ(table2Col3)), "table1.col1 = table2.col3")
 }
 
-func TestNumericEQInt(t *testing.T) {
+func TestFloatExpressionEQInt(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.EQ(Int(11))), "table1.col1 = $1")
 }
 
-func TestNumericEQFloat(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1Col1.EQ(Float(22.333))), "table1.col1 = $1")
+func TestFloatExpressionEQFloat(t *testing.T) {
+	assert.Equal(t, getTestSerialize(t, table1Col1.EQ(Int(22))), "table1.col1 = $1")
 }
 
-func TestNumericNOT_EQ(t *testing.T) {
+func TestFloatExpressionNOT_EQ(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.NOT_EQ(table2Col3)), "table1.col1 != table2.col3")
 }
 
-func TestNumericGT(t *testing.T) {
+func TestFloatExpressionGT(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.GT(table2Col3)), "table1.col1 > table2.col3")
 }
 
-func TestNumericGT_EQ(t *testing.T) {
+func TestFloatExpressionGT_EQ(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.GT_EQ(table2Col3)), "table1.col1 >= table2.col3")
 }
 
-func TestNumericLT(t *testing.T) {
+func TestFloatExpressionLT(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.LT(table2Col3)), "table1.col1 < table2.col3")
 }
 
-func TestNumericLT_EQ(t *testing.T) {
+func TestFloatExpressionLT_EQ(t *testing.T) {
 	assert.Equal(t, getTestSerialize(t, table1Col1.LT_EQ(table2Col3)), "table1.col1 <= table2.col3")
 }

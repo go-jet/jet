@@ -612,7 +612,7 @@ LIMIT 1000;
 	f1 := Film.AS("f1")
 	f2 := Film.AS("f2")
 
-	f1.FilmID.EQ(Float(11))
+	f1.FilmID.EQ(Int(11))
 
 	query := f1.
 		INNER_JOIN(f2, f1.FilmID.NOT_EQ(f2.FilmID).AND(f1.Length.EQ(f2.Length))).
@@ -770,7 +770,9 @@ func TestSelectFunctions(t *testing.T) {
 SELECT MAX(film.rental_rate) AS "max_film_rate"
 FROM dvds.film;
 `
-	query := Film.SELECT(MAX(Film.RentalRate).AS("max_film_rate"))
+	query := Film.SELECT(
+		MAXf(Film.RentalRate).AS("max_film_rate"),
+	)
 
 	assertQuery(t, query, expectedQuery)
 
@@ -807,7 +809,7 @@ WHERE film.rental_rate = (
 ORDER BY film.film_id ASC;
 `
 
-	maxFilmRentalRate := NumExp(Film.SELECT(MAX(Film.RentalRate)))
+	maxFilmRentalRate := NumExp(Film.SELECT(MAXf(Film.RentalRate)))
 
 	query := Film.
 		SELECT(Film.AllColumns).
@@ -855,17 +857,17 @@ ORDER BY SUM(payment.amount) ASC;
 	customersPaymentQuery := Payment.
 		SELECT(
 			Payment.CustomerID.AS("customer_payment_sum.customer_id"),
-			SUM(Payment.Amount).AS("customer_payment_sum.amount_sum"),
+			SUMf(Payment.Amount).AS("customer_payment_sum.amount_sum"),
 		).
 		GROUP_BY(Payment.CustomerID).
 		ORDER_BY(
-			SUM(Payment.Amount).ASC(),
+			SUMf(Payment.Amount).ASC(),
 		).
 		HAVING(
-			SUM(Payment.Amount).GT(Int(100)),
+			SUMf(Payment.Amount).GT(Float(100)),
 		)
 
-	assertQuery(t, customersPaymentQuery, expectedSql, 100)
+	assertQuery(t, customersPaymentQuery, expectedSql, float64(100))
 
 	type CustomerPaymentSum struct {
 		CustomerID int16
@@ -911,7 +913,7 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 	customersPaymentSubQuery := Payment.
 		SELECT(
 			Payment.CustomerID,
-			SUM(Payment.Amount).AS("amount_sum"),
+			SUMf(Payment.Amount).AS("amount_sum"),
 		).
 		GROUP_BY(Payment.CustomerID)
 
@@ -1024,10 +1026,10 @@ OFFSET 20;
 	query := UNION_ALL(
 		Payment.
 			SELECT(Payment.PaymentID.AS("payment.payment_id"), Payment.Amount).
-			WHERE(Payment.Amount.LT_EQ(Int(100))),
+			WHERE(Payment.Amount.LT_EQ(Float(100))),
 		Payment.
 			SELECT(Payment.PaymentID, Payment.Amount).
-			WHERE(Payment.Amount.GT_EQ(Int(200))),
+			WHERE(Payment.Amount.GT_EQ(Float(200))),
 	).
 		ORDER_BY(RefColumn("payment.payment_id").ASC(), Payment.Amount.DESC()).
 		LIMIT(10).
@@ -1036,7 +1038,7 @@ OFFSET 20;
 	queryStr, _, _ := query.Sql()
 
 	fmt.Println("-" + queryStr + "-")
-	assertQuery(t, query, expectedQuery, int(100), int(200), int64(10), int64(20))
+	assertQuery(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
 	dest := []model.Payment{}
 

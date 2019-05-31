@@ -3,50 +3,50 @@ package sqlbuilder
 type timeExpression interface {
 	expression
 
-	EQ(rhs timeExpression) boolExpression
-	NOT_EQ(rhs timeExpression) boolExpression
-	IS_DISTINCT_FROM(rhs timeExpression) boolExpression
-	IS_NOT_DISTINCT_FROM(rhs timeExpression) boolExpression
+	EQ(rhs timeExpression) BoolExpression
+	NOT_EQ(rhs timeExpression) BoolExpression
+	IS_DISTINCT_FROM(rhs timeExpression) BoolExpression
+	IS_NOT_DISTINCT_FROM(rhs timeExpression) BoolExpression
 
-	LT(rhs timeExpression) boolExpression
-	LT_EQ(rhs timeExpression) boolExpression
-	GT(rhs timeExpression) boolExpression
-	GT_EQ(rhs timeExpression) boolExpression
+	LT(rhs timeExpression) BoolExpression
+	LT_EQ(rhs timeExpression) BoolExpression
+	GT(rhs timeExpression) BoolExpression
+	GT_EQ(rhs timeExpression) BoolExpression
 }
 
 type timeInterfaceImpl struct {
 	parent timeExpression
 }
 
-func (t *timeInterfaceImpl) EQ(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) EQ(rhs timeExpression) BoolExpression {
 	return EQ(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) NOT_EQ(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) NOT_EQ(rhs timeExpression) BoolExpression {
 	return NOT_EQ(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs timeExpression) BoolExpression {
 	return IS_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs timeExpression) BoolExpression {
 	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) LT(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) LT(rhs timeExpression) BoolExpression {
 	return LT(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) LT_EQ(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) LT_EQ(rhs timeExpression) BoolExpression {
 	return LT_EQ(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) GT(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) GT(rhs timeExpression) BoolExpression {
 	return GT(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) GT_EQ(rhs timeExpression) boolExpression {
+func (t *timeInterfaceImpl) GT_EQ(rhs timeExpression) BoolExpression {
 	return GT_EQ(t.parent, rhs)
 }
 
