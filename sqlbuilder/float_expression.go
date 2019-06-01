@@ -19,6 +19,8 @@ type FloatExpression interface {
 	SUB(rhs FloatExpression) FloatExpression
 	MUL(rhs FloatExpression) FloatExpression
 	DIV(rhs FloatExpression) FloatExpression
+	MOD(rhs FloatExpression) FloatExpression
+	POW(rhs FloatExpression) FloatExpression
 }
 
 type floatInterfaceImpl struct {
@@ -73,6 +75,14 @@ func (n *floatInterfaceImpl) DIV(expression FloatExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "/")
 }
 
+func (n *floatInterfaceImpl) MOD(expression FloatExpression) FloatExpression {
+	return newBinaryFloatExpression(n.parent, expression, "%")
+}
+
+func (n *floatInterfaceImpl) POW(expression FloatExpression) FloatExpression {
+	return newBinaryFloatExpression(n.parent, expression, "^")
+}
+
 //---------------------------------------------------//
 type binaryFloatExpression struct {
 	expressionInterfaceImpl
@@ -113,7 +123,7 @@ func newFloatExpressionWrap(expression expression) FloatExpression {
 
 func (n *floatExpressionWrapper) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if n == nil {
-		return errors.New("Float expression wrapper is nil. ")
+		return errors.New("Float expressions wrapper is nil. ")
 	}
 	//out.writeString("(")
 	err := n.expression.serialize(statement, out)

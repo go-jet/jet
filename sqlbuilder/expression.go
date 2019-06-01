@@ -56,15 +56,15 @@ func (e *expressionInterfaceImpl) DESC() orderByClause {
 }
 
 func (e *expressionInterfaceImpl) serializeForGroupBy(statement statementType, out *queryData) error {
-	return e.parent.serialize(statement, out)
+	return e.parent.serialize(statement, out, NO_WRAP)
 }
 
 func (e *expressionInterfaceImpl) serializeForProjection(statement statementType, out *queryData) error {
-	return e.parent.serialize(statement, out)
+	return e.parent.serialize(statement, out, NO_WRAP)
 }
 
 func (e *expressionInterfaceImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
-	return e.parent.serialize(statement, out)
+	return e.parent.serialize(statement, out, NO_WRAP)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)

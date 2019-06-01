@@ -26,7 +26,7 @@ WHERE actor.actor_id = 1;
 		SELECT(Actor.AllColumns).
 		WHERE(Actor.ActorID.EQ(Int(1)))
 
-	assertQuery(t, query, expectedSql, 1)
+	assertQuery(t, query, expectedSql, int64(1))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -1077,7 +1077,7 @@ LIMIT 20;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)
 
-	assertQuery(t, query, expectedQuery, 1, "ONE", 2, "TWO", 3, "THREE", "OTHER", int64(20))
+	assertQuery(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
 
 	dest := []struct {
 		StaffIdNum string

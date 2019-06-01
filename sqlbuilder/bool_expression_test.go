@@ -58,7 +58,7 @@ func TestBinaryExpression(t *testing.T) {
 		err := alias.serializeForProjection(select_statement, &out)
 
 		assert.NilError(t, err)
-		assert.Equal(t, out.buff.String(), `($1 = $2) AS "alias_eq_expression"`)
+		assert.Equal(t, out.buff.String(), `$1 = $2 AS "alias_eq_expression"`)
 	})
 
 	t.Run("and", func(t *testing.T) {

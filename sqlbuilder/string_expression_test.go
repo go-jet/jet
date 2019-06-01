@@ -6,7 +6,7 @@ import (
 )
 
 func TestStringEQColumn(t *testing.T) {
-	exp := table3StrCol.EQ(table2StrCol)
+	exp := table3StrCol.EQ(table2ColStr)
 
 	out := queryData{}
 	err := exp.serialize(select_statement, &out)
@@ -26,7 +26,7 @@ func TestStringEQString(t *testing.T) {
 }
 
 func TestStringNOT_EQ(t *testing.T) {
-	exp := table3StrCol.NOT_EQ(table2StrCol)
+	exp := table3StrCol.NOT_EQ(table2ColStr)
 
 	out := queryData{}
 	err := exp.serialize(select_statement, &out)
@@ -36,7 +36,7 @@ func TestStringNOT_EQ(t *testing.T) {
 }
 
 func TestStringGT(t *testing.T) {
-	exp := table3StrCol.GT(table2StrCol)
+	exp := table3StrCol.GT(table2ColStr)
 
 	out := queryData{}
 	err := exp.serialize(select_statement, &out)
@@ -46,7 +46,7 @@ func TestStringGT(t *testing.T) {
 }
 
 func TestStringGT_EQ(t *testing.T) {
-	exp := table3StrCol.GT_EQ(table2StrCol)
+	exp := table3StrCol.GT_EQ(table2ColStr)
 
 	out := queryData{}
 	err := exp.serialize(select_statement, &out)
@@ -56,7 +56,7 @@ func TestStringGT_EQ(t *testing.T) {
 }
 
 func TestStringLT(t *testing.T) {
-	exp := table3StrCol.LT(table2StrCol)
+	exp := table3StrCol.LT(table2ColStr)
 
 	out := queryData{}
 	err := exp.serialize(select_statement, &out)
@@ -66,7 +66,7 @@ func TestStringLT(t *testing.T) {
 }
 
 func TestStringLT_EQ(t *testing.T) {
-	exp := table3StrCol.LT_EQ(table2StrCol)
+	exp := table3StrCol.LT_EQ(table2ColStr)
 
 	out := queryData{}
 	err := exp.serialize(select_statement, &out)

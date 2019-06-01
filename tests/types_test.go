@@ -88,14 +88,11 @@ func TestBoolOperators(t *testing.T) {
 	assert.NilError(t, err)
 }
 
-func TestNumericOperators(t *testing.T) {
+func TestFloatOperators(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Numeric.EQ(AllTypes.Numeric),
 		AllTypes.Decimal.EQ(Float(12)),
 		AllTypes.Real.EQ(Float(12.12)),
-		//AllTypes.Smallint.NOT_EQ(AllTypes.Real),
-		AllTypes.Integer.NOT_EQ(Int(12)),
-		AllTypes.Bigint.NOT_EQ(Int(12)),
 		AllTypes.Numeric.IS_DISTINCT_FROM(AllTypes.Numeric),
 		AllTypes.Decimal.IS_DISTINCT_FROM(Float(12)),
 		AllTypes.Real.IS_DISTINCT_FROM(Float(12.12)),
@@ -105,15 +102,80 @@ func TestNumericOperators(t *testing.T) {
 		//AllTypes.Numeric.LT(AllTypes.Integer),
 		AllTypes.Numeric.LT(Float(124)),
 		AllTypes.Numeric.LT(Float(34.56)),
-		//AllTypes.Smallint.LT_EQ(AllTypes.Numeric),
-		AllTypes.Integer.LT_EQ(Int(45)),
-		AllTypes.Bigint.LT_EQ(Int(65)),
 		//AllTypes.Numeric.GT(AllTypes.Smallint),
 		AllTypes.Numeric.GT(Float(124)),
 		AllTypes.Numeric.GT(Float(34.56)),
+
+		AllTypes.Real.ADD(AllTypes.RealPtr),
+		AllTypes.Real.ADD(Float(11.22)),
+		AllTypes.Real.SUB(AllTypes.RealPtr),
+		AllTypes.Real.SUB(Float(11.22)),
+		AllTypes.Real.MUL(AllTypes.RealPtr),
+		AllTypes.Real.MUL(Float(11.22)),
+		AllTypes.Real.DIV(AllTypes.RealPtr),
+		AllTypes.Real.DIV(Float(11.22)),
+		AllTypes.Decimal.MOD(AllTypes.Decimal),
+		AllTypes.Decimal.MOD(Float(11.22)),
+		AllTypes.Real.POW(AllTypes.RealPtr),
+		AllTypes.Real.POW(Float(11.22)),
+
+		ABSf(AllTypes.Real),
+		SQRTf(AllTypes.Real),
+		CBRTf(AllTypes.Real),
+		CEIL(AllTypes.Real),
+		FLOOR(AllTypes.Real),
+		ROUND(AllTypes.Decimal),
+		ROUND(AllTypes.Decimal, Int(3)).AS("round"),
+		SIGN(AllTypes.Real),
+		TRUNC(AllTypes.Decimal),
+		TRUNC(AllTypes.Decimal, Int(1)),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestIntegerOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Integer.EQ(AllTypes.IntegerPtr),
+		AllTypes.Bigint.EQ(Int(12)),
+		//AllTypes.Smallint.NOT_EQ(AllTypes.Real),
+		AllTypes.Integer.NOT_EQ(AllTypes.IntegerPtr),
+		AllTypes.Bigint.NOT_EQ(Int(12)),
+		AllTypes.Integer.LT(AllTypes.IntegerPtr),
+		AllTypes.Bigint.LT(Int(65)),
+		//AllTypes.Smallint.LT_EQ(AllTypes.Numeric),
+		AllTypes.Integer.LT_EQ(AllTypes.IntegerPtr),
+		AllTypes.Bigint.LT_EQ(Int(65)),
 		//AllTypes.Smallint.GT_EQ(AllTypes.Numeric),
-		AllTypes.Integer.GT_EQ(Int(45)),
+		AllTypes.Integer.GT(AllTypes.IntegerPtr),
+		AllTypes.Bigint.GT(Int(65)),
+		AllTypes.Integer.GT_EQ(AllTypes.IntegerPtr),
 		AllTypes.Bigint.GT_EQ(Int(65)),
+
+		AllTypes.Integer.ADD(AllTypes.Integer),
+		AllTypes.Integer.ADD(Int(11)),
+		AllTypes.Integer.SUB(AllTypes.Integer),
+		AllTypes.Integer.SUB(Int(11)),
+		AllTypes.Integer.MUL(AllTypes.Integer),
+		AllTypes.Integer.MUL(Int(11)),
+		AllTypes.Integer.DIV(AllTypes.Integer),
+		AllTypes.Integer.DIV(Int(11)),
+		AllTypes.Integer.MOD(AllTypes.Integer),
+		AllTypes.Integer.MOD(Int(11)),
+		AllTypes.Integer.POW(AllTypes.Smallint),
+		AllTypes.Integer.POW(Int(11)),
+		AllTypes.Integer.BIT_SHIFT_LEFT(AllTypes.Smallint),
+		AllTypes.Integer.BIT_SHIFT_LEFT(Int(11)),
+		AllTypes.Integer.BIT_SHIFT_RIGHT(AllTypes.Smallint),
+		AllTypes.Integer.BIT_SHIFT_RIGHT(Int(11)),
+
+		ABSi(AllTypes.Integer),
+		SQRTi(AllTypes.Integer),
+		CBRTi(AllTypes.Integer),
 	)
 
 	fmt.Println(query.DebugSql())

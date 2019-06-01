@@ -1,4 +1,4 @@
-// Query building functions for expression components
+// Query building functions for expressions components
 package sqlbuilder
 
 import (
@@ -42,7 +42,7 @@ func (c *intervalExpression) serialize(statement statementType, out *queryData, 
 }
 
 //// Interval returns a representation of duration
-//func Interval(duration time.Duration) expression {
+//func Interval(duration time.Duration) expressions {
 //	intervalExp := &intervalExpression{
 //		duration: duration,
 //	}

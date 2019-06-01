@@ -26,7 +26,7 @@ type integerLiteralExpression struct {
 	integerInterfaceImpl
 }
 
-func Int(value int) IntegerExpression {
+func Int(value int64) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
 	numLiteral.literalExpression = *Literal(value)

@@ -17,11 +17,15 @@ type IntegerExpression interface {
 	SUB(rhs IntegerExpression) IntegerExpression
 	MUL(rhs IntegerExpression) IntegerExpression
 	DIV(rhs IntegerExpression) IntegerExpression
+	MOD(rhs IntegerExpression) IntegerExpression
+	POW(rhs IntegerExpression) IntegerExpression
 
-	BitAnd(expression IntegerExpression) IntegerExpression
-	BitOr(expression IntegerExpression) IntegerExpression
-	BitXor(expression IntegerExpression) IntegerExpression
-	BitNot() IntegerExpression
+	BIT_AND(expression IntegerExpression) IntegerExpression
+	BIT_OR(expression IntegerExpression) IntegerExpression
+	BIT_XOR(expression IntegerExpression) IntegerExpression
+	BIT_NOT() IntegerExpression
+	BIT_SHIFT_LEFT(intExpression IntegerExpression) IntegerExpression
+	BIT_SHIFT_RIGHT(intExpression IntegerExpression) IntegerExpression
 }
 
 type integerInterfaceImpl struct {
@@ -61,35 +65,51 @@ func (i *integerInterfaceImpl) LT_EQ(expression IntegerExpression) BoolExpressio
 }
 
 func (i *integerInterfaceImpl) ADD(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "+")
+	return newBinaryIntegerExpression(i.parent, expression, "+")
 }
 
 func (i *integerInterfaceImpl) SUB(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "-")
+	return newBinaryIntegerExpression(i.parent, expression, "-")
 }
 
 func (i *integerInterfaceImpl) MUL(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "*")
+	return newBinaryIntegerExpression(i.parent, expression, "*")
 }
 
 func (i *integerInterfaceImpl) DIV(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "/")
+	return newBinaryIntegerExpression(i.parent, expression, "/")
 }
 
-func (i *integerInterfaceImpl) BitAnd(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "&")
+func (n *integerInterfaceImpl) MOD(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(n.parent, expression, "%")
 }
 
-func (i *integerInterfaceImpl) BitOr(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "|")
+func (n *integerInterfaceImpl) POW(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(n.parent, expression, "^")
 }
 
-func (i *integerInterfaceImpl) BitXor(expression IntegerExpression) IntegerExpression {
-	return NewBinaryIntegerExpression(i.parent, expression, "#")
+func (i *integerInterfaceImpl) BIT_AND(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, expression, "&")
 }
 
-func (i *integerInterfaceImpl) BitNot() IntegerExpression {
-	return NewPrefixIntegerOpExpression(i.parent, "~")
+func (i *integerInterfaceImpl) BIT_OR(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, expression, "|")
+}
+
+func (i *integerInterfaceImpl) BIT_XOR(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, expression, "#")
+}
+
+func (i *integerInterfaceImpl) BIT_NOT() IntegerExpression {
+	return newPrefixIntegerOpExpression(i.parent, "~")
+}
+
+func (i *integerInterfaceImpl) BIT_SHIFT_LEFT(intExpression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, intExpression, "<<")
+}
+
+func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, intExpression, ">>")
 }
 
 //---------------------------------------------------//
@@ -100,7 +120,7 @@ type binaryIntegerExpression struct {
 	binaryOpExpression
 }
 
-func NewBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
+func newBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
 	integerExpression := binaryIntegerExpression{}
 
 	integerExpression.expressionInterfaceImpl.parent = &integerExpression
@@ -119,7 +139,7 @@ type prefixIntegerOpExpression struct {
 	prefixOpExpression
 }
 
-func NewPrefixIntegerOpExpression(expression IntegerExpression, operator string) IntegerExpression {
+func newPrefixIntegerOpExpression(expression IntegerExpression, operator string) IntegerExpression {
 	integerExpression := prefixIntegerOpExpression{}
 	integerExpression.prefixOpExpression = newPrefixExpression(expression, operator)
 
