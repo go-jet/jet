@@ -1,68 +1,75 @@
 package sqlbuilder
 
 import (
-	"gotest.tools/assert"
 	"testing"
 )
 
-func TestIntegerExpressionEQColumn(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.EQ(table2ColInt)), "(table1.colInt = table2.colInt)")
-}
-
-func TestIntegerExpressionEQInt(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.EQ(Int(11))), "(table1.colInt = $1)")
+func TestIntegerExpressionEQ(t *testing.T) {
+	assertExpressionSerialize(t, table1ColInt.EQ(table2ColInt), "(table1.colInt = table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.EQ(Int(11)), "(table1.colInt = $1)", int64(11))
 }
 
 func TestIntegerExpressionNOT_EQ(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.NOT_EQ(table2ColInt)), "(table1.colInt != table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.NOT_EQ(table2ColInt), "(table1.colInt != table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.NOT_EQ(Int(11)), "(table1.colInt != $1)", int64(11))
 }
 
 func TestIntegerExpressionGT(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.GT(table2ColInt)), "(table1.colInt > table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.GT(table2ColInt), "(table1.colInt > table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.GT(Int(11)), "(table1.colInt > $1)", int64(11))
 }
 
 func TestIntegerExpressionGT_EQ(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.GT_EQ(table2ColInt)), "(table1.colInt >= table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.GT_EQ(table2ColInt), "(table1.colInt >= table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.GT_EQ(Int(11)), "(table1.colInt >= $1)", int64(11))
 }
 
 func TestIntegerExpressionLT(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.LT(table2ColInt)), "(table1.colInt < table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.LT(table2ColInt), "(table1.colInt < table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.LT(Int(11)), "(table1.colInt < $1)", int64(11))
 }
 
 func TestIntegerExpressionLT_EQ(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.LT_EQ(table2ColInt)), "(table1.colInt <= table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.LT_EQ(table2ColInt), "(table1.colInt <= table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.LT_EQ(Int(11)), "(table1.colInt <= $1)", int64(11))
 }
 
 func TestIntegerExpressionADD(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.ADD(table2ColInt)), "(table1.colInt + table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.ADD(table2ColInt), "(table1.colInt + table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.ADD(Int(11)), "(table1.colInt + $1)", int64(11))
 }
 
 func TestIntegerExpressionSUB(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.SUB(table2ColInt)), "(table1.colInt - table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.SUB(table2ColInt), "(table1.colInt - table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.SUB(Int(11)), "(table1.colInt - $1)", int64(11))
 }
 
 func TestIntegerExpressionMUL(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.MUL(table2ColInt)), "(table1.colInt * table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.MUL(table2ColInt), "(table1.colInt * table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.MUL(Int(11)), "(table1.colInt * $1)", int64(11))
 }
 
 func TestIntegerExpressionDIV(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.DIV(table2ColInt)), "(table1.colInt / table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.DIV(table2ColInt), "(table1.colInt / table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.DIV(Int(11)), "(table1.colInt / $1)", int64(11))
 }
 
 func TestIntExpressionMOD(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.MOD(table2ColInt)), "(table1.colInt % table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.MOD(table2ColInt), "(table1.colInt % table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.MOD(Int(11)), "(table1.colInt % $1)", int64(11))
 }
 
-func TestIntExpressionEXP(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.POW(table2ColInt)), "(table1.colInt ^ table2.colInt)")
+func TestIntExpressionPOW(t *testing.T) {
+	assertExpressionSerialize(t, table1ColInt.POW(table2ColInt), "(table1.colInt ^ table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.POW(Int(11)), "(table1.colInt ^ $1)", int64(11))
 }
 
 func TestIntExpressionBIT_SHIFT_LEFT(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.BIT_SHIFT_LEFT(table2ColInt)), "(table1.colInt << table2.colInt)")
-	assert.Equal(t, getTestSerialize(t, table1ColInt.BIT_SHIFT_LEFT(Int(2))), "(table1.colInt << $1)")
+	assertExpressionSerialize(t, table1ColInt.BIT_SHIFT_LEFT(table2ColInt), "(table1.colInt << table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.BIT_SHIFT_LEFT(Int(11)), "(table1.colInt << $1)", int64(11))
 }
 
 func TestIntExpressionBIT_SHIFT_RIGHT(t *testing.T) {
-	assert.Equal(t, getTestSerialize(t, table1ColInt.BIT_SHIFT_RIGHT(table2ColInt)), "(table1.colInt >> table2.colInt)")
-	assert.Equal(t, getTestSerialize(t, table1ColInt.BIT_SHIFT_RIGHT(Int(11))), "(table1.colInt >> $1)")
+	assertExpressionSerialize(t, table1ColInt.BIT_SHIFT_RIGHT(table2ColInt), "(table1.colInt >> table2.colInt)")
+	assertExpressionSerialize(t, table1ColInt.BIT_SHIFT_RIGHT(Int(11)), "(table1.colInt >> $1)", int64(11))
 }

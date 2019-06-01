@@ -49,11 +49,12 @@ var table3 = NewTable(
 	table3Col1,
 	table3StrCol)
 
-func getTestSerialize(t *testing.T, exp expression) string {
+func assertExpressionSerialize(t *testing.T, expression expression, query string, args ...interface{}) {
 	out := queryData{}
-	err := exp.serialize(select_statement, &out)
+	err := expression.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
 
-	return out.buff.String()
+	assert.DeepEqual(t, out.buff.String(), query)
+	assert.DeepEqual(t, out.args, args)
 }
