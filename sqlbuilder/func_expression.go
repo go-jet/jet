@@ -86,6 +86,20 @@ func newStringFunc(name string, expressions ...expression) StringExpression {
 	return stringFunc
 }
 
+type dateFunc struct {
+	funcExpressionImpl
+	dateInterfaceImpl
+}
+
+func newDateFunc(name string, expressions ...expression) DateExpression {
+	dateFunc := &dateFunc{}
+
+	dateFunc.funcExpressionImpl = *newFunc(name, expressions, dateFunc)
+	dateFunc.dateInterfaceImpl.parent = dateFunc
+
+	return dateFunc
+}
+
 type boolFunc struct {
 	funcExpressionImpl
 	boolInterfaceImpl
@@ -98,6 +112,20 @@ func newBoolFunc(name string, expressions ...expression) BoolExpression {
 	boolFunc.boolInterfaceImpl.parent = boolFunc
 
 	return boolFunc
+}
+
+type timestampzFunc struct {
+	funcExpressionImpl
+	timestampzInterfaceImpl
+}
+
+func newTimestampzFunc(name string, expressions ...expression) TimestampzExpression {
+	timestampzFunc := &timestampzFunc{}
+
+	timestampzFunc.funcExpressionImpl = *newFunc(name, expressions, timestampzFunc)
+	timestampzFunc.timestampzInterfaceImpl.parent = timestampzFunc
+
+	return timestampzFunc
 }
 
 // ------------------ Mathematical functions ---------------//
@@ -335,4 +363,22 @@ func TO_ASCII(str StringExpression, encoding ...StringExpression) StringExpressi
 
 func TO_HEX(number IntegerExpression) StringExpression {
 	return newStringFunc("TO_HEX", number)
+}
+
+//----------Data Type Formatting Functions ----------------------//
+
+func TO_CHAR(expression expression, text StringExpression) StringExpression {
+	return newStringFunc("TO_CHAR", expression, text)
+}
+
+func TO_DATE(dateStr, format StringExpression) DateExpression {
+	return newDateFunc("TO_DATE", dateStr, format)
+}
+
+func TO_NUMBER(floatStr, format StringExpression) FloatExpression {
+	return newFloatFunc("TO_NUMBER", floatStr, format)
+}
+
+func TO_TIMESTAMP(timestampzStr, format StringExpression) TimestampzExpression {
+	return newTimestampzFunc("TO_TIMESTAMP", timestampzStr, format)
 }

@@ -25,6 +25,28 @@ func TestAllTypesSelect(t *testing.T) {
 	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
 
+func TestExpressionOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Integer.IS_NULL(),
+		AllTypes.Timestamp.IS_NOT_NULL(),
+
+		TO_CHAR(AllTypes.Timestamp, String("HH12:MI:SS")),
+		TO_CHAR(AllTypes.Integer, String("999")),
+		TO_CHAR(AllTypes.DoublePrecision, String("999D9")),
+		TO_CHAR(AllTypes.Numeric, String("999D99S")),
+
+		TO_DATE(String("05 Dec 2000"), String("DD Mon YYYY")),
+		TO_NUMBER(String("12,454"), String("99G999D9S")),
+		TO_TIMESTAMP(String("05 Dec 2000"), String("DD Mon YYYY")),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
 func TestStringOperators(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Text.EQ(AllTypes.Character),
@@ -80,19 +102,6 @@ func TestStringOperators(t *testing.T) {
 	)
 
 	//fmt.Println(query.Sql())
-	fmt.Println(query.DebugSql())
-
-	err := query.Query(db, &struct{}{})
-
-	assert.NilError(t, err)
-}
-
-func TestExpressionOperators(t *testing.T) {
-	query := AllTypes.SELECT(
-		AllTypes.Integer.IS_NULL(),
-		AllTypes.Timestamp.IS_NOT_NULL(),
-	)
-
 	fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
