@@ -88,14 +88,14 @@ type timeLiteral struct {
 	literalExpression
 }
 
-func Time(hour, minute, second, milliseconds int) timeExpression {
+func Time(hour, minute, second, milliseconds int) TimeExpression {
 	timeLiteral := timeLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
 	timeLiteral.literalExpression = *Literal(timeStr)
 
 	timeLiteral.timeInterfaceImpl.parent = &timeLiteral
 
-	return &timeLiteral
+	return timeLiteral.CAST_TO_TIME()
 }
 
 //---------------------------------------------------//
@@ -104,14 +104,14 @@ type timezLiteral struct {
 	literalExpression
 }
 
-func Timez(hour, minute, second, milliseconds, timezone int) timezExpression {
+func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
 	timezLiteral := timezLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
 	timezLiteral.literalExpression = *Literal(timeStr)
 
 	timezLiteral.timezInterfaceImpl.parent = &timezLiteral
 
-	return &timezLiteral
+	return timezLiteral.CAST_TO_TIMEZ()
 }
 
 //---------------------------------------------------//
@@ -127,7 +127,7 @@ func Timestamp(year, month, day, hour, minute, second, milliseconds int) Timesta
 
 	timestampLiteral.timestampInterfaceImpl.parent = &timestampLiteral
 
-	return &timestampLiteral
+	return timestampLiteral.CAST_TO_TIMESTAMP()
 }
 
 //---------------------------------------------------//
@@ -145,7 +145,7 @@ func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone i
 
 	timestampzLiteral.timestampzInterfaceImpl.parent = &timestampzLiteral
 
-	return &timestampzLiteral
+	return timestampzLiteral.CAST_TO_TIMESTAMPZ()
 }
 
 //---------------------------------------------------//
@@ -161,5 +161,5 @@ func Date(year, month, day int) DateExpression {
 	dateLiteral.literalExpression = *Literal(timeStr)
 	dateLiteral.dateInterfaceImpl.parent = &dateLiteral
 
-	return &dateLiteral
+	return dateLiteral.CAST_TO_DATE()
 }

@@ -1,52 +1,52 @@
 package sqlbuilder
 
-type timeExpression interface {
+type TimeExpression interface {
 	expression
 
-	EQ(rhs timeExpression) BoolExpression
-	NOT_EQ(rhs timeExpression) BoolExpression
-	IS_DISTINCT_FROM(rhs timeExpression) BoolExpression
-	IS_NOT_DISTINCT_FROM(rhs timeExpression) BoolExpression
+	EQ(rhs TimeExpression) BoolExpression
+	NOT_EQ(rhs TimeExpression) BoolExpression
+	IS_DISTINCT_FROM(rhs TimeExpression) BoolExpression
+	IS_NOT_DISTINCT_FROM(rhs TimeExpression) BoolExpression
 
-	LT(rhs timeExpression) BoolExpression
-	LT_EQ(rhs timeExpression) BoolExpression
-	GT(rhs timeExpression) BoolExpression
-	GT_EQ(rhs timeExpression) BoolExpression
+	LT(rhs TimeExpression) BoolExpression
+	LT_EQ(rhs TimeExpression) BoolExpression
+	GT(rhs TimeExpression) BoolExpression
+	GT_EQ(rhs TimeExpression) BoolExpression
 }
 
 type timeInterfaceImpl struct {
-	parent timeExpression
+	parent TimeExpression
 }
 
-func (t *timeInterfaceImpl) EQ(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) EQ(rhs TimeExpression) BoolExpression {
 	return EQ(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) NOT_EQ(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) NOT_EQ(rhs TimeExpression) BoolExpression {
 	return NOT_EQ(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
 	return IS_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
 	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) LT(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) LT(rhs TimeExpression) BoolExpression {
 	return LT(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) LT_EQ(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) LT_EQ(rhs TimeExpression) BoolExpression {
 	return LT_EQ(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) GT(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) GT(rhs TimeExpression) BoolExpression {
 	return GT(t.parent, rhs)
 }
 
-func (t *timeInterfaceImpl) GT_EQ(rhs timeExpression) BoolExpression {
+func (t *timeInterfaceImpl) GT_EQ(rhs TimeExpression) BoolExpression {
 	return GT_EQ(t.parent, rhs)
 }
 
@@ -58,7 +58,7 @@ type prefixTimeExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimeExpression(operator string, expression expression) timeExpression {
+func newPrefixTimeExpression(operator string, expression expression) TimeExpression {
 	timeExpr := prefixTimeExpression{}
 	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
 

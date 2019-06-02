@@ -21,6 +21,16 @@ type expression interface {
 
 	ASC() orderByClause
 	DESC() orderByClause
+
+	CAST_TO_BOOL() BoolExpression
+	CAST_TO_INTEGER() IntegerExpression
+	CAST_TO_DOUBLE() FloatExpression
+	CAST_TO_TEXT() StringExpression
+	CAST_TO_DATE() DateExpression
+	CAST_TO_TIME() TimeExpression
+	CAST_TO_TIMEZ() TimezExpression
+	CAST_TO_TIMESTAMP() TimestampExpression
+	CAST_TO_TIMESTAMPZ() TimestampzExpression
 }
 
 type expressionInterfaceImpl struct {
@@ -53,6 +63,42 @@ func (e *expressionInterfaceImpl) ASC() orderByClause {
 
 func (e *expressionInterfaceImpl) DESC() orderByClause {
 	return &orderByClauseImpl{expression: e.parent, ascent: false}
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_BOOL() BoolExpression {
+	return newBoolCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_INTEGER() IntegerExpression {
+	return newIntegerCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_DOUBLE() FloatExpression {
+	return newDoubleCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_TEXT() StringExpression {
+	return newTextCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_DATE() DateExpression {
+	return newDateCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_TIME() TimeExpression {
+	return newTimeCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_TIMEZ() TimezExpression {
+	return newTimezCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_TIMESTAMP() TimestampExpression {
+	return newTimestampCast(e.parent)
+}
+
+func (e *expressionInterfaceImpl) CAST_TO_TIMESTAMPZ() TimestampzExpression {
+	return newTimestampzCast(e.parent)
 }
 
 func (e *expressionInterfaceImpl) serializeForGroupBy(statement statementType, out *queryData) error {

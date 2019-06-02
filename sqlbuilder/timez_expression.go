@@ -1,52 +1,52 @@
 package sqlbuilder
 
-type timezExpression interface {
+type TimezExpression interface {
 	expression
 
-	EQ(rhs timezExpression) BoolExpression
-	NOT_EQ(rhs timezExpression) BoolExpression
-	IS_DISTINCT_FROM(rhs timezExpression) BoolExpression
-	IS_NOT_DISTINCT_FROM(rhs timezExpression) BoolExpression
+	EQ(rhs TimezExpression) BoolExpression
+	NOT_EQ(rhs TimezExpression) BoolExpression
+	IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression
+	IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression
 
-	LT(rhs timezExpression) BoolExpression
-	LT_EQ(rhs timezExpression) BoolExpression
-	GT(rhs timezExpression) BoolExpression
-	GT_EQ(rhs timezExpression) BoolExpression
+	LT(rhs TimezExpression) BoolExpression
+	LT_EQ(rhs TimezExpression) BoolExpression
+	GT(rhs TimezExpression) BoolExpression
+	GT_EQ(rhs TimezExpression) BoolExpression
 }
 
 type timezInterfaceImpl struct {
-	parent timezExpression
+	parent TimezExpression
 }
 
-func (t *timezInterfaceImpl) EQ(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) EQ(rhs TimezExpression) BoolExpression {
 	return EQ(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) NOT_EQ(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) NOT_EQ(rhs TimezExpression) BoolExpression {
 	return NOT_EQ(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) IS_DISTINCT_FROM(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
 	return IS_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
 	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) LT(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) LT(rhs TimezExpression) BoolExpression {
 	return LT(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) LT_EQ(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) LT_EQ(rhs TimezExpression) BoolExpression {
 	return LT_EQ(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) GT(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) GT(rhs TimezExpression) BoolExpression {
 	return GT(t.parent, rhs)
 }
 
-func (t *timezInterfaceImpl) GT_EQ(rhs timezExpression) BoolExpression {
+func (t *timezInterfaceImpl) GT_EQ(rhs TimezExpression) BoolExpression {
 	return GT_EQ(t.parent, rhs)
 }
 
@@ -58,7 +58,7 @@ type prefixTimezExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimezExpression(operator string, expression expression) timezExpression {
+func newPrefixTimezExpression(operator string, expression expression) TimezExpression {
 	timeExpr := prefixTimezExpression{}
 	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
 

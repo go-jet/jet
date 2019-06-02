@@ -139,11 +139,11 @@ func (q *queryData) write(data []byte) {
 }
 
 func isPreSeparator(b byte) bool {
-	return b == ' ' || b == '.' || b == ',' || b == '(' || b == '\n'
+	return b == ' ' || b == '.' || b == ',' || b == '(' || b == '\n' || b == ':'
 }
 
 func isPostSeparator(b byte) bool {
-	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n'
+	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
 func (q *queryData) writeString(str string) {

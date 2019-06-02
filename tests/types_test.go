@@ -30,6 +30,16 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.Integer.IS_NULL(),
 		AllTypes.Timestamp.IS_NOT_NULL(),
 
+		String("TRUE").CAST_TO_BOOL(),
+		String("111").CAST_TO_INTEGER(),
+		String("11.23").CAST_TO_DOUBLE(),
+		Int(234).CAST_TO_TEXT(),
+		String("1/8/1999").CAST_TO_DATE(),
+		String("04:05:06.789").CAST_TO_TIME(),
+		String("04:05:06 PST").CAST_TO_TIMEZ(),
+		String("1999-01-08 04:05:06").CAST_TO_TIMESTAMP(),
+		String("January 8 04:05:06 1999 PST").CAST_TO_TIMESTAMPZ(),
+
 		TO_CHAR(AllTypes.Timestamp, String("HH12:MI:SS")),
 		TO_CHAR(AllTypes.Integer, String("999")),
 		TO_CHAR(AllTypes.DoublePrecision, String("999D9")),
