@@ -40,3 +40,8 @@ func TestStringLT_EQ(t *testing.T) {
 	assertExpressionSerialize(t, exp, "(table3.col2 <= table2.colStr)")
 	assertExpressionSerialize(t, table3StrCol.LT_EQ(String("JOHN")), "(table3.col2 <= $1)", "JOHN")
 }
+
+func TestStringCONCAT(t *testing.T) {
+	assertExpressionSerialize(t, table3StrCol.CONCAT(table2ColStr), "(table3.col2 || table2.colStr)")
+	assertExpressionSerialize(t, table3StrCol.CONCAT(String("JOHN")), "(table3.col2 || $1)", "JOHN")
+}

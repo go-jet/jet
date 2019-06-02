@@ -73,7 +73,7 @@ type stringLiteral struct {
 	literalExpression
 }
 
-func String(value string) stringExpression {
+func String(value string) StringExpression {
 	stringLiteral := stringLiteral{}
 	stringLiteral.literalExpression = *Literal(value)
 

@@ -72,6 +72,34 @@ func newIntegerFunc(name string, expressions ...expression) IntegerExpression {
 	return floatFunc
 }
 
+type stringFunc struct {
+	funcExpressionImpl
+	stringInterfaceImpl
+}
+
+func newStringFunc(name string, expressions ...expression) StringExpression {
+	stringFunc := &stringFunc{}
+
+	stringFunc.funcExpressionImpl = *newFunc(name, expressions, stringFunc)
+	stringFunc.stringInterfaceImpl.parent = stringFunc
+
+	return stringFunc
+}
+
+type boolFunc struct {
+	funcExpressionImpl
+	boolInterfaceImpl
+}
+
+func newBoolFunc(name string, expressions ...expression) BoolExpression {
+	boolFunc := &boolFunc{}
+
+	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
+	boolFunc.boolInterfaceImpl.parent = boolFunc
+
+	return boolFunc
+}
+
 // ------------------ Mathematical functions ---------------//
 
 func ABSf(floatExpression FloatExpression) FloatExpression {
@@ -156,4 +184,155 @@ func COUNTf(floatExpression FloatExpression) FloatExpression {
 
 func COUNTi(integerExpression IntegerExpression) IntegerExpression {
 	return newIntegerFunc("COUNT", integerExpression)
+}
+
+//------------ String functions ------------------//
+
+func BIT_LENGTH(stringExpression StringExpression) IntegerExpression {
+	return newIntegerFunc("BIT_LENGTH", stringExpression)
+}
+
+func CHAR_LENGTH(stringExpression StringExpression) IntegerExpression {
+	return newIntegerFunc("CHAR_LENGTH", stringExpression)
+}
+
+func OCTET_LENGTH(stringExpression StringExpression) IntegerExpression {
+	return newIntegerFunc("OCTET_LENGTH", stringExpression)
+}
+
+func LOWER(stringExpression StringExpression) StringExpression {
+	return newStringFunc("LOWER", stringExpression)
+}
+
+func UPPER(stringExpression StringExpression) StringExpression {
+	return newStringFunc("UPPER", stringExpression)
+}
+
+func BTRIM(stringExpression StringExpression) StringExpression {
+	return newStringFunc("BTRIM", stringExpression)
+}
+
+func LTRIM(str StringExpression, trimChars ...StringExpression) StringExpression {
+	if len(trimChars) > 0 {
+		return newStringFunc("LTRIM", str, trimChars[0])
+	}
+	return newStringFunc("LTRIM", str)
+}
+
+func RTRIM(str StringExpression, trimChars ...StringExpression) StringExpression {
+	if len(trimChars) > 0 {
+		return newStringFunc("RTRIM", str, trimChars[0])
+	}
+	return newStringFunc("RTRIM", str)
+}
+
+func CHR(integerExpression IntegerExpression) StringExpression {
+	return newStringFunc("CHR", integerExpression)
+}
+
+//func CONCAT(expressions ...expression) StringExpression {
+//	return newStringFunc("CONCAT", expressions...)
+//}
+//
+//func CONCAT_WS(expressions ...expression) StringExpression {
+//	return newStringFunc("CONCAT_WS", expressions...)
+//}
+
+func CONVERT(str StringExpression, fromEncoding StringExpression, toEncoding StringExpression) StringExpression {
+	return newStringFunc("CONVERT", str, fromEncoding, toEncoding)
+}
+
+func CONVERT_FROM(str StringExpression, fromEncoding StringExpression) StringExpression {
+	return newStringFunc("CONVERT_FROM", str, fromEncoding)
+}
+
+func CONVERT_TO(str StringExpression, toEncoding StringExpression) StringExpression {
+	return newStringFunc("CONVERT_TO", str, toEncoding)
+}
+
+func ENCODE(data StringExpression, format StringExpression) StringExpression {
+	return newStringFunc("ENCODE", data, format)
+}
+
+func DECODE(data StringExpression, format StringExpression) StringExpression {
+	return newStringFunc("DECODE", data, format)
+}
+
+//func FORMAT(formatStr StringExpression, formatArgs ...expression) StringExpression {
+//	args := []expression{formatStr}
+//	args = append(args, formatArgs...)
+//	return newStringFunc("FORMAT", args...)
+//}
+
+func INITCAP(str StringExpression) StringExpression {
+	return newStringFunc("INITCAP", str)
+}
+
+func LEFT(str StringExpression, n IntegerExpression) StringExpression {
+	return newStringFunc("LEFT", str, n)
+}
+
+func RIGHT(str StringExpression, n IntegerExpression) StringExpression {
+	return newStringFunc("RIGHT", str, n)
+}
+
+func LENGTH(str StringExpression, encoding ...StringExpression) StringExpression {
+	if len(encoding) > 0 {
+		return newStringFunc("LENGTH", str, encoding[0])
+	}
+	return newStringFunc("LENGTH", str)
+}
+
+func LPAD(str StringExpression, length IntegerExpression, text ...StringExpression) StringExpression {
+	if len(text) > 0 {
+		return newStringFunc("LPAD", str, length, text[0])
+	}
+
+	return newStringFunc("LPAD", str, length)
+}
+
+func RPAD(str StringExpression, length IntegerExpression, text ...StringExpression) StringExpression {
+	if len(text) > 0 {
+		return newStringFunc("RPAD", str, length, text[0])
+	}
+
+	return newStringFunc("RPAD", str, length)
+}
+
+func MD5(stringExpression StringExpression) StringExpression {
+	return newStringFunc("MD5", stringExpression)
+}
+
+func REPEAT(str StringExpression, n IntegerExpression) StringExpression {
+	return newStringFunc("REPEAT", str, n)
+}
+
+func REPLACE(text, from, to StringExpression) StringExpression {
+	return newStringFunc("REPLACE", text, from, to)
+}
+
+func REVERSE(stringExpression StringExpression) StringExpression {
+	return newStringFunc("REVERSE", stringExpression)
+}
+
+func STRPOS(str, substring StringExpression) IntegerExpression {
+	return newIntegerFunc("STRPOS", str, substring)
+}
+
+func SUBSTR(str StringExpression, from IntegerExpression, count ...IntegerExpression) StringExpression {
+	if len(count) > 0 {
+		return newStringFunc("SUBSTR", str, from, count[0])
+	}
+	return newStringFunc("SUBSTR", str, from)
+}
+
+func TO_ASCII(str StringExpression, encoding ...StringExpression) StringExpression {
+	if len(encoding) > 0 {
+		return newStringFunc("TO_ASCII", str, encoding[0])
+	}
+	return newStringFunc("TO_ASCII", str)
+}
+
+func TO_HEX(number IntegerExpression) StringExpression {
+	return newStringFunc("TO_HEX", number)
 }

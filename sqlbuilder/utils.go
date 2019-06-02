@@ -113,6 +113,16 @@ func serializeColumnList(statement statementType, columns []column, out *queryDa
 	return nil
 }
 
+//func stringExpressionListToExpressionList(stringExpressions []StringExpression) []expression{
+//	var ret []expression
+//
+//	for _, strExp := range stringExpressions {
+//		ret = append(ret, strExp)
+//	}
+//
+//	return ret
+//}
+
 func Query(statement Statement, db execution.Db, destination interface{}) error {
 	query, args, err := statement.Sql()
 

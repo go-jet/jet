@@ -39,8 +39,43 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.LT(String("Text")),
 		AllTypes.Text.LT_EQ(AllTypes.CharacterVaryingPtr),
 		AllTypes.Text.LT_EQ(String("Text")),
+		AllTypes.Text.CONCAT(String("text2")),
+		AllTypes.Text.CONCAT(Int(11)),
+
+		BIT_LENGTH(AllTypes.Text),
+		CHAR_LENGTH(AllTypes.Character),
+		OCTET_LENGTH(AllTypes.Text),
+		LOWER(AllTypes.CharacterVaryingPtr),
+		UPPER(AllTypes.Character),
+		BTRIM(AllTypes.CharacterVarying),
+		LTRIM(AllTypes.CharacterVarying, String("A")),
+		RTRIM(AllTypes.CharacterVarying, String("B")),
+		CHR(Int(65)),
+		//CONCAT(String("string1"), Int(1), Float(11.12)),
+		//CONCAT_WS(String("string1"), Int(1), Float(11.12)),
+		CONVERT(String("text_in_utf8"), String("UTF8"), String("LATIN1")),
+		CONVERT_FROM(String("text_in_utf8"), String("UTF8")),
+		CONVERT_TO(String("text_in_utf8"), String("UTF8")),
+		ENCODE(String("123\000\001"), String("base64")),
+		DECODE(String("MTIzAAE="), String("base64")),
+		//FORMAT(String("Hello %s, %1$s"), String("World")),
+		INITCAP(String("hi THOMAS")),
+		LEFT(String("abcde"), Int(2)),
+		RIGHT(String("abcde"), Int(2)),
+		LENGTH(String("jose")),
+		LENGTH(String("jose"), String("UTF8")),
+		LPAD(String("Hi"), Int(5), String("xy")),
+		RPAD(String("Hi"), Int(5), String("xy")),
+		MD5(AllTypes.CharacterVarying),
+		REPEAT(AllTypes.Text, Int(33)),
+		REPLACE(AllTypes.Character, String("BA"), String("AB")),
+		REVERSE(AllTypes.CharacterVarying),
+		STRPOS(AllTypes.Text, String("A")),
+		SUBSTR(AllTypes.CharacterPtr, Int(3), Int(2)),
+		TO_HEX(AllTypes.IntegerPtr),
 	)
 
+	//fmt.Println(query.Sql())
 	fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
