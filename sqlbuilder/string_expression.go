@@ -14,6 +14,11 @@ type StringExpression interface {
 	GT_EQ(rhs StringExpression) BoolExpression
 
 	CONCAT(rhs expression) StringExpression
+
+	LIKE(pattern StringExpression) BoolExpression
+	NOT_LIKE(pattern StringExpression) BoolExpression
+	SIMILAR_TO(pattern StringExpression) BoolExpression
+	NOT_SIMILAR_TO(pattern StringExpression) BoolExpression
 }
 
 type stringInterfaceImpl struct {
@@ -54,6 +59,22 @@ func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
 
 func (s *stringInterfaceImpl) CONCAT(rhs expression) StringExpression {
 	return newBinaryStringExpression(s.parent, rhs, "||")
+}
+
+func (s *stringInterfaceImpl) LIKE(pattern StringExpression) BoolExpression {
+	return newBinaryBoolExpression(s.parent, pattern, "LIKE")
+}
+
+func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression {
+	return newBinaryBoolExpression(s.parent, pattern, "NOT LIKE")
+}
+
+func (s *stringInterfaceImpl) SIMILAR_TO(pattern StringExpression) BoolExpression {
+	return newBinaryBoolExpression(s.parent, pattern, "SIMILAR TO")
+}
+
+func (s *stringInterfaceImpl) NOT_SIMILAR_TO(pattern StringExpression) BoolExpression {
+	return newBinaryBoolExpression(s.parent, pattern, "NOT SIMILAR TO")
 }
 
 //---------------------------------------------------//

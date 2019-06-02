@@ -41,6 +41,10 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.LT_EQ(String("Text")),
 		AllTypes.Text.CONCAT(String("text2")),
 		AllTypes.Text.CONCAT(Int(11)),
+		AllTypes.Text.LIKE(String("abc")),
+		AllTypes.Text.NOT_LIKE(String("_b_")),
+		AllTypes.Text.SIMILAR_TO(String("%(b|d)%")),
+		AllTypes.Text.NOT_SIMILAR_TO(String("(b|c)%")),
 
 		BIT_LENGTH(AllTypes.Text),
 		CHAR_LENGTH(AllTypes.Character),

@@ -45,3 +45,23 @@ func TestStringCONCAT(t *testing.T) {
 	assertExpressionSerialize(t, table3StrCol.CONCAT(table2ColStr), "(table3.col2 || table2.colStr)")
 	assertExpressionSerialize(t, table3StrCol.CONCAT(String("JOHN")), "(table3.col2 || $1)", "JOHN")
 }
+
+func TestStringLIKE(t *testing.T) {
+	assertExpressionSerialize(t, table3StrCol.LIKE(table2ColStr), "(table3.col2 LIKE table2.colStr)")
+	assertExpressionSerialize(t, table3StrCol.LIKE(String("JOHN")), "(table3.col2 LIKE $1)", "JOHN")
+}
+
+func TestStringNOT_LIKE(t *testing.T) {
+	assertExpressionSerialize(t, table3StrCol.NOT_LIKE(table2ColStr), "(table3.col2 NOT LIKE table2.colStr)")
+	assertExpressionSerialize(t, table3StrCol.NOT_LIKE(String("JOHN")), "(table3.col2 NOT LIKE $1)", "JOHN")
+}
+
+func TestStringSIMILAR_TO(t *testing.T) {
+	assertExpressionSerialize(t, table3StrCol.SIMILAR_TO(table2ColStr), "(table3.col2 SIMILAR TO table2.colStr)")
+	assertExpressionSerialize(t, table3StrCol.SIMILAR_TO(String("JOHN")), "(table3.col2 SIMILAR TO $1)", "JOHN")
+}
+
+func TestStringNOT_SIMILAR_TO(t *testing.T) {
+	assertExpressionSerialize(t, table3StrCol.NOT_SIMILAR_TO(table2ColStr), "(table3.col2 NOT SIMILAR TO table2.colStr)")
+	assertExpressionSerialize(t, table3StrCol.NOT_SIMILAR_TO(String("JOHN")), "(table3.col2 NOT SIMILAR TO $1)", "JOHN")
+}
