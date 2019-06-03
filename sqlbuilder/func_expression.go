@@ -7,6 +7,7 @@ type funcExpressionImpl struct {
 
 	name        string
 	expressions []expression
+	noBrackets  bool
 }
 
 func ROW(expressions ...expression) expression {
@@ -33,15 +34,38 @@ func (f *funcExpressionImpl) serialize(statement statementType, out *queryData, 
 		return errors.New("Function expressions is nil. ")
 	}
 
-	out.writeString(f.name + "(")
+	addBrackets := !f.noBrackets || len(f.expressions) > 0
+
+	if addBrackets {
+		out.writeString(f.name + "(")
+	} else {
+		out.writeString(f.name)
+	}
 
 	err := serializeExpressionList(statement, f.expressions, ", ", out)
 	if err != nil {
 		return err
 	}
-	out.writeString(")")
+
+	if addBrackets {
+		out.writeString(")")
+	}
 
 	return nil
+}
+
+type boolFunc struct {
+	funcExpressionImpl
+	boolInterfaceImpl
+}
+
+func newBoolFunc(name string, expressions ...expression) BoolExpression {
+	boolFunc := &boolFunc{}
+
+	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
+	boolFunc.boolInterfaceImpl.parent = boolFunc
+
+	return boolFunc
 }
 
 type floatFunc struct {
@@ -91,7 +115,7 @@ type dateFunc struct {
 	dateInterfaceImpl
 }
 
-func newDateFunc(name string, expressions ...expression) DateExpression {
+func newDateFunc(name string, expressions ...expression) *dateFunc {
 	dateFunc := &dateFunc{}
 
 	dateFunc.funcExpressionImpl = *newFunc(name, expressions, dateFunc)
@@ -100,18 +124,46 @@ func newDateFunc(name string, expressions ...expression) DateExpression {
 	return dateFunc
 }
 
-type boolFunc struct {
+type timeFunc struct {
 	funcExpressionImpl
-	boolInterfaceImpl
+	timeInterfaceImpl
 }
 
-func newBoolFunc(name string, expressions ...expression) BoolExpression {
-	boolFunc := &boolFunc{}
+func newTimeFunc(name string, expressions ...expression) *timeFunc {
+	timeFun := &timeFunc{}
 
-	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
-	boolFunc.boolInterfaceImpl.parent = boolFunc
+	timeFun.funcExpressionImpl = *newFunc(name, expressions, timeFun)
+	timeFun.timeInterfaceImpl.parent = timeFun
 
-	return boolFunc
+	return timeFun
+}
+
+type timezFunc struct {
+	funcExpressionImpl
+	timezInterfaceImpl
+}
+
+func newTimezFunc(name string, expressions ...expression) *timezFunc {
+	timezFun := &timezFunc{}
+
+	timezFun.funcExpressionImpl = *newFunc(name, expressions, timezFun)
+	timezFun.timezInterfaceImpl.parent = timezFun
+
+	return timezFun
+}
+
+type timestampFunc struct {
+	funcExpressionImpl
+	timestampInterfaceImpl
+}
+
+func newTimestampFunc(name string, expressions ...expression) *timestampFunc {
+	timestampFunc := &timestampFunc{}
+
+	timestampFunc.funcExpressionImpl = *newFunc(name, expressions, timestampFunc)
+	timestampFunc.timestampInterfaceImpl.parent = timestampFunc
+
+	return timestampFunc
 }
 
 type timestampzFunc struct {
@@ -119,7 +171,7 @@ type timestampzFunc struct {
 	timestampzInterfaceImpl
 }
 
-func newTimestampzFunc(name string, expressions ...expression) TimestampzExpression {
+func newTimestampzFunc(name string, expressions ...expression) *timestampzFunc {
 	timestampzFunc := &timestampzFunc{}
 
 	timestampzFunc.funcExpressionImpl = *newFunc(name, expressions, timestampzFunc)
@@ -258,6 +310,7 @@ func CHR(integerExpression IntegerExpression) StringExpression {
 	return newStringFunc("CHR", integerExpression)
 }
 
+//
 //func CONCAT(expressions ...expression) StringExpression {
 //	return newStringFunc("CONCAT", expressions...)
 //}
@@ -381,4 +434,72 @@ func TO_NUMBER(floatStr, format StringExpression) FloatExpression {
 
 func TO_TIMESTAMP(timestampzStr, format StringExpression) TimestampzExpression {
 	return newTimestampzFunc("TO_TIMESTAMP", timestampzStr, format)
+}
+
+//----------------- Date/Time Functions and Operators ---------------//
+
+func CURRENT_DATE() DateExpression {
+	dateFunc := newDateFunc("CURRENT_DATE")
+	dateFunc.noBrackets = true
+	return dateFunc
+}
+
+func CURRENT_TIME(precision ...int) TimezExpression {
+	var timezFunc *timezFunc
+
+	if len(precision) > 0 {
+		timezFunc = newTimezFunc("CURRENT_TIME", ConstantLiteral(precision[0]))
+	} else {
+		timezFunc = newTimezFunc("CURRENT_TIME")
+	}
+
+	timezFunc.noBrackets = true
+
+	return timezFunc
+}
+
+func CURRENT_TIMESTAMP(precision ...int) TimestampzExpression {
+	var timestampzFunc *timestampzFunc
+
+	if len(precision) > 0 {
+		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", ConstantLiteral(precision[0]))
+	} else {
+		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP")
+	}
+
+	timestampzFunc.noBrackets = true
+
+	return timestampzFunc
+}
+
+func LOCALTIME(precision ...int) TimeExpression {
+	var timeFunc *timeFunc
+
+	if len(precision) > 0 {
+		timeFunc = newTimeFunc("LOCALTIME", ConstantLiteral(precision[0]))
+	} else {
+		timeFunc = newTimeFunc("LOCALTIME")
+	}
+
+	timeFunc.noBrackets = true
+
+	return timeFunc
+}
+
+func LOCALTIMESTAMP(precision ...int) TimestampExpression {
+	var timestampFunc *timestampFunc
+
+	if len(precision) > 0 {
+		timestampFunc = newTimestampFunc("LOCALTIMESTAMP", ConstantLiteral(precision[0]))
+	} else {
+		timestampFunc = newTimestampFunc("LOCALTIMESTAMP")
+	}
+
+	timestampFunc.noBrackets = true
+
+	return timestampFunc
+}
+
+func NOW() TimestampzExpression {
+	return newTimestampzFunc("NOW")
 }

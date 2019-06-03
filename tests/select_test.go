@@ -973,7 +973,7 @@ SELECT payment.payment_id AS "payment.payment_id",
      payment.amount AS "payment.amount",
      payment.payment_date AS "payment.payment_date"
 FROM dvds.payment
-WHERE payment.payment_date < '2007-02-14 22:16:01.000'
+WHERE payment.payment_date < '2007-02-14 22:16:01.000'::timestamp without time zone
 ORDER BY payment.payment_date ASC;
 `
 

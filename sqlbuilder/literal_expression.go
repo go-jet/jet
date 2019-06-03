@@ -5,7 +5,8 @@ import "fmt"
 // Representation of an escaped literal
 type literalExpression struct {
 	expressionInterfaceImpl
-	value interface{}
+	value    interface{}
+	constant bool
 }
 
 func Literal(value interface{}) *literalExpression {
@@ -15,8 +16,19 @@ func Literal(value interface{}) *literalExpression {
 	return &exp
 }
 
+func ConstantLiteral(value interface{}) *literalExpression {
+	exp := Literal(value)
+	exp.constant = true
+
+	return exp
+}
+
 func (l literalExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
-	out.insertArgument(l.value)
+	if l.constant {
+		out.insertConstantArgument(l.value)
+	} else {
+		out.insertPreparedArgument(l.value)
+	}
 
 	return nil
 }

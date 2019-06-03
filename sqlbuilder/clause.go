@@ -158,7 +158,11 @@ func (q *queryData) finalize() (string, []interface{}) {
 	return q.buff.String() + ";\n", q.args
 }
 
-func (q *queryData) insertArgument(arg interface{}) {
+func (q *queryData) insertConstantArgument(arg interface{}) {
+	q.writeString(ArgToString(arg))
+}
+
+func (q *queryData) insertPreparedArgument(arg interface{}) {
 	q.args = append(q.args, arg)
 	argPlaceholder := "$" + strconv.Itoa(len(q.args))
 

@@ -111,7 +111,10 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	//fmt.Println(query.Sql())
+	_, args, _ := query.Sql()
+
+	fmt.Println(query.Sql())
+	fmt.Println(args[15])
 	fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
@@ -284,6 +287,17 @@ func TestTimeOperators(t *testing.T) {
 
 		AllTypes.Time.GT_EQ(AllTypes.Time),
 		AllTypes.Time.GT_EQ(Time(23, 6, 6, 1)),
+
+		CURRENT_DATE(),
+		CURRENT_TIME(),
+		CURRENT_TIME(2),
+		CURRENT_TIMESTAMP(),
+		CURRENT_TIMESTAMP(1),
+		LOCALTIME(),
+		LOCALTIME(11),
+		LOCALTIMESTAMP(),
+		LOCALTIMESTAMP(4),
+		NOW(),
 	)
 
 	fmt.Println(query.DebugSql())

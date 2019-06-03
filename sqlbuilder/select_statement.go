@@ -174,13 +174,13 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	if s.limit >= 0 {
 		out.nextLine()
 		out.writeString("LIMIT")
-		out.insertArgument(s.limit)
+		out.insertPreparedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
 		out.nextLine()
 		out.writeString("OFFSET")
-		out.insertArgument(s.offset)
+		out.insertPreparedArgument(s.offset)
 	}
 
 	if s.forUpdate {
