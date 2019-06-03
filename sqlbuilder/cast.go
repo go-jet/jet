@@ -1,12 +1,12 @@
 package sqlbuilder
 
 type cast struct {
-	expression expression
-	castType   string
+	expression
+	castType string
 }
 
-func newCast(expression expression, castType string) cast {
-	return cast{
+func newCast(expression expression, castType string) *cast {
+	return &cast{
 		expression: expression,
 		castType:   castType,
 	}
@@ -25,7 +25,7 @@ type boolCast struct {
 }
 
 func newBoolCast(expression expression) BoolExpression {
-	boolCast := &boolCast{cast: newCast(expression, "boolean")}
+	boolCast := &boolCast{cast: *newCast(expression, "boolean")}
 
 	boolCast.boolInterfaceImpl.parent = boolCast
 	boolCast.expressionInterfaceImpl.parent = boolCast
@@ -40,7 +40,7 @@ type integerCast struct {
 }
 
 func newIntegerCast(expression expression) IntegerExpression {
-	integerCast := &integerCast{cast: newCast(expression, "integer")}
+	integerCast := &integerCast{cast: *newCast(expression, "integer")}
 
 	integerCast.integerInterfaceImpl.parent = integerCast
 	integerCast.expressionInterfaceImpl.parent = integerCast
@@ -55,7 +55,7 @@ type floatCast struct {
 }
 
 func newDoubleCast(expression expression) FloatExpression {
-	floatCast := &floatCast{cast: newCast(expression, "double precision")}
+	floatCast := &floatCast{cast: *newCast(expression, "double precision")}
 
 	floatCast.floatInterfaceImpl.parent = floatCast
 	floatCast.expressionInterfaceImpl.parent = floatCast
@@ -70,7 +70,7 @@ type textCast struct {
 }
 
 func newTextCast(expression expression) StringExpression {
-	textCast := &textCast{cast: newCast(expression, "text")}
+	textCast := &textCast{cast: *newCast(expression, "text")}
 
 	textCast.stringInterfaceImpl.parent = textCast
 	textCast.expressionInterfaceImpl.parent = textCast
@@ -85,7 +85,7 @@ type dateCast struct {
 }
 
 func newDateCast(expression expression) DateExpression {
-	dateCast := &dateCast{cast: newCast(expression, "date")}
+	dateCast := &dateCast{cast: *newCast(expression, "date")}
 
 	dateCast.dateInterfaceImpl.parent = dateCast
 	dateCast.expressionInterfaceImpl.parent = dateCast
@@ -100,7 +100,7 @@ type timeCast struct {
 }
 
 func newTimeCast(expression expression) TimeExpression {
-	timeCast := &timeCast{cast: newCast(expression, "time without time zone")}
+	timeCast := &timeCast{cast: *newCast(expression, "time without time zone")}
 
 	timeCast.timeInterfaceImpl.parent = timeCast
 	timeCast.expressionInterfaceImpl.parent = timeCast
@@ -115,7 +115,7 @@ type timezCast struct {
 }
 
 func newTimezCast(expression expression) TimezExpression {
-	timezCast := &timezCast{cast: newCast(expression, "time with time zone")}
+	timezCast := &timezCast{cast: *newCast(expression, "time with time zone")}
 
 	timezCast.timezInterfaceImpl.parent = timezCast
 	timezCast.expressionInterfaceImpl.parent = timezCast
@@ -130,7 +130,7 @@ type timestampCast struct {
 }
 
 func newTimestampCast(expression expression) TimestampExpression {
-	timestampCast := &timestampCast{cast: newCast(expression, "timestamp without time zone")}
+	timestampCast := &timestampCast{cast: *newCast(expression, "timestamp without time zone")}
 
 	timestampCast.timestampInterfaceImpl.parent = timestampCast
 	timestampCast.expressionInterfaceImpl.parent = timestampCast
@@ -145,7 +145,7 @@ type timestampzCast struct {
 }
 
 func newTimestampzCast(expression expression) TimestampzExpression {
-	timestampzCast := &timestampzCast{cast: newCast(expression, "timestamp with time zone")}
+	timestampzCast := &timestampzCast{cast: *newCast(expression, "timestamp with time zone")}
 
 	timestampzCast.timestampzInterfaceImpl.parent = timestampzCast
 	timestampzCast.expressionInterfaceImpl.parent = timestampzCast

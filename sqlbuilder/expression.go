@@ -22,6 +22,7 @@ type expression interface {
 	ASC() orderByClause
 	DESC() orderByClause
 
+	CAST_TO(dbType string) expression
 	CAST_TO_BOOL() BoolExpression
 	CAST_TO_INTEGER() IntegerExpression
 	CAST_TO_DOUBLE() FloatExpression
@@ -63,6 +64,10 @@ func (e *expressionInterfaceImpl) ASC() orderByClause {
 
 func (e *expressionInterfaceImpl) DESC() orderByClause {
 	return &orderByClauseImpl{expression: e.parent, ascent: false}
+}
+
+func (e *expressionInterfaceImpl) CAST_TO(dbType string) expression {
+	return newCast(e.parent, dbType)
 }
 
 func (e *expressionInterfaceImpl) CAST_TO_BOOL() BoolExpression {

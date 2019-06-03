@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
+	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/enum"
 	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	model2 "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
@@ -287,10 +288,10 @@ LIMIT 15;
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		WHERE(Film.Rating.EQ(String(model.MpaaRating_NC17.String()))).
+		WHERE(Film.Rating.EQ(enum.MpaaRating.NC17)).
 		LIMIT(15)
 
-	assertQuery(t, query, expectedSql, model.MpaaRating_NC17.String(), int64(15))
+	assertQuery(t, query, expectedSql, int64(15))
 
 	err := query.Query(db, &filmsPerLanguage)
 
@@ -742,7 +743,7 @@ FROM dvds.actor
 `
 
 	rFilmsOnly := Film.SELECT(Film.FilmID, Film.Title, Film.Rating).
-		WHERE(Film.Rating.EQ(String("R"))).
+		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
 		AsTable("films")
 
 	query := Actor.INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
@@ -756,7 +757,7 @@ FROM dvds.actor
 
 	fmt.Println(query.Sql())
 
-	assertQuery(t, query, expectedQuery, "R")
+	assertQuery(t, query, expectedQuery)
 
 	dest := []model.Actor{}
 

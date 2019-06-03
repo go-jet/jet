@@ -70,6 +70,12 @@ func Generate(destDir string, genData GeneratorData) error {
 		return err
 	}
 
+	err = generate(schemaInfo, destDir, "enum", enumTypeTemplate, schemaInfo.EnumInfos)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

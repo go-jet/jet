@@ -124,3 +124,17 @@ func (e {{camelize $.Name}}) String() string {
 }
 
 `
+var enumTypeTemplate = `package enum
+
+import "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
+
+var {{camelize $.Name}} = &struct {
+{{- range $index, $element := .Values}}
+	{{camelize $element}} sqlbuilder.StringExpression
+{{- end}}
+} {
+{{- range $index, $element := .Values}}
+	{{camelize $element}}: sqlbuilder.NewEnumValue("{{$element}}"),
+{{- end}}
+}
+`
