@@ -10,10 +10,6 @@ type funcExpressionImpl struct {
 	noBrackets  bool
 }
 
-func ROW(expressions ...expression) expression {
-	return newFunc("ROW", expressions, nil)
-}
-
 func newFunc(name string, expressions []expression, parent expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:        name,
@@ -52,6 +48,9 @@ func (f *funcExpressionImpl) serialize(statement statementType, out *queryData, 
 	}
 
 	return nil
+}
+func ROW(expressions ...expression) expression {
+	return newFunc("ROW", expressions, nil)
 }
 
 type boolFunc struct {
@@ -240,7 +239,39 @@ func LOG(floatExpression FloatExpression) FloatExpression {
 	return newFloatFunc("LOG", floatExpression)
 }
 
-// ----------------- Group function operators -------------------//
+// ----------------- Aggregate functions  -------------------//
+
+func AVGf(floatExpression FloatExpression) FloatExpression {
+	return newFloatFunc("AVG", floatExpression)
+}
+
+func AVGi(integerExpression IntegerExpression) FloatExpression {
+	return newFloatFunc("AVG", integerExpression)
+}
+
+func BIT_AND(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("BIT_AND", integerExpression)
+}
+
+func BIT_OR(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("BIT_OR", integerExpression)
+}
+
+func BOOL_AND(boolExpression BoolExpression) BoolExpression {
+	return newBoolFunc("BOOL_AND", boolExpression)
+}
+
+func BOOL_OR(boolExpression BoolExpression) BoolExpression {
+	return newBoolFunc("BOOL_OR", boolExpression)
+}
+
+func COUNT(expression expression) IntegerExpression {
+	return newIntegerFunc("COUNT", expression)
+}
+
+func EVERY(boolExpression BoolExpression) BoolExpression {
+	return newBoolFunc("EVERY", boolExpression)
+}
 
 func MAXf(floatExpression FloatExpression) FloatExpression {
 	return newFloatFunc("MAX", floatExpression)
@@ -250,20 +281,20 @@ func MAXi(integerExpression IntegerExpression) IntegerExpression {
 	return newIntegerFunc("MAX", integerExpression)
 }
 
+func MINf(floatExpression FloatExpression) FloatExpression {
+	return newFloatFunc("MIN", floatExpression)
+}
+
+func MINi(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("MIN", integerExpression)
+}
+
 func SUMf(floatExpression FloatExpression) FloatExpression {
 	return newFloatFunc("SUM", floatExpression)
 }
 
 func SUMi(integerExpression IntegerExpression) IntegerExpression {
 	return newIntegerFunc("SUM", integerExpression)
-}
-
-func COUNTf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("COUNT", floatExpression)
-}
-
-func COUNTi(integerExpression IntegerExpression) IntegerExpression {
-	return newIntegerFunc("COUNT", integerExpression)
 }
 
 //------------ String functions ------------------//

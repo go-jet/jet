@@ -849,7 +849,11 @@ ORDER BY film.film_id ASC;
 func TestSelectGroupByHaving(t *testing.T) {
 	expectedSql := `
 SELECT payment.customer_id AS "customer_payment_sum.customer_id",
-     SUM(payment.amount) AS "customer_payment_sum.amount_sum"
+     SUM(payment.amount) AS "customer_payment_sum.amount_sum",
+     AVG(payment.amount) AS "customer_payment_sum.amount_avg",
+     MAX(payment.amount) AS "customer_payment_sum.amount_max",
+     MIN(payment.amount) AS "customer_payment_sum.amount_min",
+     COUNT(payment.amount) AS "customer_payment_sum.amount_count"
 FROM dvds.payment
 GROUP BY payment.customer_id
 HAVING SUM(payment.amount) > 100
@@ -859,6 +863,10 @@ ORDER BY SUM(payment.amount) ASC;
 		SELECT(
 			Payment.CustomerID.AS("customer_payment_sum.customer_id"),
 			SUMf(Payment.Amount).AS("customer_payment_sum.amount_sum"),
+			AVGf(Payment.Amount).AS("customer_payment_sum.amount_avg"),
+			MAXf(Payment.Amount).AS("customer_payment_sum.amount_max"),
+			MINf(Payment.Amount).AS("customer_payment_sum.amount_min"),
+			COUNT(Payment.Amount).AS("customer_payment_sum.amount_count"),
 		).
 		GROUP_BY(Payment.CustomerID).
 		ORDER_BY(
@@ -871,8 +879,12 @@ ORDER BY SUM(payment.amount) ASC;
 	assertQuery(t, customersPaymentQuery, expectedSql, float64(100))
 
 	type CustomerPaymentSum struct {
-		CustomerID int16
-		AmountSum  float64
+		CustomerID  int16
+		AmountSum   float64
+		AmountAvg   float64
+		AmountMax   float64
+		AmountMin   float64
+		AmountCount int64
 	}
 
 	customerPaymentSum := []CustomerPaymentSum{}
@@ -883,8 +895,12 @@ ORDER BY SUM(payment.amount) ASC;
 
 	assert.Equal(t, len(customerPaymentSum), 296)
 	assert.DeepEqual(t, customerPaymentSum[0], CustomerPaymentSum{
-		CustomerID: 135,
-		AmountSum:  100.72,
+		CustomerID:  135,
+		AmountSum:   100.72,
+		AmountAvg:   3.597142857142857,
+		AmountMax:   7.99,
+		AmountMin:   0.99,
+		AmountCount: 28,
 	})
 }
 

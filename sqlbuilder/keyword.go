@@ -5,7 +5,8 @@ const (
 )
 
 var (
-	NULL = newNullExpression()
+	NULL = newNullLiteral()
+	STAR = newStarLiteral()
 )
 
 type keywordClause string

@@ -177,19 +177,37 @@ func Date(year, month, day int) DateExpression {
 }
 
 //--------------------------------------------------//
-type nullExpression struct {
+type nullLiteral struct {
 	expressionInterfaceImpl
 }
 
-func newNullExpression() expression {
-	nullExpression := &nullExpression{}
+func newNullLiteral() expression {
+	nullExpression := &nullLiteral{}
 
 	nullExpression.expressionInterfaceImpl.parent = nullExpression
 
 	return nullExpression
 }
 
-func (n *nullExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (n *nullLiteral) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	out.writeString("NULL")
+	return nil
+}
+
+//--------------------------------------------------//
+type starLiteral struct {
+	expressionInterfaceImpl
+}
+
+func newStarLiteral() expression {
+	starExpression := &starLiteral{}
+
+	starExpression.expressionInterfaceImpl.parent = starExpression
+
+	return starExpression
+}
+
+func (n *starLiteral) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+	out.writeString("*")
 	return nil
 }

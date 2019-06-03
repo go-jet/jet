@@ -5,6 +5,76 @@ import (
 	"testing"
 )
 
+func TestFuncAVG(t *testing.T) {
+	t.Run("float", func(t *testing.T) {
+		assertExpressionSerialize(t, AVGf(table1ColFloat), "AVG(table1.colFloat)")
+	})
+
+	t.Run("integer", func(t *testing.T) {
+		assertExpressionSerialize(t, AVGi(table1ColInt), "AVG(table1.colInt)")
+	})
+}
+
+func TestFuncBIT_AND(t *testing.T) {
+	assertExpressionSerialize(t, BIT_AND(table1ColInt), "BIT_AND(table1.colInt)")
+}
+
+func TestFuncBIT_OR(t *testing.T) {
+	assertExpressionSerialize(t, BIT_OR(table1ColInt), "BIT_OR(table1.colInt)")
+}
+
+func TestFuncBOOL_AND(t *testing.T) {
+	assertExpressionSerialize(t, BOOL_AND(table1ColBool), "BOOL_AND(table1.colBool)")
+}
+
+func TestFuncBOOL_OR(t *testing.T) {
+	assertExpressionSerialize(t, BOOL_OR(table1ColBool), "BOOL_OR(table1.colBool)")
+}
+
+func TestFuncEVERY(t *testing.T) {
+	assertExpressionSerialize(t, EVERY(table1ColBool), "EVERY(table1.colBool)")
+}
+
+func TestFuncMIN(t *testing.T) {
+	t.Run("float", func(t *testing.T) {
+		assertExpressionSerialize(t, MINf(table1ColFloat), "MIN(table1.colFloat)")
+	})
+
+	t.Run("integer", func(t *testing.T) {
+		assertExpressionSerialize(t, MINi(table1ColInt), "MIN(table1.colInt)")
+	})
+}
+
+func TestFuncMAX(t *testing.T) {
+	t.Run("float", func(t *testing.T) {
+		assertExpressionSerialize(t, MAXf(table1ColFloat), "MAX(table1.colFloat)")
+		assertExpressionSerialize(t, MAXf(Float(11.2222)), "MAX($1)", float64(11.2222))
+	})
+
+	t.Run("integer", func(t *testing.T) {
+		assertExpressionSerialize(t, MAXi(table1ColInt), "MAX(table1.colInt)")
+		assertExpressionSerialize(t, MAXi(Int(11)), "MAX($1)", int64(11))
+	})
+}
+
+func TestFuncSUM(t *testing.T) {
+	t.Run("float", func(t *testing.T) {
+		assertExpressionSerialize(t, SUMf(table1ColFloat), "SUM(table1.colFloat)")
+		assertExpressionSerialize(t, SUMf(Float(11.2222)), "SUM($1)", float64(11.2222))
+	})
+
+	t.Run("integer", func(t *testing.T) {
+		assertExpressionSerialize(t, SUMi(table1ColInt), "SUM(table1.colInt)")
+		assertExpressionSerialize(t, SUMi(Int(11)), "SUM($1)", int64(11))
+	})
+}
+
+func TestFuncCOUNT(t *testing.T) {
+	assertExpressionSerialize(t, COUNT(STAR), "COUNT(*)")
+	assertExpressionSerialize(t, COUNT(table1ColFloat), "COUNT(table1.colFloat)")
+	assertExpressionSerialize(t, COUNT(Float(11.2222)), "COUNT($1)", float64(11.2222))
+}
+
 func TestFuncABS(t *testing.T) {
 	t.Run("float", func(t *testing.T) {
 		assertExpressionSerialize(t, ABSf(table1ColFloat), "ABS(table1.colFloat)")
@@ -38,42 +108,6 @@ func TestFuncCBRT(t *testing.T) {
 	t.Run("integer", func(t *testing.T) {
 		assertExpressionSerialize(t, CBRTi(table1ColInt), "CBRT(table1.colInt)")
 		assertExpressionSerialize(t, CBRTi(Int(11)), "CBRT($1)", int64(11))
-	})
-}
-
-func TestFuncMAX(t *testing.T) {
-	t.Run("float", func(t *testing.T) {
-		assertExpressionSerialize(t, MAXf(table1ColFloat), "MAX(table1.colFloat)")
-		assertExpressionSerialize(t, MAXf(Float(11.2222)), "MAX($1)", float64(11.2222))
-	})
-
-	t.Run("integer", func(t *testing.T) {
-		assertExpressionSerialize(t, MAXi(table1ColInt), "MAX(table1.colInt)")
-		assertExpressionSerialize(t, MAXi(Int(11)), "MAX($1)", int64(11))
-	})
-}
-
-func TestFuncSUM(t *testing.T) {
-	t.Run("float", func(t *testing.T) {
-		assertExpressionSerialize(t, SUMf(table1ColFloat), "SUM(table1.colFloat)")
-		assertExpressionSerialize(t, SUMf(Float(11.2222)), "SUM($1)", float64(11.2222))
-	})
-
-	t.Run("integer", func(t *testing.T) {
-		assertExpressionSerialize(t, SUMi(table1ColInt), "SUM(table1.colInt)")
-		assertExpressionSerialize(t, SUMi(Int(11)), "SUM($1)", int64(11))
-	})
-}
-
-func TestFuncCOUNT(t *testing.T) {
-	t.Run("float", func(t *testing.T) {
-		assertExpressionSerialize(t, COUNTf(table1ColFloat), "COUNT(table1.colFloat)")
-		assertExpressionSerialize(t, COUNTf(Float(11.2222)), "COUNT($1)", float64(11.2222))
-	})
-
-	t.Run("integer", func(t *testing.T) {
-		assertExpressionSerialize(t, COUNTi(table1ColInt), "COUNT(table1.colInt)")
-		assertExpressionSerialize(t, COUNTi(Int(11)), "COUNT($1)", int64(11))
 	})
 }
 
