@@ -118,23 +118,24 @@ func TestFuncLOG(t *testing.T) {
 	assertExpressionSerialize(t, LOG(Float(11.2222)), "LOG($1)", float64(11.2222))
 }
 
-func TestCase1(t *testing.T) {
-	query := CASE().
-		WHEN(table3Col1.EQ(Int(1))).THEN(table3Col1.ADD(Int(1))).
-		WHEN(table3Col1.EQ(Int(2))).THEN(table3Col1.ADD(Int(2)))
-
-	assertExpressionSerialize(t, query, `(CASE WHEN table3.col1 = $1 THEN table3.col1 + $2 WHEN table3.col1 = $3 THEN table3.col1 + $4 END)`,
-		int64(1), int64(1), int64(2), int64(2))
+func TestFuncCOALESCE(t *testing.T) {
+	assertExpressionSerialize(t, COALESCE(table1ColFloat), "COALESCE(table1.colFloat)")
+	assertExpressionSerialize(t, COALESCE(Float(11.2222), NULL, String("str")), "COALESCE($1, NULL, $2)", float64(11.2222), "str")
 }
 
-func TestCase2(t *testing.T) {
-	query := CASE(table3Col1).
-		WHEN(Int(1)).THEN(table3Col1.ADD(Int(1))).
-		WHEN(Int(2)).THEN(table3Col1.ADD(Int(2))).
-		ELSE(Int(0))
+func TestFuncNULLIF(t *testing.T) {
+	assertExpressionSerialize(t, NULLIF(table1ColFloat, table2ColInt), "NULLIF(table1.colFloat, table2.colInt)")
+	assertExpressionSerialize(t, NULLIF(Float(11.2222), NULL), "NULLIF($1, NULL)", float64(11.2222))
+}
 
-	assertExpressionSerialize(t, query, `(CASE table3.col1 WHEN $1 THEN table3.col1 + $2 WHEN $3 THEN table3.col1 + $4 ELSE $5 END)`,
-		int64(1), int64(1), int64(2), int64(2), int64(0))
+func TestFuncGREATEST(t *testing.T) {
+	assertExpressionSerialize(t, GREATEST(table1ColFloat), "GREATEST(table1.colFloat)")
+	assertExpressionSerialize(t, GREATEST(Float(11.2222), NULL, String("str")), "GREATEST($1, NULL, $2)", float64(11.2222), "str")
+}
+
+func TestFuncLEAST(t *testing.T) {
+	assertExpressionSerialize(t, LEAST(table1ColFloat), "LEAST(table1.colFloat)")
+	assertExpressionSerialize(t, LEAST(Float(11.2222), NULL, String("str")), "LEAST($1, NULL, $2)", float64(11.2222), "str")
 }
 
 func TestInterval(t *testing.T) {

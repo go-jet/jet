@@ -503,3 +503,27 @@ func LOCALTIMESTAMP(precision ...int) TimestampExpression {
 func NOW() TimestampzExpression {
 	return newTimestampzFunc("NOW")
 }
+
+// --------------- Conditional Expressions Functions -------------//
+
+func COALESCE(value expression, values ...expression) expression {
+	var allValues = []expression{value}
+	allValues = append(allValues, values...)
+	return newFunc("COALESCE", allValues, nil)
+}
+
+func NULLIF(value1, value2 expression) expression {
+	return newFunc("NULLIF", []expression{value1, value2}, nil)
+}
+
+func GREATEST(value expression, values ...expression) expression {
+	var allValues = []expression{value}
+	allValues = append(allValues, values...)
+	return newFunc("GREATEST", allValues, nil)
+}
+
+func LEAST(value expression, values ...expression) expression {
+	var allValues = []expression{value}
+	allValues = append(allValues, values...)
+	return newFunc("LEAST", allValues, nil)
+}

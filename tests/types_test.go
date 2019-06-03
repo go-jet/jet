@@ -48,6 +48,11 @@ func TestExpressionOperators(t *testing.T) {
 		TO_DATE(String("05 Dec 2000"), String("DD Mon YYYY")),
 		TO_NUMBER(String("12,454"), String("99G999D9S")),
 		TO_TIMESTAMP(String("05 Dec 2000"), String("DD Mon YYYY")),
+
+		COALESCE(AllTypes.IntegerPtr, AllTypes.SmallintPtr, NULL, Int(11)),
+		NULLIF(AllTypes.Text, String("(none)")),
+		GREATEST(AllTypes.Numeric, AllTypes.NumericPtr),
+		LEAST(AllTypes.Numeric, AllTypes.NumericPtr),
 	)
 
 	fmt.Println(query.DebugSql())

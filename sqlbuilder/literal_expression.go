@@ -175,3 +175,21 @@ func Date(year, month, day int) DateExpression {
 
 	return dateLiteral.CAST_TO_DATE()
 }
+
+//--------------------------------------------------//
+type nullExpression struct {
+	expressionInterfaceImpl
+}
+
+func newNullExpression() expression {
+	nullExpression := &nullExpression{}
+
+	nullExpression.expressionInterfaceImpl.parent = nullExpression
+
+	return nullExpression
+}
+
+func (n *nullExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+	out.writeString("NULL")
+	return nil
+}

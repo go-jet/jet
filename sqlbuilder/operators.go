@@ -124,7 +124,7 @@ type caseOperatorImpl struct {
 func CASE(expression ...expression) caseOperatorExpression {
 	caseExp := &caseOperatorImpl{}
 
-	if len(expression) == 1 {
+	if len(expression) > 0 {
 		caseExp.expression = expression[0]
 	}
 
