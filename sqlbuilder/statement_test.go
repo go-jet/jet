@@ -406,7 +406,7 @@ func (s *StmtSuite) TestUnlockStatement(c *gc.C) {
 }
 
 func (s *StmtSuite) TestUnionSelectStatement(c *gc.C) {
-	select_queries := make([]selectStatement, 0, 3)
+	select_queries := make([]SelectStatement, 0, 3)
 
 	select_queries = append(select_queries,
 		table1.Select(table1Col1).Where(GtL(table1Col1, 123)),
@@ -428,7 +428,7 @@ func (s *StmtSuite) TestUnionSelectStatement(c *gc.C) {
 }
 
 func (s *StmtSuite) TestUnionLimitWithoutOrderBy(c *gc.C) {
-	select_queries := make([]selectStatement, 0, 3)
+	select_queries := make([]SelectStatement, 0, 3)
 
 	select_queries = append(select_queries,
 		table1.Select(table1Col1).Where(GtL(table1Col1, 123)).OrderBy(table1ColFloat),
@@ -448,7 +448,7 @@ func (s *StmtSuite) TestUnionLimitWithoutOrderBy(c *gc.C) {
 }
 
 func (s *StmtSuite) TestUnionSelectWithMismatchedColumns(c *gc.C) {
-	select_queries := make([]selectStatement, 0, 3)
+	select_queries := make([]SelectStatement, 0, 3)
 
 	select_queries = append(select_queries,
 
@@ -483,7 +483,7 @@ func (s *StmtSuite) TestComplicatedUnionSelectWithWhereStatement(c *gc.C) {
 
 	// tests on outer Statement: Group By, Order By, LIMIT
 	// on inner Statement: AndWhere, WHERE (with AND), Order By, LIMIT
-	select_queries := make([]selectStatement, 0, 3)
+	select_queries := make([]SelectStatement, 0, 3)
 
 	// We're not trying to write a SQL parser, so we won't warn if you do something silly like
 	// try to apply a where clause on more columns than you've selected in your union select

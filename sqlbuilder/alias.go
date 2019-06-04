@@ -1,11 +1,11 @@
 package sqlbuilder
 
 type Alias struct {
-	expression expression
+	expression Expression
 	alias      string
 }
 
-func NewAlias(expression expression, alias string) *Alias {
+func NewAlias(expression Expression, alias string) *Alias {
 	return &Alias{
 		expression: expression,
 		alias:      alias,

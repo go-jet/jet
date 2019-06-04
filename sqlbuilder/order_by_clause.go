@@ -2,12 +2,12 @@ package sqlbuilder
 
 import "github.com/dropbox/godropbox/errors"
 
-type orderByClause interface {
+type OrderByClause interface {
 	serializeAsOrderBy(statement statementType, out *queryData) error
 }
 
 type orderByClauseImpl struct {
-	expression expression
+	expression Expression
 	ascent     bool
 }
 
@@ -29,10 +29,10 @@ func (o *orderByClauseImpl) serializeAsOrderBy(statement statementType, out *que
 	return nil
 }
 
-func ASC(expression expression) orderByClause {
+func ASC(expression Expression) OrderByClause {
 	return &orderByClauseImpl{expression: expression, ascent: true}
 }
 
-func DESC(expression expression) orderByClause {
+func DESC(expression Expression) OrderByClause {
 	return &orderByClauseImpl{expression: expression, ascent: false}
 }

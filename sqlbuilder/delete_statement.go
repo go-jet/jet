@@ -6,13 +6,13 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
-type deleteStatement interface {
+type DeleteStatement interface {
 	Statement
 
-	WHERE(expression BoolExpression) deleteStatement
+	WHERE(expression BoolExpression) DeleteStatement
 }
 
-func newDeleteStatement(table writableTable) deleteStatement {
+func newDeleteStatement(table writableTable) DeleteStatement {
 	return &deleteStatementImpl{
 		table: table,
 	}
@@ -23,7 +23,7 @@ type deleteStatementImpl struct {
 	where BoolExpression
 }
 
-func (d *deleteStatementImpl) WHERE(expression BoolExpression) deleteStatement {
+func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 	d.where = expression
 	return d
 }

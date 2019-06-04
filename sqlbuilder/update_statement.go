@@ -6,15 +6,15 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
-type updateStatement interface {
+type UpdateStatement interface {
 	Statement
 
-	SET(values ...interface{}) updateStatement
-	WHERE(expression BoolExpression) updateStatement
-	RETURNING(projections ...projection) updateStatement
+	SET(values ...interface{}) UpdateStatement
+	WHERE(expression BoolExpression) UpdateStatement
+	RETURNING(projections ...projection) UpdateStatement
 }
 
-func newUpdateStatement(table writableTable, columns []column) updateStatement {
+func newUpdateStatement(table writableTable, columns []column) UpdateStatement {
 	return &updateStatementImpl{
 		table:   table,
 		columns: columns,
@@ -29,7 +29,7 @@ type updateStatementImpl struct {
 	returning    []projection
 }
 
-func (u *updateStatementImpl) SET(values ...interface{}) updateStatement {
+func (u *updateStatementImpl) SET(values ...interface{}) UpdateStatement {
 
 	for _, value := range values {
 		if clause, ok := value.(clause); ok {
@@ -42,12 +42,12 @@ func (u *updateStatementImpl) SET(values ...interface{}) updateStatement {
 	return u
 }
 
-func (u *updateStatementImpl) WHERE(expression BoolExpression) updateStatement {
+func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 	u.where = expression
 	return u
 }
 
-func (u *updateStatementImpl) RETURNING(projections ...projection) updateStatement {
+func (u *updateStatementImpl) RETURNING(projections ...projection) UpdateStatement {
 	u.returning = defaultProjectionAliasing(projections)
 	return u
 }

@@ -6,11 +6,11 @@ type funcExpressionImpl struct {
 	expressionInterfaceImpl
 
 	name        string
-	expressions []expression
+	expressions []Expression
 	noBrackets  bool
 }
 
-func newFunc(name string, expressions []expression, parent expression) *funcExpressionImpl {
+func newFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:        name,
 		expressions: expressions,
@@ -55,7 +55,7 @@ type boolFunc struct {
 	boolInterfaceImpl
 }
 
-func newBoolFunc(name string, expressions ...expression) BoolExpression {
+func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 	boolFunc := &boolFunc{}
 
 	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
@@ -69,7 +69,7 @@ type floatFunc struct {
 	floatInterfaceImpl
 }
 
-func newFloatFunc(name string, expressions ...expression) FloatExpression {
+func newFloatFunc(name string, expressions ...Expression) FloatExpression {
 	floatFunc := &floatFunc{}
 
 	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
@@ -83,7 +83,7 @@ type integerFunc struct {
 	integerInterfaceImpl
 }
 
-func newIntegerFunc(name string, expressions ...expression) IntegerExpression {
+func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
 	floatFunc := &integerFunc{}
 
 	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
@@ -97,7 +97,7 @@ type stringFunc struct {
 	stringInterfaceImpl
 }
 
-func newStringFunc(name string, expressions ...expression) StringExpression {
+func newStringFunc(name string, expressions ...Expression) StringExpression {
 	stringFunc := &stringFunc{}
 
 	stringFunc.funcExpressionImpl = *newFunc(name, expressions, stringFunc)
@@ -111,7 +111,7 @@ type dateFunc struct {
 	dateInterfaceImpl
 }
 
-func newDateFunc(name string, expressions ...expression) *dateFunc {
+func newDateFunc(name string, expressions ...Expression) *dateFunc {
 	dateFunc := &dateFunc{}
 
 	dateFunc.funcExpressionImpl = *newFunc(name, expressions, dateFunc)
@@ -125,7 +125,7 @@ type timeFunc struct {
 	timeInterfaceImpl
 }
 
-func newTimeFunc(name string, expressions ...expression) *timeFunc {
+func newTimeFunc(name string, expressions ...Expression) *timeFunc {
 	timeFun := &timeFunc{}
 
 	timeFun.funcExpressionImpl = *newFunc(name, expressions, timeFun)
@@ -139,7 +139,7 @@ type timezFunc struct {
 	timezInterfaceImpl
 }
 
-func newTimezFunc(name string, expressions ...expression) *timezFunc {
+func newTimezFunc(name string, expressions ...Expression) *timezFunc {
 	timezFun := &timezFunc{}
 
 	timezFun.funcExpressionImpl = *newFunc(name, expressions, timezFun)
@@ -153,7 +153,7 @@ type timestampFunc struct {
 	timestampInterfaceImpl
 }
 
-func newTimestampFunc(name string, expressions ...expression) *timestampFunc {
+func newTimestampFunc(name string, expressions ...Expression) *timestampFunc {
 	timestampFunc := &timestampFunc{}
 
 	timestampFunc.funcExpressionImpl = *newFunc(name, expressions, timestampFunc)
@@ -167,7 +167,7 @@ type timestampzFunc struct {
 	timestampzInterfaceImpl
 }
 
-func newTimestampzFunc(name string, expressions ...expression) *timestampzFunc {
+func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 	timestampzFunc := &timestampzFunc{}
 
 	timestampzFunc.funcExpressionImpl = *newFunc(name, expressions, timestampzFunc)
@@ -176,7 +176,7 @@ func newTimestampzFunc(name string, expressions ...expression) *timestampzFunc {
 	return timestampzFunc
 }
 
-func ROW(expressions ...expression) expression {
+func ROW(expressions ...Expression) Expression {
 	return newFunc("ROW", expressions, nil)
 }
 
@@ -266,7 +266,7 @@ func BOOL_OR(boolExpression BoolExpression) BoolExpression {
 	return newBoolFunc("BOOL_OR", boolExpression)
 }
 
-func COUNT(expression expression) IntegerExpression {
+func COUNT(expression Expression) IntegerExpression {
 	return newIntegerFunc("COUNT", expression)
 }
 
@@ -343,11 +343,11 @@ func CHR(integerExpression IntegerExpression) StringExpression {
 }
 
 //
-//func CONCAT(expressions ...expression) StringExpression {
+//func CONCAT(expressions ...Expression) StringExpression {
 //	return newStringFunc("CONCAT", expressions...)
 //}
 //
-//func CONCAT_WS(expressions ...expression) StringExpression {
+//func CONCAT_WS(expressions ...Expression) StringExpression {
 //	return newStringFunc("CONCAT_WS", expressions...)
 //}
 
@@ -452,7 +452,7 @@ func TO_HEX(number IntegerExpression) StringExpression {
 
 //----------Data Type Formatting Functions ----------------------//
 
-func TO_CHAR(expression expression, text StringExpression) StringExpression {
+func TO_CHAR(expression Expression, text StringExpression) StringExpression {
 	return newStringFunc("TO_CHAR", expression, text)
 }
 
@@ -538,24 +538,24 @@ func NOW() TimestampzExpression {
 
 // --------------- Conditional Expressions Functions -------------//
 
-func COALESCE(value expression, values ...expression) expression {
-	var allValues = []expression{value}
+func COALESCE(value Expression, values ...Expression) Expression {
+	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
 	return newFunc("COALESCE", allValues, nil)
 }
 
-func NULLIF(value1, value2 expression) expression {
-	return newFunc("NULLIF", []expression{value1, value2}, nil)
+func NULLIF(value1, value2 Expression) Expression {
+	return newFunc("NULLIF", []Expression{value1, value2}, nil)
 }
 
-func GREATEST(value expression, values ...expression) expression {
-	var allValues = []expression{value}
+func GREATEST(value Expression, values ...Expression) Expression {
+	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
 	return newFunc("GREATEST", allValues, nil)
 }
 
-func LEAST(value expression, values ...expression) expression {
-	var allValues = []expression{value}
+func LEAST(value Expression, values ...Expression) Expression {
+	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
 	return newFunc("LEAST", allValues, nil)
 }

@@ -4,25 +4,25 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// An expression
-type expression interface {
+// An Expression
+type Expression interface {
 	clause
 	projection
 	groupByClause
-	orderByClause
+	OrderByClause
 
 	IS_NULL() BoolExpression
 	IS_NOT_NULL() BoolExpression
 
-	IN(expressions ...expression) BoolExpression
-	NOT_IN(expressions ...expression) BoolExpression
+	IN(expressions ...Expression) BoolExpression
+	NOT_IN(expressions ...Expression) BoolExpression
 
 	AS(alias string) projection
 
-	ASC() orderByClause
-	DESC() orderByClause
+	ASC() OrderByClause
+	DESC() OrderByClause
 
-	CAST_TO(dbType string) expression
+	CAST_TO(dbType string) Expression
 	CAST_TO_BOOL() BoolExpression
 	CAST_TO_INTEGER() IntegerExpression
 	CAST_TO_DOUBLE() FloatExpression
@@ -35,7 +35,7 @@ type expression interface {
 }
 
 type expressionInterfaceImpl struct {
-	parent expression
+	parent Expression
 }
 
 func (e *expressionInterfaceImpl) IS_NULL() BoolExpression {
@@ -46,11 +46,11 @@ func (e *expressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
 	return newPostifxBoolExpression(e.parent, "IS NOT NULL")
 }
 
-func (e *expressionInterfaceImpl) IN(expressions ...expression) BoolExpression {
+func (e *expressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
 	return newBinaryBoolExpression(e.parent, WRAP(expressions...), "IN")
 }
 
-func (e *expressionInterfaceImpl) NOT_IN(expressions ...expression) BoolExpression {
+func (e *expressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
 	return newBinaryBoolExpression(e.parent, WRAP(expressions...), "NOT IN")
 }
 
@@ -58,15 +58,15 @@ func (e *expressionInterfaceImpl) AS(alias string) projection {
 	return NewAlias(e.parent, alias)
 }
 
-func (e *expressionInterfaceImpl) ASC() orderByClause {
+func (e *expressionInterfaceImpl) ASC() OrderByClause {
 	return &orderByClauseImpl{expression: e.parent, ascent: true}
 }
 
-func (e *expressionInterfaceImpl) DESC() orderByClause {
+func (e *expressionInterfaceImpl) DESC() OrderByClause {
 	return &orderByClauseImpl{expression: e.parent, ascent: false}
 }
 
-func (e *expressionInterfaceImpl) CAST_TO(dbType string) expression {
+func (e *expressionInterfaceImpl) CAST_TO(dbType string) Expression {
 	return newCast(e.parent, dbType)
 }
 
@@ -120,11 +120,11 @@ func (e *expressionInterfaceImpl) serializeAsOrderBy(statement statementType, ou
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
 type binaryOpExpression struct {
-	lhs, rhs expression
+	lhs, rhs Expression
 	operator string
 }
 
-func newBinaryExpression(lhs, rhs expression, operator string, parent ...expression) binaryOpExpression {
+func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpression {
 	binaryExpression := binaryOpExpression{
 		lhs:      lhs,
 		rhs:      rhs,
@@ -136,7 +136,7 @@ func newBinaryExpression(lhs, rhs expression, operator string, parent ...express
 
 func (c *binaryOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if c == nil {
-		return errors.New("Binary expression is nil.")
+		return errors.New("Binary Expression is nil.")
 	}
 	if c.lhs == nil {
 		return errors.Newf("nil lhs.")
@@ -168,13 +168,13 @@ func (c *binaryOpExpression) serialize(statement statementType, out *queryData, 
 	return nil
 }
 
-// A prefix operator expression
+// A prefix operator Expression
 type prefixOpExpression struct {
-	expression expression
+	expression Expression
 	operator   string
 }
 
-func newPrefixExpression(expression expression, operator string) prefixOpExpression {
+func newPrefixExpression(expression Expression, operator string) prefixOpExpression {
 	prefixExpression := prefixOpExpression{
 		expression: expression,
 		operator:   operator,
@@ -185,13 +185,13 @@ func newPrefixExpression(expression expression, operator string) prefixOpExpress
 
 func (p *prefixOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if p == nil {
-		return errors.New("Prefix expression is nil.")
+		return errors.New("Prefix Expression is nil.")
 	}
 
 	out.writeString(p.operator + " ")
 
 	if p.expression == nil {
-		return errors.Newf("nil prefix expression.")
+		return errors.Newf("nil prefix Expression.")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err
@@ -200,13 +200,13 @@ func (p *prefixOpExpression) serialize(statement statementType, out *queryData, 
 	return nil
 }
 
-// A postifx operator expression
+// A postifx operator Expression
 type postfixOpExpression struct {
-	expression expression
+	expression Expression
 	operator   string
 }
 
-func newPostfixOpExpression(expression expression, operator string) postfixOpExpression {
+func newPostfixOpExpression(expression Expression, operator string) postfixOpExpression {
 	postfixOpExpression := postfixOpExpression{
 		expression: expression,
 		operator:   operator,
@@ -217,11 +217,11 @@ func newPostfixOpExpression(expression expression, operator string) postfixOpExp
 
 func (p *postfixOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if p == nil {
-		return errors.New("Postifx operator expression is nil.")
+		return errors.New("Postifx operator Expression is nil.")
 	}
 
 	if p.expression == nil {
-		return errors.Newf("nil prefix expression.")
+		return errors.Newf("nil prefix Expression.")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err

@@ -7,7 +7,7 @@ import (
 )
 
 type column interface {
-	expression
+	Expression
 
 	Name() string
 	TableName() string

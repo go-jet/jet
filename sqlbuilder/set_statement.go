@@ -6,14 +6,14 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
-type setStatement interface {
+type SetStatement interface {
 	Statement
-	expression
+	Expression
 	hasRows()
 
-	ORDER_BY(clauses ...orderByClause) setStatement
-	LIMIT(limit int64) setStatement
-	OFFSET(offset int64) setStatement
+	ORDER_BY(clauses ...OrderByClause) SetStatement
+	LIMIT(limit int64) SetStatement
+	OFFSET(offset int64) SetStatement
 
 	AsTable(alias string) expressionTable
 }
@@ -24,27 +24,27 @@ const (
 	except    = "EXCEPT"
 )
 
-func UNION(selects ...rowsType) setStatement {
+func UNION(selects ...rowsType) SetStatement {
 	return newSetStatementImpl(union, false, selects...)
 }
 
-func UNION_ALL(selects ...rowsType) setStatement {
+func UNION_ALL(selects ...rowsType) SetStatement {
 	return newSetStatementImpl(union, true, selects...)
 }
 
-func INTERSECT(selects ...rowsType) setStatement {
+func INTERSECT(selects ...rowsType) SetStatement {
 	return newSetStatementImpl(intersect, false, selects...)
 }
 
-func INTERSECT_ALL(selects ...rowsType) setStatement {
+func INTERSECT_ALL(selects ...rowsType) SetStatement {
 	return newSetStatementImpl(intersect, true, selects...)
 }
 
-func EXCEPT(selects ...rowsType) setStatement {
+func EXCEPT(selects ...rowsType) SetStatement {
 	return newSetStatementImpl(except, false, selects...)
 }
 
-func EXCEPT_ALL(selects ...rowsType) setStatement {
+func EXCEPT_ALL(selects ...rowsType) SetStatement {
 	return newSetStatementImpl(except, true, selects...)
 }
 
@@ -55,13 +55,13 @@ type setStatementImpl struct {
 
 	operator      string
 	selects       []rowsType
-	orderBy       []orderByClause
+	orderBy       []OrderByClause
 	limit, offset int64
 	// True if results of the union should be deduped.
 	all bool
 }
 
-func newSetStatementImpl(operator string, all bool, selects ...rowsType) setStatement {
+func newSetStatementImpl(operator string, all bool, selects ...rowsType) SetStatement {
 	setStatement := &setStatementImpl{
 		operator: operator,
 		selects:  selects,
@@ -75,18 +75,18 @@ func newSetStatementImpl(operator string, all bool, selects ...rowsType) setStat
 	return setStatement
 }
 
-func (us *setStatementImpl) ORDER_BY(orderBy ...orderByClause) setStatement {
+func (us *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
 
 	us.orderBy = orderBy
 	return us
 }
 
-func (us *setStatementImpl) LIMIT(limit int64) setStatement {
+func (us *setStatementImpl) LIMIT(limit int64) SetStatement {
 	us.limit = limit
 	return us
 }
 
-func (us *setStatementImpl) OFFSET(offset int64) setStatement {
+func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
 	us.offset = offset
 	return us
 }

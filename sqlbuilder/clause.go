@@ -76,7 +76,7 @@ func (q *queryData) writeFrom(statement statementType, table tableInterface) err
 	return err
 }
 
-func (q *queryData) writeWhere(statement statementType, where expression) error {
+func (q *queryData) writeWhere(statement statementType, where Expression) error {
 	q.nextLine()
 	q.writeString("WHERE")
 
@@ -98,7 +98,7 @@ func (q *queryData) writeGroupBy(statement statementType, groupBy []groupByClaus
 	return err
 }
 
-func (q *queryData) writeOrderBy(statement statementType, orderBy []orderByClause) error {
+func (q *queryData) writeOrderBy(statement statementType, orderBy []OrderByClause) error {
 	q.nextLine()
 	q.writeString("ORDER BY")
 
@@ -109,7 +109,7 @@ func (q *queryData) writeOrderBy(statement statementType, orderBy []orderByClaus
 	return err
 }
 
-func (q *queryData) writeHaving(statement statementType, having expression) error {
+func (q *queryData) writeHaving(statement statementType, having Expression) error {
 	q.nextLine()
 	q.writeString("HAVING")
 

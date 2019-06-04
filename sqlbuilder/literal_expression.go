@@ -181,7 +181,7 @@ type nullLiteral struct {
 	expressionInterfaceImpl
 }
 
-func newNullLiteral() expression {
+func newNullLiteral() Expression {
 	nullExpression := &nullLiteral{}
 
 	nullExpression.expressionInterfaceImpl.parent = nullExpression
@@ -199,7 +199,7 @@ type starLiteral struct {
 	expressionInterfaceImpl
 }
 
-func newStarLiteral() expression {
+func newStarLiteral() Expression {
 	starExpression := &starLiteral{}
 
 	starExpression.expressionInterfaceImpl.parent = starExpression
@@ -216,7 +216,7 @@ func (n *starLiteral) serialize(statement statementType, out *queryData, options
 
 type wrap struct {
 	expressionInterfaceImpl
-	expressions []expression
+	expressions []Expression
 }
 
 func (n *wrap) serialize(statement statementType, out *queryData, options ...serializeOption) error {
@@ -226,9 +226,28 @@ func (n *wrap) serialize(statement statementType, out *queryData, options ...ser
 	return err
 }
 
-func WRAP(expression ...expression) expression {
+func WRAP(expression ...Expression) Expression {
 	wrap := &wrap{expressions: expression}
 	wrap.expressionInterfaceImpl.parent = wrap
 
 	return wrap
+}
+
+//---------------------------------------------------//
+
+type rawExpression struct {
+	expressionInterfaceImpl
+	raw string
+}
+
+func (n *rawExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+	out.writeString(n.raw)
+	return nil
+}
+
+func RAW(raw string) Expression {
+	rawExp := &rawExpression{raw: raw}
+	rawExp.expressionInterfaceImpl.parent = rawExp
+
+	return rawExp
 }

@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type TimeExpression interface {
-	expression
+	Expression
 
 	EQ(rhs TimeExpression) BoolExpression
 	NOT_EQ(rhs TimeExpression) BoolExpression
@@ -58,7 +58,7 @@ type prefixTimeExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimeExpression(operator string, expression expression) TimeExpression {
+func newPrefixTimeExpression(operator string, expression Expression) TimeExpression {
 	timeExpr := prefixTimeExpression{}
 	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
 
@@ -68,6 +68,6 @@ func newPrefixTimeExpression(operator string, expression expression) TimeExpress
 	return &timeExpr
 }
 
-func INTERVAL(interval string) expression {
+func INTERVAL(interval string) Expression {
 	return newPrefixTimeExpression("INTERVAL", literal(interval))
 }

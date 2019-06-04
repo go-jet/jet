@@ -12,40 +12,40 @@ func NOT(expr BoolExpression) BoolExpression {
 //----------- Comparison operators ---------------//
 
 // Returns a representation of "a=b"
-func EQ(lhs, rhs expression) BoolExpression {
+func EQ(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "=")
 }
 
 // Returns a representation of "a!=b"
-func NOT_EQ(lhs, rhs expression) BoolExpression {
+func NOT_EQ(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "!=")
 }
 
-func IS_DISTINCT_FROM(lhs, rhs expression) BoolExpression {
+func IS_DISTINCT_FROM(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "IS DISTINCT FROM")
 }
 
-func IS_NOT_DISTINCT_FROM(lhs, rhs expression) BoolExpression {
+func IS_NOT_DISTINCT_FROM(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
 // Returns a representation of "a<b"
-func LT(lhs expression, rhs expression) BoolExpression {
+func LT(lhs Expression, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "<")
 }
 
 // Returns a representation of "a<=b"
-func LT_EQ(lhs, rhs expression) BoolExpression {
+func LT_EQ(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "<=")
 }
 
 // Returns a representation of "a>b"
-func GT(lhs, rhs expression) BoolExpression {
+func GT(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, ">")
 }
 
 // Returns a representation of "a>=b"
-func GT_EQ(lhs, rhs expression) BoolExpression {
+func GT_EQ(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, ">=")
 }
 
@@ -73,47 +73,47 @@ func IS_NOT_UNKNOWN(expr BoolExpression) BoolExpression {
 	return newPostifxBoolExpression(expr, "IS NOT UNKNOWN")
 }
 
-func And(lhs, rhs expression) BoolExpression {
+func And(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "AND")
 }
 
 // Returns a representation of "c[0] OR ... OR c[n-1]" for c in clauses
-func Or(lhs, rhs expression) BoolExpression {
+func Or(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "OR")
 }
 
-func Regexp(lhs, rhs expression) BoolExpression {
+func Regexp(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "REGEXP")
 }
 
-func RegexpL(lhs expression, val string) BoolExpression {
+func RegexpL(lhs Expression, val string) BoolExpression {
 	return Regexp(lhs, literal(val))
 }
 
-func EXISTS(subQuery selectStatement) BoolExpression {
+func EXISTS(subQuery SelectStatement) BoolExpression {
 	return newPrefixBoolExpression(subQuery, "EXISTS")
 }
 
 // --------------- CASE operator -------------------//
 
 type caseOperatorExpression interface {
-	expression
+	Expression
 
-	WHEN(condition expression) caseOperatorExpression
-	THEN(then expression) caseOperatorExpression
-	ELSE(els expression) caseOperatorExpression
+	WHEN(condition Expression) caseOperatorExpression
+	THEN(then Expression) caseOperatorExpression
+	ELSE(els Expression) caseOperatorExpression
 }
 
 type caseOperatorImpl struct {
 	expressionInterfaceImpl
 
-	expression expression
-	when       []expression
-	then       []expression
-	els        expression
+	expression Expression
+	when       []Expression
+	then       []Expression
+	els        Expression
 }
 
-func CASE(expression ...expression) caseOperatorExpression {
+func CASE(expression ...Expression) caseOperatorExpression {
 	caseExp := &caseOperatorImpl{}
 
 	if len(expression) > 0 {
@@ -125,17 +125,17 @@ func CASE(expression ...expression) caseOperatorExpression {
 	return caseExp
 }
 
-func (c *caseOperatorImpl) WHEN(when expression) caseOperatorExpression {
+func (c *caseOperatorImpl) WHEN(when Expression) caseOperatorExpression {
 	c.when = append(c.when, when)
 	return c
 }
 
-func (c *caseOperatorImpl) THEN(then expression) caseOperatorExpression {
+func (c *caseOperatorImpl) THEN(then Expression) caseOperatorExpression {
 	c.then = append(c.then, then)
 	return c
 }
 
-func (c *caseOperatorImpl) ELSE(els expression) caseOperatorExpression {
+func (c *caseOperatorImpl) ELSE(els Expression) caseOperatorExpression {
 	c.els = els
 
 	return c
@@ -143,7 +143,7 @@ func (c *caseOperatorImpl) ELSE(els expression) caseOperatorExpression {
 
 func (c *caseOperatorImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if c == nil {
-		return errors.New("Case expression is nil. ")
+		return errors.New("Case Expression is nil. ")
 	}
 
 	out.writeString("(CASE")
@@ -157,11 +157,11 @@ func (c *caseOperatorImpl) serialize(statement statementType, out *queryData, op
 	}
 
 	if len(c.when) == 0 || len(c.then) == 0 {
-		return errors.New("Invalid case Statement. There should be at least one when/then expression pair. ")
+		return errors.New("Invalid case Statement. There should be at least one when/then Expression pair. ")
 	}
 
 	if len(c.when) != len(c.then) {
-		return errors.New("When and then expression count mismatch. ")
+		return errors.New("When and then Expression count mismatch. ")
 	}
 
 	for i, when := range c.when {

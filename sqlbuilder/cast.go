@@ -1,19 +1,19 @@
 package sqlbuilder
 
 type cast struct {
-	expression
+	Expression
 	castType string
 }
 
-func newCast(expression expression, castType string) *cast {
+func newCast(expression Expression, castType string) *cast {
 	return &cast{
-		expression: expression,
+		Expression: expression,
 		castType:   castType,
 	}
 }
 
 func (b *cast) serialize(statement statementType, out *queryData, options ...serializeOption) error {
-	err := b.expression.serialize(statement, out, options...)
+	err := b.Expression.serialize(statement, out, options...)
 	out.writeString("::" + b.castType)
 	return err
 }
@@ -24,7 +24,7 @@ type boolCast struct {
 	cast
 }
 
-func newBoolCast(expression expression) BoolExpression {
+func newBoolCast(expression Expression) BoolExpression {
 	boolCast := &boolCast{cast: *newCast(expression, "boolean")}
 
 	boolCast.boolInterfaceImpl.parent = boolCast
@@ -39,7 +39,7 @@ type integerCast struct {
 	cast
 }
 
-func newIntegerCast(expression expression) IntegerExpression {
+func newIntegerCast(expression Expression) IntegerExpression {
 	integerCast := &integerCast{cast: *newCast(expression, "integer")}
 
 	integerCast.integerInterfaceImpl.parent = integerCast
@@ -54,7 +54,7 @@ type floatCast struct {
 	cast
 }
 
-func newDoubleCast(expression expression) FloatExpression {
+func newDoubleCast(expression Expression) FloatExpression {
 	floatCast := &floatCast{cast: *newCast(expression, "double precision")}
 
 	floatCast.floatInterfaceImpl.parent = floatCast
@@ -69,7 +69,7 @@ type textCast struct {
 	cast
 }
 
-func newTextCast(expression expression) StringExpression {
+func newTextCast(expression Expression) StringExpression {
 	textCast := &textCast{cast: *newCast(expression, "text")}
 
 	textCast.stringInterfaceImpl.parent = textCast
@@ -84,7 +84,7 @@ type dateCast struct {
 	cast
 }
 
-func newDateCast(expression expression) DateExpression {
+func newDateCast(expression Expression) DateExpression {
 	dateCast := &dateCast{cast: *newCast(expression, "date")}
 
 	dateCast.dateInterfaceImpl.parent = dateCast
@@ -99,7 +99,7 @@ type timeCast struct {
 	cast
 }
 
-func newTimeCast(expression expression) TimeExpression {
+func newTimeCast(expression Expression) TimeExpression {
 	timeCast := &timeCast{cast: *newCast(expression, "time without time zone")}
 
 	timeCast.timeInterfaceImpl.parent = timeCast
@@ -114,7 +114,7 @@ type timezCast struct {
 	cast
 }
 
-func newTimezCast(expression expression) TimezExpression {
+func newTimezCast(expression Expression) TimezExpression {
 	timezCast := &timezCast{cast: *newCast(expression, "time with time zone")}
 
 	timezCast.timezInterfaceImpl.parent = timezCast
@@ -129,7 +129,7 @@ type timestampCast struct {
 	cast
 }
 
-func newTimestampCast(expression expression) TimestampExpression {
+func newTimestampCast(expression Expression) TimestampExpression {
 	timestampCast := &timestampCast{cast: *newCast(expression, "timestamp without time zone")}
 
 	timestampCast.timestampInterfaceImpl.parent = timestampCast
@@ -144,7 +144,7 @@ type timestampzCast struct {
 	cast
 }
 
-func newTimestampzCast(expression expression) TimestampzExpression {
+func newTimestampzCast(expression Expression) TimestampzExpression {
 	timestampzCast := &timestampzCast{cast: *newCast(expression, "timestamp with time zone")}
 
 	timestampzCast.timestampzInterfaceImpl.parent = timestampzCast

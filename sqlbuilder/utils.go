@@ -6,7 +6,7 @@ import (
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
-func serializeOrderByClauseList(statement statementType, orderByClauses []orderByClause, out *queryData) error {
+func serializeOrderByClauseList(statement statementType, orderByClauses []OrderByClause, out *queryData) error {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
@@ -61,7 +61,7 @@ func serializeClauseList(statement statementType, clauses []clause, out *queryDa
 	return nil
 }
 
-func serializeExpressionList(statement statementType, expressions []expression, separator string, out *queryData) error {
+func serializeExpressionList(statement statementType, expressions []Expression, separator string, out *queryData) error {
 
 	for i, value := range expressions {
 		if i > 0 {
@@ -86,7 +86,7 @@ func serializeProjectionList(statement statementType, projections []projection, 
 		}
 
 		if col == nil {
-			return errors.New("projection expression is nil.")
+			return errors.New("projection Expression is nil.")
 		}
 
 		if err := col.serializeForProjection(statement, out); err != nil {
@@ -113,8 +113,8 @@ func serializeColumnList(statement statementType, columns []column, out *queryDa
 	return nil
 }
 
-//func stringExpressionListToExpressionList(stringExpressions []StringExpression) []expression{
-//	var ret []expression
+//func stringExpressionListToExpressionList(stringExpressions []StringExpression) []Expression{
+//	var ret []Expression
 //
 //	for _, strExp := range stringExpressions {
 //		ret = append(ret, strExp)

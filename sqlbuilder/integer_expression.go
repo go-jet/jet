@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type IntegerExpression interface {
-	expression
+	Expression
 
 	EQ(rhs IntegerExpression) BoolExpression
 	NOT_EQ(rhs IntegerExpression) BoolExpression

@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type BoolExpression interface {
-	expression
+	Expression
 
 	EQ(expression BoolExpression) BoolExpression
 	NOT_EQ(expression BoolExpression) BoolExpression
@@ -79,7 +79,7 @@ type binaryBoolExpression struct {
 	binaryOpExpression
 }
 
-func newBinaryBoolExpression(lhs, rhs expression, operator string) BoolExpression {
+func newBinaryBoolExpression(lhs, rhs Expression, operator string) BoolExpression {
 	boolExpression := binaryBoolExpression{}
 
 	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
@@ -97,7 +97,7 @@ type prefixBoolExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixBoolExpression(expression expression, operator string) BoolExpression {
+func newPrefixBoolExpression(expression Expression, operator string) BoolExpression {
 	exp := prefixBoolExpression{}
 	exp.prefixOpExpression = newPrefixExpression(expression, operator)
 
@@ -115,7 +115,7 @@ type postfixBoolOpExpression struct {
 	postfixOpExpression
 }
 
-func newPostifxBoolExpression(expression expression, operator string) BoolExpression {
+func newPostifxBoolExpression(expression Expression, operator string) BoolExpression {
 	exp := postfixBoolOpExpression{}
 	exp.postfixOpExpression = newPostfixOpExpression(expression, operator)
 

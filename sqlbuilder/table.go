@@ -16,35 +16,35 @@ type tableInterface interface {
 
 // The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
 // are not supported.
-type readableTable interface {
+type ReadableTable interface {
 	tableInterface
 
 	// Generates a select query on the current tableName.
-	SELECT(projections ...projection) selectStatement
+	SELECT(projections ...projection) SelectStatement
 
-	// Creates a inner join tableName expression using onCondition.
-	INNER_JOIN(table readableTable, onCondition BoolExpression) readableTable
+	// Creates a inner join tableName Expression using onCondition.
+	INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	// Creates a left join tableName expression using onCondition.
-	LEFT_JOIN(table readableTable, onCondition BoolExpression) readableTable
+	// Creates a left join tableName Expression using onCondition.
+	LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	// Creates a right join tableName expression using onCondition.
-	RIGHT_JOIN(table readableTable, onCondition BoolExpression) readableTable
+	// Creates a right join tableName Expression using onCondition.
+	RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable
+	FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
-	CROSS_JOIN(table readableTable) readableTable
+	CROSS_JOIN(table ReadableTable) ReadableTable
 }
 
 // The sql tableName write interface.
 type writableTable interface {
 	tableInterface
 
-	INSERT(columns ...column) insertStatement
-	UPDATE(columns ...column) updateStatement
-	DELETE() deleteStatement
+	INSERT(columns ...column) InsertStatement
+	UPDATE(columns ...column) UpdateStatement
+	DELETE() DeleteStatement
 
-	LOCK() lockStatement
+	LOCK() LockStatement
 }
 
 // Defines a physical tableName in the database that is both readable and writable.
@@ -105,7 +105,7 @@ func (t *Table) Columns() []column {
 	return t.columns
 }
 
-// Generates the sql string for the current tableName expression.  Note: the
+// Generates the sql string for the current tableName Expression.  Note: the
 // generated string may not be a valid/executable sql Statement.
 func (t *Table) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if t == nil {
@@ -125,55 +125,55 @@ func (t *Table) serialize(statement statementType, out *queryData, options ...se
 }
 
 // Generates a select query on the current tableName.
-func (t *Table) SELECT(projections ...projection) selectStatement {
+func (t *Table) SELECT(projections ...projection) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
-// Creates a inner join tableName expression using onCondition.
+// Creates a inner join tableName Expression using onCondition.
 func (t *Table) INNER_JOIN(
-	table readableTable,
-	onCondition BoolExpression) readableTable {
+	table ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return InnerJoinOn(t, table, onCondition)
 }
 
-// Creates a left join tableName expression using onCondition.
+// Creates a left join tableName Expression using onCondition.
 func (t *Table) LEFT_JOIN(
-	table readableTable,
-	onCondition BoolExpression) readableTable {
+	table ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return LeftJoinOn(t, table, onCondition)
 }
 
-// Creates a right join tableName expression using onCondition.
+// Creates a right join tableName Expression using onCondition.
 func (t *Table) RIGHT_JOIN(
-	table readableTable,
-	onCondition BoolExpression) readableTable {
+	table ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return RightJoinOn(t, table, onCondition)
 }
 
-func (t *Table) FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable {
+func (t *Table) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return FullJoin(t, table, onCondition)
 }
 
-func (t *Table) CROSS_JOIN(table readableTable) readableTable {
+func (t *Table) CROSS_JOIN(table ReadableTable) ReadableTable {
 	return CrossJoin(t, table)
 }
 
-func (t *Table) INSERT(columns ...column) insertStatement {
+func (t *Table) INSERT(columns ...column) InsertStatement {
 	return newInsertStatement(t, columns...)
 }
 
-func (t *Table) UPDATE(columns ...column) updateStatement {
+func (t *Table) UPDATE(columns ...column) UpdateStatement {
 	return newUpdateStatement(t, columns)
 }
 
-func (t *Table) DELETE() deleteStatement {
+func (t *Table) DELETE() DeleteStatement {
 	return newDeleteStatement(t)
 }
 
-func (t *Table) LOCK() lockStatement {
+func (t *Table) LOCK() LockStatement {
 	return LOCK(t)
 }
 
@@ -189,17 +189,17 @@ const (
 
 // Join expressions are pseudo readable tables.
 type joinTable struct {
-	lhs         readableTable
-	rhs         readableTable
+	lhs         ReadableTable
+	rhs         ReadableTable
 	join_type   joinType
 	onCondition BoolExpression
 }
 
 func newJoinTable(
-	lhs readableTable,
-	rhs readableTable,
+	lhs ReadableTable,
+	rhs ReadableTable,
 	join_type joinType,
-	onCondition BoolExpression) readableTable {
+	onCondition BoolExpression) ReadableTable {
 
 	return &joinTable{
 		lhs:         lhs,
@@ -210,40 +210,40 @@ func newJoinTable(
 }
 
 func InnerJoinOn(
-	lhs readableTable,
-	rhs readableTable,
-	onCondition BoolExpression) readableTable {
+	lhs ReadableTable,
+	rhs ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return newJoinTable(lhs, rhs, INNER_JOIN, onCondition)
 }
 
 func LeftJoinOn(
-	lhs readableTable,
-	rhs readableTable,
-	onCondition BoolExpression) readableTable {
+	lhs ReadableTable,
+	rhs ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return newJoinTable(lhs, rhs, LEFT_JOIN, onCondition)
 }
 
 func RightJoinOn(
-	lhs readableTable,
-	rhs readableTable,
-	onCondition BoolExpression) readableTable {
+	lhs ReadableTable,
+	rhs ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return newJoinTable(lhs, rhs, RIGHT_JOIN, onCondition)
 }
 
 func FullJoin(
-	lhs readableTable,
-	rhs readableTable,
-	onCondition BoolExpression) readableTable {
+	lhs ReadableTable,
+	rhs ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return newJoinTable(lhs, rhs, FULL_JOIN, onCondition)
 }
 
 func CrossJoin(
-	lhs readableTable,
-	rhs readableTable) readableTable {
+	lhs ReadableTable,
+	rhs ReadableTable) ReadableTable {
 
 	return newJoinTable(lhs, rhs, CROSS_JOIN, nil)
 }
@@ -318,35 +318,35 @@ func (t *joinTable) serialize(statement statementType, out *queryData, options .
 	return nil
 }
 
-func (t *joinTable) SELECT(projections ...projection) selectStatement {
+func (t *joinTable) SELECT(projections ...projection) SelectStatement {
 	return newSelectStatement(t, projections)
 }
 
 func (t *joinTable) INNER_JOIN(
-	table readableTable,
-	onCondition BoolExpression) readableTable {
+	table ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return InnerJoinOn(t, table, onCondition)
 }
 
 func (t *joinTable) LEFT_JOIN(
-	table readableTable,
-	onCondition BoolExpression) readableTable {
+	table ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return LeftJoinOn(t, table, onCondition)
 }
 
-func (t *joinTable) FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable {
+func (t *joinTable) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return FullJoin(t, table, onCondition)
 }
 
-func (t *joinTable) CROSS_JOIN(table readableTable) readableTable {
+func (t *joinTable) CROSS_JOIN(table ReadableTable) ReadableTable {
 	return CrossJoin(t, table)
 }
 
 func (t *joinTable) RIGHT_JOIN(
-	table readableTable,
-	onCondition BoolExpression) readableTable {
+	table ReadableTable,
+	onCondition BoolExpression) ReadableTable {
 
 	return RightJoinOn(t, table, onCondition)
 }

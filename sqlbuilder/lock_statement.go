@@ -19,11 +19,11 @@ const (
 	LOCK_ACCESS_EXCLUSIVE       = "ACCESS EXCLUSIVE"
 )
 
-type lockStatement interface {
+type LockStatement interface {
 	Statement
 
-	IN(lockMode lockMode) lockStatement
-	NOWAIT() lockStatement
+	IN(lockMode lockMode) LockStatement
+	NOWAIT() LockStatement
 }
 
 type lockStatementImpl struct {
@@ -32,18 +32,18 @@ type lockStatementImpl struct {
 	nowait   bool
 }
 
-func LOCK(tables ...tableInterface) lockStatement {
+func LOCK(tables ...tableInterface) LockStatement {
 	return &lockStatementImpl{
 		tables: tables,
 	}
 }
 
-func (l *lockStatementImpl) IN(lockMode lockMode) lockStatement {
+func (l *lockStatementImpl) IN(lockMode lockMode) LockStatement {
 	l.lockMode = lockMode
 	return l
 }
 
-func (l *lockStatementImpl) NOWAIT() lockStatement {
+func (l *lockStatementImpl) NOWAIT() LockStatement {
 	l.nowait = true
 	return l
 }

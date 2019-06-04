@@ -49,7 +49,7 @@ var table3 = NewTable(
 	table3Col1,
 	table3StrCol)
 
-func assertExpressionSerialize(t *testing.T, expression expression, query string, args ...interface{}) {
+func assertExpressionSerialize(t *testing.T, expression Expression, query string, args ...interface{}) {
 	out := queryData{}
 	err := expression.serialize(select_statement, &out)
 

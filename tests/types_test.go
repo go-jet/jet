@@ -57,6 +57,8 @@ func TestExpressionOperators(t *testing.T) {
 		NULLIF(AllTypes.Text, String("(none)")),
 		GREATEST(AllTypes.Numeric, AllTypes.NumericPtr),
 		LEAST(AllTypes.Numeric, AllTypes.NumericPtr),
+
+		RAW("current_database()"),
 	)
 
 	fmt.Println(query.DebugSql())

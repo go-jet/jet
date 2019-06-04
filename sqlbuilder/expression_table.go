@@ -3,7 +3,7 @@ package sqlbuilder
 import "errors"
 
 type expressionTable interface {
-	readableTable
+	ReadableTable
 
 	RefIntColumnName(name string) *IntegerColumn
 	RefIntColumn(column column) *IntegerColumn
@@ -11,7 +11,7 @@ type expressionTable interface {
 }
 
 type expressionTableImpl struct {
-	statement expression
+	statement Expression
 	alias     string
 }
 
@@ -66,33 +66,33 @@ func (e *expressionTableImpl) serialize(statement statementType, out *queryData,
 }
 
 // Generates a select query on the current tableName.
-func (e *expressionTableImpl) SELECT(projections ...projection) selectStatement {
+func (e *expressionTableImpl) SELECT(projections ...projection) SelectStatement {
 	return newSelectStatement(e, projections)
 }
 
-// Creates a inner join tableName expression using onCondition.
-func (e *expressionTableImpl) INNER_JOIN(table readableTable, onCondition BoolExpression) readableTable {
+// Creates a inner join tableName Expression using onCondition.
+func (e *expressionTableImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return InnerJoinOn(e, table, onCondition)
 }
 
-//func (s *expressionTableImpl) InnerJoinUsing(table readableTable, col1 column, col2 column) readableTable {
+//func (s *expressionTableImpl) InnerJoinUsing(table ReadableTable, col1 column, col2 column) ReadableTable {
 //	return INNER_JOIN(s, table, col1.EQ(col2))
 //}
 
-// Creates a left join tableName expression using onCondition.
-func (e *expressionTableImpl) LEFT_JOIN(table readableTable, onCondition BoolExpression) readableTable {
+// Creates a left join tableName Expression using onCondition.
+func (e *expressionTableImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return LeftJoinOn(e, table, onCondition)
 }
 
-// Creates a right join tableName expression using onCondition.
-func (e *expressionTableImpl) RIGHT_JOIN(table readableTable, onCondition BoolExpression) readableTable {
+// Creates a right join tableName Expression using onCondition.
+func (e *expressionTableImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return RightJoinOn(e, table, onCondition)
 }
 
-func (e *expressionTableImpl) FULL_JOIN(table readableTable, onCondition BoolExpression) readableTable {
+func (e *expressionTableImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return FullJoin(e, table, onCondition)
 }
 
-func (e *expressionTableImpl) CROSS_JOIN(table readableTable) readableTable {
+func (e *expressionTableImpl) CROSS_JOIN(table ReadableTable) ReadableTable {
 	return CrossJoin(e, table)
 }

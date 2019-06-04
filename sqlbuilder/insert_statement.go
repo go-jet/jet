@@ -9,20 +9,20 @@ import (
 	"strings"
 )
 
-type insertStatement interface {
+type InsertStatement interface {
 	Statement
 
 	// Add a row of values to the insert Statement.
-	VALUES(values ...interface{}) insertStatement
+	VALUES(values ...interface{}) InsertStatement
 	// Map or stracture mapped to column names
-	VALUES_MAPPING(data interface{}) insertStatement
+	VALUES_MAPPING(data interface{}) InsertStatement
 
-	RETURNING(projections ...projection) insertStatement
+	RETURNING(projections ...projection) InsertStatement
 
-	QUERY(selectStatement selectStatement) insertStatement
+	QUERY(selectStatement SelectStatement) InsertStatement
 }
 
-func newInsertStatement(t writableTable, columns ...column) insertStatement {
+func newInsertStatement(t writableTable, columns ...column) InsertStatement {
 	return &insertStatementImpl{
 		table:   t,
 		columns: columns,
@@ -33,7 +33,7 @@ type insertStatementImpl struct {
 	table     writableTable
 	columns   []column
 	rows      [][]clause
-	query     selectStatement
+	query     SelectStatement
 	returning []projection
 
 	errors []string
@@ -47,8 +47,8 @@ func (u *insertStatementImpl) Execute(db execution.Db) (res sql.Result, err erro
 	return Execute(u, db)
 }
 
-// expression or default keyword
-func (i *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
+// Expression or default keyword
+func (i *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
 	if len(values) == 0 {
 		return i
 	}
@@ -67,7 +67,7 @@ func (i *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
 	return i
 }
 
-func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
+func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 	if data == nil {
 		i.addError("ADD method data is nil.")
 		return i
@@ -105,13 +105,13 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
 	return i
 }
 
-func (i *insertStatementImpl) RETURNING(projections ...projection) insertStatement {
+func (i *insertStatementImpl) RETURNING(projections ...projection) InsertStatement {
 	i.returning = defaultProjectionAliasing(projections)
 
 	return i
 }
 
-func (i *insertStatementImpl) QUERY(selectStatement selectStatement) insertStatement {
+func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
 	i.query = selectStatement
 
 	return i

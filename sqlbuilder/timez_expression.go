@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type TimezExpression interface {
-	expression
+	Expression
 
 	EQ(rhs TimezExpression) BoolExpression
 	NOT_EQ(rhs TimezExpression) BoolExpression
@@ -58,7 +58,7 @@ type prefixTimezExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimezExpression(operator string, expression expression) TimezExpression {
+func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
 	timeExpr := prefixTimezExpression{}
 	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
 

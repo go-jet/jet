@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type TimestampExpression interface {
-	expression
+	Expression
 
 	EQ(rhs TimestampExpression) BoolExpression
 	NOT_EQ(rhs TimestampExpression) BoolExpression

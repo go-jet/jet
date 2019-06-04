@@ -3,7 +3,7 @@ package sqlbuilder
 import "errors"
 
 type FloatExpression interface {
-	expression
+	Expression
 
 	EQ(rhs FloatExpression) BoolExpression
 	NOT_EQ(rhs FloatExpression) BoolExpression
@@ -107,10 +107,10 @@ type floatExpressionWrapper struct {
 	expressionInterfaceImpl
 	floatInterfaceImpl
 
-	expression expression
+	expression Expression
 }
 
-func newFloatExpressionWrap(expression expression) FloatExpression {
+func newFloatExpressionWrap(expression Expression) FloatExpression {
 	floatExpressionWrap := floatExpressionWrapper{}
 
 	floatExpressionWrap.expression = expression

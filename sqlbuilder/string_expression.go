@@ -1,7 +1,7 @@
 package sqlbuilder
 
 type StringExpression interface {
-	expression
+	Expression
 
 	EQ(rhs StringExpression) BoolExpression
 	NOT_EQ(rhs StringExpression) BoolExpression
@@ -13,7 +13,7 @@ type StringExpression interface {
 	GT(rhs StringExpression) BoolExpression
 	GT_EQ(rhs StringExpression) BoolExpression
 
-	CONCAT(rhs expression) StringExpression
+	CONCAT(rhs Expression) StringExpression
 
 	LIKE(pattern StringExpression) BoolExpression
 	NOT_LIKE(pattern StringExpression) BoolExpression
@@ -57,7 +57,7 @@ func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
 	return LT_EQ(s.parent, rhs)
 }
 
-func (s *stringInterfaceImpl) CONCAT(rhs expression) StringExpression {
+func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {
 	return newBinaryStringExpression(s.parent, rhs, "||")
 }
 
@@ -85,7 +85,7 @@ type binaryStringExpression struct {
 	binaryOpExpression
 }
 
-func newBinaryStringExpression(lhs, rhs expression, operator string) StringExpression {
+func newBinaryStringExpression(lhs, rhs Expression, operator string) StringExpression {
 	boolExpression := binaryStringExpression{}
 
 	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
