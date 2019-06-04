@@ -107,7 +107,7 @@ func (s *ExprSuite) TestOrExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestAddExpr(c *gc.C) {
-	expr := Add(Literal(1), Literal(2), Literal(3))
+	expr := Add(literal(1), literal(2), literal(3))
 
 	buf := &bytes.Buffer{}
 
@@ -119,7 +119,7 @@ func (s *ExprSuite) TestAddExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestSubExpr(c *gc.C) {
-	expr := Sub(Literal(1), Literal(2), Literal(3))
+	expr := Sub(literal(1), literal(2), literal(3))
 
 	buf := &bytes.Buffer{}
 
@@ -131,7 +131,7 @@ func (s *ExprSuite) TestSubExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestMulExpr(c *gc.C) {
-	expr := Mul(Literal(1), Literal(2), Literal(3))
+	expr := Mul(literal(1), literal(2), literal(3))
 
 	buf := &bytes.Buffer{}
 
@@ -143,7 +143,7 @@ func (s *ExprSuite) TestMulExpr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestDivExpr(c *gc.C) {
-	expr := Div(Literal(1), Literal(2), Literal(3))
+	expr := Div(literal(1), literal(2), literal(3))
 
 	buf := &bytes.Buffer{}
 
@@ -388,7 +388,7 @@ func (s *ExprSuite) TestColumnValue(c *gc.C) {
 }
 
 func (s *ExprSuite) TestBitwiseOr(c *gc.C) {
-	clause := BitOr(Literal(1), Literal(2))
+	clause := BitOr(literal(1), literal(2))
 
 	buf := &bytes.Buffer{}
 
@@ -400,7 +400,7 @@ func (s *ExprSuite) TestBitwiseOr(c *gc.C) {
 }
 
 func (s *ExprSuite) TestBitwiseAnd(c *gc.C) {
-	clause := BitAnd(Literal(1), Literal(2))
+	clause := BitAnd(literal(1), literal(2))
 
 	buf := &bytes.Buffer{}
 
@@ -412,7 +412,7 @@ func (s *ExprSuite) TestBitwiseAnd(c *gc.C) {
 }
 
 func (s *ExprSuite) TestBitwiseXor(c *gc.C) {
-	clause := BitXor(Literal(1), Literal(2))
+	clause := BitXor(literal(1), literal(2))
 
 	buf := &bytes.Buffer{}
 
@@ -424,7 +424,7 @@ func (s *ExprSuite) TestBitwiseXor(c *gc.C) {
 }
 
 func (s *ExprSuite) TestPlus(c *gc.C) {
-	clause := Plus(Literal(1), Literal(2))
+	clause := Plus(literal(1), literal(2))
 
 	buf := &bytes.Buffer{}
 
@@ -436,7 +436,7 @@ func (s *ExprSuite) TestPlus(c *gc.C) {
 }
 
 func (s *ExprSuite) TestMinus(c *gc.C) {
-	clause := Minus(Literal(1), Literal(2))
+	clause := Minus(literal(1), literal(2))
 
 	buf := &bytes.Buffer{}
 

@@ -82,20 +82,12 @@ func Or(lhs, rhs expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "OR")
 }
 
-func Like(lhs, rhs expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "LIKE")
-}
-
-func LikeL(lhs expression, val string) BoolExpression {
-	return Like(lhs, Literal(val))
-}
-
 func Regexp(lhs, rhs expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "REGEXP")
 }
 
 func RegexpL(lhs expression, val string) BoolExpression {
-	return Regexp(lhs, Literal(val))
+	return Regexp(lhs, literal(val))
 }
 
 func EXISTS(subQuery selectStatement) BoolExpression {

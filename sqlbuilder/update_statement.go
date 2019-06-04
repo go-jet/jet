@@ -35,7 +35,7 @@ func (u *updateStatementImpl) SET(values ...interface{}) updateStatement {
 		if clause, ok := value.(clause); ok {
 			u.updateValues = append(u.updateValues, clause)
 		} else {
-			u.updateValues = append(u.updateValues, Literal(value))
+			u.updateValues = append(u.updateValues, literal(value))
 		}
 	}
 

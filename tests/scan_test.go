@@ -269,7 +269,7 @@ func TestScanToNestedStruct(t *testing.T) {
 		query := Inventory.
 			INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
 			INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
-			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns, Literal("").AS("actor.first_name")).
+			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns, String("").AS("actor.first_name")).
 			WHERE(Inventory.InventoryID.EQ(Int(1)))
 
 		dest := struct {

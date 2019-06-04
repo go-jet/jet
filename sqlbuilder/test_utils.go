@@ -58,3 +58,13 @@ func assertExpressionSerialize(t *testing.T, expression expression, query string
 	assert.DeepEqual(t, out.buff.String(), query)
 	assert.DeepEqual(t, out.args, args)
 }
+
+func assertProjectionSerialize(t *testing.T, projection projection, query string, args ...interface{}) {
+	out := queryData{}
+	err := projection.serializeForProjection(select_statement, &out)
+
+	assert.NilError(t, err)
+
+	assert.DeepEqual(t, out.buff.String(), query)
+	assert.DeepEqual(t, out.args, args)
+}

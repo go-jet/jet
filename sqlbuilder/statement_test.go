@@ -261,13 +261,13 @@ func (s *StmtSuite) TestInsertNilValue(c *gc.C) {
 }
 
 func (s *StmtSuite) TestInsertNilColumn(c *gc.C) {
-	_, err := table1.INSERT(nil).Add(Literal(1)).String()
+	_, err := table1.INSERT(nil).Add(literal(1)).String()
 
 	c.Assert(err, gc.NotNil)
 }
 
 func (s *StmtSuite) TestInsertSingleValue(c *gc.C) {
-	sql, err := table1.INSERT(table1Col1).Add(Literal(1)).String()
+	sql, err := table1.INSERT(table1Col1).Add(literal(1)).String()
 	c.Assert(err, gc.IsNil)
 
 	c.Assert(
@@ -279,7 +279,7 @@ func (s *StmtSuite) TestInsertSingleValue(c *gc.C) {
 func (s *StmtSuite) TestInsertDate(c *gc.C) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	sql, err := table1.INSERT(table1ColTime).Add(Literal(date)).String()
+	sql, err := table1.INSERT(table1ColTime).Add(literal(date)).String()
 	c.Assert(err, gc.IsNil)
 
 	c.Assert(
@@ -290,7 +290,7 @@ func (s *StmtSuite) TestInsertDate(c *gc.C) {
 }
 
 func (s *StmtSuite) TestInsertIgnore(c *gc.C) {
-	stmt := table1.INSERT(table1Col1).Add(Literal(1)).IgnoreDuplicates(true)
+	stmt := table1.INSERT(table1Col1).Add(literal(1)).IgnoreDuplicates(true)
 	sql, err := stmt.String()
 	c.Assert(err, gc.IsNil)
 
@@ -302,7 +302,7 @@ func (s *StmtSuite) TestInsertIgnore(c *gc.C) {
 
 func (s *StmtSuite) TestInsertMultipleValues(c *gc.C) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat, table1Col3)
-	stmt.Add(Literal(1), Literal(2), Literal(3))
+	stmt.Add(literal(1), literal(2), literal(3))
 
 	sql, err := stmt.String()
 	c.Assert(err, gc.IsNil)
@@ -317,9 +317,9 @@ func (s *StmtSuite) TestInsertMultipleValues(c *gc.C) {
 
 func (s *StmtSuite) TestInsertMultipleRows(c *gc.C) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat)
-	stmt.Add(Literal(1), Literal(2))
-	stmt.Add(Literal(11), Literal(22))
-	stmt.Add(Literal(111), Literal(222))
+	stmt.Add(literal(1), literal(2))
+	stmt.Add(literal(11), literal(22))
+	stmt.Add(literal(111), literal(222))
 
 	sql, err := stmt.String()
 	c.Assert(err, gc.IsNil)
@@ -334,8 +334,8 @@ func (s *StmtSuite) TestInsertMultipleRows(c *gc.C) {
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateNilCol(c *gc.C) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat)
-	stmt.Add(Literal(1), Literal(2))
-	stmt.AddOnDuplicateKeyUpdate(nil, Literal(3))
+	stmt.Add(literal(1), literal(2))
+	stmt.AddOnDuplicateKeyUpdate(nil, literal(3))
 
 	_, err := stmt.String()
 	c.Assert(err, gc.NotNil)
@@ -343,7 +343,7 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateNilCol(c *gc.C) {
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateNilExpr(c *gc.C) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat)
-	stmt.Add(Literal(1), Literal(2))
+	stmt.Add(literal(1), literal(2))
 	stmt.AddOnDuplicateKeyUpdate(table1Col1, nil)
 
 	_, err := stmt.String()
@@ -352,8 +352,8 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateNilExpr(c *gc.C) {
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateSingle(c *gc.C) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat)
-	stmt.Add(Literal(1), Literal(2))
-	stmt.AddOnDuplicateKeyUpdate(table1Col3, Literal(3))
+	stmt.Add(literal(1), literal(2))
+	stmt.AddOnDuplicateKeyUpdate(table1Col3, literal(3))
 
 	sql, err := stmt.String()
 	c.Assert(err, gc.IsNil)
@@ -369,9 +369,9 @@ func (s *StmtSuite) TestOnDuplicateKeyUpdateSingle(c *gc.C) {
 
 func (s *StmtSuite) TestOnDuplicateKeyUpdateMulti(c *gc.C) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat)
-	stmt.Add(Literal(1), Literal(2))
-	stmt.AddOnDuplicateKeyUpdate(table1Col3, Literal(3))
-	stmt.AddOnDuplicateKeyUpdate(table1ColFloat, Literal(4))
+	stmt.Add(literal(1), literal(2))
+	stmt.AddOnDuplicateKeyUpdate(table1Col3, literal(3))
+	stmt.AddOnDuplicateKeyUpdate(table1ColFloat, literal(4))
 
 	sql, err := stmt.String()
 	c.Assert(err, gc.IsNil)

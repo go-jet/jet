@@ -9,15 +9,15 @@ type literalExpression struct {
 	constant bool
 }
 
-func Literal(value interface{}) *literalExpression {
+func literal(value interface{}) *literalExpression {
 	exp := literalExpression{value: value}
 	exp.expressionInterfaceImpl.parent = &exp
 
 	return &exp
 }
 
-func ConstantLiteral(value interface{}) *literalExpression {
-	exp := Literal(value)
+func constLiteral(value interface{}) *literalExpression {
+	exp := literal(value)
 	exp.constant = true
 
 	return exp
@@ -41,7 +41,7 @@ type integerLiteralExpression struct {
 func Int(value int64) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
-	numLiteral.literalExpression = *Literal(value)
+	numLiteral.literalExpression = *literal(value)
 
 	numLiteral.literalExpression.parent = numLiteral
 	numLiteral.integerInterfaceImpl.parent = numLiteral
@@ -58,7 +58,7 @@ type boolLiteralExpression struct {
 func Bool(value bool) BoolExpression {
 	boolLiteralExpression := boolLiteralExpression{}
 
-	boolLiteralExpression.literalExpression = *Literal(value)
+	boolLiteralExpression.literalExpression = *literal(value)
 	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
 
 	return &boolLiteralExpression
@@ -72,7 +72,7 @@ type floatLiteral struct {
 
 func Float(value float64) FloatExpression {
 	floatLiteral := floatLiteral{}
-	floatLiteral.literalExpression = *Literal(value)
+	floatLiteral.literalExpression = *literal(value)
 
 	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
 
@@ -87,7 +87,7 @@ type stringLiteral struct {
 
 func String(value string) StringExpression {
 	stringLiteral := stringLiteral{}
-	stringLiteral.literalExpression = *Literal(value)
+	stringLiteral.literalExpression = *literal(value)
 
 	stringLiteral.stringInterfaceImpl.parent = &stringLiteral
 
@@ -103,7 +103,7 @@ type timeLiteral struct {
 func Time(hour, minute, second, milliseconds int) TimeExpression {
 	timeLiteral := timeLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
-	timeLiteral.literalExpression = *Literal(timeStr)
+	timeLiteral.literalExpression = *literal(timeStr)
 
 	timeLiteral.timeInterfaceImpl.parent = &timeLiteral
 
@@ -119,7 +119,7 @@ type timezLiteral struct {
 func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
 	timezLiteral := timezLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
-	timezLiteral.literalExpression = *Literal(timeStr)
+	timezLiteral.literalExpression = *literal(timeStr)
 
 	timezLiteral.timezInterfaceImpl.parent = &timezLiteral
 
@@ -135,7 +135,7 @@ type timestampLiteral struct {
 func Timestamp(year, month, day, hour, minute, second, milliseconds int) TimestampExpression {
 	timestampLiteral := timestampLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d", year, month, day, hour, minute, second, milliseconds)
-	timestampLiteral.literalExpression = *Literal(timeStr)
+	timestampLiteral.literalExpression = *literal(timeStr)
 
 	timestampLiteral.timestampInterfaceImpl.parent = &timestampLiteral
 
@@ -153,7 +153,7 @@ func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone i
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
 		year, month, day, hour, minute, second, milliseconds, timezone)
 
-	timestampzLiteral.literalExpression = *Literal(timeStr)
+	timestampzLiteral.literalExpression = *literal(timeStr)
 
 	timestampzLiteral.timestampzInterfaceImpl.parent = &timestampzLiteral
 
@@ -170,7 +170,7 @@ func Date(year, month, day int) DateExpression {
 	dateLiteral := dateLiteral{}
 
 	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
-	dateLiteral.literalExpression = *Literal(timeStr)
+	dateLiteral.literalExpression = *literal(timeStr)
 	dateLiteral.dateInterfaceImpl.parent = &dateLiteral
 
 	return dateLiteral.CAST_TO_DATE()
@@ -210,4 +210,25 @@ func newStarLiteral() expression {
 func (n *starLiteral) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	out.writeString("*")
 	return nil
+}
+
+//---------------------------------------------------//
+
+type wrap struct {
+	expressionInterfaceImpl
+	expressions []expression
+}
+
+func (n *wrap) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+	out.writeString("(")
+	err := serializeExpressionList(statement, n.expressions, ", ", out)
+	out.writeString(")")
+	return err
+}
+
+func WRAP(expression ...expression) expression {
+	wrap := &wrap{expressions: expression}
+	wrap.expressionInterfaceImpl.parent = wrap
+
+	return wrap
 }

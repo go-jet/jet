@@ -127,17 +127,11 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 		return err
 	}
 
-	if s.table == nil {
-		return errors.Newf("nil tableName.")
+	if s.table != nil {
+		if err := out.writeFrom(select_statement, s.table); err != nil {
+			return err
+		}
 	}
-
-	if err := out.writeFrom(select_statement, s.table); err != nil {
-		return err
-	}
-
-	//if err := s.table.serialize(select_statement, out); err != nil {
-	//	return err
-	//}
 
 	if s.where != nil {
 		err := out.writeWhere(select_statement, s.where)

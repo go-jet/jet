@@ -14,8 +14,8 @@ type expression interface {
 	IS_NULL() BoolExpression
 	IS_NOT_NULL() BoolExpression
 
-	IN(subQuery selectStatement) BoolExpression
-	NOT_IN(subQuery selectStatement) BoolExpression
+	IN(expressions ...expression) BoolExpression
+	NOT_IN(expressions ...expression) BoolExpression
 
 	AS(alias string) projection
 
@@ -46,12 +46,12 @@ func (e *expressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
 	return newPostifxBoolExpression(e.parent, "IS NOT NULL")
 }
 
-func (e *expressionInterfaceImpl) IN(subQuery selectStatement) BoolExpression {
-	return newBinaryBoolExpression(e.parent, subQuery, "IN")
+func (e *expressionInterfaceImpl) IN(expressions ...expression) BoolExpression {
+	return newBinaryBoolExpression(e.parent, WRAP(expressions...), "IN")
 }
 
-func (e *expressionInterfaceImpl) NOT_IN(subQuery selectStatement) BoolExpression {
-	return newBinaryBoolExpression(e.parent, subQuery, "NOT IN")
+func (e *expressionInterfaceImpl) NOT_IN(expressions ...expression) BoolExpression {
+	return newBinaryBoolExpression(e.parent, WRAP(expressions...), "NOT IN")
 }
 
 func (e *expressionInterfaceImpl) AS(alias string) projection {

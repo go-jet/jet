@@ -29,6 +29,10 @@ func TestExpressionOperators(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Integer.IS_NULL(),
 		AllTypes.Timestamp.IS_NOT_NULL(),
+		AllTypes.SmallintPtr.IN(Int(11), Int(22), NULL),
+		AllTypes.SmallintPtr.IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
+		AllTypes.SmallintPtr.NOT_IN(Int(11), Int(22), NULL),
+		AllTypes.SmallintPtr.NOT_IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
 
 		String("TRUE").CAST_TO_BOOL(),
 		String("111").CAST_TO_INTEGER(),

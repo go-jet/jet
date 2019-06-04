@@ -49,9 +49,6 @@ func (f *funcExpressionImpl) serialize(statement statementType, out *queryData, 
 
 	return nil
 }
-func ROW(expressions ...expression) expression {
-	return newFunc("ROW", expressions, nil)
-}
 
 type boolFunc struct {
 	funcExpressionImpl
@@ -177,6 +174,10 @@ func newTimestampzFunc(name string, expressions ...expression) *timestampzFunc {
 	timestampzFunc.timestampzInterfaceImpl.parent = timestampzFunc
 
 	return timestampzFunc
+}
+
+func ROW(expressions ...expression) expression {
+	return newFunc("ROW", expressions, nil)
 }
 
 // ------------------ Mathematical functions ---------------//
@@ -370,8 +371,8 @@ func DECODE(data StringExpression, format StringExpression) StringExpression {
 	return newStringFunc("DECODE", data, format)
 }
 
-//func FORMAT(formatStr StringExpression, formatArgs ...expression) StringExpression {
-//	args := []expression{formatStr}
+//func FORMAT(formatStr StringExpression, formatArgs ...expressions) StringExpression {
+//	args := []expressions{formatStr}
 //	args = append(args, formatArgs...)
 //	return newStringFunc("FORMAT", args...)
 //}
@@ -479,7 +480,7 @@ func CURRENT_TIME(precision ...int) TimezExpression {
 	var timezFunc *timezFunc
 
 	if len(precision) > 0 {
-		timezFunc = newTimezFunc("CURRENT_TIME", ConstantLiteral(precision[0]))
+		timezFunc = newTimezFunc("CURRENT_TIME", constLiteral(precision[0]))
 	} else {
 		timezFunc = newTimezFunc("CURRENT_TIME")
 	}
@@ -493,7 +494,7 @@ func CURRENT_TIMESTAMP(precision ...int) TimestampzExpression {
 	var timestampzFunc *timestampzFunc
 
 	if len(precision) > 0 {
-		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", ConstantLiteral(precision[0]))
+		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", constLiteral(precision[0]))
 	} else {
 		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP")
 	}
@@ -507,7 +508,7 @@ func LOCALTIME(precision ...int) TimeExpression {
 	var timeFunc *timeFunc
 
 	if len(precision) > 0 {
-		timeFunc = newTimeFunc("LOCALTIME", ConstantLiteral(precision[0]))
+		timeFunc = newTimeFunc("LOCALTIME", constLiteral(precision[0]))
 	} else {
 		timeFunc = newTimeFunc("LOCALTIME")
 	}
@@ -521,7 +522,7 @@ func LOCALTIMESTAMP(precision ...int) TimestampExpression {
 	var timestampFunc *timestampFunc
 
 	if len(precision) > 0 {
-		timestampFunc = newTimestampFunc("LOCALTIMESTAMP", ConstantLiteral(precision[0]))
+		timestampFunc = newTimestampFunc("LOCALTIMESTAMP", constLiteral(precision[0]))
 	} else {
 		timestampFunc = newTimestampFunc("LOCALTIMESTAMP")
 	}

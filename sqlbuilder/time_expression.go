@@ -69,5 +69,5 @@ func newPrefixTimeExpression(operator string, expression expression) TimeExpress
 }
 
 func INTERVAL(interval string) expression {
-	return newPrefixTimeExpression("INTERVAL", Literal(interval))
+	return newPrefixTimeExpression("INTERVAL", literal(interval))
 }

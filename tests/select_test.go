@@ -1086,10 +1086,10 @@ LIMIT 20;
 `
 	query := Payment.SELECT(
 		CASE(Payment.StaffID).
-			WHEN(Int(1)).THEN(Literal("ONE")).
-			WHEN(Int(2)).THEN(Literal("TWO")).
-			WHEN(Int(3)).THEN(Literal("THREE")).
-			ELSE(Literal("OTHER")).AS("staff_id_num"),
+			WHEN(Int(1)).THEN(String("ONE")).
+			WHEN(Int(2)).THEN(String("TWO")).
+			WHEN(Int(3)).THEN(String("THREE")).
+			ELSE(String("OTHER")).AS("staff_id_num"),
 	).
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)

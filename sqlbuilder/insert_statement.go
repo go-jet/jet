@@ -59,7 +59,7 @@ func (i *insertStatementImpl) VALUES(values ...interface{}) insertStatement {
 		if clause, ok := value.(clause); ok {
 			literalRow = append(literalRow, clause)
 		} else {
-			literalRow = append(literalRow, Literal(value))
+			literalRow = append(literalRow, literal(value))
 		}
 	}
 
@@ -97,7 +97,7 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) insertStatement {
 			return i
 		}
 
-		rowValues = append(rowValues, Literal(structField.Interface()))
+		rowValues = append(rowValues, literal(structField.Interface()))
 	}
 
 	i.rows = append(i.rows, rowValues)
