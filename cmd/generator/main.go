@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/sub0zero/go-sqlbuilder/generator"
+	"github.com/go-jet/jet/generator"
 	"os"
 )
 

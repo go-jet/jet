@@ -2,10 +2,10 @@ package tests
 
 import (
 	"fmt"
+	. "github.com/go-jet/jet/sqlbuilder"
+	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
+	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/table"
 	"github.com/google/uuid"
-	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
-	. "github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/table"
 	"gotest.tools/assert"
 	"testing"
 )

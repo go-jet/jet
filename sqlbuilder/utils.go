@@ -3,7 +3,7 @@ package sqlbuilder
 import (
 	"database/sql"
 	"errors"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
+	"github.com/go-jet/jet/sqlbuilder/execution"
 	"reflect"
 )
 

@@ -3,7 +3,7 @@ package postgres_metadata
 import (
 	"database/sql"
 	"fmt"
-	"github.com/sub0zero/go-sqlbuilder/generator/metadata"
+	"github.com/go-jet/jet/generator/metadata"
 )
 
 type SchemaInfo struct {
