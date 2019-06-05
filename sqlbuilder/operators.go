@@ -49,47 +49,6 @@ func GT_EQ(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, ">=")
 }
 
-func IS_TRUE(expr BoolExpression) BoolExpression {
-	return newPostifxBoolExpression(expr, "IS TRUE")
-}
-
-func IS_NOT_TRUE(expr BoolExpression) BoolExpression {
-	return newPostifxBoolExpression(expr, "IS NOT TRUE")
-}
-
-func IS_FALSE(expr BoolExpression) BoolExpression {
-	return newPostifxBoolExpression(expr, "IS FALSE")
-}
-
-func IS_NOT_FALSE(expr BoolExpression) BoolExpression {
-	return newPostifxBoolExpression(expr, "IS NOT FALSE")
-}
-
-func IS_UNKNOWN(expr BoolExpression) BoolExpression {
-	return newPostifxBoolExpression(expr, "IS UNKNOWN")
-}
-
-func IS_NOT_UNKNOWN(expr BoolExpression) BoolExpression {
-	return newPostifxBoolExpression(expr, "IS NOT UNKNOWN")
-}
-
-func And(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "AND")
-}
-
-// Returns a representation of "c[0] OR ... OR c[n-1]" for c in clauses
-func Or(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "OR")
-}
-
-func Regexp(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "REGEXP")
-}
-
-func RegexpL(lhs Expression, val string) BoolExpression {
-	return Regexp(lhs, literal(val))
-}
-
 func EXISTS(subQuery SelectStatement) BoolExpression {
 	return newPrefixBoolExpression(subQuery, "EXISTS")
 }

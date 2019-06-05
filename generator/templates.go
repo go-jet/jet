@@ -20,10 +20,6 @@ var sqlBuilderTableTemplate = `
 	{{- end}}
 {{- end}}
 
-{{define "nullable" -}}
- 	{{- if .IsNullable}}sqlbuilder.Nullable{{else}}sqlbuilder.NotNullable{{end}}
-{{- end}}
-
 package table
 
 import (
@@ -46,12 +42,12 @@ var {{camelize .Name}} = new{{.GoStructName}}()
 func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{camelize .Name}}Column = sqlbuilder.New{{.SqlBuilderColumnType}}("{{.Name}}", {{template "nullable" .}})
+		{{camelize .Name}}Column = sqlbuilder.New{{.SqlBuilderColumnType}}("{{.Name}}", {{.IsNullable}})
 	{{- end}}
 	)
 
 	return &{{.GoStructName}}{
-		Table: *sqlbuilder.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
+		Table: sqlbuilder.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
 
 		//Columns
 {{- range .Columns}}
@@ -65,7 +61,7 @@ func new{{.GoStructName}}() *{{.GoStructName}} {
 func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
 
-	aliasTable.Table.SetAlias(alias)
+	aliasTable.Table.AS(alias)
 
 	return aliasTable
 }

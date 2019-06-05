@@ -1,7 +1,7 @@
 package sqlbuilder
 
 import (
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 )
 
 // An Expression
@@ -139,10 +139,10 @@ func (c *binaryOpExpression) serialize(statement statementType, out *queryData, 
 		return errors.New("Binary Expression is nil.")
 	}
 	if c.lhs == nil {
-		return errors.Newf("nil lhs.")
+		return errors.New("nil lhs.")
 	}
 	if c.rhs == nil {
-		return errors.Newf("nil rhs.")
+		return errors.New("nil rhs.")
 	}
 
 	wrap := !contains(options, NO_WRAP)
@@ -191,7 +191,7 @@ func (p *prefixOpExpression) serialize(statement statementType, out *queryData, 
 	out.writeString(p.operator + " ")
 
 	if p.expression == nil {
-		return errors.Newf("nil prefix Expression.")
+		return errors.New("nil prefix Expression.")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err
@@ -221,7 +221,7 @@ func (p *postfixOpExpression) serialize(statement statementType, out *queryData,
 	}
 
 	if p.expression == nil {
-		return errors.Newf("nil prefix Expression.")
+		return errors.New("nil prefix Expression.")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err

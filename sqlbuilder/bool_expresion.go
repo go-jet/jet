@@ -40,35 +40,35 @@ func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpress
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
-	return And(b.parent, expression)
+	return newBinaryBoolExpression(b.parent, expression, "AND")
 }
 
 func (b *boolInterfaceImpl) OR(expression BoolExpression) BoolExpression {
-	return Or(b.parent, expression)
+	return newBinaryBoolExpression(b.parent, expression, "OR")
 }
 
 func (b *boolInterfaceImpl) IS_TRUE() BoolExpression {
-	return IS_TRUE(b.parent)
+	return newPostifxBoolExpression(b.parent, "IS TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_TRUE() BoolExpression {
-	return IS_NOT_TRUE(b.parent)
+	return newPostifxBoolExpression(b.parent, "IS NOT TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_FALSE() BoolExpression {
-	return IS_FALSE(b.parent)
+	return newPostifxBoolExpression(b.parent, "IS FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_FALSE() BoolExpression {
-	return IS_NOT_FALSE(b.parent)
+	return newPostifxBoolExpression(b.parent, "IS NOT FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_UNKNOWN() BoolExpression {
-	return IS_UNKNOWN(b.parent)
+	return newPostifxBoolExpression(b.parent, "IS UNKNOWN")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
-	return IS_NOT_UNKNOWN(b.parent)
+	return newPostifxBoolExpression(b.parent, "IS NOT UNKNOWN")
 }
 
 //---------------------------------------------------//

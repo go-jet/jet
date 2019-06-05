@@ -2,7 +2,7 @@ package sqlbuilder
 
 import (
 	"database/sql"
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
@@ -30,7 +30,7 @@ func SELECT(projection ...projection) SelectStatement {
 	return newSelectStatement(nil, projection)
 }
 
-// NOTE: SelectStatement purposely does not implement the Table interface since
+// NOTE: SelectStatement purposely does not implement the tableImpl interface since
 // mysql's subquery performance is horrible.
 type selectStatementImpl struct {
 	expressionInterfaceImpl
@@ -53,7 +53,7 @@ func defaultProjectionAliasing(projections []projection) []projection {
 	aliasedProjections := []projection{}
 
 	for _, projection := range projections {
-		if column, ok := projection.(column); ok {
+		if column, ok := projection.(Column); ok {
 			aliasedProjections = append(aliasedProjections, column.DefaultAlias())
 		} else if columnList, ok := projection.(ColumnList); ok {
 			aliasedProjections = append(aliasedProjections, columnList.DefaultAlias()...)
@@ -87,7 +87,7 @@ func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
 
 func (s *selectStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if s == nil {
-		return errors.New("Select statement is nil. ")
+		return errors.New("Select expression is nil. ")
 	}
 	out.writeString("(")
 
@@ -107,7 +107,7 @@ func (s *selectStatementImpl) serialize(statement statementType, out *queryData,
 
 func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	if s == nil {
-		return errors.New("Select statement is nil. ")
+		return errors.New("Select expression is nil. ")
 	}
 
 	out.nextLine()
@@ -205,10 +205,7 @@ func (s *selectStatementImpl) DebugSql() (query string, err error) {
 }
 
 func (s *selectStatementImpl) AsTable(alias string) expressionTable {
-	return &expressionTableImpl{
-		statement: s,
-		alias:     alias,
-	}
+	return newExpressionTable(s.parent, alias)
 }
 
 func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {

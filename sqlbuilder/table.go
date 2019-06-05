@@ -3,22 +3,10 @@
 package sqlbuilder
 
 import (
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 )
 
-type tableInterface interface {
-	clause
-	SchemaName() string
-	TableName() string
-
-	Columns() []column
-}
-
-// The sql tableName read interface.  NOTE: NATURAL JOINs, and join "USING" clause
-// are not supported.
-type ReadableTable interface {
-	tableInterface
-
+type readableTable interface {
 	// Generates a select query on the current tableName.
 	SELECT(projections ...projection) SelectStatement
 
@@ -38,20 +26,87 @@ type ReadableTable interface {
 
 // The sql tableName write interface.
 type writableTable interface {
-	tableInterface
-
-	INSERT(columns ...column) InsertStatement
-	UPDATE(columns ...column) UpdateStatement
+	INSERT(columns ...Column) InsertStatement
+	UPDATE(columns ...Column) UpdateStatement
 	DELETE() DeleteStatement
 
 	LOCK() LockStatement
 }
 
-// Defines a physical tableName in the database that is both readable and writable.
-// This function will panic if name is not valid
-func NewTable(schemaName, name string, columns ...column) *Table {
+type ReadableTable interface {
+	readableTable
+	clause
+}
 
-	t := &Table{
+type WritableTable interface {
+	writableTable
+	clause
+}
+
+type Table interface {
+	readableTable
+	writableTable
+	clause
+	SchemaName() string
+	TableName() string
+	AS(alias string)
+}
+
+type readableTableInterfaceImpl struct {
+	parent ReadableTable
+}
+
+// Generates a select query on the current tableName.
+func (r *readableTableInterfaceImpl) SELECT(projections ...projection) SelectStatement {
+	return newSelectStatement(r.parent, projections)
+}
+
+// Creates a inner join tableName Expression using onCondition.
+func (r *readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return newJoinTable(r.parent, table, innerJoin, onCondition)
+}
+
+// Creates a left join tableName Expression using onCondition.
+func (r *readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return newJoinTable(r.parent, table, leftJoin, onCondition)
+}
+
+// Creates a right join tableName Expression using onCondition.
+func (r *readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return newJoinTable(r.parent, table, rightJoin, onCondition)
+}
+
+func (r *readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
+	return newJoinTable(r.parent, table, fullJoin, onCondition)
+}
+
+func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) ReadableTable {
+	return newJoinTable(r.parent, table, crossJoin, nil)
+}
+
+type writableTableInterfaceImpl struct {
+	parent WritableTable
+}
+
+func (w *writableTableInterfaceImpl) INSERT(columns ...Column) InsertStatement {
+	return newInsertStatement(w.parent, columns...)
+}
+
+func (w *writableTableInterfaceImpl) UPDATE(columns ...Column) UpdateStatement {
+	return newUpdateStatement(w.parent, columns)
+}
+
+func (w *writableTableInterfaceImpl) DELETE() DeleteStatement {
+	return newDeleteStatement(w.parent)
+}
+
+func (w *writableTableInterfaceImpl) LOCK() LockStatement {
+	return LOCK(w.parent)
+}
+
+func NewTable(schemaName, name string, columns ...Column) Table {
+
+	t := &tableImpl{
 		schemaName: schemaName,
 		name:       name,
 		columns:    columns,
@@ -60,25 +115,23 @@ func NewTable(schemaName, name string, columns ...column) *Table {
 		c.setTableName(name)
 	}
 
+	t.readableTableInterfaceImpl.parent = t
+	t.writableTableInterfaceImpl.parent = t
+
 	return t
 }
 
-type Table struct {
+type tableImpl struct {
+	readableTableInterfaceImpl
+	writableTableInterfaceImpl
+
 	schemaName string
 	name       string
 	alias      string
-	columns    []column
+	columns    []Column
 }
 
-func (t *Table) Column(name string) column {
-	return &baseColumn{
-		name:      name,
-		nullable:  NotNullable,
-		tableName: t.name,
-	}
-}
-
-func (t *Table) SetAlias(alias string) {
+func (t *tableImpl) AS(alias string) {
 	t.alias = alias
 
 	for _, c := range t.columns {
@@ -87,29 +140,22 @@ func (t *Table) SetAlias(alias string) {
 }
 
 // Returns the tableName's name in the database
-func (t *Table) SchemaName() string {
+func (t *tableImpl) SchemaName() string {
 	return t.schemaName
 }
 
 // Returns the tableName's name in the database
-func (t *Table) TableName() string {
+func (t *tableImpl) TableName() string {
 	return t.name
 }
 
-func (t *Table) SchemaTableName() string {
+func (t *tableImpl) SchemaTableName() string {
 	return t.schemaName
 }
 
-// Returns a list of the tableName's columns
-func (t *Table) Columns() []column {
-	return t.columns
-}
-
-// Generates the sql string for the current tableName Expression.  Note: the
-// generated string may not be a valid/executable sql Statement.
-func (t *Table) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (t *tableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if t == nil {
-		return errors.Newf("Table is nil. ")
+		return errors.New("tableImpl is nil. ")
 	}
 
 	out.writeString(t.schemaName)
@@ -124,71 +170,20 @@ func (t *Table) serialize(statement statementType, out *queryData, options ...se
 	return nil
 }
 
-// Generates a select query on the current tableName.
-func (t *Table) SELECT(projections ...projection) SelectStatement {
-	return newSelectStatement(t, projections)
-}
-
-// Creates a inner join tableName Expression using onCondition.
-func (t *Table) INNER_JOIN(
-	table ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return InnerJoinOn(t, table, onCondition)
-}
-
-// Creates a left join tableName Expression using onCondition.
-func (t *Table) LEFT_JOIN(
-	table ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return LeftJoinOn(t, table, onCondition)
-}
-
-// Creates a right join tableName Expression using onCondition.
-func (t *Table) RIGHT_JOIN(
-	table ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return RightJoinOn(t, table, onCondition)
-}
-
-func (t *Table) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return FullJoin(t, table, onCondition)
-}
-
-func (t *Table) CROSS_JOIN(table ReadableTable) ReadableTable {
-	return CrossJoin(t, table)
-}
-
-func (t *Table) INSERT(columns ...column) InsertStatement {
-	return newInsertStatement(t, columns...)
-}
-
-func (t *Table) UPDATE(columns ...column) UpdateStatement {
-	return newUpdateStatement(t, columns)
-}
-
-func (t *Table) DELETE() DeleteStatement {
-	return newDeleteStatement(t)
-}
-
-func (t *Table) LOCK() LockStatement {
-	return LOCK(t)
-}
-
 type joinType int
 
 const (
-	INNER_JOIN joinType = iota
-	LEFT_JOIN
-	RIGHT_JOIN
-	FULL_JOIN
-	CROSS_JOIN
+	innerJoin joinType = iota
+	leftJoin
+	rightJoin
+	fullJoin
+	crossJoin
 )
 
 // Join expressions are pseudo readable tables.
 type joinTable struct {
+	readableTableInterfaceImpl
+
 	lhs         ReadableTable
 	rhs         ReadableTable
 	join_type   joinType
@@ -201,51 +196,16 @@ func newJoinTable(
 	join_type joinType,
 	onCondition BoolExpression) ReadableTable {
 
-	return &joinTable{
+	joinTable := &joinTable{
 		lhs:         lhs,
 		rhs:         rhs,
 		join_type:   join_type,
 		onCondition: onCondition,
 	}
-}
 
-func InnerJoinOn(
-	lhs ReadableTable,
-	rhs ReadableTable,
-	onCondition BoolExpression) ReadableTable {
+	joinTable.readableTableInterfaceImpl.parent = joinTable
 
-	return newJoinTable(lhs, rhs, INNER_JOIN, onCondition)
-}
-
-func LeftJoinOn(
-	lhs ReadableTable,
-	rhs ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return newJoinTable(lhs, rhs, LEFT_JOIN, onCondition)
-}
-
-func RightJoinOn(
-	lhs ReadableTable,
-	rhs ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return newJoinTable(lhs, rhs, RIGHT_JOIN, onCondition)
-}
-
-func FullJoin(
-	lhs ReadableTable,
-	rhs ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return newJoinTable(lhs, rhs, FULL_JOIN, onCondition)
-}
-
-func CrossJoin(
-	lhs ReadableTable,
-	rhs ReadableTable) ReadableTable {
-
-	return newJoinTable(lhs, rhs, CROSS_JOIN, nil)
+	return joinTable
 }
 
 func (t *joinTable) SchemaName() string {
@@ -256,33 +216,13 @@ func (t *joinTable) TableName() string {
 	return ""
 }
 
-func (t *joinTable) Columns() []column {
-	columns := make([]column, 0)
-	columns = append(columns, t.lhs.Columns()...)
-	columns = append(columns, t.rhs.Columns()...)
-
-	return columns
-}
-
-func (t *joinTable) Column(name string) column {
-	return &baseColumn{
-		name:     name,
-		nullable: NotNullable,
-	}
-}
-
 func (t *joinTable) serialize(statement statementType, out *queryData, options ...serializeOption) (err error) {
 	if t == nil {
 		return errors.New("Join table is nil. ")
 	}
-	if t.lhs == nil {
-		return errors.Newf("nil lhs.")
-	}
-	if t.rhs == nil {
-		return errors.Newf("nil rhs.")
-	}
-	if t.onCondition == nil && t.join_type != CROSS_JOIN {
-		return errors.Newf("nil onCondition.")
+
+	if isNil(t.lhs) {
+		return errors.New("left hand side of join operation is nil table")
 	}
 
 	if err = t.lhs.serialize(statement, out); err != nil {
@@ -292,61 +232,36 @@ func (t *joinTable) serialize(statement statementType, out *queryData, options .
 	out.nextLine()
 
 	switch t.join_type {
-	case INNER_JOIN:
-		out.writeString("JOIN")
-	case LEFT_JOIN:
+	case innerJoin:
+		out.writeString("INNER JOIN")
+	case leftJoin:
 		out.writeString("LEFT JOIN")
-	case RIGHT_JOIN:
+	case rightJoin:
 		out.writeString("RIGHT JOIN")
-	case FULL_JOIN:
+	case fullJoin:
 		out.writeString("FULL JOIN")
-	case CROSS_JOIN:
+	case crossJoin:
 		out.writeString("CROSS JOIN")
+	}
+
+	if isNil(t.rhs) {
+		return errors.New("right hand side of join operation is nil table")
 	}
 
 	if err = t.rhs.serialize(statement, out); err != nil {
 		return
 	}
 
+	if t.onCondition == nil && t.join_type != crossJoin {
+		return errors.New("join condition is nil")
+	}
+
 	if t.onCondition != nil {
-		out.writeString(" ON ")
+		out.writeString("ON")
 		if err = t.onCondition.serialize(statement, out); err != nil {
 			return
 		}
 	}
 
 	return nil
-}
-
-func (t *joinTable) SELECT(projections ...projection) SelectStatement {
-	return newSelectStatement(t, projections)
-}
-
-func (t *joinTable) INNER_JOIN(
-	table ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return InnerJoinOn(t, table, onCondition)
-}
-
-func (t *joinTable) LEFT_JOIN(
-	table ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return LeftJoinOn(t, table, onCondition)
-}
-
-func (t *joinTable) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return FullJoin(t, table, onCondition)
-}
-
-func (t *joinTable) CROSS_JOIN(table ReadableTable) ReadableTable {
-	return CrossJoin(t, table)
-}
-
-func (t *joinTable) RIGHT_JOIN(
-	table ReadableTable,
-	onCondition BoolExpression) ReadableTable {
-
-	return RightJoinOn(t, table, onCondition)
 }

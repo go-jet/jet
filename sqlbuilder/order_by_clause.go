@@ -1,6 +1,6 @@
 package sqlbuilder
 
-import "github.com/dropbox/godropbox/errors"
+import "errors"
 
 type OrderByClause interface {
 	serializeAsOrderBy(statement statementType, out *queryData) error
@@ -13,7 +13,7 @@ type orderByClauseImpl struct {
 
 func (o *orderByClauseImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
 	if o.expression == nil {
-		return errors.Newf("nil orderBy by clause.")
+		return errors.New("nil orderBy by clause.")
 	}
 
 	if err := o.expression.serializeAsOrderBy(statement, out); err != nil {

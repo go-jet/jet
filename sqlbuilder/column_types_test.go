@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewBoolColumn(t *testing.T) {
-	boolColumn := NewBoolColumn("col", Nullable)
+	boolColumn := NewBoolColumn("col", false)
 
 	out := queryData{}
 	err := boolColumn.serialize(select_statement, &out)
@@ -34,7 +34,7 @@ func TestNewBoolColumn(t *testing.T) {
 }
 
 func TestNewIntColumn(t *testing.T) {
-	integerColumn := NewIntegerColumn("col", Nullable)
+	integerColumn := NewIntegerColumn("col", false)
 
 	out := queryData{}
 	err := integerColumn.serialize(select_statement, &out)
@@ -62,7 +62,7 @@ func TestNewIntColumn(t *testing.T) {
 }
 
 func TestNewNumericColumnColumn(t *testing.T) {
-	numericColumn := NewFloatColumn("col", Nullable)
+	numericColumn := NewFloatColumn("col", false)
 
 	out := queryData{}
 	err := numericColumn.serialize(select_statement, &out)

@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
+	"reflect"
 )
 
 func serializeOrderByClauseList(statement statementType, orderByClauses []OrderByClause, out *queryData) error {
@@ -97,7 +98,7 @@ func serializeProjectionList(statement statementType, projections []projection, 
 	return nil
 }
 
-func serializeColumnList(statement statementType, columns []column, out *queryData) error {
+func serializeColumnList(statement statementType, columns []Column, out *queryData) error {
 	for i, col := range columns {
 		if i > 0 {
 			out.writeByte(',')
@@ -111,6 +112,10 @@ func serializeColumnList(statement statementType, columns []column, out *queryDa
 	}
 
 	return nil
+}
+
+func isNil(v interface{}) bool {
+	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
 
 //func stringExpressionListToExpressionList(stringExpressions []StringExpression) []Expression{

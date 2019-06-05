@@ -7,10 +7,10 @@ type BoolColumn struct {
 	baseColumn
 }
 
-func NewBoolColumn(name string, nullable NullableColumn) *BoolColumn {
+func NewBoolColumn(name string, isNullable bool) *BoolColumn {
 
 	boolColumn := &BoolColumn{}
-	boolColumn.baseColumn = newBaseColumn(name, nullable, "", boolColumn)
+	boolColumn.baseColumn = newBaseColumn(name, isNullable, "", boolColumn)
 
 	boolColumn.boolInterfaceImpl.parent = boolColumn
 
@@ -23,13 +23,13 @@ type FloatColumn struct {
 	baseColumn
 }
 
-func NewFloatColumn(name string, nullable NullableColumn) *FloatColumn {
+func NewFloatColumn(name string, isNullable bool) *FloatColumn {
 
 	floatColumn := &FloatColumn{}
 
 	floatColumn.floatInterfaceImpl.parent = floatColumn
 
-	floatColumn.baseColumn = newBaseColumn(name, nullable, "", floatColumn)
+	floatColumn.baseColumn = newBaseColumn(name, isNullable, "", floatColumn)
 
 	return floatColumn
 }
@@ -43,12 +43,12 @@ type IntegerColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewIntegerColumn(name string, nullable NullableColumn) *IntegerColumn {
+func NewIntegerColumn(name string, isNullable bool) *IntegerColumn {
 	integerColumn := &IntegerColumn{}
 
 	integerColumn.integerInterfaceImpl.parent = integerColumn
 
-	integerColumn.baseColumn = newBaseColumn(name, nullable, "", integerColumn)
+	integerColumn.baseColumn = newBaseColumn(name, isNullable, "", integerColumn)
 
 	return integerColumn
 }
@@ -62,13 +62,13 @@ type StringColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewStringColumn(name string, nullable NullableColumn) *StringColumn {
+func NewStringColumn(name string, isNullable bool) *StringColumn {
 
 	stringColumn := &StringColumn{}
 
 	stringColumn.stringInterfaceImpl.parent = stringColumn
 
-	stringColumn.baseColumn = newBaseColumn(name, nullable, "", stringColumn)
+	stringColumn.baseColumn = newBaseColumn(name, isNullable, "", stringColumn)
 
 	return stringColumn
 }
@@ -82,12 +82,12 @@ type TimeColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewTimeColumn(name string, nullable NullableColumn) *TimeColumn {
+func NewTimeColumn(name string, isNullable bool) *TimeColumn {
 	timeColumn := &TimeColumn{}
 
 	timeColumn.timeInterfaceImpl.parent = timeColumn
 
-	timeColumn.baseColumn = newBaseColumn(name, nullable, "", timeColumn)
+	timeColumn.baseColumn = newBaseColumn(name, isNullable, "", timeColumn)
 
 	return timeColumn
 }
@@ -101,12 +101,12 @@ type TimezColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewTimezColumn(name string, nullable NullableColumn) *TimezColumn {
+func NewTimezColumn(name string, isNullable bool) *TimezColumn {
 	timezColumn := &TimezColumn{}
 
 	timezColumn.timezInterfaceImpl.parent = timezColumn
 
-	timezColumn.baseColumn = newBaseColumn(name, nullable, "", timezColumn)
+	timezColumn.baseColumn = newBaseColumn(name, isNullable, "", timezColumn)
 
 	return timezColumn
 }
@@ -120,12 +120,12 @@ type TimestampColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewTimestampColumn(name string, nullable NullableColumn) *TimestampColumn {
+func NewTimestampColumn(name string, isNullable bool) *TimestampColumn {
 	timestampColumn := &TimestampColumn{}
 
 	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
 
-	timestampColumn.baseColumn = newBaseColumn(name, nullable, "", timestampColumn)
+	timestampColumn.baseColumn = newBaseColumn(name, isNullable, "", timestampColumn)
 
 	return timestampColumn
 }
@@ -139,12 +139,12 @@ type TimestampzColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewTimestampzColumn(name string, nullable NullableColumn) *TimestampzColumn {
+func NewTimestampzColumn(name string, isNullable bool) *TimestampzColumn {
 	timestampzColumn := &TimestampzColumn{}
 
 	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
 
-	timestampzColumn.baseColumn = newBaseColumn(name, nullable, "", timestampzColumn)
+	timestampzColumn.baseColumn = newBaseColumn(name, isNullable, "", timestampzColumn)
 
 	return timestampzColumn
 }
@@ -158,12 +158,12 @@ type DateColumn struct {
 
 // Representation of any integer column
 // This function will panic if name is not valid
-func NewDateColumn(name string, nullable NullableColumn) *DateColumn {
+func NewDateColumn(name string, isNullable bool) *DateColumn {
 	dateColumn := &DateColumn{}
 
 	dateColumn.dateInterfaceImpl.parent = dateColumn
 
-	dateColumn.baseColumn = newBaseColumn(name, nullable, "", dateColumn)
+	dateColumn.baseColumn = newBaseColumn(name, isNullable, "", dateColumn)
 
 	return dateColumn
 }

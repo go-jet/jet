@@ -6,7 +6,7 @@ type projection interface {
 
 //------------------------------------------------------//
 // Dummy type for select * AllColumns
-type ColumnList []column
+type ColumnList []Column
 
 func (cl ColumnList) isProjectionType() {}
 

@@ -27,12 +27,12 @@ type LockStatement interface {
 }
 
 type lockStatementImpl struct {
-	tables   []tableInterface
+	tables   []WritableTable
 	lockMode lockMode
 	nowait   bool
 }
 
-func LOCK(tables ...tableInterface) LockStatement {
+func LOCK(tables ...WritableTable) LockStatement {
 	return &lockStatementImpl{
 		tables: tables,
 	}

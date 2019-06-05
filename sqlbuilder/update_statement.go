@@ -2,7 +2,7 @@ package sqlbuilder
 
 import (
 	"database/sql"
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
@@ -14,7 +14,7 @@ type UpdateStatement interface {
 	RETURNING(projections ...projection) UpdateStatement
 }
 
-func newUpdateStatement(table writableTable, columns []column) UpdateStatement {
+func newUpdateStatement(table WritableTable, columns []Column) UpdateStatement {
 	return &updateStatementImpl{
 		table:   table,
 		columns: columns,
@@ -22,8 +22,8 @@ func newUpdateStatement(table writableTable, columns []column) UpdateStatement {
 }
 
 type updateStatementImpl struct {
-	table        writableTable
-	columns      []column
+	table        WritableTable
+	columns      []Column
 	updateValues []clause
 	where        BoolExpression
 	returning    []projection

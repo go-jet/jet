@@ -1,188 +1,101 @@
-// +build disabled
-
 package sqlbuilder
 
 import (
-	"bytes"
-
-	gc "gopkg.in/check.v1"
+	"testing"
 )
 
-type TableSuite struct {
+func TestJoinNilInputs(t *testing.T) {
+	assertClauseSerializeErr(t, table2.INNER_JOIN(nil, table1ColBool.EQ(table2ColBool)),
+		"right hand side of join operation is nil table")
+	assertClauseSerializeErr(t, table2.INNER_JOIN(table1, nil),
+		"join condition is nil")
 }
 
-var _ = gc.Suite(&TableSuite{})
-
-// NOTE: tables / columns are defined in statement_test.go
-
-func (s *TableSuite) TestBasicColumns(c *gc.C) {
-	cols := table1.Columns()
-
-	c.Assert(len(cols), gc.Equals, 4)
-	c.Assert(cols[0], gc.Equals, table1Col1)
-	c.Assert(cols[1], gc.Equals, table1ColFloat)
-	c.Assert(cols[2], gc.Equals, table1Col3)
-	c.Assert(cols[3], gc.Equals, table1ColTime)
+func TestINNER_JOIN(t *testing.T) {
+	assertClauseSerialize(t, table1.
+		INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+		`db.table1
+INNER JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+	assertClauseSerialize(t, table1.
+		INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)).
+		INNER_JOIN(table3, table1ColInt.EQ(table3ColInt)),
+		`db.table1
+INNER JOIN db.table2 ON (table1.colInt = table2.colInt)
+INNER JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+	assertClauseSerialize(t, table1.
+		INNER_JOIN(table2, table1ColInt.EQ(Int(1))).
+		INNER_JOIN(table3, table1ColInt.EQ(Int(2))),
+		`db.table1
+INNER JOIN db.table2 ON (table1.colInt = $1)
+INNER JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
 }
 
-func (s *TableSuite) TestCValidLookup(c *gc.C) {
-	col := table1.C("col1")
-
-	buf := &bytes.Buffer{}
-
-	err := col.SerializeSql(buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(sql, gc.Equals, "table1.col1")
+func TestLEFT_JOIN(t *testing.T) {
+	assertClauseSerialize(t, table1.
+		LEFT_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+		`db.table1
+LEFT JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+	assertClauseSerialize(t, table1.
+		LEFT_JOIN(table2, table1ColInt.EQ(table2ColInt)).
+		LEFT_JOIN(table3, table1ColInt.EQ(table3ColInt)),
+		`db.table1
+LEFT JOIN db.table2 ON (table1.colInt = table2.colInt)
+LEFT JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+	assertClauseSerialize(t, table1.
+		LEFT_JOIN(table2, table1ColInt.EQ(Int(1))).
+		LEFT_JOIN(table3, table1ColInt.EQ(Int(2))),
+		`db.table1
+LEFT JOIN db.table2 ON (table1.colInt = $1)
+LEFT JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
 }
 
-func (s *TableSuite) TestCInvalidLookup(c *gc.C) {
-	col := table1.C("foo")
-
-	buf := &bytes.Buffer{}
-
-	err := col.SerializeSql(buf)
-	c.Assert(err, gc.NotNil)
+func TestRIGHT_JOIN(t *testing.T) {
+	assertClauseSerialize(t, table1.
+		RIGHT_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+		`db.table1
+RIGHT JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+	assertClauseSerialize(t, table1.
+		RIGHT_JOIN(table2, table1ColInt.EQ(table2ColInt)).
+		RIGHT_JOIN(table3, table1ColInt.EQ(table3ColInt)),
+		`db.table1
+RIGHT JOIN db.table2 ON (table1.colInt = table2.colInt)
+RIGHT JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+	assertClauseSerialize(t, table1.
+		RIGHT_JOIN(table2, table1ColInt.EQ(Int(1))).
+		RIGHT_JOIN(table3, table1ColInt.EQ(Int(2))),
+		`db.table1
+RIGHT JOIN db.table2 ON (table1.colInt = $1)
+RIGHT JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
 }
 
-func (s *TableSuite) TestJoinNilLeftTable(c *gc.C) {
-	join := InnerJoinOn(nil, table2, EqL(table2Col3, 123))
-
-	buf := &bytes.Buffer{}
-
-	err := join.serialize("", buf)
-	c.Assert(err, gc.NotNil)
+func TestFULL_JOIN(t *testing.T) {
+	assertClauseSerialize(t, table1.
+		FULL_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+		`db.table1
+FULL JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+	assertClauseSerialize(t, table1.
+		FULL_JOIN(table2, table1ColInt.EQ(table2ColInt)).
+		FULL_JOIN(table3, table1ColInt.EQ(table3ColInt)),
+		`db.table1
+FULL JOIN db.table2 ON (table1.colInt = table2.colInt)
+FULL JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+	assertClauseSerialize(t, table1.
+		FULL_JOIN(table2, table1ColInt.EQ(Int(1))).
+		FULL_JOIN(table3, table1ColInt.EQ(Int(2))),
+		`db.table1
+FULL JOIN db.table2 ON (table1.colInt = $1)
+FULL JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
 }
 
-func (s *TableSuite) TestJoinNilRightTable(c *gc.C) {
-	join := InnerJoinOn(table1, nil, EqL(table2Col3, 123))
-
-	buf := &bytes.Buffer{}
-
-	err := join.serialize("", buf)
-	c.Assert(err, gc.NotNil)
-}
-
-func (s *TableSuite) TestJoinNilOnCondition(c *gc.C) {
-	join := InnerJoinOn(table1, table2, nil)
-
-	buf := &bytes.Buffer{}
-
-	err := join.serialize("", buf)
-	c.Assert(err, gc.NotNil)
-}
-
-func (s *TableSuite) TestInnerJoin(c *gc.C) {
-	join := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
-
-	buf := &bytes.Buffer{}
-
-	err := join.SerializeSql(buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"db.table1 JOIN db.table2 ON table1.col3=table2.col3")
-}
-
-func (s *TableSuite) TestLeftJoin(c *gc.C) {
-	join := table1.LEFT_JOIN(table2, EQ(table1Col3, table2Col3))
-
-	buf := &bytes.Buffer{}
-
-	err := join.serialize("", buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"db.table1 LEFT JOIN db.table2 "+
-			"ON table1.col3=table2.col3")
-}
-
-func (s *TableSuite) TestRightJoin(c *gc.C) {
-	join := table1.RIGHT_JOIN(table2, EQ(table1Col3, table2Col3))
-
-	buf := &bytes.Buffer{}
-
-	err := join.serialize("", buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"db.table1 RIGHT JOIN db.table2 "+
-			"ON table1.col3=table2.col3")
-}
-
-//func (s *TableSuite) TestJoinColumns(c *gc.C) {
-//	join := table1.RIGHT_JOIN(table2, EQ(table1Col3, table2Col3))
-//
-//	cols := join.Columns()
-//	c.Assert(len(cols), gc.Equals, 6)
-//	c.Assert(cols[0], gc.Equals, table1Col1)
-//	c.Assert(cols[1], gc.Equals, table1ColFloat)
-//	c.Assert(cols[2], gc.Equals, table1Col3)
-//	c.Assert(cols[3], gc.Equals, table1ColTime)
-//	c.Assert(cols[4], gc.Equals, table2Col3)
-//	c.Assert(cols[5], gc.Equals, table2Col4)
-//}
-
-func (s *TableSuite) TestNestedInnerJoin(c *gc.C) {
-	join1 := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
-	join2 := join1.InnerJoinOn(table3, EQ(table1Col1, table3Col1))
-
-	buf := &bytes.Buffer{}
-
-	err := join2.SerializeSql(buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"db.table1 "+
-			"JOIN db.table2 ON table1.col3=table2.col3 "+
-			"JOIN db.table3 ON table1.col1=table3.col1")
-}
-
-func (s *TableSuite) TestNestedLeftJoin(c *gc.C) {
-	join1 := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
-	join2 := join1.LeftJoinOn(table3, EQ(table1Col1, table3Col1))
-
-	buf := &bytes.Buffer{}
-
-	err := join2.SerializeSql(buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"db.table1 "+
-			"JOIN db.table2 ON table1.col3=table2.col3 "+
-			"LEFT JOIN db.table3 ON table1.col1=table3.col1")
-}
-
-func (s *TableSuite) TestNestedRightJoin(c *gc.C) {
-	join1 := table1.InnerJoinOn(table2, EQ(table1Col3, table2Col3))
-	join2 := join1.RightJoinOn(table3, EQ(table1Col1, table3Col1))
-
-	buf := &bytes.Buffer{}
-
-	err := join2.SerializeSql(buf)
-	c.Assert(err, gc.IsNil)
-
-	sql := buf.String()
-	c.Assert(
-		sql,
-		gc.Equals,
-		"db.table1 "+
-			"JOIN db.table2 ON table1.col3=table2.col3 "+
-			"RIGHT JOIN db.table3 ON table1.col1=table3.col1")
+func TestCROSS_JOIN(t *testing.T) {
+	assertClauseSerialize(t, table1.
+		CROSS_JOIN(table2),
+		`db.table1
+CROSS JOIN db.table2`)
+	assertClauseSerialize(t, table1.
+		CROSS_JOIN(table2).
+		CROSS_JOIN(table3),
+		`db.table1
+CROSS JOIN db.table2
+CROSS JOIN db.table3`)
 }

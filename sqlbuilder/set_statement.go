@@ -2,7 +2,7 @@ package sqlbuilder
 
 import (
 	"database/sql"
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
@@ -92,15 +92,12 @@ func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
 }
 
 func (us *setStatementImpl) AsTable(alias string) expressionTable {
-	return &expressionTableImpl{
-		statement: us,
-		alias:     alias,
-	}
+	return newExpressionTable(us.parent, alias)
 }
 
 func (s *setStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if s == nil {
-		return errors.New("Set statement is nil. ")
+		return errors.New("Set expression is nil. ")
 	}
 
 	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
@@ -125,11 +122,11 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData, op
 
 func (s *setStatementImpl) serializeImpl(out *queryData) error {
 	if s == nil {
-		return errors.New("Set statement is nil. ")
+		return errors.New("Set expression is nil. ")
 	}
 
 	if len(s.selects) < 2 {
-		return errors.Newf("UNION Statement must have at least two SELECT statements.")
+		return errors.New("UNION Statement must have at least two SELECT statements.")
 	}
 
 	out.nextLine()

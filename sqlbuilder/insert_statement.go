@@ -2,7 +2,7 @@ package sqlbuilder
 
 import (
 	"database/sql"
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 	"github.com/serenize/snaker"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 	"reflect"
@@ -22,7 +22,7 @@ type InsertStatement interface {
 	QUERY(selectStatement SelectStatement) InsertStatement
 }
 
-func newInsertStatement(t writableTable, columns ...column) InsertStatement {
+func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
 	return &insertStatementImpl{
 		table:   t,
 		columns: columns,
@@ -30,8 +30,8 @@ func newInsertStatement(t writableTable, columns ...column) InsertStatement {
 }
 
 type insertStatementImpl struct {
-	table     writableTable
-	columns   []column
+	table     WritableTable
+	columns   []Column
 	rows      [][]clause
 	query     SelectStatement
 	returning []projection
@@ -136,7 +136,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	queryData.writeString("INSERT INTO")
 
 	if s.table == nil {
-		return "", nil, errors.Newf("nil tableName.")
+		return "", nil, errors.New("nil tableName.")
 	}
 
 	err = s.table.serialize(insert_statement, queryData)

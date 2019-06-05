@@ -7,7 +7,7 @@ import (
 
 	gc "gopkg.in/check.v1"
 
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 )
 
 type StmtSuite struct {

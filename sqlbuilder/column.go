@@ -6,54 +6,32 @@ import (
 	"strings"
 )
 
-type column interface {
+type Column interface {
 	Expression
 
 	Name() string
 	TableName() string
-
+	IsNullable() bool
 	DefaultAlias() projection
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string)
 }
 
-type NullableColumn bool
-
-const (
-	Nullable    NullableColumn = true
-	NotNullable NullableColumn = false
-)
-
-type Collation string
-
-const (
-	UTF8CaseInsensitive Collation = "utf8_unicode_ci"
-	UTF8CaseSensitive   Collation = "utf8_unicode"
-	UTF8Binary          Collation = "utf8_bin"
-)
-
-// Representation of MySQL charsets
-type Charset string
-
-const (
-	UTF8 Charset = "utf8"
-)
-
 // The base type for real materialized columns.
 type baseColumn struct {
 	expressionInterfaceImpl
 
-	name      string
-	nullable  NullableColumn
-	tableName string
+	name       string
+	isNullable bool
+	tableName  string
 }
 
-func newBaseColumn(name string, nullable NullableColumn, tableName string, parent column) baseColumn {
+func newBaseColumn(name string, isNullable bool, tableName string, parent Column) baseColumn {
 	bc := baseColumn{
-		name:      name,
-		nullable:  nullable,
-		tableName: tableName,
+		name:       name,
+		isNullable: isNullable,
+		tableName:  tableName,
 	}
 
 	bc.expressionInterfaceImpl.parent = parent
@@ -71,6 +49,10 @@ func (c *baseColumn) TableName() string {
 
 func (c *baseColumn) setTableName(table string) {
 	c.tableName = table
+}
+
+func (c *baseColumn) IsNullable() bool {
+	return c.isNullable
 }
 
 func (c *baseColumn) DefaultAlias() projection {

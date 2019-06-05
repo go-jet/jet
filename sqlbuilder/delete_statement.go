@@ -2,7 +2,7 @@ package sqlbuilder
 
 import (
 	"database/sql"
-	"github.com/dropbox/godropbox/errors"
+	"errors"
 	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
@@ -12,14 +12,14 @@ type DeleteStatement interface {
 	WHERE(expression BoolExpression) DeleteStatement
 }
 
-func newDeleteStatement(table writableTable) DeleteStatement {
+func newDeleteStatement(table WritableTable) DeleteStatement {
 	return &deleteStatementImpl{
 		table: table,
 	}
 }
 
 type deleteStatementImpl struct {
-	table writableTable
+	table WritableTable
 	where BoolExpression
 }
 
@@ -30,7 +30,7 @@ func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 
 func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
 	if d == nil {
-		return errors.New("Delete statement. ")
+		return errors.New("Delete expression. ")
 	}
 	out.nextLine()
 	out.writeString("DELETE FROM")

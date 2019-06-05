@@ -63,7 +63,7 @@ SELECT payment.payment_id AS "payment.payment_id",
      customer.last_update AS "customer.last_update",
      customer.active AS "customer.active"
 FROM dvds.payment
-     JOIN dvds.customer ON (payment.customer_id = customer.customer_id)
+     INNER JOIN dvds.customer ON (payment.customer_id = customer.customer_id)
 ORDER BY payment.payment_id ASC
 LIMIT 30;
 `
@@ -197,11 +197,11 @@ SELECT film_actor.actor_id AS "film_actor.actor_id",
      rental.staff_id AS "rental.staff_id",
      rental.last_update AS "rental.last_update"
 FROM dvds.film_actor
-     JOIN dvds.actor ON (film_actor.actor_id = actor.actor_id)
-     JOIN dvds.film ON (film_actor.film_id = film.film_id)
-     JOIN dvds.language ON (film.language_id = language.language_id)
-     JOIN dvds.inventory ON (inventory.film_id = film.film_id)
-     JOIN dvds.rental ON (rental.inventory_id = inventory.inventory_id)
+     INNER JOIN dvds.actor ON (film_actor.actor_id = actor.actor_id)
+     INNER JOIN dvds.film ON (film_actor.film_id = film.film_id)
+     INNER JOIN dvds.language ON (film.language_id = language.language_id)
+     INNER JOIN dvds.inventory ON (inventory.film_id = film.film_id)
+     INNER JOIN dvds.rental ON (rental.inventory_id = inventory.inventory_id)
 ORDER BY film.film_id ASC
 LIMIT 50;
 `
@@ -272,7 +272,7 @@ SELECT language.language_id AS "language.language_id",
      film.special_features AS "film.special_features",
      film.fulltext AS "film.fulltext"
 FROM dvds.film
-     JOIN dvds.language ON (film.language_id = language.language_id)
+     INNER JOIN dvds.language ON (film.language_id = language.language_id)
 WHERE film.rating = 'NC-17'
 LIMIT 15;
 `
@@ -569,7 +569,7 @@ SELECT f1.film_id AS "f1.film_id",
      f2.special_features AS "f2.special_features",
      f2.fulltext AS "f2.fulltext"
 FROM dvds.film AS f1
-     JOIN dvds.film AS f2 ON ((f1.film_id < f2.film_id) AND (f1.length = f2.length))
+     INNER JOIN dvds.film AS f2 ON ((f1.film_id < f2.film_id) AND (f1.length = f2.length))
 ORDER BY f1.film_id ASC;
 `
 	f1 := Film.AS("f1")
@@ -606,7 +606,7 @@ SELECT f1.title AS "thesame_length_films.title1",
      f2.title AS "thesame_length_films.title2",
      f1.length AS "thesame_length_films.length"
 FROM dvds.film AS f1
-     JOIN dvds.film AS f2 ON ((f1.film_id != f2.film_id) AND (f1.length = f2.length))
+     INNER JOIN dvds.film AS f2 ON ((f1.film_id != f2.film_id) AND (f1.length = f2.length))
 ORDER BY f1.length ASC, f1.title ASC, f2.title ASC
 LIMIT 1000;
 `
@@ -682,8 +682,8 @@ LIMIT 1000;
 //	manager := Staff.AS("manager")
 //
 //	query := Staff.
-//		INNER_JOIN(Address, Staff.AddressID.EQ(Address.AddressID)).
-//		INNER_JOIN(manager, Staff.StaffID.EQ(manager.StaffID)).
+//		innerJoin(Address, Staff.AddressID.EQ(Address.AddressID)).
+//		innerJoin(manager, Staff.StaffID.EQ(manager.StaffID)).
 //		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName).
 //		DISTINCT()
 //
@@ -717,7 +717,7 @@ func TestSubQuery(t *testing.T) {
 	//avrgCustomer := NumExp(Customer.SELECT(Customer.LastName).LIMIT(1))
 	//
 	//Customer.
-	//	INNER_JOIN(selectStmtTable, Customer.LastName.EQ(selectStmtTable.RefStringColumn(Actor.FirstName))).
+	//	innerJoin(selectStmtTable, Customer.LastName.EQ(selectStmtTable.RefStringColumn(Actor.FirstName))).
 	//	SELECT(Customer.AllColumns, selectStmtTable.RefIntColumnName("first_name")).
 	//	WHERE(Actor.LastName.Neq(avrgCustomer))
 
@@ -732,8 +732,8 @@ SELECT actor.actor_id AS "actor.actor_id",
      films."film.title" AS "film.title",
      films."film.rating" AS "film.rating"
 FROM dvds.actor
-     JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
-     JOIN (
+     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
+     INNER JOIN (
           SELECT film.film_id AS "film.film_id",
                film.title AS "film.title",
                film.rating AS "film.rating"
@@ -918,7 +918,7 @@ SELECT customer.customer_id AS "customer.customer_id",
      customer.active AS "customer.active",
      customer_payment_sum.amount_sum AS "customer_with_amounts.amount_sum"
 FROM dvds.customer
-     JOIN (
+     INNER JOIN (
           SELECT payment.customer_id AS "payment.customer_id",
                SUM(payment.amount) AS "amount_sum"
           FROM dvds.payment

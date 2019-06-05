@@ -65,7 +65,7 @@ func (q *queryData) writeProjection(statement statementType, projections []proje
 	return err
 }
 
-func (q *queryData) writeFrom(statement statementType, table tableInterface) error {
+func (q *queryData) writeFrom(statement statementType, table ReadableTable) error {
 	q.nextLine()
 	q.writeString("FROM")
 
