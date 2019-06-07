@@ -65,3 +65,8 @@ func TestStringNOT_SIMILAR_TO(t *testing.T) {
 	assertClauseSerialize(t, table3StrCol.NOT_SIMILAR_TO(table2ColStr), "(table3.col2 NOT SIMILAR TO table2.colStr)")
 	assertClauseSerialize(t, table3StrCol.NOT_SIMILAR_TO(String("JOHN")), "(table3.col2 NOT SIMILAR TO $1)", "JOHN")
 }
+
+func TestStringExp(t *testing.T) {
+	assertClauseSerialize(t, StringExp(table2ColFloat), "table2.colFloat")
+	assertClauseSerialize(t, StringExp(table2ColFloat).NOT_LIKE(String("abc")), "(table2.colFloat NOT LIKE $1)", "abc")
+}

@@ -49,3 +49,20 @@ func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) BoolExpression {
 func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) BoolExpression {
 	return GT_EQ(t.parent, rhs)
 }
+
+//-------------------------------------------------
+
+type timestampExpressionWrapper struct {
+	timestampInterfaceImpl
+	Expression
+}
+
+func newTimestampExpressionWrap(expression Expression) TimestampExpression {
+	timestampExpressionWrap := timestampExpressionWrapper{Expression: expression}
+	timestampExpressionWrap.timestampInterfaceImpl.parent = &timestampExpressionWrap
+	return &timestampExpressionWrap
+}
+
+func TimestampExp(expression Expression) TimestampExpression {
+	return newTimestampExpressionWrap(expression)
+}

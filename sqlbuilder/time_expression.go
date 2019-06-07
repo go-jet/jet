@@ -71,3 +71,20 @@ func newPrefixTimeExpression(operator string, expression Expression) TimeExpress
 func INTERVAL(interval string) Expression {
 	return newPrefixTimeExpression("INTERVAL", literal(interval))
 }
+
+//---------------------------------------------------//
+
+type timeExpressionWrapper struct {
+	timeInterfaceImpl
+	Expression
+}
+
+func newTimeExpressionWrap(expression Expression) TimeExpression {
+	timeExpressionWrap := timeExpressionWrapper{Expression: expression}
+	timeExpressionWrap.timeInterfaceImpl.parent = &timeExpressionWrap
+	return &timeExpressionWrap
+}
+
+func TimeExp(expression Expression) TimeExpression {
+	return newTimeExpressionWrap(expression)
+}

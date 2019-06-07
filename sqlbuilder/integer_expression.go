@@ -148,3 +148,22 @@ func newPrefixIntegerOpExpression(expression IntegerExpression, operator string)
 
 	return &integerExpression
 }
+
+//---------------------------------------------------//
+type integerExpressionWrapper struct {
+	integerInterfaceImpl
+
+	Expression
+}
+
+func newIntExpressionWrap(expression Expression) IntegerExpression {
+	intExpressionWrap := integerExpressionWrapper{Expression: expression}
+
+	intExpressionWrap.integerInterfaceImpl.parent = &intExpressionWrap
+
+	return &intExpressionWrap
+}
+
+func IntExp(expression Expression) IntegerExpression {
+	return newIntExpressionWrap(expression)
+}

@@ -39,8 +39,8 @@ type integerCast struct {
 	cast
 }
 
-func newIntegerCast(expression Expression) IntegerExpression {
-	integerCast := &integerCast{cast: *newCast(expression, "integer")}
+func newIntegerCast(expression Expression, intType string) IntegerExpression {
+	integerCast := &integerCast{cast: *newCast(expression, intType)}
 
 	integerCast.integerInterfaceImpl.parent = integerCast
 	integerCast.expressionInterfaceImpl.parent = integerCast
@@ -54,8 +54,8 @@ type floatCast struct {
 	cast
 }
 
-func newDoubleCast(expression Expression) FloatExpression {
-	floatCast := &floatCast{cast: *newCast(expression, "double precision")}
+func newFloatCast(expression Expression, floatType string) FloatExpression {
+	floatCast := &floatCast{cast: *newCast(expression, floatType)}
 
 	floatCast.floatInterfaceImpl.parent = floatCast
 	floatCast.expressionInterfaceImpl.parent = floatCast

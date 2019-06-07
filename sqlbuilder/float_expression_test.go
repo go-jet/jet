@@ -63,3 +63,10 @@ func TestFloatExpressionPOW(t *testing.T) {
 	assertClauseSerialize(t, table1ColFloat.POW(table2ColFloat), "(table1.colFloat ^ table2.colFloat)")
 	assertClauseSerialize(t, table1ColFloat.POW(Float(2.11)), "(table1.colFloat ^ $1)", float64(2.11))
 }
+
+func TestFloatExp(t *testing.T) {
+	assertClauseSerialize(t, FloatExp(table1ColInt), "table1.colInt")
+	assertClauseSerialize(t, FloatExp(table1ColInt.ADD(table3ColInt)), "(table1.colInt + table3.colInt)")
+	assertClauseSerialize(t, FloatExp(table1ColInt.ADD(table3ColInt)).ADD(Float(11.11)),
+		"((table1.colInt + table3.colInt) + $1)", float64(11.11))
+}

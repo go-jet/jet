@@ -53,6 +53,7 @@ func TestBinaryBoolExpression(t *testing.T) {
 	assertClauseSerialize(t, boolExpression.OR(Int(4).EQ(Int(5))),
 		"(($1 = $2) OR ($3 = $4))", int64(2), int64(3), int64(4), int64(5))
 }
+
 func TestBoolLiteral(t *testing.T) {
 	assertClauseSerialize(t, Bool(true), "$1", true)
 	assertClauseSerialize(t, Bool(false), "$1", false)
@@ -70,4 +71,9 @@ func TestExists(t *testing.T) {
      FROM db.table2
      WHERE table1.col1 = table2.col3
 )`, int64(1))
+}
+
+func TestBoolExp(t *testing.T) {
+	assertClauseSerialize(t, BoolExp(String("true")), "$1", "true")
+	assertClauseSerialize(t, BoolExp(String("true")).IS_TRUE(), "$1 IS TRUE", "true")
 }

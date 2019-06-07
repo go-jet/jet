@@ -73,3 +73,9 @@ func TestIntExpressionBIT_SHIFT_RIGHT(t *testing.T) {
 	assertClauseSerialize(t, table1ColInt.BIT_SHIFT_RIGHT(table2ColInt), "(table1.colInt >> table2.colInt)")
 	assertClauseSerialize(t, table1ColInt.BIT_SHIFT_RIGHT(Int(11)), "(table1.colInt >> $1)", int64(11))
 }
+
+func TestIntExpressionIntExp(t *testing.T) {
+	assertClauseSerialize(t, IntExp(table1ColFloat), "table1.colFloat")
+	assertClauseSerialize(t, IntExp(table1ColFloat.ADD(table2ColFloat)).ADD(Int(11)),
+		"((table1.colFloat + table2.colFloat) + $1)", int64(11))
+}

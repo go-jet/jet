@@ -49,3 +49,20 @@ func (t *dateInterfaceImpl) GT(rhs DateExpression) BoolExpression {
 func (t *dateInterfaceImpl) GT_EQ(rhs DateExpression) BoolExpression {
 	return GT_EQ(t.parent, rhs)
 }
+
+//---------------------------------------------------//
+
+type DateExpressionWrapper struct {
+	dateInterfaceImpl
+	Expression
+}
+
+func newDateExpressionWrap(expression Expression) DateExpression {
+	dateExpressionWrap := DateExpressionWrapper{Expression: expression}
+	dateExpressionWrap.dateInterfaceImpl.parent = &dateExpressionWrap
+	return &dateExpressionWrap
+}
+
+func DateExp(expression Expression) DateExpression {
+	return newDateExpressionWrap(expression)
+}

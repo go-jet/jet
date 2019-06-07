@@ -2,6 +2,7 @@ package sqlbuilder
 
 import (
 	"errors"
+	"fmt"
 )
 
 // An Expression
@@ -22,16 +23,20 @@ type Expression interface {
 	ASC() OrderByClause
 	DESC() OrderByClause
 
-	CAST_TO(dbType string) Expression
-	CAST_TO_BOOL() BoolExpression
-	CAST_TO_INTEGER() IntegerExpression
-	CAST_TO_DOUBLE() FloatExpression
-	CAST_TO_TEXT() StringExpression
-	CAST_TO_DATE() DateExpression
-	CAST_TO_TIME() TimeExpression
-	CAST_TO_TIMEZ() TimezExpression
-	CAST_TO_TIMESTAMP() TimestampExpression
-	CAST_TO_TIMESTAMPZ() TimestampzExpression
+	TO(dbType string) Expression
+	TO_BOOL() BoolExpression
+	TO_SMALLINT() IntegerExpression
+	TO_INTEGER() IntegerExpression
+	TO_BIGINT() IntegerExpression
+	TO_NUMERIC(precision int, scale ...int) FloatExpression
+	TO_REAL() FloatExpression
+	TO_DOUBLE() FloatExpression
+	TO_TEXT() StringExpression
+	TO_DATE() DateExpression
+	TO_TIME() TimeExpression
+	TO_TIMEZ() TimezExpression
+	TO_TIMESTAMP() TimestampExpression
+	TO_TIMESTAMPZ() TimestampzExpression
 }
 
 type expressionInterfaceImpl struct {
@@ -66,43 +71,65 @@ func (e *expressionInterfaceImpl) DESC() OrderByClause {
 	return &orderByClauseImpl{expression: e.parent, ascent: false}
 }
 
-func (e *expressionInterfaceImpl) CAST_TO(dbType string) Expression {
+func (e *expressionInterfaceImpl) TO(dbType string) Expression {
 	return newCast(e.parent, dbType)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_BOOL() BoolExpression {
+func (e *expressionInterfaceImpl) TO_BOOL() BoolExpression {
 	return newBoolCast(e.parent)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_INTEGER() IntegerExpression {
-	return newIntegerCast(e.parent)
+func (e *expressionInterfaceImpl) TO_SMALLINT() IntegerExpression {
+	return newIntegerCast(e.parent, "smallint")
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_DOUBLE() FloatExpression {
-	return newDoubleCast(e.parent)
+func (e *expressionInterfaceImpl) TO_INTEGER() IntegerExpression {
+	return newIntegerCast(e.parent, "integer")
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_TEXT() StringExpression {
+func (e *expressionInterfaceImpl) TO_BIGINT() IntegerExpression {
+	return newIntegerCast(e.parent, "bigint")
+}
+
+func (e *expressionInterfaceImpl) TO_NUMERIC(precision int, scale ...int) FloatExpression {
+	var castType string
+	if len(scale) > 0 {
+		castType = fmt.Sprintf("numeric(%d, %d)", precision, scale[0])
+	} else {
+		castType = fmt.Sprintf("numeric(%d)", precision)
+	}
+	return newFloatCast(e.parent, castType)
+}
+
+func (e *expressionInterfaceImpl) TO_REAL() FloatExpression {
+	return newFloatCast(e.parent, "real")
+}
+
+func (e *expressionInterfaceImpl) TO_DOUBLE() FloatExpression {
+	return newFloatCast(e.parent, "double precision")
+}
+
+func (e *expressionInterfaceImpl) TO_TEXT() StringExpression {
 	return newTextCast(e.parent)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_DATE() DateExpression {
+func (e *expressionInterfaceImpl) TO_DATE() DateExpression {
 	return newDateCast(e.parent)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_TIME() TimeExpression {
+func (e *expressionInterfaceImpl) TO_TIME() TimeExpression {
 	return newTimeCast(e.parent)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_TIMEZ() TimezExpression {
+func (e *expressionInterfaceImpl) TO_TIMEZ() TimezExpression {
 	return newTimezCast(e.parent)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_TIMESTAMP() TimestampExpression {
+func (e *expressionInterfaceImpl) TO_TIMESTAMP() TimestampExpression {
 	return newTimestampCast(e.parent)
 }
 
-func (e *expressionInterfaceImpl) CAST_TO_TIMESTAMPZ() TimestampzExpression {
+func (e *expressionInterfaceImpl) TO_TIMESTAMPZ() TimestampzExpression {
 	return newTimestampzCast(e.parent)
 }
 

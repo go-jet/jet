@@ -700,27 +700,6 @@ LIMIT 1000;
 //}
 
 func TestSubQuery(t *testing.T) {
-
-	//selectStmtTable := Actor.SELECT(Actor.FirstName, Actor.LastName).AsTable("table_expression")
-	//
-	//query := selectStmtTable.SELECT(
-	//	selectStmtTable.RefStringColumn(Actor.FirstName).AS("nesto"),
-	//	selectStmtTable.RefIntColumnName("actor.last_name").AS("nesto2"),
-	//	)
-	//
-	//queryStr, args, err := query.Sql()
-	//
-	//assert.NilError(t, err)
-	//
-	//fmt.Println(queryStr)
-	//
-	//avrgCustomer := NumExp(Customer.SELECT(Customer.LastName).LIMIT(1))
-	//
-	//Customer.
-	//	innerJoin(selectStmtTable, Customer.LastName.EQ(selectStmtTable.RefStringColumn(Actor.FirstName))).
-	//	SELECT(Customer.AllColumns, selectStmtTable.RefIntColumnName("first_name")).
-	//	WHERE(Actor.LastName.Neq(avrgCustomer))
-
 	expectedQuery := `
 SELECT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
@@ -742,12 +721,20 @@ FROM dvds.actor
      ) AS films ON (film_actor.film_id = films."film.film_id");
 `
 
-	rFilmsOnly := Film.SELECT(Film.FilmID, Film.Title, Film.Rating).
+	rFilmsOnly := Film.
+		SELECT(
+			Film.FilmID,
+			Film.Title,
+			Film.Rating,
+		).
 		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
 		AsTable("films")
 
-	query := Actor.INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(rFilmsOnly, FilmActor.FilmID.EQ(rFilmsOnly.RefIntColumn(Film.FilmID))).
+	rFilmId := rFilmsOnly.RefIntColumn(Film.FilmID)
+
+	query := Actor.
+		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
+		INNER_JOIN(rFilmsOnly, FilmActor.FilmID.EQ(rFilmId)).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
@@ -806,11 +793,11 @@ FROM dvds.film
 WHERE film.rental_rate = (
           SELECT MAX(film.rental_rate)
           FROM dvds.film
-     )
+     )::double precision
 ORDER BY film.film_id ASC;
 `
 
-	maxFilmRentalRate := NumExp(Film.SELECT(MAXf(Film.RentalRate)))
+	maxFilmRentalRate := Film.SELECT(MAXf(Film.RentalRate)).TO_DOUBLE()
 
 	query := Film.
 		SELECT(Film.AllColumns).
@@ -936,10 +923,14 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 
 	customersPaymentTable := customersPaymentSubQuery.AsTable("customer_payment_sum")
 	amountSumColumn := customersPaymentTable.RefIntColumnName("amount_sum")
+	customerId := customersPaymentTable.RefIntColumn(Payment.CustomerID)
 
 	query := Customer.
-		INNER_JOIN(customersPaymentTable, Customer.CustomerID.EQ(customersPaymentTable.RefIntColumn(Payment.CustomerID))).
-		SELECT(Customer.AllColumns, amountSumColumn.AS("customer_with_amounts.amount_sum")).
+		INNER_JOIN(customersPaymentTable, Customer.CustomerID.EQ(customerId)).
+		SELECT(
+			Customer.AllColumns,
+			amountSumColumn.AS("customer_with_amounts.amount_sum"),
+		).
 		ORDER_BY(amountSumColumn.ASC())
 
 	assertQuery(t, query, expectedSql)

@@ -124,3 +124,20 @@ func newPostifxBoolExpression(expression Expression, operator string) BoolExpres
 
 	return &exp
 }
+
+//---------------------------------------------------//
+
+type boolExpressionWrapper struct {
+	boolInterfaceImpl
+	Expression
+}
+
+func newBoolExpressionWrap(expression Expression) BoolExpression {
+	boolExpressionWrap := boolExpressionWrapper{Expression: expression}
+	boolExpressionWrap.boolInterfaceImpl.parent = &boolExpressionWrap
+	return &boolExpressionWrap
+}
+
+func BoolExp(expression Expression) BoolExpression {
+	return newBoolExpressionWrap(expression)
+}

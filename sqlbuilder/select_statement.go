@@ -257,7 +257,3 @@ func (s *selectStatementImpl) Query(db execution.Db, destination interface{}) er
 func (s *selectStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
 	return Execute(s, db)
 }
-
-func NumExp(expression Expression) FloatExpression {
-	return newFloatExpressionWrap(expression)
-}

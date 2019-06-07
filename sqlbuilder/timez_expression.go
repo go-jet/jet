@@ -67,3 +67,20 @@ func newPrefixTimezExpression(operator string, expression Expression) TimezExpre
 
 	return &timeExpr
 }
+
+//---------------------------------------------------//
+
+type timezExpressionWrapper struct {
+	timezInterfaceImpl
+	Expression
+}
+
+func newTimezExpressionWrap(expression Expression) TimezExpression {
+	timezExpressionWrap := timezExpressionWrapper{Expression: expression}
+	timezExpressionWrap.timezInterfaceImpl.parent = &timezExpressionWrap
+	return &timezExpressionWrap
+}
+
+func TimezExp(expression Expression) TimeExpression {
+	return newTimeExpressionWrap(expression)
+}

@@ -107,7 +107,7 @@ func Time(hour, minute, second, milliseconds int) TimeExpression {
 
 	timeLiteral.timeInterfaceImpl.parent = &timeLiteral
 
-	return timeLiteral.CAST_TO_TIME()
+	return timeLiteral.TO_TIME()
 }
 
 //---------------------------------------------------//
@@ -123,7 +123,7 @@ func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
 
 	timezLiteral.timezInterfaceImpl.parent = &timezLiteral
 
-	return timezLiteral.CAST_TO_TIMEZ()
+	return timezLiteral.TO_TIMEZ()
 }
 
 //---------------------------------------------------//
@@ -139,7 +139,7 @@ func Timestamp(year, month, day, hour, minute, second, milliseconds int) Timesta
 
 	timestampLiteral.timestampInterfaceImpl.parent = &timestampLiteral
 
-	return timestampLiteral.CAST_TO_TIMESTAMP()
+	return timestampLiteral.TO_TIMESTAMP()
 }
 
 //---------------------------------------------------//
@@ -157,7 +157,7 @@ func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone i
 
 	timestampzLiteral.timestampzInterfaceImpl.parent = &timestampzLiteral
 
-	return timestampzLiteral.CAST_TO_TIMESTAMPZ()
+	return timestampzLiteral.TO_TIMESTAMPZ()
 }
 
 //---------------------------------------------------//
@@ -173,7 +173,7 @@ func Date(year, month, day int) DateExpression {
 	dateLiteral.literalExpression = *literal(timeStr)
 	dateLiteral.dateInterfaceImpl.parent = &dateLiteral
 
-	return dateLiteral.CAST_TO_DATE()
+	return dateLiteral.TO_DATE()
 }
 
 //--------------------------------------------------//

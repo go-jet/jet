@@ -1,7 +1,5 @@
 package sqlbuilder
 
-import "errors"
-
 type FloatExpression interface {
 	Expression
 
@@ -102,32 +100,19 @@ func newBinaryFloatExpression(lhs, rhs FloatExpression, operator string) FloatEx
 	return &floatExpression
 }
 
-////---------------------------------------------------//
-type floatExpressionWrapper struct {
-	expressionInterfaceImpl
-	floatInterfaceImpl
+//---------------------------------------------------//
 
-	expression Expression
+type floatExpressionWrapper struct {
+	floatInterfaceImpl
+	Expression
 }
 
 func newFloatExpressionWrap(expression Expression) FloatExpression {
-	floatExpressionWrap := floatExpressionWrapper{}
-
-	floatExpressionWrap.expression = expression
-
-	floatExpressionWrap.expressionInterfaceImpl.parent = &floatExpressionWrap
+	floatExpressionWrap := floatExpressionWrapper{Expression: expression}
 	floatExpressionWrap.floatInterfaceImpl.parent = &floatExpressionWrap
-
 	return &floatExpressionWrap
 }
 
-func (n *floatExpressionWrapper) serialize(statement statementType, out *queryData, options ...serializeOption) error {
-	if n == nil {
-		return errors.New("Float expressions wrapper is nil. ")
-	}
-	//out.writeString("(")
-	err := n.expression.serialize(statement, out)
-	//out.writeString(")")
-
-	return err
+func FloatExp(expression Expression) FloatExpression {
+	return newFloatExpressionWrap(expression)
 }

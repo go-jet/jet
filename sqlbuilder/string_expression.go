@@ -94,3 +94,20 @@ func newBinaryStringExpression(lhs, rhs Expression, operator string) StringExpre
 
 	return &boolExpression
 }
+
+//---------------------------------------------------//
+
+type stringExpressionWrapper struct {
+	stringInterfaceImpl
+	Expression
+}
+
+func newStringExpressionWrap(expression Expression) StringExpression {
+	stringExpressionWrap := stringExpressionWrapper{Expression: expression}
+	stringExpressionWrap.stringInterfaceImpl.parent = &stringExpressionWrap
+	return &stringExpressionWrap
+}
+
+func StringExp(expression Expression) StringExpression {
+	return newStringExpressionWrap(expression)
+}
