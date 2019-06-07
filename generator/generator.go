@@ -3,9 +3,9 @@ package generator
 import (
 	"database/sql"
 	"fmt"
+	"github.com/go-jet/jet/generator/metadata"
+	"github.com/go-jet/jet/generator/postgres-metadata"
 	_ "github.com/lib/pq"
-	"github.com/sub0zero/go-sqlbuilder/generator/metadata"
-	"github.com/sub0zero/go-sqlbuilder/generator/postgres-metadata"
 	"path"
 	"path/filepath"
 )

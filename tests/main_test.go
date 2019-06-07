@@ -3,9 +3,9 @@ package tests
 import (
 	"database/sql"
 	"fmt"
+	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
 	_ "github.com/lib/pq"
 	"github.com/pkg/profile"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	"gotest.tools/assert"
 	"os"
 	"reflect"

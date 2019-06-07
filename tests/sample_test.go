@@ -3,9 +3,9 @@ package tests
 import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	. "github.com/sub0zero/go-sqlbuilder/sqlbuilder"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
+	. "github.com/go-jet/jet/sqlbuilder"
+	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
+	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )

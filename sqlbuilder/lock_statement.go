@@ -2,8 +2,8 @@ package sqlbuilder
 
 import (
 	"database/sql"
+	"github.com/go-jet/jet/sqlbuilder/execution"
 	"github.com/pkg/errors"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder/execution"
 )
 
 type lockMode string

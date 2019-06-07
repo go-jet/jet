@@ -1,9 +1,9 @@
 package tests
 
 import (
+	"github.com/go-jet/jet/sqlbuilder"
+	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
 	"github.com/google/uuid"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/dvds/model"
 	"gotest.tools/assert"
 	"strings"
 	"testing"
