@@ -15,7 +15,7 @@ type SetStatement interface {
 	LIMIT(limit int64) SetStatement
 	OFFSET(offset int64) SetStatement
 
-	AsTable(alias string) expressionTable
+	AsTable(alias string) ExpressionTable
 }
 
 const (
@@ -91,7 +91,7 @@ func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
 	return us
 }
 
-func (us *setStatementImpl) AsTable(alias string) expressionTable {
+func (us *setStatementImpl) AsTable(alias string) ExpressionTable {
 	return newExpressionTable(us.parent, alias)
 }
 

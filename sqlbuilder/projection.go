@@ -29,7 +29,7 @@ func (cl ColumnList) DefaultAlias() []projection {
 	newColumnList := []projection{}
 
 	for _, column := range cl {
-		newColumn := column.DefaultAlias()
+		newColumn := column.defaultAliasProjection()
 		newColumnList = append(newColumnList, newColumn)
 	}
 

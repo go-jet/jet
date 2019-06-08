@@ -1,90 +1,45 @@
 package sqlbuilder
 
 import (
-	"gotest.tools/assert"
 	"testing"
 )
 
+var subQuery = table1.SELECT(table1ColFloat, table1ColInt).AsTable("sub_query")
+
 func TestNewBoolColumn(t *testing.T) {
-	boolColumn := NewBoolColumn("col", false)
+	boolColumn := BoolColumn("colBool").From(subQuery)
+	assertClauseSerialize(t, boolColumn, "sub_query.colBool")
+	assertClauseSerialize(t, boolColumn.EQ(Bool(true)), "(sub_query.colBool = $1)", true)
+	assertProjectionSerialize(t, boolColumn.defaultAliasProjection(), `sub_query.colBool AS "sub_query.colBool"`)
 
-	out := queryData{}
-	err := boolColumn.serialize(select_statement, &out)
-
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "col")
-
-	out.reset()
-	err = boolColumn.serialize(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "col")
-
-	out.reset()
-	boolColumn.setTableName("table1")
-	err = boolColumn.DefaultAlias().serializeForProjection(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
-
-	out.reset()
-	boolColumn.setTableName("table1")
-	aliasedBoolColumn := boolColumn.AS("alias1")
-	err = aliasedBoolColumn.serializeForProjection(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
+	boolColumn2 := table1ColBool.From(subQuery)
+	assertClauseSerialize(t, boolColumn2, `sub_query."table1.colBool"`)
+	assertClauseSerialize(t, boolColumn2.EQ(Bool(true)), `(sub_query."table1.colBool" = $1)`, true)
+	assertProjectionSerialize(t, boolColumn2.defaultAliasProjection(), `sub_query."table1.colBool" AS "sub_query.table1.colBool"`)
 }
 
 func TestNewIntColumn(t *testing.T) {
-	integerColumn := NewIntegerColumn("col", false)
+	intColumn := IntegerColumn("colInt").From(subQuery)
+	assertClauseSerialize(t, intColumn, "sub_query.colInt")
+	assertClauseSerialize(t, intColumn.EQ(Int(12)), "(sub_query.colInt = $1)", int64(12))
+	assertProjectionSerialize(t, intColumn.defaultAliasProjection(), `sub_query.colInt AS "sub_query.colInt"`)
 
-	out := queryData{}
-	err := integerColumn.serialize(select_statement, &out)
+	intColumn2 := table1ColInt.From(subQuery)
+	assertClauseSerialize(t, intColumn2, `sub_query."table1.colInt"`)
+	assertClauseSerialize(t, intColumn2.EQ(Int(14)), `(sub_query."table1.colInt" = $1)`, int64(14))
+	assertProjectionSerialize(t, intColumn2.defaultAliasProjection(), `sub_query."table1.colInt" AS "sub_query.table1.colInt"`)
 
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "col")
-
-	out.reset()
-	err = integerColumn.serialize(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "col")
-
-	out.reset()
-	integerColumn.setTableName("table1")
-	err = integerColumn.DefaultAlias().serializeForProjection(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
-
-	out.reset()
-	integerColumn.setTableName("table1")
-	aliasedBoolColumn := integerColumn.AS("alias1")
-	err = aliasedBoolColumn.serializeForProjection(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }
 
-func TestNewNumericColumnColumn(t *testing.T) {
-	numericColumn := NewFloatColumn("col", false)
+func TestNewFloatColumnColumn(t *testing.T) {
+	floatColumn := FloatColumn("colFloat").From(subQuery)
+	assertClauseSerialize(t, floatColumn, "sub_query.colFloat")
+	assertClauseSerialize(t, floatColumn.EQ(Float(1.11)), "(sub_query.colFloat = $1)", float64(1.11))
+	assertProjectionSerialize(t, floatColumn.defaultAliasProjection(), `sub_query.colFloat AS "sub_query.colFloat"`)
 
-	out := queryData{}
-	err := numericColumn.serialize(select_statement, &out)
+	floatColumn2 := table1ColFloat.From(subQuery)
+	assertClauseSerialize(t, floatColumn2, `sub_query."table1.colFloat"`)
+	assertClauseSerialize(t, floatColumn2.EQ(Float(2.22)), `(sub_query."table1.colFloat" = $1)`, float64(2.22))
+	assertProjectionSerialize(t, floatColumn2.defaultAliasProjection(), `sub_query."table1.colFloat" AS "sub_query.table1.colFloat"`)
 
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "col")
-
-	out.reset()
-	err = numericColumn.serialize(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), "col")
-
-	out.reset()
-	numericColumn.setTableName("table1")
-	err = numericColumn.DefaultAlias().serializeForProjection(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `table1.col AS "table1.col"`)
-
-	out.reset()
-	numericColumn.setTableName("table1")
-	aliasedBoolColumn := numericColumn.AS("alias1")
-	err = aliasedBoolColumn.serializeForProjection(select_statement, &out)
-	assert.NilError(t, err)
-	assert.Equal(t, out.buff.String(), `table1.col AS "alias1"`)
 }

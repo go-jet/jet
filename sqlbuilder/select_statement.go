@@ -23,7 +23,7 @@ type SelectStatement interface {
 
 	FOR_UPDATE() SelectStatement
 
-	AsTable(alias string) expressionTable
+	AsTable(alias string) ExpressionTable
 }
 
 func SELECT(projection ...projection) SelectStatement {
@@ -54,7 +54,7 @@ func defaultProjectionAliasing(projections []projection) []projection {
 
 	for _, projection := range projections {
 		if column, ok := projection.(Column); ok {
-			aliasedProjections = append(aliasedProjections, column.DefaultAlias())
+			aliasedProjections = append(aliasedProjections, column.defaultAliasProjection())
 		} else if columnList, ok := projection.(ColumnList); ok {
 			aliasedProjections = append(aliasedProjections, columnList.DefaultAlias()...)
 		} else {
@@ -204,7 +204,7 @@ func (s *selectStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(s)
 }
 
-func (s *selectStatementImpl) AsTable(alias string) expressionTable {
+func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
 	return newExpressionTable(s.parent, alias)
 }
 

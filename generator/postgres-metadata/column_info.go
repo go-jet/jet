@@ -17,27 +17,27 @@ type ColumnInfo struct {
 func (c ColumnInfo) SqlBuilderColumnType() string {
 	switch c.DataType {
 	case "boolean":
-		return "BoolColumn"
+		return "Bool"
 	case "smallint", "integer", "bigint":
-		return "IntegerColumn"
+		return "Integer"
 	case "date":
-		return "DateColumn"
+		return "Date"
 	case "timestamp without time zone":
-		return "TimestampColumn"
+		return "Timestamp"
 	case "timestamp with time zone":
-		return "TimestampzColumn"
+		return "Timestampz"
 	case "time without time zone":
-		return "TimeColumn"
+		return "Time"
 	case "time with time zone":
-		return "TimezColumn"
+		return "Timez"
 	case "USER-DEFINED", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY":
-		return "StringColumn"
+		return "String"
 	case "real", "numeric", "decimal", "double precision":
-		return "FloatColumn"
+		return "Float"
 	default:
 		fmt.Println("Unknown sql type: " + c.DataType + ", using string column instead for sql builder.")
-		return "StringColumn"
+		return "String"
 	}
 }
 

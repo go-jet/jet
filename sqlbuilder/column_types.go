@@ -1,16 +1,29 @@
 package sqlbuilder
 
 //------------------------------------------------------//
-type BoolColumn struct {
-	boolInterfaceImpl
+type ColumnBool interface {
+	BoolExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnBool
 }
 
-func NewBoolColumn(name string, isNullable bool) *BoolColumn {
+type boolColumnImpl struct {
+	boolInterfaceImpl
 
-	boolColumn := &BoolColumn{}
-	boolColumn.baseColumn = newBaseColumn(name, isNullable, "", boolColumn)
+	columnImpl
+}
+
+func (i *boolColumnImpl) From(table ExpressionTable) ColumnBool {
+	newBoolColumn := BoolColumn(i.defaultAlias())
+	newBoolColumn.setTableName(table.Alias())
+	return newBoolColumn
+}
+
+func BoolColumn(name string) ColumnBool {
+
+	boolColumn := &boolColumnImpl{}
+	boolColumn.columnImpl = newColumn(name, "", boolColumn)
 
 	boolColumn.boolInterfaceImpl.parent = boolColumn
 
@@ -18,164 +31,241 @@ func NewBoolColumn(name string, isNullable bool) *BoolColumn {
 }
 
 //------------------------------------------------------//
-type FloatColumn struct {
-	floatInterfaceImpl
-	baseColumn
+type ColumnFloat interface {
+	FloatExpression
+	column
+
+	From(table ExpressionTable) ColumnFloat
 }
 
-func NewFloatColumn(name string, isNullable bool) *FloatColumn {
+type floatColumnImpl struct {
+	floatInterfaceImpl
+	columnImpl
+}
 
-	floatColumn := &FloatColumn{}
+func (i *floatColumnImpl) From(table ExpressionTable) ColumnFloat {
+	newFloatColumn := FloatColumn(i.defaultAlias())
+	newFloatColumn.setTableName(table.Alias())
+	return newFloatColumn
+}
+
+func FloatColumn(name string) ColumnFloat {
+
+	floatColumn := &floatColumnImpl{}
 
 	floatColumn.floatInterfaceImpl.parent = floatColumn
-
-	floatColumn.baseColumn = newBaseColumn(name, isNullable, "", floatColumn)
+	floatColumn.columnImpl = newColumn(name, "", floatColumn)
 
 	return floatColumn
 }
 
 //------------------------------------------------------//
-type IntegerColumn struct {
-	integerInterfaceImpl
+type ColumnInteger interface {
+	IntegerExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnInteger
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewIntegerColumn(name string, isNullable bool) *IntegerColumn {
-	integerColumn := &IntegerColumn{}
+type integerColumnImpl struct {
+	integerInterfaceImpl
+
+	columnImpl
+}
+
+func (i *integerColumnImpl) From(table ExpressionTable) ColumnInteger {
+	newIntColumn := IntegerColumn(i.defaultAlias())
+	newIntColumn.setTableName(table.Alias())
+	return newIntColumn
+}
+
+func IntegerColumn(name string) ColumnInteger {
+	integerColumn := &integerColumnImpl{}
 
 	integerColumn.integerInterfaceImpl.parent = integerColumn
-
-	integerColumn.baseColumn = newBaseColumn(name, isNullable, "", integerColumn)
+	integerColumn.columnImpl = newColumn(name, "", integerColumn)
 
 	return integerColumn
 }
 
 //------------------------------------------------------//
-type StringColumn struct {
-	stringInterfaceImpl
+type ColumnString interface {
+	StringExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnString
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewStringColumn(name string, isNullable bool) *StringColumn {
+type stringColumnImpl struct {
+	stringInterfaceImpl
 
-	stringColumn := &StringColumn{}
+	columnImpl
+}
+
+func (i *stringColumnImpl) From(table ExpressionTable) ColumnString {
+	newStrColumn := StringColumn(i.defaultAlias())
+	newStrColumn.setTableName(table.Alias())
+	return newStrColumn
+}
+
+func StringColumn(name string) ColumnString {
+
+	stringColumn := &stringColumnImpl{}
 
 	stringColumn.stringInterfaceImpl.parent = stringColumn
 
-	stringColumn.baseColumn = newBaseColumn(name, isNullable, "", stringColumn)
+	stringColumn.columnImpl = newColumn(name, "", stringColumn)
 
 	return stringColumn
 }
 
 //------------------------------------------------------//
-type TimeColumn struct {
-	timeInterfaceImpl
+type ColumnTime interface {
+	TimeExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnTime
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewTimeColumn(name string, isNullable bool) *TimeColumn {
-	timeColumn := &TimeColumn{}
+type timeColumnImpl struct {
+	timeInterfaceImpl
+
+	columnImpl
+}
+
+func (i *timeColumnImpl) From(table ExpressionTable) ColumnTime {
+	newTimeColumn := TimeColumn(i.defaultAlias())
+	newTimeColumn.setTableName(table.Alias())
+	return newTimeColumn
+}
+
+func TimeColumn(name string) ColumnTime {
+	timeColumn := &timeColumnImpl{}
 
 	timeColumn.timeInterfaceImpl.parent = timeColumn
 
-	timeColumn.baseColumn = newBaseColumn(name, isNullable, "", timeColumn)
+	timeColumn.columnImpl = newColumn(name, "", timeColumn)
 
 	return timeColumn
 }
 
 //------------------------------------------------------//
-type TimezColumn struct {
-	timezInterfaceImpl
 
-	baseColumn
+type ColumnTimez interface {
+	TimezExpression
+	column
+
+	From(table ExpressionTable) ColumnTimez
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewTimezColumn(name string, isNullable bool) *TimezColumn {
-	timezColumn := &TimezColumn{}
+type timezColumnImpl struct {
+	timezInterfaceImpl
+
+	columnImpl
+}
+
+func (i *timezColumnImpl) From(table ExpressionTable) ColumnTimez {
+	newTimezColumn := TimezColumn(i.defaultAlias())
+	newTimezColumn.setTableName(table.Alias())
+	return newTimezColumn
+}
+
+func TimezColumn(name string) ColumnTimez {
+	timezColumn := &timezColumnImpl{}
 
 	timezColumn.timezInterfaceImpl.parent = timezColumn
 
-	timezColumn.baseColumn = newBaseColumn(name, isNullable, "", timezColumn)
+	timezColumn.columnImpl = newColumn(name, "", timezColumn)
 
 	return timezColumn
 }
 
 //------------------------------------------------------//
-type TimestampColumn struct {
-	timestampInterfaceImpl
+type ColumnTimestamp interface {
+	TimestampExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnTimestamp
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewTimestampColumn(name string, isNullable bool) *TimestampColumn {
-	timestampColumn := &TimestampColumn{}
+type timestampColumnImpl struct {
+	timestampInterfaceImpl
+
+	columnImpl
+}
+
+func (i *timestampColumnImpl) From(table ExpressionTable) ColumnTimestamp {
+	newTimestampColumn := TimestampColumn(i.defaultAlias())
+	newTimestampColumn.setTableName(table.Alias())
+	return newTimestampColumn
+}
+
+func TimestampColumn(name string) ColumnTimestamp {
+	timestampColumn := &timestampColumnImpl{}
 
 	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
 
-	timestampColumn.baseColumn = newBaseColumn(name, isNullable, "", timestampColumn)
+	timestampColumn.columnImpl = newColumn(name, "", timestampColumn)
 
 	return timestampColumn
 }
 
 //------------------------------------------------------//
-type TimestampzColumn struct {
-	timestampzInterfaceImpl
+type ColumnTimestampz interface {
+	TimestampzExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnTimestampz
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewTimestampzColumn(name string, isNullable bool) *TimestampzColumn {
-	timestampzColumn := &TimestampzColumn{}
+type timestampzColumnImpl struct {
+	timestampzInterfaceImpl
+
+	columnImpl
+}
+
+func (i *timestampzColumnImpl) From(table ExpressionTable) ColumnTimestampz {
+	newTimestampzColumn := TimestampzColumn(i.defaultAlias())
+	newTimestampzColumn.setTableName(table.Alias())
+	return newTimestampzColumn
+}
+
+func TimestampzColumn(name string) ColumnTimestampz {
+	timestampzColumn := &timestampzColumnImpl{}
 
 	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
 
-	timestampzColumn.baseColumn = newBaseColumn(name, isNullable, "", timestampzColumn)
+	timestampzColumn.columnImpl = newColumn(name, "", timestampzColumn)
 
 	return timestampzColumn
 }
 
 //------------------------------------------------------//
-type DateColumn struct {
-	dateInterfaceImpl
+type ColumnDate interface {
+	DateExpression
+	column
 
-	baseColumn
+	From(table ExpressionTable) ColumnDate
 }
 
-// Representation of any integer column
-// This function will panic if name is not valid
-func NewDateColumn(name string, isNullable bool) *DateColumn {
-	dateColumn := &DateColumn{}
+type dateColumnImpl struct {
+	dateInterfaceImpl
+
+	columnImpl
+}
+
+func (i *dateColumnImpl) From(table ExpressionTable) ColumnDate {
+	newDateColumn := DateColumn(i.defaultAlias())
+	newDateColumn.setTableName(table.Alias())
+	return newDateColumn
+}
+
+func DateColumn(name string) ColumnDate {
+	dateColumn := &dateColumnImpl{}
 
 	dateColumn.dateInterfaceImpl.parent = dateColumn
 
-	dateColumn.baseColumn = newBaseColumn(name, isNullable, "", dateColumn)
+	dateColumn.columnImpl = newColumn(name, "", dateColumn)
 
 	return dateColumn
-}
-
-// ------------------------------------------------------//
-type refColumn struct {
-	baseColumn
-}
-
-func RefColumn(name string) *refColumn {
-	refColumn := &refColumn{}
-	refColumn.baseColumn = newBaseColumn(name, false, "", refColumn)
-
-	return refColumn
 }

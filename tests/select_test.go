@@ -203,7 +203,7 @@ FROM dvds.film_actor
      INNER JOIN dvds.inventory ON (inventory.film_id = film.film_id)
      INNER JOIN dvds.rental ON (rental.inventory_id = inventory.inventory_id)
 ORDER BY film.film_id ASC
-LIMIT 50;
+LIMIT 500;
 `
 	for i := 0; i < 1; i++ {
 		query := FilmActor.
@@ -222,9 +222,9 @@ LIMIT 50;
 			).
 			//WHERE(FilmActor.ActorID.GtEqL(1).AND(FilmActor.ActorID.LtEqL(2))).
 			ORDER_BY(Film.FilmID.ASC()).
-			LIMIT(50)
+			LIMIT(500)
 
-		assertQuery(t, query, expectedSql, int64(50))
+		assertQuery(t, query, expectedSql, int64(500))
 
 		var languageActorFilm []struct {
 			model.Language
@@ -247,7 +247,7 @@ LIMIT 50;
 
 		assert.NilError(t, err)
 		assert.Equal(t, len(languageActorFilm), 1)
-		assert.Equal(t, len(languageActorFilm[0].Films), 1)
+		assert.Equal(t, len(languageActorFilm[0].Films), 6)
 		assert.Equal(t, len(languageActorFilm[0].Films[0].Actors), 10)
 	}
 
@@ -708,8 +708,7 @@ SELECT actor.actor_id AS "actor.actor_id",
      film_actor.actor_id AS "film_actor.actor_id",
      film_actor.film_id AS "film_actor.film_id",
      film_actor.last_update AS "film_actor.last_update",
-     films."film.title" AS "film.title",
-     films."film.rating" AS "film.rating"
+     rfilms."film.title" AS "film.title"
 FROM dvds.actor
      INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
      INNER JOIN (
@@ -718,28 +717,28 @@ FROM dvds.actor
                film.rating AS "film.rating"
           FROM dvds.film
           WHERE film.rating = 'R'
-     ) AS films ON (film_actor.film_id = films."film.film_id");
+     ) AS rfilms ON (film_actor.film_id = rfilms."film.film_id");
 `
 
-	rFilmsOnly := Film.
+	rRatingFilms := Film.
 		SELECT(
 			Film.FilmID,
 			Film.Title,
 			Film.Rating,
 		).
 		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
-		AsTable("films")
+		AsTable("rfilms")
 
-	rFilmId := rFilmsOnly.RefIntColumn(Film.FilmID)
+	rFilmId := Film.FilmID.From(rRatingFilms)
+	rTitle := Film.Title.From(rRatingFilms)
 
 	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(rFilmsOnly, FilmActor.FilmID.EQ(rFilmId)).
+		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmId)).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
-			rFilmsOnly.RefStringColumn(Film.Title).AS("film.title"),
-			rFilmsOnly.RefStringColumn(Film.Rating).AS("film.rating"),
+			rTitle.AS("film.title"),
 		)
 
 	fmt.Println(query.Sql())
@@ -914,24 +913,24 @@ FROM dvds.customer
 ORDER BY customer_payment_sum.amount_sum ASC;
 `
 
-	customersPaymentSubQuery := Payment.
+	customersPayments := Payment.
 		SELECT(
 			Payment.CustomerID,
 			SUMf(Payment.Amount).AS("amount_sum"),
 		).
-		GROUP_BY(Payment.CustomerID)
+		GROUP_BY(Payment.CustomerID).
+		AsTable("customer_payment_sum")
 
-	customersPaymentTable := customersPaymentSubQuery.AsTable("customer_payment_sum")
-	amountSumColumn := customersPaymentTable.RefIntColumnName("amount_sum")
-	customerId := customersPaymentTable.RefIntColumn(Payment.CustomerID)
+	customerId := Payment.CustomerID.From(customersPayments)
+	amountSum := FloatColumn("amount_sum").From(customersPayments)
 
 	query := Customer.
-		INNER_JOIN(customersPaymentTable, Customer.CustomerID.EQ(customerId)).
+		INNER_JOIN(customersPayments, Customer.CustomerID.EQ(customerId)).
 		SELECT(
 			Customer.AllColumns,
-			amountSumColumn.AS("customer_with_amounts.amount_sum"),
+			amountSum.AS("customer_with_amounts.amount_sum"),
 		).
-		ORDER_BY(amountSumColumn.ASC())
+		ORDER_BY(amountSum.ASC())
 
 	assertQuery(t, query, expectedSql)
 
@@ -1039,7 +1038,7 @@ OFFSET 20;
 			SELECT(Payment.PaymentID, Payment.Amount).
 			WHERE(Payment.Amount.GT_EQ(Float(200))),
 	).
-		ORDER_BY(RefColumn("payment.payment_id").ASC(), Payment.Amount.DESC()).
+		ORDER_BY(IntegerColumn("payment.payment_id").ASC(), Payment.Amount.DESC()).
 		LIMIT(10).
 		OFFSET(20)
 

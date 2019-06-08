@@ -6,32 +6,34 @@ import (
 	"strings"
 )
 
-type Column interface {
-	Expression
-
+type column interface {
 	Name() string
 	TableName() string
-	IsNullable() bool
-	DefaultAlias() projection
+
 	// Internal function for tracking tableName that a column belongs to
 	// for the purpose of serialization
 	setTableName(table string)
+	defaultAlias() string
+	defaultAliasProjection() projection
+}
+
+type Column interface {
+	Expression
+	column
 }
 
 // The base type for real materialized columns.
-type baseColumn struct {
+type columnImpl struct {
 	expressionInterfaceImpl
 
-	name       string
-	isNullable bool
-	tableName  string
+	name      string
+	tableName string
 }
 
-func newBaseColumn(name string, isNullable bool, tableName string, parent Column) baseColumn {
-	bc := baseColumn{
-		name:       name,
-		isNullable: isNullable,
-		tableName:  tableName,
+func newColumn(name string, tableName string, parent Column) columnImpl {
+	bc := columnImpl{
+		name:      name,
+		tableName: tableName,
 	}
 
 	bc.expressionInterfaceImpl.parent = parent
@@ -39,27 +41,31 @@ func newBaseColumn(name string, isNullable bool, tableName string, parent Column
 	return bc
 }
 
-func (c *baseColumn) Name() string {
+func (c *columnImpl) Name() string {
 	return c.name
 }
 
-func (c *baseColumn) TableName() string {
+func (c *columnImpl) TableName() string {
 	return c.tableName
 }
 
-func (c *baseColumn) setTableName(table string) {
+func (c *columnImpl) setTableName(table string) {
 	c.tableName = table
 }
 
-func (c *baseColumn) IsNullable() bool {
-	return c.isNullable
+func (c *columnImpl) defaultAlias() string {
+	if c.tableName != "" {
+		return c.tableName + "." + c.name
+	}
+
+	return c.name
 }
 
-func (c *baseColumn) DefaultAlias() projection {
-	return c.AS(c.tableName + "." + c.name)
+func (c *columnImpl) defaultAliasProjection() projection {
+	return c.AS(c.defaultAlias())
 }
 
-func (c *baseColumn) serializeAsOrderBy(statement statementType, out *queryData) error {
+func (c *columnImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
 	if statement == set_statement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		columnRef := ""
@@ -78,7 +84,7 @@ func (c *baseColumn) serializeAsOrderBy(statement statementType, out *queryData)
 	return c.serialize(statement, out)
 }
 
-func (c baseColumn) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (c columnImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 
 	columnRef := ""
 

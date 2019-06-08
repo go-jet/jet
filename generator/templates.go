@@ -31,7 +31,7 @@ type {{.GoStructName}} struct {
 	
 	//Columns
 {{- range .Columns}}
-	{{camelize .Name}} *sqlbuilder.{{.SqlBuilderColumnType}}
+	{{camelize .Name}} sqlbuilder.Column{{.SqlBuilderColumnType}}
 {{- end}}
 
 	AllColumns sqlbuilder.ColumnList
@@ -42,7 +42,7 @@ var {{camelize .Name}} = new{{.GoStructName}}()
 func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{camelize .Name}}Column = sqlbuilder.New{{.SqlBuilderColumnType}}("{{.Name}}", {{.IsNullable}})
+		{{camelize .Name}}Column = sqlbuilder.{{.SqlBuilderColumnType}}Column("{{.Name}}")
 	{{- end}}
 	)
 

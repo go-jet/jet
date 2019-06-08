@@ -2,12 +2,10 @@ package sqlbuilder
 
 import "errors"
 
-type expressionTable interface {
+type ExpressionTable interface {
 	ReadableTable
 
-	RefIntColumnName(name string) *IntegerColumn
-	RefIntColumn(column Column) *IntegerColumn
-	RefStringColumn(column Column) *StringColumn
+	Alias() string
 }
 
 type expressionTableImpl struct {
@@ -16,7 +14,7 @@ type expressionTableImpl struct {
 	alias      string
 }
 
-func newExpressionTable(expression Expression, alias string) expressionTable {
+func newExpressionTable(expression Expression, alias string) ExpressionTable {
 	expTable := &expressionTableImpl{expression: expression, alias: alias}
 
 	expTable.readableTableInterfaceImpl.parent = expTable
@@ -24,40 +22,15 @@ func newExpressionTable(expression Expression, alias string) expressionTable {
 	return expTable
 }
 
-// Returns the tableName's name in the database
-func (e *expressionTableImpl) SchemaName() string {
-	return ""
-}
-
-func (e *expressionTableImpl) TableName() string {
+func (e *expressionTableImpl) Alias() string {
 	return e.alias
-}
-
-func (e *expressionTableImpl) RefIntColumnName(name string) *IntegerColumn {
-	intColumn := NewIntegerColumn(name, false)
-	intColumn.setTableName(e.alias)
-
-	return intColumn
-}
-
-func (e *expressionTableImpl) RefIntColumn(column Column) *IntegerColumn {
-	intColumn := NewIntegerColumn(column.TableName()+"."+column.Name(), false)
-	intColumn.setTableName(e.alias)
-
-	return intColumn
-}
-
-func (e *expressionTableImpl) RefStringColumn(column Column) *StringColumn {
-	strColumn := NewStringColumn(column.TableName()+"."+column.Name(), false)
-	strColumn.setTableName(e.alias)
-	return strColumn
 }
 
 func (e *expressionTableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if e == nil {
 		return errors.New("Expression table is nil. ")
 	}
-	//out.writeString("( ")
+
 	err := e.expression.serialize(statement, out)
 
 	if err != nil {
