@@ -87,7 +87,7 @@ func serializeProjectionList(statement statementType, projections []projection, 
 		}
 
 		if col == nil {
-			return errors.New("projection Expression is nil.")
+			return errors.New("projection Expression is nil")
 		}
 
 		if err := col.serializeForProjection(statement, out); err != nil {
@@ -118,15 +118,15 @@ func isNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
 
-//func stringExpressionListToExpressionList(stringExpressions []StringExpression) []Expression{
-//	var ret []Expression
-//
-//	for _, strExp := range stringExpressions {
-//		ret = append(ret, strExp)
-//	}
-//
-//	return ret
-//}
+func columnListToProjectionList(columns []Column) []projection {
+	var ret []projection
+
+	for _, column := range columns {
+		ret = append(ret, column)
+	}
+
+	return ret
+}
 
 func Query(statement Statement, db execution.Db, destination interface{}) error {
 	query, args, err := statement.Sql()

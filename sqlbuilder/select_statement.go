@@ -49,26 +49,10 @@ type selectStatementImpl struct {
 	forUpdate bool
 }
 
-func defaultProjectionAliasing(projections []projection) []projection {
-	aliasedProjections := []projection{}
-
-	for _, projection := range projections {
-		if column, ok := projection.(Column); ok {
-			aliasedProjections = append(aliasedProjections, column.defaultAliasProjection())
-		} else if columnList, ok := projection.(ColumnList); ok {
-			aliasedProjections = append(aliasedProjections, columnList.DefaultAlias()...)
-		} else {
-			aliasedProjections = append(aliasedProjections, projection)
-		}
-	}
-
-	return aliasedProjections
-}
-
 func newSelectStatement(table ReadableTable, projections []projection) SelectStatement {
 	newSelect := &selectStatementImpl{
 		table:       table,
-		projections: defaultProjectionAliasing(projections),
+		projections: projections,
 		limit:       -1,
 		offset:      -1,
 		forUpdate:   false,
@@ -117,11 +101,11 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 		out.writeString("DISTINCT")
 	}
 
-	if s.projections == nil || len(s.projections) == 0 {
-		return errors.New("No column selected for projection.")
+	if len(s.projections) == 0 {
+		return errors.New("no column selected for projection")
 	}
 
-	err := out.writeProjection(select_statement, s.projections)
+	err := out.writeProjections(select_statement, s.projections)
 
 	if err != nil {
 		return err

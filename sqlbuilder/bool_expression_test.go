@@ -46,8 +46,9 @@ func TestBinaryBoolExpression(t *testing.T) {
 	boolExpression := Int(2).EQ(Int(3))
 
 	assertClauseSerialize(t, boolExpression, "($1 = $2)", int64(2), int64(3))
+	assertProjectionSerialize(t, boolExpression, "$1 = $2", int64(2), int64(3))
 	assertProjectionSerialize(t, boolExpression.AS("alias_eq_expression"),
-		`$1 = $2 AS "alias_eq_expression"`, int64(2), int64(3))
+		`($1 = $2) AS "alias_eq_expression"`, int64(2), int64(3))
 	assertClauseSerialize(t, boolExpression.AND(Int(4).EQ(Int(5))),
 		"(($1 = $2) AND ($3 = $4))", int64(2), int64(3), int64(4), int64(5))
 	assertClauseSerialize(t, boolExpression.OR(Int(4).EQ(Int(5))),

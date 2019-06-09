@@ -10,11 +10,7 @@ type column interface {
 	Name() string
 	TableName() string
 
-	// Internal function for tracking tableName that a column belongs to
-	// for the purpose of serialization
 	setTableName(table string)
-	defaultAlias() string
-	defaultAliasProjection() projection
 }
 
 type Column interface {
@@ -61,10 +57,6 @@ func (c *columnImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *columnImpl) defaultAliasProjection() projection {
-	return c.AS(c.defaultAlias())
-}
-
 func (c *columnImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
 	if statement == set_statement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
@@ -82,6 +74,18 @@ func (c *columnImpl) serializeAsOrderBy(statement statementType, out *queryData)
 	}
 
 	return c.serialize(statement, out)
+}
+
+func (c columnImpl) serializeForProjection(statement statementType, out *queryData) error {
+	err := c.serialize(statement, out)
+
+	if err != nil {
+		return err
+	}
+
+	out.writeString(`AS "` + c.defaultAlias() + `"`)
+
+	return nil
 }
 
 func (c columnImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {

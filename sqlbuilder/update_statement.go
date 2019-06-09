@@ -48,7 +48,7 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 }
 
 func (u *updateStatementImpl) RETURNING(projections ...projection) UpdateStatement {
-	u.returning = defaultProjectionAliasing(projections)
+	u.returning = projections
 	return u
 }
 

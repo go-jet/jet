@@ -11,27 +11,13 @@ type ColumnList []Column
 func (cl ColumnList) isProjectionType() {}
 
 func (cl ColumnList) serializeForProjection(statement statementType, out *queryData) error {
-	for i, column := range cl {
-		err := column.serializeForProjection(statement, out)
+	projections := columnListToProjectionList(cl)
 
-		if err != nil {
-			return err
-		}
+	err := serializeProjectionList(statement, projections, out)
 
-		if i != len(cl)-1 {
-			out.writeString(", ")
-		}
+	if err != nil {
+		return err
 	}
+
 	return nil
-}
-
-func (cl ColumnList) DefaultAlias() []projection {
-	newColumnList := []projection{}
-
-	for _, column := range cl {
-		newColumn := column.defaultAliasProjection()
-		newColumnList = append(newColumnList, newColumn)
-	}
-
-	return newColumnList
 }

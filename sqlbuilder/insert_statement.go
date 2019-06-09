@@ -106,7 +106,8 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 }
 
 func (i *insertStatementImpl) RETURNING(projections ...projection) InsertStatement {
-	i.returning = defaultProjectionAliasing(projections)
+	//i.returning = defaultProjectionAliasing(projections)
+	i.returning = projections
 
 	return i
 }
@@ -206,7 +207,7 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		queryData.nextLine()
 		queryData.writeString("RETURNING")
 
-		err = queryData.writeProjection(insert_statement, s.returning)
+		err = queryData.writeProjections(insert_statement, s.returning)
 
 		if err != nil {
 			return

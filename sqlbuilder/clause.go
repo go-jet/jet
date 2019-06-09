@@ -58,7 +58,7 @@ func (q *queryData) decreaseIdent() {
 	q.ident -= defaultIdent
 }
 
-func (q *queryData) writeProjection(statement statementType, projections []projection) error {
+func (q *queryData) writeProjections(statement statementType, projections []projection) error {
 	q.increaseIdent()
 	err := serializeProjectionList(statement, projections, q)
 	q.decreaseIdent()
