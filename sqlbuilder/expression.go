@@ -141,7 +141,7 @@ func (e *expressionInterfaceImpl) serializeForProjection(statement statementType
 	return e.parent.serialize(statement, out, NO_WRAP)
 }
 
-func (e *expressionInterfaceImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
+func (e *expressionInterfaceImpl) serializeForOrderBy(statement statementType, out *queryData) error {
 	return e.parent.serialize(statement, out, NO_WRAP)
 }
 

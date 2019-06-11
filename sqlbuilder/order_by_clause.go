@@ -3,7 +3,7 @@ package sqlbuilder
 import "errors"
 
 type OrderByClause interface {
-	serializeAsOrderBy(statement statementType, out *queryData) error
+	serializeForOrderBy(statement statementType, out *queryData) error
 }
 
 type orderByClauseImpl struct {
@@ -11,12 +11,12 @@ type orderByClauseImpl struct {
 	ascent     bool
 }
 
-func (o *orderByClauseImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
+func (o *orderByClauseImpl) serializeForOrderBy(statement statementType, out *queryData) error {
 	if o.expression == nil {
 		return errors.New("nil orderBy by clause.")
 	}
 
-	if err := o.expression.serializeAsOrderBy(statement, out); err != nil {
+	if err := o.expression.serializeForOrderBy(statement, out); err != nil {
 		return err
 	}
 

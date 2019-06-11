@@ -25,6 +25,18 @@ func TestAllTypesSelect(t *testing.T) {
 	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
 
+func TestAllTypesInsert(t *testing.T) {
+	query := AllTypes.INSERT(AllTypes.AllColumns...).
+		MODEL(allTypesRow0).
+		MODEL(&allTypesRow1)
+
+	_, err := query.Execute(db)
+
+	assert.NilError(t, err)
+
+	fmt.Println(query.DebugSql())
+}
+
 func TestExpressionOperators(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Integer.IS_NULL(),

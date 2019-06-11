@@ -80,3 +80,10 @@ func assertProjectionSerialize(t *testing.T, projection projection, query string
 	assert.DeepEqual(t, out.buff.String(), query)
 	assert.DeepEqual(t, out.args, args)
 }
+
+func assertQuery(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
+	queryStr, args, err := query.Sql()
+	assert.NilError(t, err)
+	assert.Equal(t, queryStr, expectedQuery)
+	assert.DeepEqual(t, args, expectedArgs)
+}

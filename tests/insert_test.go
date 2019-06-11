@@ -3,20 +3,20 @@ package tests
 import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/go-jet/jet/sqlbuilder"
+	. "github.com/go-jet/jet/sqlbuilder"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
+	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )
 
 func TestInsertValues(t *testing.T) {
-	insertQuery := table.Link.INSERT(table.Link.URL, table.Link.Name, table.Link.Rel).
-		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", sqlbuilder.DEFAULT).
-		VALUES("http://www.google.com", "Google", sqlbuilder.DEFAULT).
-		VALUES("http://www.yahoo.com", "Yahoo", sqlbuilder.DEFAULT).
-		VALUES("http://www.bing.com", "Bing", sqlbuilder.DEFAULT).
-		RETURNING(table.Link.ID)
+	insertQuery := Link.INSERT(Link.URL, Link.Name, Link.Rel).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		VALUES("http://www.google.com", "Google", DEFAULT).
+		VALUES("http://www.yahoo.com", "Yahoo", DEFAULT).
+		VALUES("http://www.bing.com", "Bing", DEFAULT).
+		RETURNING(Link.ID)
 
 	insertQueryStr, args, err := insertQuery.Sql()
 
@@ -44,7 +44,7 @@ RETURNING link.id AS "link.id";
 
 	link := []model.Link{}
 
-	err = table.Link.SELECT(table.Link.AllColumns).Query(db, &link)
+	err = Link.SELECT(Link.AllColumns).Query(db, &link)
 
 	assert.NilError(t, err)
 
@@ -72,9 +72,9 @@ func TestInsertDataObject(t *testing.T) {
 		Rel:  nil,
 	}
 
-	query := table.Link.
-		INSERT(table.Link.URL, table.Link.Name).
-		VALUES_MAPPING(linkData)
+	query := Link.
+		INSERT(Link.URL, Link.Name).
+		MODEL(linkData)
 
 	queryStr, args, err := query.Sql()
 
@@ -92,14 +92,14 @@ func TestInsertDataObject(t *testing.T) {
 
 func TestInsertQuery(t *testing.T) {
 
-	_, err := table.Link.INSERT(table.Link.URL, table.Link.Name).
+	_, err := Link.INSERT(Link.URL, Link.Name).
 		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial").Execute(db)
 
 	assert.NilError(t, err)
 
-	query := table.Link.
-		INSERT(table.Link.URL, table.Link.Name).
-		QUERY(table.Link.SELECT(table.Link.URL, table.Link.Name))
+	query := Link.
+		INSERT(Link.URL, Link.Name).
+		QUERY(Link.SELECT(Link.URL, Link.Name))
 
 	queryStr, args, err := query.Sql()
 
@@ -113,7 +113,7 @@ func TestInsertQuery(t *testing.T) {
 	assert.NilError(t, err)
 
 	allLinks := []model.Link{}
-	err = table.Link.SELECT(table.Link.AllColumns).Query(db, &allLinks)
+	err = Link.SELECT(Link.AllColumns).Query(db, &allLinks)
 	assert.NilError(t, err)
 
 	spew.Dump(allLinks)

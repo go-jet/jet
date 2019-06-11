@@ -14,7 +14,7 @@ func serializeOrderByClauseList(statement statementType, orderByClauses []OrderB
 			out.writeString(", ")
 		}
 
-		err := value.serializeAsOrderBy(statement, out)
+		err := value.serializeForOrderBy(statement, out)
 
 		if err != nil {
 			return err

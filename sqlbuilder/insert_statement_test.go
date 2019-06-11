@@ -105,28 +105,28 @@ INSERT INTO db.table1 (col1,colFloat) VALUES
 
 func TestInsertValuesFromModel(t *testing.T) {
 	type Table1Model struct {
-		Col1     int
+		Col1     *int
 		ColFloat float64
 	}
 
+	one := 1
+
 	toInsert := Table1Model{
-		Col1:     1,
+		Col1:     &one,
 		ColFloat: 1.11,
 	}
 
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
-		VALUES_MAPPING(toInsert)
+		MODEL(toInsert).
+		MODEL(&toInsert)
 
-	sql, _, err := stmt.Sql()
-
-	assert.NilError(t, err)
-
-	fmt.Println(sql)
-
-	assert.Equal(t, sql, `
+	expectedSql := `
 INSERT INTO db.table1 (col1,colFloat) VALUES
-     ($1, $2);
-`)
+     ($1, $2),
+     ($3, $4);
+`
+
+	assertQuery(t, stmt, expectedSql, int(1), float64(1.11), int(1), float64(1.11))
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
@@ -141,11 +141,11 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 	}
 
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
-		VALUES_MAPPING(toInsert)
+		MODEL(toInsert)
 
 	_, _, err := stmt.Sql()
 
-	//fmt.Println(err)
+	fmt.Println(err)
 	assert.Assert(t, err != nil)
 }
 

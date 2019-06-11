@@ -57,7 +57,7 @@ type setStatementImpl struct {
 	selects       []rowsType
 	orderBy       []OrderByClause
 	limit, offset int64
-	// True if results of the union should be deduped.
+
 	all bool
 }
 
@@ -76,7 +76,6 @@ func newSetStatementImpl(operator string, all bool, selects ...rowsType) SetStat
 }
 
 func (us *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
-
 	us.orderBy = orderBy
 	return us
 }
@@ -100,7 +99,9 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData, op
 		return errors.New("Set expression is nil. ")
 	}
 
-	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
+	wrap := s.orderBy != nil || s.limit >= 0 || s.offset >= 0
+
+	if wrap {
 		out.writeString("(")
 		out.increaseIdent()
 	}
@@ -111,7 +112,7 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData, op
 		return err
 	}
 
-	if s.orderBy != nil || s.limit >= 0 || s.offset >= 0 {
+	if wrap {
 		out.decreaseIdent()
 		out.nextLine()
 		out.writeString(")")

@@ -14,12 +14,12 @@ type InsertStatement interface {
 
 	// Add a row of values to the insert Statement.
 	VALUES(values ...interface{}) InsertStatement
-	// Map or stracture mapped to column names
-	VALUES_MAPPING(data interface{}) InsertStatement
-
-	RETURNING(projections ...projection) InsertStatement
+	// Model structure mapped to column names
+	MODEL(data interface{}) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
+
+	RETURNING(projections ...projection) InsertStatement
 }
 
 func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
@@ -39,15 +39,14 @@ type insertStatementImpl struct {
 	errors []string
 }
 
-func (s *insertStatementImpl) Query(db execution.Db, destination interface{}) error {
-	return Query(s, db, destination)
+func (i *insertStatementImpl) Query(db execution.Db, destination interface{}) error {
+	return Query(i, db, destination)
 }
 
-func (u *insertStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
-	return Execute(u, db)
+func (i *insertStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
+	return Execute(i, db)
 }
 
-// Expression or default keyword
 func (i *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
 	if len(values) == 0 {
 		return i
@@ -67,20 +66,16 @@ func (i *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
 	return i
 }
 
-func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
+func (i *insertStatementImpl) MODEL(data interface{}) InsertStatement {
 	if data == nil {
-		i.addError("ADD method data is nil.")
+		i.addError("MODEL : data is nil.")
 		return i
 	}
 
-	value := reflect.ValueOf(data)
-
-	if value.Kind() == reflect.Ptr {
-		value = value.Elem()
-	}
+	value := reflect.Indirect(reflect.ValueOf(data))
 
 	if value.Kind() != reflect.Struct {
-		i.addError("ADD method data is not struct or pointer to struct.")
+		i.addError("MODEL : data is not struct or pointer to struct.")
 		return i
 	}
 
@@ -93,11 +88,21 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 		structField := value.FieldByName(structFieldName)
 
 		if !structField.IsValid() {
-			i.addError("ADD() : Data structure doesn't contain field : " + structFieldName + " for column " + columnName)
+			i.addError("MODEL : Data structure doesn't contain field for column " + columnName)
 			return i
 		}
 
-		rowValues = append(rowValues, literal(structField.Interface()))
+		var field interface{}
+
+		fieldValue := reflect.Indirect(structField)
+
+		if fieldValue.IsValid() {
+			field = fieldValue.Interface()
+		} else {
+			field = nil
+		}
+
+		rowValues = append(rowValues, literal(field))
 	}
 
 	i.rows = append(i.rows, rowValues)
@@ -106,15 +111,12 @@ func (i *insertStatementImpl) VALUES_MAPPING(data interface{}) InsertStatement {
 }
 
 func (i *insertStatementImpl) RETURNING(projections ...projection) InsertStatement {
-	//i.returning = defaultProjectionAliasing(projections)
 	i.returning = projections
-
 	return i
 }
 
 func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
 	i.query = selectStatement
-
 	return i
 }
 
@@ -126,9 +128,9 @@ func (i *insertStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(i)
 }
 
-func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
-	if len(s.errors) > 0 {
-		return "", nil, errors.New("sql builder errors: " + strings.Join(s.errors, ", "))
+func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
+	if len(i.errors) > 0 {
+		return "", nil, errors.New("errors: " + strings.Join(i.errors, ", "))
 	}
 
 	queryData := &queryData{}
@@ -136,42 +138,40 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	queryData.nextLine()
 	queryData.writeString("INSERT INTO")
 
-	if s.table == nil {
-		return "", nil, errors.New("nil tableName.")
+	if isNil(i.table) {
+		return "", nil, errors.New("table is nil")
 	}
 
-	err = s.table.serialize(insert_statement, queryData)
-
-	queryData.writeByte(' ')
+	err = i.table.serialize(insert_statement, queryData)
 
 	if err != nil {
-		return "", nil, err
+		return
 	}
 
-	if len(s.columns) > 0 {
+	if len(i.columns) > 0 {
 		queryData.writeString("(")
 
-		err = serializeColumnList(insert_statement, s.columns, queryData)
+		err = serializeColumnList(insert_statement, i.columns, queryData)
 
 		if err != nil {
-			return "", nil, err
+			return
 		}
 
 		queryData.writeString(")")
 	}
 
-	if len(s.rows) == 0 && s.query == nil {
-		return "", nil, errors.New("No row or query  specified.")
+	if len(i.rows) == 0 && i.query == nil {
+		return "", nil, errors.New("no row values or query  specified")
 	}
 
-	if len(s.rows) > 0 && s.query != nil {
-		return "", nil, errors.New("Only new rows or query has to be specified.")
+	if len(i.rows) > 0 && i.query != nil {
+		return "", nil, errors.New("only row values or query has to be specified")
 	}
 
-	if len(s.rows) > 0 {
+	if len(i.rows) > 0 {
 		queryData.writeString("VALUES")
 
-		for row_i, row := range s.rows {
+		for row_i, row := range i.rows {
 			if row_i > 0 {
 				queryData.writeString(",")
 			}
@@ -180,8 +180,8 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			queryData.nextLine()
 			queryData.writeString("(")
 
-			if len(row) != len(s.columns) {
-				return "", nil, errors.New("# of values does not match # of columns.")
+			if len(row) != len(i.columns) {
+				return "", nil, errors.New("number of values does not match number of columns")
 			}
 
 			err = serializeClauseList(insert_statement, row, queryData)
@@ -195,19 +195,19 @@ func (s *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		}
 	}
 
-	if s.query != nil {
-		err = s.query.serialize(insert_statement, queryData)
+	if i.query != nil {
+		err = i.query.serialize(insert_statement, queryData)
 
 		if err != nil {
 			return
 		}
 	}
 
-	if len(s.returning) > 0 {
+	if len(i.returning) > 0 {
 		queryData.nextLine()
 		queryData.writeString("RETURNING")
 
-		err = queryData.writeProjections(insert_statement, s.returning)
+		err = queryData.writeProjections(insert_statement, i.returning)
 
 		if err != nil {
 			return

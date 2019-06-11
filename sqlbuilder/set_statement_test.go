@@ -162,3 +162,123 @@ func TestUnionInUnion(t *testing.T) {
 	assert.Equal(t, len(args), 0)
 	assert.Equal(t, queryStr, expectedSql)
 }
+
+func TestUnionALL(t *testing.T) {
+	query, args, err := UNION_ALL(
+		table1.SELECT(table1Col1),
+		table2.SELECT(table2Col3),
+	).Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(query)
+	assert.Equal(t, query, `
+(
+     (
+          SELECT table1.col1 AS "table1.col1"
+          FROM db.table1
+     )
+     UNION ALL
+     (
+          SELECT table2.col3 AS "table2.col3"
+          FROM db.table2
+     )
+);
+`)
+	assert.Equal(t, len(args), 0)
+}
+
+func TestINTERSECT(t *testing.T) {
+	query, args, err := INTERSECT(
+		table1.SELECT(table1Col1),
+		table2.SELECT(table2Col3),
+	).Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(query)
+	assert.Equal(t, query, `
+(
+     (
+          SELECT table1.col1 AS "table1.col1"
+          FROM db.table1
+     )
+     INTERSECT
+     (
+          SELECT table2.col3 AS "table2.col3"
+          FROM db.table2
+     )
+);
+`)
+	assert.Equal(t, len(args), 0)
+}
+
+func TestINTERSECT_ALL(t *testing.T) {
+	query, args, err := INTERSECT_ALL(
+		table1.SELECT(table1Col1),
+		table2.SELECT(table2Col3),
+	).Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(query)
+	assert.Equal(t, query, `
+(
+     (
+          SELECT table1.col1 AS "table1.col1"
+          FROM db.table1
+     )
+     INTERSECT ALL
+     (
+          SELECT table2.col3 AS "table2.col3"
+          FROM db.table2
+     )
+);
+`)
+	assert.Equal(t, len(args), 0)
+}
+
+func TestEXCEPT(t *testing.T) {
+	query, args, err := EXCEPT(
+		table1.SELECT(table1Col1),
+		table2.SELECT(table2Col3),
+	).Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(query)
+	assert.Equal(t, query, `
+(
+     (
+          SELECT table1.col1 AS "table1.col1"
+          FROM db.table1
+     )
+     EXCEPT
+     (
+          SELECT table2.col3 AS "table2.col3"
+          FROM db.table2
+     )
+);
+`)
+	assert.Equal(t, len(args), 0)
+}
+
+func TestEXCEPT_ALL(t *testing.T) {
+	query, args, err := EXCEPT_ALL(
+		table1.SELECT(table1Col1),
+		table2.SELECT(table2Col3),
+	).Sql()
+
+	assert.NilError(t, err)
+	fmt.Println(query)
+	assert.Equal(t, query, `
+(
+     (
+          SELECT table1.col1 AS "table1.col1"
+          FROM db.table1
+     )
+     EXCEPT ALL
+     (
+          SELECT table2.col3 AS "table2.col3"
+          FROM db.table2
+     )
+);
+`)
+	assert.Equal(t, len(args), 0)
+}

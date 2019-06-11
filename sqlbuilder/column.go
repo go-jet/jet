@@ -57,7 +57,7 @@ func (c *columnImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *columnImpl) serializeAsOrderBy(statement statementType, out *queryData) error {
+func (c *columnImpl) serializeForOrderBy(statement statementType, out *queryData) error {
 	if statement == set_statement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		columnRef := ""

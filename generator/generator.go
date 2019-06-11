@@ -18,14 +18,14 @@ type GeneratorData struct {
 	SslMode  string
 	Params   string
 
-	DbName     string
+	DBName     string
 	SchemaName string
 }
 
 func Generate(destDir string, genData GeneratorData) error {
 
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s %s",
-		genData.Host, genData.Port, genData.User, genData.Password, genData.DbName, genData.SslMode, genData.Params)
+		genData.Host, genData.Port, genData.User, genData.Password, genData.DBName, genData.SslMode, genData.Params)
 
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
@@ -39,13 +39,13 @@ func Generate(destDir string, genData GeneratorData) error {
 		return err
 	}
 
-	err = cleanUpGeneratedFiles(path.Join(destDir, genData.DbName, genData.SchemaName))
+	err = cleanUpGeneratedFiles(path.Join(destDir, genData.DBName, genData.SchemaName))
 
 	if err != nil {
 		return err
 	}
 
-	schemaInfo, err := postgres_metadata.GetSchemaInfo(db, genData.DbName, genData.SchemaName)
+	schemaInfo, err := postgres_metadata.GetSchemaInfo(db, genData.DBName, genData.SchemaName)
 
 	if err != nil {
 		return err

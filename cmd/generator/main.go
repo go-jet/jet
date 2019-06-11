@@ -46,7 +46,7 @@ func main() {
 		SslMode:  sslmode,
 		Params:   params,
 
-		DbName:     dbName,
+		DBName:     dbName,
 		SchemaName: schemaName,
 	}
 

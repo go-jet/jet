@@ -2,7 +2,10 @@ package sqlbuilder
 
 import (
 	"bytes"
+	"github.com/google/uuid"
 	"strconv"
+	"strings"
+	"time"
 )
 
 type serializeOption int
@@ -175,6 +178,10 @@ func (q *queryData) reset() {
 }
 
 func ArgToString(value interface{}) string {
+	if isNil(value) {
+		return "NULL"
+	}
+
 	switch bindVal := value.(type) {
 	case bool:
 		if bindVal {
@@ -210,11 +217,18 @@ func ArgToString(value interface{}) string {
 		return strconv.FormatFloat(float64(bindVal), 'f', -1, 64)
 
 	case string:
-		return `'` + bindVal + `'`
+		return stringQuote(bindVal)
 	case []byte:
-		return `'` + string(bindVal) + `'`
-		//TODO: implement
+		return stringQuote(string(bindVal))
+	case uuid.UUID:
+		return stringQuote(bindVal.String())
+	case time.Time:
+		return stringQuote(bindVal.String())
 	default:
 		return "[Unknown type]"
 	}
+}
+
+func stringQuote(value string) string {
+	return `'` + strings.Replace(value, "'", "''", -1) + `'`
 }
