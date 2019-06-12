@@ -2,6 +2,7 @@ package tests
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet/sqlbuilder"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
@@ -28,13 +29,18 @@ func TestAllTypesSelect(t *testing.T) {
 func TestAllTypesInsert(t *testing.T) {
 	query := AllTypes.INSERT(AllTypes.AllColumns...).
 		MODEL(allTypesRow0).
-		MODEL(&allTypesRow1)
+		MODEL(&allTypesRow1).
+		RETURNING(AllTypes.AllColumns)
 
-	_, err := query.Execute(db)
+	dest := []model.AllTypes{}
+	err := query.Query(db, &dest)
+
+	spew.Dump(dest[0])
 
 	assert.NilError(t, err)
-
-	fmt.Println(query.DebugSql())
+	assert.Equal(t, len(dest), 2)
+	assert.DeepEqual(t, dest[0], allTypesRow0)
+	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestExpressionOperators(t *testing.T) {
@@ -361,7 +367,7 @@ var allTypesRow0 = model.AllTypes{
 	Character:            "JOHN                                                                            ",
 	TextPtr:              stringPtr("Some text"),
 	Text:                 "Some text",
-	ByteaPtr:             []byte("bytea"),
+	ByteaPtr:             byteArrayPtr([]byte("bytea")),
 	Bytea:                []byte("bytea"),
 	TimestampzPtr:        timestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
 	Timestampz:           *timestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),

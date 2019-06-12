@@ -41,6 +41,10 @@ func stringPtr(s string) *string {
 	return &s
 }
 
+func byteArrayPtr(arr []byte) *[]byte {
+	return &arr
+}
+
 func float32Ptr(f float32) *float32 {
 	return &f
 }

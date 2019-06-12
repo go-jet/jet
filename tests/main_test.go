@@ -56,5 +56,5 @@ func TestGenerateModel(t *testing.T) {
 	staff := model.Staff{}
 
 	assert.Equal(t, reflect.TypeOf(staff.Email).String(), "*string")
-	assert.Equal(t, reflect.TypeOf(staff.Picture).String(), "[]uint8")
+	assert.Equal(t, reflect.TypeOf(staff.Picture).String(), "*[]uint8")
 }

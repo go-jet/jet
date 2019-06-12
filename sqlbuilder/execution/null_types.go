@@ -8,12 +8,18 @@ import (
 // NullByteArray
 type NullByteArray struct {
 	ByteArray []byte
-	Valid     bool // Valid is true if Time is not NULL
+	Valid     bool
 }
 
 // Scan implements the Scanner interface.
 func (nb *NullByteArray) Scan(value interface{}) error {
-	nb.ByteArray, nb.Valid = value.([]byte)
+	switch v := value.(type) {
+	case []byte:
+		nb.ByteArray = append(v[:0:0], v...)
+		nb.Valid = true
+	default:
+		nb.Valid = false
+	}
 	return nil
 }
 

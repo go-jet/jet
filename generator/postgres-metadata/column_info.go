@@ -74,7 +74,7 @@ func (c ColumnInfo) GoBaseType() string {
 
 func (c ColumnInfo) GoModelType() string {
 	typeStr := c.GoBaseType()
-	if c.IsNullable && !strings.HasPrefix(typeStr, "[]") {
+	if c.IsNullable {
 		return "*" + typeStr
 	}
 

@@ -86,6 +86,8 @@ func queryToSlice(db Db, query string, args []interface{}, slicePtr interface{})
 
 	groupTime := time.Duration(0)
 
+	slicePtrValue := reflect.ValueOf(slicePtr)
+
 	for rows.Next() {
 		err := rows.Scan(scanContext.row...)
 
@@ -97,7 +99,7 @@ func queryToSlice(db Db, query string, args []interface{}, slicePtr interface{})
 
 		begin := time.Now()
 
-		_, err = mapRowToSlice(scanContext, "", reflect.ValueOf(slicePtr), nil)
+		_, err = mapRowToSlice(scanContext, "", slicePtrValue, nil)
 
 		if err != nil {
 			return err
@@ -406,9 +408,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 			updated = true
 		} else if isGoBaseType(field.Type) {
 			cellValue := getCellValue(scanContext, tableName, fieldName)
-			//spew.Dump(rowElem)
 
-			//spew.Dump(rowColumnValue, fieldValue)
 			if cellValue != nil {
 				updated = true
 				initializeValueIfNil(fieldValue)
@@ -441,9 +441,7 @@ func initializeValueIfNil(value reflect.Value) {
 		return
 	}
 
-	if value.Type().Kind() == reflect.Slice && value.IsNil() {
-		value.Set(reflect.New(value.Type()).Elem())
-	} else if value.Kind() == reflect.Ptr && value.IsNil() {
+	if value.Kind() == reflect.Ptr && value.IsNil() {
 		value.Set(reflect.New(value.Type().Elem()))
 	}
 }
