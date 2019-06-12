@@ -36,7 +36,7 @@ func TestGenerateModel(t *testing.T) {
 	assert.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
 	actorIDField, ok := reflect.TypeOf(actor).FieldByName("ActorID")
 	assert.Assert(t, ok)
-	assert.Equal(t, actorIDField.Tag.Get("sql"), "unique")
+	assert.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
 	assert.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
 	assert.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
 	assert.Equal(t, reflect.TypeOf(actor.LastUpdate).String(), "time.Time")
@@ -46,12 +46,12 @@ func TestGenerateModel(t *testing.T) {
 	assert.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
 	filmIDField, ok := reflect.TypeOf(filmActor).FieldByName("FilmID")
 	assert.Assert(t, ok)
-	assert.Equal(t, filmIDField.Tag.Get("sql"), "unique")
+	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
 	assert.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
 	actorIDField, ok = reflect.TypeOf(filmActor).FieldByName("ActorID")
 	assert.Assert(t, ok)
-	assert.Equal(t, filmIDField.Tag.Get("sql"), "unique")
+	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
 	staff := model.Staff{}
 

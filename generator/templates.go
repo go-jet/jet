@@ -81,7 +81,7 @@ import (
 
 type {{camelize .Name}} struct {
 {{- range .Columns}}
-	{{camelize .Name}} {{.GoModelType}} {{if $.IsUnique .Name}}` + "`sql:\"unique\"`" + ` {{end}}
+	{{camelize .Name}} {{.GoModelType}} ` + "{{.GoModelTag ($.IsUnique .Name)}}" + `
 {{- end}}
 }
 `

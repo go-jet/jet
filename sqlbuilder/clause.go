@@ -3,6 +3,7 @@ package sqlbuilder
 import (
 	"bytes"
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"strconv"
 	"strings"
 	"time"
@@ -223,7 +224,7 @@ func ArgToString(value interface{}) string {
 	case uuid.UUID:
 		return stringQuote(bindVal.String())
 	case time.Time:
-		return stringQuote(bindVal.String())
+		return stringQuote(string(pq.FormatTimestamp(bindVal)))
 	default:
 		return "[Unknown type]"
 	}

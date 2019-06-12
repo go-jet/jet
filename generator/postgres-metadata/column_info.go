@@ -81,6 +81,20 @@ func (c ColumnInfo) GoModelType() string {
 	return typeStr
 }
 
+func (c ColumnInfo) GoModelTag(isPrimaryKey bool) string {
+	tags := []string{}
+
+	if isPrimaryKey {
+		tags = append(tags, "primary_key")
+	}
+
+	if len(tags) > 0 {
+		return "`sql:\"" + strings.Join(tags, ",") + "\"`"
+	}
+
+	return ""
+}
+
 func getColumnInfos(db *sql.DB, dbName, schemaName, tableName string) ([]ColumnInfo, error) {
 
 	query := `

@@ -142,11 +142,11 @@ VALUES (1, 1, 300, 300, 50000, 5000, 11.44, 11.44, 55.77, 55.77, 99.1, 99.1, 111
 DROP TABLE IF EXISTS test_sample.link;
 
 CREATE TABLE IF NOT EXISTS test_sample.link (
-                                                ID serial PRIMARY KEY,
-                                                url VARCHAR (255) NOT NULL,
-                                                name VARCHAR (255) NOT NULL,
-                                                description VARCHAR (255),
-                                                rel VARCHAR (50)
+    ID serial PRIMARY KEY,
+    url VARCHAR (255) NOT NULL,
+    name VARCHAR (255) NOT NULL,
+    description VARCHAR (255),
+    rel VARCHAR (50)
 );
 
 
@@ -158,6 +158,7 @@ CREATE TABLE test_sample.employee (
   employee_id INT PRIMARY KEY,
   first_name VARCHAR (255) NOT NULL,
   last_name VARCHAR (255) NOT NULL,
+  employment_date timestamp with time zone,
   manager_id INT,
   FOREIGN KEY (manager_id)
       REFERENCES test_sample.employee (employee_id)
@@ -167,17 +168,18 @@ INSERT INTO test_sample.employee (
     employee_id,
     first_name,
     last_name,
+    employment_date,
     manager_id
 )
 VALUES
-(1, 'Windy', 'Hays', NULL),
-(2, 'Ava', 'Christensen', 1),
-(3, 'Hassan', 'Conner', 1),
-(4, 'Anna', 'Reeves', 2),
-(5, 'Sau', 'Norman', 2),
-(6, 'Kelsie', 'Hays', 3),
-(7, 'Tory', 'Goff', 3),
-(8, 'Salley', 'Lester', 3);
+(1, 'Windy', 'Hays', '1999-01-08 04:05:06.100 -8:00', NULL),
+(2, 'Ava', 'Christensen', '1999-01-08 04:05:06', 1),
+(3, 'Hassan', 'Conner', '1999-01-08 04:05:06', 1),
+(4, 'Anna', 'Reeves', '1999-01-08 04:05:06', 2),
+(5, 'Sau', 'Norman', '1999-01-08 04:05:06', 2),
+(6, 'Kelsie', 'Hays', '1999-01-08 04:05:06', 3),
+(7, 'Tory', 'Goff', '1999-01-08 04:05:06', 3),
+(8, 'Salley', 'Lester', '1999-01-08 04:05:06', 3);
 
 
 -- Person table ------------------

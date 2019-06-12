@@ -364,6 +364,8 @@ func TestScanToNestedStruct(t *testing.T) {
 			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns, Language.AllColumns).
 			WHERE(Inventory.InventoryID.EQ(Int(1)))
 
+		type Language3 model.Language
+
 		dest := struct {
 			model.Inventory
 			Film struct {
@@ -371,7 +373,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 				Language  model.Language
 				Language2 *model.Language
-				Language3 *model.Language `sqlbuilder:"language"`
+				Language3 *Language3 `sql:"table:language"`
 				Lang      struct {
 					model.Language
 				}
@@ -392,7 +394,7 @@ func TestScanToNestedStruct(t *testing.T) {
 		assert.DeepEqual(t, dest.Film.Lang.Language, language1)
 		assert.DeepEqual(t, dest.Film.Lang2.Language, language1)
 		assert.DeepEqual(t, dest.Film.Language2, (*model.Language)(nil))
-		assert.DeepEqual(t, dest.Film.Language3, &language1)
+		assert.DeepEqual(t, model.Language(*dest.Film.Language3), language1)
 	})
 }
 
@@ -443,7 +445,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("struct with slice of ints", func(t *testing.T) {
 			var dest struct {
 				model.Film
-				IDs []int32 `sqlbuilder:"inventory.inventory_id"`
+				IDs []int32 `sql:"table:inventory,column:inventory_id"`
 			}
 
 			err := query.Query(db, &dest)
@@ -456,7 +458,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice of structs with slice of ints", func(t *testing.T) {
 			var dest []struct {
 				model.Film
-				IDs []int32 `sqlbuilder:"inventory.inventory_id"`
+				IDs []int32 `sql:"table:inventory,column:inventory_id"`
 			}
 
 			err := query.Query(db, &dest)
@@ -472,7 +474,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice of structs with slice of pointer to ints", func(t *testing.T) {
 			var dest []struct {
 				model.Film
-				IDs []*int32 `sqlbuilder:"inventory.inventory_id"`
+				IDs []*int32 `sql:"table:inventory,column:inventory_id"`
 			}
 
 			err := query.Query(db, &dest)

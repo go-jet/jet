@@ -131,8 +131,8 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 	if isGoBaseType(sliceElemType) {
 		index := 0
 		if structField != nil {
-			columnName := getRefTableNameFrom(structField)
-			index = getIndex(scanContext.columnNames, columnName)
+			tableName, columnName := getRefTableNameFrom(structField)
+			index = getIndex(scanContext.columnNames, tableName+"."+columnName)
 
 			if index < 0 {
 				return
@@ -192,7 +192,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 }
 
 func getGroupKey(scanContext *scanContext, structType reflect.Type, structField *reflect.StructField) string {
-	tableName := getRefTableNameFrom(structField)
+	tableName, _ := getRefTableNameFrom(structField)
 
 	if tableName == "" {
 		tableName = snaker.CamelToSnake(structType.Name())
@@ -218,7 +218,7 @@ func getGroupKey(scanContext *scanContext, structType reflect.Type, structField 
 			if structGroupKey != "" {
 				groupKeys = append(groupKeys, structGroupKey)
 			}
-		} else if field.Tag == `sql:"unique"` {
+		} else if tagInfo(field.Tag.Get("sql")).isPrimaryKey {
 			fieldName := field.Name
 			columnName := tableName + "." + snaker.CamelToSnake(fieldName)
 
@@ -293,11 +293,7 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) e
 
 func newElemPtrValueForSlice(slicePtrValue reflect.Value) reflect.Value {
 	destinationSliceType := slicePtrValue.Type().Elem()
-	elemType := destinationSliceType.Elem()
-
-	if elemType.Kind() == reflect.Ptr {
-		return reflect.New(elemType.Elem())
-	}
+	elemType := indirectType(destinationSliceType.Elem())
 
 	return reflect.New(elemType)
 }
@@ -348,51 +344,37 @@ func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest re
 	return
 }
 
-func getRefTableNameFrom(structField *reflect.StructField) string {
+func getRefTableNameFrom(structField *reflect.StructField) (table, column string) {
 	if structField == nil {
-		return ""
+		return
 	}
 
-	tagOverwriteName := structField.Tag.Get("sqlbuilder")
+	sqlTag := structField.Tag.Get("sql")
 
-	if tagOverwriteName != "" {
-		return tagOverwriteName
+	if sqlTag != "" {
+		tagInfo := tagInfo(sqlTag)
+
+		return tagInfo.table, tagInfo.column
 	}
 
 	if !structField.Anonymous {
-		return snaker.CamelToSnake(structField.Name)
+		return snaker.CamelToSnake(structField.Name), ""
 	}
 
-	var elemType string
+	fieldType := indirectType(structField.Type)
 
-	if structField.Type.Kind() == reflect.Ptr {
-		elem := structField.Type.Elem()
-		if elem.Kind() == reflect.Struct {
-			elemType = elem.Name()
-		} else if elem.Kind() == reflect.Slice {
-			elemType = elem.Elem().Name()
-		}
-	} else {
-		if structField.Type.Kind() == reflect.Struct {
-			elemType = structField.Type.Name()
-		} else {
-			sliceElem := structField.Type.Elem()
-			if sliceElem.Kind() == reflect.Ptr {
-				elemType = sliceElem.Elem().Name()
-			} else {
-				elemType = sliceElem.Name()
-			}
-		}
+	if fieldType.Kind() == reflect.Slice {
+		fieldType = fieldType.Elem()
 	}
 
-	return snaker.CamelToSnake(elemType)
+	return snaker.CamelToSnake(fieldType.Name()), ""
 }
 
 func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
 	structType := structPtrValue.Type().Elem()
 	structValue := structPtrValue.Elem()
 
-	tableName := getRefTableNameFrom(structField)
+	tableName, _ := getRefTableNameFrom(structField)
 
 	if tableName == "" {
 		tableName = snaker.CamelToSnake(structType.Name())
@@ -688,4 +670,42 @@ func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
 	newElem := reflect.New(rowElemValue.Type())
 	newElem.Elem().Set(rowElemValue)
 	return newElem
+}
+
+type sqlTagInfo struct {
+	isPrimaryKey bool
+	table        string
+	column       string
+}
+
+func tagInfo(tag string) sqlTagInfo {
+	sqlTags := strings.Split(tag, ",")
+	tagMap := map[string]string{}
+
+	for _, tag := range sqlTags {
+		tagParts := strings.Split(tag, ":")
+
+		tagKey := tagParts[0]
+		tagValue := ""
+		if len(tagParts) > 1 {
+			tagValue = tagParts[1]
+		}
+
+		tagMap[tagKey] = tagValue
+	}
+
+	_, isPrimaryKey := tagMap["primary_key"]
+
+	return sqlTagInfo{
+		isPrimaryKey: isPrimaryKey,
+		table:        tagMap["table"],
+		column:       tagMap["column"],
+	}
+}
+
+func indirectType(reflectType reflect.Type) reflect.Type {
+	if reflectType.Kind() != reflect.Ptr {
+		return reflectType
+	}
+	return reflectType.Elem()
 }
