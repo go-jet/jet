@@ -14,7 +14,7 @@ type Statement interface {
 	DebugSql() (query string, err error)
 
 	Query(db execution.Db, destination interface{}) error
-	Execute(db execution.Db) (sql.Result, error)
+	Exec(db execution.Db) (sql.Result, error)
 }
 
 func DebugSql(statement Statement) (string, error) {

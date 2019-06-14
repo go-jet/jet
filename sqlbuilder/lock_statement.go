@@ -63,7 +63,7 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 
 	out := &queryData{}
 
-	out.nextLine()
+	out.newLine()
 	out.writeString("LOCK TABLE")
 
 	for i, table := range l.tables {
@@ -96,6 +96,6 @@ func (l *lockStatementImpl) Query(db execution.Db, destination interface{}) erro
 	return Query(l, db, destination)
 }
 
-func (l *lockStatementImpl) Execute(db execution.Db) (sql.Result, error) {
-	return Execute(l, db)
+func (l *lockStatementImpl) Exec(db execution.Db) (sql.Result, error) {
+	return Exec(l, db)
 }

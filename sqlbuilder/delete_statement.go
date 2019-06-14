@@ -32,7 +32,7 @@ func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
 	if d == nil {
 		return errors.New("Delete expression. ")
 	}
-	out.nextLine()
+	out.newLine()
 	out.writeString("DELETE FROM")
 
 	if d.table == nil {
@@ -75,6 +75,6 @@ func (d *deleteStatementImpl) Query(db execution.Db, destination interface{}) er
 	return Query(d, db, destination)
 }
 
-func (d *deleteStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
-	return Execute(d, db)
+func (d *deleteStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+	return Exec(d, db)
 }

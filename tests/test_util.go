@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func assertQuery(t *testing.T, query sqlbuilder.Statement, expectedQuery string, expectedArgs ...interface{}) {
+func assertStatementSql(t *testing.T, query sqlbuilder.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	_, args, err := query.Sql()
 	assert.NilError(t, err)
 	//assert.Equal(t, queryStr, expectedQuery)
@@ -21,6 +21,20 @@ func assertQuery(t *testing.T, query sqlbuilder.Statement, expectedQuery string,
 	assert.Equal(t, debuqSql, expectedQuery)
 }
 
+func assertExec(t *testing.T, stmt sqlbuilder.Statement, rowsAffected int64) {
+	res, err := stmt.Exec(db)
+
+	assert.NilError(t, err)
+	rows, err := res.RowsAffected()
+	assert.NilError(t, err)
+	assert.Equal(t, rows, rowsAffected)
+}
+
+func assertExecErr(t *testing.T, stmt sqlbuilder.Statement, errorStr string) {
+	_, err := stmt.Exec(db)
+
+	assert.Equal(t, err.Error(), errorStr)
+}
 func boolPtr(b bool) *bool {
 	return &b
 }

@@ -27,7 +27,7 @@ WHERE actor.actor_id = 1;
 		SELECT(Actor.AllColumns).
 		WHERE(Actor.ActorID.EQ(Int(1)))
 
-	assertQuery(t, query, expectedSql, int64(1))
+	assertStatementSql(t, query, expectedSql, int64(1))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -73,7 +73,7 @@ LIMIT 30;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
-	assertQuery(t, query, expectedSql, int64(30))
+	assertStatementSql(t, query, expectedSql, int64(30))
 
 	dest := []model.Payment{}
 
@@ -102,7 +102,7 @@ ORDER BY customer.customer_id ASC;
 
 	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	err := query.Query(db, &customers)
 	assert.NilError(t, err)
@@ -156,7 +156,7 @@ LIMIT 12;
 		LIMIT(12)
 
 	fmt.Println(query.Sql())
-	assertQuery(t, query, expectedSql, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+	assertStatementSql(t, query, expectedSql, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -224,7 +224,7 @@ LIMIT 500;
 			ORDER_BY(Film.FilmID.ASC()).
 			LIMIT(500)
 
-		assertQuery(t, query, expectedSql, int64(500))
+		assertStatementSql(t, query, expectedSql, int64(500))
 
 		var languageActorFilm []struct {
 			model.Language
@@ -291,7 +291,7 @@ LIMIT 15;
 		WHERE(Film.Rating.EQ(enum.MpaaRating.NC17)).
 		LIMIT(15)
 
-	assertQuery(t, query, expectedSql, int64(15))
+	assertStatementSql(t, query, expectedSql, int64(15))
 
 	err := query.Query(db, &filmsPerLanguage)
 
@@ -422,7 +422,7 @@ ORDER BY customer.customer_id ASC;
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC())
 
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	allCustomersAndAddress := []struct {
 		Address  *model.Address
@@ -475,7 +475,7 @@ LIMIT 1000;
 		ORDER_BY(Customer.CustomerID.ASC()).
 		LIMIT(1000)
 
-	assertQuery(t, query, expectedSql, int64(1000))
+	assertStatementSql(t, query, expectedSql, int64(1000))
 
 	var customerAddresCrosJoined []struct {
 		model.Customer
@@ -513,7 +513,7 @@ ORDER BY employee.employee_id;
 		SELECT(Employee.AllColumns, manager.AllColumns).
 		ORDER_BY(Employee.EmployeeID)
 
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	var dest []struct {
 		model2.Employee
@@ -585,7 +585,7 @@ ORDER BY f1.film_id ASC;
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	type F1 model.Film
 	type F2 model.Film
@@ -627,7 +627,7 @@ LIMIT 1000;
 		ORDER_BY(f1.Length.ASC(), f1.Title.ASC(), f2.Title.ASC()).
 		LIMIT(1000)
 
-	assertQuery(t, query, expectedSql, int64(1000))
+	assertStatementSql(t, query, expectedSql, int64(1000))
 
 	type thesameLengthFilms struct {
 		Title1 string
@@ -691,7 +691,7 @@ LIMIT 1000;
 //		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName).
 //		DISTINCT()
 //
-//	assertQuery(t, query, expectedSql)
+//	assertStatementSql(t, query, expectedSql)
 //
 //	staffs := []staff{}
 //
@@ -747,7 +747,7 @@ FROM dvds.actor
 
 	fmt.Println(query.Sql())
 
-	assertQuery(t, query, expectedQuery)
+	assertStatementSql(t, query, expectedQuery)
 
 	dest := []model.Actor{}
 
@@ -765,7 +765,7 @@ FROM dvds.film;
 		MAXf(Film.RentalRate).AS("max_film_rate"),
 	)
 
-	assertQuery(t, query, expectedQuery)
+	assertStatementSql(t, query, expectedQuery)
 
 	ret := struct {
 		MaxFilmRate float64
@@ -808,7 +808,7 @@ ORDER BY film.film_id ASC;
 		ORDER_BY(Film.FilmID.ASC())
 
 	fmt.Println(query.Sql())
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	maxRentalRateFilms := []model.Film{}
 	err := query.Query(db, &maxRentalRateFilms)
@@ -866,7 +866,7 @@ ORDER BY SUM(payment.amount) ASC;
 			SUMf(Payment.Amount).GT(Float(100)),
 		)
 
-	assertQuery(t, customersPaymentQuery, expectedSql, float64(100))
+	assertStatementSql(t, customersPaymentQuery, expectedSql, float64(100))
 
 	type CustomerPaymentSum struct {
 		CustomerID  int16
@@ -936,7 +936,7 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 		).
 		ORDER_BY(amountSum.ASC())
 
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	type CustomerWithAmounts struct {
 		Customer  *model.Customer
@@ -992,7 +992,7 @@ ORDER BY payment.payment_date ASC;
 		WHERE(Payment.PaymentDate.LT(Timestamp(2007, 02, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	assertQuery(t, query, expectedSql, "2007-02-14 22:16:01.000")
+	assertStatementSql(t, query, expectedSql, "2007-02-14 22:16:01.000")
 
 	payments := []model.Payment{}
 
@@ -1049,7 +1049,7 @@ OFFSET 20;
 	queryStr, _, _ := query.Sql()
 
 	fmt.Println("-" + queryStr + "-")
-	assertQuery(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
+	assertStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
 	dest := []model.Payment{}
 
@@ -1088,7 +1088,7 @@ LIMIT 20;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)
 
-	assertQuery(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
+	assertStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
 
 	dest := []struct {
 		StaffIdNum string
@@ -1111,11 +1111,11 @@ LOCK TABLE dvds.address IN EXCLUSIVE MODE NOWAIT;
 	querySql, _, _ := query.Sql()
 	fmt.Println("-" + querySql + "-")
 
-	assertQuery(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSql)
 
 	tx, _ := db.Begin()
 
-	_, err := query.Execute(tx)
+	_, err := query.Exec(tx)
 
 	assert.NilError(t, err)
 }

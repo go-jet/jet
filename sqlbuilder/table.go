@@ -19,15 +19,17 @@ type readableTable interface {
 	// Creates a right join tableName Expression using onCondition.
 	RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
+	// Creates a full join tableName Expression using onCondition.
 	FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
+	// Creates a cross join tableName Expression using onCondition.
 	CROSS_JOIN(table ReadableTable) ReadableTable
 }
 
 // The sql tableName write interface.
 type writableTable interface {
-	INSERT(columns ...Column) InsertStatement
-	UPDATE(columns ...Column) UpdateStatement
+	INSERT(column column, columns ...column) InsertStatement
+	UPDATE(column column, columns ...column) UpdateStatement
 	DELETE() DeleteStatement
 
 	LOCK() LockStatement
@@ -88,12 +90,12 @@ type writableTableInterfaceImpl struct {
 	parent WritableTable
 }
 
-func (w *writableTableInterfaceImpl) INSERT(columns ...Column) InsertStatement {
-	return newInsertStatement(w.parent, columns...)
+func (w *writableTableInterfaceImpl) INSERT(column column, columns ...column) InsertStatement {
+	return newInsertStatement(w.parent, unwindColumns(column, columns...))
 }
 
-func (w *writableTableInterfaceImpl) UPDATE(columns ...Column) UpdateStatement {
-	return newUpdateStatement(w.parent, columns)
+func (w *writableTableInterfaceImpl) UPDATE(column column, columns ...column) UpdateStatement {
+	return newUpdateStatement(w.parent, unwindColumns(column, columns...))
 }
 
 func (w *writableTableInterfaceImpl) DELETE() DeleteStatement {
@@ -229,7 +231,7 @@ func (t *joinTable) serialize(statement statementType, out *queryData, options .
 		return
 	}
 
-	out.nextLine()
+	out.newLine()
 
 	switch t.join_type {
 	case innerJoin:
@@ -264,4 +266,20 @@ func (t *joinTable) serialize(statement statementType, out *queryData, options .
 	}
 
 	return nil
+}
+
+func unwindColumns(column1 column, columns ...column) []column {
+	columnList := []column{}
+
+	if val, ok := column1.(ColumnList); ok {
+		for _, col := range val {
+			columnList = append(columnList, col)
+		}
+		columnList = append(columnList, columns...)
+	} else {
+		columnList = append(columnList, column1)
+		columnList = append(columnList, columns...)
+	}
+
+	return columnList
 }

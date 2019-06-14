@@ -9,35 +9,37 @@ import (
 type UpdateStatement interface {
 	Statement
 
-	SET(values ...interface{}) UpdateStatement
+	SET(value interface{}, values ...interface{}) UpdateStatement
+	USING(data interface{}) UpdateStatement
+
 	WHERE(expression BoolExpression) UpdateStatement
 	RETURNING(projections ...projection) UpdateStatement
 }
 
-func newUpdateStatement(table WritableTable, columns []Column) UpdateStatement {
+func newUpdateStatement(table WritableTable, columns []column) UpdateStatement {
 	return &updateStatementImpl{
 		table:   table,
 		columns: columns,
+		row:     make([]clause, 0, len(columns)),
 	}
 }
 
 type updateStatementImpl struct {
-	table        WritableTable
-	columns      []Column
-	updateValues []clause
-	where        BoolExpression
-	returning    []projection
+	table     WritableTable
+	columns   []column
+	row       []clause
+	where     BoolExpression
+	returning []projection
 }
 
-func (u *updateStatementImpl) SET(values ...interface{}) UpdateStatement {
+func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {
+	u.row = unwindRowFromValues(value, values)
 
-	for _, value := range values {
-		if clause, ok := value.(clause); ok {
-			u.updateValues = append(u.updateValues, clause)
-		} else {
-			u.updateValues = append(u.updateValues, literal(value))
-		}
-	}
+	return u
+}
+
+func (u *updateStatementImpl) USING(modelData interface{}) UpdateStatement {
+	u.row = unwindRowFromModel(u.columns, modelData)
 
 	return u
 }
@@ -55,31 +57,36 @@ func (u *updateStatementImpl) RETURNING(projections ...projection) UpdateStateme
 func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
 	out := &queryData{}
 
-	out.nextLine()
+	out.newLine()
 	out.writeString("UPDATE")
 
-	if u.table == nil {
-		return "", nil, errors.New("nil tableName.")
+	if isNil(u.table) {
+		return "", nil, errors.New("table to update is nil")
 	}
 
 	if err = u.table.serialize(update_statement, out); err != nil {
 		return
 	}
 
-	if len(u.updateValues) == 0 {
-		return "", nil, errors.New("No column updated.")
+	if len(u.columns) == 0 {
+		return "", nil, errors.New("no columns selected")
 	}
 
+	if len(u.row) == 0 {
+		return "", nil, errors.New("no values to updated")
+	}
+
+	out.newLine()
 	out.writeString("SET")
 
 	if len(u.columns) > 1 {
 		out.writeString("(")
 	}
 
-	err = serializeColumnList(update_statement, u.columns, out)
+	err = serializeColumnNames(u.columns, out)
 
 	if err != nil {
-		return "", nil, err
+		return
 	}
 
 	if len(u.columns) > 1 {
@@ -88,28 +95,22 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 
 	out.writeString("=")
 
-	if len(u.updateValues) > 1 {
+	if len(u.row) > 1 {
 		out.writeString("(")
 	}
 
-	for i, value := range u.updateValues {
-		if i > 0 {
-			out.writeString(", ")
-		}
+	err = serializeClauseList(update_statement, u.row, out)
 
-		err = value.serialize(update_statement, out)
-
-		if err != nil {
-			return
-		}
+	if err != nil {
+		return
 	}
 
-	if len(u.updateValues) > 1 {
+	if len(u.row) > 1 {
 		out.writeString(")")
 	}
 
 	if u.where == nil {
-		return "", nil, errors.New("Updating without a WHERE clause.")
+		return "", nil, errors.New("WHERE clause not set")
 	}
 
 	if err = out.writeWhere(update_statement, u.where); err != nil {
@@ -117,8 +118,10 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(u.returning) > 0 {
-		out.nextLine()
+		out.newLine()
 		out.writeString("RETURNING")
+		out.increaseIdent()
+		out.increaseIdent()
 
 		err = serializeProjectionList(update_statement, u.returning, out)
 
@@ -139,6 +142,6 @@ func (u *updateStatementImpl) Query(db execution.Db, destination interface{}) er
 	return Query(u, db, destination)
 }
 
-func (u *updateStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
-	return Execute(u, db)
+func (u *updateStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+	return Exec(u, db)
 }

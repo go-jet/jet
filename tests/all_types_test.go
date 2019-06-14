@@ -2,7 +2,6 @@ package tests
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet/sqlbuilder"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
@@ -26,16 +25,32 @@ func TestAllTypesSelect(t *testing.T) {
 	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
 
-func TestAllTypesInsert(t *testing.T) {
-	query := AllTypes.INSERT(AllTypes.AllColumns...).
-		MODEL(allTypesRow0).
-		MODEL(&allTypesRow1).
+func TestAllTypesInsertModel(t *testing.T) {
+	query := AllTypes.INSERT(AllTypes.AllColumns).
+		USING(allTypesRow0).
+		USING(&allTypesRow1).
 		RETURNING(AllTypes.AllColumns)
 
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
 
-	spew.Dump(dest[0])
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 2)
+	assert.DeepEqual(t, dest[0], allTypesRow0)
+	assert.DeepEqual(t, dest[1], allTypesRow1)
+}
+
+func TestAllTypesInsertQuery(t *testing.T) {
+	query := AllTypes.INSERT(AllTypes.AllColumns).
+		QUERY(
+			AllTypes.
+				SELECT(AllTypes.AllColumns).
+				LIMIT(2),
+		).
+		RETURNING(AllTypes.AllColumns)
+
+	dest := []model.AllTypes{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 2)

@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -66,7 +65,6 @@ func assertClauseSerializeErr(t *testing.T, clause clause, errString string) {
 	out := queryData{}
 	err := clause.serialize(select_statement, &out)
 
-	fmt.Println(err)
 	assert.Assert(t, err != nil)
 	assert.Equal(t, err.Error(), errString)
 }
@@ -81,9 +79,16 @@ func assertProjectionSerialize(t *testing.T, projection projection, query string
 	assert.DeepEqual(t, out.args, args)
 }
 
-func assertQuery(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
+func assertStatement(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 	assert.Equal(t, queryStr, expectedQuery)
 	assert.DeepEqual(t, args, expectedArgs)
+}
+
+func assertStatementErr(t *testing.T, stmt Statement, errorStr string) {
+	_, _, err := stmt.Sql()
+
+	assert.Assert(t, err != nil)
+	assert.Equal(t, err.Error(), errorStr)
 }

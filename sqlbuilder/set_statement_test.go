@@ -1,7 +1,6 @@
 package sqlbuilder
 
 import (
-	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -29,7 +28,6 @@ func TestUnionTwoSelect(t *testing.T) {
 	).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -53,7 +51,6 @@ func TestUnionThreeSelect(t *testing.T) {
 		table3.SELECT(table3Col1),
 	).Sql()
 
-	fmt.Println(query)
 	assert.NilError(t, err)
 	assert.Equal(t, query, `
 (
@@ -83,7 +80,6 @@ func TestUnionWithOrderBy(t *testing.T) {
 	).ORDER_BY(table1Col1.ASC()).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -108,7 +104,6 @@ func TestUnionWithLimit(t *testing.T) {
 	).LIMIT(10).OFFSET(11).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -157,7 +152,6 @@ func TestUnionInUnion(t *testing.T) {
 
 	queryStr, args, err := query.Sql()
 
-	fmt.Println(queryStr)
 	assert.NilError(t, err)
 	assert.Equal(t, len(args), 0)
 	assert.Equal(t, queryStr, expectedSql)
@@ -170,7 +164,6 @@ func TestUnionALL(t *testing.T) {
 	).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -194,7 +187,6 @@ func TestINTERSECT(t *testing.T) {
 	).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -218,7 +210,6 @@ func TestINTERSECT_ALL(t *testing.T) {
 	).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -242,7 +233,6 @@ func TestEXCEPT(t *testing.T) {
 	).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (
@@ -266,7 +256,6 @@ func TestEXCEPT_ALL(t *testing.T) {
 	).Sql()
 
 	assert.NilError(t, err)
-	fmt.Println(query)
 	assert.Equal(t, query, `
 (
      (

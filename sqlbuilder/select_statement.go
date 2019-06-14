@@ -83,7 +83,7 @@ func (s *selectStatementImpl) serialize(statement statementType, out *queryData,
 		return err
 	}
 
-	out.nextLine()
+	out.newLine()
 	out.writeString(")")
 
 	return nil
@@ -94,7 +94,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 		return errors.New("Select expression is nil. ")
 	}
 
-	out.nextLine()
+	out.newLine()
 	out.writeString("SELECT")
 
 	if s.distinct {
@@ -150,19 +150,19 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.limit >= 0 {
-		out.nextLine()
+		out.newLine()
 		out.writeString("LIMIT")
 		out.insertPreparedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.nextLine()
+		out.newLine()
 		out.writeString("OFFSET")
 		out.insertPreparedArgument(s.offset)
 	}
 
 	if s.forUpdate {
-		out.nextLine()
+		out.newLine()
 		out.writeString("FOR UPDATE")
 	}
 
@@ -238,6 +238,6 @@ func (s *selectStatementImpl) Query(db execution.Db, destination interface{}) er
 	return Query(s, db, destination)
 }
 
-func (s *selectStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
-	return Execute(s, db)
+func (s *selectStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+	return Exec(s, db)
 }

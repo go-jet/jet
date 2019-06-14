@@ -1,17 +1,10 @@
 package sqlbuilder
 
 import (
-	"fmt"
 	"gotest.tools/assert"
 	"testing"
 	"time"
 )
-
-func TestInsertNoColumn(t *testing.T) {
-	_, _, err := table1.INSERT().VALUES().Sql()
-
-	assert.Assert(t, err != nil)
-}
 
 func TestInsertNoRow(t *testing.T) {
 	_, _, err := table1.INSERT(table1Col1).Sql()
@@ -72,10 +65,8 @@ func TestInsertMultipleValues(t *testing.T) {
 	sql, _, err := stmt.Sql()
 	assert.NilError(t, err)
 
-	fmt.Println(sql)
-
 	expectedSql := `
-INSERT INTO db.table1 (col1,colFloat,col3) VALUES
+INSERT INTO db.table1 (col1, colFloat, col3) VALUES
      ($1, $2, $3);
 `
 
@@ -91,10 +82,8 @@ func TestInsertMultipleRows(t *testing.T) {
 	sql, _, err := stmt.Sql()
 	assert.NilError(t, err)
 
-	fmt.Println(sql)
-
 	expectedSql := `
-INSERT INTO db.table1 (col1,colFloat) VALUES
+INSERT INTO db.table1 (col1, colFloat) VALUES
      ($1, $2),
      ($3, $4),
      ($5, $6);
@@ -117,16 +106,16 @@ func TestInsertValuesFromModel(t *testing.T) {
 	}
 
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
-		MODEL(toInsert).
-		MODEL(&toInsert)
+		USING(toInsert).
+		USING(&toInsert)
 
 	expectedSql := `
-INSERT INTO db.table1 (col1,colFloat) VALUES
+INSERT INTO db.table1 (col1, colFloat) VALUES
      ($1, $2),
      ($3, $4);
 `
 
-	assertQuery(t, stmt, expectedSql, int(1), float64(1.11), int(1), float64(1.11))
+	assertStatement(t, stmt, expectedSql, int(1), float64(1.11), int(1), float64(1.11))
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
@@ -141,11 +130,10 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 	}
 
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
-		MODEL(toInsert)
+		USING(toInsert)
 
 	_, _, err := stmt.Sql()
 
-	fmt.Println(err)
 	assert.Assert(t, err != nil)
 }
 
@@ -154,20 +142,23 @@ func TestInsertQuery(t *testing.T) {
 	stmt := table1.INSERT(table1Col1).
 		QUERY(table1.SELECT(table1Col1))
 
-	stmtStr, _, err := stmt.Sql()
-
-	assert.NilError(t, err)
-
-	fmt.Println(stmtStr)
+	var expectedSql = `
+INSERT INTO db.table1 (col1) (
+     SELECT table1.col1 AS "table1.col1"
+     FROM db.table1
+);
+`
+	assertStatement(t, stmt, expectedSql)
 }
 
 func TestInsertDefaultValue(t *testing.T) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES(DEFAULT, "two")
 
-	stmtStr, _, err := stmt.Sql()
+	var expectedSql = `
+INSERT INTO db.table1 (col1, colFloat) VALUES
+     (DEFAULT, $1);
+`
 
-	assert.NilError(t, err)
-
-	fmt.Println(stmtStr)
+	assertStatement(t, stmt, expectedSql, "two")
 }

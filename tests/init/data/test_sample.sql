@@ -149,6 +149,9 @@ CREATE TABLE IF NOT EXISTS test_sample.link (
     rel VARCHAR (50)
 );
 
+INSERT INTO test_sample.link (ID, url, name, description) VALUES
+ (0, 'http://www.youtube.com', 'Youtube' , '');
+
 
 -- Employee table ---------------
 

@@ -114,7 +114,7 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData, op
 
 	if wrap {
 		out.decreaseIdent()
-		out.nextLine()
+		out.newLine()
 		out.writeString(")")
 	}
 
@@ -130,19 +130,19 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 		return errors.New("UNION Statement must have at least two SELECT statements.")
 	}
 
-	out.nextLine()
+	out.newLine()
 	out.writeString("(")
 	out.increaseIdent()
 
 	for i, selectStmt := range s.selects {
-		out.nextLine()
+		out.newLine()
 		if i > 0 {
 			out.writeString(s.operator)
 
 			if s.all {
 				out.writeString("ALL")
 			}
-			out.nextLine()
+			out.newLine()
 		}
 
 		err := selectStmt.serialize(set_statement, out)
@@ -153,7 +153,7 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	out.decreaseIdent()
-	out.nextLine()
+	out.newLine()
 	out.writeString(")")
 
 	if s.orderBy != nil {
@@ -164,13 +164,13 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if s.limit >= 0 {
-		out.nextLine()
+		out.newLine()
 		out.writeString("LIMIT")
 		out.insertPreparedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.nextLine()
+		out.newLine()
 		out.writeString("OFFSET")
 		out.insertPreparedArgument(s.offset)
 	}
@@ -199,6 +199,6 @@ func (s *setStatementImpl) Query(db execution.Db, destination interface{}) error
 	return Query(s, db, destination)
 }
 
-func (u *setStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
-	return Execute(u, db)
+func (u *setStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+	return Exec(u, db)
 }

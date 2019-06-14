@@ -112,3 +112,27 @@ func (c columnImpl) serialize(statement statementType, out *queryData, options .
 
 	return nil
 }
+
+//------------------------------------------------------//
+// Dummy type for select * AllColumns
+type ColumnList []Column
+
+// projection interface implementation
+func (cl ColumnList) isProjectionType() {}
+
+func (cl ColumnList) serializeForProjection(statement statementType, out *queryData) error {
+	projections := columnListToProjectionList(cl)
+
+	err := serializeProjectionList(statement, projections, out)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// column interface implementation
+func (cl ColumnList) Name() string             { return "" }
+func (cl ColumnList) TableName() string        { return "" }
+func (cl ColumnList) setTableName(name string) {}

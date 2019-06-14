@@ -70,7 +70,7 @@ func (q *queryData) writeProjections(statement statementType, projections []proj
 }
 
 func (q *queryData) writeFrom(statement statementType, table ReadableTable) error {
-	q.nextLine()
+	q.newLine()
 	q.writeString("FROM")
 
 	q.increaseIdent()
@@ -81,7 +81,7 @@ func (q *queryData) writeFrom(statement statementType, table ReadableTable) erro
 }
 
 func (q *queryData) writeWhere(statement statementType, where Expression) error {
-	q.nextLine()
+	q.newLine()
 	q.writeString("WHERE")
 
 	q.increaseIdent()
@@ -92,7 +92,7 @@ func (q *queryData) writeWhere(statement statementType, where Expression) error 
 }
 
 func (q *queryData) writeGroupBy(statement statementType, groupBy []groupByClause) error {
-	q.nextLine()
+	q.newLine()
 	q.writeString("GROUP BY")
 
 	q.increaseIdent()
@@ -103,7 +103,7 @@ func (q *queryData) writeGroupBy(statement statementType, groupBy []groupByClaus
 }
 
 func (q *queryData) writeOrderBy(statement statementType, orderBy []OrderByClause) error {
-	q.nextLine()
+	q.newLine()
 	q.writeString("ORDER BY")
 
 	q.increaseIdent()
@@ -114,7 +114,7 @@ func (q *queryData) writeOrderBy(statement statementType, orderBy []OrderByClaus
 }
 
 func (q *queryData) writeHaving(statement statementType, having Expression) error {
-	q.nextLine()
+	q.newLine()
 	q.writeString("HAVING")
 
 	q.increaseIdent()
@@ -124,7 +124,7 @@ func (q *queryData) writeHaving(statement statementType, having Expression) erro
 	return err
 }
 
-func (q *queryData) nextLine() {
+func (q *queryData) newLine() {
 	q.write([]byte{'\n'})
 	q.write(bytes.Repeat([]byte{' '}, q.ident))
 }

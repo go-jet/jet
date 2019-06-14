@@ -4,8 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/sqlbuilder/execution"
-	"github.com/serenize/snaker"
-	"reflect"
 	"strings"
 )
 
@@ -13,16 +11,16 @@ type InsertStatement interface {
 	Statement
 
 	// Add a row of values to the insert Statement.
-	VALUES(values ...interface{}) InsertStatement
+	VALUES(value interface{}, values ...interface{}) InsertStatement
 	// Model structure mapped to column names
-	MODEL(data interface{}) InsertStatement
+	USING(data interface{}) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
 
 	RETURNING(projections ...projection) InsertStatement
 }
 
-func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
+func newInsertStatement(t WritableTable, columns []column) InsertStatement {
 	return &insertStatementImpl{
 		table:   t,
 		columns: columns,
@@ -31,7 +29,7 @@ func newInsertStatement(t WritableTable, columns ...Column) InsertStatement {
 
 type insertStatementImpl struct {
 	table     WritableTable
-	columns   []Column
+	columns   []column
 	rows      [][]clause
 	query     SelectStatement
 	returning []projection
@@ -39,74 +37,13 @@ type insertStatementImpl struct {
 	errors []string
 }
 
-func (i *insertStatementImpl) Query(db execution.Db, destination interface{}) error {
-	return Query(i, db, destination)
-}
-
-func (i *insertStatementImpl) Execute(db execution.Db) (res sql.Result, err error) {
-	return Execute(i, db)
-}
-
-func (i *insertStatementImpl) VALUES(values ...interface{}) InsertStatement {
-	if len(values) == 0 {
-		return i
-	}
-
-	literalRow := []clause{}
-
-	for _, value := range values {
-		if clause, ok := value.(clause); ok {
-			literalRow = append(literalRow, clause)
-		} else {
-			literalRow = append(literalRow, literal(value))
-		}
-	}
-
-	i.rows = append(i.rows, literalRow)
+func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
+	i.rows = append(i.rows, unwindRowFromValues(value, values))
 	return i
 }
 
-func (i *insertStatementImpl) MODEL(data interface{}) InsertStatement {
-	if data == nil {
-		i.addError("MODEL : data is nil.")
-		return i
-	}
-
-	value := reflect.Indirect(reflect.ValueOf(data))
-
-	if value.Kind() != reflect.Struct {
-		i.addError("MODEL : data is not struct or pointer to struct.")
-		return i
-	}
-
-	rowValues := []clause{}
-
-	for _, column := range i.columns {
-		columnName := column.Name()
-		structFieldName := snaker.SnakeToCamel(columnName)
-
-		structField := value.FieldByName(structFieldName)
-
-		if !structField.IsValid() {
-			i.addError("MODEL : Data structure doesn't contain field for column " + columnName)
-			return i
-		}
-
-		var field interface{}
-
-		fieldValue := reflect.Indirect(structField)
-
-		if fieldValue.IsValid() {
-			field = fieldValue.Interface()
-		} else {
-			field = nil
-		}
-
-		rowValues = append(rowValues, literal(field))
-	}
-
-	i.rows = append(i.rows, rowValues)
-
+func (i *insertStatementImpl) USING(data interface{}) InsertStatement {
+	i.rows = append(i.rows, unwindRowFromModel(i.columns, data))
 	return i
 }
 
@@ -135,7 +72,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 
 	queryData := &queryData{}
 
-	queryData.nextLine()
+	queryData.newLine()
 	queryData.writeString("INSERT INTO")
 
 	if isNil(i.table) {
@@ -151,7 +88,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	if len(i.columns) > 0 {
 		queryData.writeString("(")
 
-		err = serializeColumnList(insert_statement, i.columns, queryData)
+		err = serializeColumnNames(i.columns, queryData)
 
 		if err != nil {
 			return
@@ -177,7 +114,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			}
 
 			queryData.increaseIdent()
-			queryData.nextLine()
+			queryData.newLine()
 			queryData.writeString("(")
 
 			if len(row) != len(i.columns) {
@@ -204,7 +141,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(i.returning) > 0 {
-		queryData.nextLine()
+		queryData.newLine()
 		queryData.writeString("RETURNING")
 
 		err = queryData.writeProjections(insert_statement, i.returning)
@@ -217,4 +154,12 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	sql, args = queryData.finalize()
 
 	return
+}
+
+func (i *insertStatementImpl) Query(db execution.Db, destination interface{}) error {
+	return Query(i, db, destination)
+}
+
+func (i *insertStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+	return Exec(i, db)
 }
