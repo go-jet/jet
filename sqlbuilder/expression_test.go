@@ -7,7 +7,7 @@ import (
 func TestExpressionIS_NULL(t *testing.T) {
 	assertClauseSerialize(t, table2Col3.IS_NULL(), "table2.col3 IS NULL")
 	assertClauseSerialize(t, table2Col3.ADD(table2Col3).IS_NULL(), "(table2.col3 + table2.col3) IS NULL")
-	assertClauseSerializeErr(t, table2Col3.ADD(nil), "nil rhs.")
+	assertClauseSerializeErr(t, table2Col3.ADD(nil), "nil rhs")
 }
 
 func TestExpressionIS_NOT_NULL(t *testing.T) {

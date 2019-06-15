@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type lockMode string
+type TableLockMode string
 
 const (
 	LOCK_ACCESS_SHARE           = "ACCESS SHARE"
@@ -22,13 +22,13 @@ const (
 type LockStatement interface {
 	Statement
 
-	IN(lockMode lockMode) LockStatement
+	IN(lockMode TableLockMode) LockStatement
 	NOWAIT() LockStatement
 }
 
 type lockStatementImpl struct {
 	tables   []WritableTable
-	lockMode lockMode
+	lockMode TableLockMode
 	nowait   bool
 }
 
@@ -38,7 +38,7 @@ func LOCK(tables ...WritableTable) LockStatement {
 	}
 }
 
-func (l *lockStatementImpl) IN(lockMode lockMode) LockStatement {
+func (l *lockStatementImpl) IN(lockMode TableLockMode) LockStatement {
 	l.lockMode = lockMode
 	return l
 }

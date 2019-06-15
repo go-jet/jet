@@ -163,13 +163,13 @@ func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpressio
 
 func (c *binaryOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	if c == nil {
-		return errors.New("Binary Expression is nil.")
+		return errors.New("binary Expression is nil")
 	}
 	if c.lhs == nil {
-		return errors.New("nil lhs.")
+		return errors.New("nil lhs")
 	}
 	if c.rhs == nil {
-		return errors.New("nil rhs.")
+		return errors.New("nil rhs")
 	}
 
 	wrap := !contains(options, NO_WRAP)

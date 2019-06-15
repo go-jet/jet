@@ -6,6 +6,13 @@ import (
 	"github.com/go-jet/jet/sqlbuilder/execution"
 )
 
+var (
+	UPDATE        = newLock("UPDATE")
+	NO_KEY_UPDATE = newLock("NO KEY UPDATE")
+	SHARE         = newLock("SHARE")
+	KEY_SHARE     = newLock("KEY SHARE")
+)
+
 type SelectStatement interface {
 	Statement
 	Expression
@@ -21,17 +28,15 @@ type SelectStatement interface {
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
 
-	FOR_UPDATE() SelectStatement
+	FOR(lock SelectLock) SelectStatement
 
 	AsTable(alias string) ExpressionTable
 }
 
-func SELECT(projection ...projection) SelectStatement {
-	return newSelectStatement(nil, projection)
+func SELECT(projection1 projection, projections ...projection) SelectStatement {
+	return newSelectStatement(nil, append([]projection{projection1}, projections...))
 }
 
-// NOTE: SelectStatement purposely does not implement the tableImpl interface since
-// mysql's subquery performance is horrible.
 type selectStatementImpl struct {
 	expressionInterfaceImpl
 	isRowsType
@@ -46,7 +51,7 @@ type selectStatementImpl struct {
 
 	limit, offset int64
 
-	forUpdate bool
+	lockFor SelectLock
 }
 
 func newSelectStatement(table ReadableTable, projections []projection) SelectStatement {
@@ -55,7 +60,6 @@ func newSelectStatement(table ReadableTable, projections []projection) SelectSta
 		projections: projections,
 		limit:       -1,
 		offset:      -1,
-		forUpdate:   false,
 		distinct:    false,
 	}
 
@@ -161,15 +165,19 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 		out.insertPreparedArgument(s.offset)
 	}
 
-	if s.forUpdate {
+	if s.lockFor != nil {
 		out.newLine()
-		out.writeString("FOR UPDATE")
+		out.writeString("FOR")
+		err := s.lockFor.serialize(select_statement, out)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-// Return the properly escaped SQL Statement, against the specified database
 func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error) {
 	queryData := queryData{}
 
@@ -229,9 +237,55 @@ func (s *selectStatementImpl) DISTINCT() SelectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) FOR_UPDATE() SelectStatement {
-	s.forUpdate = true
+func (s *selectStatementImpl) FOR(lock SelectLock) SelectStatement {
+	s.lockFor = lock
 	return s
+}
+
+type SelectLock interface {
+	clause
+
+	NOWAIT() SelectLock
+	SKIP_LOCKED() SelectLock
+}
+
+type selectLockImpl struct {
+	lockStrength       string
+	noWait, skipLocked bool
+}
+
+func newLock(name string) func() SelectLock {
+	return func() SelectLock {
+		return newSelectLock(name)
+	}
+}
+
+func newSelectLock(lockStrength string) SelectLock {
+	return &selectLockImpl{lockStrength: lockStrength}
+}
+
+func (s *selectLockImpl) NOWAIT() SelectLock {
+	s.noWait = true
+	return s
+}
+
+func (s *selectLockImpl) SKIP_LOCKED() SelectLock {
+	s.skipLocked = true
+	return s
+}
+
+func (s *selectLockImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+	out.writeString(s.lockStrength)
+
+	if s.noWait {
+		out.writeString("NOWAIT")
+	}
+
+	if s.skipLocked {
+		out.writeString("SKIP LOCKED")
+	}
+
+	return nil
 }
 
 func (s *selectStatementImpl) Query(db execution.Db, destination interface{}) error {

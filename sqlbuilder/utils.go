@@ -88,7 +88,7 @@ func serializeProjectionList(statement statementType, projections []projection, 
 		}
 
 		if col == nil {
-			return errors.New("projection Expression is nil")
+			return errors.New("projection is nil")
 		}
 
 		if err := col.serializeForProjection(statement, out); err != nil {
@@ -115,6 +115,16 @@ func serializeColumnNames(columns []column, out *queryData) error {
 	return nil
 }
 
+func columnListToProjectionList(columns []Column) []projection {
+	var ret []projection
+
+	for _, column := range columns {
+		ret = append(ret, column)
+	}
+
+	return ret
+}
+
 func isNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
@@ -132,9 +142,7 @@ func unwindRowFromModel(columns []column, data interface{}) []clause {
 
 	row := []clause{}
 
-	if structValue.Kind() != reflect.Struct {
-		return row
-	}
+	mustBe(structValue, reflect.Struct)
 
 	for _, column := range columns {
 		columnName := column.Name()
@@ -143,7 +151,7 @@ func unwindRowFromModel(columns []column, data interface{}) []clause {
 		structField := structValue.FieldByName(structFieldName)
 
 		if !structField.IsValid() {
-			continue
+			panic("missing struct field for column : " + column.Name())
 		}
 
 		var field interface{}
@@ -172,14 +180,10 @@ func unwindRowFromValues(value interface{}, values []interface{}) []clause {
 	return row
 }
 
-func columnListToProjectionList(columns []Column) []projection {
-	var ret []projection
-
-	for _, column := range columns {
-		ret = append(ret, column)
+func mustBe(v reflect.Value, expected reflect.Kind) {
+	if k := v.Kind(); k != expected {
+		panic("argument mismatch: expected " + expected.String() + ", got " + v.Type().String())
 	}
-
-	return ret
 }
 
 func Query(statement Statement, db execution.Db, destination interface{}) error {

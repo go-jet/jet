@@ -5,6 +5,7 @@ import (
 )
 
 func TestBoolExpressionEQ(t *testing.T) {
+	assertClauseSerializeErr(t, table1ColBool.EQ(nil), "nil rhs")
 	assertClauseSerialize(t, table1ColBool.EQ(table2ColBool), "(table1.colBool = table2.colBool)")
 	assertClauseSerialize(t, table1ColBool.EQ(Bool(true)), "(table1.colBool = $1)", true)
 }

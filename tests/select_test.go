@@ -1104,18 +1104,109 @@ LIMIT 20;
 
 func TestLockTable(t *testing.T) {
 	expectedSql := `
-LOCK TABLE dvds.address IN EXCLUSIVE MODE NOWAIT;
-`
-	query := Address.LOCK().IN(LOCK_EXCLUSIVE).NOWAIT()
+LOCK TABLE dvds.address IN`
 
-	querySql, _, _ := query.Sql()
-	fmt.Println("-" + querySql + "-")
+	var testData = []TableLockMode{
+		LOCK_ACCESS_SHARE,
+		LOCK_ROW_SHARE,
+		LOCK_ROW_EXCLUSIVE,
+		LOCK_SHARE_UPDATE_EXCLUSIVE,
+		LOCK_SHARE,
+		LOCK_SHARE_ROW_EXCLUSIVE,
+		LOCK_EXCLUSIVE,
+		LOCK_ACCESS_EXCLUSIVE,
+	}
 
-	assertStatementSql(t, query, expectedSql)
+	for _, lockMode := range testData {
+		query := Address.LOCK().IN(lockMode)
 
-	tx, _ := db.Begin()
+		assertStatementSql(t, query, expectedSql+" "+string(lockMode)+" MODE;\n")
 
-	_, err := query.Exec(tx)
+		tx, _ := db.Begin()
 
-	assert.NilError(t, err)
+		_, err := query.Exec(tx)
+
+		assert.NilError(t, err)
+
+		tx.Rollback()
+	}
+
+	for _, lockMode := range testData {
+		query := Address.LOCK().IN(lockMode).NOWAIT()
+
+		assertStatementSql(t, query, expectedSql+" "+string(lockMode)+" MODE NOWAIT;\n")
+
+		tx, _ := db.Begin()
+
+		_, err := query.Exec(tx)
+
+		assert.NilError(t, err)
+
+		tx.Rollback()
+	}
+}
+
+func getRowLockTestData() map[SelectLock]string {
+	return map[SelectLock]string{
+		UPDATE():        "UPDATE",
+		NO_KEY_UPDATE(): "NO KEY UPDATE",
+		SHARE():         "SHARE",
+		KEY_SHARE():     "KEY SHARE",
+	}
+}
+
+func TestRowLock(t *testing.T) {
+	expectedSql := `
+SELECT *
+FROM dvds.address
+LIMIT 3
+FOR`
+	query := Address.
+		SELECT(STAR).
+		LIMIT(3)
+
+	for lockType, lockTypeStr := range getRowLockTestData() {
+		query.FOR(lockType)
+
+		assertStatementSql(t, query, expectedSql+" "+lockTypeStr+";\n", int64(3))
+
+		tx, _ := db.Begin()
+
+		res, err := query.Exec(tx)
+		assert.NilError(t, err)
+		rowsAffected, _ := res.RowsAffected()
+		assert.Equal(t, rowsAffected, int64(3))
+
+		tx.Rollback()
+	}
+
+	for lockType, lockTypeStr := range getRowLockTestData() {
+		query.FOR(lockType.NOWAIT())
+
+		assertStatementSql(t, query, expectedSql+" "+lockTypeStr+" NOWAIT;\n", int64(3))
+
+		tx, _ := db.Begin()
+
+		res, err := query.Exec(tx)
+		assert.NilError(t, err)
+		rowsAffected, _ := res.RowsAffected()
+		assert.Equal(t, rowsAffected, int64(3))
+
+		tx.Rollback()
+	}
+
+	for lockType, lockTypeStr := range getRowLockTestData() {
+		query.FOR(lockType.SKIP_LOCKED())
+
+		assertStatementSql(t, query, expectedSql+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
+
+		tx, _ := db.Begin()
+
+		res, err := query.Exec(tx)
+		assert.NilError(t, err)
+		rowsAffected, _ := res.RowsAffected()
+		assert.Equal(t, rowsAffected, int64(3))
+
+		tx.Rollback()
+	}
 }

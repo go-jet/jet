@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/sqlbuilder/execution"
-	"strings"
 )
 
 type InsertStatement interface {
@@ -33,8 +32,6 @@ type insertStatementImpl struct {
 	rows      [][]clause
 	query     SelectStatement
 	returning []projection
-
-	errors []string
 }
 
 func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
@@ -57,19 +54,11 @@ func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertState
 	return i
 }
 
-func (i *insertStatementImpl) addError(err string) {
-	i.errors = append(i.errors, err)
-}
-
 func (i *insertStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(i)
 }
 
 func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
-	if len(i.errors) > 0 {
-		return "", nil, errors.New("errors: " + strings.Join(i.errors, ", "))
-	}
-
 	queryData := &queryData{}
 
 	queryData.newLine()

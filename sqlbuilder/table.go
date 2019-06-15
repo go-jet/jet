@@ -8,7 +8,7 @@ import (
 
 type readableTable interface {
 	// Generates a select query on the current tableName.
-	SELECT(projections ...projection) SelectStatement
+	SELECT(projection projection, projections ...projection) SelectStatement
 
 	// Creates a inner join tableName Expression using onCondition.
 	INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
@@ -59,8 +59,8 @@ type readableTableInterfaceImpl struct {
 }
 
 // Generates a select query on the current tableName.
-func (r *readableTableInterfaceImpl) SELECT(projections ...projection) SelectStatement {
-	return newSelectStatement(r.parent, projections)
+func (r *readableTableInterfaceImpl) SELECT(projection1 projection, projections ...projection) SelectStatement {
+	return newSelectStatement(r.parent, append([]projection{projection1}, projections...))
 }
 
 // Creates a inner join tableName Expression using onCondition.

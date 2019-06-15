@@ -1,28 +1,32 @@
 package sqlbuilder
 
 import (
-	"gotest.tools/assert"
 	"testing"
 )
 
-func TestLockSingleTable(t *testing.T) {
-	lock := table1.LOCK().IN(LOCK_ROW_SHARE)
-
-	queryStr, _, err := lock.Sql()
-
-	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `
+func TestLockTable(t *testing.T) {
+	assertStatement(t, table1.LOCK().IN(LOCK_ACCESS_SHARE), `
+LOCK TABLE db.table1 IN ACCESS SHARE MODE;
+`)
+	assertStatement(t, table1.LOCK().IN(LOCK_ROW_SHARE), `
 LOCK TABLE db.table1 IN ROW SHARE MODE;
 `)
-}
-
-func TestLockMultipleTable(t *testing.T) {
-	lock := LOCK(table2, table1).IN(LOCK_ACCESS_EXCLUSIVE).NOWAIT()
-
-	queryStr, _, err := lock.Sql()
-
-	assert.NilError(t, err)
-	assert.Equal(t, queryStr, `
-LOCK TABLE db.table2, db.table1 IN ACCESS EXCLUSIVE MODE NOWAIT;
+	assertStatement(t, table1.LOCK().IN(LOCK_ROW_EXCLUSIVE), `
+LOCK TABLE db.table1 IN ROW EXCLUSIVE MODE;
+`)
+	assertStatement(t, table1.LOCK().IN(LOCK_SHARE_UPDATE_EXCLUSIVE), `
+LOCK TABLE db.table1 IN SHARE UPDATE EXCLUSIVE MODE;
+`)
+	assertStatement(t, table1.LOCK().IN(LOCK_SHARE), `
+LOCK TABLE db.table1 IN SHARE MODE;
+`)
+	assertStatement(t, table1.LOCK().IN(LOCK_SHARE_ROW_EXCLUSIVE), `
+LOCK TABLE db.table1 IN SHARE ROW EXCLUSIVE MODE;
+`)
+	assertStatement(t, table1.LOCK().IN(LOCK_EXCLUSIVE), `
+LOCK TABLE db.table1 IN EXCLUSIVE MODE;
+`)
+	assertStatement(t, table1.LOCK().IN(LOCK_ACCESS_EXCLUSIVE), `
+LOCK TABLE db.table1 IN ACCESS EXCLUSIVE MODE;
 `)
 }

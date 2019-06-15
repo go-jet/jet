@@ -119,22 +119,37 @@ INSERT INTO db.table1 (col1, colFloat) VALUES
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, "missing struct field for column : col1")
+	}()
 	type Table1Model struct {
 		Col1Prim int
 		Col2     string
 	}
 
-	toInsert := Table1Model{
+	newData := Table1Model{
 		Col1Prim: 1,
 		Col2:     "one",
 	}
 
-	stmt := table1.INSERT(table1Col1, table1ColFloat).
-		USING(toInsert)
+	stmt := table1.
+		INSERT(table1Col1, table1ColFloat).
+		USING(newData)
 
 	_, _, err := stmt.Sql()
 
 	assert.Assert(t, err != nil)
+}
+
+func TestInsertFromNonStructModel(t *testing.T) {
+
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, "argument mismatch: expected struct, got []int")
+	}()
+
+	table2.INSERT(table2ColInt).USING([]int{})
 }
 
 func TestInsertQuery(t *testing.T) {

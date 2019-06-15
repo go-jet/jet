@@ -213,6 +213,11 @@ WHERE link.id = 201;
 }
 
 func TestUpdateWithInvalidModelData(t *testing.T) {
+	defer func() {
+		r := recover()
+
+		assert.Equal(t, r, "missing struct field for column : id")
+	}()
 
 	setupLinkTableForUpdateTest(t)
 

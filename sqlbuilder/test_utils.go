@@ -65,6 +65,7 @@ func assertClauseSerializeErr(t *testing.T, clause clause, errString string) {
 	out := queryData{}
 	err := clause.serialize(select_statement, &out)
 
+	//fmt.Println(out.buff.String())
 	assert.Assert(t, err != nil)
 	assert.Equal(t, err.Error(), errString)
 }
@@ -82,6 +83,8 @@ func assertProjectionSerialize(t *testing.T, projection projection, query string
 func assertStatement(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
+
+	//fmt.Println(queryStr)
 	assert.Equal(t, queryStr, expectedQuery)
 	assert.DeepEqual(t, args, expectedArgs)
 }
