@@ -23,6 +23,7 @@ type Expression interface {
 	ASC() OrderByClause
 	DESC() OrderByClause
 
+	// casts
 	TO(dbType string) Expression
 	TO_BOOL() BoolExpression
 	TO_SMALLINT() IntegerExpression

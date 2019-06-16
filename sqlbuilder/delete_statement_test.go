@@ -1,22 +1,17 @@
 package sqlbuilder
 
 import (
-	"gotest.tools/assert"
 	"testing"
 )
 
 func TestDeleteUnconditionally(t *testing.T) {
-	_, _, err := table1.DELETE().Sql()
-	assert.Assert(t, err != nil)
+	assertStatementErr(t, table1.DELETE(), `deleting without a WHERE clause`)
+	assertStatementErr(t, table1.DELETE().WHERE(nil), `deleting without a WHERE clause`)
 }
 
 func TestDeleteWithWhere(t *testing.T) {
-	sql, _, err := table1.DELETE().WHERE(table1Col1.EQ(Int(1))).Sql()
-	assert.NilError(t, err)
-
-	expectedSql := `
+	assertStatement(t, table1.DELETE().WHERE(table1Col1.EQ(Int(1))), `
 DELETE FROM db.table1
 WHERE table1.col1 = $1;
-`
-	assert.Equal(t, sql, expectedSql)
+`, int64(1))
 }

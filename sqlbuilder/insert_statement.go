@@ -87,7 +87,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(i.rows) == 0 && i.query == nil {
-		return "", nil, errors.New("no row values or query  specified")
+		return "", nil, errors.New("no row values or query specified")
 	}
 
 	if len(i.rows) > 0 && i.query != nil {

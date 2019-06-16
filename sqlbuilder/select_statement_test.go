@@ -6,6 +6,17 @@ func TestInvalidSelect(t *testing.T) {
 	assertStatementErr(t, SELECT(nil), "projection is nil")
 }
 
+func TestSelectColumnList(t *testing.T) {
+	columnList := ColumnList{table2ColInt, table2ColFloat, table3ColInt}
+
+	assertStatement(t, SELECT(columnList).FROM(table2), `
+SELECT table2.colInt AS "table2.colInt",
+     table2.colFloat AS "table2.colFloat",
+     table3.colInt AS "table3.colInt"
+FROM db.table2;
+`)
+}
+
 func TestSelectDistinct(t *testing.T) {
 	assertStatement(t, SELECT(table1ColBool).DISTINCT(), `
 SELECT DISTINCT table1.colBool AS "table1.colBool";
@@ -66,6 +77,11 @@ func TestSelectOrderBy(t *testing.T) {
 SELECT table2.colFloat AS "table2.colFloat"
 FROM db.table2
 ORDER BY table2.colInt DESC;
+`)
+	assertStatement(t, SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.DESC(), table2ColInt.ASC()), `
+SELECT table2.colFloat AS "table2.colFloat"
+FROM db.table2
+ORDER BY table2.colInt DESC, table2.colInt ASC;
 `)
 }
 

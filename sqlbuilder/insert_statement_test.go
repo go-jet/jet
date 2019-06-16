@@ -6,71 +6,49 @@ import (
 	"time"
 )
 
-func TestInsertNoRow(t *testing.T) {
-	_, _, err := table1.INSERT(table1Col1).Sql()
-
-	assert.Assert(t, err != nil)
-}
-
-func TestInsertColumnLengthMismatch(t *testing.T) {
-	_, _, err := table1.INSERT(table1Col1, table1ColFloat).VALUES(nil).Sql()
-
-	//fmt.Println(err)
-	assert.Assert(t, err != nil)
+func TestInvalidInsert(t *testing.T) {
+	assertStatementErr(t, table1.INSERT(table1Col1), "no row values or query specified")
+	assertStatementErr(t, table1.INSERT(table1Col1, table1ColFloat).VALUES(11), "number of values does not match number of columns")
+	assertStatementErr(t, table1.INSERT(nil).VALUES(1), "nil column in columns list")
 }
 
 func TestInsertNilValue(t *testing.T) {
-	query, args, err := table1.INSERT(table1Col1).VALUES(nil).Sql()
-
-	assert.Equal(t, query, `
+	assertStatement(t, table1.INSERT(table1Col1).VALUES(nil), `
 INSERT INTO db.table1 (col1) VALUES
      ($1);
-`)
-	assert.Equal(t, len(args), 1)
-	assert.NilError(t, err)
-}
-
-func TestInsertNilColumn(t *testing.T) {
-	_, _, err := table1.INSERT(nil).VALUES(1).Sql()
-
-	assert.Assert(t, err != nil)
+`, nil)
 }
 
 func TestInsertSingleValue(t *testing.T) {
-	sql, _, err := table1.INSERT(table1Col1).VALUES(1).Sql()
-	assert.NilError(t, err)
-
-	assert.Equal(t, sql, `
+	assertStatement(t, table1.INSERT(table1Col1).VALUES(1), `
 INSERT INTO db.table1 (col1) VALUES
      ($1);
-`)
+`, int(1))
+}
+
+func TestInsertWithColumnList(t *testing.T) {
+	columnList := ColumnList{table3ColInt, table3StrCol}
+
+	assertStatement(t, table3.INSERT(columnList).VALUES(1, 3), `
+INSERT INTO db.table3 (colInt, col2) VALUES
+     ($1, $2);
+`, 1, 3)
 }
 
 func TestInsertDate(t *testing.T) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	sql, _, err := table1.INSERT(table1ColTime).VALUES(date).Sql()
-	assert.NilError(t, err)
-
-	assert.Equal(t, sql, `
+	assertStatement(t, table1.INSERT(table1ColTime).VALUES(date), `
 INSERT INTO db.table1 (colTime) VALUES
      ($1);
-`)
+`, date)
 }
 
 func TestInsertMultipleValues(t *testing.T) {
-	stmt := table1.INSERT(table1Col1, table1ColFloat, table1Col3)
-	stmt.VALUES(1, 2, 3)
-
-	sql, _, err := stmt.Sql()
-	assert.NilError(t, err)
-
-	expectedSql := `
+	assertStatement(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
 INSERT INTO db.table1 (col1, colFloat, col3) VALUES
      ($1, $2, $3);
-`
-
-	assert.Equal(t, sql, expectedSql)
+`, 1, 2, 3)
 }
 
 func TestInsertMultipleRows(t *testing.T) {
@@ -79,17 +57,12 @@ func TestInsertMultipleRows(t *testing.T) {
 		VALUES(11, 22).
 		VALUES(111, 222)
 
-	sql, _, err := stmt.Sql()
-	assert.NilError(t, err)
-
-	expectedSql := `
+	assertStatement(t, stmt, `
 INSERT INTO db.table1 (col1, colFloat) VALUES
      ($1, $2),
      ($3, $4),
      ($5, $6);
-`
-
-	assert.Equal(t, sql, expectedSql)
+`, 1, 2, 11, 22, 111, 222)
 }
 
 func TestInsertValuesFromModel(t *testing.T) {
@@ -133,13 +106,9 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 		Col2:     "one",
 	}
 
-	stmt := table1.
+	table1.
 		INSERT(table1Col1, table1ColFloat).
 		USING(newData)
-
-	_, _, err := stmt.Sql()
-
-	assert.Assert(t, err != nil)
 }
 
 func TestInsertFromNonStructModel(t *testing.T) {
