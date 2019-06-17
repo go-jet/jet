@@ -38,7 +38,8 @@ func getTableInfos(db *sql.DB, dbName, schemaName string) ([]metadata.MetaData, 
 	query := `
 SELECT table_name 
 FROM information_schema.tables
-where table_catalog = $1 and table_schema = $2 and table_type = 'BASE TABLE';`
+where table_catalog = $1 and table_schema = $2 and table_type = 'BASE TABLE';
+`
 
 	rows, err := db.Query(query, dbName, schemaName)
 

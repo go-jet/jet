@@ -2,10 +2,6 @@
 
 package sqlbuilder
 
-import (
-	"strings"
-)
-
 type column interface {
 	Name() string
 	TableName() string
@@ -60,15 +56,7 @@ func (c *columnImpl) defaultAlias() string {
 func (c *columnImpl) serializeForOrderBy(statement statementType, out *queryData) error {
 	if statement == set_statement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
-		columnRef := ""
-
-		if c.tableName != "" {
-			columnRef += c.tableName + "."
-		}
-
-		columnRef += c.name
-
-		out.writeString(`"` + columnRef + `"`)
+		out.writeString(`"` + c.defaultAlias() + `"`) //always quote
 
 		return nil
 	}
@@ -90,25 +78,12 @@ func (c columnImpl) serializeForProjection(statement statementType, out *queryDa
 
 func (c columnImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 
-	columnRef := ""
-
 	if c.tableName != "" {
-		columnRef += c.tableName + "."
+		out.writeIdentifier(c.tableName)
+		out.writeByte('.')
 	}
 
-	wrapColumnName := strings.Contains(c.name, ".")
-
-	if wrapColumnName {
-		columnRef += `"`
-	}
-
-	columnRef += c.name
-
-	if wrapColumnName {
-		columnRef += `"`
-	}
-
-	out.writeString(columnRef)
+	out.writeIdentifier(c.name)
 
 	return nil
 }

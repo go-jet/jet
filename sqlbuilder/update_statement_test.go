@@ -7,8 +7,8 @@ import (
 func TestUpdateWithOneValue(t *testing.T) {
 	expectedSql := `
 UPDATE db.table1
-SET colInt = $1
-WHERE table1.colInt >= $2;
+SET col_int = $1
+WHERE table1.col_int >= $2;
 `
 	stmt := table1.UPDATE(table1ColInt).
 		SET(1).
@@ -20,8 +20,8 @@ WHERE table1.colInt >= $2;
 func TestUpdateWithValues(t *testing.T) {
 	expectedSql := `
 UPDATE db.table1
-SET (colInt, colFloat) = ($1, $2)
-WHERE table1.colInt >= $3;
+SET (col_int, col_float) = ($1, $2)
+WHERE table1.col_int >= $3;
 `
 	stmt := table1.UPDATE(table1ColInt, table1ColFloat).
 		SET(1, 22.2).
@@ -33,8 +33,8 @@ WHERE table1.colInt >= $3;
 func TestUpdateOneColumnWithSelect(t *testing.T) {
 	expectedSql := `
 UPDATE db.table1
-SET colFloat = (
-     SELECT table1.colFloat AS "table1.colFloat"
+SET col_float = (
+     SELECT table1.col_float AS "table1.col_float"
      FROM db.table1
 )
 WHERE table1.col1 = $1
@@ -54,8 +54,8 @@ RETURNING table1.col1 AS "table1.col1";
 func TestUpdateColumnsWithSelect(t *testing.T) {
 	expectedSql := `
 UPDATE db.table1
-SET (col1, colFloat) = (
-     SELECT table1.colFloat AS "table1.colFloat",
+SET (col1, col_float) = (
+     SELECT table1.col_float AS "table1.col_float",
           table2.col3 AS "table2.col3"
      FROM db.table1
 )

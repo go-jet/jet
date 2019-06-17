@@ -15,7 +15,7 @@ import (
 
 func TestSelect_ScanToStruct(t *testing.T) {
 	expectedSql := `
-SELECT actor.actor_id AS "actor.actor_id",
+SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update"
@@ -25,6 +25,7 @@ WHERE actor.actor_id = 1;
 
 	query := Actor.
 		SELECT(Actor.AllColumns).
+		DISTINCT().
 		WHERE(Actor.ActorID.EQ(Int(1)))
 
 	assertStatementSql(t, query, expectedSql, int64(1))
@@ -712,7 +713,7 @@ SELECT actor.actor_id AS "actor.actor_id",
      film_actor.actor_id AS "film_actor.actor_id",
      film_actor.film_id AS "film_actor.film_id",
      film_actor.last_update AS "film_actor.last_update",
-     rfilms."film.title" AS "film.title"
+     "rFilms"."film.title" AS "film.title"
 FROM dvds.actor
      INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
      INNER JOIN (
@@ -721,7 +722,7 @@ FROM dvds.actor
                film.rating AS "film.rating"
           FROM dvds.film
           WHERE film.rating = 'R'
-     ) AS rfilms ON (film_actor.film_id = rfilms."film.film_id");
+     ) AS "rFilms" ON (film_actor.film_id = "rFilms"."film.film_id");
 `
 
 	rRatingFilms := Film.
@@ -731,7 +732,7 @@ FROM dvds.actor
 			Film.Rating,
 		).
 		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
-		AsTable("rfilms")
+		AsTable("rFilms")
 
 	rFilmId := Film.FilmID.From(rRatingFilms)
 	rTitle := Film.Title.From(rRatingFilms)

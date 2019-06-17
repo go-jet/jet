@@ -183,7 +183,7 @@ func (c *binaryOpExpression) serialize(statement statementType, out *queryData, 
 		return err
 	}
 
-	out.writeString(" " + c.operator + " ")
+	out.writeString(c.operator)
 
 	if err := c.rhs.serialize(statement, out); err != nil {
 		return err

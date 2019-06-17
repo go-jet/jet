@@ -30,7 +30,7 @@ func TestInsertWithColumnList(t *testing.T) {
 	columnList := ColumnList{table3ColInt, table3StrCol}
 
 	assertStatement(t, table3.INSERT(columnList).VALUES(1, 3), `
-INSERT INTO db.table3 (colInt, col2) VALUES
+INSERT INTO db.table3 (col_int, col2) VALUES
      ($1, $2);
 `, 1, 3)
 }
@@ -39,14 +39,14 @@ func TestInsertDate(t *testing.T) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
 	assertStatement(t, table1.INSERT(table1ColTime).VALUES(date), `
-INSERT INTO db.table1 (colTime) VALUES
+INSERT INTO db.table1 (col_time) VALUES
      ($1);
 `, date)
 }
 
 func TestInsertMultipleValues(t *testing.T) {
 	assertStatement(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
-INSERT INTO db.table1 (col1, colFloat, col3) VALUES
+INSERT INTO db.table1 (col1, col_float, col3) VALUES
      ($1, $2, $3);
 `, 1, 2, 3)
 }
@@ -58,7 +58,7 @@ func TestInsertMultipleRows(t *testing.T) {
 		VALUES(111, 222)
 
 	assertStatement(t, stmt, `
-INSERT INTO db.table1 (col1, colFloat) VALUES
+INSERT INTO db.table1 (col1, col_float) VALUES
      ($1, $2),
      ($3, $4),
      ($5, $6);
@@ -83,7 +83,7 @@ func TestInsertValuesFromModel(t *testing.T) {
 		USING(&toInsert)
 
 	expectedSql := `
-INSERT INTO db.table1 (col1, colFloat) VALUES
+INSERT INTO db.table1 (col1, col_float) VALUES
      ($1, $2),
      ($3, $4);
 `
@@ -140,7 +140,7 @@ func TestInsertDefaultValue(t *testing.T) {
 		VALUES(DEFAULT, "two")
 
 	var expectedSql = `
-INSERT INTO db.table1 (col1, colFloat) VALUES
+INSERT INTO db.table1 (col1, col_float) VALUES
      (DEFAULT, $1);
 `
 

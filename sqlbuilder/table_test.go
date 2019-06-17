@@ -15,76 +15,76 @@ func TestINNER_JOIN(t *testing.T) {
 	assertClauseSerialize(t, table1.
 		INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
 		`db.table1
-INNER JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+INNER JOIN db.table2 ON (table1.col_int = table2.col_int)`)
 	assertClauseSerialize(t, table1.
 		INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)).
 		INNER_JOIN(table3, table1ColInt.EQ(table3ColInt)),
 		`db.table1
-INNER JOIN db.table2 ON (table1.colInt = table2.colInt)
-INNER JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+INNER JOIN db.table2 ON (table1.col_int = table2.col_int)
+INNER JOIN db.table3 ON (table1.col_int = table3.col_int)`)
 	assertClauseSerialize(t, table1.
 		INNER_JOIN(table2, table1ColInt.EQ(Int(1))).
 		INNER_JOIN(table3, table1ColInt.EQ(Int(2))),
 		`db.table1
-INNER JOIN db.table2 ON (table1.colInt = $1)
-INNER JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
+INNER JOIN db.table2 ON (table1.col_int = $1)
+INNER JOIN db.table3 ON (table1.col_int = $2)`, int64(1), int64(2))
 }
 
 func TestLEFT_JOIN(t *testing.T) {
 	assertClauseSerialize(t, table1.
 		LEFT_JOIN(table2, table1ColInt.EQ(table2ColInt)),
 		`db.table1
-LEFT JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+LEFT JOIN db.table2 ON (table1.col_int = table2.col_int)`)
 	assertClauseSerialize(t, table1.
 		LEFT_JOIN(table2, table1ColInt.EQ(table2ColInt)).
 		LEFT_JOIN(table3, table1ColInt.EQ(table3ColInt)),
 		`db.table1
-LEFT JOIN db.table2 ON (table1.colInt = table2.colInt)
-LEFT JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+LEFT JOIN db.table2 ON (table1.col_int = table2.col_int)
+LEFT JOIN db.table3 ON (table1.col_int = table3.col_int)`)
 	assertClauseSerialize(t, table1.
 		LEFT_JOIN(table2, table1ColInt.EQ(Int(1))).
 		LEFT_JOIN(table3, table1ColInt.EQ(Int(2))),
 		`db.table1
-LEFT JOIN db.table2 ON (table1.colInt = $1)
-LEFT JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
+LEFT JOIN db.table2 ON (table1.col_int = $1)
+LEFT JOIN db.table3 ON (table1.col_int = $2)`, int64(1), int64(2))
 }
 
 func TestRIGHT_JOIN(t *testing.T) {
 	assertClauseSerialize(t, table1.
 		RIGHT_JOIN(table2, table1ColInt.EQ(table2ColInt)),
 		`db.table1
-RIGHT JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+RIGHT JOIN db.table2 ON (table1.col_int = table2.col_int)`)
 	assertClauseSerialize(t, table1.
 		RIGHT_JOIN(table2, table1ColInt.EQ(table2ColInt)).
 		RIGHT_JOIN(table3, table1ColInt.EQ(table3ColInt)),
 		`db.table1
-RIGHT JOIN db.table2 ON (table1.colInt = table2.colInt)
-RIGHT JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+RIGHT JOIN db.table2 ON (table1.col_int = table2.col_int)
+RIGHT JOIN db.table3 ON (table1.col_int = table3.col_int)`)
 	assertClauseSerialize(t, table1.
 		RIGHT_JOIN(table2, table1ColInt.EQ(Int(1))).
 		RIGHT_JOIN(table3, table1ColInt.EQ(Int(2))),
 		`db.table1
-RIGHT JOIN db.table2 ON (table1.colInt = $1)
-RIGHT JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
+RIGHT JOIN db.table2 ON (table1.col_int = $1)
+RIGHT JOIN db.table3 ON (table1.col_int = $2)`, int64(1), int64(2))
 }
 
 func TestFULL_JOIN(t *testing.T) {
 	assertClauseSerialize(t, table1.
 		FULL_JOIN(table2, table1ColInt.EQ(table2ColInt)),
 		`db.table1
-FULL JOIN db.table2 ON (table1.colInt = table2.colInt)`)
+FULL JOIN db.table2 ON (table1.col_int = table2.col_int)`)
 	assertClauseSerialize(t, table1.
 		FULL_JOIN(table2, table1ColInt.EQ(table2ColInt)).
 		FULL_JOIN(table3, table1ColInt.EQ(table3ColInt)),
 		`db.table1
-FULL JOIN db.table2 ON (table1.colInt = table2.colInt)
-FULL JOIN db.table3 ON (table1.colInt = table3.colInt)`)
+FULL JOIN db.table2 ON (table1.col_int = table2.col_int)
+FULL JOIN db.table3 ON (table1.col_int = table3.col_int)`)
 	assertClauseSerialize(t, table1.
 		FULL_JOIN(table2, table1ColInt.EQ(Int(1))).
 		FULL_JOIN(table3, table1ColInt.EQ(Int(2))),
 		`db.table1
-FULL JOIN db.table2 ON (table1.colInt = $1)
-FULL JOIN db.table3 ON (table1.colInt = $2)`, int64(1), int64(2))
+FULL JOIN db.table2 ON (table1.col_int = $1)
+FULL JOIN db.table3 ON (table1.col_int = $2)`, int64(1), int64(2))
 }
 
 func TestCROSS_JOIN(t *testing.T) {

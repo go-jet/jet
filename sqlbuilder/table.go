@@ -160,13 +160,13 @@ func (t *tableImpl) serialize(statement statementType, out *queryData, options .
 		return errors.New("tableImpl is nil. ")
 	}
 
-	out.writeString(t.schemaName)
+	out.writeIdentifier(t.schemaName)
 	out.writeString(".")
-	out.writeString(t.TableName())
+	out.writeIdentifier(t.name)
 
 	if len(t.alias) > 0 {
-		out.writeString(" AS ")
-		out.writeString(t.alias)
+		out.writeString("AS")
+		out.writeIdentifier(t.alias)
 	}
 
 	return nil

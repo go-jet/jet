@@ -154,6 +154,16 @@ func (q *queryData) writeString(str string) {
 	q.write([]byte(str))
 }
 
+func (q *queryData) writeIdentifier(name string) {
+	quoteWrap := name != strings.ToLower(name) || strings.Contains(name, ".")
+
+	if quoteWrap {
+		q.writeString(`"` + name + `"`)
+	} else {
+		q.writeString(name)
+	}
+}
+
 func (q *queryData) writeByte(b byte) {
 	q.write([]byte{b})
 }

@@ -54,5 +54,5 @@ func TestEnumType(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	//spew.Dump(result2)
+	spew.Dump(result2)
 }

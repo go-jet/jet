@@ -6,41 +6,41 @@ import (
 
 func TestBoolExpressionEQ(t *testing.T) {
 	assertClauseSerializeErr(t, table1ColBool.EQ(nil), "nil rhs")
-	assertClauseSerialize(t, table1ColBool.EQ(table2ColBool), "(table1.colBool = table2.colBool)")
-	assertClauseSerialize(t, table1ColBool.EQ(Bool(true)), "(table1.colBool = $1)", true)
+	assertClauseSerialize(t, table1ColBool.EQ(table2ColBool), "(table1.col_bool = table2.col_bool)")
+	assertClauseSerialize(t, table1ColBool.EQ(Bool(true)), "(table1.col_bool = $1)", true)
 }
 
 func TestBoolExpressionNOT_EQ(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.NOT_EQ(table2ColBool), "(table1.colBool != table2.colBool)")
-	assertClauseSerialize(t, table1ColBool.NOT_EQ(Bool(true)), "(table1.colBool != $1)", true)
+	assertClauseSerialize(t, table1ColBool.NOT_EQ(table2ColBool), "(table1.col_bool != table2.col_bool)")
+	assertClauseSerialize(t, table1ColBool.NOT_EQ(Bool(true)), "(table1.col_bool != $1)", true)
 }
 
 func TestBoolExpressionIS_TRUE(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.IS_TRUE(), "table1.colBool IS TRUE")
+	assertClauseSerialize(t, table1ColBool.IS_TRUE(), "table1.col_bool IS TRUE")
 	assertClauseSerialize(t, (Int(2).EQ(table1ColInt)).IS_TRUE(),
-		`($1 = table1.colInt) IS TRUE`, int64(2))
+		`($1 = table1.col_int) IS TRUE`, int64(2))
 	assertClauseSerialize(t, (Int(2).EQ(table1ColInt)).IS_TRUE().AND(Int(4).EQ(table2ColInt)),
-		`(($1 = table1.colInt) IS TRUE AND ($2 = table2.colInt))`, int64(2), int64(4))
+		`(($1 = table1.col_int) IS TRUE AND ($2 = table2.col_int))`, int64(2), int64(4))
 }
 
 func TestBoolExpressionIS_NOT_TRUE(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.IS_NOT_TRUE(), "table1.colBool IS NOT TRUE")
+	assertClauseSerialize(t, table1ColBool.IS_NOT_TRUE(), "table1.col_bool IS NOT TRUE")
 }
 
 func TestBoolExpressionIS_FALSE(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.IS_FALSE(), "table1.colBool IS FALSE")
+	assertClauseSerialize(t, table1ColBool.IS_FALSE(), "table1.col_bool IS FALSE")
 }
 
 func TestBoolExpressionIS_NOT_FALSE(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.IS_NOT_FALSE(), "table1.colBool IS NOT FALSE")
+	assertClauseSerialize(t, table1ColBool.IS_NOT_FALSE(), "table1.col_bool IS NOT FALSE")
 }
 
 func TestBoolExpressionIS_UNKNOWN(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.IS_UNKNOWN(), "table1.colBool IS UNKNOWN")
+	assertClauseSerialize(t, table1ColBool.IS_UNKNOWN(), "table1.col_bool IS UNKNOWN")
 }
 
 func TestBoolExpressionIS_NOT_UNKNOWN(t *testing.T) {
-	assertClauseSerialize(t, table1ColBool.IS_NOT_UNKNOWN(), "table1.colBool IS NOT UNKNOWN")
+	assertClauseSerialize(t, table1ColBool.IS_NOT_UNKNOWN(), "table1.col_bool IS NOT UNKNOWN")
 }
 
 func TestBinaryBoolExpression(t *testing.T) {

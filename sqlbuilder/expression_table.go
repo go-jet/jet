@@ -38,7 +38,7 @@ func (e *expressionTableImpl) serialize(statement statementType, out *queryData,
 	}
 
 	out.writeString("AS")
-	out.writeString(e.alias)
+	out.writeIdentifier(e.alias)
 
 	return nil
 }

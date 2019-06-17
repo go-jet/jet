@@ -6,11 +6,11 @@ import (
 )
 
 var table1Col1 = IntegerColumn("col1")
-var table1ColInt = IntegerColumn("colInt")
-var table1ColFloat = FloatColumn("colFloat")
+var table1ColInt = IntegerColumn("col_int")
+var table1ColFloat = FloatColumn("col_float")
 var table1Col3 = IntegerColumn("col3")
-var table1ColTime = TimeColumn("colTime")
-var table1ColBool = BoolColumn("colBool")
+var table1ColTime = TimeColumn("col_time")
+var table1ColBool = BoolColumn("col_bool")
 
 var table1 = NewTable(
 	"db",
@@ -24,11 +24,11 @@ var table1 = NewTable(
 
 var table2Col3 = IntegerColumn("col3")
 var table2Col4 = IntegerColumn("col4")
-var table2ColInt = IntegerColumn("colInt")
-var table2ColFloat = FloatColumn("colFloat")
-var table2ColStr = StringColumn("colStr")
-var table2ColBool = BoolColumn("colBool")
-var table2ColTime = TimeColumn("colTime")
+var table2ColInt = IntegerColumn("col_int")
+var table2ColFloat = FloatColumn("col_float")
+var table2ColStr = StringColumn("col_str")
+var table2ColBool = BoolColumn("col_bool")
+var table2ColTime = TimeColumn("col_time")
 
 var table2 = NewTable(
 	"db",
@@ -42,7 +42,7 @@ var table2 = NewTable(
 	table2ColTime)
 
 var table3Col1 = IntegerColumn("col1")
-var table3ColInt = IntegerColumn("colInt")
+var table3ColInt = IntegerColumn("col_int")
 var table3StrCol = StringColumn("col2")
 var table3 = NewTable(
 	"db",

@@ -1,9 +1,11 @@
 
 -- AllTypes table -----------------------------
 
+create schema IF NOT EXISTS test_sample;
+
 DROP TABLE IF EXISTS test_sample.all_types;
 
-CREATE TABLE test_sample.all_types
+CREATE TABLE test_sample.ALL_TYPES
 (
     -- numeric
     smallint_ptr smallint,
@@ -94,7 +96,7 @@ CREATE TABLE test_sample.all_types
     text_multi_dim_array text[][] NOT NULL
 );
 
-INSERT INTO test_sample.all_types(
+INSERT INTO test_sample.ALL_types(
     smallint_ptr, "smallint", integer_ptr, "integer", bigint_ptr, "bigint", decimal_ptr, "decimal", numeric_ptr, "numeric", real_ptr, "real", double_precision_ptr, double_precision, smallserial, serial, bigserial,
 --     money_ptr, money,
     character_varying_ptr, character_varying, character_ptr, "character", text_ptr, text,
@@ -193,4 +195,8 @@ CREATE TABLE test_sample.person(
     person_id uuid,
     first_name varchar(100),
     last_name varchar(100)
-)
+);
+
+DROP TYPE IF EXISTS test_sample.MOOD CASCADE;
+
+CREATE TYPE test_sample.MOOD AS ENUM ('sad', 'ok', 'happy');

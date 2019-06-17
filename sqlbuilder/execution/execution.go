@@ -134,7 +134,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 		index := 0
 		if structField != nil {
 			tableName, columnName := getRefTableNameFrom(structField)
-			index = getIndex(scanContext.columnNames, tableName+"."+columnName)
+			index = scanContext.columnIndex(tableName, columnName)
 
 			if index < 0 {
 				return
@@ -197,7 +197,7 @@ func getGroupKey(scanContext *scanContext, structType reflect.Type, structField 
 	tableName, _ := getRefTableNameFrom(structField)
 
 	if tableName == "" {
-		tableName = snaker.CamelToSnake(structType.Name())
+		tableName = structType.Name()
 	}
 
 	groupKeys := []string{}
@@ -222,15 +222,8 @@ func getGroupKey(scanContext *scanContext, structType reflect.Type, structField 
 			}
 		} else if tagInfo(field.Tag.Get("sql")).isPrimaryKey {
 			fieldName := field.Name
-			columnName := tableName + "." + snaker.CamelToSnake(fieldName)
 
-			index := getIndex(scanContext.columnNames, columnName)
-
-			if index < 0 {
-				continue
-			}
-
-			cellValue := scanContext.rowElem(index)
+			cellValue := scanContext.getCellValue(tableName, fieldName)
 			subKey := valueToString(cellValue)
 
 			if subKey != "" {
@@ -360,7 +353,7 @@ func getRefTableNameFrom(structField *reflect.StructField) (table, column string
 	}
 
 	if !structField.Anonymous {
-		return snaker.CamelToSnake(structField.Name), ""
+		return structField.Name, ""
 	}
 
 	fieldType := indirectType(structField.Type)
@@ -369,7 +362,7 @@ func getRefTableNameFrom(structField *reflect.StructField) (table, column string
 		fieldType = fieldType.Elem()
 	}
 
-	return snaker.CamelToSnake(fieldType.Name()), ""
+	return fieldType.Name(), ""
 }
 
 func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
@@ -379,7 +372,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 	tableName, _ := getRefTableNameFrom(structField)
 
 	if tableName == "" {
-		tableName = snaker.CamelToSnake(structType.Name())
+		tableName = structType.Name()
 	}
 
 	for i := 0; i < structType.NumField(); i++ {
@@ -389,7 +382,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 		fieldName := field.Name
 
 		if scannerValue, ok := implementsScanner(fieldValue); ok {
-			cellValue := getCellValue(scanContext, tableName, fieldName)
+			cellValue := scanContext.getCellValue(tableName, fieldName)
 
 			if cellValue == nil {
 				continue
@@ -407,7 +400,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 			}
 			updated = true
 		} else if isGoBaseType(field.Type) {
-			cellValue := getCellValue(scanContext, tableName, fieldName)
+			cellValue := scanContext.getCellValue(tableName, fieldName)
 
 			if cellValue != nil {
 				updated = true
@@ -456,24 +449,6 @@ func implementsScanner(value reflect.Value) (reflect.Value, bool) {
 	}
 
 	return value, false
-}
-
-func getCellValue(scanContext *scanContext, tableName, fieldName string) interface{} {
-	columnName := ""
-
-	if tableName == "" {
-		columnName = snaker.CamelToSnake(fieldName)
-	} else {
-		columnName = tableName + "." + snaker.CamelToSnake(fieldName)
-	}
-
-	index := getIndex(scanContext.columnNames, columnName)
-
-	if index < 0 {
-		return nil
-	}
-
-	return scanContext.rowElem(index)
 }
 
 func valueToString(val interface{}) string {
@@ -546,16 +521,6 @@ func setReflectValue(source, destination reflect.Value) error {
 	return nil
 }
 
-func getIndex(list []string, text string) int {
-	for i, str := range list {
-		if str == text {
-			return i
-		}
-	}
-
-	return -1
-}
-
 func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	values := make([]interface{}, len(columnTypes))
 
@@ -610,9 +575,10 @@ type scanContext struct {
 	rowNum      int
 	columnNames []string
 
-	row              []interface{}
-	uniqueObjectsMap map[string]int
-	groupKeyMap      map[string]string
+	row                []interface{}
+	uniqueObjectsMap   map[string]int
+	groupKeyMap        map[string]string
+	columnNameIndexMap map[string]int
 }
 
 func newScanContext(rows *sql.Rows) (*scanContext, error) {
@@ -628,12 +594,65 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 		return nil, err
 	}
 
+	columnNameIndexMap := map[string]int{}
+
+	for i, columnName := range columnNames {
+		columnNameIndexMap[strings.ToLower(columnName)] = i
+	}
+
 	return &scanContext{
-		row:              createScanValue(columnTypes),
-		columnNames:      columnNames,
-		uniqueObjectsMap: make(map[string]int),
-		groupKeyMap:      make(map[string]string),
+		row:                createScanValue(columnTypes),
+		columnNames:        columnNames,
+		uniqueObjectsMap:   make(map[string]int),
+		groupKeyMap:        make(map[string]string),
+		columnNameIndexMap: columnNameIndexMap,
 	}, nil
+}
+
+func (s *scanContext) columnIndex(structName, fieldName string) int {
+	if structName == "" {
+		name := strings.ToLower(fieldName)
+		if i, ok := s.columnNameIndexMap[name]; ok {
+			return i
+		}
+
+		name = strings.ToLower(snaker.CamelToSnake(fieldName))
+		if i, ok := s.columnNameIndexMap[name]; ok {
+			return i
+		}
+	} else {
+		name := strings.ToLower(structName + "." + fieldName)
+		if i, ok := s.columnNameIndexMap[name]; ok {
+			return i
+		}
+
+		name = strings.ToLower(structName + "." + snaker.CamelToSnake(fieldName))
+		if i, ok := s.columnNameIndexMap[name]; ok {
+			return i
+		}
+
+		name = strings.ToLower(snaker.CamelToSnake(structName) + "." + fieldName)
+		if i, ok := s.columnNameIndexMap[name]; ok {
+			return i
+		}
+
+		name = strings.ToLower(snaker.CamelToSnake(structName) + "." + snaker.CamelToSnake(fieldName))
+		if i, ok := s.columnNameIndexMap[name]; ok {
+			return i
+		}
+	}
+
+	return -1
+}
+
+func (s *scanContext) getCellValue(tableName, fieldName string) interface{} {
+	index := s.columnIndex(tableName, fieldName)
+
+	if index < 0 {
+		return nil
+	}
+
+	return s.rowElem(index)
 }
 
 func (s *scanContext) rowElem(index int) interface{} {

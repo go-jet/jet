@@ -21,9 +21,9 @@ func (o *orderByClauseImpl) serializeForOrderBy(statement statementType, out *qu
 	}
 
 	if o.ascent {
-		out.writeString(" ASC")
+		out.writeString("ASC")
 	} else {
-		out.writeString(" DESC")
+		out.writeString("DESC")
 	}
 
 	return nil
