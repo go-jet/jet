@@ -3,6 +3,7 @@ package tests
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet/sqlbuilder"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/chinook/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/chinook/table"
@@ -149,6 +150,65 @@ ORDER BY "Album.AlbumId";
 	assert.Equal(t, len(dest), 2)
 	assert.DeepEqual(t, dest[0], album1)
 	assert.DeepEqual(t, dest[1], album2)
+}
+
+func TestSubQueriesForQuotedNames(t *testing.T) {
+	first10Artist := Artist.
+		SELECT(Artist.AllColumns).
+		ORDER_BY(Artist.ArtistId).
+		LIMIT(10).
+		AsTable("first10Artist")
+
+	artistId := Artist.ArtistId.From(first10Artist)
+
+	first10Albums := Album.
+		SELECT(Album.AllColumns).
+		ORDER_BY(Album.AlbumId).
+		LIMIT(10).
+		AsTable("first10Albums")
+
+	albumArtistId := Album.ArtistId.From(first10Albums)
+
+	stmt := first10Artist.
+		INNER_JOIN(first10Albums, artistId.EQ(albumArtistId)).
+		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
+		ORDER_BY(artistId)
+
+	assertStatementSql(t, stmt, `
+SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
+     "first10Artist"."Artist.Name" AS "Artist.Name",
+     "first10Albums"."Album.AlbumId" AS "Album.AlbumId",
+     "first10Albums"."Album.Title" AS "Album.Title",
+     "first10Albums"."Album.ArtistId" AS "Album.ArtistId"
+FROM (
+          SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+               "Artist"."Name" AS "Artist.Name"
+          FROM chinook."Artist"
+          ORDER BY "Artist"."ArtistId"
+          LIMIT 10
+     ) AS "first10Artist"
+     INNER JOIN (
+          SELECT "Album"."AlbumId" AS "Album.AlbumId",
+               "Album"."Title" AS "Album.Title",
+               "Album"."ArtistId" AS "Album.ArtistId"
+          FROM chinook."Album"
+          ORDER BY "Album"."AlbumId"
+          LIMIT 10
+     ) AS "first10Albums" ON ("first10Artist"."Artist.ArtistId" = "first10Albums"."Album.ArtistId")
+ORDER BY "first10Artist"."Artist.ArtistId";
+`, int64(10), int64(10))
+
+	var dest []struct {
+		model.Artist
+
+		Album []model.Album
+	}
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	spew.Dump(dest)
 }
 
 func assertJson(t *testing.T, jsonFilePath string, data interface{}) {

@@ -907,7 +907,7 @@ SELECT customer.customer_id AS "customer.customer_id",
      customer.create_date AS "customer.create_date",
      customer.last_update AS "customer.last_update",
      customer.active AS "customer.active",
-     customer_payment_sum.amount_sum AS "customer_with_amounts.amount_sum"
+     customer_payment_sum."amount_sum" AS "CustomerWithAmounts.AmountSum"
 FROM dvds.customer
      INNER JOIN (
           SELECT payment.customer_id AS "payment.customer_id",
@@ -915,7 +915,7 @@ FROM dvds.customer
           FROM dvds.payment
           GROUP BY payment.customer_id
      ) AS customer_payment_sum ON (customer.customer_id = customer_payment_sum."payment.customer_id")
-ORDER BY customer_payment_sum.amount_sum ASC;
+ORDER BY customer_payment_sum."amount_sum" ASC;
 `
 
 	customersPayments := Payment.
@@ -933,7 +933,7 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 		INNER_JOIN(customersPayments, Customer.CustomerID.EQ(customerId)).
 		SELECT(
 			Customer.AllColumns,
-			amountSum.AS("customer_with_amounts.amount_sum"),
+			amountSum.AS("CustomerWithAmounts.AmountSum"),
 		).
 		ORDER_BY(amountSum.ASC())
 

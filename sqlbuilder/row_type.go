@@ -2,9 +2,5 @@ package sqlbuilder
 
 type rowsType interface {
 	clause
-	hasRows()
+	projections() []projection
 }
-
-type isRowsType struct{}
-
-func (i *isRowsType) hasRows() {}

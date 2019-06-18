@@ -6,24 +6,42 @@ type ExpressionTable interface {
 	ReadableTable
 
 	Alias() string
+
+	AllColumns() ProjectionList
 }
 
 type expressionTableImpl struct {
 	readableTableInterfaceImpl
 	expression Expression
 	alias      string
+
+	projections []projection
 }
 
-func newExpressionTable(expression Expression, alias string) ExpressionTable {
+func newExpressionTable(expression Expression, alias string, projections []projection) ExpressionTable {
 	expTable := &expressionTableImpl{expression: expression, alias: alias}
 
 	expTable.readableTableInterfaceImpl.parent = expTable
+
+	for _, projection := range projections {
+		newProjection := projection.from(expTable)
+
+		expTable.projections = append(expTable.projections, newProjection)
+	}
 
 	return expTable
 }
 
 func (e *expressionTableImpl) Alias() string {
 	return e.alias
+}
+
+func (e *expressionTableImpl) columns() []Column {
+	return nil
+}
+
+func (e *expressionTableImpl) AllColumns() ProjectionList {
+	return e.projections
 }
 
 func (e *expressionTableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {

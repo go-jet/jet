@@ -16,7 +16,6 @@ var (
 type SelectStatement interface {
 	Statement
 	Expression
-	hasRows()
 
 	DISTINCT() SelectStatement
 	FROM(table ReadableTable) SelectStatement
@@ -31,6 +30,8 @@ type SelectStatement interface {
 	FOR(lock SelectLock) SelectStatement
 
 	AsTable(alias string) ExpressionTable
+
+	projections() []projection
 }
 
 func SELECT(projection1 projection, projections ...projection) SelectStatement {
@@ -39,15 +40,14 @@ func SELECT(projection1 projection, projections ...projection) SelectStatement {
 
 type selectStatementImpl struct {
 	expressionInterfaceImpl
-	isRowsType
 
-	table       ReadableTable
-	distinct    bool
-	projections []projection
-	where       BoolExpression
-	groupBy     []groupByClause
-	having      BoolExpression
-	orderBy     []OrderByClause
+	table          ReadableTable
+	distinct       bool
+	projectionList []projection
+	where          BoolExpression
+	groupBy        []groupByClause
+	having         BoolExpression
+	orderBy        []OrderByClause
 
 	limit, offset int64
 
@@ -56,11 +56,11 @@ type selectStatementImpl struct {
 
 func newSelectStatement(table ReadableTable, projections []projection) SelectStatement {
 	newSelect := &selectStatementImpl{
-		table:       table,
-		projections: projections,
-		limit:       -1,
-		offset:      -1,
-		distinct:    false,
+		table:          table,
+		projectionList: projections,
+		limit:          -1,
+		offset:         -1,
+		distinct:       false,
 	}
 
 	newSelect.expressionInterfaceImpl.parent = newSelect
@@ -105,11 +105,11 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 		out.writeString("DISTINCT")
 	}
 
-	if len(s.projections) == 0 {
+	if len(s.projectionList) == 0 {
 		return errors.New("no column selected for projection")
 	}
 
-	err := out.writeProjections(select_statement, s.projections)
+	err := out.writeProjections(select_statement, s.projectionList)
 
 	if err != nil {
 		return err
@@ -196,8 +196,12 @@ func (s *selectStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(s)
 }
 
+func (s *selectStatementImpl) projections() []projection {
+	return s.projectionList
+}
+
 func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
-	return newExpressionTable(s.parent, alias)
+	return newExpressionTable(s.parent, alias, s.projectionList)
 }
 
 func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
@@ -216,9 +220,7 @@ func (s *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement 
 }
 
 func (s *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
-
 	s.orderBy = clauses
-
 	return s
 }
 

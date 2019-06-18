@@ -44,6 +44,10 @@ type expressionInterfaceImpl struct {
 	parent Expression
 }
 
+func (e *expressionInterfaceImpl) from(subQuery ExpressionTable) projection {
+	return e.parent
+}
+
 func (e *expressionInterfaceImpl) IS_NULL() BoolExpression {
 	return newPostifxBoolExpression(e.parent, "IS NULL")
 }
@@ -61,7 +65,7 @@ func (e *expressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpressi
 }
 
 func (e *expressionInterfaceImpl) AS(alias string) projection {
-	return NewAlias(e.parent, alias)
+	return newAlias(e.parent, alias)
 }
 
 func (e *expressionInterfaceImpl) ASC() OrderByClause {

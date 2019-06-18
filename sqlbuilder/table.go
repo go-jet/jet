@@ -24,6 +24,8 @@ type readableTable interface {
 
 	// Creates a cross join tableName Expression using onCondition.
 	CROSS_JOIN(table ReadableTable) ReadableTable
+
+	columns() []Column
 }
 
 // The sql tableName write interface.
@@ -111,7 +113,7 @@ func NewTable(schemaName, name string, columns ...Column) Table {
 	t := &tableImpl{
 		schemaName: schemaName,
 		name:       name,
-		columns:    columns,
+		columnList: columns,
 	}
 	for _, c := range columns {
 		c.setTableName(name)
@@ -130,13 +132,13 @@ type tableImpl struct {
 	schemaName string
 	name       string
 	alias      string
-	columns    []Column
+	columnList []Column
 }
 
 func (t *tableImpl) AS(alias string) {
 	t.alias = alias
 
-	for _, c := range t.columns {
+	for _, c := range t.columnList {
 		c.setTableName(alias)
 	}
 }
@@ -151,8 +153,8 @@ func (t *tableImpl) TableName() string {
 	return t.name
 }
 
-func (t *tableImpl) SchemaTableName() string {
-	return t.schemaName
+func (t *tableImpl) columns() []Column {
+	return t.columnList
 }
 
 func (t *tableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
@@ -216,6 +218,10 @@ func (t *joinTable) SchemaName() string {
 
 func (t *joinTable) TableName() string {
 	return ""
+}
+
+func (t *joinTable) columns() []Column {
+	return append(t.lhs.columns(), t.rhs.columns()...)
 }
 
 func (t *joinTable) serialize(statement statementType, out *queryData, options ...serializeOption) (err error) {

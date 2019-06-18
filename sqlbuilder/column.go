@@ -7,6 +7,8 @@ type column interface {
 	TableName() string
 
 	setTableName(table string)
+	setSubQuery(subQuery ExpressionTable)
+	defaultAlias() string
 }
 
 type Column interface {
@@ -20,6 +22,8 @@ type columnImpl struct {
 
 	name      string
 	tableName string
+
+	subQuery ExpressionTable
 }
 
 func newColumn(name string, tableName string, parent Column) columnImpl {
@@ -43,6 +47,10 @@ func (c *columnImpl) TableName() string {
 
 func (c *columnImpl) setTableName(table string) {
 	c.tableName = table
+}
+
+func (c *columnImpl) setSubQuery(subQuery ExpressionTable) {
+	c.subQuery = subQuery
 }
 
 func (c *columnImpl) defaultAlias() string {
@@ -78,12 +86,18 @@ func (c columnImpl) serializeForProjection(statement statementType, out *queryDa
 
 func (c columnImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 
-	if c.tableName != "" {
-		out.writeIdentifier(c.tableName)
+	if c.subQuery != nil {
+		out.writeIdentifier(c.subQuery.Alias())
 		out.writeByte('.')
-	}
+		out.writeString(`"` + c.defaultAlias() + `"`)
+	} else {
+		if c.tableName != "" {
+			out.writeIdentifier(c.tableName)
+			out.writeByte('.')
+		}
 
-	out.writeIdentifier(c.name)
+		out.writeIdentifier(c.name)
+	}
 
 	return nil
 }
@@ -94,6 +108,16 @@ type ColumnList []Column
 
 // projection interface implementation
 func (cl ColumnList) isProjectionType() {}
+
+func (cl ColumnList) from(subQuery ExpressionTable) projection {
+	newProjectionList := ProjectionList{}
+
+	for _, column := range cl {
+		newProjectionList = append(newProjectionList, column.from(subQuery))
+	}
+
+	return newProjectionList
+}
 
 func (cl ColumnList) serializeForProjection(statement statementType, out *queryData) error {
 	projections := columnListToProjectionList(cl)
@@ -108,6 +132,8 @@ func (cl ColumnList) serializeForProjection(statement statementType, out *queryD
 }
 
 // column interface implementation
-func (cl ColumnList) Name() string             { return "" }
-func (cl ColumnList) TableName() string        { return "" }
-func (cl ColumnList) setTableName(name string) {}
+func (cl ColumnList) Name() string                         { return "" }
+func (cl ColumnList) TableName() string                    { return "" }
+func (cl ColumnList) setTableName(name string)             {}
+func (cl ColumnList) setSubQuery(subQuery ExpressionTable) {}
+func (cl ColumnList) defaultAlias() string                 { return "" }

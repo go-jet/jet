@@ -1,23 +1,36 @@
 package sqlbuilder
 
-type Alias struct {
+type alias struct {
 	expression Expression
 	alias      string
+
+	subQuery ExpressionTable
 }
 
-func NewAlias(expression Expression, alias string) *Alias {
-	return &Alias{
+func newAlias(expression Expression, aliasName string) projection {
+	return &alias{
 		expression: expression,
-		alias:      alias,
+		alias:      aliasName,
 	}
 }
 
-func (a *Alias) serializeForProjection(statement statementType, out *queryData) error {
+func (a *alias) from(subQuery ExpressionTable) projection {
+	newAlias := *a
+	newAlias.subQuery = subQuery
+	return &newAlias
+}
 
-	err := a.expression.serialize(statement, out)
+func (a *alias) serializeForProjection(statement statementType, out *queryData) error {
+	if a.subQuery != nil {
+		out.writeIdentifier(a.subQuery.Alias())
+		out.writeByte('.')
+		out.writeQuotedString(a.alias)
+	} else {
+		err := a.expression.serialize(statement, out)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 
 	out.writeString(`AS "` + a.alias + `"`)

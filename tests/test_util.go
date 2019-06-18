@@ -17,6 +17,7 @@ func assertStatementSql(t *testing.T, query sqlbuilder.Statement, expectedQuery 
 	assert.DeepEqual(t, args, expectedArgs)
 
 	debuqSql, err := query.DebugSql()
+
 	assert.NilError(t, err)
 	assert.Equal(t, debuqSql, expectedQuery)
 }

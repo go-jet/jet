@@ -9,13 +9,14 @@ import (
 type SetStatement interface {
 	Statement
 	Expression
-	hasRows()
 
 	ORDER_BY(clauses ...OrderByClause) SetStatement
 	LIMIT(limit int64) SetStatement
 	OFFSET(offset int64) SetStatement
 
 	AsTable(alias string) ExpressionTable
+
+	projections() []projection
 }
 
 const (
@@ -51,7 +52,6 @@ func EXCEPT_ALL(selects ...rowsType) SetStatement {
 // Similar to selectStatementImpl, but less complete
 type setStatementImpl struct {
 	expressionInterfaceImpl
-	isRowsType
 
 	operator      string
 	selects       []rowsType
@@ -75,23 +75,30 @@ func newSetStatementImpl(operator string, all bool, selects ...rowsType) SetStat
 	return setStatement
 }
 
-func (us *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
-	us.orderBy = orderBy
-	return us
+func (s *setStatementImpl) ORDER_BY(orderBy ...OrderByClause) SetStatement {
+	s.orderBy = orderBy
+	return s
 }
 
-func (us *setStatementImpl) LIMIT(limit int64) SetStatement {
-	us.limit = limit
-	return us
+func (s *setStatementImpl) LIMIT(limit int64) SetStatement {
+	s.limit = limit
+	return s
 }
 
-func (us *setStatementImpl) OFFSET(offset int64) SetStatement {
-	us.offset = offset
-	return us
+func (s *setStatementImpl) OFFSET(offset int64) SetStatement {
+	s.offset = offset
+	return s
 }
 
-func (us *setStatementImpl) AsTable(alias string) ExpressionTable {
-	return newExpressionTable(us.parent, alias)
+func (s *setStatementImpl) projections() []projection {
+	if len(s.selects) > 0 {
+		return s.selects[0].projections()
+	}
+	return []projection{}
+}
+
+func (s *setStatementImpl) AsTable(alias string) ExpressionTable {
+	return newExpressionTable(s.parent, alias, s.projections())
 }
 
 func (s *setStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
@@ -178,10 +185,10 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 	return nil
 }
 
-func (us *setStatementImpl) Sql() (query string, args []interface{}, err error) {
+func (s *setStatementImpl) Sql() (query string, args []interface{}, err error) {
 	queryData := &queryData{}
 
-	err = us.serializeImpl(queryData)
+	err = s.serializeImpl(queryData)
 
 	if err != nil {
 		return
@@ -199,6 +206,6 @@ func (s *setStatementImpl) Query(db execution.Db, destination interface{}) error
 	return Query(s, db, destination)
 }
 
-func (u *setStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
-	return Exec(u, db)
+func (s *setStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+	return Exec(s, db)
 }

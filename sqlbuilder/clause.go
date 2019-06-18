@@ -150,6 +150,10 @@ func isPostSeparator(b byte) bool {
 	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
+func (q *queryData) writeQuotedString(str string) {
+	q.writeString(`"` + str + `"`)
+}
+
 func (q *queryData) writeString(str string) {
 	q.write([]byte(str))
 }

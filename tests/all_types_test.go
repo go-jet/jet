@@ -356,6 +356,185 @@ func TestTimeOperators(t *testing.T) {
 	assert.NilError(t, err)
 }
 
+func TestSubQueryColumnReference(t *testing.T) {
+
+	type expected struct {
+		sql  string
+		args []interface{}
+	}
+
+	subQueries := map[ExpressionTable]expected{}
+
+	selectSubQuery := AllTypes.SELECT(
+		AllTypes.Boolean,
+		AllTypes.Integer,
+		AllTypes.Real,
+		AllTypes.Text,
+		AllTypes.Time,
+		AllTypes.Timez,
+		AllTypes.Timestamp,
+		AllTypes.Timestampz,
+		AllTypes.Date,
+		AllTypes.Bytea.AS("aliasedColumn"),
+	).
+		LIMIT(2).
+		AsTable("subQuery")
+
+	var selectExpectedSql = ` (
+          SELECT all_types.boolean AS "all_types.boolean",
+               all_types.integer AS "all_types.integer",
+               all_types.real AS "all_types.real",
+               all_types.text AS "all_types.text",
+               all_types.time AS "all_types.time",
+               all_types.timez AS "all_types.timez",
+               all_types.timestamp AS "all_types.timestamp",
+               all_types.timestampz AS "all_types.timestampz",
+               all_types.date AS "all_types.date",
+               all_types.bytea AS "aliasedColumn"
+          FROM test_sample.all_types
+          LIMIT 2
+     ) AS "subQuery"`
+
+	unionSubQuery :=
+		UNION_ALL(
+			AllTypes.SELECT(
+				AllTypes.Boolean,
+				AllTypes.Integer,
+				AllTypes.Real,
+				AllTypes.Text,
+				AllTypes.Time,
+				AllTypes.Timez,
+				AllTypes.Timestamp,
+				AllTypes.Timestampz,
+				AllTypes.Date,
+				AllTypes.Bytea.AS("aliasedColumn"),
+			).
+				LIMIT(1),
+			AllTypes.SELECT(
+				AllTypes.Boolean,
+				AllTypes.Integer,
+				AllTypes.Real,
+				AllTypes.Text,
+				AllTypes.Time,
+				AllTypes.Timez,
+				AllTypes.Timestamp,
+				AllTypes.Timestampz,
+				AllTypes.Date,
+				AllTypes.Bytea.AS("aliasedColumn"),
+			).
+				LIMIT(1).OFFSET(1),
+		).
+			AsTable("subQuery")
+
+	unionExpectedSql := `
+     (
+          (
+               SELECT all_types.boolean AS "all_types.boolean",
+                    all_types.integer AS "all_types.integer",
+                    all_types.real AS "all_types.real",
+                    all_types.text AS "all_types.text",
+                    all_types.time AS "all_types.time",
+                    all_types.timez AS "all_types.timez",
+                    all_types.timestamp AS "all_types.timestamp",
+                    all_types.timestampz AS "all_types.timestampz",
+                    all_types.date AS "all_types.date",
+                    all_types.bytea AS "aliasedColumn"
+               FROM test_sample.all_types
+               LIMIT 1
+          )
+          UNION ALL
+          (
+               SELECT all_types.boolean AS "all_types.boolean",
+                    all_types.integer AS "all_types.integer",
+                    all_types.real AS "all_types.real",
+                    all_types.text AS "all_types.text",
+                    all_types.time AS "all_types.time",
+                    all_types.timez AS "all_types.timez",
+                    all_types.timestamp AS "all_types.timestamp",
+                    all_types.timestampz AS "all_types.timestampz",
+                    all_types.date AS "all_types.date",
+                    all_types.bytea AS "aliasedColumn"
+               FROM test_sample.all_types
+               LIMIT 1
+               OFFSET 1
+          )
+     ) AS "subQuery"`
+
+	subQueries[selectSubQuery] = expected{sql: selectExpectedSql, args: []interface{}{int64(2)}}
+	subQueries[unionSubQuery] = expected{sql: unionExpectedSql, args: []interface{}{int64(1), int64(1), int64(1)}}
+
+	for subQuery, expected := range subQueries {
+		boolColumn := AllTypes.Boolean.From(subQuery)
+		intColumn := AllTypes.Integer.From(subQuery)
+		floatColumn := AllTypes.Real.From(subQuery)
+		stringColumn := AllTypes.Text.From(subQuery)
+		timeColumn := AllTypes.Time.From(subQuery)
+		timezColumn := AllTypes.Timez.From(subQuery)
+		timestampColumn := AllTypes.Timestamp.From(subQuery)
+		timestampzColumn := AllTypes.Timestampz.From(subQuery)
+		dateColumn := AllTypes.Date.From(subQuery)
+		aliasedColumn := StringColumn("aliasedColumn").From(subQuery)
+
+		stmt1 := SELECT(
+			boolColumn,
+			intColumn,
+			floatColumn,
+			stringColumn,
+			timeColumn,
+			timezColumn,
+			timestampColumn,
+			timestampzColumn,
+			dateColumn,
+			aliasedColumn,
+		).
+			FROM(subQuery)
+
+		var expectedSql = `
+SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
+     "subQuery"."all_types.integer" AS "all_types.integer",
+     "subQuery"."all_types.real" AS "all_types.real",
+     "subQuery"."all_types.text" AS "all_types.text",
+     "subQuery"."all_types.time" AS "all_types.time",
+     "subQuery"."all_types.timez" AS "all_types.timez",
+     "subQuery"."all_types.timestamp" AS "all_types.timestamp",
+     "subQuery"."all_types.timestampz" AS "all_types.timestampz",
+     "subQuery"."all_types.date" AS "all_types.date",
+     "subQuery"."aliasedColumn" AS "aliasedColumn"
+FROM`
+
+		assertStatementSql(t, stmt1, expectedSql+expected.sql+";\n", expected.args...)
+
+		dest1 := []model.AllTypes{}
+		err := stmt1.Query(db, &dest1)
+		assert.NilError(t, err)
+		assert.Equal(t, len(dest1), 2)
+		assert.Equal(t, dest1[0].Boolean, allTypesRow0.Boolean)
+		assert.Equal(t, dest1[0].Integer, allTypesRow0.Integer)
+		assert.Equal(t, dest1[0].Real, allTypesRow0.Real)
+		assert.Equal(t, dest1[0].Text, allTypesRow0.Text)
+		assert.DeepEqual(t, dest1[0].Time, allTypesRow0.Time)
+		assert.DeepEqual(t, dest1[0].Timez, allTypesRow0.Timez)
+		assert.DeepEqual(t, dest1[0].Timestamp, allTypesRow0.Timestamp)
+		assert.DeepEqual(t, dest1[0].Timestampz, allTypesRow0.Timestampz)
+		assert.DeepEqual(t, dest1[0].Date, allTypesRow0.Date)
+
+		stmt2 := SELECT(
+			subQuery.AllColumns(),
+		).
+			FROM(subQuery)
+
+		fmt.Println(stmt2.DebugSql())
+
+		assertStatementSql(t, stmt2, expectedSql+expected.sql+";\n", expected.args...)
+
+		dest2 := []model.AllTypes{}
+		err = stmt2.Query(db, &dest2)
+
+		assert.NilError(t, err)
+		assert.DeepEqual(t, dest1, dest2)
+	}
+}
+
 var allTypesRow0 = model.AllTypes{
 	SmallintPtr:        int16Ptr(1),
 	Smallint:           1,

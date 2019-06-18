@@ -5,7 +5,7 @@ type ColumnBool interface {
 	BoolExpression
 	column
 
-	From(table ExpressionTable) ColumnBool
+	From(subQuery ExpressionTable) ColumnBool
 }
 
 type boolColumnImpl struct {
@@ -14,17 +14,23 @@ type boolColumnImpl struct {
 	columnImpl
 }
 
-func (i *boolColumnImpl) From(table ExpressionTable) ColumnBool {
-	newBoolColumn := BoolColumn(i.defaultAlias())
-	newBoolColumn.setTableName(table.Alias())
+func (i *boolColumnImpl) from(subQuery ExpressionTable) projection {
+	newBoolColumn := BoolColumn(i.name)
+	newBoolColumn.setTableName(i.tableName)
+	newBoolColumn.setSubQuery(subQuery)
+
+	return newBoolColumn
+}
+
+func (i *boolColumnImpl) From(subQuery ExpressionTable) ColumnBool {
+	newBoolColumn := i.from(subQuery).(ColumnBool)
+
 	return newBoolColumn
 }
 
 func BoolColumn(name string) ColumnBool {
-
 	boolColumn := &boolColumnImpl{}
 	boolColumn.columnImpl = newColumn(name, "", boolColumn)
-
 	boolColumn.boolInterfaceImpl.parent = boolColumn
 
 	return boolColumn
@@ -35,7 +41,7 @@ type ColumnFloat interface {
 	FloatExpression
 	column
 
-	From(table ExpressionTable) ColumnFloat
+	From(subQuery ExpressionTable) ColumnFloat
 }
 
 type floatColumnImpl struct {
@@ -43,16 +49,22 @@ type floatColumnImpl struct {
 	columnImpl
 }
 
-func (i *floatColumnImpl) From(table ExpressionTable) ColumnFloat {
-	newFloatColumn := FloatColumn(i.defaultAlias())
-	newFloatColumn.setTableName(table.Alias())
+func (i *floatColumnImpl) from(subQuery ExpressionTable) projection {
+	newFloatColumn := FloatColumn(i.name)
+	newFloatColumn.setTableName(i.tableName)
+	newFloatColumn.setSubQuery(subQuery)
+
+	return newFloatColumn
+}
+
+func (i *floatColumnImpl) From(subQuery ExpressionTable) ColumnFloat {
+	newFloatColumn := i.from(subQuery).(ColumnFloat)
+
 	return newFloatColumn
 }
 
 func FloatColumn(name string) ColumnFloat {
-
 	floatColumn := &floatColumnImpl{}
-
 	floatColumn.floatInterfaceImpl.parent = floatColumn
 	floatColumn.columnImpl = newColumn(name, "", floatColumn)
 
@@ -64,7 +76,7 @@ type ColumnInteger interface {
 	IntegerExpression
 	column
 
-	From(table ExpressionTable) ColumnInteger
+	From(subQuery ExpressionTable) ColumnInteger
 }
 
 type integerColumnImpl struct {
@@ -73,15 +85,20 @@ type integerColumnImpl struct {
 	columnImpl
 }
 
-func (i *integerColumnImpl) From(table ExpressionTable) ColumnInteger {
-	newIntColumn := IntegerColumn(i.defaultAlias())
-	newIntColumn.setTableName(table.Alias())
+func (i *integerColumnImpl) from(subQuery ExpressionTable) projection {
+	newIntColumn := IntegerColumn(i.name)
+	newIntColumn.setTableName(i.tableName)
+	newIntColumn.setSubQuery(subQuery)
+
 	return newIntColumn
+}
+
+func (i *integerColumnImpl) From(subQuery ExpressionTable) ColumnInteger {
+	return i.from(subQuery).(ColumnInteger)
 }
 
 func IntegerColumn(name string) ColumnInteger {
 	integerColumn := &integerColumnImpl{}
-
 	integerColumn.integerInterfaceImpl.parent = integerColumn
 	integerColumn.columnImpl = newColumn(name, "", integerColumn)
 
@@ -93,7 +110,7 @@ type ColumnString interface {
 	StringExpression
 	column
 
-	From(table ExpressionTable) ColumnString
+	From(subQuery ExpressionTable) ColumnString
 }
 
 type stringColumnImpl struct {
@@ -102,18 +119,21 @@ type stringColumnImpl struct {
 	columnImpl
 }
 
-func (i *stringColumnImpl) From(table ExpressionTable) ColumnString {
-	newStrColumn := StringColumn(i.defaultAlias())
-	newStrColumn.setTableName(table.Alias())
+func (i *stringColumnImpl) from(subQuery ExpressionTable) projection {
+	newStrColumn := StringColumn(i.name)
+	newStrColumn.setTableName(i.tableName)
+	newStrColumn.setSubQuery(subQuery)
+
 	return newStrColumn
 }
 
+func (i *stringColumnImpl) From(subQuery ExpressionTable) ColumnString {
+	return i.from(subQuery).(ColumnString)
+}
+
 func StringColumn(name string) ColumnString {
-
 	stringColumn := &stringColumnImpl{}
-
 	stringColumn.stringInterfaceImpl.parent = stringColumn
-
 	stringColumn.columnImpl = newColumn(name, "", stringColumn)
 
 	return stringColumn
@@ -124,28 +144,30 @@ type ColumnTime interface {
 	TimeExpression
 	column
 
-	From(table ExpressionTable) ColumnTime
+	From(subQuery ExpressionTable) ColumnTime
 }
 
 type timeColumnImpl struct {
 	timeInterfaceImpl
-
 	columnImpl
 }
 
-func (i *timeColumnImpl) From(table ExpressionTable) ColumnTime {
-	newTimeColumn := TimeColumn(i.defaultAlias())
-	newTimeColumn.setTableName(table.Alias())
+func (i *timeColumnImpl) from(subQuery ExpressionTable) projection {
+	newTimeColumn := TimeColumn(i.name)
+	newTimeColumn.setTableName(i.tableName)
+	newTimeColumn.setSubQuery(subQuery)
+
 	return newTimeColumn
+}
+
+func (i *timeColumnImpl) From(subQuery ExpressionTable) ColumnTime {
+	return i.from(subQuery).(ColumnTime)
 }
 
 func TimeColumn(name string) ColumnTime {
 	timeColumn := &timeColumnImpl{}
-
 	timeColumn.timeInterfaceImpl.parent = timeColumn
-
 	timeColumn.columnImpl = newColumn(name, "", timeColumn)
-
 	return timeColumn
 }
 
@@ -155,7 +177,7 @@ type ColumnTimez interface {
 	TimezExpression
 	column
 
-	From(table ExpressionTable) ColumnTimez
+	From(subQuery ExpressionTable) ColumnTimez
 }
 
 type timezColumnImpl struct {
@@ -164,17 +186,21 @@ type timezColumnImpl struct {
 	columnImpl
 }
 
-func (i *timezColumnImpl) From(table ExpressionTable) ColumnTimez {
-	newTimezColumn := TimezColumn(i.defaultAlias())
-	newTimezColumn.setTableName(table.Alias())
+func (i *timezColumnImpl) from(subQuery ExpressionTable) projection {
+	newTimezColumn := TimezColumn(i.name)
+	newTimezColumn.setTableName(i.tableName)
+	newTimezColumn.setSubQuery(subQuery)
+
 	return newTimezColumn
+}
+
+func (i *timezColumnImpl) From(subQuery ExpressionTable) ColumnTimez {
+	return i.from(subQuery).(ColumnTimez)
 }
 
 func TimezColumn(name string) ColumnTimez {
 	timezColumn := &timezColumnImpl{}
-
 	timezColumn.timezInterfaceImpl.parent = timezColumn
-
 	timezColumn.columnImpl = newColumn(name, "", timezColumn)
 
 	return timezColumn
@@ -185,7 +211,7 @@ type ColumnTimestamp interface {
 	TimestampExpression
 	column
 
-	From(table ExpressionTable) ColumnTimestamp
+	From(subQuery ExpressionTable) ColumnTimestamp
 }
 
 type timestampColumnImpl struct {
@@ -194,17 +220,21 @@ type timestampColumnImpl struct {
 	columnImpl
 }
 
-func (i *timestampColumnImpl) From(table ExpressionTable) ColumnTimestamp {
-	newTimestampColumn := TimestampColumn(i.defaultAlias())
-	newTimestampColumn.setTableName(table.Alias())
+func (i *timestampColumnImpl) from(subQuery ExpressionTable) projection {
+	newTimestampColumn := TimestampColumn(i.name)
+	newTimestampColumn.setTableName(i.tableName)
+	newTimestampColumn.setSubQuery(subQuery)
+
 	return newTimestampColumn
+}
+
+func (i *timestampColumnImpl) From(subQuery ExpressionTable) ColumnTimestamp {
+	return i.from(subQuery).(ColumnTimestamp)
 }
 
 func TimestampColumn(name string) ColumnTimestamp {
 	timestampColumn := &timestampColumnImpl{}
-
 	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
-
 	timestampColumn.columnImpl = newColumn(name, "", timestampColumn)
 
 	return timestampColumn
@@ -215,7 +245,7 @@ type ColumnTimestampz interface {
 	TimestampzExpression
 	column
 
-	From(table ExpressionTable) ColumnTimestampz
+	From(subQuery ExpressionTable) ColumnTimestampz
 }
 
 type timestampzColumnImpl struct {
@@ -224,17 +254,21 @@ type timestampzColumnImpl struct {
 	columnImpl
 }
 
-func (i *timestampzColumnImpl) From(table ExpressionTable) ColumnTimestampz {
-	newTimestampzColumn := TimestampzColumn(i.defaultAlias())
-	newTimestampzColumn.setTableName(table.Alias())
+func (i *timestampzColumnImpl) from(subQuery ExpressionTable) projection {
+	newTimestampzColumn := TimestampzColumn(i.name)
+	newTimestampzColumn.setTableName(i.tableName)
+	newTimestampzColumn.setSubQuery(subQuery)
+
 	return newTimestampzColumn
+}
+
+func (i *timestampzColumnImpl) From(subQuery ExpressionTable) ColumnTimestampz {
+	return i.from(subQuery).(ColumnTimestampz)
 }
 
 func TimestampzColumn(name string) ColumnTimestampz {
 	timestampzColumn := &timestampzColumnImpl{}
-
 	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
-
 	timestampzColumn.columnImpl = newColumn(name, "", timestampzColumn)
 
 	return timestampzColumn
@@ -245,7 +279,7 @@ type ColumnDate interface {
 	DateExpression
 	column
 
-	From(table ExpressionTable) ColumnDate
+	From(subQuery ExpressionTable) ColumnDate
 }
 
 type dateColumnImpl struct {
@@ -254,18 +288,21 @@ type dateColumnImpl struct {
 	columnImpl
 }
 
-func (i *dateColumnImpl) From(table ExpressionTable) ColumnDate {
-	newDateColumn := DateColumn(i.defaultAlias())
-	newDateColumn.setTableName(table.Alias())
+func (i *dateColumnImpl) from(subQuery ExpressionTable) projection {
+	newDateColumn := DateColumn(i.name)
+	newDateColumn.setTableName(i.tableName)
+	newDateColumn.setSubQuery(subQuery)
+
 	return newDateColumn
+}
+
+func (i *dateColumnImpl) From(subQuery ExpressionTable) ColumnDate {
+	return i.from(subQuery).(ColumnDate)
 }
 
 func DateColumn(name string) ColumnDate {
 	dateColumn := &dateColumnImpl{}
-
 	dateColumn.dateInterfaceImpl.parent = dateColumn
-
 	dateColumn.columnImpl = newColumn(name, "", dateColumn)
-
 	return dateColumn
 }
