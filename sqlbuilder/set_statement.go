@@ -1,6 +1,7 @@
 package sqlbuilder
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/sqlbuilder/execution"
@@ -206,6 +207,14 @@ func (s *setStatementImpl) Query(db execution.Db, destination interface{}) error
 	return Query(s, db, destination)
 }
 
+func (s *setStatementImpl) QueryContext(db execution.Db, context context.Context, destination interface{}) error {
+	return QueryContext(s, db, context, destination)
+}
+
 func (s *setStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
 	return Exec(s, db)
+}
+
+func (s *setStatementImpl) ExecContext(db execution.Db, context context.Context) (res sql.Result, err error) {
+	return ExecContext(s, db, context)
 }

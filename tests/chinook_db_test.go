@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
@@ -10,6 +11,7 @@ import (
 	"gotest.tools/assert"
 	"io/ioutil"
 	"testing"
+	"time"
 )
 
 func TestSelect(t *testing.T) {
@@ -150,6 +152,36 @@ ORDER BY "Album.AlbumId";
 	assert.Equal(t, len(dest), 2)
 	assert.DeepEqual(t, dest[0], album1)
 	assert.DeepEqual(t, dest[1], album2)
+}
+
+func TestQueryWithContext(t *testing.T) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	dest := []model.Album{}
+
+	err := Album.
+		CROSS_JOIN(Track).
+		CROSS_JOIN(InvoiceLine).
+		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
+		QueryContext(db, ctx, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestExecWithContext(t *testing.T) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err := Album.
+		CROSS_JOIN(Track).
+		CROSS_JOIN(InvoiceLine).
+		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
+		ExecContext(db, ctx)
+
+	assert.Error(t, err, "pq: canceling statement due to user request")
 }
 
 func TestSubQueriesForQuotedNames(t *testing.T) {

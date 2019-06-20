@@ -1,6 +1,7 @@
 package execution
 
 import (
+	"context"
 	"database/sql"
 	"database/sql/driver"
 	"errors"
@@ -12,7 +13,7 @@ import (
 	"time"
 )
 
-func Query(db Db, query string, args []interface{}, destinationPtr interface{}) error {
+func Query(db Db, context context.Context, query string, args []interface{}, destinationPtr interface{}) error {
 
 	if destinationPtr == nil {
 		return errors.New("Destination is nil. ")
@@ -24,12 +25,12 @@ func Query(db Db, query string, args []interface{}, destinationPtr interface{}) 
 	}
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		return queryToSlice(db, query, args, destinationPtr)
+		return queryToSlice(db, context, query, args, destinationPtr)
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		err := queryToSlice(db, query, args, tempSlicePtrValue.Interface())
+		err := queryToSlice(db, context, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return err
@@ -53,7 +54,7 @@ func Query(db Db, query string, args []interface{}, destinationPtr interface{}) 
 	}
 }
 
-func queryToSlice(db Db, query string, args []interface{}, slicePtr interface{}) error {
+func queryToSlice(db Db, ctx context.Context, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
 		return errors.New("db is nil")
 	}
@@ -67,7 +68,11 @@ func queryToSlice(db Db, query string, args []interface{}, slicePtr interface{})
 		return errors.New("Destination has to be a pointer to slice. ")
 	}
 
-	rows, err := db.Query(query, args...)
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	rows, err := db.QueryContext(ctx, query, args...)
 
 	if err != nil {
 		return err

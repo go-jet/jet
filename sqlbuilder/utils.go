@@ -1,9 +1,7 @@
 package sqlbuilder
 
 import (
-	"database/sql"
 	"errors"
-	"github.com/go-jet/jet/sqlbuilder/execution"
 	"github.com/serenize/snaker"
 	"reflect"
 )
@@ -184,24 +182,4 @@ func mustBe(v reflect.Value, expected reflect.Kind) {
 	if k := v.Kind(); k != expected {
 		panic("argument mismatch: expected " + expected.String() + ", got " + v.Type().String())
 	}
-}
-
-func Query(statement Statement, db execution.Db, destination interface{}) error {
-	query, args, err := statement.Sql()
-
-	if err != nil {
-		return err
-	}
-
-	return execution.Query(db, query, args, destination)
-}
-
-func Exec(statement Statement, db execution.Db) (res sql.Result, err error) {
-	query, args, err := statement.Sql()
-
-	if err != nil {
-		return
-	}
-
-	return db.Exec(query, args...)
 }
