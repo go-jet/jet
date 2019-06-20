@@ -204,9 +204,9 @@ FROM dvds.film_actor
      INNER JOIN dvds.inventory ON (inventory.film_id = film.film_id)
      INNER JOIN dvds.rental ON (rental.inventory_id = inventory.inventory_id)
 ORDER BY film.film_id ASC
-LIMIT 500;
+LIMIT 1000;
 `
-	for i := 0; i < 1; i++ {
+	for i := 0; i < 2; i++ {
 		query := FilmActor.
 			INNER_JOIN(Actor, FilmActor.ActorID.EQ(Actor.ActorID)).
 			INNER_JOIN(Film, FilmActor.FilmID.EQ(Film.FilmID)).
@@ -223,9 +223,9 @@ LIMIT 500;
 			).
 			//WHERE(FilmActor.ActorID.GtEqL(1).AND(FilmActor.ActorID.LtEqL(2))).
 			ORDER_BY(Film.FilmID.ASC()).
-			LIMIT(500)
+			LIMIT(1000)
 
-		assertStatementSql(t, query, expectedSql, int64(500))
+		assertStatementSql(t, query, expectedSql, int64(1000))
 
 		var languageActorFilm []struct {
 			model.Language
@@ -248,7 +248,7 @@ LIMIT 500;
 
 		assert.NilError(t, err)
 		assert.Equal(t, len(languageActorFilm), 1)
-		assert.Equal(t, len(languageActorFilm[0].Films), 6)
+		assert.Equal(t, len(languageActorFilm[0].Films), 10)
 		assert.Equal(t, len(languageActorFilm[0].Films[0].Actors), 10)
 	}
 
