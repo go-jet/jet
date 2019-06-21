@@ -23,18 +23,18 @@ var sqlBuilderTableTemplate = `
 package table
 
 import (
-	"github.com/go-jet/jet/sqlbuilder"
+	"github.com/go-jet/jet"
 )
 
 type {{.GoStructName}} struct {
-	sqlbuilder.Table
+	jet.Table
 	
 	//Columns
 {{- range .Columns}}
-	{{camelize .Name}} sqlbuilder.Column{{.SqlBuilderColumnType}}
+	{{camelize .Name}} jet.Column{{.SqlBuilderColumnType}}
 {{- end}}
 
-	AllColumns sqlbuilder.ColumnList
+	AllColumns jet.ColumnList
 }
 
 var {{camelize .Name}} = new{{.GoStructName}}()
@@ -42,19 +42,19 @@ var {{camelize .Name}} = new{{.GoStructName}}()
 func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{camelize .Name}}Column = sqlbuilder.{{.SqlBuilderColumnType}}Column("{{.Name}}")
+		{{camelize .Name}}Column = jet.{{.SqlBuilderColumnType}}Column("{{.Name}}")
 	{{- end}}
 	)
 
 	return &{{.GoStructName}}{
-		Table: sqlbuilder.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
+		Table: jet.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
 
 		//Columns
 {{- range .Columns}}
 		{{camelize .Name}}: {{camelize .Name}}Column,
 {{- end}}
 
-		AllColumns: sqlbuilder.ColumnList{ {{template "column-list" .Columns}} },
+		AllColumns: jet.ColumnList{ {{template "column-list" .Columns}} },
 	}
 }
 
@@ -122,15 +122,15 @@ func (e {{camelize $.Name}}) String() string {
 `
 var enumTypeTemplate = `package enum
 
-import "github.com/go-jet/jet/sqlbuilder"
+import "github.com/go-jet/jet"
 
 var {{camelize $.Name}} = &struct {
 {{- range $index, $element := .Values}}
-	{{camelize $element}} sqlbuilder.StringExpression
+	{{camelize $element}} jet.StringExpression
 {{- end}}
 } {
 {{- range $index, $element := .Values}}
-	{{camelize $element}}: sqlbuilder.NewEnumValue("{{$element}}"),
+	{{camelize $element}}: jet.NewEnumValue("{{$element}}"),
 {{- end}}
 }
 `

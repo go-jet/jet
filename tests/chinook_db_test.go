@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	. "github.com/go-jet/jet/sqlbuilder"
+	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/chinook/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/chinook/table"
 	"gotest.tools/assert"
@@ -254,14 +254,14 @@ func assertJson(t *testing.T, jsonFilePath string, data interface{}) {
 }
 
 func jsonPrint(v interface{}) {
-	json, _ := json.MarshalIndent(v, "", "\t")
-	fmt.Println(string(json))
+	jsonText, _ := json.MarshalIndent(v, "", "\t")
+	fmt.Println(string(jsonText))
 }
 
 func jsonSave(path string, v interface{}) {
-	json, _ := json.MarshalIndent(v, "", "\t")
+	jsonText, _ := json.MarshalIndent(v, "", "\t")
 
-	err := ioutil.WriteFile(path, json, 0644)
+	err := ioutil.WriteFile(path, jsonText, 0644)
 
 	if err != nil {
 		panic(err)

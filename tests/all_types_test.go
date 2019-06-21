@@ -2,7 +2,7 @@ package tests
 
 import (
 	"fmt"
-	. "github.com/go-jet/jet/sqlbuilder"
+	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
 	"github.com/google/uuid"
@@ -11,7 +11,6 @@ import (
 )
 
 func TestAllTypesSelect(t *testing.T) {
-
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)

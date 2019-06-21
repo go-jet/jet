@@ -3,7 +3,7 @@ package tests
 import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	. "github.com/go-jet/jet/sqlbuilder"
+	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/table"
 	"github.com/google/uuid"
