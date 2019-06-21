@@ -24,10 +24,8 @@ type SelectStatement interface {
 	GROUP_BY(groupByClauses ...groupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
 	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
-
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
-
 	FOR(lock SelectLock) SelectStatement
 
 	AsTable(alias string) ExpressionTable

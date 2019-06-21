@@ -6,13 +6,8 @@ import (
 )
 
 func TestFuncAVG(t *testing.T) {
-	t.Run("float", func(t *testing.T) {
-		assertClauseSerialize(t, AVGf(table1ColFloat), "AVG(table1.col_float)")
-	})
-
-	t.Run("integer", func(t *testing.T) {
-		assertClauseSerialize(t, AVGi(table1ColInt), "AVG(table1.col_int)")
-	})
+	assertClauseSerialize(t, AVG(table1ColFloat), "AVG(table1.col_float)")
+	assertClauseSerialize(t, AVG(table1ColInt), "AVG(table1.col_int)")
 }
 
 func TestFuncBIT_AND(t *testing.T) {
@@ -88,27 +83,17 @@ func TestFuncABS(t *testing.T) {
 }
 
 func TestFuncSQRT(t *testing.T) {
-	t.Run("float", func(t *testing.T) {
-		assertClauseSerialize(t, SQRTf(table1ColFloat), "SQRT(table1.col_float)")
-		assertClauseSerialize(t, SQRTf(Float(11.2222)), "SQRT($1)", float64(11.2222))
-	})
-
-	t.Run("integer", func(t *testing.T) {
-		assertClauseSerialize(t, SQRTi(table1ColInt), "SQRT(table1.col_int)")
-		assertClauseSerialize(t, SQRTi(Int(11)), "SQRT($1)", int64(11))
-	})
+	assertClauseSerialize(t, SQRT(table1ColFloat), "SQRT(table1.col_float)")
+	assertClauseSerialize(t, SQRT(Float(11.2222)), "SQRT($1)", float64(11.2222))
+	assertClauseSerialize(t, SQRT(table1ColInt), "SQRT(table1.col_int)")
+	assertClauseSerialize(t, SQRT(Int(11)), "SQRT($1)", int64(11))
 }
 
 func TestFuncCBRT(t *testing.T) {
-	t.Run("float", func(t *testing.T) {
-		assertClauseSerialize(t, CBRTf(table1ColFloat), "CBRT(table1.col_float)")
-		assertClauseSerialize(t, CBRTf(Float(11.2222)), "CBRT($1)", float64(11.2222))
-	})
-
-	t.Run("integer", func(t *testing.T) {
-		assertClauseSerialize(t, CBRTi(table1ColInt), "CBRT(table1.col_int)")
-		assertClauseSerialize(t, CBRTi(Int(11)), "CBRT($1)", int64(11))
-	})
+	assertClauseSerialize(t, CBRT(table1ColFloat), "CBRT(table1.col_float)")
+	assertClauseSerialize(t, CBRT(Float(11.2222)), "CBRT($1)", float64(11.2222))
+	assertClauseSerialize(t, CBRT(table1ColInt), "CBRT(table1.col_int)")
+	assertClauseSerialize(t, CBRT(Int(11)), "CBRT($1)", int64(11))
 }
 
 func TestFuncCEIL(t *testing.T) {

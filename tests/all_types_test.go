@@ -230,8 +230,8 @@ func TestFloatOperators(t *testing.T) {
 		AllTypes.Real.POW(Float(11.22)),
 
 		ABSf(AllTypes.Real),
-		SQRTf(AllTypes.Real),
-		CBRTf(AllTypes.Real),
+		SQRT(AllTypes.Real),
+		CBRT(AllTypes.Real),
 		CEIL(AllTypes.Real),
 		FLOOR(AllTypes.Real),
 		ROUND(AllTypes.Decimal),
@@ -284,8 +284,8 @@ func TestIntegerOperators(t *testing.T) {
 		AllTypes.Integer.BIT_SHIFT_RIGHT(Int(11)),
 
 		ABSi(AllTypes.Integer),
-		SQRTi(AllTypes.Integer),
-		CBRTi(AllTypes.Integer),
+		SQRT(AllTypes.Integer),
+		CBRT(AllTypes.Integer),
 	)
 
 	fmt.Println(query.DebugSql())

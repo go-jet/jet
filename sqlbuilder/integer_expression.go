@@ -2,6 +2,7 @@ package sqlbuilder
 
 type IntegerExpression interface {
 	Expression
+	numericExpression
 
 	EQ(rhs IntegerExpression) BoolExpression
 	NOT_EQ(rhs IntegerExpression) BoolExpression
@@ -29,6 +30,7 @@ type IntegerExpression interface {
 }
 
 type integerInterfaceImpl struct {
+	numericExpressionImpl
 	parent IntegerExpression
 }
 

@@ -2,6 +2,7 @@ package sqlbuilder
 
 type FloatExpression interface {
 	Expression
+	numericExpression
 
 	EQ(rhs FloatExpression) BoolExpression
 	NOT_EQ(rhs FloatExpression) BoolExpression
@@ -22,6 +23,7 @@ type FloatExpression interface {
 }
 
 type floatInterfaceImpl struct {
+	numericExpressionImpl
 	parent FloatExpression
 }
 

@@ -854,7 +854,7 @@ ORDER BY SUM(payment.amount) ASC;
 		SELECT(
 			Payment.CustomerID.AS("customer_payment_sum.customer_id"),
 			SUMf(Payment.Amount).AS("customer_payment_sum.amount_sum"),
-			AVGf(Payment.Amount).AS("customer_payment_sum.amount_avg"),
+			AVG(Payment.Amount).AS("customer_payment_sum.amount_avg"),
 			MAXf(Payment.Amount).AS("customer_payment_sum.amount_max"),
 			MINf(Payment.Amount).AS("customer_payment_sum.amount_min"),
 			COUNT(Payment.Amount).AS("customer_payment_sum.amount_count"),

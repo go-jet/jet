@@ -186,24 +186,16 @@ func ABSf(floatExpression FloatExpression) FloatExpression {
 	return newFloatFunc("ABS", floatExpression)
 }
 
-func ABSi(integerExpression IntegerExpression) FloatExpression {
-	return newFloatFunc("ABS", integerExpression)
+func ABSi(integerExpression IntegerExpression) IntegerExpression {
+	return newIntegerFunc("ABS", integerExpression)
 }
 
-func SQRTf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("SQRT", floatExpression)
+func SQRT(numericExpression NumericExpression) FloatExpression {
+	return newFloatFunc("SQRT", numericExpression)
 }
 
-func SQRTi(integerExpression IntegerExpression) FloatExpression {
-	return newFloatFunc("SQRT", integerExpression)
-}
-
-func CBRTf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("CBRT", floatExpression)
-}
-
-func CBRTi(integerExpression IntegerExpression) FloatExpression {
-	return newFloatFunc("CBRT", integerExpression)
+func CBRT(numericExpression NumericExpression) FloatExpression {
+	return newFloatFunc("CBRT", numericExpression)
 }
 
 func CEIL(floatExpression FloatExpression) FloatExpression {
@@ -242,12 +234,8 @@ func LOG(floatExpression FloatExpression) FloatExpression {
 
 // ----------------- Aggregate functions  -------------------//
 
-func AVGf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("AVG", floatExpression)
-}
-
-func AVGi(integerExpression IntegerExpression) FloatExpression {
-	return newFloatFunc("AVG", integerExpression)
+func AVG(numericExpression NumericExpression) FloatExpression {
+	return newFloatFunc("AVG", numericExpression)
 }
 
 func BIT_AND(integerExpression IntegerExpression) IntegerExpression {
