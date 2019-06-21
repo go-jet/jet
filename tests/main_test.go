@@ -2,7 +2,7 @@ package tests
 
 import (
 	"database/sql"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
+	"github.com/go-jet/jet/tests/.test_files/jetdb/dvds/model"
 	"github.com/go-jet/jet/tests/dbconfig"
 	_ "github.com/lib/pq"
 	"github.com/pkg/profile"

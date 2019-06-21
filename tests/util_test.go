@@ -2,7 +2,7 @@ package tests
 
 import (
 	"github.com/go-jet/jet"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
+	"github.com/go-jet/jet/tests/.test_files/jetdb/dvds/model"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 	"strings"

@@ -115,13 +115,13 @@ func queryToSlice(db Db, ctx context.Context, query string, args []interface{}, 
 
 	fmt.Println(groupTime.String())
 
-	err = rows.Err()
-
+	err = rows.Close()
 	if err != nil {
 		return err
 	}
 
-	err = rows.Close()
+	err = rows.Err()
+
 	if err != nil {
 		return err
 	}

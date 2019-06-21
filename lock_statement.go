@@ -3,8 +3,8 @@ package jet
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/go-jet/jet/execution"
-	"github.com/pkg/errors"
 )
 
 type TableLockMode string

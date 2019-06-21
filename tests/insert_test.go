@@ -2,8 +2,8 @@ package tests
 
 import (
 	. "github.com/go-jet/jet"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
-	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
+	"github.com/go-jet/jet/tests/.test_files/jetdb/test_sample/model"
+	. "github.com/go-jet/jet/tests/.test_files/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )

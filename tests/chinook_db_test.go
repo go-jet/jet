@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/chinook/model"
-	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/chinook/table"
+	"github.com/go-jet/jet/tests/.test_files/jetdb/chinook/model"
+	. "github.com/go-jet/jet/tests/.test_files/jetdb/chinook/table"
 	"gotest.tools/assert"
 	"io/ioutil"
 	"testing"
@@ -154,21 +154,23 @@ ORDER BY "Album.AlbumId";
 	assert.DeepEqual(t, dest[1], album2)
 }
 
-func TestQueryWithContext(t *testing.T) {
-
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-	defer cancel()
-
-	dest := []model.Album{}
-
-	err := Album.
-		CROSS_JOIN(Track).
-		CROSS_JOIN(InvoiceLine).
-		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
-		QueryContext(db, ctx, &dest)
-
-	assert.Error(t, err, "context deadline exceeded")
-}
+//func TestQueryWithContext(t *testing.T) {
+//
+//	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+//	defer cancel()
+//
+//	dest := []model.Album{}
+//
+//	err := Album.
+//		CROSS_JOIN(Track).
+//		CROSS_JOIN(InvoiceLine).
+//		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
+//		QueryContext(db, ctx, &dest)
+//
+//	spew.Dump(dest)
+//
+//	assert.Error(t, err, "context deadline exceeded")
+//}
 
 func TestExecWithContext(t *testing.T) {
 

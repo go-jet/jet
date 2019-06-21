@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/enum"
-	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
-	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/table"
-	model2 "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/model"
-	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/test_sample/table"
+	"github.com/go-jet/jet/tests/.test_files/jetdb/dvds/enum"
+	"github.com/go-jet/jet/tests/.test_files/jetdb/dvds/model"
+	. "github.com/go-jet/jet/tests/.test_files/jetdb/dvds/table"
+	model2 "github.com/go-jet/jet/tests/.test_files/jetdb/test_sample/model"
+	. "github.com/go-jet/jet/tests/.test_files/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -530,7 +530,7 @@ ORDER BY employee.employee_id;
 		EmployeeID:     1,
 		FirstName:      "Windy",
 		LastName:       "Hays",
-		EmploymentDate: timestampWithTimeZone("1999-01-08 13:05:06.1 +0100 CET", 1),
+		EmploymentDate: timestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
 		ManagerID:      nil,
 	})
 

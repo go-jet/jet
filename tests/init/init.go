@@ -9,6 +9,8 @@ import (
 )
 
 func main() {
+	fmt.Println(dbconfig.ConnectString)
+
 	db, err := sql.Open("postgres", dbconfig.ConnectString)
 	if err != nil {
 		panic("Failed to connect to test db")
@@ -38,6 +40,7 @@ func main() {
 			Password:   dbconfig.Password,
 			DBName:     dbconfig.DBName,
 			SchemaName: schemaName,
+			SslMode:    "disable",
 		})
 
 		panicOnError(err)
