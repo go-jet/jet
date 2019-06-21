@@ -3,7 +3,7 @@ package tests
 import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
-	. "github.com/go-jet/jet/sqlbuilder"
+	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/enum"
 	"github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/model"
 	. "github.com/go-jet/jet/tests/.test_files/dvd_rental/dvds/table"
@@ -1129,7 +1129,9 @@ LOCK TABLE dvds.address IN`
 
 		assert.NilError(t, err)
 
-		tx.Rollback()
+		err = tx.Rollback()
+
+		assert.NilError(t, err)
 	}
 
 	for _, lockMode := range testData {
@@ -1143,7 +1145,9 @@ LOCK TABLE dvds.address IN`
 
 		assert.NilError(t, err)
 
-		tx.Rollback()
+		err = tx.Rollback()
+
+		assert.NilError(t, err)
 	}
 }
 
@@ -1178,7 +1182,8 @@ FOR`
 		rowsAffected, _ := res.RowsAffected()
 		assert.Equal(t, rowsAffected, int64(3))
 
-		tx.Rollback()
+		err = tx.Rollback()
+		assert.NilError(t, err)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
@@ -1193,7 +1198,8 @@ FOR`
 		rowsAffected, _ := res.RowsAffected()
 		assert.Equal(t, rowsAffected, int64(3))
 
-		tx.Rollback()
+		err = tx.Rollback()
+		assert.NilError(t, err)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
@@ -1208,6 +1214,7 @@ FOR`
 		rowsAffected, _ := res.RowsAffected()
 		assert.Equal(t, rowsAffected, int64(3))
 
-		tx.Rollback()
+		err = tx.Rollback()
+		assert.NilError(t, err)
 	}
 }

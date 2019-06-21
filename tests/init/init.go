@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/go-jet/jet/generator"
 	"github.com/go-jet/jet/tests/dbconfig"
 	"io/ioutil"
@@ -12,49 +13,45 @@ func main() {
 	if err != nil {
 		panic("Failed to connect to test db")
 	}
-	defer db.Close()
+	defer func() {
+		err := db.Close()
+		printOnError(err)
+	}()
 
-	testSampleSql, err := ioutil.ReadFile("./init/data/test_sample.sql")
+	schemaNames := []string{
+		"dvds",
+		"test_sample",
+		"chinook",
+	}
 
-	panicOnError(err)
+	for _, schemaName := range schemaNames {
+		testSampleSql, err := ioutil.ReadFile("./init/data/" + schemaName + ".sql")
 
-	_, err = db.Exec(string(testSampleSql))
+		panicOnError(err)
 
-	panicOnError(err)
+		_, err = db.Exec(string(testSampleSql))
 
-	dvdsSql, err := ioutil.ReadFile("./init/data/dvds.sql")
+		err = generator.Generate("./.test_files", generator.GeneratorData{
+			Host:       dbconfig.Host,
+			Port:       "5432",
+			User:       dbconfig.User,
+			Password:   dbconfig.Password,
+			DBName:     dbconfig.DBName,
+			SchemaName: schemaName,
+		})
 
-	panicOnError(err)
-
-	_, err = db.Exec(string(dvdsSql))
-
-	panicOnError(err)
-
-	err = generator.Generate("./.test_files", generator.GeneratorData{
-		Host:       dbconfig.Host,
-		Port:       "5432",
-		User:       dbconfig.User,
-		Password:   dbconfig.Password,
-		DBName:     dbconfig.DBName,
-		SchemaName: "dvds",
-	})
-
-	panicOnError(err)
-
-	err = generator.Generate("./.test_files", generator.GeneratorData{
-		Host:       dbconfig.Host,
-		Port:       "5432",
-		User:       dbconfig.User,
-		Password:   dbconfig.Password,
-		DBName:     dbconfig.DBName,
-		SchemaName: "test_sample",
-	})
-
-	panicOnError(err)
+		panicOnError(err)
+	}
 }
 
 func panicOnError(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+func printOnError(err error) {
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 }
