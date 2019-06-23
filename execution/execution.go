@@ -6,6 +6,7 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"github.com/go-jet/jet/execution/internal"
 	"github.com/serenize/snaker"
 	"reflect"
 	"strconv"
@@ -13,7 +14,7 @@ import (
 	"time"
 )
 
-func Query(db Db, context context.Context, query string, args []interface{}, destinationPtr interface{}) error {
+func Query(db DB, context context.Context, query string, args []interface{}, destinationPtr interface{}) error {
 
 	if destinationPtr == nil {
 		return errors.New("Destination is nil. ")
@@ -54,7 +55,7 @@ func Query(db Db, context context.Context, query string, args []interface{}, des
 	}
 }
 
-func queryToSlice(db Db, ctx context.Context, query string, args []interface{}, slicePtr interface{}) error {
+func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
 		return errors.New("db is nil")
 	}
@@ -494,15 +495,15 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	return values
 }
 
-var nullFloatType = reflect.TypeOf(NullFloat32{})
+var nullFloatType = reflect.TypeOf(internal.NullFloat32{})
 var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
-var nullInt16Type = reflect.TypeOf(NullInt16{})
-var nullInt32Type = reflect.TypeOf(NullInt32{})
+var nullInt16Type = reflect.TypeOf(internal.NullInt16{})
+var nullInt32Type = reflect.TypeOf(internal.NullInt32{})
 var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
 var nullStringType = reflect.TypeOf(sql.NullString{})
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
-var nullTimeType = reflect.TypeOf(NullTime{})
-var nullByteArrayType = reflect.TypeOf(NullByteArray{})
+var nullTimeType = reflect.TypeOf(internal.NullTime{})
+var nullByteArrayType = reflect.TypeOf(internal.NullByteArray{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
 	switch columnType.DatabaseTypeName() {

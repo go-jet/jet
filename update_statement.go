@@ -139,18 +139,18 @@ func (u *updateStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(u)
 }
 
-func (u *updateStatementImpl) Query(db execution.Db, destination interface{}) error {
+func (u *updateStatementImpl) Query(db execution.DB, destination interface{}) error {
 	return Query(u, db, destination)
 }
 
-func (u *updateStatementImpl) QueryContext(db execution.Db, context context.Context, destination interface{}) error {
+func (u *updateStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
 	return QueryContext(u, db, context, destination)
 }
 
-func (u *updateStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+func (u *updateStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
 	return Exec(u, db)
 }
 
-func (u *updateStatementImpl) ExecContext(db execution.Db, context context.Context) (res sql.Result, err error) {
+func (u *updateStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
 	return ExecContext(u, db, context)
 }

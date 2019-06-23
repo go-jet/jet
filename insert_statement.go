@@ -146,18 +146,18 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	return
 }
 
-func (i *insertStatementImpl) Query(db execution.Db, destination interface{}) error {
+func (i *insertStatementImpl) Query(db execution.DB, destination interface{}) error {
 	return Query(i, db, destination)
 }
 
-func (i *insertStatementImpl) QueryContext(db execution.Db, context context.Context, destination interface{}) error {
+func (i *insertStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
 	return QueryContext(i, db, context, destination)
 }
 
-func (i *insertStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+func (i *insertStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
 	return Exec(i, db)
 }
 
-func (i *insertStatementImpl) ExecContext(db execution.Db, context context.Context) (res sql.Result, err error) {
+func (i *insertStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
 	return ExecContext(i, db, context)
 }

@@ -1,4 +1,4 @@
-package generator
+package postgresgen
 
 var autoGenWarningTemplate = `
 //

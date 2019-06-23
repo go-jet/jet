@@ -1,4 +1,4 @@
-package generator
+package utils
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func saveGoFile(dirPath, fileName string, text []byte) error {
+func SaveGoFile(dirPath, fileName string, text []byte) error {
 	newGoFilePath := filepath.Join(dirPath, fileName) + ".go"
 
 	file, err := os.Create(newGoFilePath)
@@ -36,7 +36,7 @@ func saveGoFile(dirPath, fileName string, text []byte) error {
 	return nil
 }
 
-func ensureDirPath(dirPath string) error {
+func EnsureDirPath(dirPath string) error {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, os.ModePerm)
 
@@ -48,7 +48,7 @@ func ensureDirPath(dirPath string) error {
 	return nil
 }
 
-func generateTemplate(templateText string, templateData interface{}) ([]byte, error) {
+func GenerateTemplate(templateText string, templateData interface{}) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"camelize": func(txt string) string {
@@ -71,8 +71,8 @@ func generateTemplate(templateText string, templateData interface{}) ([]byte, er
 	return buf.Bytes(), nil
 }
 
-func cleanUpGeneratedFiles(dir string) error {
-	exist, err := dirExists(dir)
+func CleanUpGeneratedFiles(dir string) error {
+	exist, err := DirExists(dir)
 
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func cleanUpGeneratedFiles(dir string) error {
 	return nil
 }
 
-func dirExists(path string) (bool, error) {
+func DirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true, nil

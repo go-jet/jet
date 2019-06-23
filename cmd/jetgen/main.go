@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet/generator"
+	"github.com/go-jet/jet/generator/postgresgen"
 	"os"
 )
 
@@ -38,7 +38,7 @@ func init() {
 
 func main() {
 
-	genData := generator.GeneratorData{
+	genData := postgresgen.DBConnection{
 		Host:     host,
 		Port:     port,
 		User:     user,
@@ -50,14 +50,10 @@ func main() {
 		SchemaName: schemaName,
 	}
 
-	fmt.Println(destDir, genData)
-
-	err := generator.Generate(destDir, genData)
+	err := postgresgen.Generate(destDir, genData)
 
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(-1)
 	}
-
-	fmt.Println("SUCCESS")
 }

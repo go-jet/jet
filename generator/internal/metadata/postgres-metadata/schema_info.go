@@ -2,8 +2,7 @@ package postgres_metadata
 
 import (
 	"database/sql"
-	"fmt"
-	"github.com/go-jet/jet/generator/metadata"
+	"github.com/go-jet/jet/generator/internal/metadata"
 )
 
 type SchemaInfo struct {
@@ -64,8 +63,6 @@ where table_catalog = $1 and table_schema = $2 and table_type = 'BASE TABLE';
 
 		ret = append(ret, tableInfo)
 	}
-
-	fmt.Println("FOUND", len(ret), "tables")
 
 	err = rows.Err()
 

@@ -2,8 +2,7 @@ package postgres_metadata
 
 import (
 	"database/sql"
-	"fmt"
-	"github.com/go-jet/jet/generator/metadata"
+	"github.com/go-jet/jet/generator/internal/metadata"
 )
 
 type EnumInfo struct {
@@ -62,8 +61,6 @@ ORDER BY n.nspname, t.typname, e.enumsortorder;`
 			enumValues,
 		})
 	}
-
-	fmt.Println("FOUND", len(ret), " enums")
 
 	return ret, nil
 }

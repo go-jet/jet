@@ -91,7 +91,7 @@ func TestJoinEverything(t *testing.T) {
 					Customer struct { // customer data for invoice
 						model.Customer
 
-						Employee *struct {
+						Employee *struct { // employee data for customer if exists
 							model.Employee
 
 							Manager *model.Employee

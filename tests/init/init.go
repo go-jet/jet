@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/generator"
+	postgres_generator "github.com/go-jet/jet/generator/postgresgen"
 	"github.com/go-jet/jet/tests/dbconfig"
 	"io/ioutil"
 )
@@ -33,7 +33,7 @@ func main() {
 
 		_, err = db.Exec(string(testSampleSql))
 
-		err = generator.Generate("./.test_files", generator.GeneratorData{
+		err = postgres_generator.Generate("./.test_files", postgres_generator.DBConnection{
 			Host:       dbconfig.Host,
 			Port:       "5432",
 			User:       dbconfig.User,

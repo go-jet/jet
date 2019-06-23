@@ -1,4 +1,4 @@
-package execution
+package internal
 
 import (
 	"database/sql/driver"

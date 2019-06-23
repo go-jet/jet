@@ -72,18 +72,18 @@ func (d *deleteStatementImpl) DebugSql() (query string, err error) {
 	return DebugSql(d)
 }
 
-func (d *deleteStatementImpl) Query(db execution.Db, destination interface{}) error {
+func (d *deleteStatementImpl) Query(db execution.DB, destination interface{}) error {
 	return Query(d, db, destination)
 }
 
-func (d *deleteStatementImpl) QueryContext(db execution.Db, context context.Context, destination interface{}) error {
+func (d *deleteStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
 	return QueryContext(d, db, context, destination)
 }
 
-func (d *deleteStatementImpl) Exec(db execution.Db) (res sql.Result, err error) {
+func (d *deleteStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
 	return Exec(d, db)
 }
 
-func (d *deleteStatementImpl) ExecContext(db execution.Db, context context.Context) (res sql.Result, err error) {
+func (d *deleteStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
 	return ExecContext(d, db, context)
 }
