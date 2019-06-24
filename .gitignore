@@ -15,4 +15,5 @@
 .idea
 
 # Test files
+gen
 .gentestdata

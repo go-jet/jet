@@ -25,8 +25,8 @@ func init() {
 	flag.StringVar(&port, "port", "", "Database port")
 	flag.StringVar(&user, "user", "", "Database user")
 	flag.StringVar(&password, "password", "", "The user’s password")
-	flag.StringVar(&sslmode, "sslmode", "disable", "Whether or not to use SSL")
-	flag.StringVar(&params, "params", "", "Additional connection string parameters.")
+	flag.StringVar(&sslmode, "sslmode", "disable", "Whether or not to use SSL(optional)")
+	flag.StringVar(&params, "params", "", "Additional connection string parameters(optional)")
 
 	flag.StringVar(&dbName, "dbname", "", "name of the database")
 	flag.StringVar(&schemaName, "schema", "public", "Database schema name.")
@@ -37,6 +37,12 @@ func init() {
 }
 
 func main() {
+
+	if host == "" || port == "" || user == "" || dbName == "" || schemaName == "" {
+		fmt.Println("jetgen: required flag missing")
+		flag.Usage()
+		os.Exit(-2)
+	}
 
 	genData := postgresgen.DBConnection{
 		Host:     host,

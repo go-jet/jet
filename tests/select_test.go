@@ -1218,3 +1218,92 @@ FOR`
 		assert.NilError(t, err)
 	}
 }
+
+func TestForQuickStart(t *testing.T) {
+
+	var expectedSql = `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update",
+     film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     film.description AS "film.description",
+     film.release_year AS "film.release_year",
+     film.language_id AS "film.language_id",
+     film.rental_duration AS "film.rental_duration",
+     film.rental_rate AS "film.rental_rate",
+     film.length AS "film.length",
+     film.replacement_cost AS "film.replacement_cost",
+     film.rating AS "film.rating",
+     film.last_update AS "film.last_update",
+     film.special_features AS "film.special_features",
+     film.fulltext AS "film.fulltext",
+     language.language_id AS "language.language_id",
+     language.name AS "language.name",
+     language.last_update AS "language.last_update",
+     category.category_id AS "category.category_id",
+     category.name AS "category.name",
+     category.last_update AS "category.last_update"
+FROM dvds.actor
+     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
+     INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
+     INNER JOIN dvds.language ON (language.language_id = film.language_id)
+     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+     INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
+WHERE ((language.name = 'English') AND (category.name != 'Action')) AND (film.length > 180)
+ORDER BY actor.actor_id ASC, film.film_id ASC;
+`
+
+	stmt := SELECT(
+		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate, // list of all actor columns (equivalent to Actor.AllColumns)
+		Film.AllColumns, // list of all film columns (equivalent to Film.FilmID, Film.Title, ...)
+		Language.AllColumns,
+		Category.AllColumns,
+	).FROM(
+		Actor.
+			INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)). // INNER JOIN Actor with FilmActor on condition Actor.ActorID = FilmActor.ActorID
+			INNER_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)).         // then with Film, Language, FilmCategory and Category.
+			INNER_JOIN(Language, Language.LanguageID.EQ(Film.LanguageID)).
+			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
+	).WHERE(
+		Language.Name.EQ(String("English")). // note that every column has type.
+							AND(Category.Name.NOT_EQ(String("Action"))). // String column Language.Name and Category.Name can be compared only with string expression
+							AND(Film.Length.GT(Int(180))),               // Film.Length is integer column and can be compared only with integer expression
+	).ORDER_BY(
+		Actor.ActorID.ASC(),
+		Film.FilmID.ASC(),
+	)
+
+	assertStatementSql(t, stmt, expectedSql, "English", "Action", int64(180))
+
+	var dest []struct {
+		model.Actor
+
+		Films []struct {
+			model.Film
+
+			Language model.Language
+
+			Category []model.Category
+		}
+	}
+
+	err := stmt.Query(db, &dest)
+	assert.NilError(t, err)
+
+	assertJson(t, "./testdata/quick-start-dest.json", dest)
+
+	var dest2 []struct {
+		model.Category
+
+		Film  []model.Film
+		Actor []model.Actor
+	}
+
+	err = stmt.Query(db, &dest2)
+	assert.NilError(t, err)
+
+	assertJson(t, "./testdata/quick-start-dest2.json", dest2)
+}
