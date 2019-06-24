@@ -15,4 +15,4 @@
 .idea
 
 # Test files
-.test_files
+.gentestdata

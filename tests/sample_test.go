@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
-	"github.com/go-jet/jet/tests/.test_files/jetdb/test_sample/model"
-	"github.com/go-jet/jet/tests/.test_files/jetdb/test_sample/table"
+	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
+	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )

@@ -675,17 +675,20 @@ func (s *scanContext) columnIndex(tableName, columnName string) int {
 			return i
 		}
 
-		name = strings.ToLower(snaker.CamelToSnake(tableName) + "." + snaker.CamelToSnake(columnName))
+		snakedTableName := snaker.CamelToSnake(tableName)
+		snakedColumnName := snaker.CamelToSnake(columnName)
+
+		name = strings.ToLower(snakedTableName + "." + snakedColumnName)
 		if i, ok := s.columnNameIndexMap[name]; ok {
 			return i
 		}
 
-		name = strings.ToLower(tableName + "." + snaker.CamelToSnake(columnName))
+		name = strings.ToLower(tableName + "." + snakedColumnName)
 		if i, ok := s.columnNameIndexMap[name]; ok {
 			return i
 		}
 
-		name = strings.ToLower(snaker.CamelToSnake(tableName) + "." + columnName)
+		name = strings.ToLower(snakedTableName + "." + columnName)
 		if i, ok := s.columnNameIndexMap[name]; ok {
 			return i
 		}

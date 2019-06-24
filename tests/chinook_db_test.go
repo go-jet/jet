@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
-	"github.com/go-jet/jet/tests/.test_files/jetdb/chinook/model"
-	. "github.com/go-jet/jet/tests/.test_files/jetdb/chinook/table"
+	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
+	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
 	"gotest.tools/assert"
 	"io/ioutil"
 	"testing"
@@ -110,7 +110,7 @@ func TestJoinEverything(t *testing.T) {
 	fmt.Println("Artist count :", len(dest))
 	assert.Equal(t, len(dest), 275)
 
-	assertJson(t, "./data/joined_everything.json", dest)
+	assertJson(t, "./testdata/joined_everything.json", dest)
 }
 
 func TestUnionForQuotedNames(t *testing.T) {
