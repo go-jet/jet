@@ -33,7 +33,7 @@ func main() {
 
 		_, err = db.Exec(string(testSampleSql))
 
-		err = postgres_generator.Generate("./.test_files", postgres_generator.DBConnection{
+		err = postgres_generator.Generate("./.gentestdata", postgres_generator.DBConnection{
 			Host:       dbconfig.Host,
 			Port:       "5432",
 			User:       dbconfig.User,
