@@ -4,18 +4,18 @@
 
 Jet is sql builder for Postgresql(support for MySql and OracleSql will be added later). Jet enables writing typesafe SQL queries in Go, and ability to easily convert query result to desired arbitrary structure.
 
-#Features
+# Features
 * TODO
 
 # Getting Started
 
-##Prerequisites
+## Prerequisites
 
 To install Jet package, you need to install Go and set your Go workspace first.
 
 [Go](https://golang.org/) **version 1.8+ is required**
 
-##Installation
+## Installation
 
 Use the bellow command to install jet
 ```sh
@@ -30,11 +30,11 @@ go install github.com/go-jet/jet/cmd/jetgen
 
 Make sure GOPATH bin folder is added to the PATH environment variable.
 
-##Quick Start
+## Quick Start
 For this quick start example we will use sample dvd rental database. Full database dump can be found in [./tests/init/data/dvds.sql](./tests/init/data/dvds.sql)
 Schema diagram of interest for example can be found [here](./examples/quick-start/diagram.png).
 
-###Generate sql builder and model files
+### Generate sql builder and model files
 To generate sql builder and data model go files we need to call jetgen, and provide it with postgres connection parameters and destination folder for generated go files.
 Sample command used in tests:
 ```sh
@@ -56,7 +56,7 @@ As jetgen command output suggest, jetgen will:
 -delete everything in destination folder `./gen`,   
 -and finally generate sql builder and model *.go files for all database tables and enums in destination folder `./tests/gentestdata`.
 
-###Now lets write some SQL queries in go
+### Now lets write some SQL queries in go
 
 First lets import jet and generated files from previous step
 ```go
@@ -316,8 +316,8 @@ handleError(err)
 
 Complete code example can be found at [./examples/quick-start/quick-start.go](./examples/quick-start/quick-start.go)
 
-#Contributing
+# Contributing
 
-#Versioning
+# Versioning
 
-#Licence
+# Licence
