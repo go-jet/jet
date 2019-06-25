@@ -53,16 +53,18 @@ Generating enum model files...
 Done
 ```
 As jetgen command output suggest, jetgen will:  
-- connect to postgres database and retrieve information about the tables and enums of `dvds` schema\
+- connect to postgres database and retrieve information about the tables and enums of `dvds` schema
 - delete everything in destination folder `./gen`,   
-- and finally generate sql builder and model Go files for all schema tables and enums in destination folder `./gen`.\
-Generated files folder looks like this:
+- and finally generate sql builder and model Go files for each schema tables and enums into destination folder `./gen`.  
+
+
+Generated files folder structure will look like this:
 ```sh 
 |-- gen                               # destination folder
 |   `-- jetdb                         # database name
 |       `-- dvds                      # schema name
 |           |-- enum                  # sql builder folder for enums
-|           |   `-- mpaa_rating.go
+|           |   |-- mpaa_rating.go
 |           |-- table                 # sql builder folder for tables
 |               |-- actor.go
 |               |-- address.go
@@ -121,9 +123,7 @@ args - are parameters for the query
 <details>
   <summary>Click to see</summary>
   
-```sh
-Parameterized query: 
-
+```sql
 SELECT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
@@ -155,10 +155,12 @@ FROM dvds.actor
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
 WHERE ((language.name = $1) AND (category.name != $2)) AND (film.length > $3)
 ORDER BY actor.actor_id ASC, film.film_id ASC;
-
-Arguments: 
+```
+```sh 
 [English Action 180]
 ```
+
+
 </details>
   
 To see debug sql that can be copy pasted to sql editor and executed.
@@ -169,9 +171,7 @@ query - is parametrized query where every parameter is replaced with appropriate
 <details>
   <summary>Click to see</summary>
   
-```sh
-Debug sql: 
-
+```sql
 SELECT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
@@ -220,7 +220,7 @@ var dest []struct {
 ```
 _There is no limitation for how big or nested destination structure can be._
 
-Now to lets execute a above statement on open database connection db.
+Now to lets execute a above statement on open database connection db and store result into `dest`.
 
 ```go
 err := stmt.Query(db, &dest)
