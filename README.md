@@ -5,18 +5,27 @@
 Jet is Go SQL Builder for PostgreSQL(support for MySql and OracleSql will be added later). 
 Jet enables writing type safe SQL queries in Go, and ability to easily convert database query result to desired arbitrary structure.
 
-# Features
+## Contents
+   - [Getting Started](#getting-started)
+      - [Prerequisites](#prerequisites)
+      - [Installation](#installation)
+      - [Quick Start](#quick-start)
+         - [Generate sql builder and model files](#generate-sql-builder-and-model-files)
+         - [Lets write some SQL queries in Go](#lets-write-some-sql-queries-in-go)
+   - [Benefits](#benefits)
+   - [Versioning](#versioning)
+## Features
 * TODO
 
-# Getting Started
+## Getting Started
 
-## Prerequisites
+### Prerequisites
 
 To install Jet package, you need to install Go and set your Go workspace first.
 
 [Go](https://golang.org/) **version 1.8+ is required**
 
-## Installation
+### Installation
 
 Use the bellow command to install jet
 ```sh
@@ -31,11 +40,11 @@ go install github.com/go-jet/jet/cmd/jetgen
 
 Make sure GOPATH bin folder is added to the PATH environment variable.
 
-## Quick Start
+### Quick Start
 For this quick start example we will use sample _dvd rental_ database. Full database dump can be found in [./tests/init/data/dvds.sql](./tests/init/data/dvds.sql).
 Schema diagram of interest for example can be found [here](./examples/quick-start/diagram.png).
 
-### Generate sql builder and model files
+#### Generate sql builder and model files
 To generate Go sql builder and Go data model from postgres database we need to call jetgen, and provide it with postgres connection parameters and destination folder for generated go files.\
 Assuming we are running local postgres database, with user `jet`, database `jetdb` and schema `dvds` we will use this command:
 ```sh
@@ -78,7 +87,7 @@ Generated files folder structure will look like this:
 
 ```
 You will be using types from `table` and `enum` to write type safe SQL in Go, and `model` types would be used to store results of the queries.
-### Now lets write some SQL queries in Go
+#### Lets write some SQL queries in Go
 
 First lets import jet and generated files from previous step
 ```go
@@ -327,7 +336,7 @@ err = stmt.Query(db, &dest2)
 handleError(err)
 ```
 <details>
-  <summary>`dest2` json: </summary>
+  <summary>Click to see dest2 json</summary>
 
 ```json
 [
@@ -422,12 +431,49 @@ Complete code example can be found at [./examples/quick-start/quick-start.go](./
 This example represent probably the most common use case, but Jet offers much more. Like subqueries, INSERT, UPDATE, DELETE, LOCK statements and much more.
 Detail info can be found at project wiki page.
 
-# Benefits
+## Benefits
 
-TODO:
+##### What are the benefits of writing SQL in Go using Jet?
+The biggest benefit is speed. Speed is improved in 3 major areas:
+##### Speed of development  
+Writing SQL queries is much easier directly from Go, because programmer will have the help of SQL code completion and SQL type safety directly in Go.
+Writing code is much faster and code is more robust. Automatic scan to arbitrary structure removes a lot of headache and 
+boilerplate code needed to structure database query result.  
+With Jet programmer have the power of SQL but also ease of use of NoSQL. 
+##### Speed of execution
+Common web and database server usually is not on the same physical machine, and there is some latency between them. 
+Latency can vary from 5ms to 50+ms. In majority of cases query executed on database is simple query lasting no more than 1ms.
+In those cases web server handler execution time is directly proportional to latency between server and database.
+This is not such a big problem if handler calls database couple of times, but what if web server is using ORM to retrieve all data from database.
+ORM usually access the database once for every object needed.  
+Now lets say latency is 30ms and there are 100 different objects required from the database. This handler will last 3s !!!.  
+With Jet, handler time lost on latency between server and database is constant(because we can write complex query and return result in one database call), 
+and handler execution will be proportional to number or rows returned from database. 
+ORM example replaced with jet will take just 30ms + 'result scan time' = 31ms (rough estimate).  
 
-# Contributing
+With Jet you can even join the whole database and store the whole structured result in  in one query call. 
+This is exactly what is being done in one of the tests: [TestJoinEverything](/tests/chinook_db_test.go#L40). 
+The whole test database is joined and query result is stored in a structured variable in less than 1s. 
 
-# Versioning
+##### How quickly bugs are found
+The most expensive bugs are the one on the production and the least expensive are those found during development.
+With automatically generated type safe SQL not only queries are written faster but bugs are found sooner.  
+Lets return to quick start example, and take closer look at a line:
+ ```go
+AND(Film.Length.GT(Int(180))), // Film.Length is integer column and can be compared only with integer columns and expressions
+```
+Lets say someone changes column `length` to `duration` from `film` table. The next go build will fail at that line and 
+the bug will be caught at compile time.
 
-# Licence
+Lets say someone changes the type of `length` column to some non integer type. Build will also fail at the same line
+because integer columns and expressions can be only compered to other integer columns and expressions.
+
+Without Jet these bugs will have to be either caught by some test or by manual testing. 
+
+## Contributing
+
+## Versioning
+
+[SemVer](http://semver.org/) is used for versioning. For the versions available, see the [releases](https://github.com/go-jet/jet/releases). 
+
+## Licence
