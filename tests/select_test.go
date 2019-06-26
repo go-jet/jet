@@ -7,8 +7,6 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/enum"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
-	model2 "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
-	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -490,61 +488,6 @@ LIMIT 1000;
 	assert.NilError(t, err)
 }
 
-func TestSelecSelfJoin1(t *testing.T) {
-
-	var expectedSql = `
-SELECT employee.employee_id AS "employee.employee_id",
-     employee.first_name AS "employee.first_name",
-     employee.last_name AS "employee.last_name",
-     employee.employment_date AS "employee.employment_date",
-     employee.manager_id AS "employee.manager_id",
-     manager.employee_id AS "manager.employee_id",
-     manager.first_name AS "manager.first_name",
-     manager.last_name AS "manager.last_name",
-     manager.employment_date AS "manager.employment_date",
-     manager.manager_id AS "manager.manager_id"
-FROM test_sample.employee
-     LEFT JOIN test_sample.employee AS manager ON (manager.employee_id = employee.manager_id)
-ORDER BY employee.employee_id;
-`
-
-	manager := Employee.AS("manager")
-	query := Employee.
-		LEFT_JOIN(manager, manager.EmployeeID.EQ(Employee.ManagerID)).
-		SELECT(Employee.AllColumns, manager.AllColumns).
-		ORDER_BY(Employee.EmployeeID)
-
-	assertStatementSql(t, query, expectedSql)
-
-	var dest []struct {
-		model2.Employee
-
-		Manager *model2.Employee
-	}
-
-	err := query.Query(db, &dest)
-
-	assert.NilError(t, err)
-	assert.Equal(t, len(dest), 8)
-	assert.DeepEqual(t, dest[0].Employee, model2.Employee{
-		EmployeeID:     1,
-		FirstName:      "Windy",
-		LastName:       "Hays",
-		EmploymentDate: timestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
-		ManagerID:      nil,
-	})
-
-	assert.Assert(t, dest[0].Manager == nil)
-
-	assert.DeepEqual(t, dest[7].Employee, model2.Employee{
-		EmployeeID:     8,
-		FirstName:      "Salley",
-		LastName:       "Lester",
-		EmploymentDate: timestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      int32Ptr(3),
-	})
-}
-
 func TestSelectSelfJoin(t *testing.T) {
 	expectedSql := `
 SELECT f1.film_id AS "f1.film_id",
@@ -646,63 +589,6 @@ LIMIT 1000;
 	assert.Equal(t, len(films), 1000)
 	assert.DeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
 }
-
-//
-//type Manager staff
-//
-//type staff struct {
-//	StaffID   int32 `sql:"unique"`
-//	FirstName string
-//	LastName  string
-//	//Address    *model.Address
-//	//Email      *string
-//	//StoreID    int16
-//	//Active     bool
-//	//Username   string
-//	//Password   *string
-//	//LastUpdate time.Time
-//	*Manager //`sqlbuilder:"manager"`
-//}
-//
-//func TestSelectSelfReferenceType(t *testing.T) {
-//
-//	expectedSql := `
-//SELECT DISTINCT staff.staff_id AS "staff.staff_id",
-//     staff.first_name AS "staff.first_name",
-//     staff.last_name AS "staff.last_name",
-//     address.address_id AS "address.address_id",
-//     address.address AS "address.address",
-//     address.address2 AS "address.address2",
-//     address.district AS "address.district",
-//     address.city_id AS "address.city_id",
-//     address.postal_code AS "address.postal_code",
-//     address.phone AS "address.phone",
-//     address.last_update AS "address.last_update",
-//     manager.staff_id AS "manager.staff_id",
-//     manager.first_name AS "manager.first_name"
-//FROM dvds.staff
-//     JOIN dvds.address ON staff.address_id = address.address_id
-//     JOIN dvds.staff AS manager ON staff.staff_id = manager.staff_id;
-//`
-//	manager := Staff.AS("manager")
-//
-//	query := Staff.
-//		innerJoin(Address, Staff.AddressID.EQ(Address.AddressID)).
-//		innerJoin(manager, Staff.StaffID.EQ(manager.StaffID)).
-//		SELECT(Staff.StaffID, Staff.FirstName, Staff.LastName, Address.AllColumns, manager.StaffID, manager.FirstName).
-//		DISTINCT()
-//
-//	assertStatementSql(t, query, expectedSql)
-//
-//	staffs := []staff{}
-//
-//	err := query.Query(db, &staffs)
-//
-//	assert.NilError(t, err)
-//
-//	fmt.Println(query.DebugSql())
-//	//spew.Dump(staffs)
-//}
 
 func TestSubQuery(t *testing.T) {
 	expectedQuery := `
@@ -1219,7 +1105,7 @@ FOR`
 	}
 }
 
-func TestForQuickStart(t *testing.T) {
+func TestQuickStart(t *testing.T) {
 
 	var expectedSql = `
 SELECT actor.actor_id AS "actor.actor_id",
@@ -1286,24 +1172,90 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 			Language model.Language
 
-			Category []model.Category
+			Categories []model.Category
 		}
 	}
 
 	err := stmt.Query(db, &dest)
 	assert.NilError(t, err)
 
+	//jsonSave("./testdata/quick-start-dest.json", dest)
 	assertJson(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
 
-		Film  []model.Film
-		Actor []model.Actor
+		Films  []model.Film
+		Actors []model.Actor
 	}
 
 	err = stmt.Query(db, &dest2)
 	assert.NilError(t, err)
 
+	//jsonSave("./testdata/quick-start-dest2.json", dest2)
+	assertJson(t, "./testdata/quick-start-dest2.json", dest2)
+}
+
+func TestQuickStartWithSubQueries(t *testing.T) {
+	filmLogerThan180 := Film.
+		SELECT(Film.AllColumns).
+		WHERE(Film.Length.GT(Int(180))).
+		AsTable("films")
+
+	filmId := Film.FilmID.From(filmLogerThan180)
+	filmLanguageId := Film.LanguageID.From(filmLogerThan180)
+
+	categoriesNotAction := Category.
+		SELECT(Category.AllColumns).
+		WHERE(Category.Name.NOT_EQ(String("Action"))).
+		AsTable("categories")
+
+	categoryId := Category.CategoryID.From(categoriesNotAction)
+
+	stmt := Actor.
+		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
+		INNER_JOIN(filmLogerThan180, filmId.EQ(FilmActor.FilmID)).
+		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageId)).
+		INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmId)).
+		INNER_JOIN(categoriesNotAction, categoryId.EQ(FilmCategory.CategoryID)).
+		SELECT(
+			Actor.AllColumns,
+			filmLogerThan180.AllColumns(),
+			Language.AllColumns,
+			categoriesNotAction.AllColumns(),
+		).ORDER_BY(
+		Actor.ActorID.ASC(),
+		filmId.ASC(),
+	)
+
+	var dest []struct {
+		model.Actor
+
+		Films []struct {
+			model.Film
+
+			Language model.Language
+
+			Categories []model.Category
+		}
+	}
+
+	err := stmt.Query(db, &dest)
+	assert.NilError(t, err)
+
+	//jsonSave("./testdata/quick-start-dest.json", dest)
+	assertJson(t, "./testdata/quick-start-dest.json", dest)
+
+	var dest2 []struct {
+		model.Category
+
+		Films  []model.Film
+		Actors []model.Actor
+	}
+
+	err = stmt.Query(db, &dest2)
+	assert.NilError(t, err)
+
+	//jsonSave("./testdata/quick-start-dest2.json", dest2)
 	assertJson(t, "./testdata/quick-start-dest2.json", dest2)
 }

@@ -144,7 +144,7 @@ func TestScanToStruct(t *testing.T) {
 
 	t.Run("custom struct", func(t *testing.T) {
 		type Inventory struct {
-			InventoryID *int32 `sql:"unique"`
+			InventoryID *int32 `sql:"primary_key"`
 			FilmID      int16
 			StoreID     *int16
 		}
@@ -373,8 +373,8 @@ func TestScanToNestedStruct(t *testing.T) {
 				model.Film
 
 				Language  model.Language
-				Language2 *model.Language
-				Language3 *Language3 `sql:"table:language"`
+				Language2 *model.Language `alias:"Language.*"`
+				Language3 *Language3      `alias:"language"`
 				Lang      struct {
 					model.Language
 				}
@@ -394,7 +394,7 @@ func TestScanToNestedStruct(t *testing.T) {
 		assert.DeepEqual(t, dest.Film.Language, language1)
 		assert.DeepEqual(t, dest.Film.Lang.Language, language1)
 		assert.DeepEqual(t, dest.Film.Lang2.Language, language1)
-		assert.DeepEqual(t, dest.Film.Language2, (*model.Language)(nil))
+		assert.DeepEqual(t, dest.Film.Language2, &language1)
 		assert.DeepEqual(t, model.Language(*dest.Film.Language3), language1)
 	})
 }
@@ -439,14 +439,18 @@ func TestScanToSlice(t *testing.T) {
 		query := Inventory.
 			INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
 			INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
-			SELECT(Inventory.AllColumns, Film.AllColumns, Store.AllColumns).
+			SELECT(
+				Inventory.AllColumns,
+				Film.AllColumns,
+				Store.AllColumns,
+			).
 			ORDER_BY(Inventory.InventoryID).
 			LIMIT(10)
 
 		t.Run("struct with slice of ints", func(t *testing.T) {
 			var dest struct {
 				model.Film
-				IDs []int32 `sql:"table:inventory,column:inventory_id"`
+				IDs []int32 `alias:"inventory.inventory_id"`
 			}
 
 			err := query.Query(db, &dest)
@@ -463,7 +467,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice of structs with slice of ints", func(t *testing.T) {
 			var dest []struct {
 				model.Film
-				IDs []int32 `sql:"table:inventory,column:inventory_id"`
+				IDs []int32 `alias:"Inventory.inventory_id"`
 			}
 
 			err := query.Query(db, &dest)
@@ -479,7 +483,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice of structs with slice of pointer to ints", func(t *testing.T) {
 			var dest []struct {
 				model.Film
-				IDs []*int32 `sql:"table:inventory,column:inventory_id"`
+				IDs []*int32 `alias:"inventory.InventoryId"`
 			}
 
 			err := query.Query(db, &dest)

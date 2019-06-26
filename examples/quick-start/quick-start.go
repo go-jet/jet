@@ -57,8 +57,8 @@ func main() {
 		model.Actor
 		Films []struct {
 			model.Film
-			Language model.Language
-			Category []model.Category
+			Language   model.Language
+			Categories []model.Category
 		}
 	}
 
@@ -72,8 +72,8 @@ func main() {
 	var dest2 []struct {
 		model.Category
 
-		Film  []model.Film
-		Actor []model.Actor
+		Films  []model.Film
+		Actors []model.Actor
 	}
 
 	err = stmt.Query(db, &dest2)

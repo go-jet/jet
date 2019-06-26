@@ -83,7 +83,7 @@ func TestJoinEverything(t *testing.T) {
 				Genre     model.Genre     // track genre
 				MediaType model.MediaType // track media type
 
-				Playlists []model.Playlist `sql:"table:Playlist"` // list of playlist where track is used
+				Playlists []model.Playlist // list of playlist where track is used
 
 				Invoices []struct { // list of invoices where track occurs
 					model.Invoice
@@ -94,7 +94,7 @@ func TestJoinEverything(t *testing.T) {
 						Employee *struct { // employee data for customer if exists
 							model.Employee
 
-							Manager *model.Employee
+							Manager *model.Employee `alias:"Manager"`
 						}
 					}
 				}

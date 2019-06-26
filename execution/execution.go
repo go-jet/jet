@@ -139,7 +139,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 	if isGoBaseType(sliceElemType) {
 		index := 0
 		if structField != nil {
-			tableName, columnName := getRefTableNameFrom(structField)
+			tableName, columnName := getRefAlias(structField)
 			index = scanContext.columnIndex(tableName, columnName)
 
 			if index < 0 {
@@ -297,7 +297,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 	structType := structPtrValue.Type().Elem()
 	structValue := structPtrValue.Elem()
 
-	tableName, _ := getRefTableNameFrom(structField)
+	tableName, _ := getRefAlias(structField)
 
 	if tableName == "" {
 		tableName = structType.Name()
@@ -365,30 +365,26 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 	return
 }
 
-func getRefTableNameFrom(structField *reflect.StructField) (table, column string) {
+func getRefAlias(structField *reflect.StructField) (table, column string) {
 	if structField == nil {
 		return
 	}
 
-	sqlTag := structField.Tag.Get("sql")
+	aliasTag := structField.Tag.Get("alias")
 
-	if sqlTag != "" {
-		tagInfo := tagInfo(sqlTag)
-
-		return tagInfo.table, tagInfo.column
+	if aliasTag == "" {
+		return
 	}
 
-	if !structField.Anonymous {
-		return structField.Name, ""
+	aliasParts := strings.Split(aliasTag, ".")
+
+	table = aliasParts[0]
+
+	if len(aliasParts) > 1 {
+		column = aliasParts[1]
 	}
 
-	fieldType := indirectType(structField.Type)
-
-	if fieldType.Kind() == reflect.Slice {
-		fieldType = fieldType.Elem()
-	}
-
-	return fieldType.Name(), ""
+	return
 }
 
 func initializeValueIfNilPtr(value reflect.Value) {
@@ -612,7 +608,7 @@ func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 }
 
 func (s *scanContext) getGroupKeyInfo(structType reflect.Type, structField *reflect.StructField) groupKeyInfo {
-	tableName, _ := getRefTableNameFrom(structField)
+	tableName, _ := getRefAlias(structField)
 
 	if tableName == "" {
 		tableName = structType.Name()
@@ -638,7 +634,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, structField *refl
 			if len(subType.indexes) != 0 || len(subType.subTypes) != 0 {
 				ret.subTypes = append(ret.subTypes, subType)
 			}
-		} else if tagInfo(field.Tag.Get("sql")).isPrimaryKey {
+		} else if isPrimaryKey(field) {
 			index := s.columnIndex(tableName, field.Name)
 
 			if index < 0 {
@@ -741,35 +737,11 @@ func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
 	return newElem
 }
 
-type sqlTagInfo struct {
-	isPrimaryKey bool
-	table        string
-	column       string
-}
+func isPrimaryKey(field reflect.StructField) bool {
 
-func tagInfo(tag string) sqlTagInfo {
-	sqlTags := strings.Split(tag, ",")
-	tagMap := map[string]string{}
+	sqlTag := field.Tag.Get("sql")
 
-	for _, tag := range sqlTags {
-		tagParts := strings.Split(tag, ":")
-
-		tagKey := tagParts[0]
-		tagValue := ""
-		if len(tagParts) > 1 {
-			tagValue = tagParts[1]
-		}
-
-		tagMap[tagKey] = tagValue
-	}
-
-	_, isPrimaryKey := tagMap["primary_key"]
-
-	return sqlTagInfo{
-		isPrimaryKey: isPrimaryKey,
-		table:        tagMap["table"],
-		column:       tagMap["column"],
-	}
+	return sqlTag == "primary_key"
 }
 
 func indirectType(reflectType reflect.Type) reflect.Type {

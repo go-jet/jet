@@ -214,7 +214,7 @@ var dest []struct {
     Films []struct {
         model.Film
         Language model.Language
-        Category []model.Category
+        Categories []model.Category
     }
 }
 ```
@@ -263,7 +263,7 @@ fmt.Println(string(jsonText))
 					"Name": "English             ",
 					"LastUpdate": "2006-02-15T10:02:19Z"
 				},
-				"Category": [
+				"Categories": [
 					{
 						"CategoryID": 8,
 						"Name": "Family",
@@ -298,7 +298,7 @@ fmt.Println(string(jsonText))
 					"Name": "English             ",
 					"LastUpdate": "2006-02-15T10:02:19Z"
 				},
-				"Category": [
+				"Categories": [
 					{
 						"CategoryID": 6,
 						"Name": "Documentary",
@@ -319,8 +319,8 @@ In that case we can reuse above statement `stmt`, and just change our destinatio
 var dest2 []struct {
     model.Category
 
-    Film []model.Film
-    Actor []model.Actor
+    Films []model.Film
+    Actors []model.Actor
 }
 
 err = stmt.Query(db, &dest2)
@@ -335,7 +335,7 @@ handleError(err)
 		"CategoryID": 8,
 		"Name": "Family",
 		"LastUpdate": "2006-02-15T09:46:27Z",
-		"Film": [
+		"Films": [
 			{
 				"FilmID": 499,
 				"Title": "King Evolution",
@@ -367,7 +367,7 @@ handleError(err)
 				"Fulltext": "'bake':1 'cleopatra':2 'drama':5 'forens':8 'husband':12 'monasteri':20 'must':14 'overcom':15 'psychologist':9 'stun':4 'waitress':17"
 			}
 		],
-		"Actor": [
+		"Actors": [
 			{
 				"ActorID": 1,
 				"FirstName": "Penelope",
@@ -417,6 +417,14 @@ handleError(err)
 </details>
 
 Complete code example can be found at [./examples/quick-start/quick-start.go](./examples/quick-start/quick-start.go)
+
+
+This example represent probably the most common use case, but Jet offers much more. Like subqueries, INSERT, UPDATE, DELETE, LOCK statements and much more.
+Detail info can be found at project wiki page.
+
+# Benefits
+
+TODO:
 
 # Contributing
 
