@@ -26,6 +26,8 @@ import (
 	"github.com/go-jet/jet"
 )
 
+var {{camelize .Name}} = new{{.GoStructName}}()
+
 type {{.GoStructName}} struct {
 	jet.Table
 	
@@ -37,7 +39,14 @@ type {{.GoStructName}} struct {
 	AllColumns jet.ColumnList
 }
 
-var {{camelize .Name}} = new{{.GoStructName}}()
+// creates new {{.GoStructName}} with assigned alias
+func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
+	aliasTable := new{{.GoStructName}}()
+
+	aliasTable.Table.AS(alias)
+
+	return aliasTable
+}
 
 func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
@@ -56,14 +65,6 @@ func new{{.GoStructName}}() *{{.GoStructName}} {
 
 		AllColumns: jet.ColumnList{ {{template "column-list" .Columns}} },
 	}
-}
-
-func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
-	aliasTable := new{{.GoStructName}}()
-
-	aliasTable.Table.AS(alias)
-
-	return aliasTable
 }
 
 `

@@ -447,8 +447,8 @@ In those cases web server handler execution time is directly proportional to lat
 This is not such a big problem if handler calls database couple of times, but what if web server is using ORM to retrieve all data from database.
 ORM usually access the database once for every object needed.  
 Now lets say latency is 30ms and there are 100 different objects required from the database. This handler will last 3s !!!.  
-With Jet, handler time lost on latency between server and database is constant(because we can write complex query and return result in one database call), 
-and handler execution will be proportional to number or rows returned from database. 
+With Jet, handler time lost on latency between server and database is constant. Because we can write complex query and 
+return result in one database call. Handler execution will be proportional to number or rows returned from database. 
 ORM example replaced with jet will take just 30ms + 'result scan time' = 31ms (rough estimate).  
 
 With Jet you can even join the whole database and store the whole structured result in  in one query call. 
