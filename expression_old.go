@@ -1,4 +1,3 @@
-// Query building functions for expressions components
 package jet
 
 import (

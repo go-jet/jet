@@ -26,35 +26,35 @@ type stringInterfaceImpl struct {
 }
 
 func (s *stringInterfaceImpl) EQ(rhs StringExpression) BoolExpression {
-	return EQ(s.parent, rhs)
+	return eq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) NOT_EQ(rhs StringExpression) BoolExpression {
-	return NOT_EQ(s.parent, rhs)
+	return notEq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) IS_DISTINCT_FROM(rhs StringExpression) BoolExpression {
-	return IS_DISTINCT_FROM(s.parent, rhs)
+	return isDistinctFrom(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs StringExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(s.parent, rhs)
+	return isNotDistinctFrom(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) GT(rhs StringExpression) BoolExpression {
-	return GT(s.parent, rhs)
+	return gt(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) GT_EQ(rhs StringExpression) BoolExpression {
-	return GT_EQ(s.parent, rhs)
+	return gtEq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) LT(rhs StringExpression) BoolExpression {
-	return LT(s.parent, rhs)
+	return lt(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
-	return LT_EQ(s.parent, rhs)
+	return ltEq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {

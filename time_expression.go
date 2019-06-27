@@ -19,35 +19,35 @@ type timeInterfaceImpl struct {
 }
 
 func (t *timeInterfaceImpl) EQ(rhs TimeExpression) BoolExpression {
-	return EQ(t.parent, rhs)
+	return eq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) NOT_EQ(rhs TimeExpression) BoolExpression {
-	return NOT_EQ(t.parent, rhs)
+	return notEq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
-	return IS_DISTINCT_FROM(t.parent, rhs)
+	return isDistinctFrom(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
+	return isNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) LT(rhs TimeExpression) BoolExpression {
-	return LT(t.parent, rhs)
+	return lt(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) LT_EQ(rhs TimeExpression) BoolExpression {
-	return LT_EQ(t.parent, rhs)
+	return ltEq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) GT(rhs TimeExpression) BoolExpression {
-	return GT(t.parent, rhs)
+	return gt(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) GT_EQ(rhs TimeExpression) BoolExpression {
-	return GT_EQ(t.parent, rhs)
+	return gtEq(t.parent, rhs)
 }
 
 //---------------------------------------------------//

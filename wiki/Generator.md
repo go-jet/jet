@@ -4,7 +4,7 @@ To generate files we need running database instance containing already defined d
 
 This files can be generated in two ways:
 
-#### Generating from command line
+#### 1) Generating from command line
 
 Install jetgen to GOPATH bin folder. This will allow generating jet files from the command line.
 
@@ -53,7 +53,7 @@ Generating enum sql builder files...
 Generating enum model files...
 Done
 ```
-#### Generating from code
+#### 2) Generating from code
 
 ```
 import "github.com/go-jet/jet/generator/postgresgen"
@@ -77,7 +77,7 @@ In both ways, generator will:
 - generate sql builder and model Go files for each schema tables and enums into destination folder `./gen`.  
 
 Generated files folder structure will look like this:
-```sh 
+```
 |-- gen                               # destination folder
 |   `-- jetdb                         # database name
 |       `-- dvds                      # schema name
@@ -252,7 +252,7 @@ const (
 
 For a reference SQL table definition of table `film`:
 
-```sql
+```
 CREATE TABLE dvds.film (
     film_id integer DEFAULT nextval('dvds.film_film_id_seq'::regclass) NOT NULL,
     title character varying(255) NOT NULL,

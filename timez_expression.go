@@ -19,35 +19,35 @@ type timezInterfaceImpl struct {
 }
 
 func (t *timezInterfaceImpl) EQ(rhs TimezExpression) BoolExpression {
-	return EQ(t.parent, rhs)
+	return eq(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) NOT_EQ(rhs TimezExpression) BoolExpression {
-	return NOT_EQ(t.parent, rhs)
+	return notEq(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
-	return IS_DISTINCT_FROM(t.parent, rhs)
+	return isDistinctFrom(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
+	return isNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) LT(rhs TimezExpression) BoolExpression {
-	return LT(t.parent, rhs)
+	return lt(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) LT_EQ(rhs TimezExpression) BoolExpression {
-	return LT_EQ(t.parent, rhs)
+	return ltEq(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) GT(rhs TimezExpression) BoolExpression {
-	return GT(t.parent, rhs)
+	return gt(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) GT_EQ(rhs TimezExpression) BoolExpression {
-	return GT_EQ(t.parent, rhs)
+	return gtEq(t.parent, rhs)
 }
 
 //---------------------------------------------------//

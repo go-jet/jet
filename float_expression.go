@@ -28,35 +28,35 @@ type floatInterfaceImpl struct {
 }
 
 func (n *floatInterfaceImpl) EQ(rhs FloatExpression) BoolExpression {
-	return EQ(n.parent, rhs)
+	return eq(n.parent, rhs)
 }
 
 func (n *floatInterfaceImpl) NOT_EQ(rhs FloatExpression) BoolExpression {
-	return NOT_EQ(n.parent, rhs)
+	return notEq(n.parent, rhs)
 }
 
 func (n *floatInterfaceImpl) IS_DISTINCT_FROM(rhs FloatExpression) BoolExpression {
-	return IS_DISTINCT_FROM(n.parent, rhs)
+	return isDistinctFrom(n.parent, rhs)
 }
 
 func (n *floatInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs FloatExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(n.parent, rhs)
+	return isNotDistinctFrom(n.parent, rhs)
 }
 
 func (n *floatInterfaceImpl) GT(rhs FloatExpression) BoolExpression {
-	return GT(n.parent, rhs)
+	return gt(n.parent, rhs)
 }
 
 func (n *floatInterfaceImpl) GT_EQ(rhs FloatExpression) BoolExpression {
-	return GT_EQ(n.parent, rhs)
+	return gtEq(n.parent, rhs)
 }
 
 func (n *floatInterfaceImpl) LT(expression FloatExpression) BoolExpression {
-	return LT(n.parent, expression)
+	return lt(n.parent, expression)
 }
 
 func (n *floatInterfaceImpl) LT_EQ(expression FloatExpression) BoolExpression {
-	return LT_EQ(n.parent, expression)
+	return ltEq(n.parent, expression)
 }
 
 func (n *floatInterfaceImpl) ADD(expression FloatExpression) FloatExpression {

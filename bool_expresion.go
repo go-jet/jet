@@ -3,20 +3,32 @@ package jet
 type BoolExpression interface {
 	Expression
 
-	EQ(expression BoolExpression) BoolExpression
-	NOT_EQ(expression BoolExpression) BoolExpression
+	// Check if this expression is equal to rhs
+	EQ(rhs BoolExpression) BoolExpression
+	// Check if this expression is not equal to rhs
+	NOT_EQ(rhs BoolExpression) BoolExpression
+	// Check if this expression is distinct to rhs
 	IS_DISTINCT_FROM(rhs BoolExpression) BoolExpression
+	// Check if this expression is not distinct to rhs
 	IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpression
 
+	// Check if this expression is true
 	IS_TRUE() BoolExpression
+	// Check if this expression is not true
 	IS_NOT_TRUE() BoolExpression
+	// Check if this expression is false
 	IS_FALSE() BoolExpression
+	// Check if this expression is not false
 	IS_NOT_FALSE() BoolExpression
+	// Check if this expression is unknown
 	IS_UNKNOWN() BoolExpression
+	// Check if this expression is not unknown
 	IS_NOT_UNKNOWN() BoolExpression
 
-	AND(expression BoolExpression) BoolExpression
-	OR(expression BoolExpression) BoolExpression
+	// expression AND operator rhs
+	AND(rhs BoolExpression) BoolExpression
+	// expression OR operator rhs
+	OR(rhs BoolExpression) BoolExpression
 }
 
 type boolInterfaceImpl struct {
@@ -24,19 +36,19 @@ type boolInterfaceImpl struct {
 }
 
 func (b *boolInterfaceImpl) EQ(expression BoolExpression) BoolExpression {
-	return EQ(b.parent, expression)
+	return eq(b.parent, expression)
 }
 
 func (b *boolInterfaceImpl) NOT_EQ(expression BoolExpression) BoolExpression {
-	return NOT_EQ(b.parent, expression)
+	return notEq(b.parent, expression)
 }
 
 func (b *boolInterfaceImpl) IS_DISTINCT_FROM(rhs BoolExpression) BoolExpression {
-	return IS_DISTINCT_FROM(b.parent, rhs)
+	return isDistinctFrom(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(b.parent, rhs)
+	return isNotDistinctFrom(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {

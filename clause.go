@@ -12,7 +12,7 @@ import (
 type serializeOption int
 
 const (
-	NO_WRAP serializeOption = iota
+	noWrap serializeOption = iota
 )
 
 type clause interface {
@@ -85,7 +85,7 @@ func (q *queryData) writeWhere(statement statementType, where Expression) error 
 	q.writeString("WHERE")
 
 	q.increaseIdent()
-	err := where.serialize(statement, q, NO_WRAP)
+	err := where.serialize(statement, q, noWrap)
 	q.decreaseIdent()
 
 	return err
@@ -118,7 +118,7 @@ func (q *queryData) writeHaving(statement statementType, having Expression) erro
 	q.writeString("HAVING")
 
 	q.increaseIdent()
-	err := having.serialize(statement, q, NO_WRAP)
+	err := having.serialize(statement, q, noWrap)
 	q.decreaseIdent()
 
 	return err

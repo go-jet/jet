@@ -11,46 +11,46 @@ func NOT(expr BoolExpression) BoolExpression {
 
 //----------- Comparison operators ---------------//
 
+func EXISTS(subQuery SelectStatement) BoolExpression {
+	return newPrefixBoolExpression(subQuery, "EXISTS")
+}
+
 // Returns a representation of "a=b"
-func EQ(lhs, rhs Expression) BoolExpression {
+func eq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "=")
 }
 
 // Returns a representation of "a!=b"
-func NOT_EQ(lhs, rhs Expression) BoolExpression {
+func notEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "!=")
 }
 
-func IS_DISTINCT_FROM(lhs, rhs Expression) BoolExpression {
+func isDistinctFrom(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "IS DISTINCT FROM")
 }
 
-func IS_NOT_DISTINCT_FROM(lhs, rhs Expression) BoolExpression {
+func isNotDistinctFrom(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
 // Returns a representation of "a<b"
-func LT(lhs Expression, rhs Expression) BoolExpression {
+func lt(lhs Expression, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "<")
 }
 
 // Returns a representation of "a<=b"
-func LT_EQ(lhs, rhs Expression) BoolExpression {
+func ltEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, "<=")
 }
 
 // Returns a representation of "a>b"
-func GT(lhs, rhs Expression) BoolExpression {
+func gt(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, ">")
 }
 
 // Returns a representation of "a>=b"
-func GT_EQ(lhs, rhs Expression) BoolExpression {
+func gtEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolExpression(lhs, rhs, ">=")
-}
-
-func EXISTS(subQuery SelectStatement) BoolExpression {
-	return newPrefixBoolExpression(subQuery, "EXISTS")
 }
 
 // --------------- CASE operator -------------------//
@@ -125,14 +125,14 @@ func (c *caseOperatorImpl) serialize(statement statementType, out *queryData, op
 
 	for i, when := range c.when {
 		out.writeString("WHEN")
-		err := when.serialize(statement, out, NO_WRAP)
+		err := when.serialize(statement, out, noWrap)
 
 		if err != nil {
 			return err
 		}
 
 		out.writeString("THEN")
-		err = c.then[i].serialize(statement, out, NO_WRAP)
+		err = c.then[i].serialize(statement, out, noWrap)
 
 		if err != nil {
 			return err
@@ -141,7 +141,7 @@ func (c *caseOperatorImpl) serialize(statement statementType, out *queryData, op
 
 	if c.els != nil {
 		out.writeString("ELSE")
-		err := c.els.serialize(statement, out, NO_WRAP)
+		err := c.els.serialize(statement, out, noWrap)
 
 		if err != nil {
 			return err

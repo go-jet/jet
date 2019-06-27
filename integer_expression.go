@@ -4,29 +4,49 @@ type IntegerExpression interface {
 	Expression
 	numericExpression
 
+	// Check if expression is equal to rhs
 	EQ(rhs IntegerExpression) BoolExpression
+	// Check if expression is not equal to rhs
 	NOT_EQ(rhs IntegerExpression) BoolExpression
+	// Check if expression is distinct from rhs
 	IS_DISTINCT_FROM(rhs IntegerExpression) BoolExpression
+	// Check if expression is not distinct from rhs
 	IS_NOT_DISTINCT_FROM(rhs IntegerExpression) BoolExpression
 
+	// Check if expression is less then rhs
 	LT(rhs IntegerExpression) BoolExpression
+	// Check if expression is less then equal rhs
 	LT_EQ(rhs IntegerExpression) BoolExpression
+	// Check if expression is greater then rhs
 	GT(rhs IntegerExpression) BoolExpression
+	// Check if expression is greater then equal rhs
 	GT_EQ(rhs IntegerExpression) BoolExpression
 
+	// expression + rhs
 	ADD(rhs IntegerExpression) IntegerExpression
+	// expression - rhs
 	SUB(rhs IntegerExpression) IntegerExpression
+	// expression * rhs
 	MUL(rhs IntegerExpression) IntegerExpression
+	// expression / rhs
 	DIV(rhs IntegerExpression) IntegerExpression
+	// expression % rhs
 	MOD(rhs IntegerExpression) IntegerExpression
+	// expression ^ rhs
 	POW(rhs IntegerExpression) IntegerExpression
 
-	BIT_AND(expression IntegerExpression) IntegerExpression
-	BIT_OR(expression IntegerExpression) IntegerExpression
-	BIT_XOR(expression IntegerExpression) IntegerExpression
+	// expression & rhs
+	BIT_AND(rhs IntegerExpression) IntegerExpression
+	// expression | rhs
+	BIT_OR(rhs IntegerExpression) IntegerExpression
+	// expression # rhs
+	BIT_XOR(rhs IntegerExpression) IntegerExpression
+	// ~expression
 	BIT_NOT() IntegerExpression
-	BIT_SHIFT_LEFT(intExpression IntegerExpression) IntegerExpression
-	BIT_SHIFT_RIGHT(intExpression IntegerExpression) IntegerExpression
+	// expression << rhs
+	BIT_SHIFT_LEFT(shift IntegerExpression) IntegerExpression
+	// expression >> rhs
+	BIT_SHIFT_RIGHT(shift IntegerExpression) IntegerExpression
 }
 
 type integerInterfaceImpl struct {
@@ -35,35 +55,35 @@ type integerInterfaceImpl struct {
 }
 
 func (i *integerInterfaceImpl) EQ(rhs IntegerExpression) BoolExpression {
-	return EQ(i.parent, rhs)
+	return eq(i.parent, rhs)
 }
 
 func (i *integerInterfaceImpl) NOT_EQ(rhs IntegerExpression) BoolExpression {
-	return NOT_EQ(i.parent, rhs)
+	return notEq(i.parent, rhs)
 }
 
 func (i *integerInterfaceImpl) IS_DISTINCT_FROM(rhs IntegerExpression) BoolExpression {
-	return IS_DISTINCT_FROM(i.parent, rhs)
+	return isDistinctFrom(i.parent, rhs)
 }
 
 func (i *integerInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs IntegerExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(i.parent, rhs)
+	return isNotDistinctFrom(i.parent, rhs)
 }
 
 func (i *integerInterfaceImpl) GT(rhs IntegerExpression) BoolExpression {
-	return GT(i.parent, rhs)
+	return gt(i.parent, rhs)
 }
 
 func (i *integerInterfaceImpl) GT_EQ(rhs IntegerExpression) BoolExpression {
-	return GT_EQ(i.parent, rhs)
+	return gtEq(i.parent, rhs)
 }
 
 func (i *integerInterfaceImpl) LT(expression IntegerExpression) BoolExpression {
-	return LT(i.parent, expression)
+	return lt(i.parent, expression)
 }
 
 func (i *integerInterfaceImpl) LT_EQ(expression IntegerExpression) BoolExpression {
-	return LT_EQ(i.parent, expression)
+	return ltEq(i.parent, expression)
 }
 
 func (i *integerInterfaceImpl) ADD(expression IntegerExpression) IntegerExpression {

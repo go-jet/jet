@@ -19,46 +19,46 @@ type dateInterfaceImpl struct {
 }
 
 func (t *dateInterfaceImpl) EQ(rhs DateExpression) BoolExpression {
-	return EQ(t.parent, rhs)
+	return eq(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) NOT_EQ(rhs DateExpression) BoolExpression {
-	return NOT_EQ(t.parent, rhs)
+	return notEq(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) IS_DISTINCT_FROM(rhs DateExpression) BoolExpression {
-	return IS_DISTINCT_FROM(t.parent, rhs)
+	return isDistinctFrom(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs DateExpression) BoolExpression {
-	return IS_NOT_DISTINCT_FROM(t.parent, rhs)
+	return isNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) LT(rhs DateExpression) BoolExpression {
-	return LT(t.parent, rhs)
+	return lt(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) LT_EQ(rhs DateExpression) BoolExpression {
-	return LT_EQ(t.parent, rhs)
+	return ltEq(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) GT(rhs DateExpression) BoolExpression {
-	return GT(t.parent, rhs)
+	return gt(t.parent, rhs)
 }
 
 func (t *dateInterfaceImpl) GT_EQ(rhs DateExpression) BoolExpression {
-	return GT_EQ(t.parent, rhs)
+	return gtEq(t.parent, rhs)
 }
 
 //---------------------------------------------------//
 
-type DateExpressionWrapper struct {
+type dateExpressionWrapper struct {
 	dateInterfaceImpl
 	Expression
 }
 
 func newDateExpressionWrap(expression Expression) DateExpression {
-	dateExpressionWrap := DateExpressionWrapper{Expression: expression}
+	dateExpressionWrap := dateExpressionWrapper{Expression: expression}
 	dateExpressionWrap.dateInterfaceImpl.parent = &dateExpressionWrap
 	return &dateExpressionWrap
 }

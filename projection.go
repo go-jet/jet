@@ -5,7 +5,6 @@ type projection interface {
 	from(subQuery ExpressionTable) projection
 }
 
-//------------------------------------------------------//
 // Dummy type for projection list
 type ProjectionList []projection
 
