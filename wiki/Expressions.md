@@ -14,216 +14,148 @@ Jet sql builder supports following expression types:
 _This list might be extended with feature Jet releases._  
 
 ### Literal type
-For every expression type there is a method to create one literal type expressions.  
+For every expression type there is a method to create one expression literal type .  
 Literal type examples:
 
 ```
-Bool(true)  
-Integer(11)  
-Float(23.44)  
-String("John Doe")  
-Date(2010, 12, 3)  
-Time(23, 6, 6, 1)  
-Timez(23, 6, 6, 222, +200)  
-Timestamp(2010, 10, 21, 15, 30, 12, 333)  
-Timestampz(2010, 10, 21, 15, 30, 12, 444, 0)
+jet.Bool(true)  
+jet.Integer(11)  
+jet.Float(23.44)  
+jet.String("John Doe")  
+jet.Date(2010, 12, 3)  
+jet.Time(23, 6, 6, 1)  
+jet.Timez(23, 6, 6, 222, +200)  
+jet.Timestamp(2010, 10, 21, 15, 30, 12, 333)  
+jet.Timestampz(2010, 10, 21, 15, 30, 12, 444, 0)
 
-NULL
-STAR (alias for *)  
+jet.NULL
+jet.STAR (alias for *)  
 ```
 
 ### Column types
 Every sql builder table column belongs to one expression type. There are following column types:
 ```
-ColumnBool
-ColumnInteger
-ColumnFloat
-ColumnString
-ColumnDate
-ColumnTime
-ColumnTimez
-ColumnTimestamp
-ColumnTimestampz
+jet.ColumnBool
+jet.ColumnInteger
+jet.ColumnFloat
+jet.ColumnString
+jet.ColumnDate
+jet.ColumnTime
+jet.ColumnTimez
+jet.ColumnTimestamp
+jet.ColumnTimestampz
 ```
 
 Columns and literals can form arbitrary expressions but have to follow valid SQL expression syntax.
 For instance valid expressions are:
 
 ```
-Bool(true).AND(Bool(false)).IS_FALSE()
-(Film.Length.GT(Int(100)).AND(Film.Length.LT(Int(200))).IS_TRUE()          // table 'film', integer column 'length'
+jet.Bool(true).AND(jet.Bool(false)).IS_FALSE()
+(table.Film.Length.GT(jet.Int(100)).AND(table.Film.Length.LT(jet.Int(200))).IS_TRUE()         
 ```
 
 Some of the invalid expressions. These expressions will cause go build to break.
 
 ```
-Bool(true).AND(Int(11))        // can't compare bool and
-Int(11).ADD(Float(22.2))       // can't add integer and floats, but 
-                               // using cast it is possible: Int(11).TO_FLOAT().ADD(Float(22.2))
-```
+jet.Bool(true).ADD(jet.Int(11))        // can't add bool and integer
+jet.Int(11).LIKE(jet.Float(22.2))      // integer expressions doesn't have LIKE method
+ ```
 
-## Common expression operators
 
-```go
-type Expression interface {
-    clause
-    projection
-    groupByClause
-    OrderByClause
-    // Test expression whether it is a NULL value.
-    IS_NULL() BoolExpression
-    // Test expression whether it is a non-NULL value.
-    IS_NOT_NULL() BoolExpression
-    
-    // Check if this expressions matches any in expressions list
-    IN(expressions ...Expression) BoolExpression
-    // Check if this expressions is different of all expressions in expressions list
-    NOT_IN(expressions ...Expression) BoolExpression
-    
-    // The temporary alias name to assign to the expression
-    AS(alias string) projection
-    
-    // Expression will be used to sort query result in ascending order
-    ASC() OrderByClause
-    // Expression will be used to sort query result in ascending order
-    DESC() OrderByClause
-    
-    // Cast expression to dbType
-    TO(dbType string) Expression
-    // Cast expression to bool type
-    TO_BOOL() BoolExpression
-    // Cast expression to smallint type
-    TO_SMALLINT() IntegerExpression
-    // Cast expression to integer type
-    TO_INTEGER() IntegerExpression
-    // Cast expression to bigint type
-    TO_BIGINT() IntegerExpression
-    // Cast expression to numeric type, using precision and optionally scale
-    TO_NUMERIC(precision int, scale ...int) FloatExpression
-    // Cast expression to real type
-    TO_REAL() FloatExpression
-    // Cast expression to double precision type
-    TO_DOUBLE() FloatExpression
-    // Cast expression to text type
-    TO_TEXT() StringExpression
-    // Cast expression to date type
-    TO_DATE() DateExpression
-    // Cast expression to time type
-    TO_TIME() TimeExpression
-    // Cast expression to time with time timezone type
-    TO_TIMEZ() TimezExpression
-    // Cast expression to timestamp type
-    TO_TIMESTAMP() TimestampExpression
-    // Cast expression to timestamp with timezone type
-    TO_TIMESTAMPZ() TimestampzExpression
-}
-```
-Examples:
-```go
-Film.Description.IS_NULL()
-Int(1).ADD(Int(2)).AS("1+2")
-(Film.Duration.ADD(Int(3))).ASC()
-String("1999-01-08 13:05:06 +0100 CET").TO_TIMESTAMPZ()
-```
+## Comparision operators
 
-### Bool expression operators:
-```go
-type BoolExpression interface {
-	Expression
+Jet supports following comparison operators for all expression types:
 
-	// Check if this expression is equal to rhs
-	EQ(rhs BoolExpression) BoolExpression
-	// Check if this expression is not equal to rhs
-	NOT_EQ(rhs BoolExpression) BoolExpression
-	// Check if this expression is distinct to rhs
-	IS_DISTINCT_FROM(rhs BoolExpression) BoolExpression
-	// Check if this expression is not distinct to rhs
-	IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpression
+| Method                         | Sample                                             | Generated sql                        |
+| ------------------------------ | ------------------------------------------------   |----------------------------          |
+| EQ                             | jet.Int(1).EQ(table.Film.Length)                   | 1 = film.length                      |
+| NOT_EQ                         | jet.Int(1).EQ(table.Film.Length)                   | 1 != film.length                     |
+| IS_DISTINCT_FROM               | jet.Int(1).IS_DISTINCT_FROM(table.Film.Length)     | 1 IS DISTINCT FROM film.length       |
+| IS_NOT_DISTINCT_FROM           | jet.Int(1).IS_NOT_DISTINCT_FROM(table.Film.Length) | 1 IS NOT DISTINCT FROM film.length   |
+| LT                             | jet.Int(1).LT(table.Film.Length)                   | 1 < film.length                      |
+| LT_EQ                          | jet.Int(1).LT_EQ(table.Film.Length)                | 1 <= film.length                     |
+| GT                             | jet.Int(1).GT(table.Film.Length)                   | 1 > film.length                      |
+| GT_EQ                          | jet.Int(1).GT_EQ(table.Film.Length)                | 1 >= film.length                     |
 
-	// Check if this expression is true
-	IS_TRUE() BoolExpression
-	// Check if this expression is not true
-	IS_NOT_TRUE() BoolExpression
-	// Check if this expression is false
-	IS_FALSE() BoolExpression
-	// Check if this expression is not false
-	IS_NOT_FALSE() BoolExpression
-	// Check if this expression is unknown
-	IS_UNKNOWN() BoolExpression
-	// Check if this expression is not unknown
-	IS_NOT_UNKNOWN() BoolExpression
+*Left-hand side and right-hand side of operators have to be of the same type*
 
-	// expression AND operator rhs
-	AND(rhs BoolExpression) BoolExpression
-	// expression OR operator rhs
-	OR(rhs BoolExpression) BoolExpression
-}
-```
 
-Examples:
-```
-Staff.Active.EQ(Bool(true))
-Staff.Active.IS_TRUE()
+## Arithmetic operators
 
-Bool(true).AND(Staff.Active).OR(Bool(false))
-```
+Following arithmetic operators are supported for integer and float expressions. 
+If the first argument is float expression, second argument can be integer or float expression.
+If the first argument is integer expression second argument can only be integer expression.
 
-### Integer expression operators
+| Method                         | Sample                                             | Generated sql                        |
+| ------------------------------ | ------------------------------------------------   |----------------------------          |
+| ADD                            | jet.Int(1).ADD(table.Film.Length)                  | 1 + film.length                      |
+| SUB                            | jet.Float(1.11).SUB(Int(1))                        | 1.11 + 1                             |
+| MUL                            | jet.Int(1).MUL(table.Film.Length)                  | 1 * film.length                      |
+| DIV                            | jet.Float(1.11).DIV(jet.Float(3.33)                | 1.11 / 3.33                          |
+| MOD                            | jet.Int(10).MOD(table.Film.Length)                 | 10 % film.length                     |
+| POW                            | jet.Float(10.01).POW(table.Film.Length)            | 10.01 ^ film.length                  |
 
-```go
-type IntegerExpression interface {
-	Expression
-	numericExpression
 
-	// Check if expression is equal to rhs
-	EQ(rhs IntegerExpression) BoolExpression
-	// Check if expression is not equal to rhs
-	NOT_EQ(rhs IntegerExpression) BoolExpression
-	// Check if expression is distinct from rhs
-	IS_DISTINCT_FROM(rhs IntegerExpression) BoolExpression
-	// Check if expression is not distinct from rhs
-	IS_NOT_DISTINCT_FROM(rhs IntegerExpression) BoolExpression
+## Bit operators
 
-	// Check if expression is less then rhs
-	LT(rhs IntegerExpression) BoolExpression
-	// Check if expression is less then equal rhs
-	LT_EQ(rhs IntegerExpression) BoolExpression
-	// Check if expression is greater then rhs
-	GT(rhs IntegerExpression) BoolExpression
-	// Check if expression is greater then equal rhs
-	GT_EQ(rhs IntegerExpression) BoolExpression
+Following operators are only available on integer expressions:
 
-	// expression + rhs
-	ADD(rhs IntegerExpression) IntegerExpression
-	// expression - rhs
-	SUB(rhs IntegerExpression) IntegerExpression
-	// expression * rhs
-	MUL(rhs IntegerExpression) IntegerExpression
-	// expression / rhs
-	DIV(rhs IntegerExpression) IntegerExpression
-	// expression % rhs
-	MOD(rhs IntegerExpression) IntegerExpression
-	// expression ^ rhs
-	POW(rhs IntegerExpression) IntegerExpression
+| Method                         | Sample                                             | Generated sql                        |
+| ------------------------------ | ------------------------------------------------   |----------------------------          |
+| BIT_AND                        | jet.Int(11).BIT_AND(table.Film.Length)             | 11 & film.length                     |
+| BIT_OR                         | jet.Int(11).BIT_OR(table.Film.Length)              | 11 \| film.length                    |
+| BIT_XOR                        | jet.Int(11).BIT_XOR(table.Film.Length)             | 11 # film.length                     |
+| BIT_NOT                        | jet.Int(11).BIT_NOT(table.Film.Length)             | ~ 11                                 |
+| BIT_SHIFT_LEFT                 | jet.Int(11).BIT_SHIFT_LEFT(table.Film.Length)      | 11 >> film.length                    |
+| BIT_SHIFT_RIGHT                | jet.Int(11).BIT_SHIFT_RIGHT(table.Film.Length)     | 11 >> film.length                    |
 
-	// expression & rhs
-	BIT_AND(rhs IntegerExpression) IntegerExpression
-	// expression | rhs
-	BIT_OR(rhs IntegerExpression) IntegerExpression
-	// expression # rhs
-	BIT_XOR(rhs IntegerExpression) IntegerExpression
-	// ~expression
-	BIT_NOT() IntegerExpression
-	// expression << rhs
-	BIT_SHIFT_LEFT(shift IntegerExpression) IntegerExpression
-	// expression >> rhs
-	BIT_SHIFT_RIGHT(shift IntegerExpression) IntegerExpression
-}
-```
 
-Examples:
-```go
-(Film.Length.ADD(Int(20))).LT(Int(200))
-Film.LanguageID.EQ(Int(2))
-Film.LanguageID.BIT_SHIFT_LEFT(Int(2))
-```
+## Logical operators
+
+Following operators are only available on boolean expressions:
+
+| Method                         | Sample                                                   | Generated sql                        |
+| ------------------------------ | ---------------------------------------------------------|----------------------------          |
+| IS_TRUE                        | table.Staff.Active.IS_TRUE()                             | staff.active IS TRUE                 |
+| IS_NOT_TRUE                    | (table.Staff.Active.AND(jet.Bool(true))).IS_NOT_TRUE()   | (staff.active AND true) IS NOT TRUE  |
+| IS_FALSE                       | jet.Bool(false).IS_FALSE()                               | false IS FALSE                       |
+| IS_NOT_FALSE                   | jet.Bool(true).IS_NOT_FALSE()                            | true IS NOT FALSE                    |
+| IS_UNKNOWN                     | table.Staff.Active.IS_UNKNOWN()                          | staff.active IS UNKNOWN              |
+| IS_NOT_UNKNOWN                 | table.Staff.Active.IS_NOT_UNKNOWN()                      | staff.active IS NOT UNKNOWN          |
+
+
+## String operators
+
+Following operators are only available on string expressions:
+
+| Method                         | Sample                                                   | Generated sql                        |
+| ------------------------------ | ---------------------------------------------------------|----------------------------          |
+| CONCAT                         | table.Film.Name.CONCAT(table.Film.Description)           | film.name \|\| film.description      |
+| LIKE                           | table.Film.Name.LIKE(String("%Wind%"))                   | film.name LIKE %Wind%                |
+| NOT_LIKE                       | table.Film.Name.NOT_LIKE(String("%Wind%"))               | staff.active NOT LIKE %Wind%         |
+| SIMILAR_TO                     | table.Film.Name.SIMILAR_TO(String("%Wind%"))             | staff.active SIMILAR TO %Wind%       |
+| NOT_SIMILAR_TO                 | table.Film.Name.NOT_SIMILAR_TO(String("%Wind%"))         | staff.active NOT SIMILAR TO %Wind%   |
+
+
+## Cast operators
+
+Cast operators allow expressions to be casted to some other database type.
+SQL builder expression type changes accordingly to database type.
+
+| Method                         | Sample                                     | Generated sql                   |
+| ------------------------------ | -------------------------------------------|----------------------------     |
+| TO_BOOL                        | table.Film.Description.TO_BOOL()           | film.description::boolean       |
+| TO_SMALLINT                    | table.Film.Description.TO_SMALLINT()       | film.description::smallint      |
+| TO_INTEGER                     | table.Film.Description.TO_INTEGER()        | film.description::integer       |
+| TO_BIGINT                      | table.Film.Description.TO_BIGINT()         | film.description::bigint        |
+| TO_NUMERIC                     | table.Film.Description.TO_NUMERIC(10, 6)   | film.description::numeric(10,6) |
+| TO_REAL                        | table.Film.Description.TO_REAL()           | film.description::real          |
+| TO_DOUBLE                      | table.Film.Description.TO_DOUBLE()         | film.description::double        |
+| TO_TEXT                        | table.Film.Description.TO_TEXT()           | film.description::text          |
+| TO_DATE                        | table.Film.Description.TO_DATE()           | film.description::date          |
+| TO_TIME                        | table.Film.Description.TO_TIME()           | film.description::time          |
+| TO_TIMEZ                       | table.Film.Description.TO_TIMEZ()          | film.description::timez         |
+| TO_TIMESTAMP                   | table.Film.Description.TO_TIMESTAMP()      | film.description::timestamp     |
+| TO_TIMESTAMPZ                  | table.Film.Description.TO_TIMESTAMPZ()     | film.description::timestampz    |
+
+

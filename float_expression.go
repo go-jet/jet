@@ -14,12 +14,12 @@ type FloatExpression interface {
 	GT(rhs FloatExpression) BoolExpression
 	GT_EQ(rhs FloatExpression) BoolExpression
 
-	ADD(rhs FloatExpression) FloatExpression
-	SUB(rhs FloatExpression) FloatExpression
-	MUL(rhs FloatExpression) FloatExpression
-	DIV(rhs FloatExpression) FloatExpression
-	MOD(rhs FloatExpression) FloatExpression
-	POW(rhs FloatExpression) FloatExpression
+	ADD(rhs NumericExpression) FloatExpression
+	SUB(rhs NumericExpression) FloatExpression
+	MUL(rhs NumericExpression) FloatExpression
+	DIV(rhs NumericExpression) FloatExpression
+	MOD(rhs NumericExpression) FloatExpression
+	POW(rhs NumericExpression) FloatExpression
 }
 
 type floatInterfaceImpl struct {
@@ -59,27 +59,27 @@ func (n *floatInterfaceImpl) LT_EQ(expression FloatExpression) BoolExpression {
 	return ltEq(n.parent, expression)
 }
 
-func (n *floatInterfaceImpl) ADD(expression FloatExpression) FloatExpression {
+func (n *floatInterfaceImpl) ADD(expression NumericExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "+")
 }
 
-func (n *floatInterfaceImpl) SUB(expression FloatExpression) FloatExpression {
+func (n *floatInterfaceImpl) SUB(expression NumericExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "-")
 }
 
-func (n *floatInterfaceImpl) MUL(expression FloatExpression) FloatExpression {
+func (n *floatInterfaceImpl) MUL(expression NumericExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "*")
 }
 
-func (n *floatInterfaceImpl) DIV(expression FloatExpression) FloatExpression {
+func (n *floatInterfaceImpl) DIV(expression NumericExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "/")
 }
 
-func (n *floatInterfaceImpl) MOD(expression FloatExpression) FloatExpression {
+func (n *floatInterfaceImpl) MOD(expression NumericExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "%")
 }
 
-func (n *floatInterfaceImpl) POW(expression FloatExpression) FloatExpression {
+func (n *floatInterfaceImpl) POW(expression NumericExpression) FloatExpression {
 	return newBinaryFloatExpression(n.parent, expression, "^")
 }
 
@@ -91,7 +91,7 @@ type binaryFloatExpression struct {
 	binaryOpExpression
 }
 
-func newBinaryFloatExpression(lhs, rhs FloatExpression, operator string) FloatExpression {
+func newBinaryFloatExpression(lhs, rhs Expression, operator string) FloatExpression {
 	floatExpression := binaryFloatExpression{}
 
 	floatExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
