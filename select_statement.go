@@ -192,7 +192,7 @@ func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error
 }
 
 func (s *selectStatementImpl) DebugSql() (query string, err error) {
-	return DebugSql(s)
+	return debugSql(s)
 }
 
 func (s *selectStatementImpl) projections() []projection {
@@ -290,17 +290,17 @@ func (s *selectLockImpl) serialize(statement statementType, out *queryData, opti
 }
 
 func (s *selectStatementImpl) Query(db execution.DB, destination interface{}) error {
-	return Query(s, db, destination)
+	return query(s, db, destination)
 }
 
 func (s *selectStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return QueryContext(s, db, context, destination)
+	return queryContext(s, db, context, destination)
 }
 
 func (s *selectStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
-	return Exec(s, db)
+	return exec(s, db)
 }
 
 func (s *selectStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return ExecContext(s, db, context)
+	return execContext(s, db, context)
 }

@@ -50,7 +50,7 @@ func (l *lockStatementImpl) NOWAIT() LockStatement {
 }
 
 func (l *lockStatementImpl) DebugSql() (query string, err error) {
-	return DebugSql(l)
+	return debugSql(l)
 }
 
 func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) {
@@ -94,17 +94,17 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 }
 
 func (l *lockStatementImpl) Query(db execution.DB, destination interface{}) error {
-	return Query(l, db, destination)
+	return query(l, db, destination)
 }
 
 func (l *lockStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return QueryContext(l, db, context, destination)
+	return queryContext(l, db, context, destination)
 }
 
 func (l *lockStatementImpl) Exec(db execution.DB) (sql.Result, error) {
-	return Exec(l, db)
+	return exec(l, db)
 }
 
 func (l *lockStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return ExecContext(l, db, context)
+	return execContext(l, db, context)
 }

@@ -67,8 +67,12 @@ ORDER BY payment.payment_id ASC
 LIMIT 30;
 `
 
-	query := SELECT(Payment.AllColumns, Customer.AllColumns).
-		FROM(Payment.INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID))).
+	query := SELECT(
+		Payment.AllColumns,
+		Customer.AllColumns,
+	).
+		FROM(Payment.
+			INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID))).
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
@@ -599,7 +603,9 @@ SELECT actor.actor_id AS "actor.actor_id",
      film_actor.actor_id AS "film_actor.actor_id",
      film_actor.film_id AS "film_actor.film_id",
      film_actor.last_update AS "film_actor.last_update",
-     "rFilms"."film.title" AS "film.title"
+     "rFilms"."film.film_id" AS "film.film_id",
+     "rFilms"."film.title" AS "film.title",
+     "rFilms"."film.rating" AS "film.rating"
 FROM dvds.actor
      INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
      INNER JOIN (
@@ -621,7 +627,6 @@ FROM dvds.actor
 		AsTable("rFilms")
 
 	rFilmId := Film.FilmID.From(rRatingFilms)
-	rTitle := Film.Title.From(rRatingFilms)
 
 	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
@@ -629,10 +634,10 @@ FROM dvds.actor
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
-			rTitle.AS("film.title"),
+			rRatingFilms.AllColumns(),
 		)
 
-	fmt.Println(query.Sql())
+	fmt.Println(query.DebugSql())
 
 	assertStatementSql(t, query, expectedQuery)
 

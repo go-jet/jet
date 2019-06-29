@@ -3,7 +3,7 @@
 [![CircleCI](https://circleci.com/gh/go-jet/jet/tree/develop.svg?style=svg&circle-token=97f255c6a4a3ab6590ea2e9195eb3ebf9f97b4a7)](https://circleci.com/gh/go-jet/jet/tree/develop)
 
 Jet is Go SQL Builder for PostgreSQL(support for MySql and OracleSql will be added later). 
-Jet enables writing type safe SQL queries in Go, and ability to easily convert database query result to desired arbitrary structure.
+Jet enables writing type safe SQL queries in Go, and has ability to convert database query result to desired arbitrary structure.
 
 ## Contents
    - [Getting Started](#getting-started)

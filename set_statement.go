@@ -200,21 +200,21 @@ func (s *setStatementImpl) Sql() (query string, args []interface{}, err error) {
 }
 
 func (s *setStatementImpl) DebugSql() (query string, err error) {
-	return DebugSql(s)
+	return debugSql(s)
 }
 
 func (s *setStatementImpl) Query(db execution.DB, destination interface{}) error {
-	return Query(s, db, destination)
+	return query(s, db, destination)
 }
 
 func (s *setStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return QueryContext(s, db, context, destination)
+	return queryContext(s, db, context, destination)
 }
 
 func (s *setStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
-	return Exec(s, db)
+	return exec(s, db)
 }
 
 func (s *setStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return ExecContext(s, db, context)
+	return execContext(s, db, context)
 }

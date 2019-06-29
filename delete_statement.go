@@ -69,21 +69,21 @@ func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error
 }
 
 func (d *deleteStatementImpl) DebugSql() (query string, err error) {
-	return DebugSql(d)
+	return debugSql(d)
 }
 
 func (d *deleteStatementImpl) Query(db execution.DB, destination interface{}) error {
-	return Query(d, db, destination)
+	return query(d, db, destination)
 }
 
 func (d *deleteStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return QueryContext(d, db, context, destination)
+	return queryContext(d, db, context, destination)
 }
 
 func (d *deleteStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
-	return Exec(d, db)
+	return exec(d, db)
 }
 
 func (d *deleteStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return ExecContext(d, db, context)
+	return execContext(d, db, context)
 }

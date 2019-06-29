@@ -9,19 +9,28 @@ import (
 )
 
 type Statement interface {
-	// String returns generated SQL as string.
+	// Sql returns parametrized sql query with list of arguments.
+	// err is returned if statement is not composed correctly
 	Sql() (query string, args []interface{}, err error)
-
+	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
+	// Do not use it in production. Use it only for debug purposes.
+	// err is returned if statement is not composed correctly
 	DebugSql() (query string, err error)
 
+	// Query executes statement over database connection db and stores row result in destination.
+	// Destination can be arbitrary structure
 	Query(db execution.DB, destination interface{}) error
+	// QueryContext executes statement with a context over database connection db and stores row result in destination.
+	// Destination can be of arbitrary structure
 	QueryContext(db execution.DB, context context.Context, destination interface{}) error
 
+	//Exec executes statement over db connection without returning any rows.
 	Exec(db execution.DB) (sql.Result, error)
+	//Exec executes statement with context over db connection without returning any rows.
 	ExecContext(db execution.DB, context context.Context) (sql.Result, error)
 }
 
-func DebugSql(statement Statement) (string, error) {
+func debugSql(statement Statement) (string, error) {
 	sqlQuery, args, err := statement.Sql()
 
 	if err != nil {
@@ -38,7 +47,7 @@ func DebugSql(statement Statement) (string, error) {
 	return debugSqlQuery, nil
 }
 
-func Query(statement Statement, db execution.DB, destination interface{}) error {
+func query(statement Statement, db execution.DB, destination interface{}) error {
 	query, args, err := statement.Sql()
 
 	if err != nil {
@@ -48,7 +57,7 @@ func Query(statement Statement, db execution.DB, destination interface{}) error 
 	return execution.Query(db, context.Background(), query, args, destination)
 }
 
-func QueryContext(statement Statement, db execution.DB, context context.Context, destination interface{}) error {
+func queryContext(statement Statement, db execution.DB, context context.Context, destination interface{}) error {
 	query, args, err := statement.Sql()
 
 	if err != nil {
@@ -58,7 +67,7 @@ func QueryContext(statement Statement, db execution.DB, context context.Context,
 	return execution.Query(db, context, query, args, destination)
 }
 
-func Exec(statement Statement, db execution.DB) (res sql.Result, err error) {
+func exec(statement Statement, db execution.DB) (res sql.Result, err error) {
 	query, args, err := statement.Sql()
 
 	if err != nil {
@@ -68,7 +77,7 @@ func Exec(statement Statement, db execution.DB) (res sql.Result, err error) {
 	return db.Exec(query, args...)
 }
 
-func ExecContext(statement Statement, db execution.DB, context context.Context) (res sql.Result, err error) {
+func execContext(statement Statement, db execution.DB, context context.Context) (res sql.Result, err error) {
 	query, args, err := statement.Sql()
 
 	if err != nil {

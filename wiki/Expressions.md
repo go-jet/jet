@@ -137,7 +137,7 @@ Following operators are only available on string expressions:
 | NOT_SIMILAR_TO                 | table.Film.Name.NOT_SIMILAR_TO(String("%Wind%"))         | staff.active NOT SIMILAR TO %Wind%   |
 
 
-## Cast operators
+## SQL Cast operators
 
 Cast operators allow expressions to be casted to some other database type.
 SQL builder expression type changes accordingly to database type.
@@ -158,4 +158,6 @@ SQL builder expression type changes accordingly to database type.
 | TO_TIMESTAMP                   | table.Film.Description.TO_TIMESTAMP()      | film.description::timestamp     |
 | TO_TIMESTAMPZ                  | table.Film.Description.TO_TIMESTAMPZ()     | film.description::timestampz    |
 
+## SQL builder cast
 
+TODO:
