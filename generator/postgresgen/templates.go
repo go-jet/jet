@@ -36,7 +36,8 @@ type {{.GoStructName}} struct {
 	{{camelize .Name}} jet.Column{{.SqlBuilderColumnType}}
 {{- end}}
 
-	AllColumns jet.ColumnList
+	AllColumns     jet.ColumnList
+	MutableColumns jet.ColumnList
 }
 
 // creates new {{.GoStructName}} with assigned alias
@@ -63,7 +64,8 @@ func new{{.GoStructName}}() *{{.GoStructName}} {
 		{{camelize .Name}}: {{camelize .Name}}Column,
 {{- end}}
 
-		AllColumns: jet.ColumnList{ {{template "column-list" .Columns}} },
+		AllColumns:     jet.ColumnList{ {{template "column-list" .Columns}} },
+		MutableColumns: jet.ColumnList{ {{template "column-list" .MutableColumns}} },
 	}
 }
 
@@ -82,7 +84,7 @@ import (
 
 type {{camelize .Name}} struct {
 {{- range .Columns}}
-	{{camelize .Name}} {{.GoModelType}} ` + "{{.GoModelTag ($.IsUnique .Name)}}" + `
+	{{camelize .Name}} {{.GoModelType}} ` + "{{.GoModelTag ($.IsPrimaryKey .Name)}}" + `
 {{- end}}
 }
 `

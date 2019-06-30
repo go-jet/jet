@@ -9,22 +9,20 @@ import (
 )
 
 func TestInsertValues(t *testing.T) {
-
 	cleanUpLinkTable(t)
 
 	var expectedSql = `
-INSERT INTO test_sample.link (id, url, name, rel) VALUES
+INSERT INTO test_sample.link (id, url, name, description) VALUES
      (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
      (101, 'http://www.google.com', 'Google', DEFAULT),
      (102, 'http://www.yahoo.com', 'Yahoo', NULL)
 RETURNING link.id AS "link.id",
      link.url AS "link.url",
      link.name AS "link.name",
-     link.description AS "link.description",
-     link.rel AS "link.rel";
+     link.description AS "link.description";
 `
 
-	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Rel).
+	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
 		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 		VALUES(101, "http://www.google.com", "Google", DEFAULT).
 		VALUES(102, "http://www.yahoo.com", "Yahoo", nil).
@@ -47,21 +45,18 @@ RETURNING link.id AS "link.id",
 		ID:   100,
 		URL:  "http://www.postgresqltutorial.com",
 		Name: "PostgreSQL Tutorial",
-		Rel:  nil,
 	})
 
 	assert.DeepEqual(t, insertedLinks[1], model.Link{
 		ID:   101,
 		URL:  "http://www.google.com",
 		Name: "Google",
-		Rel:  nil,
 	})
 
 	assert.DeepEqual(t, insertedLinks[2], model.Link{
 		ID:   102,
 		URL:  "http://www.yahoo.com",
 		Name: "Yahoo",
-		Rel:  nil,
 	})
 
 	allLinks := []model.Link{}
@@ -76,7 +71,24 @@ RETURNING link.id AS "link.id",
 	assert.DeepEqual(t, insertedLinks, allLinks)
 }
 
-func TestInsertDataObject(t *testing.T) {
+func TestInsertEmptyColumnList(t *testing.T) {
+	cleanUpLinkTable(t)
+
+	expectedSql := `
+INSERT INTO test_sample.link VALUES
+     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
+`
+
+	stmt := Link.INSERT().
+		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT)
+
+	assertStatementSql(t, stmt, expectedSql,
+		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
+
+	assertExec(t, stmt, 1)
+}
+
+func TestInsertModelObject(t *testing.T) {
 	var expectedSql = `
 INSERT INTO test_sample.link (url, name) VALUES
      ('http://www.duckduckgo.com', 'Duck Duck go');
@@ -85,12 +97,11 @@ INSERT INTO test_sample.link (url, name) VALUES
 	linkData := model.Link{
 		URL:  "http://www.duckduckgo.com",
 		Name: "Duck Duck go",
-		Rel:  nil,
 	}
 
 	query := Link.
 		INSERT(Link.URL, Link.Name).
-		USING(linkData)
+		MODEL(linkData)
 
 	assertStatementSql(t, query, expectedSql, "http://www.duckduckgo.com", "Duck Duck go")
 
@@ -101,6 +112,75 @@ INSERT INTO test_sample.link (url, name) VALUES
 	rowsAffected, err := result.RowsAffected()
 
 	assert.Equal(t, rowsAffected, int64(1))
+}
+
+func TestInsertModelsObject(t *testing.T) {
+	expectedSql := `
+INSERT INTO test_sample.link (url, name) VALUES
+     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
+     ('http://www.google.com', 'Google'),
+     ('http://www.yahoo.com', 'Yahoo');
+`
+
+	tutorial := model.Link{
+		URL:  "http://www.postgresqltutorial.com",
+		Name: "PostgreSQL Tutorial",
+	}
+
+	google := model.Link{
+		URL:  "http://www.google.com",
+		Name: "Google",
+	}
+
+	yahoo := model.Link{
+		URL:  "http://www.yahoo.com",
+		Name: "Yahoo",
+	}
+
+	stmt := Link.
+		INSERT(Link.URL, Link.Name).
+		MODELS([]model.Link{tutorial, google, yahoo})
+
+	assertStatementSql(t, stmt, expectedSql,
+		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		"http://www.google.com", "Google",
+		"http://www.yahoo.com", "Yahoo")
+
+	assertExec(t, stmt, 3)
+}
+
+func TestInsertUsingMutableColumns(t *testing.T) {
+	var expectedSql = `
+INSERT INTO test_sample.link (url, name, description) VALUES
+     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+     ('http://www.google.com', 'Google', NULL),
+     ('http://www.google.com', 'Google', NULL),
+     ('http://www.yahoo.com', 'Yahoo', NULL);
+`
+
+	google := model.Link{
+		URL:  "http://www.google.com",
+		Name: "Google",
+	}
+
+	yahoo := model.Link{
+		URL:  "http://www.yahoo.com",
+		Name: "Yahoo",
+	}
+
+	stmt := Link.
+		INSERT(Link.MutableColumns).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		MODEL(google).
+		MODELS([]model.Link{google, yahoo})
+
+	assertStatementSql(t, stmt, expectedSql,
+		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		"http://www.google.com", "Google", nil,
+		"http://www.google.com", "Google", nil,
+		"http://www.yahoo.com", "Yahoo", nil)
+
+	assertExec(t, stmt, 4)
 }
 
 func TestInsertQuery(t *testing.T) {
@@ -119,8 +199,7 @@ INSERT INTO test_sample.link (url, name) (
 RETURNING link.id AS "link.id",
      link.url AS "link.url",
      link.name AS "link.name",
-     link.description AS "link.description",
-     link.rel AS "link.rel";
+     link.description AS "link.description";
 `
 
 	query := Link.

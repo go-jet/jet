@@ -36,7 +36,7 @@ func (e *expressionTableImpl) Alias() string {
 	return e.alias
 }
 
-func (e *expressionTableImpl) columns() []Column {
+func (e *expressionTableImpl) columns() []column {
 	return nil
 }
 

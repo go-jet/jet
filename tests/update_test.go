@@ -86,8 +86,7 @@ WHERE link.name = 'Ask'
 RETURNING link.id AS "link.id",
           link.url AS "link.url",
           link.name AS "link.name",
-          link.description AS "link.description",
-          link.rel AS "link.rel";
+          link.description AS "link.description";
 `
 
 	stmt := Link.
@@ -120,12 +119,11 @@ func TestUpdateWithSelect(t *testing.T) {
 
 	expectedSql := `
 UPDATE test_sample.link
-SET (id, url, name, description, rel) = (
+SET (id, url, name, description) = (
      SELECT link.id AS "link.id",
           link.url AS "link.url",
           link.name AS "link.name",
-          link.description AS "link.description",
-          link.rel AS "link.rel"
+          link.description AS "link.description"
      FROM test_sample.link
      WHERE link.id = 0
 )
@@ -148,7 +146,7 @@ func TestUpdateWithInvalidSelect(t *testing.T) {
 
 	var expectedSql = `
 UPDATE test_sample.link
-SET (id, url, name, description, rel) = (
+SET (id, url, name, description) = (
      SELECT link.id AS "link.id",
           link.name AS "link.name"
      FROM test_sample.link
@@ -177,10 +175,10 @@ func TestUpdateWithModelData(t *testing.T) {
 
 	expectedSql := `
 UPDATE test_sample.link
-SET (id, url, name, description, rel) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL, NULL)
+SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSql, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
+	assertStatementSql(t, stmt, expectedSql, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 
 	assertExec(t, stmt, 1)
 }
@@ -195,7 +193,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 		Name: "DuckDuckGo",
 	}
 
-	updateColumnList := ColumnList{Link.Rel, Link.Name, Link.URL}
+	updateColumnList := ColumnList{Link.Description, Link.Name, Link.URL}
 
 	stmt := Link.
 		UPDATE(updateColumnList).
@@ -204,7 +202,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 
 	var expectedSql = `
 UPDATE test_sample.link
-SET (rel, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
+SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
 WHERE link.id = 201;
 `
 	assertStatementSql(t, stmt, expectedSql, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
@@ -252,7 +250,7 @@ func setupLinkTableForUpdateTest(t *testing.T) {
 
 	cleanUpLinkTable(t)
 
-	_, err := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Rel).
+	_, err := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
 		VALUES(200, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 		VALUES(201, "http://www.ask.com", "Ask", DEFAULT).
 		VALUES(202, "http://www.ask.com", "Ask", DEFAULT).

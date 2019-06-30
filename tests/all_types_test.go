@@ -26,8 +26,8 @@ func TestAllTypesSelect(t *testing.T) {
 
 func TestAllTypesInsertModel(t *testing.T) {
 	query := AllTypes.INSERT(AllTypes.AllColumns).
-		USING(allTypesRow0).
-		USING(&allTypesRow1).
+		MODEL(allTypesRow0).
+		MODEL(&allTypesRow1).
 		RETURNING(AllTypes.AllColumns)
 
 	dest := []model.AllTypes{}

@@ -6,6 +6,10 @@ import (
 	"errors"
 )
 
+type table interface {
+	columns() []column
+}
+
 type readableTable interface {
 	// Generates a select query on the current tableName.
 	SELECT(projection projection, projections ...projection) SelectStatement
@@ -24,13 +28,11 @@ type readableTable interface {
 
 	// Creates a cross join tableName Expression using onCondition.
 	CROSS_JOIN(table ReadableTable) ReadableTable
-
-	columns() []Column
 }
 
 // The sql tableName write interface.
 type writableTable interface {
-	INSERT(column column, columns ...column) InsertStatement
+	INSERT(columns ...column) InsertStatement
 	UPDATE(column column, columns ...column) UpdateStatement
 	DELETE() DeleteStatement
 
@@ -38,16 +40,19 @@ type writableTable interface {
 }
 
 type ReadableTable interface {
+	table
 	readableTable
 	clause
 }
 
 type WritableTable interface {
+	table
 	writableTable
 	clause
 }
 
 type Table interface {
+	table
 	readableTable
 	writableTable
 	clause
@@ -92,8 +97,14 @@ type writableTableInterfaceImpl struct {
 	parent WritableTable
 }
 
-func (w *writableTableInterfaceImpl) INSERT(column column, columns ...column) InsertStatement {
-	return newInsertStatement(w.parent, unwindColumns(column, columns...))
+func (w *writableTableInterfaceImpl) INSERT(columns ...column) InsertStatement {
+	//columnList := unwidColumnList(columns)
+	//
+	//if len(columns) == 0 {
+	//	columnList = w.parent.columns()
+	//}
+
+	return newInsertStatement(w.parent, unwidColumnList(columns))
 }
 
 func (w *writableTableInterfaceImpl) UPDATE(column column, columns ...column) UpdateStatement {
@@ -153,8 +164,14 @@ func (t *tableImpl) TableName() string {
 	return t.name
 }
 
-func (t *tableImpl) columns() []Column {
-	return t.columnList
+func (t *tableImpl) columns() []column {
+	ret := []column{}
+
+	for _, col := range t.columnList {
+		ret = append(ret, col)
+	}
+
+	return ret
 }
 
 func (t *tableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
@@ -220,7 +237,7 @@ func (t *joinTable) TableName() string {
 	return ""
 }
 
-func (t *joinTable) columns() []Column {
+func (t *joinTable) columns() []column {
 	return append(t.lhs.columns(), t.rhs.columns()...)
 }
 
@@ -288,4 +305,20 @@ func unwindColumns(column1 column, columns ...column) []column {
 	}
 
 	return columnList
+}
+
+func unwidColumnList(columns []column) []column {
+	ret := []column{}
+
+	for _, col := range columns {
+		if columnList, ok := col.(ColumnList); ok {
+			for _, c := range columnList {
+				ret = append(ret, c)
+			}
+		} else {
+			ret = append(ret, col)
+		}
+	}
+
+	return ret
 }

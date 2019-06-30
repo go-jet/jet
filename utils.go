@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/serenize/snaker"
 	"reflect"
+	"strings"
 )
 
 func serializeOrderByClauseList(statement statementType, orderByClauses []OrderByClause, out *queryData) error {
@@ -166,6 +167,21 @@ func unwindRowFromModel(columns []column, data interface{}) []clause {
 	return row
 }
 
+func unwindRowsFromModels(columns []column, data interface{}) [][]clause {
+	sliceValue := reflect.Indirect(reflect.ValueOf(data))
+	mustBe(sliceValue, reflect.Slice)
+
+	rows := [][]clause{}
+
+	for i := 0; i < sliceValue.Len(); i++ {
+		structValue := sliceValue.Index(i)
+
+		rows = append(rows, unwindRowFromModel(columns, structValue.Interface()))
+	}
+
+	return rows
+}
+
 func unwindRowFromValues(value interface{}, values []interface{}) []clause {
 	row := []clause{}
 
@@ -178,8 +194,16 @@ func unwindRowFromValues(value interface{}, values []interface{}) []clause {
 	return row
 }
 
-func mustBe(v reflect.Value, expected reflect.Kind) {
-	if k := v.Kind(); k != expected {
-		panic("argument mismatch: expected " + expected.String() + ", got " + v.Type().String())
+func mustBe(v reflect.Value, expectedKinds ...reflect.Kind) {
+	indirectV := reflect.Indirect(v)
+	types := []string{}
+
+	for _, expectedKind := range expectedKinds {
+		types = append(types, expectedKind.String())
+		if k := indirectV.Kind(); k == expectedKind {
+			return
+		}
 	}
+
+	panic("argument mismatch: expected " + strings.Join(types, " or ") + ", got " + v.Type().String())
 }

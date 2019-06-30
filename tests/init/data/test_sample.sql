@@ -144,11 +144,10 @@ VALUES (1, 1, 300, 300, 50000, 5000, 11.44, 11.44, 55.77, 55.77, 99.1, 99.1, 111
 DROP TABLE IF EXISTS test_sample.link;
 
 CREATE TABLE IF NOT EXISTS test_sample.link (
-    ID serial PRIMARY KEY,
+    id serial PRIMARY KEY,
     url VARCHAR (255) NOT NULL,
     name VARCHAR (255) NOT NULL,
-    description VARCHAR (255),
-    rel VARCHAR (50)
+    description VARCHAR (255)
 );
 
 INSERT INTO test_sample.link (ID, url, name, description) VALUES

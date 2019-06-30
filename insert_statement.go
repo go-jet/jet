@@ -10,10 +10,13 @@ import (
 type InsertStatement interface {
 	Statement
 
-	// Add a row of values to the insert Statement.
+	// Insert row of values
 	VALUES(value interface{}, values ...interface{}) InsertStatement
-	// Model structure mapped to column names
-	USING(data interface{}) InsertStatement
+	// Insert row of values, where value for each column is extracted from filed of structure data.
+	// If data is not struct or there is no field for every column selected, this method will panic.
+	MODEL(data interface{}) InsertStatement
+
+	MODELS(data interface{}) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
 
@@ -40,8 +43,13 @@ func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) I
 	return i
 }
 
-func (i *insertStatementImpl) USING(data interface{}) InsertStatement {
-	i.rows = append(i.rows, unwindRowFromModel(i.columns, data))
+func (i *insertStatementImpl) MODEL(data interface{}) InsertStatement {
+	i.rows = append(i.rows, unwindRowFromModel(i.getColumns(), data))
+	return i
+}
+
+func (i *insertStatementImpl) MODELS(data interface{}) InsertStatement {
+	i.rows = append(i.rows, unwindRowsFromModels(i.getColumns(), data)...)
 	return i
 }
 
@@ -53,6 +61,14 @@ func (i *insertStatementImpl) RETURNING(projections ...projection) InsertStateme
 func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
 	i.query = selectStatement
 	return i
+}
+
+func (i *insertStatementImpl) getColumns() []column {
+	if len(i.columns) > 0 {
+		return i.columns
+	}
+
+	return i.table.columns()
 }
 
 func (i *insertStatementImpl) DebugSql() (query string, err error) {
@@ -106,10 +122,6 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			queryData.increaseIdent()
 			queryData.newLine()
 			queryData.writeString("(")
-
-			if len(row) != len(i.columns) {
-				return "", nil, errors.New("number of values does not match number of columns")
-			}
 
 			err = serializeClauseList(insert_statement, row, queryData)
 

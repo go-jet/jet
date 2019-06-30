@@ -8,7 +8,6 @@ import (
 
 func TestInvalidInsert(t *testing.T) {
 	assertStatementErr(t, table1.INSERT(table1Col1), "no row values or query specified")
-	assertStatementErr(t, table1.INSERT(table1Col1, table1ColFloat).VALUES(11), "number of values does not match number of columns")
 	assertStatementErr(t, table1.INSERT(nil).VALUES(1), "nil column in columns list")
 }
 
@@ -79,8 +78,8 @@ func TestInsertValuesFromModel(t *testing.T) {
 	}
 
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
-		USING(toInsert).
-		USING(&toInsert)
+		MODEL(toInsert).
+		MODEL(&toInsert)
 
 	expectedSql := `
 INSERT INTO db.table1 (col1, col_float) VALUES
@@ -108,7 +107,7 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 
 	table1.
 		INSERT(table1Col1, table1ColFloat).
-		USING(newData)
+		MODEL(newData)
 }
 
 func TestInsertFromNonStructModel(t *testing.T) {
@@ -118,7 +117,7 @@ func TestInsertFromNonStructModel(t *testing.T) {
 		assert.Equal(t, r, "argument mismatch: expected struct, got []int")
 	}()
 
-	table2.INSERT(table2ColInt).USING([]int{})
+	table2.INSERT(table2ColInt).MODEL([]int{})
 }
 
 func TestInsertQuery(t *testing.T) {

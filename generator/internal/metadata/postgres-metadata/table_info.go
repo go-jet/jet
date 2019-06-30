@@ -16,8 +16,22 @@ func (t TableInfo) Name() string {
 	return t.name
 }
 
-func (t TableInfo) IsUnique(columnName string) bool {
+func (t TableInfo) IsPrimaryKey(columnName string) bool {
 	return t.PrimaryKeys[columnName]
+}
+
+func (t TableInfo) MutableColumns() []ColumnInfo {
+	ret := []ColumnInfo{}
+
+	for _, column := range t.Columns {
+		if t.IsPrimaryKey(column.Name) {
+			continue
+		}
+
+		ret = append(ret, column)
+	}
+
+	return ret
 }
 
 func (t TableInfo) GetImports() []string {
