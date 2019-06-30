@@ -142,15 +142,8 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		}
 	}
 
-	if len(i.returning) > 0 {
-		queryData.newLine()
-		queryData.writeString("RETURNING")
-
-		err = queryData.writeProjections(insert_statement, i.returning)
-
-		if err != nil {
-			return
-		}
+	if err = queryData.writeReturning(insert_statement, i.returning); err != nil {
+		return
 	}
 
 	sql, args = queryData.finalize()

@@ -17,9 +17,9 @@ INSERT INTO test_sample.link (id, url, name, description) VALUES
      (101, 'http://www.google.com', 'Google', DEFAULT),
      (102, 'http://www.yahoo.com', 'Yahoo', NULL)
 RETURNING link.id AS "link.id",
-     link.url AS "link.url",
-     link.name AS "link.name",
-     link.description AS "link.description";
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
 `
 
 	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
@@ -197,9 +197,9 @@ INSERT INTO test_sample.link (url, name) (
      WHERE link.id = 0
 )
 RETURNING link.id AS "link.id",
-     link.url AS "link.url",
-     link.name AS "link.name",
-     link.description AS "link.description";
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
 `
 
 	query := Link.

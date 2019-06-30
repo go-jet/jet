@@ -118,18 +118,22 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return
 	}
 
-	if len(u.returning) > 0 {
-		out.newLine()
-		out.writeString("RETURNING")
-		out.increaseIdent()
-		out.increaseIdent()
-
-		err = serializeProjectionList(update_statement, u.returning, out)
-
-		if err != nil {
-			return
-		}
+	if err = out.writeReturning(update_statement, u.returning); err != nil {
+		return
 	}
+
+	//if len(u.returning) > 0 {
+	//	out.newLine()
+	//	out.writeString("RETURNING")
+	//	out.increaseIdent()
+	//	out.increaseIdent()
+	//
+	//	err = serializeProjectionList(update_statement, u.returning, out)
+	//
+	//	if err != nil {
+	//		return
+	//	}
+	//}
 
 	sql, args = out.finalize()
 	return

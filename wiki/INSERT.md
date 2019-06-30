@@ -9,7 +9,9 @@ Following clauses are supported:
 - MODEL(model) - list of values for columns will be extracted from model object
 - MODELS([]model)  - list of values for columns will be extracted from list of model objects
 - QUERY(select) - select statement that supplies the rows to be inserted.
-- RETURNING(columns...) - list of columns to return as statement result
+- RETURNING(output_expression...) - An expressions to be computed and returned by the INSERT statement after each row is inserted.
+The expressions can use any column names of the table. Write _TableName_.AllColumns to return all columns.
+
 
 _This list might be extended with feature Jet releases._ 
 
@@ -124,7 +126,7 @@ err := insertStmt.Query(db, &dest)
 
 Use `ExecContext` and `QueryContext` to provide context object to execution.
 
-Insert example SQL table:
+##### SQL table used for the example:
 ```sql
 CREATE TABLE IF NOT EXISTS link (
     id serial PRIMARY KEY,

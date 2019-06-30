@@ -1,12 +1,13 @@
 UPDATE changes the values of the specified columns in all rows that satisfy the condition.
 More about UPDATE statement in PostgreSQL: https://www.postgresql.org/docs/11/sql-update.html
 
-Following clauses are supported 
+Following clauses are supported:
 - UPDATE(columns...) - list of columns to update
 - SET(values...) - list of values for columns
 - MODEL(model) - list of values for columns will be extracted from model object
-- WHERE(condition) - row condition to update
-- RETURNING(columns...) - list of columns to return as statement result
+- WHERE(condition) - only rows for which condition returns true will be updated.
+- RETURNING(output_expression...) - An expressions to be computed and returned by the UPDATE statement after each row is updated.
+The expressions can use any column names of the table. Write _TableName_.AllColumns to return all columns.
 
 _This list might be extended with feature Jet releases._ 
 
@@ -23,7 +24,7 @@ updateStmt := Link.
 Debug sql of above statement:
 ```sql
 UPDATE test_sample.link          -- 'test_sample' is name of the schema
-SET (name, url) = ('Bong', 'http://bong.com')
+SET (name, url) = ('Yahoo', 'http://yahoo.com')
 WHERE link.name = 'Bing';
 ```
 
@@ -41,8 +42,8 @@ updateStmt := Link.
     WHERE(Link.Name.EQ(String("Bing")))
 ```
 
-`Link.Name, Link.URL, Link.Description` - can be replaced with Link.MutableColumns. All columns minus primary key columns.
-Primary key columns are not updated usually.
+`Link.Name, Link.URL, Link.Description` - can be replaced with Link.MutableColumns(all columns minus primary key column).  
+Primary key columns usually are not updated.
 
 ```
 updateStmt := Link.
@@ -75,7 +76,7 @@ err := updateStmt.Query(db, &dest)
 
 Use `ExecContext` and `QueryContext` to provide context object to execution.
 
-Update example SQL table:
+##### SQL table used for the example:
 ```sql
 CREATE TABLE IF NOT EXISTS link (
     id serial PRIMARY KEY,

@@ -11,6 +11,8 @@ type DeleteStatement interface {
 	Statement
 
 	WHERE(expression BoolExpression) DeleteStatement
+
+	RETURNING(projections ...projection) DeleteStatement
 }
 
 func newDeleteStatement(table WritableTable) DeleteStatement {
@@ -20,12 +22,18 @@ func newDeleteStatement(table WritableTable) DeleteStatement {
 }
 
 type deleteStatementImpl struct {
-	table WritableTable
-	where BoolExpression
+	table     WritableTable
+	where     BoolExpression
+	returning []projection
 }
 
 func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 	d.where = expression
+	return d
+}
+
+func (d *deleteStatementImpl) RETURNING(projections ...projection) DeleteStatement {
+	d.returning = projections
 	return d
 }
 
@@ -49,6 +57,10 @@ func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
 	}
 
 	if err := out.writeWhere(delete_statement, d.where); err != nil {
+		return err
+	}
+
+	if err := out.writeReturning(delete_statement, d.returning); err != nil {
 		return err
 	}
 

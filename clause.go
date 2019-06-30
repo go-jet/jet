@@ -124,6 +124,18 @@ func (q *queryData) writeHaving(statement statementType, having Expression) erro
 	return err
 }
 
+func (q *queryData) writeReturning(statement statementType, returning []projection) error {
+	if len(returning) == 0 {
+		return nil
+	}
+
+	q.newLine()
+	q.writeString("RETURNING")
+	q.increaseIdent()
+
+	return q.writeProjections(statement, returning)
+}
+
 func (q *queryData) newLine() {
 	q.write([]byte{'\n'})
 	q.write(bytes.Repeat([]byte{' '}, q.ident))
