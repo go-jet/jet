@@ -3,7 +3,9 @@
 The PostgreSQL INSERT statement is used to insert a single record or multiple records 
 into a table. More about PostgreSQL INSERT statement can be found here: https://www.postgresql.org/docs/11/sql-insert.html
 
-Following SQL table is used for insert example:
+## Insert statement
+
+Insert example SQL table:
 ```sql
 CREATE TABLE IF NOT EXISTS link (
     id serial PRIMARY KEY,
@@ -16,7 +18,7 @@ CREATE TABLE IF NOT EXISTS link (
 ### Insert row by row
 
 ```
-insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
     VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
     VALUES(101, "http://www.google.com", "Google", DEFAULT).
     VALUES(102, "http://www.yahoo.com", "Yahoo", nil)
@@ -42,20 +44,21 @@ yahoo := model.Link{
     Name: "Yahoo",
 }
 
-insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
     MODEL(turorial).
     MODEL(google).
     MODEL(yahoo)
-    
-// Or event shorter if model data is in the slice:
-insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+```
+Or event shorter if model data is in the slice:
+```
+insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
     MODELS([]model.Link{turorial, google, yahoo})
 ```
 `Link.ID, Link.URL, Link.Name, Link.Description` - is the same as Link.AllColumns 
 so above statement can be simplified to:
 
 ```
-insertQuery := Link.INSERT(Link.AllColumns).
+insertStmt := Link.INSERT(Link.AllColumns).
     MODELS([]model.Link{turorial, google, yahoo})
 ```
 
@@ -63,14 +66,14 @@ insertQuery := Link.INSERT(Link.AllColumns).
 `Link.MutableColumns` - is shorthand notation for list of all columns minus primary key columns.
 
 ```
-insertQuery := Link.INSERT(Link.MutableColumns).
+insertStmt := Link.INSERT(Link.MutableColumns).
     MODELS([]model.Link{turorial, google, yahoo})
 ```
 
 Inserts using `VALUES`, `MODEL` and `MODELS` can appear as the part of the same insert statement.
 
 ```
-insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description, Link.Description).
+insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description, Link.Description).
     VALUES(101, "http://www.google.com", "Google", DEFAULT, DEFAULT).
     MODEL(turorial).
     MODELS([]model.Link{yahoo})
@@ -80,7 +83,7 @@ insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description, Link.
 A query (SELECT statement) that supplies the rows to be inserted.
 ```
 // duplicate first 10 entries
-query := Link.
+insertStmt := Link.
     INSERT(Link.URL, Link.Name).
     QUERY(
         SELECT(Link.URL, Link.Name).
@@ -88,3 +91,27 @@ query := Link.
             WHERE(Link.ID.GT(Int(0)).AND(Link.ID.LT_EQ(10))),
     )
 ```
+
+## Execute statement
+
+To execute insert statement and get sql.Result:
+
+```
+res, err := insertStmt.Exec(db)
+```
+
+To execute insert statement and return row records inserted, insert statement has to have RETURNING clause:
+```
+insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+    VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+    VALUES(101, "http://www.google.com", "Google", DEFAULT).
+    RETURNING(Link.ID, Link.URL, Link.Name, Link.Description)
+    
+dest := []model.Link{}
+
+err := insertStmt.Query(db, &dest)
+    
+```
+
+Use `ExecContext` and `QueryContext` to provide context object to execution.
+
