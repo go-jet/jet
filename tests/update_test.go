@@ -170,7 +170,7 @@ func TestUpdateWithModelData(t *testing.T) {
 
 	stmt := Link.
 		UPDATE(Link.AllColumns).
-		USING(link).
+		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.ID))))
 
 	expectedSql := `
@@ -197,7 +197,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 
 	stmt := Link.
 		UPDATE(updateColumnList).
-		USING(link).
+		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.ID))))
 
 	var expectedSql = `
@@ -233,7 +233,7 @@ func TestUpdateWithInvalidModelData(t *testing.T) {
 
 	stmt := Link.
 		UPDATE(Link.AllColumns).
-		USING(link).
+		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.Ident))))
 
 	var expectedSql = `

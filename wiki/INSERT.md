@@ -3,18 +3,18 @@
 The PostgreSQL INSERT statement is used to insert a single record or multiple records 
 into a table. More about PostgreSQL INSERT statement can be found here: https://www.postgresql.org/docs/11/sql-insert.html
 
-## Insert statement
+Following clauses are supported:
+- INSERT(columns...) - list of columns for insert
+- VALUES(values...) - list of values 
+- MODEL(model) - list of values for columns will be extracted from model object
+- MODELS([]model)  - list of values for columns will be extracted from list of model objects
+- QUERY(select) - select statement that supplies the rows to be inserted.
+- RETURNING(columns...) - list of columns to return as statement result
 
-Insert example SQL table:
-```sql
-CREATE TABLE IF NOT EXISTS link (
-    id serial PRIMARY KEY,
-    url VARCHAR (255) NOT NULL,
-    name VARCHAR (255) NOT NULL,
-    description VARCHAR (255)
-);
-```
+_This list might be extended with feature Jet releases._ 
 
+
+## Example
 ### Insert row by row
 
 ```
@@ -23,6 +23,16 @@ insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
     VALUES(101, "http://www.google.com", "Google", DEFAULT).
     VALUES(102, "http://www.yahoo.com", "Yahoo", nil)
 ```
+Debug SQL of above insert statement:
+
+```sql
+INSERT INTO test_sample.link (id, url, name, description) VALUES
+     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+     (101, 'http://www.google.com', 'Google', DEFAULT),
+     (102, 'http://www.yahoo.com', 'Yahoo', NULL)
+```
+
+
 
 There is also shorthand notation for inserting model data:
 ```
@@ -80,7 +90,6 @@ insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description, Link.D
 ``` 
 
 ### Insert using query
-A query (SELECT statement) that supplies the rows to be inserted.
 ```
 // duplicate first 10 entries
 insertStmt := Link.
@@ -105,7 +114,7 @@ To execute insert statement and return row records inserted, insert statement ha
 insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
     VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
     VALUES(101, "http://www.google.com", "Google", DEFAULT).
-    RETURNING(Link.ID, Link.URL, Link.Name, Link.Description)
+    RETURNING(Link.ID, Link.URL, Link.Name, Link.Description)  // or RETURNING(Link.AllColumns)
     
 dest := []model.Link{}
 
@@ -114,4 +123,14 @@ err := insertStmt.Query(db, &dest)
 ```
 
 Use `ExecContext` and `QueryContext` to provide context object to execution.
+
+Insert example SQL table:
+```sql
+CREATE TABLE IF NOT EXISTS link (
+    id serial PRIMARY KEY,
+    url VARCHAR (255) NOT NULL,
+    name VARCHAR (255) NOT NULL,
+    description VARCHAR (255)
+);
+```
 

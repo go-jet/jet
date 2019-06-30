@@ -11,7 +11,7 @@ type UpdateStatement interface {
 	Statement
 
 	SET(value interface{}, values ...interface{}) UpdateStatement
-	USING(data interface{}) UpdateStatement
+	MODEL(data interface{}) UpdateStatement
 
 	WHERE(expression BoolExpression) UpdateStatement
 	RETURNING(projections ...projection) UpdateStatement
@@ -39,8 +39,8 @@ func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) Upda
 	return u
 }
 
-func (u *updateStatementImpl) USING(modelData interface{}) UpdateStatement {
-	u.row = unwindRowFromModel(u.columns, modelData)
+func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
+	u.row = unwindRowFromModel(u.columns, data)
 
 	return u
 }
