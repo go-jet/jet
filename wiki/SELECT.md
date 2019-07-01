@@ -123,14 +123,26 @@ SQL:
 OFFSET 11
 ```
 
-##### 9. FOR clause
+##### 9. FOR clause 
+
+Lock mode can be:
+- jet.UPDATE()       
+- jet.NO_KEY_UPDATE()
+- jet.SHARE()      
+- jet.KEY_SHARE()    
+
+Lock mode has following clauses:
+- NOWAIT()
+- SKIP_LOCKED()
+
 ```
 Go:
-.FOR(jet.NO_KEY_UPDATE)
+.FOR(jet.NO_KEY_UPDATE().SKIP_LOCKED())
 
 SQL:
-FOR NO KEY UPDATE
+FOR NO KEY UPDATE SKIP LOCKED
 ```
+
 
 ### Two forms of select statements in Jet
 

@@ -1,6 +1,7 @@
 
 * [Installation](https://github.com/go-jet/jet/wiki/Installation)
 * [Generator](https://github.com/go-jet/jet/wiki/Generator)
+* [Model data](https://github.com/go-jet/jet/wiki/Model-data.md)
 * [Writing SQL in Go]() 
     * [Expressions](https://github.com/go-jet/jet/wiki/Expressions)
     * [Statements](https://github.com/go-jet/jet/wiki/Statements)
@@ -9,3 +10,4 @@
         * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE)
         * [DELETE](https://github.com/go-jet/jet/wiki/DELETE)
         * [LOCK](https://github.com/go-jet/jet/wiki/LOCK)
+* [Execution]()
