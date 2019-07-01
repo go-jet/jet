@@ -28,6 +28,13 @@ type SelectStatement interface {
 	OFFSET(offset int64) SelectStatement
 	FOR(lock SelectLock) SelectStatement
 
+	UNION(rhs SelectStatement) SelectStatement
+	UNION_ALL(rhs SelectStatement) SelectStatement
+	INTERSECT(rhs SelectStatement) SelectStatement
+	INTERSECT_ALL(rhs SelectStatement) SelectStatement
+	EXCEPT(rhs SelectStatement) SelectStatement
+	EXCEPT_ALL(rhs SelectStatement) SelectStatement
+
 	AsTable(alias string) ExpressionTable
 
 	projections() []projection
@@ -39,6 +46,7 @@ func SELECT(projection1 projection, projections ...projection) SelectStatement {
 
 type selectStatementImpl struct {
 	expressionInterfaceImpl
+	parent SelectStatement
 
 	table          ReadableTable
 	distinct       bool
@@ -46,8 +54,8 @@ type selectStatementImpl struct {
 	where          BoolExpression
 	groupBy        []groupByClause
 	having         BoolExpression
-	orderBy        []OrderByClause
 
+	orderBy       []OrderByClause
 	limit, offset int64
 
 	lockFor SelectLock
@@ -63,13 +71,86 @@ func newSelectStatement(table ReadableTable, projections []projection) SelectSta
 	}
 
 	newSelect.expressionInterfaceImpl.parent = newSelect
+	newSelect.parent = newSelect
 
 	return newSelect
 }
 
 func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
 	s.table = table
-	return s
+	return s.parent
+}
+
+func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
+	return newExpressionTable(s.parent, alias, s.parent.projections())
+}
+
+func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
+	s.where = expression
+	return s.parent
+}
+
+func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) SelectStatement {
+	s.groupBy = groupByClauses
+	return s.parent
+}
+
+func (s *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement {
+	s.having = expression
+	return s.parent
+}
+
+func (s *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
+	s.orderBy = clauses
+	return s.parent
+}
+
+func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
+	s.offset = offset
+	return s.parent
+}
+
+func (s *selectStatementImpl) LIMIT(limit int64) SelectStatement {
+	s.limit = limit
+	return s.parent
+}
+
+func (s *selectStatementImpl) DISTINCT() SelectStatement {
+	s.distinct = true
+	return s.parent
+}
+
+func (s *selectStatementImpl) FOR(lock SelectLock) SelectStatement {
+	s.lockFor = lock
+	return s.parent
+}
+
+func (s *selectStatementImpl) UNION(rhs SelectStatement) SelectStatement {
+	return UNION(s.parent, rhs)
+}
+
+func (s *selectStatementImpl) UNION_ALL(rhs SelectStatement) SelectStatement {
+	return UNION_ALL(s.parent, rhs)
+}
+
+func (s *selectStatementImpl) INTERSECT(rhs SelectStatement) SelectStatement {
+	return INTERSECT(s.parent, rhs)
+}
+
+func (s *selectStatementImpl) INTERSECT_ALL(rhs SelectStatement) SelectStatement {
+	return INTERSECT_ALL(s.parent, rhs)
+}
+
+func (s *selectStatementImpl) EXCEPT(rhs SelectStatement) SelectStatement {
+	return EXCEPT(s.parent, rhs)
+}
+
+func (s *selectStatementImpl) EXCEPT_ALL(rhs SelectStatement) SelectStatement {
+	return EXCEPT_ALL(s.parent, rhs)
+}
+
+func (s *selectStatementImpl) projections() []projection {
+	return s.projectionList
 }
 
 func (s *selectStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
@@ -192,56 +273,26 @@ func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error
 }
 
 func (s *selectStatementImpl) DebugSql() (query string, err error) {
-	return debugSql(s)
+	return debugSql(s.parent)
 }
 
-func (s *selectStatementImpl) projections() []projection {
-	return s.projectionList
+func (s *selectStatementImpl) Query(db execution.DB, destination interface{}) error {
+	return query(s.parent, db, destination)
 }
 
-func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
-	return newExpressionTable(s.parent, alias, s.projectionList)
+func (s *selectStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
+	return queryContext(s.parent, db, context, destination)
 }
 
-func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
-	s.where = expression
-	return s
+func (s *selectStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
+	return exec(s.parent, db)
 }
 
-func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) SelectStatement {
-	s.groupBy = groupByClauses
-	return s
+func (s *selectStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
+	return execContext(s.parent, db, context)
 }
 
-func (s *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement {
-	s.having = expression
-	return s
-}
-
-func (s *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
-	s.orderBy = clauses
-	return s
-}
-
-func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
-	s.offset = offset
-	return s
-}
-
-func (s *selectStatementImpl) LIMIT(limit int64) SelectStatement {
-	s.limit = limit
-	return s
-}
-
-func (s *selectStatementImpl) DISTINCT() SelectStatement {
-	s.distinct = true
-	return s
-}
-
-func (s *selectStatementImpl) FOR(lock SelectLock) SelectStatement {
-	s.lockFor = lock
-	return s
-}
+// SelectLock
 
 type SelectLock interface {
 	clause
@@ -287,20 +338,4 @@ func (s *selectLockImpl) serialize(statement statementType, out *queryData, opti
 	}
 
 	return nil
-}
-
-func (s *selectStatementImpl) Query(db execution.DB, destination interface{}) error {
-	return query(s, db, destination)
-}
-
-func (s *selectStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return queryContext(s, db, context, destination)
-}
-
-func (s *selectStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
-	return exec(s, db)
-}
-
-func (s *selectStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return execContext(s, db, context)
 }

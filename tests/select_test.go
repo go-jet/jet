@@ -963,6 +963,41 @@ OFFSET 20;
 	})
 }
 
+func TestAllSetOperators(t *testing.T) {
+
+	select1 := Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17600)).AND(Payment.PaymentID.LT(Int(17610))))
+	select2 := Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17620)).AND(Payment.PaymentID.LT(Int(17630))))
+
+	type setOperator func(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement
+	operators := []setOperator{
+		UNION,
+		UNION_ALL,
+		INTERSECT,
+		INTERSECT_ALL,
+		EXCEPT,
+		EXCEPT_ALL,
+	}
+
+	expectedDestLen := []int{
+		20,
+		20,
+		0,
+		0,
+		10,
+		10,
+	}
+
+	for i, operator := range operators {
+		query := operator(select1, select2)
+
+		dest := []model.Payment{}
+		err := query.Query(db, &dest)
+
+		assert.NilError(t, err)
+		assert.Equal(t, len(dest), expectedDestLen[i])
+	}
+}
+
 func TestSelectWithCase(t *testing.T) {
 	expectedQuery := `
 SELECT (CASE payment.staff_id WHEN 1 THEN 'ONE' WHEN 2 THEN 'TWO' WHEN 3 THEN 'THREE' ELSE 'OTHER' END) AS "staff_id_num"

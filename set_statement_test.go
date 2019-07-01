@@ -1,34 +1,13 @@
 package jet
 
 import (
+	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
 
-func TestUnionNoSelect(t *testing.T) {
-	_, _, err := UNION().Sql()
-
-	assert.Assert(t, err != nil)
-	//fmt.Println(err.Error())
-	//fmt.Print(query, args)
-}
-
-func TestUnionOneSelect(t *testing.T) {
-	_, _, err := UNION(
-		table1.SELECT(table1Col1),
-	).Sql()
-
-	assert.Assert(t, err != nil)
-}
-
 func TestUnionTwoSelect(t *testing.T) {
-	query, args, err := UNION(
-		table1.SELECT(table1Col1),
-		table2.SELECT(table2Col3),
-	).Sql()
-
-	assert.NilError(t, err)
-	assert.Equal(t, query, `
+	var expectedSql = `
 (
      (
           SELECT table1.col1 AS "table1.col1"
@@ -40,19 +19,71 @@ func TestUnionTwoSelect(t *testing.T) {
           FROM db.table2
      )
 );
-`)
-	assert.Equal(t, len(args), 0)
+`
+	unionStmt1 := table1.
+		SELECT(table1Col1).
+		UNION(
+			table2.SELECT(table2Col3),
+		)
+
+	unionStmt2 := UNION(table1.SELECT(table1Col1), table2.SELECT(table2Col3))
+
+	assertStatement(t, unionStmt1, expectedSql)
+	assertStatement(t, unionStmt2, expectedSql)
 }
 
-func TestUnionThreeSelect(t *testing.T) {
-	query, args, err := UNION(
+func TestUnionNilSelect(t *testing.T) {
+	unionStmt := table1.
+		SELECT(table1Col1).
+		UNION(nil)
+
+	assertStatementErr(t, unionStmt, "select statement is nil")
+}
+
+func TestUnionThreeSelect1(t *testing.T) {
+
+	unionStmt1 := table1.SELECT(table1Col1).
+		UNION(
+			table2.SELECT(table2Col3),
+		).
+		UNION(
+			table3.SELECT(table3Col1),
+		)
+
+	var expectedSql = `
+(
+     
+     (
+          (
+               SELECT table1.col1 AS "table1.col1"
+               FROM db.table1
+          )
+          UNION
+          (
+               SELECT table2.col3 AS "table2.col3"
+               FROM db.table2
+          )
+     )
+     UNION
+     (
+          SELECT table3.col1 AS "table3.col1"
+          FROM db.table3
+     )
+);
+`
+
+	assertStatement(t, unionStmt1, expectedSql)
+}
+
+func TestUnionThreeSelect2(t *testing.T) {
+
+	unionStmt2 := UNION(
 		table1.SELECT(table1Col1),
 		table2.SELECT(table2Col3),
 		table3.SELECT(table3Col1),
-	).Sql()
+	)
 
-	assert.NilError(t, err)
-	assert.Equal(t, query, `
+	var expectedSql = `
 (
      (
           SELECT table1.col1 AS "table1.col1"
@@ -69,18 +100,19 @@ func TestUnionThreeSelect(t *testing.T) {
           FROM db.table3
      )
 );
-`)
-	assert.Equal(t, len(args), 0)
+`
+
+	assertStatement(t, unionStmt2, expectedSql)
 }
 
 func TestUnionWithOrderBy(t *testing.T) {
-	query, args, err := UNION(
+	unionStmt := UNION(
 		table1.SELECT(table1Col1),
 		table2.SELECT(table2Col3),
-	).ORDER_BY(table1Col1.ASC()).Sql()
+	).
+		ORDER_BY(table1Col1.ASC())
 
-	assert.NilError(t, err)
-	assert.Equal(t, query, `
+	assertStatement(t, unionStmt, `
 (
      (
           SELECT table1.col1 AS "table1.col1"
@@ -94,14 +126,15 @@ func TestUnionWithOrderBy(t *testing.T) {
 )
 ORDER BY "table1.col1" ASC;
 `)
-	assert.Equal(t, len(args), 0)
 }
 
-func TestUnionWithLimit(t *testing.T) {
+func TestUnionWithLimitAndOffset(t *testing.T) {
 	query, args, err := UNION(
 		table1.SELECT(table1Col1),
 		table2.SELECT(table2Col3),
-	).LIMIT(10).OFFSET(11).Sql()
+	).
+		LIMIT(10).
+		OFFSET(11).Sql()
 
 	assert.NilError(t, err)
 	assert.Equal(t, query, `
@@ -150,11 +183,8 @@ func TestUnionInUnion(t *testing.T) {
 		UNION_ALL(table1.SELECT(table1Col1), table2.SELECT(table2Col3)),
 	)
 
-	queryStr, args, err := query.Sql()
-
-	assert.NilError(t, err)
-	assert.Equal(t, len(args), 0)
-	assert.Equal(t, queryStr, expectedSql)
+	fmt.Println(query.Sql())
+	assertStatement(t, query, expectedSql)
 }
 
 func TestUnionALL(t *testing.T) {
