@@ -14,6 +14,7 @@ Jet enables writing type safe SQL queries in Go, and has ability to convert data
          - [Lets write some SQL queries in Go](#lets-write-some-sql-queries-in-go)
    - [Benefits](#benefits)
    - [Versioning](#versioning)
+
 ## Features
 * TODO
 

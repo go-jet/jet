@@ -2,11 +2,34 @@
 SELECT statement is used to retrieve records from one or more tables in PostgreSQL.
 More about SELECT statement in postgres can be found at: https://www.postgresql.org/docs/11/sql-select.html
 
+Following clauses are supported:
+- SELECT(expressions...) - expressions to form output rows of the SELECT statement.
+- DISTINCT() - remove all duplicate rows from result set
+- FROM(tableSource...) - specifies one or more source tables for the SELECT.
+- WHERE(condition) - only rows for which condition returns true will be selected.
+- GROUP BY(groupingElement, ...) -  will condense into a single row all selected rows that share the same values for the grouped expressions.
+- HAVING(condition) - eliminates group rows that do not satisfy the condition
+- ORDER BY(orderBy, ...) - causes the result rows to be sorted according to the specified expression(s)
+- LIMIT(count) - specifies the maximum number of rows to return
+- OFFSET(start) - specifies the number of rows to skip before starting to return rows
+- FOR(lockMode) - how SELECT will lock rows as they are obtained from the table   
+  Lock mode can be:
+   - jet.UPDATE()
+   - jet.NO_KEY_UPDATE()
+   - jet.SHARE()
+   - jet.KEY_SHARE()
 
-## SELECT statement clauses
+    Lock mode can be extended with following clauses:
+    - NOWAIT()
+    - SKIP_LOCKED()
 
-Following clauses are supported - SELECT, DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET and FOR.  
-_This list might be extended with feature Jet releases._ 
+- UNION(select) / UNION_ALL(select) - computes the set union of the rows returned by the involved SELECT statements
+- INTERSECT(select) / INTERSECT_ALL(select) - computes the set intersection of the rows returned by the involved SELECT statements
+- EXCEPT(select) / EXCEPT_ALL(select) - computes the set of rows that are in the result of the left SELECT statement but not in the result of the right one
+   
+_This list might be extended with feature Jet releases._
+
+### Examples per clause
 
 ##### 1. SELECT clause
 
@@ -125,16 +148,6 @@ OFFSET 11
 
 ##### 9. FOR clause 
 
-Lock mode can be:
-- jet.UPDATE()       
-- jet.NO_KEY_UPDATE()
-- jet.SHARE()      
-- jet.KEY_SHARE()    
-
-Lock mode has following clauses:
-- NOWAIT()
-- SKIP_LOCKED()
-
 ```
 Go:
 .FOR(jet.NO_KEY_UPDATE().SKIP_LOCKED())
@@ -143,11 +156,31 @@ SQL:
 FOR NO KEY UPDATE SKIP LOCKED
 ```
 
+##### 10. Set clauses (UNION, UNION_ALL, INTERSECT, INTERSECT_ALL, EXCEPT, EXCEPT_ALL)
+
+```
+Go:
+SELECT(Payment.Amount).FROM(Payment)
+UNION_ALL(SELECT(Payment.Amount).FROM(Payment))
+
+Sql:
+(
+     (
+          SELECT payment.amount AS "payment.amount"
+          FROM dvds.payment
+     )
+     UNION
+     (
+          SELECT payment.amount AS "payment.amount"
+          FROM dvds.payment
+     )
+);
+```
 
 ### Two forms of select statements in Jet
 
 #### 1. Classical select statement
-Columns selected are before tables selected
+Columns selected are before table source selected
 ```
 SELECT(
     Payment.AllColumns,
@@ -160,7 +193,7 @@ LIMIT(30)
 ```
 
 #### 2. Jet select statement
-Joined tables(or just one) are before columns selected. There is no FROM.
+Table sources are before columns selected. There is no FROM.
 ```
 Payment.
     INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID))
