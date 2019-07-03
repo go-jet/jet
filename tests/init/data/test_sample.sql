@@ -199,3 +199,33 @@ CREATE TABLE test_sample.person(
 DROP TYPE IF EXISTS test_sample.MOOD CASCADE;
 
 CREATE TYPE test_sample.MOOD AS ENUM ('sad', 'ok', 'happy');
+
+
+-- WEIRD TABLE NAMES --------------
+
+DROP TABLE IF EXISTS test_sample."WEIRD NAMES TABLE";
+
+CREATE TABLE test_sample."WEIRD NAMES TABLE"(
+    "weird_column_name1" varchar(100) NOT NULL,
+    "Weird_Column_Name2" varchar(100) NOT NULL,
+    "wEiRd_cOluMn_nAmE3" varchar(100) NOT NULL,
+    "WeIrd_CoLuMN_Name4" varchar(100) NOT NULL,
+    "WEIRD_COLUMN_NAME5" varchar(100) NOT NULL,
+
+    "WeirdColumnName6" varchar(100) NOT NULL,
+    "weirdColumnName7" varchar(100) NOT NULL,
+    "weirdcolumnname8" varchar(100),
+
+    "weird col name9" varchar(100) NOT NULL,
+    "wEiRd cOlu nAmE10" varchar(100) NOT NULL,
+    "WEIRD COLU NAME11" varchar(100) NOT NULL,
+    "Weird Colu Name12" varchar(100) NOT NULL,
+
+    "weird-col-name13" varchar(100) NOT NULL,
+    "wEiRd-cOlu-nAmE14" varchar(100) NOT NULL,
+    "WEIRD-COLU-NAME15" varchar(100) NOT NULL,
+    "Weird-Colu-Name16" varchar(100) NOT NULL
+);
+
+INSERT INTO test_sample."WEIRD NAMES TABLE"
+VALUES ('Doe', 'Doe', 'Doe', 'Doe','Doe', 'Doe', 'Doe', 'Doe','Doe', 'Doe', 'Doe', 'Doe','Doe', 'Doe', 'Doe', 'Doe');

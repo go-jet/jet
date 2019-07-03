@@ -291,7 +291,7 @@ LIMIT 15;
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
-		WHERE(Film.Rating.EQ(enum.MpaaRating.NC17)).
+		WHERE(Film.Rating.EQ(enum.MpaaRating.Nc17)).
 		LIMIT(15)
 
 	assertStatementSql(t, query, expectedSql, int64(15))
@@ -304,7 +304,7 @@ LIMIT 15;
 
 	englishFilms := filmsPerLanguage[0]
 
-	assert.Equal(t, *englishFilms.Film[0].Rating, model.MpaaRating_NC17)
+	assert.Equal(t, *englishFilms.Film[0].Rating, model.MpaaRating_Nc17)
 
 	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
 	err = query.Query(db, &filmsPerLanguageWithPtrs)
@@ -1237,6 +1237,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
+
 	filmLogerThan180 := Film.
 		SELECT(Film.AllColumns).
 		WHERE(Film.Length.GT(Int(180))).

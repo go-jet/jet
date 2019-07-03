@@ -467,7 +467,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice of structs with slice of ints", func(t *testing.T) {
 			var dest []struct {
 				model.Film
-				IDs []int32 `alias:"Inventory.inventory_id"`
+				IDs []int32 `alias:"inventory.inventory_id"`
 			}
 
 			err := query.Query(db, &dest)
@@ -483,7 +483,7 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice of structs with slice of pointer to ints", func(t *testing.T) {
 			var dest []struct {
 				model.Film
-				IDs []*int32 `alias:"inventory.InventoryId"`
+				IDs []*int32 `alias:"inventory.inventory_id"`
 			}
 
 			err := query.Query(db, &dest)
@@ -796,7 +796,7 @@ var store1 = model.Store{
 	LastUpdate:     *timestampWithoutTimeZone("2006-02-15 09:57:12", 0),
 }
 
-var pgRating = model.MpaaRating_PG
+var pgRating = model.MpaaRating_Pg
 var gRating = model.MpaaRating_G
 
 var language1 = model.Language{

@@ -2,7 +2,7 @@ package jet
 
 import (
 	"errors"
-	"github.com/serenize/snaker"
+	"github.com/go-jet/jet/internal/util"
 	"reflect"
 	"strings"
 )
@@ -145,7 +145,7 @@ func unwindRowFromModel(columns []column, data interface{}) []clause {
 
 	for _, column := range columns {
 		columnName := column.Name()
-		structFieldName := snaker.SnakeToCamel(columnName)
+		structFieldName := util.ToGoIdentifier(columnName)
 
 		structField := structValue.FieldByName(structFieldName)
 

@@ -98,12 +98,6 @@ type writableTableInterfaceImpl struct {
 }
 
 func (w *writableTableInterfaceImpl) INSERT(columns ...column) InsertStatement {
-	//columnList := unwidColumnList(columns)
-	//
-	//if len(columns) == 0 {
-	//	columnList = w.parent.columns()
-	//}
-
 	return newInsertStatement(w.parent, unwidColumnList(columns))
 }
 

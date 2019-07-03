@@ -171,7 +171,7 @@ func (q *queryData) writeString(str string) {
 }
 
 func (q *queryData) writeIdentifier(name string) {
-	quoteWrap := name != strings.ToLower(name) || strings.Contains(name, ".")
+	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
 
 	if quoteWrap {
 		q.writeString(`"` + name + `"`)

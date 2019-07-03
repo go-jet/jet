@@ -116,3 +116,35 @@ ORDER BY employee.employee_id;
 		ManagerID:      int32Ptr(3),
 	})
 }
+
+func TestWierdNamesTable(t *testing.T) {
+	stmt := WeirdNamesTable.SELECT(WeirdNamesTable.AllColumns)
+
+	fmt.Println(stmt.DebugSql())
+
+	dest := []model.WeirdNamesTable{}
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 1)
+	assert.DeepEqual(t, dest[0], model.WeirdNamesTable{
+		WeirdColumnName1: "Doe",
+		WeirdColumnName2: "Doe",
+		WeirdColumnName3: "Doe",
+		WeirdColumnName4: "Doe",
+		WeirdColumnName5: "Doe",
+		WeirdColumnName6: "Doe",
+		WeirdColumnName7: "Doe",
+		Weirdcolumnname8: stringPtr("Doe"),
+		WeirdColName9:    "Doe",
+		WeirdColuName10:  "Doe",
+		WeirdColuName11:  "Doe",
+		WeirdColuName12:  "Doe",
+		WeirdColName13:   "Doe",
+		WeirdColuName14:  "Doe",
+		WeirdColuName15:  "Doe",
+		WeirdColuName16:  "Doe",
+	})
+}

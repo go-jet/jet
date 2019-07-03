@@ -6,6 +6,7 @@ import (
 	"github.com/go-jet/jet/generator/internal/metadata"
 	"github.com/go-jet/jet/generator/internal/metadata/postgres-metadata"
 	"github.com/go-jet/jet/generator/internal/utils"
+	"github.com/go-jet/jet/internal/util"
 	_ "github.com/lib/pq"
 	"path"
 	"path/filepath"
@@ -115,7 +116,7 @@ func generate(schemaInfo postgres_metadata.SchemaInfo, dirPath, packageName stri
 			return err
 		}
 
-		err = utils.SaveGoFile(modelDirPath, metaData.Name(), append(autoGenWarning, text...))
+		err = utils.SaveGoFile(modelDirPath, util.ToGoFileName(metaData.Name()), append(autoGenWarning, text...))
 
 		if err != nil {
 			return err

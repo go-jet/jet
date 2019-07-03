@@ -2,11 +2,10 @@ package utils
 
 import (
 	"bytes"
-	"github.com/serenize/snaker"
+	"github.com/go-jet/jet/internal/util"
 	"go/format"
 	"os"
 	"path/filepath"
-	"strings"
 	"text/template"
 	"time"
 )
@@ -51,9 +50,7 @@ func EnsureDirPath(dirPath string) error {
 func GenerateTemplate(templateText string, templateData interface{}) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
-		"camelize": func(txt string) string {
-			return snaker.SnakeToCamel(strings.Replace(txt, "-", "_", -1))
-		},
+		"ToGoIdentifier": util.ToGoIdentifier,
 		"now": func() string {
 			return time.Now().Format(time.RFC850)
 		},

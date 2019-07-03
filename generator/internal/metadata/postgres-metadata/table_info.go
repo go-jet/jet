@@ -2,7 +2,7 @@ package postgres_metadata
 
 import (
 	"database/sql"
-	"github.com/serenize/snaker"
+	"github.com/go-jet/jet/internal/util"
 )
 
 type TableInfo struct {
@@ -58,7 +58,7 @@ func (t TableInfo) GetImports() []string {
 }
 
 func (t TableInfo) GoStructName() string {
-	return snaker.SnakeToCamel(t.name) + "Table"
+	return util.ToGoIdentifier(t.name) + "Table"
 }
 
 func GetTableInfo(db *sql.DB, dbName, schemaName, tableName string) (tableInfo TableInfo, err error) {
