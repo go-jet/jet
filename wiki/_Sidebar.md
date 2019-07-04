@@ -2,7 +2,7 @@
 * [Installation](https://github.com/go-jet/jet/wiki/Installation)
 * [Generator](https://github.com/go-jet/jet/wiki/Generator)
 * [Model files](https://github.com/go-jet/jet/wiki/Model-data.md)
-* [Writing SQL in Go]() 
+* [SQL Builder](https://github.com/go-jet/jet/wiki/SQL-Builder.md) 
     * [Expressions](https://github.com/go-jet/jet/wiki/Expressions)
     * [Statements](https://github.com/go-jet/jet/wiki/Statements)
         * [SELECT](https://github.com/go-jet/jet/wiki/SELECT)

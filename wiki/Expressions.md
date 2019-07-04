@@ -66,7 +66,7 @@ jet.Int(11).LIKE(jet.Float(22.2))      // integer expressions doesn't have LIKE 
 
 Jet supports following comparison operators for all expression types:
 
-| Method                         | Sample                                             | Generated sql                        |
+| Method                         | Example                                             | Generated sql                        |
 | ------------------------------ | ------------------------------------------------   |----------------------------          |
 | EQ                             | jet.Int(1).EQ(table.Film.Length)                   | 1 = film.length                      |
 | NOT_EQ                         | jet.Int(1).EQ(table.Film.Length)                   | 1 != film.length                     |
@@ -86,7 +86,7 @@ Following arithmetic operators are supported for integer and float expressions.
 If the first argument is float expression, second argument can be integer or float expression.
 If the first argument is integer expression second argument can only be integer expression.
 
-| Method                         | Sample                                             | Generated sql                        |
+| Method                         | Example                                             | Generated sql                        |
 | ------------------------------ | ------------------------------------------------   |----------------------------          |
 | ADD                            | jet.Int(1).ADD(table.Film.Length)                  | 1 + film.length                      |
 | SUB                            | jet.Float(1.11).SUB(Int(1))                        | 1.11 + 1                             |
@@ -100,7 +100,7 @@ If the first argument is integer expression second argument can only be integer 
 
 Following operators are only available on integer expressions:
 
-| Method                         | Sample                                             | Generated sql                        |
+| Method                         | Example                                             | Generated sql                        |
 | ------------------------------ | ------------------------------------------------   |----------------------------          |
 | BIT_AND                        | jet.Int(11).BIT_AND(table.Film.Length)             | 11 & film.length                     |
 | BIT_OR                         | jet.Int(11).BIT_OR(table.Film.Length)              | 11 \| film.length                    |
@@ -114,7 +114,7 @@ Following operators are only available on integer expressions:
 
 Following operators are only available on boolean expressions:
 
-| Method                         | Sample                                                   | Generated sql                        |
+| Method                         | Example                                                   | Generated sql                        |
 | ------------------------------ | ---------------------------------------------------------|----------------------------          |
 | IS_TRUE                        | table.Staff.Active.IS_TRUE()                             | staff.active IS TRUE                 |
 | IS_NOT_TRUE                    | (table.Staff.Active.AND(jet.Bool(true))).IS_NOT_TRUE()   | (staff.active AND true) IS NOT TRUE  |
@@ -128,7 +128,7 @@ Following operators are only available on boolean expressions:
 
 Following operators are only available on string expressions:
 
-| Method                         | Sample                                                   | Generated sql                        |
+| Method                         | Example                                                   | Generated sql                        |
 | ------------------------------ | ---------------------------------------------------------|----------------------------          |
 | CONCAT                         | table.Film.Name.CONCAT(table.Film.Description)           | film.name \|\| film.description      |
 | LIKE                           | table.Film.Name.LIKE(String("%Wind%"))                   | film.name LIKE %Wind%                |
@@ -142,7 +142,7 @@ Following operators are only available on string expressions:
 Cast operators allow expressions to be casted to some other database type.
 SQL builder expression type changes accordingly to database type.
 
-| Method                         | Sample                                     | Generated sql                   |
+| Method                         | Example                                     | Generated sql                   |
 | ------------------------------ | -------------------------------------------|----------------------------     |
 | TO_BOOL                        | table.Film.Description.TO_BOOL()           | film.description::boolean       |
 | TO_SMALLINT                    | table.Film.Description.TO_SMALLINT()       | film.description::smallint      |
