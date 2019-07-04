@@ -13,6 +13,7 @@ Jet enables writing type safe SQL queries in Go, and has ability to convert data
          - [Generate sql builder and model files](#generate-sql-builder-and-model-files)
          - [Lets write some SQL queries in Go](#lets-write-some-sql-queries-in-go)
    - [Benefits](#benefits)
+   - [Dependencies](#dependencies)
    - [Versioning](#versioning)
 
 ## Features
@@ -470,6 +471,9 @@ Lets say someone changes the type of `length` column to some non integer type. B
 because integer columns and expressions can be only compered to other integer columns and expressions.
 
 Without Jet these bugs will have to be either caught by some test or by manual testing. 
+
+## Dependencies
+TODO:
 
 ## Contributing
 

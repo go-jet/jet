@@ -224,7 +224,7 @@ rRatingFilms := Film.
     WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
     AsTable("rFilms")
 ```
-`AsTable("rFilms")` - allows SELECT statements to be seen as table.    
+`AsTable("rFilms")` - allows SELECT statements to be seen as source table.    
 
 To use sub-query columns in SELECT statement expressions we have to export column from sub-query, 
 using `From` method. 
