@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
-	"github.com/go-jet/jet/internal/util"
+	"github.com/go-jet/jet/internal/utils"
 	"reflect"
 	"strconv"
 	"strings"
@@ -550,10 +550,10 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 	for i, alias := range aliases {
 		names := strings.SplitN(alias, ".", 2)
 
-		goName := util.ToGoIdentifier(names[0])
+		goName := utils.ToGoIdentifier(names[0])
 
 		if len(names) > 1 {
-			goName += "." + util.ToGoIdentifier(names[1])
+			goName += "." + utils.ToGoIdentifier(names[1])
 		}
 
 		goNamesMap[strings.ToLower(goName)] = i

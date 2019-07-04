@@ -3,7 +3,7 @@ package postgres_metadata
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/internal/util"
+	"github.com/go-jet/jet/internal/utils"
 	"strings"
 )
 
@@ -44,7 +44,7 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 func (c ColumnInfo) GoBaseType() string {
 	switch c.DataType {
 	case "USER-DEFINED":
-		return util.ToGoIdentifier(c.EnumName)
+		return utils.ToGoIdentifier(c.EnumName)
 	case "boolean":
 		return "bool"
 	case "smallint":

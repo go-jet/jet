@@ -2,7 +2,7 @@ package postgres_metadata
 
 import (
 	"database/sql"
-	"github.com/go-jet/jet/internal/util"
+	"github.com/go-jet/jet/internal/utils"
 )
 
 type TableInfo struct {
@@ -58,7 +58,7 @@ func (t TableInfo) GetImports() []string {
 }
 
 func (t TableInfo) GoStructName() string {
-	return util.ToGoIdentifier(t.name) + "Table"
+	return utils.ToGoIdentifier(t.name) + "Table"
 }
 
 func GetTableInfo(db *sql.DB, dbName, schemaName, tableName string) (tableInfo TableInfo, err error) {

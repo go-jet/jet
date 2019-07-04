@@ -2,8 +2,8 @@ package jet
 
 import (
 	"bytes"
+	"github.com/go-jet/jet/internal/utils"
 	"github.com/google/uuid"
-	"github.com/lib/pq"
 	"strconv"
 	"strings"
 	"time"
@@ -250,7 +250,7 @@ func ArgToString(value interface{}) string {
 	case uuid.UUID:
 		return stringQuote(bindVal.String())
 	case time.Time:
-		return stringQuote(string(pq.FormatTimestamp(bindVal)))
+		return stringQuote(string(utils.FormatTimestamp(bindVal)))
 	default:
 		return "[Unknown type]"
 	}

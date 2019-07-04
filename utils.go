@@ -2,7 +2,7 @@ package jet
 
 import (
 	"errors"
-	"github.com/go-jet/jet/internal/util"
+	"github.com/go-jet/jet/internal/utils"
 	"reflect"
 	"strings"
 )
@@ -145,7 +145,7 @@ func unwindRowFromModel(columns []column, data interface{}) []clause {
 
 	for _, column := range columns {
 		columnName := column.Name()
-		structFieldName := util.ToGoIdentifier(columnName)
+		structFieldName := utils.ToGoIdentifier(columnName)
 
 		structField := structValue.FieldByName(structFieldName)
 

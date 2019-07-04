@@ -473,7 +473,13 @@ because integer columns and expressions can be only compered to other integer co
 Without Jet these bugs will have to be either caught by some test or by manual testing. 
 
 ## Dependencies
-TODO:
+At the moment Jet dependence only of:
+- `github.com/google/uuid` _(Used for debug purposes)_
+- `github.com/lib/pq` _(Used by JetGen to read information about database schema)_
+
+To run the tests, additional dependencies are required:
+- `github.com/pkg/profile`
+- `gotest.tools/assert`
 
 ## Contributing
 
