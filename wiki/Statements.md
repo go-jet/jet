@@ -9,14 +9,22 @@ Following statements are supported:
 
 _This list might be extended with feature Jet releases._ 
 
-There is a common set of action that can be performed for each statement type:
+Statements SQL can be debugged in two ways:
 
 - `Sql() (query string, args []interface{}, err error)` - retrieves parametrized sql query with list of arguments
 - `DebugSql() (query string, err error)` - retrieves debug query where every parametrized placeholder is replaced with its argument.
+
+Statements can be executed by following methods:
 - `Query(db execution.DB, destination interface{}) error` - executes statements over database connection db and stores row result in destination.
 - `QueryContext(db execution.DB, context context.Context, destination interface{}) error` - executes statement with a context over database connection db and stores row result in destination.
 - `Exec(db execution.DB) (sql.Result, error)` - executes statement over db connection without returning any rows.
 - `ExecContext(db execution.DB, context context.Context) (sql.Result, error)` - executes statement with context over db connection without returning any rows.
+
+Each execution method first creates parametrized sql query with list of arguments and then initiates query on database connection.
+Exec and ExecContext are just a wrappers around database `Exec` and `ExecContext`.
+
+`Query` and `QueryContext` are bit more complex, the are wrappers around database `Query` and `QueryContext`, 
+but they also perform grouping of row result to arbitrary `destination` structure. 
 
 Database connection can be of any type that implements following interface:
 

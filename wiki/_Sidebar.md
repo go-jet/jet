@@ -10,4 +10,4 @@
         * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE)
         * [DELETE](https://github.com/go-jet/jet/wiki/DELETE)
         * [LOCK](https://github.com/go-jet/jet/wiki/LOCK)
-* [Execution](https://github.com/go-jet/jet/wiki/Execution)
+* [Scan to arbitrary destination](https://github.com/go-jet/jet/wiki/Scan-to-arbitrary-destination.md)

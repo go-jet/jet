@@ -314,6 +314,179 @@ LIMIT 15;
 	assert.Equal(t, len(filmsPerLanguage[0].Film), limit)
 }
 
+func TestExecution1(t *testing.T) {
+	stmt := City.
+		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
+		SELECT(
+			City.CityID,
+			City.City,
+			Address.AddressID,
+			Address.Address,
+			Customer.CustomerID,
+			Customer.LastName,
+		).
+		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+
+	assertStatementSql(t, stmt, `
+SELECT city.city_id AS "city.city_id",
+     city.city AS "city.city",
+     address.address_id AS "address.address_id",
+     address.address AS "address.address",
+     customer.customer_id AS "customer.customer_id",
+     customer.last_name AS "customer.last_name"
+FROM dvds.city
+     INNER JOIN dvds.address ON (address.city_id = city.city_id)
+     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
+WHERE (city.city = 'London') OR (city.city = 'York')
+ORDER BY city.city_id, address.address_id, customer.customer_id;
+`, "London", "York")
+
+	var dest []struct {
+		model.City
+
+		Customers []struct {
+			model.Customer
+
+			Address model.Address
+		}
+	}
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 2)
+	assert.Equal(t, dest[0].City.City, "London")
+	assert.Equal(t, dest[1].City.City, "York")
+	assert.Equal(t, len(dest[0].Customers), 2)
+	assert.Equal(t, dest[0].Customers[0].LastName, "Hoffman")
+	assert.Equal(t, dest[0].Customers[1].LastName, "Vines")
+
+}
+
+func TestExecution2(t *testing.T) {
+
+	type MyAddress struct {
+		ID          int32 `sql:"primary_key"`
+		AddressLine string
+	}
+
+	type MyCustomer struct {
+		ID       int32 `sql:"primary_key"`
+		LastName *string
+
+		Address MyAddress
+	}
+
+	type MyCity struct {
+		ID   int32 `sql:"primary_key"`
+		Name string
+
+		Customers []MyCustomer
+	}
+
+	dest := []MyCity{}
+
+	stmt := City.
+		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
+		SELECT(
+			City.CityID.AS("my_city.id"),
+			City.City.AS("myCity.Name"),
+			Address.AddressID.AS("My_Address.id"),
+			Address.Address.AS("my address.address line"),
+			Customer.CustomerID.AS("my_customer.id"),
+			Customer.LastName.AS("my_customer.last_name"),
+		).
+		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+
+	assertStatementSql(t, stmt, `
+SELECT city.city_id AS "my_city.id",
+     city.city AS "myCity.Name",
+     address.address_id AS "My_Address.id",
+     address.address AS "my address.address line",
+     customer.customer_id AS "my_customer.id",
+     customer.last_name AS "my_customer.last_name"
+FROM dvds.city
+     INNER JOIN dvds.address ON (address.city_id = city.city_id)
+     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
+WHERE (city.city = 'London') OR (city.city = 'York')
+ORDER BY city.city_id, address.address_id, customer.customer_id;
+`, "London", "York")
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 2)
+	assert.Equal(t, dest[0].Name, "London")
+	assert.Equal(t, dest[1].Name, "York")
+	assert.Equal(t, len(dest[0].Customers), 2)
+	assert.Equal(t, *dest[0].Customers[0].LastName, "Hoffman")
+	assert.Equal(t, *dest[0].Customers[1].LastName, "Vines")
+
+}
+
+func TestExecution3(t *testing.T) {
+
+	var dest []struct {
+		CityID   int32 `sql:"primary_key"`
+		CityName string
+
+		Customers []struct {
+			CustomerID int32 `sql:"primary_key"`
+			LastName   *string
+
+			Address struct {
+				AddressID   int32 `sql:"primary_key"`
+				AddressLine string
+			}
+		}
+	}
+
+	stmt := City.
+		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
+		SELECT(
+			City.CityID.AS("city_id"),
+			City.City.AS("city_name"),
+			Customer.CustomerID.AS("customer_id"),
+			Customer.LastName.AS("last_name"),
+			Address.AddressID.AS("address_id"),
+			Address.Address.AS("address_line"),
+		).
+		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+
+	assertStatementSql(t, stmt, `
+SELECT city.city_id AS "city_id",
+     city.city AS "city_name",
+     customer.customer_id AS "customer_id",
+     customer.last_name AS "last_name",
+     address.address_id AS "address_id",
+     address.address AS "address_line"
+FROM dvds.city
+     INNER JOIN dvds.address ON (address.city_id = city.city_id)
+     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
+WHERE (city.city = 'London') OR (city.city = 'York')
+ORDER BY city.city_id, address.address_id, customer.customer_id;
+`, "London", "York")
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 2)
+	assert.Equal(t, dest[0].CityName, "London")
+	assert.Equal(t, dest[1].CityName, "York")
+	assert.Equal(t, len(dest[0].Customers), 2)
+	assert.Equal(t, *dest[0].Customers[0].LastName, "Hoffman")
+	assert.Equal(t, *dest[0].Customers[1].LastName, "Vines")
+}
+
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
 	type FilmsPerLanguage struct {
 		Language model.Language
