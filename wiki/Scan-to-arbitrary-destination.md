@@ -51,13 +51,13 @@ Every column is aliased by default. Format is "`table_name`.`column_name`"
 Above statement will produce following result set:
 
 |_row_| city.city_id |   city.city      | address.address_id  |   address.address     | customer.customer_id | customer.last_name |
-|---| ------------ | -------------    | ------------------- | --------------------  | -------------------- | ------------------ |
-|  _1_|          312 |	  "London"    |	             256    |	"1497 Yuzhou Drive"	|                  252 |           "Hoffman"|
-|  _2_|          312 |	  "London"    |	             517    |	"548 Uruapan Street"|                  512 |           "Vines"  | 
-|  _3_|          589 |	  "York"      |	             502    |	"1515 Korla Way"	|                  497 |           "Sledge" |
+|---  | ------------ | -------------    | ------------------- | --------------------  | -------------------- | ------------------ |
+|  _1_|          312 |	  "London"      |	             256  |	"1497 Yuzhou Drive"	  |                  252 |           "Hoffman"|
+|  _2_|          312 |	  "London"      |	             517  |	"548 Uruapan Street"  |                  512 |           "Vines"  | 
+|  _3_|          589 |	  "York"        |	             502  |	"1515 Korla Way"	  |                  497 |           "Sledge" |
 
 Lets execute statement and scan result set to destination `dest`:
- ```
+ ```sql
 var dest []struct {
     model.City
 
@@ -190,7 +190,7 @@ City of `London` has two customers, which is the product of object reuse in `ROW
  
 ### Custom model files
 
-**Programmes are not limited to just model files, any destination will work, as long as camel case of result set column
+**Destinations are not limited to just model files, any destination will work, as long as camel case of result set column
 is equal to `model type name`.`field name`.**
 
 #### Named types

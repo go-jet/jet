@@ -3,8 +3,6 @@ package jet
 type alias struct {
 	expression Expression
 	alias      string
-
-	subQuery ExpressionTable
 }
 
 func newAlias(expression Expression, aliasName string) projection {
@@ -15,25 +13,22 @@ func newAlias(expression Expression, aliasName string) projection {
 }
 
 func (a *alias) from(subQuery ExpressionTable) projection {
-	newAlias := *a
-	newAlias.subQuery = subQuery
-	return &newAlias
+	column := newColumn(a.alias, "", nil)
+	column.parent = &column
+	column.subQuery = subQuery
+
+	return &column
 }
 
 func (a *alias) serializeForProjection(statement statementType, out *queryData) error {
-	if a.subQuery != nil {
-		out.writeIdentifier(a.subQuery.Alias())
-		out.writeByte('.')
-		out.writeQuotedString(a.alias)
-	} else {
-		err := a.expression.serialize(statement, out)
+	err := a.expression.serialize(statement, out)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
 	}
 
-	out.writeString(`AS "` + a.alias + `"`)
+	out.writeString("AS ")
+	out.writeQuotedString(a.alias)
 
 	return nil
 }

@@ -89,7 +89,7 @@ func (c columnImpl) serialize(statement statementType, out *queryData, options .
 	if c.subQuery != nil {
 		out.writeIdentifier(c.subQuery.Alias())
 		out.writeByte('.')
-		out.writeString(`"` + c.defaultAlias() + `"`)
+		out.writeQuotedString(c.defaultAlias())
 	} else {
 		if c.tableName != "" {
 			out.writeIdentifier(c.tableName)
