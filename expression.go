@@ -2,7 +2,6 @@ package jet
 
 import (
 	"errors"
-	"fmt"
 )
 
 // Common expression interface
@@ -29,35 +28,6 @@ type Expression interface {
 	ASC() OrderByClause
 	// Expression will be used to sort query result in ascending order
 	DESC() OrderByClause
-
-	// Cast expression to dbType
-	TO(dbType string) Expression
-	// Cast expression to bool type
-	TO_BOOL() BoolExpression
-	// Cast expression to smallint type
-	TO_SMALLINT() IntegerExpression
-	// Cast expression to integer type
-	TO_INTEGER() IntegerExpression
-	// Cast expression to bigint type
-	TO_BIGINT() IntegerExpression
-	// Cast expression to numeric type, using precision and optionally scale
-	TO_NUMERIC(precision int, scale ...int) FloatExpression
-	// Cast expression to real type
-	TO_REAL() FloatExpression
-	// Cast expression to double precision type
-	TO_DOUBLE() FloatExpression
-	// Cast expression to text type
-	TO_TEXT() StringExpression
-	// Cast expression to date type
-	TO_DATE() DateExpression
-	// Cast expression to time type
-	TO_TIME() TimeExpression
-	// Cast expression to time with time timezone type
-	TO_TIMEZ() TimezExpression
-	// Cast expression to timestamp type
-	TO_TIMESTAMP() TimestampExpression
-	// Cast expression to timestamp with timezone type
-	TO_TIMESTAMPZ() TimestampzExpression
 }
 
 type expressionInterfaceImpl struct {
@@ -94,68 +64,6 @@ func (e *expressionInterfaceImpl) ASC() OrderByClause {
 
 func (e *expressionInterfaceImpl) DESC() OrderByClause {
 	return newOrderByClause(e.parent, false)
-}
-
-func (e *expressionInterfaceImpl) TO(dbType string) Expression {
-	return newCast(e.parent, dbType)
-}
-
-func (e *expressionInterfaceImpl) TO_BOOL() BoolExpression {
-	return newBoolCast(e.parent)
-}
-
-func (e *expressionInterfaceImpl) TO_SMALLINT() IntegerExpression {
-	return newIntegerCast(e.parent, "smallint")
-}
-
-func (e *expressionInterfaceImpl) TO_INTEGER() IntegerExpression {
-	return newIntegerCast(e.parent, "integer")
-}
-
-func (e *expressionInterfaceImpl) TO_BIGINT() IntegerExpression {
-	return newIntegerCast(e.parent, "bigint")
-}
-
-func (e *expressionInterfaceImpl) TO_NUMERIC(precision int, scale ...int) FloatExpression {
-	var castType string
-	if len(scale) > 0 {
-		castType = fmt.Sprintf("numeric(%d, %d)", precision, scale[0])
-	} else {
-		castType = fmt.Sprintf("numeric(%d)", precision)
-	}
-	return newFloatCast(e.parent, castType)
-}
-
-func (e *expressionInterfaceImpl) TO_REAL() FloatExpression {
-	return newFloatCast(e.parent, "real")
-}
-
-func (e *expressionInterfaceImpl) TO_DOUBLE() FloatExpression {
-	return newFloatCast(e.parent, "double precision")
-}
-
-func (e *expressionInterfaceImpl) TO_TEXT() StringExpression {
-	return newTextCast(e.parent)
-}
-
-func (e *expressionInterfaceImpl) TO_DATE() DateExpression {
-	return newDateCast(e.parent)
-}
-
-func (e *expressionInterfaceImpl) TO_TIME() TimeExpression {
-	return newTimeCast(e.parent)
-}
-
-func (e *expressionInterfaceImpl) TO_TIMEZ() TimezExpression {
-	return newTimezCast(e.parent)
-}
-
-func (e *expressionInterfaceImpl) TO_TIMESTAMP() TimestampExpression {
-	return newTimestampCast(e.parent)
-}
-
-func (e *expressionInterfaceImpl) TO_TIMESTAMPZ() TimestampzExpression {
-	return newTimestampzCast(e.parent)
 }
 
 func (e *expressionInterfaceImpl) serializeForGroupBy(statement statementType, out *queryData) error {

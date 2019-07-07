@@ -865,7 +865,10 @@ WHERE film.rental_rate = (
 ORDER BY film.film_id ASC;
 `
 
-	maxFilmRentalRate := Film.SELECT(MAXf(Film.RentalRate)).TO_DOUBLE()
+	maxFilmRentalRate := CAST(
+		Film.
+			SELECT(MAXf(Film.RentalRate)),
+	).AS_DOUBLE()
 
 	query := Film.
 		SELECT(Film.AllColumns).

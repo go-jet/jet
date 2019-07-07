@@ -1,154 +1,131 @@
 package jet
 
-type cast struct {
+import "fmt"
+
+type cast interface {
+	// Cast expression AS bool type
+	AS_BOOL() BoolExpression
+	// Cast expression AS smallint type
+	AS_SMALLINT() IntegerExpression
+	// Cast expression AS integer type
+	AS_INTEGER() IntegerExpression
+	// Cast expression AS bigint type
+	AS_BIGINT() IntegerExpression
+	// Cast expression AS numeric type, using precision and optionally scale
+	AS_NUMERIC(precision int, scale ...int) FloatExpression
+	// Cast expression AS real type
+	AS_REAL() FloatExpression
+	// Cast expression AS double precision type
+	AS_DOUBLE() FloatExpression
+	// Cast expression AS text type
+	AS_TEXT() StringExpression
+	// Cast expression AS date type
+	AS_DATE() DateExpression
+	// Cast expression AS time type
+	AS_TIME() TimeExpression
+	// Cast expression AS time with time timezone type
+	AS_TIMEZ() TimezExpression
+	// Cast expression AS timestamp type
+	AS_TIMESTAMP() TimestampExpression
+	// Cast expression AS timestamp with timezone type
+	AS_TIMESTAMPZ() TimestampzExpression
+}
+
+type castImpl struct {
 	Expression
 	castType string
 }
 
-func newCast(expression Expression, castType string) *cast {
-	return &cast{
+func CAST(expression Expression) cast {
+	return &castImpl{
 		Expression: expression,
-		castType:   castType,
 	}
 }
 
-func (b *cast) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (b *castImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
 	err := b.Expression.serialize(statement, out, options...)
 	out.writeString("::" + b.castType)
 	return err
 }
 
-type boolCast struct {
-	expressionInterfaceImpl
-	boolInterfaceImpl
-	cast
+func (b *castImpl) AS_BOOL() BoolExpression {
+	b.castType = "boolean"
+	return BoolExp(b)
 }
 
-func newBoolCast(expression Expression) BoolExpression {
-	boolCast := &boolCast{cast: *newCast(expression, "boolean")}
-
-	boolCast.boolInterfaceImpl.parent = boolCast
-	boolCast.expressionInterfaceImpl.parent = boolCast
-
-	return boolCast
+func (b *castImpl) AS_SMALLINT() IntegerExpression {
+	b.castType = "smallint"
+	return IntExp(b)
 }
 
-type integerCast struct {
-	expressionInterfaceImpl
-	integerInterfaceImpl
-	cast
+// Cast expression AS integer type
+func (b *castImpl) AS_INTEGER() IntegerExpression {
+	b.castType = "integer"
+	return IntExp(b)
 }
 
-func newIntegerCast(expression Expression, intType string) IntegerExpression {
-	integerCast := &integerCast{cast: *newCast(expression, intType)}
-
-	integerCast.integerInterfaceImpl.parent = integerCast
-	integerCast.expressionInterfaceImpl.parent = integerCast
-
-	return integerCast
+// Cast expression AS bigint type
+func (b *castImpl) AS_BIGINT() IntegerExpression {
+	b.castType = "bigint"
+	return IntExp(b)
 }
 
-type floatCast struct {
-	expressionInterfaceImpl
-	floatInterfaceImpl
-	cast
+// Cast expression AS numeric type, using precision and optionally scale
+func (b *castImpl) AS_NUMERIC(precision int, scale ...int) FloatExpression {
+
+	if len(scale) > 0 {
+		b.castType = fmt.Sprintf("numeric(%d, %d)", precision, scale[0])
+	} else {
+		b.castType = fmt.Sprintf("numeric(%d)", precision)
+	}
+
+	return FloatExp(b)
 }
 
-func newFloatCast(expression Expression, floatType string) FloatExpression {
-	floatCast := &floatCast{cast: *newCast(expression, floatType)}
-
-	floatCast.floatInterfaceImpl.parent = floatCast
-	floatCast.expressionInterfaceImpl.parent = floatCast
-
-	return floatCast
+// Cast expression AS real type
+func (b *castImpl) AS_REAL() FloatExpression {
+	b.castType = "real"
+	return FloatExp(b)
 }
 
-type textCast struct {
-	expressionInterfaceImpl
-	stringInterfaceImpl
-	cast
+// Cast expression AS double precision type
+func (b *castImpl) AS_DOUBLE() FloatExpression {
+	b.castType = "double precision"
+	return FloatExp(b)
 }
 
-func newTextCast(expression Expression) StringExpression {
-	textCast := &textCast{cast: *newCast(expression, "text")}
-
-	textCast.stringInterfaceImpl.parent = textCast
-	textCast.expressionInterfaceImpl.parent = textCast
-
-	return textCast
+// Cast expression AS text type
+func (b *castImpl) AS_TEXT() StringExpression {
+	b.castType = "text"
+	return StringExp(b)
 }
 
-type dateCast struct {
-	expressionInterfaceImpl
-	dateInterfaceImpl
-	cast
+// Cast expression AS date type
+func (b *castImpl) AS_DATE() DateExpression {
+	b.castType = "date"
+	return DateExp(b)
 }
 
-func newDateCast(expression Expression) DateExpression {
-	dateCast := &dateCast{cast: *newCast(expression, "date")}
-
-	dateCast.dateInterfaceImpl.parent = dateCast
-	dateCast.expressionInterfaceImpl.parent = dateCast
-
-	return dateCast
+// Cast expression AS time type
+func (b *castImpl) AS_TIME() TimeExpression {
+	b.castType = "time without time zone"
+	return TimeExp(b)
 }
 
-type timeCast struct {
-	expressionInterfaceImpl
-	timeInterfaceImpl
-	cast
+// Cast expression AS time with time timezone type
+func (b *castImpl) AS_TIMEZ() TimezExpression {
+	b.castType = "time with time zone"
+	return TimezExp(b)
 }
 
-func newTimeCast(expression Expression) TimeExpression {
-	timeCast := &timeCast{cast: *newCast(expression, "time without time zone")}
-
-	timeCast.timeInterfaceImpl.parent = timeCast
-	timeCast.expressionInterfaceImpl.parent = timeCast
-
-	return timeCast
+// Cast expression AS timestamp type
+func (b *castImpl) AS_TIMESTAMP() TimestampExpression {
+	b.castType = "timestamp without time zone"
+	return TimestampExp(b)
 }
 
-type timezCast struct {
-	expressionInterfaceImpl
-	timezInterfaceImpl
-	cast
-}
-
-func newTimezCast(expression Expression) TimezExpression {
-	timezCast := &timezCast{cast: *newCast(expression, "time with time zone")}
-
-	timezCast.timezInterfaceImpl.parent = timezCast
-	timezCast.expressionInterfaceImpl.parent = timezCast
-
-	return timezCast
-}
-
-type timestampCast struct {
-	expressionInterfaceImpl
-	timestampInterfaceImpl
-	cast
-}
-
-func newTimestampCast(expression Expression) TimestampExpression {
-	timestampCast := &timestampCast{cast: *newCast(expression, "timestamp without time zone")}
-
-	timestampCast.timestampInterfaceImpl.parent = timestampCast
-	timestampCast.expressionInterfaceImpl.parent = timestampCast
-
-	return timestampCast
-}
-
-type timestampzCast struct {
-	expressionInterfaceImpl
-	timestampzInterfaceImpl
-	cast
-}
-
-func newTimestampzCast(expression Expression) TimestampzExpression {
-	timestampzCast := &timestampzCast{cast: *newCast(expression, "timestamp with time zone")}
-
-	timestampzCast.timestampzInterfaceImpl.parent = timestampzCast
-	timestampzCast.expressionInterfaceImpl.parent = timestampzCast
-
-	return timestampzCast
+// Cast expression AS timestamp with timezone type
+func (b *castImpl) AS_TIMESTAMPZ() TimestampzExpression {
+	b.castType = "timestamp with time zone"
+	return TimestampzExp(b)
 }

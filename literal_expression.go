@@ -101,13 +101,13 @@ type timeLiteral struct {
 }
 
 func Time(hour, minute, second, milliseconds int) TimeExpression {
-	timeLiteral := timeLiteral{}
+	timeLiteral := &timeLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
 	timeLiteral.literalExpression = *literal(timeStr)
 
-	timeLiteral.timeInterfaceImpl.parent = &timeLiteral
+	timeLiteral.timeInterfaceImpl.parent = timeLiteral
 
-	return timeLiteral.TO_TIME()
+	return CAST(timeLiteral).AS_TIME()
 }
 
 //---------------------------------------------------//
@@ -117,13 +117,13 @@ type timezLiteral struct {
 }
 
 func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
-	timezLiteral := timezLiteral{}
+	timezLiteral := &timezLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
 	timezLiteral.literalExpression = *literal(timeStr)
 
-	timezLiteral.timezInterfaceImpl.parent = &timezLiteral
+	timezLiteral.timezInterfaceImpl.parent = timezLiteral
 
-	return timezLiteral.TO_TIMEZ()
+	return CAST(timezLiteral).AS_TIMEZ()
 }
 
 //---------------------------------------------------//
@@ -133,13 +133,13 @@ type timestampLiteral struct {
 }
 
 func Timestamp(year, month, day, hour, minute, second, milliseconds int) TimestampExpression {
-	timestampLiteral := timestampLiteral{}
+	timestampLiteral := &timestampLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d", year, month, day, hour, minute, second, milliseconds)
 	timestampLiteral.literalExpression = *literal(timeStr)
 
-	timestampLiteral.timestampInterfaceImpl.parent = &timestampLiteral
+	timestampLiteral.timestampInterfaceImpl.parent = timestampLiteral
 
-	return timestampLiteral.TO_TIMESTAMP()
+	return CAST(timestampLiteral).AS_TIMESTAMP()
 }
 
 //---------------------------------------------------//
@@ -149,15 +149,15 @@ type timestampzLiteral struct {
 }
 
 func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone int) TimestampzExpression {
-	timestampzLiteral := timestampzLiteral{}
+	timestampzLiteral := &timestampzLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
 		year, month, day, hour, minute, second, milliseconds, timezone)
 
 	timestampzLiteral.literalExpression = *literal(timeStr)
 
-	timestampzLiteral.timestampzInterfaceImpl.parent = &timestampzLiteral
+	timestampzLiteral.timestampzInterfaceImpl.parent = timestampzLiteral
 
-	return timestampzLiteral.TO_TIMESTAMPZ()
+	return CAST(timestampzLiteral).AS_TIMESTAMPZ()
 }
 
 //---------------------------------------------------//
@@ -167,13 +167,13 @@ type dateLiteral struct {
 }
 
 func Date(year, month, day int) DateExpression {
-	dateLiteral := dateLiteral{}
+	dateLiteral := &dateLiteral{}
 
 	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
 	dateLiteral.literalExpression = *literal(timeStr)
-	dateLiteral.dateInterfaceImpl.parent = &dateLiteral
+	dateLiteral.dateInterfaceImpl.parent = dateLiteral
 
-	return dateLiteral.TO_DATE()
+	return CAST(dateLiteral).AS_DATE()
 }
 
 //--------------------------------------------------//

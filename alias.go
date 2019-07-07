@@ -27,7 +27,7 @@ func (a *alias) serializeForProjection(statement statementType, out *queryData) 
 		return err
 	}
 
-	out.writeString("AS ")
+	out.writeString("AS")
 	out.writeQuotedString(a.alias)
 
 	return nil

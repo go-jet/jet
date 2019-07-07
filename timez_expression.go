@@ -81,6 +81,6 @@ func newTimezExpressionWrap(expression Expression) TimezExpression {
 	return &timezExpressionWrap
 }
 
-func TimezExp(expression Expression) TimeExpression {
-	return newTimeExpressionWrap(expression)
+func TimezExp(expression Expression) TimezExpression {
+	return newTimezExpressionWrap(expression)
 }

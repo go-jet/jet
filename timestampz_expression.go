@@ -63,6 +63,6 @@ func newTimestampzExpressionWrap(expression Expression) TimestampzExpression {
 	return &timestampzExpressionWrap
 }
 
-func TimestampzExp(expression Expression) TimestampExpression {
-	return newTimestampExpressionWrap(expression)
+func TimestampzExp(expression Expression) TimestampzExpression {
+	return newTimestampzExpressionWrap(expression)
 }
