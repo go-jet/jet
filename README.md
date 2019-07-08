@@ -34,10 +34,10 @@ Use the bellow command to install jet
 $ go get -u github.com/go-jet/jet
 ```
 
-Install jetgen to GOPATH bin folder. This will allow generating jet files from the command line.
+Install jet to GOPATH bin folder. This will allow generating jet files from the command line.
 
 ```sh
-go install github.com/go-jet/jet/cmd/jetgen
+go install github.com/go-jet/jet/cmd/jet
 ```
 
 Make sure GOPATH bin folder is added to the PATH environment variable.
@@ -47,10 +47,10 @@ For this quick start example we will use sample _dvd rental_ database. Full data
 Schema diagram of interest for example can be found [here](./examples/quick-start/diagram.png).
 
 #### Generate sql builder and model files
-To generate Go sql builder and Go data model from postgres database we need to call jetgen, and provide it with postgres connection parameters and destination folder for generated go files.\
+To generate Go sql builder and Go data model from postgres database we need to call jet, and provide it with postgres connection parameters and destination folder for generated go files.\
 Assuming we are running local postgres database, with user `jet`, database `jetdb` and schema `dvds` we will use this command:
 ```sh
-jetgen -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema dvds -path ./gen
+jet -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema dvds -path ./gen
 ```
 ```sh
 Connecting to postgres database: host=localhost port=5432 user=jet password=jet dbname=jetdb sslmode=disable 
@@ -63,7 +63,7 @@ Generating enum sql builder files...
 Generating enum model files...
 Done
 ```
-As jetgen command output suggest, jetgen will:  
+As jet command output suggest, jet will:  
 - connect to postgres database and retrieve information about the tables and enums of `dvds` schema
 - delete everything in destination folder `./gen`,   
 - and finally generate sql builder and model Go files for each schema tables and enums into destination folder `./gen`.  
@@ -475,7 +475,7 @@ Without Jet these bugs will have to be either caught by some test or by manual t
 ## Dependencies
 At the moment Jet dependence only of:
 - `github.com/google/uuid` _(Used for debug purposes)_
-- `github.com/lib/pq` _(Used by JetGen to read information about database schema)_
+- `github.com/lib/pq` _(Used by Jet to read information about database schema)_
 
 To run the tests, additional dependencies are required:
 - `github.com/pkg/profile`

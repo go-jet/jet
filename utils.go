@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func serializeOrderByClauseList(statement statementType, orderByClauses []OrderByClause, out *queryData) error {
+func serializeOrderByClauseList(statement statementType, orderByClauses []OrderByClause, out *sqlBuilder) error {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
@@ -24,7 +24,7 @@ func serializeOrderByClauseList(statement statementType, orderByClauses []OrderB
 	return nil
 }
 
-func serializeGroupByClauseList(statement statementType, clauses []groupByClause, out *queryData) (err error) {
+func serializeGroupByClauseList(statement statementType, clauses []groupByClause, out *sqlBuilder) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -43,7 +43,7 @@ func serializeGroupByClauseList(statement statementType, clauses []groupByClause
 	return nil
 }
 
-func serializeClauseList(statement statementType, clauses []clause, out *queryData) (err error) {
+func serializeClauseList(statement statementType, clauses []clause, out *sqlBuilder) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -62,7 +62,7 @@ func serializeClauseList(statement statementType, clauses []clause, out *queryDa
 	return nil
 }
 
-func serializeExpressionList(statement statementType, expressions []Expression, separator string, out *queryData) error {
+func serializeExpressionList(statement statementType, expressions []Expression, separator string, out *sqlBuilder) error {
 
 	for i, value := range expressions {
 		if i > 0 {
@@ -79,7 +79,7 @@ func serializeExpressionList(statement statementType, expressions []Expression, 
 	return nil
 }
 
-func serializeProjectionList(statement statementType, projections []projection, out *queryData) error {
+func serializeProjectionList(statement statementType, projections []projection, out *sqlBuilder) error {
 	for i, col := range projections {
 		if i > 0 {
 			out.writeString(",")
@@ -98,7 +98,7 @@ func serializeProjectionList(statement statementType, projections []projection, 
 	return nil
 }
 
-func serializeColumnNames(columns []column, out *queryData) error {
+func serializeColumnNames(columns []column, out *sqlBuilder) error {
 	for i, col := range columns {
 		if i > 0 {
 			out.writeString(", ")

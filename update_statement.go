@@ -56,7 +56,7 @@ func (u *updateStatementImpl) RETURNING(projections ...projection) UpdateStateme
 }
 
 func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
-	out := &queryData{}
+	out := &sqlBuilder{}
 
 	out.newLine()
 	out.writeString("UPDATE")

@@ -1,4 +1,4 @@
-package postgresgen
+package postgres
 
 import (
 	"database/sql"

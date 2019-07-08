@@ -23,7 +23,7 @@ func constLiteral(value interface{}) *literalExpression {
 	return exp
 }
 
-func (l literalExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (l literalExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if l.constant {
 		out.insertConstantArgument(l.value)
 	} else {
@@ -189,7 +189,7 @@ func newNullLiteral() Expression {
 	return nullExpression
 }
 
-func (n *nullLiteral) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (n *nullLiteral) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString("NULL")
 	return nil
 }
@@ -207,7 +207,7 @@ func newStarLiteral() Expression {
 	return starExpression
 }
 
-func (n *starLiteral) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (n *starLiteral) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString("*")
 	return nil
 }
@@ -219,7 +219,7 @@ type wrap struct {
 	expressions []Expression
 }
 
-func (n *wrap) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (n *wrap) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString("(")
 	err := serializeExpressionList(statement, n.expressions, ", ", out)
 	out.writeString(")")
@@ -240,7 +240,7 @@ type rawExpression struct {
 	raw string
 }
 
-func (n *rawExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (n *rawExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString(n.raw)
 	return nil
 }

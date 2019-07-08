@@ -3,7 +3,7 @@ package jet
 import "errors"
 
 type OrderByClause interface {
-	serializeForOrderBy(statement statementType, out *queryData) error
+	serializeForOrderBy(statement statementType, out *sqlBuilder) error
 }
 
 type orderByClauseImpl struct {
@@ -11,7 +11,7 @@ type orderByClauseImpl struct {
 	ascent     bool
 }
 
-func (o *orderByClauseImpl) serializeForOrderBy(statement statementType, out *queryData) error {
+func (o *orderByClauseImpl) serializeForOrderBy(statement statementType, out *sqlBuilder) error {
 	if o.expression == nil {
 		return errors.New("nil orderBy by clause.")
 	}

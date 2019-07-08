@@ -44,7 +44,7 @@ func (e *expressionTableImpl) AllColumns() ProjectionList {
 	return e.projections
 }
 
-func (e *expressionTableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (e *expressionTableImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if e == nil {
 		return errors.New("Expression table is nil. ")
 	}

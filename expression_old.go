@@ -12,7 +12,7 @@ type intervalExpression struct {
 
 const intervalSep = ":"
 
-func (c *intervalExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (c *intervalExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString("INTERVAL '")
 
 	duration := c.duration

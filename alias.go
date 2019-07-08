@@ -20,7 +20,7 @@ func (a *alias) from(subQuery ExpressionTable) projection {
 	return &column
 }
 
-func (a *alias) serializeForProjection(statement statementType, out *queryData) error {
+func (a *alias) serializeForProjection(statement statementType, out *sqlBuilder) error {
 	err := a.expression.serialize(statement, out)
 
 	if err != nil {

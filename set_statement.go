@@ -69,7 +69,7 @@ func (s *setStatementImpl) projections() []projection {
 	return []projection{}
 }
 
-func (s *setStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (s *setStatementImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if s == nil {
 		return errors.New("Set expression is nil. ")
 	}
@@ -96,7 +96,7 @@ func (s *setStatementImpl) serialize(statement statementType, out *queryData, op
 	return nil
 }
 
-func (s *setStatementImpl) serializeImpl(out *queryData) error {
+func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if s == nil {
 		return errors.New("Set expression is nil. ")
 	}
@@ -158,7 +158,7 @@ func (s *setStatementImpl) serializeImpl(out *queryData) error {
 }
 
 func (s *setStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := &queryData{}
+	queryData := &sqlBuilder{}
 
 	err = s.serializeImpl(queryData)
 

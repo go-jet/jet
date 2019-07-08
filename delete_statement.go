@@ -37,7 +37,7 @@ func (d *deleteStatementImpl) RETURNING(projections ...projection) DeleteStateme
 	return d
 }
 
-func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
+func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if d == nil {
 		return errors.New("delete statement is nil")
 	}
@@ -68,7 +68,7 @@ func (d *deleteStatementImpl) serializeImpl(out *queryData) error {
 }
 
 func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := &queryData{}
+	queryData := &sqlBuilder{}
 
 	err = d.serializeImpl(queryData)
 

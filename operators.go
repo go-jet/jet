@@ -100,7 +100,7 @@ func (c *caseOperatorImpl) ELSE(els Expression) CaseOperatorExpression {
 	return c
 }
 
-func (c *caseOperatorImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (c *caseOperatorImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if c == nil {
 		return errors.New("Case Expression is nil. ")
 	}

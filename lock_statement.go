@@ -62,7 +62,7 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 		return "", nil, errors.New("There is no table selected to be locked. ")
 	}
 
-	out := &queryData{}
+	out := &sqlBuilder{}
 
 	out.newLine()
 	out.writeString("LOCK TABLE")

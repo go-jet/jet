@@ -52,7 +52,7 @@ var table3 = NewTable(
 	table3StrCol)
 
 func assertClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
-	out := queryData{}
+	out := sqlBuilder{}
 	err := clause.serialize(select_statement, &out)
 
 	assert.NilError(t, err)
@@ -62,7 +62,7 @@ func assertClauseSerialize(t *testing.T, clause clause, query string, args ...in
 }
 
 func assertClauseSerializeErr(t *testing.T, clause clause, errString string) {
-	out := queryData{}
+	out := sqlBuilder{}
 	err := clause.serialize(select_statement, &out)
 
 	//fmt.Println(out.buff.String())
@@ -71,7 +71,7 @@ func assertClauseSerializeErr(t *testing.T, clause clause, errString string) {
 }
 
 func assertProjectionSerialize(t *testing.T, projection projection, query string, args ...interface{}) {
-	out := queryData{}
+	out := sqlBuilder{}
 	err := projection.serializeForProjection(select_statement, &out)
 
 	assert.NilError(t, err)

@@ -66,15 +66,15 @@ func (e *expressionInterfaceImpl) DESC() OrderByClause {
 	return newOrderByClause(e.parent, false)
 }
 
-func (e *expressionInterfaceImpl) serializeForGroupBy(statement statementType, out *queryData) error {
+func (e *expressionInterfaceImpl) serializeForGroupBy(statement statementType, out *sqlBuilder) error {
 	return e.parent.serialize(statement, out, noWrap)
 }
 
-func (e *expressionInterfaceImpl) serializeForProjection(statement statementType, out *queryData) error {
+func (e *expressionInterfaceImpl) serializeForProjection(statement statementType, out *sqlBuilder) error {
 	return e.parent.serialize(statement, out, noWrap)
 }
 
-func (e *expressionInterfaceImpl) serializeForOrderBy(statement statementType, out *queryData) error {
+func (e *expressionInterfaceImpl) serializeForOrderBy(statement statementType, out *sqlBuilder) error {
 	return e.parent.serialize(statement, out, noWrap)
 }
 
@@ -94,7 +94,7 @@ func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpressio
 	return binaryExpression
 }
 
-func (c *binaryOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (c *binaryOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if c == nil {
 		return errors.New("binary Expression is nil")
 	}
@@ -143,7 +143,7 @@ func newPrefixExpression(expression Expression, operator string) prefixOpExpress
 	return prefixExpression
 }
 
-func (p *prefixOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (p *prefixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if p == nil {
 		return errors.New("Prefix Expression is nil.")
 	}
@@ -175,7 +175,7 @@ func newPostfixOpExpression(expression Expression, operator string) postfixOpExp
 	return postfixOpExpression
 }
 
-func (p *postfixOpExpression) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (p *postfixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if p == nil {
 		return errors.New("Postifx operator Expression is nil.")
 	}

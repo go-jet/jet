@@ -15,7 +15,7 @@ func NewEnumValue(name string) StringExpression {
 	return enumValue
 }
 
-func (e enumValue) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (e enumValue) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.insertConstantArgument(e.name)
 	return nil
 }

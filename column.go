@@ -61,7 +61,7 @@ func (c *columnImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *columnImpl) serializeForOrderBy(statement statementType, out *queryData) error {
+func (c *columnImpl) serializeForOrderBy(statement statementType, out *sqlBuilder) error {
 	if statement == set_statement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.writeString(`"` + c.defaultAlias() + `"`) //always quote
@@ -72,7 +72,7 @@ func (c *columnImpl) serializeForOrderBy(statement statementType, out *queryData
 	return c.serialize(statement, out)
 }
 
-func (c columnImpl) serializeForProjection(statement statementType, out *queryData) error {
+func (c columnImpl) serializeForProjection(statement statementType, out *sqlBuilder) error {
 	err := c.serialize(statement, out)
 
 	if err != nil {
@@ -84,7 +84,7 @@ func (c columnImpl) serializeForProjection(statement statementType, out *queryDa
 	return nil
 }
 
-func (c columnImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (c columnImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 
 	if c.subQuery != nil {
 		out.writeIdentifier(c.subQuery.Alias())
@@ -119,7 +119,7 @@ func (cl ColumnList) from(subQuery ExpressionTable) projection {
 	return newProjectionList
 }
 
-func (cl ColumnList) serializeForProjection(statement statementType, out *queryData) error {
+func (cl ColumnList) serializeForProjection(statement statementType, out *sqlBuilder) error {
 	projections := columnListToProjectionList(cl)
 
 	err := serializeProjectionList(statement, projections, out)

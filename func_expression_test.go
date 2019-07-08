@@ -160,7 +160,7 @@ func TestFuncLEAST(t *testing.T) {
 func TestInterval(t *testing.T) {
 	query := INTERVAL(`6 years 5 months 4 days 3 hours 2 minutes 1 second`)
 
-	queryData := &queryData{}
+	queryData := &sqlBuilder{}
 
 	err := query.serialize(select_statement, queryData)
 

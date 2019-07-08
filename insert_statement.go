@@ -76,7 +76,7 @@ func (i *insertStatementImpl) DebugSql() (query string, err error) {
 }
 
 func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
-	queryData := &queryData{}
+	queryData := &sqlBuilder{}
 
 	queryData.newLine()
 	queryData.writeString("INSERT INTO")

@@ -168,7 +168,7 @@ func (t *tableImpl) columns() []column {
 	return ret
 }
 
-func (t *tableImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (t *tableImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if t == nil {
 		return errors.New("tableImpl is nil. ")
 	}
@@ -235,7 +235,7 @@ func (t *joinTable) columns() []column {
 	return append(t.lhs.columns(), t.rhs.columns()...)
 }
 
-func (t *joinTable) serialize(statement statementType, out *queryData, options ...serializeOption) (err error) {
+func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) (err error) {
 	if t == nil {
 		return errors.New("Join table is nil. ")
 	}

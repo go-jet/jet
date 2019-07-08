@@ -16,7 +16,7 @@ const (
 )
 
 type clause interface {
-	serialize(statement statementType, out *queryData, options ...serializeOption) error
+	serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error
 }
 
 func contains(options []serializeOption, option serializeOption) bool {
@@ -29,7 +29,7 @@ func contains(options []serializeOption, option serializeOption) bool {
 	return false
 }
 
-type queryData struct {
+type sqlBuilder struct {
 	buff bytes.Buffer
 	args []interface{}
 
@@ -50,11 +50,11 @@ const (
 
 const defaultIdent = 5
 
-func (q *queryData) increaseIdent() {
+func (q *sqlBuilder) increaseIdent() {
 	q.ident += defaultIdent
 }
 
-func (q *queryData) decreaseIdent() {
+func (q *sqlBuilder) decreaseIdent() {
 	if q.ident < defaultIdent {
 		q.ident = 0
 	}
@@ -62,14 +62,14 @@ func (q *queryData) decreaseIdent() {
 	q.ident -= defaultIdent
 }
 
-func (q *queryData) writeProjections(statement statementType, projections []projection) error {
+func (q *sqlBuilder) writeProjections(statement statementType, projections []projection) error {
 	q.increaseIdent()
 	err := serializeProjectionList(statement, projections, q)
 	q.decreaseIdent()
 	return err
 }
 
-func (q *queryData) writeFrom(statement statementType, table ReadableTable) error {
+func (q *sqlBuilder) writeFrom(statement statementType, table ReadableTable) error {
 	q.newLine()
 	q.writeString("FROM")
 
@@ -80,7 +80,7 @@ func (q *queryData) writeFrom(statement statementType, table ReadableTable) erro
 	return err
 }
 
-func (q *queryData) writeWhere(statement statementType, where Expression) error {
+func (q *sqlBuilder) writeWhere(statement statementType, where Expression) error {
 	q.newLine()
 	q.writeString("WHERE")
 
@@ -91,7 +91,7 @@ func (q *queryData) writeWhere(statement statementType, where Expression) error 
 	return err
 }
 
-func (q *queryData) writeGroupBy(statement statementType, groupBy []groupByClause) error {
+func (q *sqlBuilder) writeGroupBy(statement statementType, groupBy []groupByClause) error {
 	q.newLine()
 	q.writeString("GROUP BY")
 
@@ -102,7 +102,7 @@ func (q *queryData) writeGroupBy(statement statementType, groupBy []groupByClaus
 	return err
 }
 
-func (q *queryData) writeOrderBy(statement statementType, orderBy []OrderByClause) error {
+func (q *sqlBuilder) writeOrderBy(statement statementType, orderBy []OrderByClause) error {
 	q.newLine()
 	q.writeString("ORDER BY")
 
@@ -113,7 +113,7 @@ func (q *queryData) writeOrderBy(statement statementType, orderBy []OrderByClaus
 	return err
 }
 
-func (q *queryData) writeHaving(statement statementType, having Expression) error {
+func (q *sqlBuilder) writeHaving(statement statementType, having Expression) error {
 	q.newLine()
 	q.writeString("HAVING")
 
@@ -124,7 +124,7 @@ func (q *queryData) writeHaving(statement statementType, having Expression) erro
 	return err
 }
 
-func (q *queryData) writeReturning(statement statementType, returning []projection) error {
+func (q *sqlBuilder) writeReturning(statement statementType, returning []projection) error {
 	if len(returning) == 0 {
 		return nil
 	}
@@ -136,12 +136,12 @@ func (q *queryData) writeReturning(statement statementType, returning []projecti
 	return q.writeProjections(statement, returning)
 }
 
-func (q *queryData) newLine() {
+func (q *sqlBuilder) newLine() {
 	q.write([]byte{'\n'})
 	q.write(bytes.Repeat([]byte{' '}, q.ident))
 }
 
-func (q *queryData) write(data []byte) {
+func (q *sqlBuilder) write(data []byte) {
 	if len(data) == 0 {
 		return
 	}
@@ -162,15 +162,15 @@ func isPostSeparator(b byte) bool {
 	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
-func (q *queryData) writeQuotedString(str string) {
+func (q *sqlBuilder) writeQuotedString(str string) {
 	q.writeString(`"` + str + `"`)
 }
 
-func (q *queryData) writeString(str string) {
+func (q *sqlBuilder) writeString(str string) {
 	q.write([]byte(str))
 }
 
-func (q *queryData) writeIdentifier(name string) {
+func (q *sqlBuilder) writeIdentifier(name string) {
 	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
 
 	if quoteWrap {
@@ -180,26 +180,26 @@ func (q *queryData) writeIdentifier(name string) {
 	}
 }
 
-func (q *queryData) writeByte(b byte) {
+func (q *sqlBuilder) writeByte(b byte) {
 	q.write([]byte{b})
 }
 
-func (q *queryData) finalize() (string, []interface{}) {
+func (q *sqlBuilder) finalize() (string, []interface{}) {
 	return q.buff.String() + ";\n", q.args
 }
 
-func (q *queryData) insertConstantArgument(arg interface{}) {
+func (q *sqlBuilder) insertConstantArgument(arg interface{}) {
 	q.writeString(ArgToString(arg))
 }
 
-func (q *queryData) insertPreparedArgument(arg interface{}) {
+func (q *sqlBuilder) insertPreparedArgument(arg interface{}) {
 	q.args = append(q.args, arg)
 	argPlaceholder := "$" + strconv.Itoa(len(q.args))
 
 	q.writeString(argPlaceholder)
 }
 
-func (q *queryData) reset() {
+func (q *sqlBuilder) reset() {
 	q.buff.Reset()
 	q.args = []interface{}{}
 }

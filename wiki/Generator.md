@@ -6,18 +6,18 @@ This files can be generated in two ways:
 
 #### 1) Generating from command line
 
-Install jetgen to GOPATH bin folder. This will allow generating jet files from the command line.
+Install jet to GOPATH bin folder. This will allow generating jet files from the command line.
 
 ```sh
-go install github.com/go-jet/jet/cmd/jetgen
+go install github.com/go-jet/jet/cmd/jet
 ```
 
 Make sure GOPATH bin folder is added to the PATH environment variable.
 
-Test jetgen can be found in the PATH.
+Test jet can be found in the PATH.
 ```sh
-jetgen -h
-Usage of jetgen:
+jet -h
+Usage of jet:
   -host string
     	Database host path (Example: localhost)
   -port string
@@ -40,7 +40,7 @@ Usage of jetgen:
 
 Now to generate sample database:
 ```sh
-jetgen -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema dvds -path ./gen
+jet -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema dvds -path ./gen
 ```
 ```sh
 Connecting to postgres database: host=localhost port=5432 user=jet password=jet dbname=jetdb sslmode=disable 
@@ -56,11 +56,11 @@ Done
 #### 2) Generating from code
 
 ```
-import "github.com/go-jet/jet/generator/postgresgen"
+import "github.com/go-jet/jet/generator/postgres"
 
 ...
 
-err = postgresgen.Generate("./gen", postgresgen.DBConnection{
+err = postgres.Generate("./gen", postgres.DBConnection{
     Host:       "localhost",
     Port:       "5432",
     User:       "jet",

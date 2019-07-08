@@ -1,7 +1,7 @@
 package jet
 
 type projection interface {
-	serializeForProjection(statement statementType, out *queryData) error
+	serializeForProjection(statement statementType, out *sqlBuilder) error
 	from(subQuery ExpressionTable) projection
 }
 
@@ -18,7 +18,7 @@ func (cl ProjectionList) from(subQuery ExpressionTable) projection {
 	return newProjectionList
 }
 
-func (cl ProjectionList) serializeForProjection(statement statementType, out *queryData) error {
+func (cl ProjectionList) serializeForProjection(statement statementType, out *sqlBuilder) error {
 	err := serializeProjectionList(statement, cl, out)
 
 	if err != nil {

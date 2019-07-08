@@ -42,7 +42,7 @@ func CAST(expression Expression) cast {
 	}
 }
 
-func (b *castImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (b *castImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	err := b.Expression.serialize(statement, out, options...)
 	out.writeString("::" + b.castType)
 	return err

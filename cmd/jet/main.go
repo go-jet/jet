@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet/generator/postgresgen"
+	"github.com/go-jet/jet/generator/postgres"
 	"os"
 )
 
@@ -39,12 +39,12 @@ func init() {
 func main() {
 
 	if host == "" || port == "" || user == "" || dbName == "" || schemaName == "" {
-		fmt.Println("jetgen: required flag missing")
+		fmt.Println("jet: required flag missing")
 		flag.Usage()
 		os.Exit(-2)
 	}
 
-	genData := postgresgen.DBConnection{
+	genData := postgres.DBConnection{
 		Host:     host,
 		Port:     port,
 		User:     user,
@@ -56,7 +56,7 @@ func main() {
 		SchemaName: schemaName,
 	}
 
-	err := postgresgen.Generate(destDir, genData)
+	err := postgres.Generate(destDir, genData)
 
 	if err != nil {
 		fmt.Println(err.Error())

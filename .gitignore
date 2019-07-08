@@ -13,6 +13,7 @@
 
 # Idea
 .idea
+*.iml
 
 # Test files
 gen

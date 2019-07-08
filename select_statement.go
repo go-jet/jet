@@ -153,7 +153,7 @@ func (s *selectStatementImpl) projections() []projection {
 	return s.projectionList
 }
 
-func (s *selectStatementImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (s *selectStatementImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if s == nil {
 		return errors.New("Select expression is nil. ")
 	}
@@ -173,7 +173,7 @@ func (s *selectStatementImpl) serialize(statement statementType, out *queryData,
 	return nil
 }
 
-func (s *selectStatementImpl) serializeImpl(out *queryData) error {
+func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if s == nil {
 		return errors.New("Select expression is nil. ")
 	}
@@ -259,7 +259,7 @@ func (s *selectStatementImpl) serializeImpl(out *queryData) error {
 }
 
 func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := queryData{}
+	queryData := sqlBuilder{}
 
 	err = s.serializeImpl(&queryData)
 
@@ -326,7 +326,7 @@ func (s *selectLockImpl) SKIP_LOCKED() SelectLock {
 	return s
 }
 
-func (s *selectLockImpl) serialize(statement statementType, out *queryData, options ...serializeOption) error {
+func (s *selectLockImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString(s.lockStrength)
 
 	if s.noWait {
