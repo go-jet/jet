@@ -39,13 +39,13 @@ func (d *deleteStatementImpl) RETURNING(projections ...projection) DeleteStateme
 
 func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if d == nil {
-		return errors.New("delete statement is nil")
+		return errors.New("jet: delete statement is nil")
 	}
 	out.newLine()
 	out.writeString("DELETE FROM")
 
 	if d.table == nil {
-		return errors.New("nil tableName")
+		return errors.New("jet: nil tableName")
 	}
 
 	if err := d.table.serialize(delete_statement, out); err != nil {
@@ -53,7 +53,7 @@ func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 	}
 
 	if d.where == nil {
-		return errors.New("deleting without a WHERE clause")
+		return errors.New("jet: deleting without a WHERE clause")
 	}
 
 	if err := out.writeWhere(delete_statement, d.where); err != nil {

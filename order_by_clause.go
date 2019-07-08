@@ -13,7 +13,7 @@ type orderByClauseImpl struct {
 
 func (o *orderByClauseImpl) serializeForOrderBy(statement statementType, out *sqlBuilder) error {
 	if o.expression == nil {
-		return errors.New("nil orderBy by clause.")
+		return errors.New("jet: nil orderBy by clause.")
 	}
 
 	if err := o.expression.serializeForOrderBy(statement, out); err != nil {

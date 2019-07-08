@@ -37,7 +37,7 @@ func TestUnionNilSelect(t *testing.T) {
 		SELECT(table1Col1).
 		UNION(nil)
 
-	assertStatementErr(t, unionStmt, "select statement is nil")
+	assertStatementErr(t, unionStmt, "jet: select statement is nil")
 }
 
 func TestUnionThreeSelect1(t *testing.T) {

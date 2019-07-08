@@ -32,7 +32,7 @@ func serializeGroupByClauseList(statement statementType, clauses []groupByClause
 		}
 
 		if c == nil {
-			return errors.New("nil clause.")
+			return errors.New("jet: nil clause.")
 		}
 
 		if err = c.serializeForGroupBy(statement, out); err != nil {
@@ -51,7 +51,7 @@ func serializeClauseList(statement statementType, clauses []clause, out *sqlBuil
 		}
 
 		if c == nil {
-			return errors.New("nil clause.")
+			return errors.New("jet: nil clause.")
 		}
 
 		if err = c.serialize(statement, out); err != nil {
@@ -87,7 +87,7 @@ func serializeProjectionList(statement statementType, projections []projection, 
 		}
 
 		if col == nil {
-			return errors.New("projection is nil")
+			return errors.New("jet: projection is nil")
 		}
 
 		if err := col.serializeForProjection(statement, out); err != nil {
@@ -105,7 +105,7 @@ func serializeColumnNames(columns []column, out *sqlBuilder) error {
 		}
 
 		if col == nil {
-			return errors.New("nil column in columns list")
+			return errors.New("jet: nil column in columns list")
 		}
 
 		out.writeString(col.Name())

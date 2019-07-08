@@ -21,31 +21,31 @@ func TestScanToInvalidDestination(t *testing.T) {
 	t.Run("nil dest", func(t *testing.T) {
 		err := query.Query(db, nil)
 
-		assert.Error(t, err, "Destination is nil. ")
+		assert.Error(t, err, "jet: Destination is nil.")
 	})
 
 	t.Run("struct dest", func(t *testing.T) {
 		err := query.Query(db, struct{}{})
 
-		assert.Error(t, err, "Destination has to be a pointer to slice or pointer to struct. ")
+		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("slice dest", func(t *testing.T) {
 		err := query.Query(db, []struct{}{})
 
-		assert.Error(t, err, "Destination has to be a pointer to slice or pointer to struct. ")
+		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("slice of pointers to pointer dest", func(t *testing.T) {
 		err := query.Query(db, []**struct{}{})
 
-		assert.Error(t, err, "Destination has to be a pointer to slice or pointer to struct. ")
+		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("map dest", func(t *testing.T) {
 		err := query.Query(db, []map[string]string{})
 
-		assert.Error(t, err, "Destination has to be a pointer to slice or pointer to struct. ")
+		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
 	})
 }
 
@@ -129,7 +129,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.Error(t, err, "Unsupported dest type: Inventory **model.Inventory")
+		assert.Error(t, err, "jet: Unsupported dest type: Inventory **model.Inventory")
 	})
 
 	t.Run("invalid dest 2", func(t *testing.T) {
@@ -139,7 +139,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.Error(t, err, "Unsupported dest type: Inventory ***model.Inventory")
+		assert.Error(t, err, "jet: Unsupported dest type: Inventory ***model.Inventory")
 	})
 
 	t.Run("custom struct", func(t *testing.T) {
@@ -170,7 +170,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.Error(t, err, `Scan: can't set int32 to int, at struct field: InventoryID int of type tests.Inventory. `)
+		assert.Error(t, err, `jet: can't set int32 to int, at struct field: InventoryID int of type tests.Inventory. `)
 
 		fmt.Println(err)
 	})
@@ -431,7 +431,7 @@ func TestScanToSlice(t *testing.T) {
 			var dest []int
 
 			err := query.Query(db, &dest)
-			assert.Error(t, err, `Scan: can't append int32 to []int slice `)
+			assert.Error(t, err, `jet: can't append int32 to []int slice `)
 		})
 	})
 
@@ -678,7 +678,7 @@ func TestScanToSlice(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.Error(t, err, "Unsupported dest type: Cities []**struct { *model.City }")
+		assert.Error(t, err, "jet: Unsupported dest type: Cities []**struct { *model.City }")
 	})
 }
 

@@ -17,12 +17,12 @@ import (
 func Query(db DB, context context.Context, query string, args []interface{}, destinationPtr interface{}) error {
 
 	if destinationPtr == nil {
-		return errors.New("Destination is nil. ")
+		return errors.New("jet: Destination is nil.")
 	}
 
 	destinationPtrType := reflect.TypeOf(destinationPtr)
 	if destinationPtrType.Kind() != reflect.Ptr {
-		return errors.New("Destination has to be a pointer to slice or pointer to struct. ")
+		return errors.New("jet: Destination has to be a pointer to slice or pointer to struct")
 	}
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
@@ -51,22 +51,22 @@ func Query(db DB, context context.Context, query string, args []interface{}, des
 		}
 		return nil
 	} else {
-		return errors.New("Unsupported destination type. ")
+		return errors.New("jet: unsupported destination type")
 	}
 }
 
 func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
-		return errors.New("db is nil")
+		return errors.New("jet: db is nil")
 	}
 
 	if slicePtr == nil {
-		return errors.New("Destination is nil. ")
+		return errors.New("jet: Destination is nil. ")
 	}
 
 	destinationType := reflect.TypeOf(slicePtr)
 	if destinationType.Kind() != reflect.Ptr && destinationType.Elem().Kind() != reflect.Slice {
-		return errors.New("Destination has to be a pointer to slice. ")
+		return errors.New("jet: Destination has to be a pointer to slice. ")
 	}
 
 	if ctx == nil {
@@ -157,7 +157,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 	}
 
 	if sliceElemType.Kind() != reflect.Struct {
-		return false, errors.New("Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
 	}
 
 	structGroupKey := scanContext.getGroupKey(sliceElemType, structField)
@@ -229,7 +229,7 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) e
 	}
 
 	if !newElemValue.Type().AssignableTo(sliceElemType) {
-		return fmt.Errorf("Scan: can't append %s to %s slice ", newElemValue.Type().String(), sliceValue.Type().String())
+		return fmt.Errorf("jet: can't append %s to %s slice ", newElemValue.Type().String(), sliceValue.Type().String())
 	}
 
 	sliceValue.Set(reflect.Append(sliceValue, newElemValue))
@@ -247,7 +247,7 @@ func newElemPtrValueForSlice(slicePtrValue reflect.Value) reflect.Value {
 func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
 
 	if destPtrValue.Kind() != reflect.Ptr {
-		return false, errors.New("Internal error. ")
+		return false, errors.New("jet: Internal error. ")
 	}
 
 	destValueKind := destPtrValue.Elem().Kind()
@@ -257,7 +257,7 @@ func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrVa
 	} else if destValueKind == reflect.Slice {
 		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
 	} else {
-		return false, errors.New("Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
 	}
 }
 
@@ -274,7 +274,7 @@ func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest re
 			destPtrValue = dest
 		}
 	} else {
-		return false, errors.New("Internal error. ")
+		return false, errors.New("jet: Internal error. ")
 	}
 
 	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
@@ -337,7 +337,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
 
 				if err != nil {
-					err = fmt.Errorf("Scan: %s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
+					err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
 					return
 				}
 			}
@@ -456,7 +456,7 @@ func setReflectValue(source, destination reflect.Value) error {
 	}
 
 	if !sourceElem.Type().AssignableTo(destination.Type()) {
-		return errors.New("can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
+		return errors.New("jet: can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
 	}
 
 	destination.Set(sourceElem)

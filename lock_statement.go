@@ -55,11 +55,11 @@ func (l *lockStatementImpl) DebugSql() (query string, err error) {
 
 func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) {
 	if l == nil {
-		return "", nil, errors.New("nil Statement.")
+		return "", nil, errors.New("jet: nil Statement.")
 	}
 
 	if len(l.tables) == 0 {
-		return "", nil, errors.New("There is no table selected to be locked. ")
+		return "", nil, errors.New("jet: There is no table selected to be locked. ")
 	}
 
 	out := &sqlBuilder{}

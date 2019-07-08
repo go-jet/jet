@@ -7,8 +7,8 @@ import (
 )
 
 func TestInvalidInsert(t *testing.T) {
-	assertStatementErr(t, table1.INSERT(table1Col1), "no row values or query specified")
-	assertStatementErr(t, table1.INSERT(nil).VALUES(1), "nil column in columns list")
+	assertStatementErr(t, table1.INSERT(table1Col1), "jet: no row values or query specified")
+	assertStatementErr(t, table1.INSERT(nil).VALUES(1), "jet: nil column in columns list")
 }
 
 func TestInsertNilValue(t *testing.T) {

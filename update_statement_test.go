@@ -71,6 +71,6 @@ RETURNING table1.col1 AS "table1.col1";
 }
 
 func TestInvalidInputs(t *testing.T) {
-	assertStatementErr(t, table1.UPDATE(table1ColInt).SET(1, 2), "WHERE clause not set")
-	assertStatementErr(t, table1.UPDATE(nil).SET(1, 2), "nil column in columns list")
+	assertStatementErr(t, table1.UPDATE(table1ColInt).SET(1, 2), "jet: WHERE clause not set")
+	assertStatementErr(t, table1.UPDATE(nil).SET(1, 2), "jet: nil column in columns list")
 }

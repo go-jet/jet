@@ -247,7 +247,7 @@ jsonText, _ := json.MarshalIndent(dest, "", "\t")
 fmt.Println(string(jsonText))
 ```
 
-```json
+```js
 [
 	{
 		"ActorID": 1,
@@ -319,7 +319,8 @@ fmt.Println(string(jsonText))
 			}
 		]
 	},
-	...(125 more items)
+	//...(125 more items)
+]
 ```
 
 What if we also want to have list of films per category and actors per category, where films are longer than 180 minutes, film language is 'English' 
@@ -340,7 +341,7 @@ handleError(err)
 <details>
   <summary>Click to see dest2 json</summary>
 
-```json
+```js
 [
 	{
 		"CategoryID": 8,
@@ -423,7 +424,8 @@ handleError(err)
 			}
 		]
 	},
-    ...
+    //...
+]
 ```
 </details>
 

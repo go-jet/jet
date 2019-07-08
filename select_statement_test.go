@@ -3,7 +3,7 @@ package jet
 import "testing"
 
 func TestInvalidSelect(t *testing.T) {
-	assertStatementErr(t, SELECT(nil), "projection is nil")
+	assertStatementErr(t, SELECT(nil), "jet: projection is nil")
 }
 
 func TestSelectColumnList(t *testing.T) {

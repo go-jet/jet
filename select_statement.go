@@ -155,7 +155,7 @@ func (s *selectStatementImpl) projections() []projection {
 
 func (s *selectStatementImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if s == nil {
-		return errors.New("Select expression is nil. ")
+		return errors.New("jet: Select expression is nil. ")
 	}
 	out.writeString("(")
 
@@ -175,7 +175,7 @@ func (s *selectStatementImpl) serialize(statement statementType, out *sqlBuilder
 
 func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if s == nil {
-		return errors.New("Select expression is nil. ")
+		return errors.New("jet: Select expression is nil. ")
 	}
 
 	out.newLine()
@@ -186,7 +186,7 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	}
 
 	if len(s.projectionList) == 0 {
-		return errors.New("no column selected for projection")
+		return errors.New("jet: no column selected for projection")
 	}
 
 	err := out.writeProjections(select_statement, s.projectionList)

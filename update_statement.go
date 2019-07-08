@@ -62,7 +62,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	out.writeString("UPDATE")
 
 	if isNil(u.table) {
-		return "", nil, errors.New("table to update is nil")
+		return "", nil, errors.New("jet: table to update is nil")
 	}
 
 	if err = u.table.serialize(update_statement, out); err != nil {
@@ -70,11 +70,11 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(u.columns) == 0 {
-		return "", nil, errors.New("no columns selected")
+		return "", nil, errors.New("jet: no columns selected")
 	}
 
 	if len(u.row) == 0 {
-		return "", nil, errors.New("no values to updated")
+		return "", nil, errors.New("jet: no values to updated")
 	}
 
 	out.newLine()
@@ -111,7 +111,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if u.where == nil {
-		return "", nil, errors.New("WHERE clause not set")
+		return "", nil, errors.New("jet: WHERE clause not set")
 	}
 
 	if err = out.writeWhere(update_statement, u.where); err != nil {

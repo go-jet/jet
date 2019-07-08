@@ -5,8 +5,8 @@ import (
 )
 
 func TestDeleteUnconditionally(t *testing.T) {
-	assertStatementErr(t, table1.DELETE(), `deleting without a WHERE clause`)
-	assertStatementErr(t, table1.DELETE().WHERE(nil), `deleting without a WHERE clause`)
+	assertStatementErr(t, table1.DELETE(), `jet: deleting without a WHERE clause`)
+	assertStatementErr(t, table1.DELETE().WHERE(nil), `jet: deleting without a WHERE clause`)
 }
 
 func TestDeleteWithWhere(t *testing.T) {

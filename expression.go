@@ -96,13 +96,13 @@ func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpressio
 
 func (c *binaryOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if c == nil {
-		return errors.New("binary Expression is nil")
+		return errors.New("jet: binary Expression is nil")
 	}
 	if c.lhs == nil {
-		return errors.New("nil lhs")
+		return errors.New("jet: nil lhs")
 	}
 	if c.rhs == nil {
-		return errors.New("nil rhs")
+		return errors.New("jet: nil rhs")
 	}
 
 	wrap := !contains(options, noWrap)
@@ -145,13 +145,13 @@ func newPrefixExpression(expression Expression, operator string) prefixOpExpress
 
 func (p *prefixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if p == nil {
-		return errors.New("Prefix Expression is nil.")
+		return errors.New("jet: Prefix Expression is nil.")
 	}
 
 	out.writeString(p.operator + " ")
 
 	if p.expression == nil {
-		return errors.New("nil prefix Expression.")
+		return errors.New("jet: nil prefix Expression.")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err
@@ -177,11 +177,11 @@ func newPostfixOpExpression(expression Expression, operator string) postfixOpExp
 
 func (p *postfixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if p == nil {
-		return errors.New("Postifx operator Expression is nil.")
+		return errors.New("jet: Postifx operator Expression is nil.")
 	}
 
 	if p.expression == nil {
-		return errors.New("nil prefix Expression.")
+		return errors.New("jet: nil prefix Expression.")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err

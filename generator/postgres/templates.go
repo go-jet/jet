@@ -103,7 +103,7 @@ const (
 
 func (e *{{ToGoIdentifier $.Name}}) Scan(value interface{}) error {
 	if v, ok := value.(string); !ok {
-		return errors.New("Invalid data for {{ToGoIdentifier $.Name}} enum")
+		return errors.New("jet: Invalid data for {{ToGoIdentifier $.Name}} enum")
 	} else {
 		switch string(v) {
 {{- range $index, $element := .Values}}
@@ -111,7 +111,7 @@ func (e *{{ToGoIdentifier $.Name}}) Scan(value interface{}) error {
 			*e = {{ToGoIdentifier $.Name}}_{{ToGoIdentifier $element}}
 {{- end}}
 		default:
-			return errors.New("Inavlid data " + string(v) + "for {{ToGoIdentifier $.Name}} enum")
+			return errors.New("jet: Inavlid data " + string(v) + "for {{ToGoIdentifier $.Name}} enum")
 		}
 
 		return nil

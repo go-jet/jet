@@ -46,7 +46,7 @@ func (e *expressionTableImpl) AllColumns() ProjectionList {
 
 func (e *expressionTableImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if e == nil {
-		return errors.New("Expression table is nil. ")
+		return errors.New("jet: Expression table is nil. ")
 	}
 
 	err := e.expression.serialize(statement, out)

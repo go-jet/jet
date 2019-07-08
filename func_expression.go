@@ -27,7 +27,7 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 
 func (f *funcExpressionImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if f == nil {
-		return errors.New("Function expressions is nil. ")
+		return errors.New("jet: Function expressions is nil. ")
 	}
 
 	addBrackets := !f.noBrackets || len(f.expressions) > 0

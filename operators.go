@@ -102,7 +102,7 @@ func (c *caseOperatorImpl) ELSE(els Expression) CaseOperatorExpression {
 
 func (c *caseOperatorImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if c == nil {
-		return errors.New("Case Expression is nil. ")
+		return errors.New("jet: Case Expression is nil. ")
 	}
 
 	out.writeString("(CASE")
@@ -116,11 +116,11 @@ func (c *caseOperatorImpl) serialize(statement statementType, out *sqlBuilder, o
 	}
 
 	if len(c.when) == 0 || len(c.then) == 0 {
-		return errors.New("Invalid case Statement. There should be at least one when/then Expression pair. ")
+		return errors.New("jet: Invalid case Statement. There should be at least one when/then Expression pair. ")
 	}
 
 	if len(c.when) != len(c.then) {
-		return errors.New("When and then Expression count mismatch. ")
+		return errors.New("jet: When and then Expression count mismatch. ")
 	}
 
 	for i, when := range c.when {

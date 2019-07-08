@@ -170,7 +170,7 @@ func (t *tableImpl) columns() []column {
 
 func (t *tableImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if t == nil {
-		return errors.New("tableImpl is nil. ")
+		return errors.New("jet: tableImpl is nil. ")
 	}
 
 	out.writeIdentifier(t.schemaName)
@@ -237,11 +237,11 @@ func (t *joinTable) columns() []column {
 
 func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) (err error) {
 	if t == nil {
-		return errors.New("Join table is nil. ")
+		return errors.New("jet: Join table is nil. ")
 	}
 
 	if isNil(t.lhs) {
-		return errors.New("left hand side of join operation is nil table")
+		return errors.New("jet: left hand side of join operation is nil table")
 	}
 
 	if err = t.lhs.serialize(statement, out); err != nil {
@@ -264,7 +264,7 @@ func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options 
 	}
 
 	if isNil(t.rhs) {
-		return errors.New("right hand side of join operation is nil table")
+		return errors.New("jet: right hand side of join operation is nil table")
 	}
 
 	if err = t.rhs.serialize(statement, out); err != nil {
@@ -272,7 +272,7 @@ func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options 
 	}
 
 	if t.onCondition == nil && t.join_type != crossJoin {
-		return errors.New("join condition is nil")
+		return errors.New("jet: join condition is nil")
 	}
 
 	if t.onCondition != nil {

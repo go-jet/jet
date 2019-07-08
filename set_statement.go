@@ -71,7 +71,7 @@ func (s *setStatementImpl) projections() []projection {
 
 func (s *setStatementImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if s == nil {
-		return errors.New("Set expression is nil. ")
+		return errors.New("jet: Set expression is nil. ")
 	}
 
 	wrap := s.orderBy != nil || s.limit >= 0 || s.offset >= 0
@@ -98,11 +98,11 @@ func (s *setStatementImpl) serialize(statement statementType, out *sqlBuilder, o
 
 func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if s == nil {
-		return errors.New("Set expression is nil. ")
+		return errors.New("jet: Set expression is nil. ")
 	}
 
 	if len(s.selects) < 2 {
-		return errors.New("UNION Statement must have at least two SELECT statements.")
+		return errors.New("jet: UNION Statement must have at least two SELECT statements.")
 	}
 
 	out.newLine()
@@ -121,7 +121,7 @@ func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 		}
 
 		if selectStmt == nil {
-			return errors.New("select statement is nil")
+			return errors.New("jet: select statement is nil")
 		}
 
 		err := selectStmt.serialize(set_statement, out)

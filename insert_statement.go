@@ -82,7 +82,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	queryData.writeString("INSERT INTO")
 
 	if isNil(i.table) {
-		return "", nil, errors.New("table is nil")
+		return "", nil, errors.New("jet: table is nil")
 	}
 
 	err = i.table.serialize(insert_statement, queryData)
@@ -104,11 +104,11 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(i.rows) == 0 && i.query == nil {
-		return "", nil, errors.New("no row values or query specified")
+		return "", nil, errors.New("jet: no row values or query specified")
 	}
 
 	if len(i.rows) > 0 && i.query != nil {
-		return "", nil, errors.New("only row values or query has to be specified")
+		return "", nil, errors.New("jet: only row values or query has to be specified")
 	}
 
 	if len(i.rows) > 0 {

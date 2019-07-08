@@ -113,7 +113,7 @@ const (
 
 func (e *MpaaRating) Scan(value interface{}) error {
 	if v, ok := value.(string); !ok {
-		return errors.New("Invalid data for MpaaRating enum")
+		return errors.New("jet: Invalid data for MpaaRating enum")
 	} else {
 		switch string(v) {
 		case "G":

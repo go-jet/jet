@@ -861,14 +861,14 @@ FROM dvds.film
 WHERE film.rental_rate = (
           SELECT MAX(film.rental_rate)
           FROM dvds.film
-     )::double precision
+     )
 ORDER BY film.film_id ASC;
 `
 
-	maxFilmRentalRate := CAST(
+	maxFilmRentalRate := FloatExp(
 		Film.
 			SELECT(MAXf(Film.RentalRate)),
-	).AS_DOUBLE()
+	)
 
 	query := Film.
 		SELECT(Film.AllColumns).
