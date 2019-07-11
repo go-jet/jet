@@ -63,8 +63,8 @@ Generating enum sql builder files...
 Generating enum model files...
 Done
 ```
-As jet command output suggest, jet will:  
-- connect to postgres database and retrieve information about the tables and enums of `dvds` schema
+As command output suggest, Jet will:  
+- connect to postgres database and retrieve information about the _tables_ and _enums_ of `dvds` schema
 - delete everything in destination folder `./gen`,   
 - and finally generate sql builder and model Go files for each schema tables and enums into destination folder `./gen`.  
 
@@ -88,7 +88,7 @@ Generated files folder structure will look like this:
                 ...
 
 ```
-You will be using types from `table` and `enum` to write type safe SQL in Go, and `model` types would be used to store results of the queries.
+Types from `table` and `enum` are used to write type safe SQL in Go, and `model` types are used to store results of the queries.
 #### Lets write some SQL queries in Go
 
 First lets import jet and generated files from previous step
@@ -100,8 +100,8 @@ import (
 	"github.com/go-jet/jet/examples/quick-start/gen/jetdb/dvds/model"
 )
 ```
-Lets say we want to retrieve the list of all actors that acted in films longer than 180 minutes, film language is 'English' 
-and film category is not 'Action'.  
+Lets say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
+and _film category_ is not 'Action'.  
 ```go
 stmt := SELECT(
     Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate, // list of all actor columns (equivalent to Actor.AllColumns)
@@ -217,7 +217,9 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
 </details>
 
-Well formed sql is just a first half the job. Now lets execute sql statement and store result in desired structure.  
+Well formed sql is just a first half the job. 
+##### Execute query and store result
+
 Let's say this is our desired structure:  
 ```go
 var dest []struct {
@@ -445,7 +447,7 @@ Writing code is much faster and code is more robust. Automatic scan to arbitrary
 boilerplate code needed to structure database query result.  
 With Jet programmer have the power of SQL but also ease of use of NoSQL. 
 ##### Speed of execution
-Common web and database server usually is not on the same physical machine, and there is some latency between them. 
+Common web and database server usually are not on the same physical machine, and there is some latency between them. 
 Latency can vary from 5ms to 50+ms. In majority of cases query executed on database is simple query lasting no more than 1ms.
 In those cases web server handler execution time is directly proportional to latency between server and database.
 This is not such a big problem if handler calls database couple of times, but what if web server is using ORM to retrieve all data from database.

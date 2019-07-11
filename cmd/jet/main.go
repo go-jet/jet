@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/generator/postgres"
 	"os"
+	"strconv"
 )
 
 var (
 	host       string
-	port       string
+	port       int
 	user       string
 	password   string
 	sslmode    string
@@ -22,31 +23,54 @@ var (
 
 func init() {
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
-	flag.StringVar(&port, "port", "", "Database port")
+	flag.IntVar(&port, "port", 0, "Database port")
 	flag.StringVar(&user, "user", "", "Database user")
 	flag.StringVar(&password, "password", "", "The user’s password")
 	flag.StringVar(&sslmode, "sslmode", "disable", "Whether or not to use SSL(optional)")
 	flag.StringVar(&params, "params", "", "Additional connection string parameters(optional)")
-
 	flag.StringVar(&dbName, "dbname", "", "name of the database")
 	flag.StringVar(&schemaName, "schema", "public", "Database schema name.")
 
-	flag.StringVar(&destDir, "path", "", "Destination dir for generated files.")
-
-	flag.Parse()
+	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
 }
 
 func main() {
 
-	if host == "" || port == "" || user == "" || dbName == "" || schemaName == "" {
-		fmt.Println("jet: required flag missing")
+	flag.Usage = func() {
+		_, _ = fmt.Fprint(os.Stdout, `
+Usage of jet:
+  -host string
+        Database host path (Example: localhost)
+  -port int
+        Database port
+  -user string
+        Database user
+  -password string
+        The user’s password
+  -dbname string
+        name of the database
+  -params string
+        Additional connection string parameters(optional)
+  -schema string
+        Database schema name. (default "public")
+  -sslmode string
+        Whether or not to use SSL(optional) (default "disable")
+  -path string
+        Destination dir for files generated.
+`)
+	}
+
+	flag.Parse()
+
+	if host == "" || port == 0 || user == "" || dbName == "" || schemaName == "" {
+		fmt.Println("\njet: required flag missing")
 		flag.Usage()
 		os.Exit(-2)
 	}
 
 	genData := postgres.DBConnection{
 		Host:     host,
-		Port:     port,
+		Port:     strconv.Itoa(port),
 		User:     user,
 		Password: password,
 		SslMode:  sslmode,
