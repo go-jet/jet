@@ -6,25 +6,29 @@ import (
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
+	"github.com/google/uuid"
 	"gotest.tools/assert"
 	"testing"
 )
 
 func TestUUIDType(t *testing.T) {
 	query := AllTypes.
-		SELECT(AllTypes.AllColumns).
+		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
 		WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
 
-	queryStr, args, err := query.Sql()
+	assertStatementSql(t, query, `
+SELECT all_types.uuid AS "all_types.uuid",
+     all_types.uuid_ptr AS "all_types.uuid_ptr"
+FROM test_sample.all_types
+WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+`, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
 
-	assert.NilError(t, err)
-	assert.Equal(t, len(args), 1)
-	fmt.Println(queryStr)
-	//assert.Equal(t, queryStr, `SELECT all_types.character AS "all_types.character", all_types.character_varying AS "all_types.character_varying", all_types.text AS "all_types.text", all_types.bytea AS "all_types.bytea", all_types.timestamp_without_time_zone AS "all_types.timestamp_without_time_zone", all_types.timestamp_with_time_zone AS "all_types.timestamp_with_time_zone", all_types.uuid AS "all_types.uuid", all_types.json AS "all_types.json", all_types.jsonb AS "all_types.jsonb" FROM test_sample.all_types WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11`)
 	result := model.AllTypes{}
 
-	err = query.Query(db, &result)
-	spew.Dump(result)
+	err := query.Query(db, &result)
+	assert.NilError(t, err)
+	assert.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	assert.DeepEqual(t, result.UUIDPtr, uuidPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 }
 
 func TestEnumType(t *testing.T) {
@@ -120,7 +124,25 @@ ORDER BY employee.employee_id;
 func TestWierdNamesTable(t *testing.T) {
 	stmt := WeirdNamesTable.SELECT(WeirdNamesTable.AllColumns)
 
-	fmt.Println(stmt.DebugSql())
+	assertStatementSql(t, stmt, `
+SELECT "WEIRD NAMES TABLE".weird_column_name1 AS "WEIRD NAMES TABLE.weird_column_name1",
+     "WEIRD NAMES TABLE"."Weird_Column_Name2" AS "WEIRD NAMES TABLE.Weird_Column_Name2",
+     "WEIRD NAMES TABLE"."wEiRd_cOluMn_nAmE3" AS "WEIRD NAMES TABLE.wEiRd_cOluMn_nAmE3",
+     "WEIRD NAMES TABLE"."WeIrd_CoLuMN_Name4" AS "WEIRD NAMES TABLE.WeIrd_CoLuMN_Name4",
+     "WEIRD NAMES TABLE"."WEIRD_COLUMN_NAME5" AS "WEIRD NAMES TABLE.WEIRD_COLUMN_NAME5",
+     "WEIRD NAMES TABLE"."WeirdColumnName6" AS "WEIRD NAMES TABLE.WeirdColumnName6",
+     "WEIRD NAMES TABLE"."weirdColumnName7" AS "WEIRD NAMES TABLE.weirdColumnName7",
+     "WEIRD NAMES TABLE".weirdcolumnname8 AS "WEIRD NAMES TABLE.weirdcolumnname8",
+     "WEIRD NAMES TABLE"."weird col name9" AS "WEIRD NAMES TABLE.weird col name9",
+     "WEIRD NAMES TABLE"."wEiRd cOlu nAmE10" AS "WEIRD NAMES TABLE.wEiRd cOlu nAmE10",
+     "WEIRD NAMES TABLE"."WEIRD COLU NAME11" AS "WEIRD NAMES TABLE.WEIRD COLU NAME11",
+     "WEIRD NAMES TABLE"."Weird Colu Name12" AS "WEIRD NAMES TABLE.Weird Colu Name12",
+     "WEIRD NAMES TABLE"."weird-col-name13" AS "WEIRD NAMES TABLE.weird-col-name13",
+     "WEIRD NAMES TABLE"."wEiRd-cOlu-nAmE14" AS "WEIRD NAMES TABLE.wEiRd-cOlu-nAmE14",
+     "WEIRD NAMES TABLE"."WEIRD-COLU-NAME15" AS "WEIRD NAMES TABLE.WEIRD-COLU-NAME15",
+     "WEIRD NAMES TABLE"."Weird-Colu-Name16" AS "WEIRD NAMES TABLE.Weird-Colu-Name16"
+FROM test_sample."WEIRD NAMES TABLE";
+`)
 
 	dest := []model.WeirdNamesTable{}
 

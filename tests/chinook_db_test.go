@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
@@ -105,12 +104,106 @@ func TestJoinEverything(t *testing.T) {
 	err := stmt.Query(db, &dest)
 
 	assert.NilError(t, err)
-	//jsonSave(dest)
 
-	fmt.Println("Artist count :", len(dest))
 	assert.Equal(t, len(dest), 275)
 
-	assertJson(t, "./testdata/joined_everything.json", dest)
+	assertJsonFile(t, "./testdata/joined_everything.json", dest)
+}
+
+func TestSelfJoin(t *testing.T) {
+	var dest []struct {
+		model.Employee
+
+		Manager *model.Employee `alias:"Manager.*"`
+	}
+
+	manager := Employee.AS("Manager")
+
+	stmt := Employee.
+		LEFT_JOIN(manager, Employee.ReportsTo.EQ(manager.EmployeeId)).
+		SELECT(
+			Employee.EmployeeId,
+			Employee.FirstName,
+			Employee.LastName,
+			manager.EmployeeId,
+			manager.FirstName,
+			manager.LastName,
+		).
+		ORDER_BY(Employee.EmployeeId)
+
+	assertStatementSql(t, stmt, `
+SELECT "Employee"."EmployeeId" AS "Employee.EmployeeId",
+     "Employee"."FirstName" AS "Employee.FirstName",
+     "Employee"."LastName" AS "Employee.LastName",
+     "Manager"."EmployeeId" AS "Manager.EmployeeId",
+     "Manager"."FirstName" AS "Manager.FirstName",
+     "Manager"."LastName" AS "Manager.LastName"
+FROM chinook."Employee"
+     LEFT JOIN chinook."Employee" AS "Manager" ON ("Employee"."ReportsTo" = "Manager"."EmployeeId")
+ORDER BY "Employee"."EmployeeId";
+`)
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 8)
+	assertJson(t, dest[0:2], `
+[
+	{
+		"EmployeeId": 1,
+		"LastName": "Adams",
+		"FirstName": "Andrew",
+		"Title": null,
+		"ReportsTo": null,
+		"BirthDate": null,
+		"HireDate": null,
+		"Address": null,
+		"City": null,
+		"State": null,
+		"Country": null,
+		"PostalCode": null,
+		"Phone": null,
+		"Fax": null,
+		"Email": null,
+		"Manager": null
+	},
+	{
+		"EmployeeId": 2,
+		"LastName": "Edwards",
+		"FirstName": "Nancy",
+		"Title": null,
+		"ReportsTo": null,
+		"BirthDate": null,
+		"HireDate": null,
+		"Address": null,
+		"City": null,
+		"State": null,
+		"Country": null,
+		"PostalCode": null,
+		"Phone": null,
+		"Fax": null,
+		"Email": null,
+		"Manager": {
+			"EmployeeId": 1,
+			"LastName": "Adams",
+			"FirstName": "Andrew",
+			"Title": null,
+			"ReportsTo": null,
+			"BirthDate": null,
+			"HireDate": null,
+			"Address": null,
+			"City": null,
+			"State": null,
+			"Country": null,
+			"PostalCode": null,
+			"Phone": null,
+			"Fax": null,
+			"Email": null
+		}
+	}
+]
+`)
+
 }
 
 func TestUnionForQuotedNames(t *testing.T) {
@@ -121,7 +214,7 @@ func TestUnionForQuotedNames(t *testing.T) {
 	).
 		ORDER_BY(Album.AlbumId)
 
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 	assertStatementSql(t, stmt, `
 (
      (
@@ -242,10 +335,17 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 
 	assert.NilError(t, err)
 
-	spew.Dump(dest)
+	//spew.Dump(dest)
 }
 
-func assertJson(t *testing.T, jsonFilePath string, data interface{}) {
+func assertJson(t *testing.T, data interface{}, expectedJson string) {
+	jsonData, err := json.MarshalIndent(data, "", "\t")
+	assert.NilError(t, err)
+
+	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJson)
+}
+
+func assertJsonFile(t *testing.T, jsonFilePath string, data interface{}) {
 	fileJsonData, err := ioutil.ReadFile(jsonFilePath)
 	assert.NilError(t, err)
 
@@ -253,6 +353,7 @@ func assertJson(t *testing.T, jsonFilePath string, data interface{}) {
 	assert.NilError(t, err)
 
 	assert.Assert(t, string(fileJsonData) == string(jsonData))
+	//assert.Equal(t, string(fileJsonData), string(jsonData))
 }
 
 func jsonPrint(v interface{}) {

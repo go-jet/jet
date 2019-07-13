@@ -89,6 +89,7 @@ INSERT INTO test_sample.link VALUES
 }
 
 func TestInsertModelObject(t *testing.T) {
+	cleanUpLinkTable(t)
 	var expectedSql = `
 INSERT INTO test_sample.link (url, name) VALUES
      ('http://www.duckduckgo.com', 'Duck Duck go');

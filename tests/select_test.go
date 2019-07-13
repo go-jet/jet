@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/enum"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
@@ -158,7 +156,6 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
-	fmt.Println(query.Sql())
 	assertStatementSql(t, query, expectedSql, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 }
 
@@ -253,7 +250,6 @@ LIMIT 1000;
 		assert.Equal(t, len(languageActorFilm[0].Films), 10)
 		assert.Equal(t, len(languageActorFilm[0].Films[0].Actors), 10)
 	}
-
 }
 
 func TestJoinQuerySlice(t *testing.T) {
@@ -485,6 +481,97 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 	assert.Equal(t, len(dest[0].Customers), 2)
 	assert.Equal(t, *dest[0].Customers[0].LastName, "Hoffman")
 	assert.Equal(t, *dest[0].Customers[1].LastName, "Vines")
+}
+
+func TestExecution4(t *testing.T) {
+
+	var dest []struct {
+		CityID   int32  `sql:"primary_key" alias:"city.city_id"`
+		CityName string `alias:"city.city"`
+
+		Customers []struct {
+			CustomerID int32   `sql:"primary_key" alias:"customer_id"`
+			LastName   *string `alias:"last_name"`
+
+			Address struct {
+				AddressID   int32  `sql:"primary_key" alias:"AddressId"`
+				AddressLine string `alias:"address.address"`
+			} `alias:"address.*"`
+		} `alias:"customer"`
+	}
+
+	stmt := City.
+		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
+		SELECT(
+			City.CityID,
+			City.City,
+			Customer.CustomerID,
+			Customer.LastName,
+			Address.AddressID,
+			Address.Address,
+		).
+		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+
+	assertStatementSql(t, stmt, `
+SELECT city.city_id AS "city.city_id",
+     city.city AS "city.city",
+     customer.customer_id AS "customer.customer_id",
+     customer.last_name AS "customer.last_name",
+     address.address_id AS "address.address_id",
+     address.address AS "address.address"
+FROM dvds.city
+     INNER JOIN dvds.address ON (address.city_id = city.city_id)
+     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
+WHERE (city.city = 'London') OR (city.city = 'York')
+ORDER BY city.city_id, address.address_id, customer.customer_id;
+`, "London", "York")
+
+	err := stmt.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 2)
+	assertJson(t, dest, `
+[
+	{
+		"CityID": 312,
+		"CityName": "London",
+		"Customers": [
+			{
+				"CustomerID": 252,
+				"LastName": "Hoffman",
+				"Address": {
+					"AddressID": 256,
+					"AddressLine": "1497 Yuzhou Drive"
+				}
+			},
+			{
+				"CustomerID": 512,
+				"LastName": "Vines",
+				"Address": {
+					"AddressID": 517,
+					"AddressLine": "548 Uruapan Street"
+				}
+			}
+		]
+	},
+	{
+		"CityID": 589,
+		"CityName": "York",
+		"Customers": [
+			{
+				"CustomerID": 497,
+				"LastName": "Sledge",
+				"Address": {
+					"AddressID": 502,
+					"AddressLine": "1515 Korla Way"
+				}
+			}
+		]
+	}
+]
+`)
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
@@ -810,8 +897,6 @@ FROM dvds.actor
 			rRatingFilms.AllColumns(),
 		)
 
-	fmt.Println(query.DebugSql())
-
 	assertStatementSql(t, query, expectedQuery)
 
 	dest := []model.Actor{}
@@ -875,7 +960,6 @@ ORDER BY film.film_id ASC;
 		WHERE(Film.RentalRate.EQ(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
-	fmt.Println(query.Sql())
 	assertStatementSql(t, query, expectedSql)
 
 	maxRentalRateFilms := []model.Film{}
@@ -1039,7 +1123,36 @@ func TestSelectStaff(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	spew.Dump(staffs)
+	assertJson(t, staffs, `
+[
+	{
+		"StaffID": 1,
+		"FirstName": "Mike",
+		"LastName": "Hillyer",
+		"AddressID": 3,
+		"Email": "Mike.Hillyer@sakilastaff.com",
+		"StoreID": 1,
+		"Active": true,
+		"Username": "Mike",
+		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+		"LastUpdate": "2006-05-16T16:13:11.79328Z",
+		"Picture": "iVBORw0KWgo="
+	},
+	{
+		"StaffID": 2,
+		"FirstName": "Jon",
+		"LastName": "Stephens",
+		"AddressID": 4,
+		"Email": "Jon.Stephens@sakilastaff.com",
+		"StoreID": 2,
+		"Active": true,
+		"Username": "Jon",
+		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+		"LastUpdate": "2006-05-16T16:13:11.79328Z",
+		"Picture": null
+	}
+]
+`)
 }
 
 func TestSelectTimeColumns(t *testing.T) {
@@ -1114,9 +1227,6 @@ OFFSET 20;
 		LIMIT(10).
 		OFFSET(20)
 
-	queryStr, _, _ := query.Sql()
-
-	fmt.Println("-" + queryStr + "-")
 	assertStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
 	dest := []model.Payment{}
@@ -1396,7 +1506,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJson(t, "./testdata/quick-start-dest.json", dest)
+	assertJsonFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1409,7 +1519,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJson(t, "./testdata/quick-start-dest2.json", dest2)
+	assertJsonFile(t, "./testdata/quick-start-dest2.json", dest2)
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1461,7 +1571,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJson(t, "./testdata/quick-start-dest.json", dest)
+	assertJsonFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1474,5 +1584,5 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJson(t, "./testdata/quick-start-dest2.json", dest2)
+	assertJsonFile(t, "./testdata/quick-start-dest2.json", dest2)
 }

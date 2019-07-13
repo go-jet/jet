@@ -18,8 +18,6 @@ func TestAllTypesSelect(t *testing.T) {
 	fmt.Println(err)
 	assert.NilError(t, err)
 
-	assert.Equal(t, len(dest), 2)
-
 	assert.DeepEqual(t, dest[0], allTypesRow0)
 	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
@@ -98,7 +96,7 @@ func TestExpressionOperators(t *testing.T) {
 		RAW("current_database()"),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -159,11 +157,11 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	_, args, _ := query.Sql()
+	//_, args, _ := query.Sql()
 
-	fmt.Println(query.Sql())
-	fmt.Println(args[15])
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.Sql())
+	//fmt.Println(args[15])
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -190,7 +188,7 @@ func TestBoolOperators(t *testing.T) {
 		AllTypes.Boolean.OR(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -240,7 +238,7 @@ func TestFloatOperators(t *testing.T) {
 		TRUNC(AllTypes.Decimal, Int(1)),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -287,7 +285,7 @@ func TestIntegerOperators(t *testing.T) {
 		CBRT(AllTypes.Integer),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -348,7 +346,7 @@ func TestTimeOperators(t *testing.T) {
 		NOW(),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -522,7 +520,7 @@ FROM`
 		).
 			FROM(subQuery)
 
-		fmt.Println(stmt2.DebugSql())
+		//fmt.Println(stmt2.DebugSql())
 
 		assertStatementSql(t, stmt2, expectedSql+expected.sql+";\n", expected.args...)
 

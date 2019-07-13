@@ -46,7 +46,7 @@ WHERE (city.city = 'London') OR (city.city = 'York')
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 ```
 
-Every column is aliased by default. Format is "`table_name`.`column_name`"
+Note that every column is aliased by default. Format is "`table_name`.`column_name`"
 
 Above statement will produce following result set:
 
@@ -57,7 +57,7 @@ Above statement will produce following result set:
 |  _3_|          589 |	  "York"        |	             502  |	"1515 Korla Way"	  |                  497 |           "Sledge" |
 
 Lets execute statement and scan result set to destination `dest`:
- ```sql
+ ```
 var dest []struct {
     model.City
 
@@ -70,33 +70,29 @@ var dest []struct {
 
 err := stmt.Query(db, &dest)
  ```
- 
-`Query` uses reflection to introspect destination type structure, and result set column names(aliases), to be able to map result set data to destination object.  
+
 Note that camel case of result set column names(aliases) is the same as `model type name`.`field name`. 
 For instance `city.city_id` -> `City.CityID`. This is being used to find appropriate column for each destination model field.
-It is not an error if there is not a column for each destination model field.
+It is not an error if there is not a column for each destination model field. Table and column names does not have
+to be in snake case.
+ 
+`Query` uses reflection to introspect destination type structure, and result set column names(aliases), to be able to map result set data to destination object.
+Every new destination struct object is cached by his and all the parents primary key. So grouping to work correctly at least table primary keys has to appear in query result set. If there is no primary key in a result set
+row number is used as grouping condition(which is always unique).    
+For instance, after row 1 is processed, two objects are stored to cache:
+```
+Key:                                        Object:
+(City(312))                              -> (*struct { model.City; Customers []struct { model.Customer; Address model.Address } })
+(City(312)),(Customer(252),Address(256)) -> (*struct { model.Customer; Address model.Address })
+```
+After row 2 processing only one object is stored to cache, because city with city_id 312 is already in cache.
+```
+Key:                                        Object:
+(City(312))                              -> pulled from cache
+(City(312)),(Customer(512),Address(517)) -> (*struct { model.Customer; Address model.Address })
+```
 
-Lets see in general how `Query` works row by row:
-
-- ROW 1:
-    - dest is slice of structs, so new struct object is initialized and scan proceeds to next step.
-        - `city.city_id` and `city.city` columns (values `312` and `"London"`) are used to initialize `CityID` and `City` fields of `model.City` object.
-        - `Customers` is a slice of structs, so new struct object is initialized and scan proceeds to next step.
-            - `customer.customer_id` and `customer.last_name` is used to initialize fields in `model.Customer` object.
-            - `address.address_id` and `address.address` is used to initialize fields in `Address model.Address`
-        - because at least one field of struct is being initialized struct is added to `Customers []struct` and cached by parent and
-        struct primary key fields([more about primary key fields](TODO)). Primary keys used for caching are `CityID`, `CustomerID` and `AddressID` of `model.City`, `model.Customer` 
-        and `model.Address`
-    - because at least one field of struct is being initialized struct is added to `var dest []struct` and cached by 
-      struct primary key fields. Primary keys used for caching is only `CityID` from `model.City`
-- ROW 2:
-    - Does not initialize new struct object for `dest []struct` but pulls one from the cache, because `city` with `city_id` of `312` has
-      already being processed. Following steps are the same as above, new objects are created, stored in slice and cached.
-- ROW 3:
-    - steps would be similar as for the first step. Nothing is pulled from he cache, stored in slice and cached.
-    
-    
- Lets print `dest` as a json, to visualize `Query` result:
+Lets print `dest` as a json, to visualize `Query` result:
  
  ```
  [
@@ -190,8 +186,10 @@ City of `London` has two customers, which is the product of object reuse in `ROW
  
 ### Custom model files
 
-**Destinations are not limited to just model files, any destination will work, as long as camel case of result set column
-is equal to `model type name`.`field name`.**
+Destinations are not limited to just model files, any destination will work, as long as camel case of result set column
+is equal to `model type name`.`field name`.
+Custom model type can have field of any type listed in [Mappings of database types to Go types](), 
+plus any type that implements `sql.Scanner` interface.
 
 #### Named types
  
@@ -237,7 +235,7 @@ err := stmt2.Query(db, &dest2)
 ```
 
 Destination type names and field names are now changed. Every type has 'My' prefix, every primary key column is named `ID`,
- `FirstName` is now string pointer etc.  
+ `LastName` is now string pointer etc.  
 Because we are using custom types with changed identifier, every column has to be aliased.  
 For instance: `City.CityID.AS("my_city.id")`, ` City.City.AS("myCity.Name")` etc.  
 **Table names, column names and aliases doesn't have to be in a snake case. CamelCase, PascalCase or some other mixed space is also supported,
@@ -286,10 +284,10 @@ Json of new destination is also changed:
 ]
 ```
 
-#### Antonymous types
+#### Anonymous custom types
 
 There is no need to create new named type for every custom model. 
-Destination type can be declared inline without naming any type.
+Destination type can be declared inline without naming any new type.
  
 ```
 var dest []struct {
@@ -326,6 +324,80 @@ err := stmt.Query(db, &dest)
 Aliasing is now simplified. Alias contains only (column/field) name. 
 On the other hand, we can not have 3 fields named `ID`, because aliases have to be unique.
 
+### Tagging model files
+
+Desired mapping can be set the other way around as well, by tagging destination fields and types.
+
+```
+var dest []struct {
+    CityID   int32 `sql:"primary_key" alias:"city.city_id"`
+    CityName string `alias:"city.city"`
+
+    Customers []struct {
+        // because the whole struct is refering to 'customer.*' (see below tag),
+        // we can just use 'alias:"customer_id"`' instead of 'alias:"customer.customer_id"`'
+        CustomerID int32 `sql:"primary_key" alias:"customer_id"` 
+        LastName   *string `alias:"last_name"`                   
+
+        Address struct {
+            AddressID   int32 `sql:"primary_key" alias:"AddressId"` // cammel case for alias will work as well
+            AddressLine string `alias:"address.address"`            // full alias will work as well
+        } `alias:"address.*"`                                       // struct is now refering to all address.* columns
+
+    } `alias:"customer.*"`                                          // struct is now refering to all  customer.* columns
+}
+
+stmt := City.
+    INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+    INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
+    SELECT(
+        City.CityID,
+        City.City,
+        Customer.CustomerID,
+        Customer.LastName,
+        Address.AddressID,
+        Address.Address,
+    ).
+    WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+    ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+
+err := stmt.Query(db, &dest)
+```
+
+This kind of mapping is more complicated than in previous examples, and it should avoided and used 
+only when there is no alternative. Usually this is the case in two scenarios:
+
+1) Self join
+
+```
+var dest []struct{
+    model.Employee
+
+    Manager *model.Employee `alias:"Manager.*"` //or just `alias:"Manager"
+}
+
+manager := Employee.AS("Manager")
+
+stmt := Employee.
+    LEFT_JOIN(manager, Employee.ReportsTo.EQ(manager.EmployeeId)).
+    SELECT(
+        Employee.EmployeeId,
+        Employee.FirstName,
+        manager.EmployeeId,
+        manager.FirstName,
+    )
+```
+_This example could also be written without tag alias, by just introducing of a new type `type Manager model.Employee`._
+
+2) Slices of go base types (int32, float64, string, ...)
+
+```
+var dest struct {
+    model.Film
+    
+    InventoryIDs []int32 `alias:"inventory.inventory_id"`
+}
+```
 
 ### Combining autogenerated and custom model files
 
@@ -347,3 +419,5 @@ type MyCity struct {
     Customers []MyCustomer
 }
 ```
+
+

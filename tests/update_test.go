@@ -24,8 +24,6 @@ UPDATE test_sample.link
 SET (name, url) = ('Bong', 'http://bong.com')
 WHERE link.name = 'Bing';
 `
-	fmt.Println(query.Sql())
-
 	assertStatementSql(t, query, expectedSql, "Bong", "http://bong.com", "Bing")
 
 	assertExec(t, query, 1)

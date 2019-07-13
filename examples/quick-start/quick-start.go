@@ -4,11 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/lib/pq"
 
-	. "github.com/go-jet/jet"                                           // dot import so go code would resemble as much as native SQL
-	. "github.com/go-jet/jet/examples/quick-start/gen/jetdb/dvds/table" // dot import is not mandatory
+	. "github.com/go-jet/jet"                                            // dot import so go code would resemble as much as native SQL
+	. "github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/table" // dot import is not mandatory
 
-	"github.com/go-jet/jet/examples/quick-start/gen/jetdb/dvds/model"
+	"github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/model"
 	"github.com/go-jet/jet/tests/dbconfig"
 )
 

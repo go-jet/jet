@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
-	"github.com/go-jet/jet/internal/utils"
 	"reflect"
 	"strconv"
 	"strings"
@@ -132,48 +131,33 @@ func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, 
 	return nil
 }
 
-func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue reflect.Value, field *reflect.StructField) (updated bool, err error) {
 
 	sliceElemType := getSliceElemType(slicePtrValue)
 
 	if isGoBaseType(sliceElemType) {
-		index := 0
-		if structField != nil {
-			if index = scanContext.aliasColumnIndex(structField.Tag.Get("alias")); index < 0 {
-				return
-			}
-		}
-		rowElemPtr := scanContext.rowElemValuePtr(index)
-
-		if !rowElemPtr.IsNil() {
-			updated = true
-			err = appendElemToSlice(slicePtrValue, rowElemPtr)
-			if err != nil {
-				return
-			}
-		}
-
+		updated, err = mapRowToBaseTypeSlice(scanContext, slicePtrValue, field)
 		return
 	}
 
 	if sliceElemType.Kind() != reflect.Struct {
-		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+		return false, errors.New("jet: Unsupported dest type: " + field.Name + " " + field.Type.String())
 	}
 
-	structGroupKey := scanContext.getGroupKey(sliceElemType, structField)
+	structGroupKey := scanContext.getGroupKey(sliceElemType, field)
 
-	groupKey = groupKey + ":" + structGroupKey
+	groupKey = groupKey + "," + structGroupKey
 
 	index, ok := scanContext.uniqueDestObjectsMap[groupKey]
 
 	if ok {
 		structPtrValue := getSliceElemPtrAt(slicePtrValue, index)
 
-		return mapRowToStruct(scanContext, groupKey, structPtrValue, structField, true)
+		return mapRowToStruct(scanContext, groupKey, structPtrValue, field, true)
 	} else {
 		destinationStructPtr := newElemPtrValueForSlice(slicePtrValue)
 
-		updated, err = mapRowToStruct(scanContext, groupKey, destinationStructPtr, structField)
+		updated, err = mapRowToStruct(scanContext, groupKey, destinationStructPtr, field)
 
 		if err != nil {
 			return
@@ -190,6 +174,213 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 	}
 
 	return
+}
+
+func mapRowToBaseTypeSlice(scanContext *scanContext, slicePtrValue reflect.Value, field *reflect.StructField) (updated bool, err error) {
+	index := 0
+	if field != nil {
+		typeName, columnName := getTypeAndFieldName("", *field)
+		if index = scanContext.typeToColumnIndex(typeName, columnName); index < 0 {
+			return
+		}
+	}
+	rowElemPtr := scanContext.rowElemValuePtr(index)
+
+	if !rowElemPtr.IsNil() {
+		updated = true
+		err = appendElemToSlice(slicePtrValue, rowElemPtr)
+		if err != nil {
+			return
+		}
+	}
+
+	return
+}
+
+type typeInfo struct {
+	fieldMappings []fieldMapping
+}
+
+type fieldMapping struct {
+	complexType       bool
+	columnIndex       int
+	implementsScanner bool
+}
+
+func (s *scanContext) getTypeInfo(structType reflect.Type, parentField *reflect.StructField) typeInfo {
+
+	typeMapKey := structType.String()
+
+	if parentField != nil {
+		typeMapKey += string(parentField.Tag)
+	}
+
+	if typeInfo, ok := s.typeInfoMap[typeMapKey]; ok {
+		return typeInfo
+	}
+
+	typeName := getTypeName(structType, parentField)
+
+	newTypeInfo := typeInfo{}
+
+	for i := 0; i < structType.NumField(); i++ {
+		field := structType.Field(i)
+
+		newTypeName, fieldName := getTypeAndFieldName(typeName, field)
+		columnIndex := s.typeToColumnIndex(newTypeName, fieldName)
+
+		fieldMap := fieldMapping{
+			columnIndex: columnIndex,
+		}
+
+		if implementsScannerType(field.Type) {
+			fieldMap.implementsScanner = true
+		} else if !isGoBaseType(field.Type) {
+			fieldMap.complexType = true
+		}
+
+		newTypeInfo.fieldMappings = append(newTypeInfo.fieldMappings, fieldMap)
+	}
+
+	s.typeInfoMap[typeMapKey] = newTypeInfo
+
+	return newTypeInfo
+}
+
+func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue reflect.Value, parentField *reflect.StructField, onlySlices ...bool) (updated bool, err error) {
+	structType := structPtrValue.Type().Elem()
+
+	typeInf := scanContext.getTypeInfo(structType, parentField)
+
+	structValue := structPtrValue.Elem()
+
+	for i := 0; i < structValue.NumField(); i++ {
+		field := structType.Field(i)
+		fieldValue := structValue.Field(i)
+
+		fieldMap := typeInf.fieldMappings[i]
+
+		if fieldMap.complexType {
+			var changed bool
+			changed, err = mapRowToDestinationValue(scanContext, groupKey, fieldValue, &field)
+
+			if err != nil {
+				return
+			}
+
+			if changed {
+				updated = true
+			}
+
+		} else if len(onlySlices) == 0 {
+
+			if fieldMap.columnIndex == -1 {
+				continue
+			}
+
+			if fieldMap.implementsScanner {
+
+				cellValue := scanContext.rowElem(fieldMap.columnIndex)
+
+				if cellValue == nil {
+					continue
+				}
+
+				initializeValueIfNilPtr(fieldValue)
+
+				scanner := getScanner(fieldValue)
+
+				err = scanner.Scan(cellValue)
+
+				if err != nil {
+					err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
+					return
+				}
+				updated = true
+			} else {
+				cellValue := scanContext.rowElem(fieldMap.columnIndex)
+
+				if cellValue != nil {
+					updated = true
+					initializeValueIfNilPtr(fieldValue)
+					err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+
+					if err != nil {
+						err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
+						return
+					}
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+
+	if destPtrValue.Kind() != reflect.Ptr {
+		return false, errors.New("jet: Internal error. ")
+	}
+
+	destValueKind := destPtrValue.Elem().Kind()
+
+	if destValueKind == reflect.Struct {
+		return mapRowToStruct(scanContext, groupKey, destPtrValue, structField)
+	} else if destValueKind == reflect.Slice {
+		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
+	} else {
+		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+	}
+}
+
+func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+
+	var destPtrValue reflect.Value
+
+	if dest.Kind() != reflect.Ptr {
+		destPtrValue = dest.Addr()
+	} else if dest.Kind() == reflect.Ptr {
+		if dest.IsNil() {
+			destPtrValue = reflect.New(dest.Type().Elem())
+		} else {
+			destPtrValue = dest
+		}
+	} else {
+		return false, errors.New("jet: Internal error. ")
+	}
+
+	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
+
+	if err != nil {
+		return
+	}
+
+	if dest.Kind() == reflect.Ptr && dest.IsNil() && updated {
+		dest.Set(destPtrValue)
+	}
+
+	return
+}
+
+var scannerInterfaceType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
+
+func implementsScannerType(fieldType reflect.Type) bool {
+	if fieldType.Implements(scannerInterfaceType) {
+		return true
+	}
+
+	typePtr := reflect.New(fieldType).Type()
+
+	return typePtr.Implements(scannerInterfaceType)
+}
+
+func getScanner(value reflect.Value) sql.Scanner {
+	if scanner, ok := value.Interface().(sql.Scanner); ok {
+		return scanner
+	}
+
+	return value.Addr().Interface().(sql.Scanner)
 }
 
 func getSliceElemType(slicePtrValue reflect.Value) reflect.Type {
@@ -244,120 +435,6 @@ func newElemPtrValueForSlice(slicePtrValue reflect.Value) reflect.Value {
 	return reflect.New(elemType)
 }
 
-func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
-
-	if destPtrValue.Kind() != reflect.Ptr {
-		return false, errors.New("jet: Internal error. ")
-	}
-
-	destValueKind := destPtrValue.Elem().Kind()
-
-	if destValueKind == reflect.Struct {
-		return mapRowToStruct(scanContext, groupKey, destPtrValue, structField)
-	} else if destValueKind == reflect.Slice {
-		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
-	} else {
-		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
-	}
-}
-
-func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest reflect.Value, structField *reflect.StructField) (updated bool, err error) {
-
-	var destPtrValue reflect.Value
-
-	if dest.Kind() != reflect.Ptr {
-		destPtrValue = dest.Addr()
-	} else if dest.Kind() == reflect.Ptr {
-		if dest.IsNil() {
-			destPtrValue = reflect.New(dest.Type().Elem())
-		} else {
-			destPtrValue = dest
-		}
-	} else {
-		return false, errors.New("jet: Internal error. ")
-	}
-
-	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
-
-	if err != nil {
-		return
-	}
-
-	if dest.Kind() == reflect.Ptr && dest.IsNil() && updated {
-		dest.Set(destPtrValue)
-	}
-
-	return
-}
-
-func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue reflect.Value, parentField *reflect.StructField, onlySlices ...bool) (updated bool, err error) {
-	structType := structPtrValue.Type().Elem()
-	structValue := structPtrValue.Elem()
-
-	typeName := getTypeName(structType, parentField)
-
-	for i := 0; i < structType.NumField(); i++ {
-		field := structType.Field(i)
-
-		fieldValue := structValue.Field(i)
-		fieldName := field.Name
-
-		if scannerValue, ok := implementsScanner(fieldValue); ok {
-			if len(onlySlices) > 0 {
-				continue
-			}
-
-			cellValue := scanContext.getCellValue(typeName, fieldName)
-
-			if cellValue == nil {
-				continue
-			}
-
-			initializeValueIfNilPtr(fieldValue)
-
-			scanner := scannerValue.Interface().(sql.Scanner)
-
-			err = scanner.Scan(cellValue)
-
-			if err != nil {
-				err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
-				return
-			}
-			updated = true
-		} else if isGoBaseType(field.Type) {
-			if len(onlySlices) > 0 {
-				continue
-			}
-
-			cellValue := scanContext.getCellValue(typeName, fieldName)
-
-			if cellValue != nil {
-				updated = true
-				initializeValueIfNilPtr(fieldValue)
-				err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
-
-				if err != nil {
-					err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
-					return
-				}
-			}
-		} else {
-			var changed bool
-			changed, err = mapRowToDestinationValue(scanContext, groupKey, fieldValue, &field)
-
-			if err != nil {
-				return
-			}
-
-			if changed {
-				updated = true
-			}
-		}
-	}
-
-	return
-}
-
 func getTypeName(structType reflect.Type, parentField *reflect.StructField) string {
 	if parentField == nil {
 		return structType.Name()
@@ -371,7 +448,29 @@ func getTypeName(structType reflect.Type, parentField *reflect.StructField) stri
 
 	aliasParts := strings.Split(aliasTag, ".")
 
-	return aliasParts[0]
+	return toCommonIdentifier(aliasParts[0])
+}
+
+func getTypeAndFieldName(structType string, field reflect.StructField) (string, string) {
+	aliasTag := field.Tag.Get("alias")
+
+	if aliasTag == "" {
+		return structType, field.Name
+	}
+
+	aliasParts := strings.Split(aliasTag, ".")
+
+	if len(aliasParts) == 1 {
+		return structType, toCommonIdentifier(aliasParts[0])
+	}
+
+	return toCommonIdentifier(aliasParts[0]), toCommonIdentifier(aliasParts[1])
+}
+
+var replacer = strings.NewReplacer(" ", "", "-", "", "_", "")
+
+func toCommonIdentifier(name string) string {
+	return strings.ToLower(replacer.Replace(name))
 }
 
 func initializeValueIfNilPtr(value reflect.Value) {
@@ -382,18 +481,6 @@ func initializeValueIfNilPtr(value reflect.Value) {
 	if value.Kind() == reflect.Ptr && value.IsNil() {
 		value.Set(reflect.New(value.Type().Elem()))
 	}
-}
-
-func implementsScanner(value reflect.Value) (reflect.Value, bool) {
-	if _, ok := value.Interface().(sql.Scanner); ok {
-		return value, true
-	} else if value.CanAddr() {
-		if _, ok := value.Addr().Interface().(sql.Scanner); ok {
-			return value.Addr(), true
-		}
-	}
-
-	return value, false
 }
 
 func valueToString(value reflect.Value) string {
@@ -520,10 +607,11 @@ type scanContext struct {
 	row                  []interface{}
 	uniqueDestObjectsMap map[string]int
 
-	aliasIndexMap map[string]int
-	goNameMap     map[string]int
+	typeToColumnIndexMap map[string]int
 
 	groupKeyInfoCache map[string]groupKeyInfo
+
+	typeInfoMap map[string]typeInfo
 }
 
 func newScanContext(rows *sql.Rows) (*scanContext, error) {
@@ -539,34 +627,35 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 		return nil, err
 	}
 
-	aliasIndexMap := map[string]int{}
-
-	for i, columnName := range aliases {
-		aliasIndexMap[strings.ToLower(columnName)] = i
-	}
-
-	goNamesMap := map[string]int{}
+	typeToIndexMap := map[string]int{}
 
 	for i, alias := range aliases {
 		names := strings.SplitN(alias, ".", 2)
 
-		goName := utils.ToGoIdentifier(names[0])
+		goName := toCommonIdentifier(names[0])
 
 		if len(names) > 1 {
-			goName += "." + utils.ToGoIdentifier(names[1])
+			goName += "." + toCommonIdentifier(names[1])
 		}
 
-		goNamesMap[strings.ToLower(goName)] = i
+		typeToIndexMap[strings.ToLower(goName)] = i
 	}
 
 	return &scanContext{
 		row:                  createScanValue(columnTypes),
 		uniqueDestObjectsMap: make(map[string]int),
 
-		groupKeyInfoCache: make(map[string]groupKeyInfo),
-		aliasIndexMap:     aliasIndexMap,
-		goNameMap:         goNamesMap,
+		groupKeyInfoCache:    make(map[string]groupKeyInfo),
+		typeToColumnIndexMap: typeToIndexMap,
+
+		typeInfoMap: make(map[string]typeInfo),
 	}, nil
+}
+
+type groupKeyInfo struct {
+	typeName string
+	indexes  []int
+	subTypes []groupKeyInfo
 }
 
 func (s *scanContext) getGroupKey(structType reflect.Type, structField *reflect.StructField) string {
@@ -607,7 +696,7 @@ func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 		subTypesGroupKeys = append(subTypesGroupKeys, s.constructGroupKey(subType))
 	}
 
-	return "{" + groupKeyInfo.typeName + "(" + strings.Join(groupKeys, ",") + strings.Join(subTypesGroupKeys, ",") + ")}"
+	return groupKeyInfo.typeName + "(" + strings.Join(groupKeys, ",") + strings.Join(subTypesGroupKeys, ",") + ")"
 }
 
 func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *reflect.StructField) groupKeyInfo {
@@ -617,6 +706,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
+		newTypeName, fieldName := getTypeAndFieldName(typeName, field)
 
 		if !isGoBaseType(field.Type) {
 			var structType reflect.Type
@@ -634,7 +724,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 				ret.subTypes = append(ret.subTypes, subType)
 			}
 		} else if isPrimaryKey(field) {
-			index := s.typeColumnIndex(typeName, field.Name)
+			index := s.typeToColumnIndex(newTypeName, fieldName)
 
 			if index < 0 {
 				continue
@@ -647,23 +737,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 	return ret
 }
 
-type groupKeyInfo struct {
-	typeName string
-	indexes  []int
-	subTypes []groupKeyInfo
-}
-
-func (s *scanContext) aliasColumnIndex(alias string) int {
-	index, ok := s.aliasIndexMap[alias]
-
-	if !ok {
-		return -1
-	}
-
-	return index
-}
-
-func (s *scanContext) typeColumnIndex(typeName, fieldName string) int {
+func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 	var key string
 
 	if typeName != "" {
@@ -672,7 +746,7 @@ func (s *scanContext) typeColumnIndex(typeName, fieldName string) int {
 		key = strings.ToLower(fieldName)
 	}
 
-	index, ok := s.goNameMap[key]
+	index, ok := s.typeToColumnIndexMap[key]
 
 	if !ok {
 		return -1
@@ -682,7 +756,7 @@ func (s *scanContext) typeColumnIndex(typeName, fieldName string) int {
 }
 
 func (s *scanContext) getCellValue(typeName, fieldName string) interface{} {
-	index := s.typeColumnIndex(typeName, fieldName)
+	index := s.typeToColumnIndex(typeName, fieldName)
 
 	if index < 0 {
 		return nil
