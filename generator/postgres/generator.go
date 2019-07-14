@@ -51,8 +51,10 @@ func Generate(destDir string, genData DBConnection) error {
 
 	fmt.Println("	FOUND", len(schemaInfo.TableInfos), " table(s), ", len(schemaInfo.EnumInfos), " enum(s)")
 
+	schemaGenPath := path.Join(destDir, genData.DBName, genData.SchemaName)
+	fmt.Println("Destination directory:", schemaGenPath)
 	fmt.Println("Cleaning up destination directory...")
-	err = utils.CleanUpGeneratedFiles(path.Join(destDir, genData.DBName, genData.SchemaName))
+	err = utils.CleanUpGeneratedFiles(schemaGenPath)
 
 	if err != nil {
 		return err
