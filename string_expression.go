@@ -62,19 +62,19 @@ func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {
 }
 
 func (s *stringInterfaceImpl) LIKE(pattern StringExpression) BoolExpression {
-	return newBinaryBoolExpression(s.parent, pattern, "LIKE")
+	return newBinaryBoolOperator(s.parent, pattern, "LIKE")
 }
 
 func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression {
-	return newBinaryBoolExpression(s.parent, pattern, "NOT LIKE")
+	return newBinaryBoolOperator(s.parent, pattern, "NOT LIKE")
 }
 
 func (s *stringInterfaceImpl) SIMILAR_TO(pattern StringExpression) BoolExpression {
-	return newBinaryBoolExpression(s.parent, pattern, "SIMILAR TO")
+	return newBinaryBoolOperator(s.parent, pattern, "SIMILAR TO")
 }
 
 func (s *stringInterfaceImpl) NOT_SIMILAR_TO(pattern StringExpression) BoolExpression {
-	return newBinaryBoolExpression(s.parent, pattern, "NOT SIMILAR TO")
+	return newBinaryBoolOperator(s.parent, pattern, "NOT SIMILAR TO")
 }
 
 //---------------------------------------------------//

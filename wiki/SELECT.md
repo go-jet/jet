@@ -1,7 +1,7 @@
 
 SELECT statement is used to retrieve records from one or more tables in PostgreSQL.
 More about SELECT statement in postgres can be found at: https://www.postgresql.org/docs/11/sql-select.html
-
+   
 Following clauses are supported:
 - SELECT(expressions...) - expressions to form output rows of the SELECT statement.
 - DISTINCT() - remove all duplicate rows from result set
@@ -26,7 +26,7 @@ Following clauses are supported:
 - UNION(select) / UNION_ALL(select) - computes the set union of the rows returned by the involved SELECT statements
 - INTERSECT(select) / INTERSECT_ALL(select) - computes the set intersection of the rows returned by the involved SELECT statements
 - EXCEPT(select) / EXCEPT_ALL(select) - computes the set of rows that are in the result of the left SELECT statement but not in the result of the right one
-   
+
 _This list might be extended with feature Jet releases._
 
 ### Examples per clause
@@ -57,7 +57,7 @@ Above SQL clause written in go will produce following raw SQL:
 
 ```
 SELECT 1 + 12 - 21,
-       film.name AS "film.name",                              --  
+       film.name AS "film.name",  
        customer.first_name || customer.last_name AS "FullName"                                  
 ``` 
 `film.name AS "film.name"` - column names are aliased by default. Alias is used during execution to map row result to 
@@ -211,7 +211,7 @@ of interest, and than about the columns.
 
 ## Sub-queries
 
-How to write SELECT statement with sub-queries?
+__How to write SELECT statement with sub-queries?__
 
 Sub-queries are composed first:  
 ```

@@ -7,14 +7,14 @@ Jet sql builder supports following expression types:
  - String expressions
  - Date expressions
  - Time expressions
- - Timez expressions (with time zone)
+ - Timez expressions (Time with time zone)
  - Timestamp expressions
- - Timestampz expressions (with time zone)
+ - Timestampz expressions (Timestamp with time zone)
  
 _This list might be extended with feature Jet releases._  
 
 ### Literal Types
-For every expression type there is a method to create one expression literal type .  
+For every expression type there is a method to create one expression literal type.  
 Literal type examples:
 
 ```
@@ -27,9 +27,12 @@ jet.Time(23, 6, 6, 1)
 jet.Timez(23, 6, 6, 222, +200)  
 jet.Timestamp(2010, 10, 21, 15, 30, 12, 333)  
 jet.Timestampz(2010, 10, 21, 15, 30, 12, 444, 0)
+```
 
+There is also: 
+```
 jet.NULL
-jet.STAR (alias for *)  
+jet.STAR (alias for *)
 ```
 
 ### Column Types
@@ -105,7 +108,7 @@ Following operators are only available on integer expressions:
 | BIT_AND                        | jet.Int(11).BIT_AND(table.Film.Length)             | 11 & film.length                     |
 | BIT_OR                         | jet.Int(11).BIT_OR(table.Film.Length)              | 11 \| film.length                    |
 | BIT_XOR                        | jet.Int(11).BIT_XOR(table.Film.Length)             | 11 # film.length                     |
-| BIT_NOT                        | jet.Int(11).BIT_NOT(table.Film.Length)             | ~ 11                                 |
+| BIT_NOT                        | BIT_NOT(table.Film.Length)                         | ~ film.length                                 |
 | BIT_SHIFT_LEFT                 | jet.Int(11).BIT_SHIFT_LEFT(table.Film.Length)      | 11 >> film.length                    |
 | BIT_SHIFT_RIGHT                | jet.Int(11).BIT_SHIFT_RIGHT(table.Film.Length)     | 11 >> film.length                    |
 

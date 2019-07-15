@@ -9,16 +9,16 @@ Following statements are supported:
 
 _This list might be extended with feature Jet releases._ 
 
-Statements SQL can be debugged in two ways:
+### Executing statements
 
-- `Sql() (query string, args []interface{}, err error)` - retrieves parametrized sql query with list of arguments
-- `DebugSql() (query string, err error)` - retrieves debug query where every parametrized placeholder is replaced with its argument.
-
-Statements can be executed by following methods:
-- `Query(db execution.DB, destination interface{}) error` - executes statements over database connection db and stores row result in destination.
-- `QueryContext(db execution.DB, context context.Context, destination interface{}) error` - executes statement with a context over database connection db and stores row result in destination.
-- `Exec(db execution.DB) (sql.Result, error)` - executes statement over db connection without returning any rows.
-- `ExecContext(db execution.DB, context context.Context) (sql.Result, error)` - executes statement with context over db connection without returning any rows.
+Statements can be executed with following methods:
+- `Query(db execution.DB, destination interface{}) error` - executes statements over database connection db and maps 
+row result result set to destination.
+- `QueryContext(db execution.DB, context context.Context, destination interface{}) error` - executes statement with a 
+context over database connection db and maps row result result set to destination.
+- `Exec(db execution.DB) (sql.Result, error)` - executes statement over db connection and returns `sql.Result`.
+- `ExecContext(db execution.DB, context context.Context) (sql.Result, error)` - executes statement with context over 
+db connection and returns `sql.Result`.
 
 Each execution method first creates parametrized sql query with list of arguments and then initiates query on database connection.
 Exec and ExecContext are just a wrappers around database `Exec` and `ExecContext`.
@@ -41,3 +41,11 @@ These include but are not limited to:
 - `sql.DB`
 - `sql.Tx`
 - `sql.Conn`
+
+
+### Debugging statements
+
+Statements SQL can be debugged in two ways:
+
+- `Sql() (query string, args []interface{}, err error)` - retrieves parametrized sql query with list of arguments
+- `DebugSql() (query string, err error)` - retrieves debug query where every parametrized placeholder is replaced with its argument.

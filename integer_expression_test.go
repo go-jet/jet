@@ -64,6 +64,11 @@ func TestIntExpressionPOW(t *testing.T) {
 	assertClauseSerialize(t, table1ColInt.POW(Int(11)), "(table1.col_int ^ $1)", int64(11))
 }
 
+func TestIntExpressionBIT_NOT(t *testing.T) {
+	assertClauseSerialize(t, BIT_NOT(table2ColInt), "~ table2.col_int")
+	assertClauseSerialize(t, BIT_NOT(Int(11)), "~ $1", int64(11))
+}
+
 func TestIntExpressionBIT_SHIFT_LEFT(t *testing.T) {
 	assertClauseSerialize(t, table1ColInt.BIT_SHIFT_LEFT(table2ColInt), "(table1.col_int << table2.col_int)")
 	assertClauseSerialize(t, table1ColInt.BIT_SHIFT_LEFT(Int(11)), "(table1.col_int << $1)", int64(11))

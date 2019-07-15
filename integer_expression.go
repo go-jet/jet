@@ -41,8 +41,6 @@ type IntegerExpression interface {
 	BIT_OR(rhs IntegerExpression) IntegerExpression
 	// expression # rhs
 	BIT_XOR(rhs IntegerExpression) IntegerExpression
-	// ~expression
-	BIT_NOT() IntegerExpression
 	// expression << rhs
 	BIT_SHIFT_LEFT(shift IntegerExpression) IntegerExpression
 	// expression >> rhs
@@ -102,12 +100,12 @@ func (i *integerInterfaceImpl) DIV(expression IntegerExpression) IntegerExpressi
 	return newBinaryIntegerExpression(i.parent, expression, "/")
 }
 
-func (n *integerInterfaceImpl) MOD(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(n.parent, expression, "%")
+func (i *integerInterfaceImpl) MOD(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, expression, "%")
 }
 
-func (n *integerInterfaceImpl) POW(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(n.parent, expression, "^")
+func (i *integerInterfaceImpl) POW(expression IntegerExpression) IntegerExpression {
+	return newBinaryIntegerExpression(i.parent, expression, "^")
 }
 
 func (i *integerInterfaceImpl) BIT_AND(expression IntegerExpression) IntegerExpression {
@@ -120,10 +118,6 @@ func (i *integerInterfaceImpl) BIT_OR(expression IntegerExpression) IntegerExpre
 
 func (i *integerInterfaceImpl) BIT_XOR(expression IntegerExpression) IntegerExpression {
 	return newBinaryIntegerExpression(i.parent, expression, "#")
-}
-
-func (i *integerInterfaceImpl) BIT_NOT() IntegerExpression {
-	return newPrefixIntegerOpExpression(i.parent, "~")
 }
 
 func (i *integerInterfaceImpl) BIT_SHIFT_LEFT(intExpression IntegerExpression) IntegerExpression {
@@ -161,7 +155,7 @@ type prefixIntegerOpExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixIntegerOpExpression(expression IntegerExpression, operator string) IntegerExpression {
+func newPrefixIntegerOperator(expression IntegerExpression, operator string) IntegerExpression {
 	integerExpression := prefixIntegerOpExpression{}
 	integerExpression.prefixOpExpression = newPrefixExpression(expression, operator)
 

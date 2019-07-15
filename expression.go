@@ -47,11 +47,11 @@ func (e *expressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
 }
 
 func (e *expressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolExpression(e.parent, WRAP(expressions...), "IN")
+	return newBinaryBoolOperator(e.parent, WRAP(expressions...), "IN")
 }
 
 func (e *expressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolExpression(e.parent, WRAP(expressions...), "NOT IN")
+	return newBinaryBoolOperator(e.parent, WRAP(expressions...), "NOT IN")
 }
 
 func (e *expressionInterfaceImpl) AS(alias string) projection {

@@ -76,7 +76,7 @@ For instance `city.city_id` -> `City.CityID`. This is being used to find appropr
 It is not an error if there is not a column for each destination model field. Table and column names does not have
 to be in snake case.
  
-`Query` uses reflection to introspect destination type structure, and result set column names(aliases), to be able to map result set data to destination object.
+`Query` uses reflection to introspect destination type structure, and result set column names(aliases), to find appropriate destination field for result set column.
 Every new destination struct object is cached by his and all the parents primary key. So grouping to work correctly at least table primary keys has to appear in query result set. If there is no primary key in a result set
 row number is used as grouping condition(which is always unique).    
 For instance, after row 1 is processed, two objects are stored to cache:

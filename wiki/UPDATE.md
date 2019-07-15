@@ -28,7 +28,7 @@ SET (name, url) = ('Yahoo', 'http://yahoo.com')
 WHERE link.name = 'Bing';
 ```
 
-Short-hand notation to extract model data for column values:
+Short-hand notation to update values from model data:
 
 ```
 yahoo := model.Link{
@@ -70,8 +70,7 @@ updateStmt := Link.
     
 dest := []model.Link{}
 
-err := updateStmt.Query(db, &dest)
-    
+err := updateStmt.Query(db, &dest)   
 ```
 
 Use `ExecContext` and `QueryContext` to provide context object to execution.

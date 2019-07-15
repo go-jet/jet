@@ -4,7 +4,7 @@
 
 Jet is a framework for writing type-safe SQL queries for PostgreSQL in Go, with ability to easily 
 convert database query result to desired arbitrary structure.  
-_Support for other databases will be added in future releases._
+_Support for additional databases will be added in future jet releases._
 
 
 ## Contents
@@ -105,7 +105,7 @@ Generated files folder structure will look like this:
 |           |   |-- mpaa_rating.go
 |           |   ...
 ```
-Types from `table` and `enum` are used to write type safe SQL in Go, and `model` types are combined and used to store 
+Types from `table` and `enum` are used to write type safe SQL in Go, and `model` types are combined to store 
 results of the SQL queries.
 
 #### Lets write some SQL queries in Go
@@ -150,7 +150,7 @@ Note that every column has a type. String column `Language.Name` and `Category.N
 string columns and expressions. `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns 
 and can be compared only with integer columns and expressions.
 
-__To get parametrized SQL query created with above statement__
+__How get parametrized SQL query?__
 ```go
 query, args, err := stmt.Sql()
 ```
@@ -200,7 +200,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 </details>
     
-__To get debug SQL that can be copy pasted to sql editor and executed.__
+__How to get debug SQL that can be copy pasted to sql editor and executed?__
 ```go
 debugSql, err := stmt.DebugSql()
 ```
@@ -272,7 +272,7 @@ err := stmt.Query(db, &dest)
 handleError(err)
 ```
 
-__And thats It.__
+__And thats it.__
   
 `dest` now contains the list of all actors(with list of films acted, where each film has information about language and list of belonging categories) that acted in films longer than 180 minutes, film language is 'English' 
 and film category is not 'Action'.
@@ -468,7 +468,8 @@ handleError(err)
 Complete code example can be found at [./examples/quick-start/quick-start.go](./examples/quick-start/quick-start.go)
 
 
-This example represent probably the most common use case, but Jet offers much more. Detail info can be found at project wiki page.
+This example represent probably the most common use case.  Detail info about additional features and use cases can be 
+found at project [wiki](https://github.com/go-jet/jet/wiki) page.
 
 ## Benefits
 

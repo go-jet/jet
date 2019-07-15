@@ -1,6 +1,6 @@
 
 
-The PostgreSQL INSERT statement is used to insert a single record or multiple records 
+INSERT statement is used to insert a single record or multiple records 
 into a table. More about PostgreSQL INSERT statement can be found here: https://www.postgresql.org/docs/11/sql-insert.html
 
 Following clauses are supported:
@@ -121,7 +121,6 @@ insertStmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
 dest := []model.Link{}
 
 err := insertStmt.Query(db, &dest)
-    
 ```
 
 Use `ExecContext` and `QueryContext` to provide context object to execution.

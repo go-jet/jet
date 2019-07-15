@@ -6,51 +6,55 @@ import "errors"
 
 // Returns a representation of "not expr"
 func NOT(expr BoolExpression) BoolExpression {
-	return newPrefixBoolExpression(expr, "NOT")
+	return newPrefixBoolOperator(expr, "NOT")
+}
+
+func BIT_NOT(expr IntegerExpression) IntegerExpression {
+	return newPrefixIntegerOperator(expr, "~")
 }
 
 //----------- Comparison operators ---------------//
 
 func EXISTS(subQuery SelectStatement) BoolExpression {
-	return newPrefixBoolExpression(subQuery, "EXISTS")
+	return newPrefixBoolOperator(subQuery, "EXISTS")
 }
 
 // Returns a representation of "a=b"
 func eq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "=")
+	return newBinaryBoolOperator(lhs, rhs, "=")
 }
 
 // Returns a representation of "a!=b"
 func notEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "!=")
+	return newBinaryBoolOperator(lhs, rhs, "!=")
 }
 
 func isDistinctFrom(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "IS DISTINCT FROM")
+	return newBinaryBoolOperator(lhs, rhs, "IS DISTINCT FROM")
 }
 
 func isNotDistinctFrom(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "IS NOT DISTINCT FROM")
+	return newBinaryBoolOperator(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
 // Returns a representation of "a<b"
 func lt(lhs Expression, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "<")
+	return newBinaryBoolOperator(lhs, rhs, "<")
 }
 
 // Returns a representation of "a<=b"
 func ltEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, "<=")
+	return newBinaryBoolOperator(lhs, rhs, "<=")
 }
 
 // Returns a representation of "a>b"
 func gt(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, ">")
+	return newBinaryBoolOperator(lhs, rhs, ">")
 }
 
 // Returns a representation of "a>=b"
 func gtEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolExpression(lhs, rhs, ">=")
+	return newBinaryBoolOperator(lhs, rhs, ">=")
 }
 
 // --------------- CASE operator -------------------//

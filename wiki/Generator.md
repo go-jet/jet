@@ -14,7 +14,7 @@ go install github.com/go-jet/jet/cmd/jet
 
 Make sure GOPATH bin folder is added to the PATH environment variable.
 
-Test jet can be found in the PATH.
+Test jet generator can be found in the PATH.
 ```sh
 jet -h
 Usage of jet:
@@ -38,15 +38,19 @@ Usage of jet:
     	Additional connection string parameters(optional)
 ```
 
-Now to generate sample database:
+To generate jet SQL Builder and Data Model files from postgres database we need to call `jet` generator with postgres 
+connection parameters and root destination folder path for generated files. 
+Assuming we are running local postgres database, with user `jet`, database `jetdb` and schema `dvds` we will use this command:
+
 ```sh
-jet -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema dvds -path ./gen
+jet -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema=dvds -path=./gen
 ```
 ```sh
 Connecting to postgres database: host=localhost port=5432 user=jet password=jet dbname=jetdb sslmode=disable 
 Retrieving schema information...
-	FOUND 15  table(s),  1  enum(s)
-Cleaning up destination directory...
+    FOUND 15  table(s),  1  enum(s)
+Destination directory: ./gen/jetdb/dvds
+Cleaning up schema destination directory...
 Generating table sql builder files...
 Generating table model files...
 Generating enum sql builder files...
@@ -54,6 +58,8 @@ Generating enum model files...
 Done
 ```
 #### 2) Generating from code
+
+The same files can be generated manually from code.
 
 ```
 import "github.com/go-jet/jet/generator/postgres"
@@ -71,10 +77,10 @@ err = postgres.Generate("./gen", postgres.DBConnection{
 })
 ```
 
-In both ways, generator will:  
-- connect to postgres database and retrieve information about the tables and enums of `dvds` schema
-- delete everything in destination folder `./gen`,   
-- generate sql builder and model Go files for each schema tables and enums into destination folder `./gen`.  
+In both ways, generator will:
+- connect to postgres database and retrieve information about the _tables_ and _enums_ of `dvds` schema
+- delete everything in schema destination folder -  `./gen/jetdb/dvds`,
+- and finally generate sql builder and model files for each schema tables and enums.
 
 Generated files folder structure will look like this:
 ```
@@ -98,4 +104,4 @@ Generated files folder structure will look like this:
 
 Table and enums from database schema are used as a template to generate two types of Go files:
 * SQL Builder files - used to write type safe SQL statements in Go (`enum` and `table` package)
-* Model files - used to store result from database queries (`model` package)
+* Model files - used to combine and store result from database queries (`model` package)

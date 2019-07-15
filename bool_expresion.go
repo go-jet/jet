@@ -52,11 +52,11 @@ func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpress
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
-	return newBinaryBoolExpression(b.parent, expression, "AND")
+	return newBinaryBoolOperator(b.parent, expression, "AND")
 }
 
 func (b *boolInterfaceImpl) OR(expression BoolExpression) BoolExpression {
-	return newBinaryBoolExpression(b.parent, expression, "OR")
+	return newBinaryBoolOperator(b.parent, expression, "OR")
 }
 
 func (b *boolInterfaceImpl) IS_TRUE() BoolExpression {
@@ -91,7 +91,7 @@ type binaryBoolExpression struct {
 	binaryOpExpression
 }
 
-func newBinaryBoolExpression(lhs, rhs Expression, operator string) BoolExpression {
+func newBinaryBoolOperator(lhs, rhs Expression, operator string) BoolExpression {
 	boolExpression := binaryBoolExpression{}
 
 	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
@@ -109,7 +109,7 @@ type prefixBoolExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixBoolExpression(expression Expression, operator string) BoolExpression {
+func newPrefixBoolOperator(expression Expression, operator string) BoolExpression {
 	exp := prefixBoolExpression{}
 	exp.prefixOpExpression = newPrefixExpression(expression, operator)
 
