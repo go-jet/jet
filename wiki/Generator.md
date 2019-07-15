@@ -39,7 +39,7 @@ Usage of jet:
 ```
 
 To generate jet SQL Builder and Data Model files from postgres database we need to call `jet` generator with postgres 
-connection parameters and root destination folder path for generated files. 
+connection parameters and root destination folder path for generated files.   
 Assuming we are running local postgres database, with user `jet`, database `jetdb` and schema `dvds` we will use this command:
 
 ```sh

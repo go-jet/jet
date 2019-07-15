@@ -67,8 +67,7 @@ func TestJoinEverything(t *testing.T) {
 		).
 		ORDER_BY(Artist.ArtistId, Album.AlbumId, Track.TrackId,
 			Genre.GenreId, MediaType.MediaTypeId, Playlist.PlaylistId,
-			Invoice.InvoiceId, Customer.CustomerId).
-		WHERE(Artist.ArtistId.LT_EQ(Int(100000)))
+			Invoice.InvoiceId, Customer.CustomerId)
 
 	var dest []struct { //list of all artist
 		model.Artist
@@ -104,9 +103,7 @@ func TestJoinEverything(t *testing.T) {
 	err := stmt.Query(db, &dest)
 
 	assert.NilError(t, err)
-
 	assert.Equal(t, len(dest), 275)
-
 	assertJsonFile(t, "./testdata/joined_everything.json", dest)
 }
 

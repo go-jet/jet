@@ -31,7 +31,7 @@ Field name is camel case of column name. See below table for type mapping.
 | bytea, uuid                                     |                                                    |
 | and all remaining types                         |  ColumnString                                      |
 
-### Example
+#### Example
 
 Sql table `address`:
 ```

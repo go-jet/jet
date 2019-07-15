@@ -31,7 +31,7 @@ _Support for additional databases will be added in future jet releases._
         * DELETE (WHERE, RETURNING),
         * LOCK (IN, NOWAIT)
  2) Auto-generated Data Model types - Go struct mapped to database type (table or enum)
- 3) Query execution with mapping to arbitrary destination structure - destination structure can be 
+ 3) Query execution with result set mapping to arbitrary destination structure - destination structure can be 
  created by combining auto-generated data model types. 
 
 ## Getting Started
