@@ -205,6 +205,8 @@
 This product builds on various third-party components under other open source licenses.
 This section summarizes those components and their licenses.
 
+
+https://github.com/dropbox/godropbox
 ---------------------------------------
 
 Copyright (c) 2014 Dropbox, Inc.
@@ -235,6 +237,8 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+
+https://github.com/serenize/snaker
 ---------------------------------------
 
 Copyright (c) 2015 Serenize UG (haftungsbeschränkt)
