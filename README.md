@@ -19,6 +19,7 @@ _Support for additional databases will be added in future jet releases._
    - [Benefits](#benefits)
    - [Dependencies](#dependencies)
    - [Versioning](#versioning)
+   - [License](#license)
 
 ## Features
  1) Type-safe SQL Builder
@@ -30,7 +31,8 @@ _Support for additional databases will be added in future jet releases._
         * UPDATE (SET, WHERE, RETURNING), 
         * DELETE (WHERE, RETURNING),
         * LOCK (IN, NOWAIT)
- 2) Auto-generated Data Model types - Go struct mapped to database type (table or enum)
+ 2) Auto-generated Data Model types - Go struct mapped to database type (table or enum), used to store
+ result of database queries.
  3) Query execution with mapping to arbitrary destination structure - destination structure can be 
  created by combining auto-generated data model types. 
 
@@ -150,7 +152,7 @@ Note that every column has a type. String column `Language.Name` and `Category.N
 string columns and expressions. `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns 
 and can be compared only with integer columns and expressions.
 
-__How get parametrized SQL query?__
+__How to get parametrized SQL query?__
 ```go
 query, args, err := stmt.Sql()
 ```
@@ -524,10 +526,12 @@ To run the tests, additional dependencies are required:
 - `github.com/pkg/profile`
 - `gotest.tools/assert`
 
-## Contributing
 
 ## Versioning
 
 [SemVer](http://semver.org/) is used for versioning. For the versions available, see the [releases](https://github.com/go-jet/jet/releases). 
 
-## Licence
+## License
+
+Copyright 2019 Goran Bjelanovic  
+Licensed under the Apache License, Version 2.0.
