@@ -1,5 +1,3 @@
-// Modeling of tables.  This is where query preparation starts
-
 package jet
 
 import (
@@ -30,7 +28,6 @@ type readableTable interface {
 	CROSS_JOIN(table ReadableTable) ReadableTable
 }
 
-// The sql tableName write interface.
 type writableTable interface {
 	INSERT(columns ...column) InsertStatement
 	UPDATE(column column, columns ...column) UpdateStatement
@@ -148,12 +145,10 @@ func (t *tableImpl) AS(alias string) {
 	}
 }
 
-// Returns the tableName's name in the database
 func (t *tableImpl) SchemaName() string {
 	return t.schemaName
 }
 
-// Returns the tableName's name in the database
 func (t *tableImpl) TableName() string {
 	return t.name
 }

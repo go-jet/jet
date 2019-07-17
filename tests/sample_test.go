@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
@@ -35,30 +33,41 @@ func TestEnumType(t *testing.T) {
 	query := Person.
 		SELECT(Person.AllColumns)
 
-	queryStr, args, err := query.Sql()
+	assertStatementSql(t, query, `
+SELECT person.person_id AS "person.person_id",
+     person.first_name AS "person.first_name",
+     person.last_name AS "person.last_name",
+     person."Mood" AS "person.Mood"
+FROM test_sample.person;
+`)
 
-	assert.NilError(t, err)
-	fmt.Println(queryStr)
-	assert.Equal(t, len(args), 0)
 	result := []model.Person{}
 
-	err = query.Query(db, &result)
+	err := query.Query(db, &result)
 
 	assert.NilError(t, err)
-	//spew.Dump(result)
-
-	type Person struct {
-		Name        string
-		CurrentMood model.Mood
+	assertJson(t, result, `
+[
+	{
+		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
+		"FirstName": "Sad",
+		"LastName": "John",
+		"Mood": "sad"
+	},
+	{
+		"PersonID": "b68dbff5-a87d-11e9-a7f2-98ded00c39c7",
+		"FirstName": "Ok",
+		"LastName": "John",
+		"Mood": "ok"
+	},
+	{
+		"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8",
+		"FirstName": "Ok",
+		"LastName": "John",
+		"Mood": "ok"
 	}
-
-	result2 := []Person{}
-
-	err = query.Query(db, &result2)
-
-	assert.NilError(t, err)
-
-	spew.Dump(result2)
+]
+`)
 }
 
 func TestSelecSelfJoin1(t *testing.T) {

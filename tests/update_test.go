@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
@@ -16,8 +15,6 @@ func TestUpdateValues(t *testing.T) {
 		UPDATE(Link.Name, Link.URL).
 		SET("Bong", "http://bong.com").
 		WHERE(Link.Name.EQ(String("Bing")))
-
-	fmt.Println(query.DebugSql())
 
 	var expectedSql = `
 UPDATE test_sample.link

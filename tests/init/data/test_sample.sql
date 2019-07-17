@@ -188,17 +188,25 @@ VALUES
 
 -- Person table ------------------
 
-DROP TABLE IF EXISTS test_sample.person;
-
-CREATE TABLE test_sample.person(
-    person_id uuid,
-    first_name varchar(100),
-    last_name varchar(100)
-);
-
 DROP TYPE IF EXISTS test_sample.MOOD CASCADE;
 
 CREATE TYPE test_sample.MOOD AS ENUM ('sad', 'ok', 'happy');
+
+DROP TABLE IF EXISTS test_sample.person;
+
+
+CREATE TABLE test_sample.person(
+    person_id uuid NOT NULL PRIMARY KEY,
+    first_name varchar(100),
+    last_name varchar(100),
+    "Mood" test_sample.mood
+);
+
+INSERT INTO test_sample.person(person_id, first_name, last_name, "Mood") VALUES
+     ('b68dbff4-a87d-11e9-a7f2-98ded00c39c6', 'Sad', 'John', 'sad'),
+     ('b68dbff5-a87d-11e9-a7f2-98ded00c39c7', 'Ok', 'John', 'ok'),
+     ('b68dbff6-a87d-11e9-a7f2-98ded00c39c8', 'Ok', 'John', 'ok');
+
 
 
 -- WEIRD TABLE NAMES --------------

@@ -36,8 +36,6 @@ func Query(db DB, context context.Context, query string, args []interface{}, des
 			return err
 		}
 
-		fmt.Println("TEMP SLICE SIZE: ", tempSliceValue.Len())
-
 		if tempSliceValue.Len() == 0 {
 			return nil
 		}
@@ -89,8 +87,6 @@ func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, 
 		return nil
 	}
 
-	groupTime := time.Duration(0)
-
 	slicePtrValue := reflect.ValueOf(slicePtr)
 
 	for rows.Next() {
@@ -102,18 +98,12 @@ func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, 
 
 		scanContext.rowNum++
 
-		begin := time.Now()
-
 		_, err = mapRowToSlice(scanContext, "", slicePtrValue, nil)
 
 		if err != nil {
 			return err
 		}
-
-		groupTime += time.Now().Sub(begin)
 	}
-
-	fmt.Println(groupTime.String())
 
 	err = rows.Close()
 	if err != nil {
@@ -125,8 +115,6 @@ func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, 
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(strconv.Itoa(scanContext.rowNum) + " ROW(S) PROCESSED")
 
 	return nil
 }
@@ -596,7 +584,6 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 	case "DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
 		return nullTimeType
 	default:
-		fmt.Println("Unknown column database type " + columnType.DatabaseTypeName() + " using string as default.")
 		return nullStringType
 	}
 }

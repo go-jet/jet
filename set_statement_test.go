@@ -1,7 +1,6 @@
 package jet
 
 import (
-	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -183,7 +182,6 @@ func TestUnionInUnion(t *testing.T) {
 		UNION_ALL(table1.SELECT(table1Col1), table2.SELECT(table2Col3)),
 	)
 
-	fmt.Println(query.Sql())
 	assertStatement(t, query, expectedSql)
 }
 

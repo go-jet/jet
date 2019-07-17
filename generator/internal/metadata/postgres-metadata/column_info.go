@@ -36,7 +36,7 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 	case "real", "numeric", "decimal", "double precision":
 		return "Float"
 	default:
-		fmt.Println("Unknown sql type: " + c.DataType + ", using string column instead for sql builder.")
+		fmt.Println("Unsupported sql type: " + c.DataType + ", using string column instead for sql builder.")
 		return "String"
 	}
 }
@@ -67,7 +67,7 @@ func (c ColumnInfo) GoBaseType() string {
 	case "uuid":
 		return "uuid.UUID"
 	default:
-		fmt.Println("Unknown sql type: " + c.DataType + ", " + c.EnumName + ", using string instead for model type.")
+		fmt.Println("Unsupported sql type: " + c.DataType + ", " + c.EnumName + ", using string instead for model type.")
 		return "string"
 	}
 }

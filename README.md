@@ -477,12 +477,12 @@ found at project [wiki](https://github.com/go-jet/jet/wiki) page.
 
 What are the benefits of writing SQL in Go using Jet? The biggest benefit is speed.  
 Speed is improved in 3 major areas:
+
 ##### Speed of development  
 
 Writing SQL queries is much easier directly from Go, because programmer has the help of SQL code completion and SQL type safety directly in Go.
 Writing code is much faster and code is more robust. Automatic scan to arbitrary structure removes a lot of headache and 
 boilerplate code needed to structure database query result.  
-With Jet programmer has the power of SQL but also ease of use of NoSQL. 
 
 ##### Speed of execution
 

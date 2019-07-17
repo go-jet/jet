@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
@@ -14,8 +13,6 @@ func TestAllTypesSelect(t *testing.T) {
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
-
-	fmt.Println(err)
 	assert.NilError(t, err)
 
 	assert.DeepEqual(t, dest[0], allTypesRow0)

@@ -1,8 +1,6 @@
 package tests
 
 import (
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
@@ -171,8 +169,6 @@ func TestScanToStruct(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		assert.Error(t, err, `jet: can't set int32 to int, at struct field: InventoryID int of type tests.Inventory. `)
-
-		fmt.Println(err)
 	})
 
 	t.Run("type mismatch scanner type", func(t *testing.T) {
@@ -454,10 +450,6 @@ func TestScanToSlice(t *testing.T) {
 			}
 
 			err := query.Query(db, &dest)
-
-			fmt.Println(query.DebugSql())
-
-			spew.Dump(dest)
 
 			assert.NilError(t, err)
 			assert.DeepEqual(t, dest.Film, film1)
