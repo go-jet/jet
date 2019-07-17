@@ -1,7 +1,6 @@
 --
 -- PostgreSQL database dump
 --
-SET search_path = northwind;
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -16,6 +15,11 @@ SET default_tablespace = '';
 
 SET default_with_oids = false;
 
+DROP SCHEMA IF EXISTS northwind CASCADE;
+
+CREATE SCHEMA northwind;
+
+SET search_path = northwind;
 
 ---
 --- drop tables
