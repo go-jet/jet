@@ -103,7 +103,8 @@ func (c columnImpl) serialize(statement statementType, out *sqlBuilder, options 
 }
 
 //------------------------------------------------------//
-// Dummy type for select * AllColumns
+
+// Redefined type to support list of columns as projection
 type ColumnList []Column
 
 // projection interface implementation
@@ -131,7 +132,8 @@ func (cl ColumnList) serializeForProjection(statement statementType, out *sqlBui
 	return nil
 }
 
-// column interface implementation
+// dummy column interface implementation
+
 func (cl ColumnList) Name() string                         { return "" }
 func (cl ColumnList) TableName() string                    { return "" }
 func (cl ColumnList) setTableName(name string)             {}

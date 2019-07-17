@@ -4,9 +4,9 @@ import "errors"
 
 //----------- Logical operators ---------------//
 
-// Returns a representation of "not expr"
-func NOT(expr BoolExpression) BoolExpression {
-	return newPrefixBoolOperator(expr, "NOT")
+// Returns negation of bool expression expr
+func NOT(exp BoolExpression) BoolExpression {
+	return newPrefixBoolOperator(exp, "NOT")
 }
 
 func BIT_NOT(expr IntegerExpression) IntegerExpression {
