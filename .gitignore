@@ -13,6 +13,8 @@
 
 # Idea
 .idea
+*.iml
 
 # Test files
-.test_files
+gen
+.gentestdata

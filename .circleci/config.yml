@@ -1,0 +1,67 @@
+# Golang CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-go/ for more details
+version: 2
+jobs:
+  build:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.11
+
+      - image: circleci/postgres:10.6-alpine
+        environment: # environment variables for primary container
+          POSTGRES_USER: jet
+          POSTGRES_PASSWORD: jet
+          POSTGRES_DB: jetdb
+
+    working_directory: /go/src/github.com/go-jet/jet
+
+    environment: # environment variables for the build itself
+      TEST_RESULTS: /tmp/test-results # path to where test results will be saved
+
+    steps:
+      - checkout
+
+      # specify any bash command here prefixed with `run: `
+      - run:
+          name: Install dependencies
+          command: |
+            go get github.com/google/uuid
+            go get github.com/lib/pq
+
+            go get github.com/pkg/profile
+            go get gotest.tools/assert
+            go get github.com/davecgh/go-spew/spew
+            go get github.com/jstemmer/go-junit-report
+
+      - run: mkdir -p $TEST_RESULTS/unit-tests
+      - run: mkdir -p $TEST_RESULTS/integration-tests
+
+      - run: go test -v 2>&1 | go-junit-report > $TEST_RESULTS/unit-tests/results.xml
+
+      - run:
+          name: Waiting for Postgres to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z localhost 5432 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Postgres && exit 1
+
+      - run:
+          name: Run integration tests
+          command: |
+            cd tests
+            go run ./init/init.go
+            go test -v 2>&1 | go-junit-report > $TEST_RESULTS/integration-tests/results.xml
+            cd ..
+
+      - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
+          path: /tmp/test-results
+          destination: raw-test-output
+
+      - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+          path: /tmp/test-results
+

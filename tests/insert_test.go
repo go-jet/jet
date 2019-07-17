@@ -1,113 +1,231 @@
 package tests
 
 import (
-	"fmt"
-	"github.com/davecgh/go-spew/spew"
-	"github.com/sub0zero/go-sqlbuilder/sqlbuilder"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/model"
-	"github.com/sub0zero/go-sqlbuilder/tests/.test_files/dvd_rental/test_sample/table"
+	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
+	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 )
 
 func TestInsertValues(t *testing.T) {
-	insertQuery := table.Link.INSERT(table.Link.URL, table.Link.Name, table.Link.Rel).
-		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", sqlbuilder.DEFAULT).
-		VALUES("http://www.google.com", "Google", sqlbuilder.DEFAULT).
-		VALUES("http://www.yahoo.com", "Yahoo", sqlbuilder.DEFAULT).
-		VALUES("http://www.bing.com", "Bing", sqlbuilder.DEFAULT).
-		RETURNING(table.Link.ID)
+	cleanUpLinkTable(t)
 
-	insertQueryStr, args, err := insertQuery.Sql()
+	var expectedSql = `
+INSERT INTO test_sample.link (id, url, name, description) VALUES
+     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+     (101, 'http://www.google.com', 'Google', DEFAULT),
+     (102, 'http://www.yahoo.com', 'Yahoo', NULL)
+RETURNING link.id AS "link.id",
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
+`
+
+	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		VALUES(101, "http://www.google.com", "Google", DEFAULT).
+		VALUES(102, "http://www.yahoo.com", "Yahoo", nil).
+		RETURNING(Link.AllColumns)
+
+	assertStatementSql(t, insertQuery, expectedSql,
+		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		101, "http://www.google.com", "Google",
+		102, "http://www.yahoo.com", "Yahoo", nil)
+
+	insertedLinks := []model.Link{}
+
+	err := insertQuery.Query(db, &insertedLinks)
 
 	assert.NilError(t, err)
-	assert.Equal(t, len(args), 8)
 
-	fmt.Println(insertQueryStr)
+	assert.Equal(t, len(insertedLinks), 3)
 
-	assert.Equal(t, insertQueryStr, `INSERT INTO test_sample.link (url,name,rel) VALUES ($1, $2, DEFAULT), ($3, $4, DEFAULT), ($5, $6, DEFAULT), ($7, $8, DEFAULT) RETURNING link.id AS "link.id";`)
-	res, err := insertQuery.Execute(db)
-
-	assert.NilError(t, err)
-
-	rowsAffected, err := res.RowsAffected()
-	assert.NilError(t, err)
-
-	assert.Equal(t, rowsAffected, int64(4))
-
-	link := []model.Link{}
-
-	err = table.Link.SELECT(table.Link.AllColumns).Query(db, &link)
-
-	assert.NilError(t, err)
-
-	assert.Equal(t, len(link), 4)
-
-	assert.DeepEqual(t, link[0], model.Link{
-		ID:   1,
+	assert.DeepEqual(t, insertedLinks[0], model.Link{
+		ID:   100,
 		URL:  "http://www.postgresqltutorial.com",
 		Name: "PostgreSQL Tutorial",
-		Rel:  nil,
 	})
 
-	assert.DeepEqual(t, link[3], model.Link{
-		ID:   4,
-		URL:  "http://www.bing.com",
-		Name: "Bing",
-		Rel:  nil,
+	assert.DeepEqual(t, insertedLinks[1], model.Link{
+		ID:   101,
+		URL:  "http://www.google.com",
+		Name: "Google",
 	})
+
+	assert.DeepEqual(t, insertedLinks[2], model.Link{
+		ID:   102,
+		URL:  "http://www.yahoo.com",
+		Name: "Yahoo",
+	})
+
+	allLinks := []model.Link{}
+
+	err = Link.SELECT(Link.AllColumns).
+		WHERE(Link.ID.GT_EQ(Int(100))).
+		ORDER_BY(Link.ID).
+		Query(db, &allLinks)
+
+	assert.NilError(t, err)
+
+	assert.DeepEqual(t, insertedLinks, allLinks)
 }
 
-func TestInsertDataObject(t *testing.T) {
+func TestInsertEmptyColumnList(t *testing.T) {
+	cleanUpLinkTable(t)
+
+	expectedSql := `
+INSERT INTO test_sample.link VALUES
+     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
+`
+
+	stmt := Link.INSERT().
+		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT)
+
+	assertStatementSql(t, stmt, expectedSql,
+		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
+
+	assertExec(t, stmt, 1)
+}
+
+func TestInsertModelObject(t *testing.T) {
+	cleanUpLinkTable(t)
+	var expectedSql = `
+INSERT INTO test_sample.link (url, name) VALUES
+     ('http://www.duckduckgo.com', 'Duck Duck go');
+`
+
 	linkData := model.Link{
 		URL:  "http://www.duckduckgo.com",
 		Name: "Duck Duck go",
-		Rel:  nil,
 	}
 
-	query := table.Link.
-		INSERT(table.Link.URL, table.Link.Name).
-		VALUES_MAPPING(linkData)
+	query := Link.
+		INSERT(Link.URL, Link.Name).
+		MODEL(linkData)
 
-	queryStr, args, err := query.Sql()
+	assertStatementSql(t, query, expectedSql, "http://www.duckduckgo.com", "Duck Duck go")
 
-	assert.NilError(t, err)
-	assert.Equal(t, len(args), 2)
-
-	fmt.Println(queryStr)
-
-	result, err := query.Execute(db)
+	result, err := query.Exec(db)
 
 	assert.NilError(t, err)
 
-	fmt.Println(result)
+	rowsAffected, err := result.RowsAffected()
+
+	assert.Equal(t, rowsAffected, int64(1))
+}
+
+func TestInsertModelsObject(t *testing.T) {
+	expectedSql := `
+INSERT INTO test_sample.link (url, name) VALUES
+     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
+     ('http://www.google.com', 'Google'),
+     ('http://www.yahoo.com', 'Yahoo');
+`
+
+	tutorial := model.Link{
+		URL:  "http://www.postgresqltutorial.com",
+		Name: "PostgreSQL Tutorial",
+	}
+
+	google := model.Link{
+		URL:  "http://www.google.com",
+		Name: "Google",
+	}
+
+	yahoo := model.Link{
+		URL:  "http://www.yahoo.com",
+		Name: "Yahoo",
+	}
+
+	stmt := Link.
+		INSERT(Link.URL, Link.Name).
+		MODELS([]model.Link{tutorial, google, yahoo})
+
+	assertStatementSql(t, stmt, expectedSql,
+		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		"http://www.google.com", "Google",
+		"http://www.yahoo.com", "Yahoo")
+
+	assertExec(t, stmt, 3)
+}
+
+func TestInsertUsingMutableColumns(t *testing.T) {
+	var expectedSql = `
+INSERT INTO test_sample.link (url, name, description) VALUES
+     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+     ('http://www.google.com', 'Google', NULL),
+     ('http://www.google.com', 'Google', NULL),
+     ('http://www.yahoo.com', 'Yahoo', NULL);
+`
+
+	google := model.Link{
+		URL:  "http://www.google.com",
+		Name: "Google",
+	}
+
+	yahoo := model.Link{
+		URL:  "http://www.yahoo.com",
+		Name: "Yahoo",
+	}
+
+	stmt := Link.
+		INSERT(Link.MutableColumns).
+		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		MODEL(google).
+		MODELS([]model.Link{google, yahoo})
+
+	assertStatementSql(t, stmt, expectedSql,
+		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		"http://www.google.com", "Google", nil,
+		"http://www.google.com", "Google", nil,
+		"http://www.yahoo.com", "Yahoo", nil)
+
+	assertExec(t, stmt, 4)
 }
 
 func TestInsertQuery(t *testing.T) {
+	_, err := Link.DELETE().
+		WHERE(Link.ID.NOT_EQ(Int(0)).AND(Link.Name.EQ(String("Youtube")))).
+		Exec(db)
+	assert.NilError(t, err)
 
-	_, err := table.Link.INSERT(table.Link.URL, table.Link.Name).
-		VALUES("http://www.postgresqltutorial.com", "PostgreSQL Tutorial").Execute(db)
+	var expectedSql = `
+INSERT INTO test_sample.link (url, name) (
+     SELECT link.url AS "link.url",
+          link.name AS "link.name"
+     FROM test_sample.link
+     WHERE link.id = 0
+)
+RETURNING link.id AS "link.id",
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
+`
+
+	query := Link.
+		INSERT(Link.URL, Link.Name).
+		QUERY(
+			SELECT(Link.URL, Link.Name).
+				FROM(Link).
+				WHERE(Link.ID.EQ(Int(0))),
+		).
+		RETURNING(Link.AllColumns)
+
+	assertStatementSql(t, query, expectedSql, int64(0))
+
+	dest := []model.Link{}
+
+	err = query.Query(db, &dest)
 
 	assert.NilError(t, err)
 
-	query := table.Link.
-		INSERT(table.Link.URL, table.Link.Name).
-		QUERY(table.Link.SELECT(table.Link.URL, table.Link.Name))
-
-	queryStr, args, err := query.Sql()
-
-	assert.NilError(t, err)
-	assert.Equal(t, len(args), 0)
-
-	fmt.Println(queryStr)
-
-	_, err = query.Execute(db)
+	youtubeLinks := []model.Link{}
+	err = Link.
+		SELECT(Link.AllColumns).
+		WHERE(Link.Name.EQ(String("Youtube"))).
+		Query(db, &youtubeLinks)
 
 	assert.NilError(t, err)
-
-	allLinks := []model.Link{}
-	err = table.Link.SELECT(table.Link.AllColumns).Query(db, &allLinks)
-	assert.NilError(t, err)
-
-	spew.Dump(allLinks)
+	assert.Equal(t, len(youtubeLinks), 2)
 }

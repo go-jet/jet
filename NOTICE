@@ -1,0 +1,10 @@
+Jet
+Copyright 2019 Goran Bjelanovic
+
+
+This product contains a modified portion of 'godropbox' which can be obtained at:
+https://github.com/dropbox/godropbox/tree/master/database/sqlbuilder (BSD-3)
+
+
+This product contains a modified portion of 'snaker' which can be obtained at:
+https://github.com/serenize/snaker (MIT)
