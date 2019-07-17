@@ -24,6 +24,7 @@ func main() {
 		"dvds",
 		"test_sample",
 		"chinook",
+		"northwind",
 	}
 
 	for _, schemaName := range schemaNames {
@@ -32,6 +33,8 @@ func main() {
 		panicOnError(err)
 
 		_, err = db.Exec(string(testSampleSql))
+
+		panicOnError(err)
 
 		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
 			Host:       dbconfig.Host,

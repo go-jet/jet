@@ -1,6 +1,5 @@
 package jet
 
-//------------------------------------------------------//
 type ColumnBool interface {
 	BoolExpression
 	column
@@ -37,6 +36,7 @@ func BoolColumn(name string) ColumnBool {
 }
 
 //------------------------------------------------------//
+
 type ColumnFloat interface {
 	FloatExpression
 	column
@@ -72,6 +72,7 @@ func FloatColumn(name string) ColumnFloat {
 }
 
 //------------------------------------------------------//
+
 type ColumnInteger interface {
 	IntegerExpression
 	column
@@ -106,6 +107,7 @@ func IntegerColumn(name string) ColumnInteger {
 }
 
 //------------------------------------------------------//
+
 type ColumnString interface {
 	StringExpression
 	column
@@ -140,6 +142,7 @@ func StringColumn(name string) ColumnString {
 }
 
 //------------------------------------------------------//
+
 type ColumnTime interface {
 	TimeExpression
 	column
@@ -207,6 +210,7 @@ func TimezColumn(name string) ColumnTimez {
 }
 
 //------------------------------------------------------//
+
 type ColumnTimestamp interface {
 	TimestampExpression
 	column
@@ -241,6 +245,7 @@ func TimestampColumn(name string) ColumnTimestamp {
 }
 
 //------------------------------------------------------//
+
 type ColumnTimestampz interface {
 	TimestampzExpression
 	column
@@ -275,6 +280,7 @@ func TimestampzColumn(name string) ColumnTimestampz {
 }
 
 //------------------------------------------------------//
+
 type ColumnDate interface {
 	DateExpression
 	column

@@ -49,7 +49,11 @@ func Generate(destDir string, genData DBConnection) error {
 		return err
 	}
 
-	fmt.Println("	FOUND", len(schemaInfo.TableInfos), " table(s), ", len(schemaInfo.EnumInfos), " enum(s)")
+	fmt.Println("	FOUND", len(schemaInfo.TableInfos), "table(s), ", len(schemaInfo.EnumInfos), "enum(s)")
+
+	if len(schemaInfo.TableInfos) == 0 && len(schemaInfo.EnumInfos) == 0 {
+		return nil
+	}
 
 	schemaGenPath := path.Join(destDir, genData.DBName, genData.SchemaName)
 	fmt.Println("Destination directory:", schemaGenPath)
