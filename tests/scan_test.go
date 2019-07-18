@@ -19,7 +19,7 @@ func TestScanToInvalidDestination(t *testing.T) {
 	t.Run("nil dest", func(t *testing.T) {
 		err := query.Query(db, nil)
 
-		assert.Error(t, err, "jet: Destination is nil.")
+		assert.Error(t, err, "jet: Destination is nil")
 	})
 
 	t.Run("struct dest", func(t *testing.T) {

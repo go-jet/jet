@@ -4,13 +4,13 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/generator/internal/metadata"
-	"github.com/go-jet/jet/generator/internal/metadata/postgres-metadata"
+	"github.com/go-jet/jet/generator/internal/metadata/postgresmeta"
 	"github.com/go-jet/jet/internal/utils"
-	_ "github.com/lib/pq"
 	"path"
 	"path/filepath"
 )
 
+// DBConnection contains postgres connection details
 type DBConnection struct {
 	Host     string
 	Port     string
@@ -23,10 +23,11 @@ type DBConnection struct {
 	SchemaName string
 }
 
-func Generate(destDir string, genData DBConnection) error {
+// Generate generates jet files at destination dir from database connection details
+func Generate(destDir string, dbConn DBConnection) error {
 
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s %s",
-		genData.Host, genData.Port, genData.User, genData.Password, genData.DBName, genData.SslMode, genData.Params)
+		dbConn.Host, dbConn.Port, dbConn.User, dbConn.Password, dbConn.DBName, dbConn.SslMode, dbConn.Params)
 
 	fmt.Println("Connecting to postgres database: " + connectionString)
 
@@ -43,7 +44,7 @@ func Generate(destDir string, genData DBConnection) error {
 	}
 
 	fmt.Println("Retrieving schema information...")
-	schemaInfo, err := postgres_metadata.GetSchemaInfo(db, genData.DBName, genData.SchemaName)
+	schemaInfo, err := postgresmeta.GetSchemaInfo(db, dbConn.DBName, dbConn.SchemaName)
 
 	if err != nil {
 		return err
@@ -55,7 +56,7 @@ func Generate(destDir string, genData DBConnection) error {
 		return nil
 	}
 
-	schemaGenPath := path.Join(destDir, genData.DBName, genData.SchemaName)
+	schemaGenPath := path.Join(destDir, dbConn.DBName, dbConn.SchemaName)
 	fmt.Println("Destination directory:", schemaGenPath)
 	fmt.Println("Cleaning up destination directory...")
 	err = utils.CleanUpGeneratedFiles(schemaGenPath)
@@ -99,7 +100,7 @@ func Generate(destDir string, genData DBConnection) error {
 	return nil
 }
 
-func generate(schemaInfo postgres_metadata.SchemaInfo, dirPath, packageName string, template string, metaDataList []metadata.MetaData) error {
+func generate(schemaInfo postgresmeta.SchemaInfo, dirPath, packageName string, template string, metaDataList []metadata.MetaData) error {
 	modelDirPath := filepath.Join(dirPath, schemaInfo.DatabaseName, schemaInfo.Name, packageName)
 
 	err := utils.EnsureDirPath(modelDirPath)

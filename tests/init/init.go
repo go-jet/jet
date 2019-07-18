@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/generator/postgres"
 	"github.com/go-jet/jet/tests/dbconfig"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 )
 

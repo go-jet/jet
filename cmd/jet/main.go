@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-jet/jet/generator/postgres"
+	_ "github.com/lib/pq"
 	"os"
 	"strconv"
 )

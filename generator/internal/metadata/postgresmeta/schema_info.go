@@ -1,10 +1,11 @@
-package postgres_metadata
+package postgresmeta
 
 import (
 	"database/sql"
 	"github.com/go-jet/jet/generator/internal/metadata"
 )
 
+// SchemaInfo metadata struct
 type SchemaInfo struct {
 	DatabaseName string
 	Name         string
@@ -12,6 +13,7 @@ type SchemaInfo struct {
 	EnumInfos    []metadata.MetaData
 }
 
+// GetSchemaInfo returns schema information from db connection.
 func GetSchemaInfo(db *sql.DB, databaseName, schemaName string) (schemaInfo SchemaInfo, err error) {
 
 	schemaInfo.DatabaseName = databaseName

@@ -1,10 +1,11 @@
-package postgres_metadata
+package postgresmeta
 
 import (
 	"database/sql"
 	"github.com/go-jet/jet/internal/utils"
 )
 
+// TableInfo metadata struct
 type TableInfo struct {
 	SchemaName  string
 	name        string
@@ -12,14 +13,17 @@ type TableInfo struct {
 	Columns     []ColumnInfo
 }
 
+// Name returns table info name
 func (t TableInfo) Name() string {
 	return t.name
 }
 
-func (t TableInfo) IsPrimaryKey(columnName string) bool {
-	return t.PrimaryKeys[columnName]
+// IsPrimaryKey returns if column is a part of primary key
+func (t TableInfo) IsPrimaryKey(column string) bool {
+	return t.PrimaryKeys[column]
 }
 
+// MutableColumns returns list of mutable columns for table
 func (t TableInfo) MutableColumns() []ColumnInfo {
 	ret := []ColumnInfo{}
 
@@ -34,6 +38,7 @@ func (t TableInfo) MutableColumns() []ColumnInfo {
 	return ret
 }
 
+// GetImports returns model imports for table.
 func (t TableInfo) GetImports() []string {
 	imports := map[string]string{}
 
@@ -57,10 +62,12 @@ func (t TableInfo) GetImports() []string {
 	return ret
 }
 
+// GoStructName returns go struct name for sql builder
 func (t TableInfo) GoStructName() string {
 	return utils.ToGoIdentifier(t.name) + "Table"
 }
 
+// GetTableInfo returns table info metadata
 func GetTableInfo(db *sql.DB, dbName, schemaName, tableName string) (tableInfo TableInfo, err error) {
 
 	tableInfo.SchemaName = schemaName

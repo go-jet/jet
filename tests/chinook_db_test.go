@@ -106,7 +106,7 @@ func TestJoinEverything(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 275)
-	assertJsonFile(t, "./testdata/joined_everything.json", dest)
+	assertJSONFile(t, "./testdata/joined_everything.json", dest)
 }
 
 func TestSelfJoin(t *testing.T) {
@@ -146,7 +146,7 @@ ORDER BY "Employee"."EmployeeId";
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 8)
-	assertJson(t, dest[0:2], `
+	assertJSON(t, dest[0:2], `
 [
 	{
 		"EmployeeId": 1,
@@ -285,7 +285,7 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		LIMIT(10).
 		AsTable("first10Artist")
 
-	artistId := Artist.ArtistId.From(first10Artist)
+	artistID := Artist.ArtistId.From(first10Artist)
 
 	first10Albums := Album.
 		SELECT(Album.AllColumns).
@@ -293,12 +293,12 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		LIMIT(10).
 		AsTable("first10Albums")
 
-	albumArtistId := Album.ArtistId.From(first10Albums)
+	albumArtistID := Album.ArtistId.From(first10Albums)
 
 	stmt := first10Artist.
-		INNER_JOIN(first10Albums, artistId.EQ(albumArtistId)).
+		INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)).
 		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
-		ORDER_BY(artistId)
+		ORDER_BY(artistID)
 
 	assertStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
@@ -337,26 +337,26 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	//spew.Dump(dest)
 }
 
-func assertJson(t *testing.T, data interface{}, expectedJson string) {
+func assertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
-	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJson)
+	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
 
-func assertJsonFile(t *testing.T, jsonFilePath string, data interface{}) {
-	fileJsonData, err := ioutil.ReadFile(jsonFilePath)
+func assertJSONFile(t *testing.T, jsonFilePath string, data interface{}) {
+	fileJSONData, err := ioutil.ReadFile(jsonFilePath)
 	assert.NilError(t, err)
 
 	if runtime.GOOS == "windows" {
-		fileJsonData = bytes.Replace(fileJsonData, []byte("\r\n"), []byte("\n"), -1)
+		fileJSONData = bytes.Replace(fileJSONData, []byte("\r\n"), []byte("\n"), -1)
 	}
 
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
-	assert.Assert(t, string(fileJsonData) == string(jsonData))
-	//assert.Equal(t, string(fileJsonData), string(jsonData))
+	assert.Assert(t, string(fileJSONData) == string(jsonData))
+	//assert.Equal(t, string(fileJSONData), string(jsonData))
 }
 
 func jsonPrint(v interface{}) {

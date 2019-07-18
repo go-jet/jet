@@ -1,15 +1,17 @@
-package postgres_metadata
+package postgresmeta
 
 import (
 	"database/sql"
 	"github.com/go-jet/jet/generator/internal/metadata"
 )
 
+// EnumInfo struct
 type EnumInfo struct {
 	name   string
 	Values []string
 }
 
+// Name returns enum name
 func (e EnumInfo) Name() string {
 	return e.name
 }

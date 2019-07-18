@@ -532,7 +532,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 2)
-	assertJson(t, dest, `
+	assertJSON(t, dest, `
 [
 	{
 		"CityID": 312,
@@ -886,11 +886,11 @@ FROM dvds.actor
 		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
 		AsTable("rFilms")
 
-	rFilmId := Film.FilmID.From(rRatingFilms)
+	rFilmID := Film.FilmID.From(rRatingFilms)
 
 	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmId)).
+		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmID)).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
@@ -1077,11 +1077,11 @@ ORDER BY customer_payment_sum."amount_sum" ASC;
 		GROUP_BY(Payment.CustomerID).
 		AsTable("customer_payment_sum")
 
-	customerId := Payment.CustomerID.From(customersPayments)
+	customerID := Payment.CustomerID.From(customersPayments)
 	amountSum := FloatColumn("amount_sum").From(customersPayments)
 
 	query := Customer.
-		INNER_JOIN(customersPayments, Customer.CustomerID.EQ(customerId)).
+		INNER_JOIN(customersPayments, Customer.CustomerID.EQ(customerID)).
 		SELECT(
 			Customer.AllColumns,
 			amountSum.AS("CustomerWithAmounts.AmountSum"),
@@ -1123,7 +1123,7 @@ func TestSelectStaff(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	assertJson(t, staffs, `
+	assertJSON(t, staffs, `
 [
 	{
 		"StaffID": 1,
@@ -1304,15 +1304,15 @@ LIMIT 20;
 	assertStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
 
 	dest := []struct {
-		StaffIdNum string
+		StaffIDNum string
 	}{}
 
 	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 20)
-	assert.Equal(t, dest[0].StaffIdNum, "TWO")
-	assert.Equal(t, dest[1].StaffIdNum, "ONE")
+	assert.Equal(t, dest[0].StaffIDNum, "TWO")
+	assert.Equal(t, dest[1].StaffIDNum, "ONE")
 }
 
 func TestLockTable(t *testing.T) {
@@ -1506,7 +1506,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJsonFile(t, "./testdata/quick-start-dest.json", dest)
+	assertJSONFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1519,7 +1519,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJsonFile(t, "./testdata/quick-start-dest2.json", dest2)
+	assertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1529,22 +1529,22 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 		WHERE(Film.Length.GT(Int(180))).
 		AsTable("films")
 
-	filmId := Film.FilmID.From(filmLogerThan180)
-	filmLanguageId := Film.LanguageID.From(filmLogerThan180)
+	filmID := Film.FilmID.From(filmLogerThan180)
+	filmLanguageID := Film.LanguageID.From(filmLogerThan180)
 
 	categoriesNotAction := Category.
 		SELECT(Category.AllColumns).
 		WHERE(Category.Name.NOT_EQ(String("Action"))).
 		AsTable("categories")
 
-	categoryId := Category.CategoryID.From(categoriesNotAction)
+	categoryID := Category.CategoryID.From(categoriesNotAction)
 
 	stmt := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
-		INNER_JOIN(filmLogerThan180, filmId.EQ(FilmActor.FilmID)).
-		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageId)).
-		INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmId)).
-		INNER_JOIN(categoriesNotAction, categoryId.EQ(FilmCategory.CategoryID)).
+		INNER_JOIN(filmLogerThan180, filmID.EQ(FilmActor.FilmID)).
+		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageID)).
+		INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmID)).
+		INNER_JOIN(categoriesNotAction, categoryID.EQ(FilmCategory.CategoryID)).
 		SELECT(
 			Actor.AllColumns,
 			filmLogerThan180.AllColumns(),
@@ -1552,7 +1552,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 			categoriesNotAction.AllColumns(),
 		).ORDER_BY(
 		Actor.ActorID.ASC(),
-		filmId.ASC(),
+		filmID.ASC(),
 	)
 
 	var dest []struct {
@@ -1571,7 +1571,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJsonFile(t, "./testdata/quick-start-dest.json", dest)
+	assertJSONFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1584,5 +1584,5 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJsonFile(t, "./testdata/quick-start-dest2.json", dest2)
+	assertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
 }

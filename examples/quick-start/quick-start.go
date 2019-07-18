@@ -50,11 +50,11 @@ func main() {
 	fmt.Println("Arguments: ")
 	fmt.Println(args)
 
-	debugSql, err := stmt.DebugSql()
+	debugSQL, err := stmt.DebugSql()
 	panicOnError(err)
 
 	fmt.Println("Debug sql: ")
-	fmt.Println(debugSql)
+	fmt.Println(debugSQL)
 
 	var dest []struct {
 		model.Actor
