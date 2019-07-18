@@ -348,12 +348,12 @@ func TO_DATE(dateStr, format StringExpression) DateExpression {
 	return newDateFunc("TO_DATE", dateStr, format)
 }
 
-// TO_NUMBER converst string to numeric using format
+// TO_NUMBER converts string to numeric using format
 func TO_NUMBER(floatStr, format StringExpression) FloatExpression {
 	return newFloatFunc("TO_NUMBER", floatStr, format)
 }
 
-// TO_TIMESTAMP converst string to time stamp with time zone using format
+// TO_TIMESTAMP converts string to time stamp with time zone using format
 func TO_TIMESTAMP(timestampzStr, format StringExpression) TimestampzExpression {
 	return newTimestampzFunc("TO_TIMESTAMP", timestampzStr, format)
 }

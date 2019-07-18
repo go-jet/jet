@@ -106,13 +106,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 
 	assertStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
 
-	result, err := query.Exec(db)
-
-	assert.NilError(t, err)
-
-	rowsAffected, err := result.RowsAffected()
-
-	assert.Equal(t, rowsAffected, int64(1))
+	assertExec(t, query, 1)
 }
 
 func TestInsertModelsObject(t *testing.T) {
