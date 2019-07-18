@@ -1,5 +1,6 @@
 package jet
 
+// IntegerExpression interface
 type IntegerExpression interface {
 	Expression
 	numericExpression
@@ -180,6 +181,9 @@ func newIntExpressionWrap(expression Expression) IntegerExpression {
 	return &intExpressionWrap
 }
 
+// IntExp is int expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as int expression.
+// Does not add sql cast to generated sql builder output.
 func IntExp(expression Expression) IntegerExpression {
 	return newIntExpressionWrap(expression)
 }

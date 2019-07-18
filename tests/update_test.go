@@ -16,12 +16,12 @@ func TestUpdateValues(t *testing.T) {
 		SET("Bong", "http://bong.com").
 		WHERE(Link.Name.EQ(String("Bing")))
 
-	var expectedSql = `
+	var expectedSQL = `
 UPDATE test_sample.link
 SET (name, url) = ('Bong', 'http://bong.com')
 WHERE link.name = 'Bing';
 `
-	assertStatementSql(t, query, expectedSql, "Bong", "http://bong.com", "Bing")
+	assertStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
 
 	assertExec(t, query, 1)
 
@@ -54,7 +54,7 @@ func TestUpdateWithSubQueries(t *testing.T) {
 		).
 		WHERE(Link.Name.EQ(String("Bing")))
 
-	expectedSql := `
+	expectedSQL := `
 UPDATE test_sample.link
 SET (name, url) = ((
      SELECT 'Bong'
@@ -66,7 +66,7 @@ SET (name, url) = ((
 WHERE link.name = 'Bing';
 `
 
-	assertStatementSql(t, query, expectedSql, "Bong", "Bing", "Bing")
+	assertStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
 
 	assertExec(t, query, 1)
 }
@@ -74,7 +74,7 @@ WHERE link.name = 'Bing';
 func TestUpdateAndReturning(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
-	expectedSql := `
+	expectedSQL := `
 UPDATE test_sample.link
 SET (name, url) = ('DuckDuckGo', 'http://www.duckduckgo.com')
 WHERE link.name = 'Ask'
@@ -90,7 +90,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.EQ(String("Ask"))).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, stmt, expectedSql, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
+	assertStatementSql(t, stmt, expectedSQL, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
 
 	links := []model.Link{}
 
@@ -112,7 +112,7 @@ func TestUpdateWithSelect(t *testing.T) {
 		).
 		WHERE(Link.ID.EQ(Int(0)))
 
-	expectedSql := `
+	expectedSQL := `
 UPDATE test_sample.link
 SET (id, url, name, description) = (
      SELECT link.id AS "link.id",
@@ -124,7 +124,7 @@ SET (id, url, name, description) = (
 )
 WHERE link.id = 0;
 `
-	assertStatementSql(t, stmt, expectedSql, int64(0), int64(0))
+	assertStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
 	assertExec(t, stmt, 1)
 }
@@ -139,7 +139,7 @@ func TestUpdateWithInvalidSelect(t *testing.T) {
 		).
 		WHERE(Link.ID.EQ(Int(0)))
 
-	var expectedSql = `
+	var expectedSQL = `
 UPDATE test_sample.link
 SET (id, url, name, description) = (
      SELECT link.id AS "link.id",
@@ -149,7 +149,7 @@ SET (id, url, name, description) = (
 )
 WHERE link.id = 0;
 `
-	assertStatementSql(t, stmt, expectedSql, int64(0), int64(0))
+	assertStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
 	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
 }
@@ -168,12 +168,12 @@ func TestUpdateWithModelData(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.ID))))
 
-	expectedSql := `
+	expectedSQL := `
 UPDATE test_sample.link
 SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSql, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	assertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 
 	assertExec(t, stmt, 1)
 }
@@ -195,12 +195,12 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.ID))))
 
-	var expectedSql = `
+	var expectedSQL = `
 UPDATE test_sample.link
 SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSql, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
+	assertStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
 
 	assertExec(t, stmt, 1)
 }
@@ -231,12 +231,12 @@ func TestUpdateWithInvalidModelData(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.Ident))))
 
-	var expectedSql = `
+	var expectedSQL = `
 UPDATE test_sample.link
 SET (id, url, name, description, rel) = ('http://www.duckduckgo.com', 'DuckDuckGo', NULL, NULL)
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSql, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
+	assertStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
 
 	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
 }

@@ -1,5 +1,6 @@
 package jet
 
+// DateExpression is interface for all SQL date expressions.
 type DateExpression interface {
 	Expression
 
@@ -63,6 +64,9 @@ func newDateExpressionWrap(expression Expression) DateExpression {
 	return &dateExpressionWrap
 }
 
+// DateExp is date expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as date expression.
+// Does not add sql cast to generated sql builder output.
 func DateExp(expression Expression) DateExpression {
 	return newDateExpressionWrap(expression)
 }

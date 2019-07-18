@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/execution"
 )
 
+// Select statements lock types
 var (
 	UPDATE        = newLock("UPDATE")
 	NO_KEY_UPDATE = newLock("NO KEY UPDATE")
@@ -14,6 +15,7 @@ var (
 	KEY_SHARE     = newLock("KEY SHARE")
 )
 
+// SelectStatement is interface for SQL SELECT statements
 type SelectStatement interface {
 	Statement
 	Expression
@@ -23,7 +25,7 @@ type SelectStatement interface {
 	WHERE(expression BoolExpression) SelectStatement
 	GROUP_BY(groupByClauses ...groupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
-	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
+	ORDER_BY(orderByClauses ...orderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
 	FOR(lock SelectLock) SelectStatement
@@ -35,11 +37,12 @@ type SelectStatement interface {
 	EXCEPT(rhs SelectStatement) SelectStatement
 	EXCEPT_ALL(rhs SelectStatement) SelectStatement
 
-	AsTable(alias string) ExpressionTable
+	AsTable(alias string) SelectTable
 
 	projections() []projection
 }
 
+//SELECT creates new SelectStatement with list of projections
 func SELECT(projection1 projection, projections ...projection) SelectStatement {
 	return newSelectStatement(nil, append([]projection{projection1}, projections...))
 }
@@ -55,7 +58,7 @@ type selectStatementImpl struct {
 	groupBy        []groupByClause
 	having         BoolExpression
 
-	orderBy       []OrderByClause
+	orderBy       []orderByClause
 	limit, offset int64
 
 	lockFor SelectLock
@@ -81,8 +84,8 @@ func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
 	return s.parent
 }
 
-func (s *selectStatementImpl) AsTable(alias string) ExpressionTable {
-	return newExpressionTable(s.parent, alias, s.parent.projections())
+func (s *selectStatementImpl) AsTable(alias string) SelectTable {
+	return newSelectTable(s.parent, alias)
 }
 
 func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
@@ -100,7 +103,7 @@ func (s *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement 
 	return s.parent
 }
 
-func (s *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
+func (s *selectStatementImpl) ORDER_BY(clauses ...orderByClause) SelectStatement {
 	s.orderBy = clauses
 	return s.parent
 }
@@ -189,20 +192,20 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 		return errors.New("jet: no column selected for projection")
 	}
 
-	err := out.writeProjections(select_statement, s.projectionList)
+	err := out.writeProjections(selectStatement, s.projectionList)
 
 	if err != nil {
 		return err
 	}
 
 	if s.table != nil {
-		if err := out.writeFrom(select_statement, s.table); err != nil {
+		if err := out.writeFrom(selectStatement, s.table); err != nil {
 			return err
 		}
 	}
 
 	if s.where != nil {
-		err := out.writeWhere(select_statement, s.where)
+		err := out.writeWhere(selectStatement, s.where)
 
 		if err != nil {
 			return nil
@@ -210,7 +213,7 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	}
 
 	if s.groupBy != nil && len(s.groupBy) > 0 {
-		err := out.writeGroupBy(select_statement, s.groupBy)
+		err := out.writeGroupBy(selectStatement, s.groupBy)
 
 		if err != nil {
 			return err
@@ -218,7 +221,7 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	}
 
 	if s.having != nil {
-		err := out.writeHaving(select_statement, s.having)
+		err := out.writeHaving(selectStatement, s.having)
 
 		if err != nil {
 			return err
@@ -226,7 +229,7 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	}
 
 	if s.orderBy != nil {
-		err := out.writeOrderBy(select_statement, s.orderBy)
+		err := out.writeOrderBy(selectStatement, s.orderBy)
 
 		if err != nil {
 			return err
@@ -236,19 +239,19 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if s.limit >= 0 {
 		out.newLine()
 		out.writeString("LIMIT")
-		out.insertPreparedArgument(s.limit)
+		out.insertParametrizedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
 		out.newLine()
 		out.writeString("OFFSET")
-		out.insertPreparedArgument(s.offset)
+		out.insertParametrizedArgument(s.offset)
 	}
 
 	if s.lockFor != nil {
 		out.newLine()
 		out.writeString("FOR")
-		err := s.lockFor.serialize(select_statement, out)
+		err := s.lockFor.serialize(selectStatement, out)
 
 		if err != nil {
 			return err
@@ -281,7 +284,7 @@ func (s *selectStatementImpl) Query(db execution.DB, destination interface{}) er
 }
 
 func (s *selectStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return queryContext(s.parent, db, context, destination)
+	return queryContext(context, s.parent, db, destination)
 }
 
 func (s *selectStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
@@ -292,8 +295,7 @@ func (s *selectStatementImpl) ExecContext(db execution.DB, context context.Conte
 	return execContext(s.parent, db, context)
 }
 
-// SelectLock
-
+// SelectLock is interface for SELECT statement locks
 type SelectLock interface {
 	clause
 

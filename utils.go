@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func serializeOrderByClauseList(statement statementType, orderByClauses []OrderByClause, out *sqlBuilder) error {
+func serializeOrderByClauseList(statement statementType, orderByClauses []orderByClause, out *sqlBuilder) error {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
@@ -32,7 +32,7 @@ func serializeGroupByClauseList(statement statementType, clauses []groupByClause
 		}
 
 		if c == nil {
-			return errors.New("jet: nil clause.")
+			return errors.New("jet: nil clause")
 		}
 
 		if err = c.serializeForGroupBy(statement, out); err != nil {
@@ -51,7 +51,7 @@ func serializeClauseList(statement statementType, clauses []clause, out *sqlBuil
 		}
 
 		if c == nil {
-			return errors.New("jet: nil clause.")
+			return errors.New("jet: nil clause")
 		}
 
 		if err = c.serialize(statement, out); err != nil {
@@ -131,9 +131,9 @@ func isNil(v interface{}) bool {
 func valueToClause(value interface{}) clause {
 	if clause, ok := value.(clause); ok {
 		return clause
-	} else {
-		return literal(value)
 	}
+
+	return literal(value)
 }
 
 func unwindRowFromModel(columns []column, data interface{}) []clause {

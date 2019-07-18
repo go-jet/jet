@@ -11,7 +11,7 @@ import (
 func TestDeleteWithWhere(t *testing.T) {
 	initForDeleteTest(t)
 
-	var expectedSql = `
+	var expectedSQL = `
 DELETE FROM test_sample.link
 WHERE link.name IN ('Gmail', 'Outlook');
 `
@@ -19,14 +19,14 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	assertStatementSql(t, deleteStmt, expectedSql, "Gmail", "Outlook")
+	assertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 	assertExec(t, deleteStmt, 2)
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {
 	initForDeleteTest(t)
 
-	var expectedSql = `
+	var expectedSQL = `
 DELETE FROM test_sample.link
 WHERE link.name IN ('Gmail', 'Outlook')
 RETURNING link.id AS "link.id",
@@ -39,7 +39,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, deleteStmt, expectedSql, "Gmail", "Outlook")
+	assertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 
 	dest := []model.Link{}
 

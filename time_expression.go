@@ -1,5 +1,6 @@
 package jet
 
+// TimeExpression interface
 type TimeExpression interface {
 	Expression
 
@@ -68,10 +69,6 @@ func newPrefixTimeExpression(operator string, expression Expression) TimeExpress
 	return &timeExpr
 }
 
-func INTERVAL(interval string) Expression {
-	return newPrefixTimeExpression("INTERVAL", literal(interval))
-}
-
 //---------------------------------------------------//
 
 type timeExpressionWrapper struct {
@@ -85,6 +82,9 @@ func newTimeExpressionWrap(expression Expression) TimeExpression {
 	return &timeExpressionWrap
 }
 
+// TimeExp is time expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as time expression.
+// Does not add sql cast to generated sql builder output.
 func TimeExp(expression Expression) TimeExpression {
 	return newTimeExpressionWrap(expression)
 }

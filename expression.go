@@ -4,12 +4,13 @@ import (
 	"errors"
 )
 
-// Common expression interface
+// Expression is common interface for all expressions.
+// Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
 	clause
 	projection
 	groupByClause
-	OrderByClause
+	orderByClause
 
 	// Test expression whether it is a NULL value.
 	IS_NULL() BoolExpression
@@ -25,16 +26,16 @@ type Expression interface {
 	AS(alias string) projection
 
 	// Expression will be used to sort query result in ascending order
-	ASC() OrderByClause
+	ASC() orderByClause
 	// Expression will be used to sort query result in ascending order
-	DESC() OrderByClause
+	DESC() orderByClause
 }
 
 type expressionInterfaceImpl struct {
 	parent Expression
 }
 
-func (e *expressionInterfaceImpl) from(subQuery ExpressionTable) projection {
+func (e *expressionInterfaceImpl) from(subQuery SelectTable) projection {
 	return e.parent
 }
 
@@ -58,11 +59,11 @@ func (e *expressionInterfaceImpl) AS(alias string) projection {
 	return newAlias(e.parent, alias)
 }
 
-func (e *expressionInterfaceImpl) ASC() OrderByClause {
+func (e *expressionInterfaceImpl) ASC() orderByClause {
 	return newOrderByClause(e.parent, true)
 }
 
-func (e *expressionInterfaceImpl) DESC() OrderByClause {
+func (e *expressionInterfaceImpl) DESC() orderByClause {
 	return newOrderByClause(e.parent, false)
 }
 
@@ -145,13 +146,13 @@ func newPrefixExpression(expression Expression, operator string) prefixOpExpress
 
 func (p *prefixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if p == nil {
-		return errors.New("jet: Prefix Expression is nil.")
+		return errors.New("jet: Prefix Expression is nil")
 	}
 
 	out.writeString(p.operator + " ")
 
 	if p.expression == nil {
-		return errors.New("jet: nil prefix Expression.")
+		return errors.New("jet: nil prefix Expression")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err
@@ -177,11 +178,11 @@ func newPostfixOpExpression(expression Expression, operator string) postfixOpExp
 
 func (p *postfixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if p == nil {
-		return errors.New("jet: Postifx operator Expression is nil.")
+		return errors.New("jet: Postifx operator Expression is nil")
 	}
 
 	if p.expression == nil {
-		return errors.New("jet: nil prefix Expression.")
+		return errors.New("jet: nil prefix Expression")
 	}
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err

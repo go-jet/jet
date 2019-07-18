@@ -36,18 +36,21 @@ type writableTable interface {
 	LOCK() LockStatement
 }
 
+// ReadableTable interface
 type ReadableTable interface {
 	table
 	readableTable
 	clause
 }
 
+// WritableTable interface
 type WritableTable interface {
 	table
 	writableTable
 	clause
 }
 
+// Table interface
 type Table interface {
 	table
 	readableTable
@@ -110,6 +113,7 @@ func (w *writableTableInterfaceImpl) LOCK() LockStatement {
 	return LOCK(w.parent)
 }
 
+// NewTable creates new table with schema name, table name and list of columns
 func NewTable(schemaName, name string, columns ...Column) Table {
 
 	t := &tableImpl{
@@ -196,20 +200,20 @@ type joinTable struct {
 
 	lhs         ReadableTable
 	rhs         ReadableTable
-	join_type   joinType
+	joinType    joinType
 	onCondition BoolExpression
 }
 
 func newJoinTable(
 	lhs ReadableTable,
 	rhs ReadableTable,
-	join_type joinType,
+	joinType joinType,
 	onCondition BoolExpression) ReadableTable {
 
 	joinTable := &joinTable{
 		lhs:         lhs,
 		rhs:         rhs,
-		join_type:   join_type,
+		joinType:    joinType,
 		onCondition: onCondition,
 	}
 
@@ -245,7 +249,7 @@ func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options 
 
 	out.newLine()
 
-	switch t.join_type {
+	switch t.joinType {
 	case innerJoin:
 		out.writeString("INNER JOIN")
 	case leftJoin:
@@ -266,7 +270,7 @@ func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options 
 		return
 	}
 
-	if t.onCondition == nil && t.join_type != crossJoin {
+	if t.onCondition == nil && t.joinType != crossJoin {
 		return errors.New("jet: join condition is nil")
 	}
 

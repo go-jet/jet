@@ -36,6 +36,8 @@ type castImpl struct {
 	castType string
 }
 
+// CAST wraps expression for casting.
+// For instance: CAST(table.column).AS_BOOL()
 func CAST(expression Expression) cast {
 	return &castImpl{
 		Expression: expression,

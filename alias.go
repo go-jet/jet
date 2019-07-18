@@ -12,7 +12,7 @@ func newAlias(expression Expression, aliasName string) projection {
 	}
 }
 
-func (a *alias) from(subQuery ExpressionTable) projection {
+func (a *alias) from(subQuery SelectTable) projection {
 	column := newColumn(a.alias, "", nil)
 	column.parent = &column
 	column.subQuery = subQuery

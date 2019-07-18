@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/execution"
 )
 
+// DeleteStatement is interface for SQL DELETE statement
 type DeleteStatement interface {
 	Statement
 
@@ -48,7 +49,7 @@ func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 		return errors.New("jet: nil tableName")
 	}
 
-	if err := d.table.serialize(delete_statement, out); err != nil {
+	if err := d.table.serialize(deleteStatement, out); err != nil {
 		return err
 	}
 
@@ -56,11 +57,11 @@ func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 		return errors.New("jet: deleting without a WHERE clause")
 	}
 
-	if err := out.writeWhere(delete_statement, d.where); err != nil {
+	if err := out.writeWhere(deleteStatement, d.where); err != nil {
 		return err
 	}
 
-	if err := out.writeReturning(delete_statement, d.returning); err != nil {
+	if err := out.writeReturning(deleteStatement, d.returning); err != nil {
 		return err
 	}
 
@@ -89,7 +90,7 @@ func (d *deleteStatementImpl) Query(db execution.DB, destination interface{}) er
 }
 
 func (d *deleteStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return queryContext(d, db, context, destination)
+	return queryContext(context, d, db, destination)
 }
 
 func (d *deleteStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {

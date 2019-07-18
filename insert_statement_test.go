@@ -81,13 +81,13 @@ func TestInsertValuesFromModel(t *testing.T) {
 		MODEL(toInsert).
 		MODEL(&toInsert)
 
-	expectedSql := `
+	expectedSQL := `
 INSERT INTO db.table1 (col1, col_float) VALUES
      ($1, $2),
      ($3, $4);
 `
 
-	assertStatement(t, stmt, expectedSql, int(1), float64(1.11), int(1), float64(1.11))
+	assertStatement(t, stmt, expectedSQL, int(1), float64(1.11), int(1), float64(1.11))
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
@@ -125,23 +125,23 @@ func TestInsertQuery(t *testing.T) {
 	stmt := table1.INSERT(table1Col1).
 		QUERY(table1.SELECT(table1Col1))
 
-	var expectedSql = `
+	var expectedSQL = `
 INSERT INTO db.table1 (col1) (
      SELECT table1.col1 AS "table1.col1"
      FROM db.table1
 );
 `
-	assertStatement(t, stmt, expectedSql)
+	assertStatement(t, stmt, expectedSQL)
 }
 
 func TestInsertDefaultValue(t *testing.T) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES(DEFAULT, "two")
 
-	var expectedSql = `
+	var expectedSQL = `
 INSERT INTO db.table1 (col1, col_float) VALUES
      (DEFAULT, $1);
 `
 
-	assertStatement(t, stmt, expectedSql, "two")
+	assertStatement(t, stmt, expectedSQL, "two")
 }

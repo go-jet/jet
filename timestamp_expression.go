@@ -1,5 +1,6 @@
 package jet
 
+// TimestampExpression interface
 type TimestampExpression interface {
 	Expression
 
@@ -63,6 +64,9 @@ func newTimestampExpressionWrap(expression Expression) TimestampExpression {
 	return &timestampExpressionWrap
 }
 
+// TimestampExp is timestamp expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as timestamp expression.
+// Does not add sql cast to generated sql builder output.
 func TimestampExp(expression Expression) TimestampExpression {
 	return newTimestampExpressionWrap(expression)
 }

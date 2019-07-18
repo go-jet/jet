@@ -1,5 +1,6 @@
 package jet
 
+//BoolExpression interface
 type BoolExpression interface {
 	Expression
 
@@ -150,6 +151,9 @@ func newBoolExpressionWrap(expression Expression) BoolExpression {
 	return &boolExpressionWrap
 }
 
+// BoolExp is bool expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as bool expression.
+// Does not add sql cast to generated sql builder output.
 func BoolExp(expression Expression) BoolExpression {
 	return newBoolExpressionWrap(expression)
 }

@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+//Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement interface {
 	// Sql returns parametrized sql query with list of arguments.
 	// err is returned if statement is not composed correctly
@@ -37,14 +38,14 @@ func debugSql(statement Statement) (string, error) {
 		return "", err
 	}
 
-	debugSqlQuery := sqlQuery
+	debugSQLQuery := sqlQuery
 
 	for i, arg := range args {
 		argPlaceholder := "$" + strconv.Itoa(i+1)
-		debugSqlQuery = strings.Replace(debugSqlQuery, argPlaceholder, ArgToString(arg), 1)
+		debugSQLQuery = strings.Replace(debugSQLQuery, argPlaceholder, argToString(arg), 1)
 	}
 
-	return debugSqlQuery, nil
+	return debugSQLQuery, nil
 }
 
 func query(statement Statement, db execution.DB, destination interface{}) error {
@@ -57,7 +58,7 @@ func query(statement Statement, db execution.DB, destination interface{}) error 
 	return execution.Query(db, context.Background(), query, args, destination)
 }
 
-func queryContext(statement Statement, db execution.DB, context context.Context, destination interface{}) error {
+func queryContext(context context.Context, statement Statement, db execution.DB, destination interface{}) error {
 	query, args, err := statement.Sql()
 
 	if err != nil {

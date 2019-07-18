@@ -72,7 +72,7 @@ FROM test_sample.person;
 
 func TestSelecSelfJoin1(t *testing.T) {
 
-	var expectedSql = `
+	var expectedSQL = `
 SELECT employee.employee_id AS "employee.employee_id",
      employee.first_name AS "employee.first_name",
      employee.last_name AS "employee.last_name",
@@ -97,7 +97,7 @@ ORDER BY employee.employee_id;
 		).
 		ORDER_BY(Employee.EmployeeID)
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	type Manager model.Employee
 
