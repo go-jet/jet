@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
 	"gotest.tools/assert"
 	"io/ioutil"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -345,6 +347,10 @@ func assertJson(t *testing.T, data interface{}, expectedJson string) {
 func assertJsonFile(t *testing.T, jsonFilePath string, data interface{}) {
 	fileJsonData, err := ioutil.ReadFile(jsonFilePath)
 	assert.NilError(t, err)
+
+	if runtime.GOOS == "windows" {
+		fileJsonData = bytes.Replace(fileJsonData, []byte("\r\n"), []byte("\n"), -1)
+	}
 
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
