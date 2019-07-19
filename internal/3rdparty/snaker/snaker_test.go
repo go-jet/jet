@@ -83,7 +83,7 @@ var _ = Describe("Snaker", func() {
 			Expect(SnakeToCamel("id")).To(Equal("ID"))
 		})
 
-		It("sould work with initialism where only certain characters are uppercase", func() {
+		It("should work with initialism where only certain characters are uppercase", func() {
 			Expect(SnakeToCamel("oauth_client")).To(Equal("OAuthClient"))
 		})
 	})

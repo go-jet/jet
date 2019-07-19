@@ -89,7 +89,7 @@ func (d *deleteStatementImpl) Query(db execution.DB, destination interface{}) er
 	return query(d, db, destination)
 }
 
-func (d *deleteStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
+func (d *deleteStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
 	return queryContext(context, d, db, destination)
 }
 
@@ -97,6 +97,6 @@ func (d *deleteStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 	return exec(d, db)
 }
 
-func (d *deleteStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
+func (d *deleteStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
 	return execContext(d, db, context)
 }

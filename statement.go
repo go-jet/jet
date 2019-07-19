@@ -23,12 +23,12 @@ type Statement interface {
 	Query(db execution.DB, destination interface{}) error
 	// QueryContext executes statement with a context over database connection db and stores row result in destination.
 	// Destination can be of arbitrary structure
-	QueryContext(db execution.DB, context context.Context, destination interface{}) error
+	QueryContext(context context.Context, db execution.DB, destination interface{}) error
 
 	//Exec executes statement over db connection without returning any rows.
 	Exec(db execution.DB) (sql.Result, error)
 	//Exec executes statement with context over db connection without returning any rows.
-	ExecContext(db execution.DB, context context.Context) (sql.Result, error)
+	ExecContext(context context.Context, db execution.DB) (sql.Result, error)
 }
 
 func debugSql(statement Statement) (string, error) {

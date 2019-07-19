@@ -101,7 +101,7 @@ func (l *lockStatementImpl) Query(db execution.DB, destination interface{}) erro
 	return query(l, db, destination)
 }
 
-func (l *lockStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
+func (l *lockStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
 	return queryContext(context, l, db, destination)
 }
 
@@ -109,6 +109,6 @@ func (l *lockStatementImpl) Exec(db execution.DB) (sql.Result, error) {
 	return exec(l, db)
 }
 
-func (l *lockStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
+func (l *lockStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
 	return execContext(l, db, context)
 }

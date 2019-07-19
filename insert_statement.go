@@ -156,7 +156,7 @@ func (i *insertStatementImpl) Query(db execution.DB, destination interface{}) er
 	return query(i, db, destination)
 }
 
-func (i *insertStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
+func (i *insertStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
 	return queryContext(context, i, db, destination)
 }
 
@@ -164,6 +164,6 @@ func (i *insertStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 	return exec(i, db)
 }
 
-func (i *insertStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
+func (i *insertStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
 	return execContext(i, db, context)
 }

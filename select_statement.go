@@ -283,7 +283,7 @@ func (s *selectStatementImpl) Query(db execution.DB, destination interface{}) er
 	return query(s.parent, db, destination)
 }
 
-func (s *selectStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
+func (s *selectStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
 	return queryContext(context, s.parent, db, destination)
 }
 
@@ -291,7 +291,7 @@ func (s *selectStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 	return exec(s.parent, db)
 }
 
-func (s *selectStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
+func (s *selectStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
 	return execContext(s.parent, db, context)
 }
 

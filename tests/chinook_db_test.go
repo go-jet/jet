@@ -273,7 +273,7 @@ func TestExecWithContext(t *testing.T) {
 		CROSS_JOIN(Track).
 		CROSS_JOIN(InvoiceLine).
 		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
-		ExecContext(db, ctx)
+		ExecContext(ctx, db)
 
 	assert.Error(t, err, "pq: canceling statement due to user request")
 }
