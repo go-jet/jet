@@ -743,16 +743,6 @@ func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 	return index
 }
 
-func (s *scanContext) getCellValue(typeName, fieldName string) interface{} {
-	index := s.typeToColumnIndex(typeName, fieldName)
-
-	if index < 0 {
-		return nil
-	}
-
-	return s.rowElem(index)
-}
-
 func (s *scanContext) rowElem(index int) interface{} {
 
 	valuer, ok := s.row[index].(driver.Valuer)

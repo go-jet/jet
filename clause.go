@@ -199,11 +199,6 @@ func (q *sqlBuilder) insertParametrizedArgument(arg interface{}) {
 	q.writeString(argPlaceholder)
 }
 
-func (q *sqlBuilder) reset() {
-	q.buff.Reset()
-	q.args = []interface{}{}
-}
-
 func argToString(value interface{}) string {
 	if isNil(value) {
 		return "NULL"
