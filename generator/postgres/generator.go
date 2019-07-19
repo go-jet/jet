@@ -8,12 +8,13 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 	"path"
 	"path/filepath"
+	"strconv"
 )
 
 // DBConnection contains postgres connection details
 type DBConnection struct {
 	Host     string
-	Port     string
+	Port     int
 	User     string
 	Password string
 	SslMode  string
@@ -27,7 +28,7 @@ type DBConnection struct {
 func Generate(destDir string, dbConn DBConnection) error {
 
 	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s %s",
-		dbConn.Host, dbConn.Port, dbConn.User, dbConn.Password, dbConn.DBName, dbConn.SslMode, dbConn.Params)
+		dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.User, dbConn.Password, dbConn.DBName, dbConn.SslMode, dbConn.Params)
 
 	fmt.Println("Connecting to postgres database: " + connectionString)
 
