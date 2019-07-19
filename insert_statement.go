@@ -165,5 +165,5 @@ func (i *insertStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 }
 
 func (i *insertStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	return execContext(i, db, context)
+	return execContext(context, i, db)
 }

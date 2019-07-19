@@ -98,5 +98,5 @@ func (d *deleteStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 }
 
 func (d *deleteStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	return execContext(d, db, context)
+	return execContext(context, d, db)
 }

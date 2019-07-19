@@ -144,5 +144,5 @@ func (u *updateStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 }
 
 func (u *updateStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	return execContext(u, db, context)
+	return execContext(context, u, db)
 }

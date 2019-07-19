@@ -55,7 +55,7 @@ func query(statement Statement, db execution.DB, destination interface{}) error 
 		return err
 	}
 
-	return execution.Query(db, context.Background(), query, args, destination)
+	return execution.Query(context.Background(), db, query, args, destination)
 }
 
 func queryContext(context context.Context, statement Statement, db execution.DB, destination interface{}) error {
@@ -65,7 +65,7 @@ func queryContext(context context.Context, statement Statement, db execution.DB,
 		return err
 	}
 
-	return execution.Query(db, context, query, args, destination)
+	return execution.Query(context, db, query, args, destination)
 }
 
 func exec(statement Statement, db execution.DB) (res sql.Result, err error) {
@@ -78,7 +78,7 @@ func exec(statement Statement, db execution.DB) (res sql.Result, err error) {
 	return db.Exec(query, args...)
 }
 
-func execContext(statement Statement, db execution.DB, context context.Context) (res sql.Result, err error) {
+func execContext(context context.Context, statement Statement, db execution.DB) (res sql.Result, err error) {
 	query, args, err := statement.Sql()
 
 	if err != nil {

@@ -292,7 +292,7 @@ func (s *selectStatementImpl) Exec(db execution.DB) (res sql.Result, err error) 
 }
 
 func (s *selectStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	return execContext(s.parent, db, context)
+	return execContext(context, s.parent, db)
 }
 
 // SelectLock is interface for SELECT statement locks

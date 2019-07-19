@@ -110,5 +110,5 @@ func (l *lockStatementImpl) Exec(db execution.DB) (sql.Result, error) {
 }
 
 func (l *lockStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	return execContext(l, db, context)
+	return execContext(context, l, db)
 }

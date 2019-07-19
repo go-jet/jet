@@ -15,7 +15,7 @@ import (
 
 // Query executes query with arguments over database connection with context and stores result into destination.
 // Destination can be either pointer to struct or pointer to slice of structs.
-func Query(db DB, context context.Context, query string, args []interface{}, destinationPtr interface{}) error {
+func Query(context context.Context, db DB, query string, args []interface{}, destinationPtr interface{}) error {
 
 	if destinationPtr == nil {
 		return errors.New("jet: Destination is nil")
@@ -27,12 +27,12 @@ func Query(db DB, context context.Context, query string, args []interface{}, des
 	}
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		return queryToSlice(db, context, query, args, destinationPtr)
+		return queryToSlice(context, db, query, args, destinationPtr)
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		err := queryToSlice(db, context, query, args, tempSlicePtrValue.Interface())
+		err := queryToSlice(context, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return err
@@ -54,7 +54,7 @@ func Query(db DB, context context.Context, query string, args []interface{}, des
 	}
 }
 
-func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, slicePtr interface{}) error {
+func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
 		return errors.New("jet: db is nil")
 	}
