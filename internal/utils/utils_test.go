@@ -6,6 +6,7 @@ import (
 )
 
 func TestToGoIdentifier(t *testing.T) {
+	assert.Equal(t, ToGoIdentifier(""), "")
 	assert.Equal(t, ToGoIdentifier("uuid"), "UUID")
 	assert.Equal(t, ToGoIdentifier("col1"), "Col1")
 	assert.Equal(t, ToGoIdentifier("PG-13"), "Pg13")

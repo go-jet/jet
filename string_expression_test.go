@@ -17,6 +17,16 @@ func TestStringNOT_EQ(t *testing.T) {
 	assertClauseSerialize(t, table3StrCol.NOT_EQ(String("JOHN")), "(table3.col2 != $1)", "JOHN")
 }
 
+func TestStringExpressionIS_DISTINCT_FROM(t *testing.T) {
+	assertClauseSerialize(t, table3StrCol.IS_DISTINCT_FROM(table2ColStr), "(table3.col2 IS DISTINCT FROM table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.IS_DISTINCT_FROM(String("JOHN")), "(table3.col2 IS DISTINCT FROM $1)", "JOHN")
+}
+
+func TestStringExpressionIS_NOT_DISTINCT_FROM(t *testing.T) {
+	assertClauseSerialize(t, table3StrCol.IS_NOT_DISTINCT_FROM(table2ColStr), "(table3.col2 IS NOT DISTINCT FROM table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.IS_NOT_DISTINCT_FROM(String("JOHN")), "(table3.col2 IS NOT DISTINCT FROM $1)", "JOHN")
+}
+
 func TestStringGT(t *testing.T) {
 	exp := table3StrCol.GT(table2ColStr)
 	assertClauseSerialize(t, exp, "(table3.col2 > table2.col_str)")

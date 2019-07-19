@@ -14,6 +14,16 @@ func TestFloatExpressionNOT_EQ(t *testing.T) {
 	assertClauseSerialize(t, table1ColFloat.NOT_EQ(Float(2.11)), "(table1.col_float != $1)", float64(2.11))
 }
 
+func TestFloatExpressionIS_DISTINCT_FROM(t *testing.T) {
+	assertClauseSerialize(t, table1ColFloat.IS_DISTINCT_FROM(table2ColFloat), "(table1.col_float IS DISTINCT FROM table2.col_float)")
+	assertClauseSerialize(t, table1ColFloat.IS_DISTINCT_FROM(Float(2.11)), "(table1.col_float IS DISTINCT FROM $1)", float64(2.11))
+}
+
+func TestFloatExpressionIS_NOT_DISTINCT_FROM(t *testing.T) {
+	assertClauseSerialize(t, table1ColFloat.IS_NOT_DISTINCT_FROM(table2ColFloat), "(table1.col_float IS NOT DISTINCT FROM table2.col_float)")
+	assertClauseSerialize(t, table1ColFloat.IS_NOT_DISTINCT_FROM(Float(2.11)), "(table1.col_float IS NOT DISTINCT FROM $1)", float64(2.11))
+}
+
 func TestFloatExpressionGT(t *testing.T) {
 	assertClauseSerialize(t, table1ColFloat.GT(table2ColFloat), "(table1.col_float > table2.col_float)")
 	assertClauseSerialize(t, table1ColFloat.GT(Float(2.11)), "(table1.col_float > $1)", float64(2.11))
