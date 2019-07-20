@@ -1,11 +1,13 @@
 package tests
 
 import (
+	"context"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestUpdateValues(t *testing.T) {
@@ -239,6 +241,43 @@ WHERE link.id = 201;
 	assertStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
 
 	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
+}
+
+func TestUpdateQueryContext(t *testing.T) {
+	setupLinkTableForUpdateTest(t)
+
+	updateStmt := Link.
+		UPDATE(Link.Name, Link.URL).
+		SET("Bong", "http://bong.com").
+		WHERE(Link.Name.EQ(String("Bing")))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Microsecond)
+
+	dest := []model.Link{}
+	err := updateStmt.QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestUpdateExecContext(t *testing.T) {
+	setupLinkTableForUpdateTest(t)
+
+	updateStmt := Link.
+		UPDATE(Link.Name, Link.URL).
+		SET("Bong", "http://bong.com").
+		WHERE(Link.Name.EQ(String("Bing")))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Microsecond)
+
+	_, err := updateStmt.ExecContext(ctx, db)
+
+	assert.Error(t, err, "context deadline exceeded")
 }
 
 func setupLinkTableForUpdateTest(t *testing.T) {
