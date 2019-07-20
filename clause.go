@@ -246,7 +246,7 @@ func argToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(utils.FormatTimestamp(bindVal)))
 	default:
-		return "[Unknown type]"
+		return "[Unsupported type]"
 	}
 }
 
