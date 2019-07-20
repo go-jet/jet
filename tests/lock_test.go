@@ -62,7 +62,7 @@ func TestLockExecContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	tx, _ := db.Begin()
 	defer tx.Rollback()

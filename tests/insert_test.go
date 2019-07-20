@@ -258,7 +258,7 @@ func TestInsertWithQueryContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	dest := []model.Link{}
 	err := stmt.QueryContext(ctx, db, &dest)
@@ -275,7 +275,7 @@ func TestInsertWithExecContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	_, err := stmt.ExecContext(ctx, db)
 

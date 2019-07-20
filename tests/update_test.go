@@ -254,7 +254,7 @@ func TestUpdateQueryContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	dest := []model.Link{}
 	err := updateStmt.QueryContext(ctx, db, &dest)
@@ -273,7 +273,7 @@ func TestUpdateExecContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	_, err := updateStmt.ExecContext(ctx, db)
 

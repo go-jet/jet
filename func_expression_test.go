@@ -155,3 +155,8 @@ func TestFuncLEAST(t *testing.T) {
 	assertClauseSerialize(t, LEAST(table1ColFloat), "LEAST(table1.col_float)")
 	assertClauseSerialize(t, LEAST(Float(11.2222), NULL, String("str")), "LEAST($1, NULL, $2)", float64(11.2222), "str")
 }
+
+func TestTO_ASCII(t *testing.T) {
+	assertClauseSerialize(t, TO_ASCII(String("Karel")), `TO_ASCII($1)`, "Karel")
+	assertClauseSerialize(t, TO_ASCII(String("Karel")), `TO_ASCII($1)`, "Karel")
+}

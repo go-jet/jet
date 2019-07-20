@@ -73,7 +73,7 @@ func TestDeleteQueryContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	dest := []model.Link{}
 	err := deleteStmt.QueryContext(ctx, db, &dest)
@@ -91,7 +91,7 @@ func TestDeleteExecContext(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Microsecond)
+	time.Sleep(10 * time.Millisecond)
 
 	_, err := deleteStmt.ExecContext(ctx, db)
 
