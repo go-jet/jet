@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	_ "github.com/lib/pq"
+	"io/ioutil"
 
 	// dot import so go code would resemble as much as native SQL
 	// dot import is not mandatory
@@ -12,15 +13,26 @@ import (
 	. "github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/table"
 
 	"github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/model"
-	"github.com/go-jet/jet/tests/dbconfig"
+)
+
+const (
+	Host     = "localhost"
+	Port     = 5432
+	User     = "jet"
+	Password = "jet"
+	DBName   = "jetdb"
 )
 
 func main() {
 
-	db, err := sql.Open("postgres", dbconfig.ConnectString)
+	// Connect to database
+	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", Host, Port, User, Password, DBName)
+
+	db, err := sql.Open("postgres", connectString)
 	panicOnError(err)
 	defer db.Close()
 
+	// Write query
 	stmt := SELECT(
 		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,
 		Film.AllColumns,
@@ -42,24 +54,13 @@ func main() {
 		Film.FilmID.ASC(),
 	)
 
-	query, args, err := stmt.Sql()
-	panicOnError(err)
-
-	fmt.Println("Parameterized query: ")
-	fmt.Println(query)
-	fmt.Println("Arguments: ")
-	fmt.Println(args)
-
-	debugSQL, err := stmt.DebugSql()
-	panicOnError(err)
-
-	fmt.Println("Debug sql: ")
-	fmt.Println(debugSQL)
-
+	// Execute query and store result
 	var dest []struct {
 		model.Actor
+
 		Films []struct {
 			model.Film
+
 			Language   model.Language
 			Categories []model.Category
 		}
@@ -68,9 +69,8 @@ func main() {
 	err = stmt.Query(db, &dest)
 	panicOnError(err)
 
-	fmt.Println("dest to json: ")
-	jsonText, _ := json.MarshalIndent(dest, "", "\t")
-	fmt.Println(string(jsonText))
+	printStatementInfo(stmt)
+	jsonSave("./dest.json", dest)
 
 	// New Destination
 
@@ -84,9 +84,35 @@ func main() {
 	err = stmt.Query(db, &dest2)
 	panicOnError(err)
 
-	fmt.Println("dest2 to json: ")
-	jsonText, _ = json.MarshalIndent(dest2, "", "\t")
-	fmt.Println(string(jsonText))
+	jsonSave("./dest2.json", dest2)
+}
+
+func jsonSave(path string, v interface{}) {
+	jsonText, _ := json.MarshalIndent(v, "", "\t")
+
+	err := ioutil.WriteFile(path, jsonText, 0644)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func printStatementInfo(stmt Statement) {
+	query, args, err := stmt.Sql()
+	panicOnError(err)
+
+	fmt.Println("Parameterized query: ")
+	fmt.Println(query)
+	fmt.Println("Arguments: ")
+	fmt.Println(args)
+
+	debugSQL, err := stmt.DebugSql()
+	panicOnError(err)
+
+	fmt.Println("\n\n==============================")
+
+	fmt.Println("\n\nDebug sql: ")
+	fmt.Println(debugSQL)
 }
 
 func panicOnError(err error) {
