@@ -200,7 +200,7 @@ func (q *sqlBuilder) insertParametrizedArgument(arg interface{}) {
 }
 
 func argToString(value interface{}) string {
-	if isNil(value) {
+	if utils.IsNil(value) {
 		return "NULL"
 	}
 

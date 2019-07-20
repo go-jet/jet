@@ -124,10 +124,6 @@ func columnListToProjectionList(columns []Column) []projection {
 	return ret
 }
 
-func isNil(v interface{}) bool {
-	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
-}
-
 func valueToClause(value interface{}) clause {
 	if clause, ok := value.(clause); ok {
 		return clause

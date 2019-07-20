@@ -2,6 +2,7 @@ package jet
 
 import (
 	"errors"
+	"github.com/go-jet/jet/internal/utils"
 )
 
 type table interface {
@@ -239,7 +240,7 @@ func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options 
 		return errors.New("jet: Join table is nil. ")
 	}
 
-	if isNil(t.lhs) {
+	if utils.IsNil(t.lhs) {
 		return errors.New("jet: left hand side of join operation is nil table")
 	}
 
@@ -262,7 +263,7 @@ func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options 
 		out.writeString("CROSS JOIN")
 	}
 
-	if isNil(t.rhs) {
+	if utils.IsNil(t.rhs) {
 		return errors.New("jet: right hand side of join operation is nil table")
 	}
 

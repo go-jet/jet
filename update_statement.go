@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/execution"
+	"github.com/go-jet/jet/internal/utils"
 )
 
 // UpdateStatement is interface of SQL UPDATE statement
@@ -62,7 +63,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	out.newLine()
 	out.writeString("UPDATE")
 
-	if isNil(u.table) {
+	if utils.IsNil(u.table) {
 		return "", nil, errors.New("jet: table to update is nil")
 	}
 

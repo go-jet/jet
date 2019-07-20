@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
+	"github.com/go-jet/jet/internal/utils"
 	"reflect"
 	"strconv"
 	"strings"
@@ -17,7 +18,7 @@ import (
 // Destination can be either pointer to struct or pointer to slice of structs.
 func Query(context context.Context, db DB, query string, args []interface{}, destinationPtr interface{}) error {
 
-	if destinationPtr == nil {
+	if utils.IsNil(destinationPtr) {
 		return errors.New("jet: Destination is nil")
 	}
 

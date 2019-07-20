@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/execution"
+	"github.com/go-jet/jet/internal/utils"
 )
 
 // InsertStatement is interface for SQL INSERT statements
@@ -82,7 +83,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	queryData.newLine()
 	queryData.writeString("INSERT INTO")
 
-	if isNil(i.table) {
+	if utils.IsNil(i.table) {
 		return "", nil, errors.New("jet: table is nil")
 	}
 

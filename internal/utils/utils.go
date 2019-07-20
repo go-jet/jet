@@ -6,6 +6,7 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -153,4 +154,8 @@ func FormatTimestamp(t time.Time) []byte {
 		b = append(b, " BC"...)
 	}
 	return b
+}
+
+func IsNil(v interface{}) bool {
+	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
