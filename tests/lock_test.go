@@ -7,7 +7,7 @@ import (
 	"time"
 
 	. "github.com/go-jet/jet"
-	. "github.com/go-jet/jet/tests/genTestDir2/jetdb/dvds/table"
+	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
 )
 
 func TestLockTable(t *testing.T) {
