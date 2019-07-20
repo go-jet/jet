@@ -15,6 +15,16 @@ func TestBoolExpressionNOT_EQ(t *testing.T) {
 	assertClauseSerialize(t, table1ColBool.NOT_EQ(Bool(true)), "(table1.col_bool != $1)", true)
 }
 
+func TestBoolExpressionIS_DISTINCT_FROM(t *testing.T) {
+	assertClauseSerialize(t, table1ColBool.IS_DISTINCT_FROM(table2ColBool), "(table1.col_bool IS DISTINCT FROM table2.col_bool)")
+	assertClauseSerialize(t, table1ColBool.IS_DISTINCT_FROM(Bool(false)), "(table1.col_bool IS DISTINCT FROM $1)", false)
+}
+
+func TestBoolExpressionIS_NOT_DISTINCT_FROM(t *testing.T) {
+	assertClauseSerialize(t, table1ColBool.IS_NOT_DISTINCT_FROM(table2ColBool), "(table1.col_bool IS NOT DISTINCT FROM table2.col_bool)")
+	assertClauseSerialize(t, table1ColBool.IS_NOT_DISTINCT_FROM(Bool(false)), "(table1.col_bool IS NOT DISTINCT FROM $1)", false)
+}
+
 func TestBoolExpressionIS_TRUE(t *testing.T) {
 	assertClauseSerialize(t, table1ColBool.IS_TRUE(), "table1.col_bool IS TRUE")
 	assertClauseSerialize(t, (Int(2).EQ(table1ColInt)).IS_TRUE(),

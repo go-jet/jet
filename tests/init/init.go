@@ -39,7 +39,7 @@ func main() {
 
 		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
 			Host:       dbconfig.Host,
-			Port:       "5432",
+			Port:       5432,
 			User:       dbconfig.User,
 			Password:   dbconfig.Password,
 			DBName:     dbconfig.DBName,

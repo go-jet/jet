@@ -109,6 +109,28 @@ INSERT INTO test_sample.link (url, name) VALUES
 	assertExec(t, query, 1)
 }
 
+func TestInsertModelObjectEmptyColumnList(t *testing.T) {
+	cleanUpLinkTable(t)
+	var expectedSQL = `
+INSERT INTO test_sample.link VALUES
+     (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
+`
+
+	linkData := model.Link{
+		ID:   1000,
+		URL:  "http://www.duckduckgo.com",
+		Name: "Duck Duck go",
+	}
+
+	query := Link.
+		INSERT().
+		MODEL(linkData)
+
+	assertStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
+
+	assertExec(t, query, 1)
+}
+
 func TestInsertModelsObject(t *testing.T) {
 	expectedSQL := `
 INSERT INTO test_sample.link (url, name) VALUES

@@ -14,10 +14,6 @@ import (
 
 // ToGoIdentifier converts database to Go identifier.
 func ToGoIdentifier(databaseIdentifier string) string {
-	if len(databaseIdentifier) == 0 {
-		return databaseIdentifier
-	}
-
 	return snaker.SnakeToCamel(replaceInvalidChars(databaseIdentifier))
 }
 

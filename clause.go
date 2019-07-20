@@ -199,11 +199,6 @@ func (q *sqlBuilder) insertParametrizedArgument(arg interface{}) {
 	q.writeString(argPlaceholder)
 }
 
-func (q *sqlBuilder) reset() {
-	q.buff.Reset()
-	q.args = []interface{}{}
-}
-
 func argToString(value interface{}) string {
 	if isNil(value) {
 		return "NULL"
@@ -251,7 +246,7 @@ func argToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(utils.FormatTimestamp(bindVal)))
 	default:
-		return "[Unknown type]"
+		return "[Unsupported type]"
 	}
 }
 
