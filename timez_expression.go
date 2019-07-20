@@ -67,15 +67,15 @@ type prefixTimezExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
-	timeExpr := prefixTimezExpression{}
-	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
-
-	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-	timeExpr.timezInterfaceImpl.parent = &timeExpr
-
-	return &timeExpr
-}
+//func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
+//	timeExpr := prefixTimezExpression{}
+//	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
+//
+//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
+//	timeExpr.timezInterfaceImpl.parent = &timeExpr
+//
+//	return &timeExpr
+//}
 
 //---------------------------------------------------//
 

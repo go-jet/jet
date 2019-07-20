@@ -119,6 +119,7 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
+	assert.NilError(t, err)
 
 	assertFileNameEqual(t, enumFiles, "mpaa_rating.go")
 	assertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", "\npackage enum", mpaaRatingEnumFile)

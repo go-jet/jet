@@ -59,15 +59,15 @@ type prefixTimeExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimeExpression(operator string, expression Expression) TimeExpression {
-	timeExpr := prefixTimeExpression{}
-	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
-
-	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-	timeExpr.timeInterfaceImpl.parent = &timeExpr
-
-	return &timeExpr
-}
+//func newPrefixTimeExpression(operator string, expression Expression) TimeExpression {
+//	timeExpr := prefixTimeExpression{}
+//	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
+//
+//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
+//	timeExpr.timeInterfaceImpl.parent = &timeExpr
+//
+//	return &timeExpr
+//}
 
 //---------------------------------------------------//
 
