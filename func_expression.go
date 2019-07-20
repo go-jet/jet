@@ -168,7 +168,7 @@ func UPPER(stringExpression StringExpression) StringExpression {
 // in characters (a space by default) from the start and end of string
 func BTRIM(stringExpression StringExpression, trimChars ...StringExpression) StringExpression {
 	if len(trimChars) > 0 {
-		return newStringFunc("LTRIM", stringExpression, trimChars[0])
+		return newStringFunc("BTRIM", stringExpression, trimChars[0])
 	}
 	return newStringFunc("BTRIM", stringExpression)
 }

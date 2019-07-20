@@ -246,23 +246,21 @@ ORDER BY "Album.AlbumId";
 	assert.DeepEqual(t, dest[1], album2)
 }
 
-//func TestQueryWithContext(t *testing.T) {
-//
-//	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-//	defer cancel()
-//
-//	dest := []model.Album{}
-//
-//	err := Album.
-//		CROSS_JOIN(Track).
-//		CROSS_JOIN(InvoiceLine).
-//		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
-//		QueryContext(db, ctx, &dest)
-//
-//	spew.Dump(dest)
-//
-//	assert.Error(t, err, "context deadline exceeded")
-//}
+func TestQueryWithContext(t *testing.T) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	dest := []model.Album{}
+
+	err := Album.
+		CROSS_JOIN(Track).
+		CROSS_JOIN(InvoiceLine).
+		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
+		QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
 
 func TestExecWithContext(t *testing.T) {
 

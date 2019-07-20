@@ -1315,54 +1315,6 @@ LIMIT 20;
 	assert.Equal(t, dest[1].StaffIDNum, "ONE")
 }
 
-func TestLockTable(t *testing.T) {
-	expectedSQL := `
-LOCK TABLE dvds.address IN`
-
-	var testData = []TableLockMode{
-		LOCK_ACCESS_SHARE,
-		LOCK_ROW_SHARE,
-		LOCK_ROW_EXCLUSIVE,
-		LOCK_SHARE_UPDATE_EXCLUSIVE,
-		LOCK_SHARE,
-		LOCK_SHARE_ROW_EXCLUSIVE,
-		LOCK_EXCLUSIVE,
-		LOCK_ACCESS_EXCLUSIVE,
-	}
-
-	for _, lockMode := range testData {
-		query := Address.LOCK().IN(lockMode)
-
-		assertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-
-		assert.NilError(t, err)
-	}
-
-	for _, lockMode := range testData {
-		query := Address.LOCK().IN(lockMode).NOWAIT()
-
-		assertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-
-		assert.NilError(t, err)
-	}
-}
-
 func getRowLockTestData() map[SelectLock]string {
 	return map[SelectLock]string{
 		UPDATE():        "UPDATE",

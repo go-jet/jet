@@ -1,11 +1,13 @@
 package tests
 
 import (
+	"context"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestInsertValues(t *testing.T) {
@@ -244,4 +246,38 @@ RETURNING link.id AS "link.id",
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(youtubeLinks), 2)
+}
+
+func TestInsertWithQueryContext(t *testing.T) {
+	cleanUpLinkTable(t)
+
+	stmt := Link.INSERT().
+		VALUES(1100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		RETURNING(Link.AllColumns)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	dest := []model.Link{}
+	err := stmt.QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestInsertWithExecContext(t *testing.T) {
+	cleanUpLinkTable(t)
+
+	stmt := Link.INSERT().
+		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	_, err := stmt.ExecContext(ctx, db)
+
+	assert.Error(t, err, "context deadline exceeded")
 }

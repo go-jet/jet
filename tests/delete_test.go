@@ -1,11 +1,13 @@
 package tests
 
 import (
+	"context"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestDeleteWithWhere(t *testing.T) {
@@ -59,4 +61,39 @@ func initForDeleteTest(t *testing.T) {
 		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
 
 	assertExec(t, stmt, 2)
+}
+
+func TestDeleteQueryContext(t *testing.T) {
+	initForDeleteTest(t)
+
+	deleteStmt := Link.
+		DELETE().
+		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	dest := []model.Link{}
+	err := deleteStmt.QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestDeleteExecContext(t *testing.T) {
+	initForDeleteTest(t)
+
+	deleteStmt := Link.
+		DELETE().
+		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	_, err := deleteStmt.ExecContext(ctx, db)
+
+	assert.Error(t, err, "context deadline exceeded")
 }
