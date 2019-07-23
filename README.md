@@ -4,7 +4,7 @@
 [![codecov](https://codecov.io/gh/go-jet/jet/branch/develop/graph/badge.svg)](https://codecov.io/gh/go-jet/jet)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-jet/jet)](https://goreportcard.com/report/github.com/go-jet/jet)
 [![Documentation](https://godoc.org/github.com/go-jet/jet?status.svg)](http://godoc.org/github.com/go-jet/jet)
-![GitHub release](https://img.shields.io/github/release/go-jet/jet.svg)
+[![GitHub release](https://img.shields.io/github/release/go-jet/jet.svg)](https://github.com/go-jet/jet/releases)
 
 
 Jet is a framework for writing type-safe SQL queries for PostgreSQL in Go, with ability to easily 
