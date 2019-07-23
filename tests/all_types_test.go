@@ -127,7 +127,10 @@ func TestStringOperators(t *testing.T) {
 		LOWER(AllTypes.CharacterVaryingPtr),
 		UPPER(AllTypes.Character),
 		BTRIM(AllTypes.CharacterVarying),
+		BTRIM(AllTypes.CharacterVarying, String("AA")),
+		LTRIM(AllTypes.CharacterVarying),
 		LTRIM(AllTypes.CharacterVarying, String("A")),
+		RTRIM(AllTypes.CharacterVarying),
 		RTRIM(AllTypes.CharacterVarying, String("B")),
 		CHR(Int(65)),
 		//CONCAT(String("string1"), Int(1), Float(11.12)),
@@ -143,13 +146,16 @@ func TestStringOperators(t *testing.T) {
 		RIGHT(String("abcde"), Int(2)),
 		LENGTH(String("jose")),
 		LENGTH(String("jose"), String("UTF8")),
+		LPAD(String("Hi"), Int(5)),
 		LPAD(String("Hi"), Int(5), String("xy")),
+		RPAD(String("Hi"), Int(5)),
 		RPAD(String("Hi"), Int(5), String("xy")),
 		MD5(AllTypes.CharacterVarying),
 		REPEAT(AllTypes.Text, Int(33)),
 		REPLACE(AllTypes.Character, String("BA"), String("AB")),
 		REVERSE(AllTypes.CharacterVarying),
 		STRPOS(AllTypes.Text, String("A")),
+		SUBSTR(AllTypes.CharacterPtr, Int(3)),
 		SUBSTR(AllTypes.CharacterPtr, Int(3), Int(2)),
 		TO_HEX(AllTypes.IntegerPtr),
 	)
@@ -229,7 +235,7 @@ func TestFloatOperators(t *testing.T) {
 		CEIL(AllTypes.Real),
 		FLOOR(AllTypes.Real),
 		ROUND(AllTypes.Decimal),
-		ROUND(AllTypes.Decimal, Int(3)).AS("round"),
+		ROUND(AllTypes.Decimal, AllTypes.Integer).AS("round"),
 		SIGN(AllTypes.Real),
 		TRUNC(AllTypes.Decimal),
 		TRUNC(AllTypes.Decimal, Int(1)),
@@ -361,7 +367,7 @@ func TestSubQueryColumnReference(t *testing.T) {
 		args []interface{}
 	}
 
-	subQueries := map[ExpressionTable]expected{}
+	subQueries := map[SelectTable]expected{}
 
 	selectSubQuery := AllTypes.SELECT(
 		AllTypes.Boolean,
@@ -378,7 +384,7 @@ func TestSubQueryColumnReference(t *testing.T) {
 		LIMIT(2).
 		AsTable("subQuery")
 
-	var selectExpectedSql = ` (
+	var selectexpectedSQL = ` (
           SELECT all_types.boolean AS "all_types.boolean",
                all_types.integer AS "all_types.integer",
                all_types.real AS "all_types.real",
@@ -424,7 +430,7 @@ func TestSubQueryColumnReference(t *testing.T) {
 		).
 			AsTable("subQuery")
 
-	unionExpectedSql := `
+	unionexpectedSQL := `
      (
           (
                SELECT all_types.boolean AS "all_types.boolean",
@@ -458,8 +464,8 @@ func TestSubQueryColumnReference(t *testing.T) {
           )
      ) AS "subQuery"`
 
-	subQueries[selectSubQuery] = expected{sql: selectExpectedSql, args: []interface{}{int64(2)}}
-	subQueries[unionSubQuery] = expected{sql: unionExpectedSql, args: []interface{}{int64(1), int64(1), int64(1)}}
+	subQueries[selectSubQuery] = expected{sql: selectexpectedSQL, args: []interface{}{int64(2)}}
+	subQueries[unionSubQuery] = expected{sql: unionexpectedSQL, args: []interface{}{int64(1), int64(1), int64(1)}}
 
 	for subQuery, expected := range subQueries {
 		boolColumn := AllTypes.Boolean.From(subQuery)
@@ -487,7 +493,7 @@ func TestSubQueryColumnReference(t *testing.T) {
 		).
 			FROM(subQuery)
 
-		var expectedSql = `
+		var expectedSQL = `
 SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
      "subQuery"."all_types.integer" AS "all_types.integer",
      "subQuery"."all_types.real" AS "all_types.real",
@@ -500,7 +506,7 @@ SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
      "subQuery"."aliasedColumn" AS "aliasedColumn"
 FROM`
 
-		assertStatementSql(t, stmt1, expectedSql+expected.sql+";\n", expected.args...)
+		assertStatementSql(t, stmt1, expectedSQL+expected.sql+";\n", expected.args...)
 
 		dest1 := []model.AllTypes{}
 		err := stmt1.Query(db, &dest1)
@@ -523,7 +529,7 @@ FROM`
 
 		//fmt.Println(stmt2.DebugSql())
 
-		assertStatementSql(t, stmt2, expectedSql+expected.sql+";\n", expected.args...)
+		assertStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
 
 		dest2 := []model.AllTypes{}
 		err = stmt2.Query(db, &dest2)

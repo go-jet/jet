@@ -40,12 +40,12 @@ type sqlBuilder struct {
 type statementType string
 
 const (
-	select_statement statementType = "SELECT"
-	insert_statement statementType = "INSERT"
-	update_statement statementType = "UPDATE"
-	delete_statement statementType = "DELETE"
-	set_statement    statementType = "SET"
-	lock_statement   statementType = "LOCK"
+	selectStatement statementType = "SELECT"
+	insertStatement statementType = "INSERT"
+	updateStatement statementType = "UPDATE"
+	deleteStatement statementType = "DELETE"
+	setStatement    statementType = "SET"
+	lockStatement   statementType = "LOCK"
 )
 
 const defaultIdent = 5
@@ -102,7 +102,7 @@ func (q *sqlBuilder) writeGroupBy(statement statementType, groupBy []groupByClau
 	return err
 }
 
-func (q *sqlBuilder) writeOrderBy(statement statementType, orderBy []OrderByClause) error {
+func (q *sqlBuilder) writeOrderBy(statement statementType, orderBy []orderByClause) error {
 	q.newLine()
 	q.writeString("ORDER BY")
 
@@ -189,23 +189,18 @@ func (q *sqlBuilder) finalize() (string, []interface{}) {
 }
 
 func (q *sqlBuilder) insertConstantArgument(arg interface{}) {
-	q.writeString(ArgToString(arg))
+	q.writeString(argToString(arg))
 }
 
-func (q *sqlBuilder) insertPreparedArgument(arg interface{}) {
+func (q *sqlBuilder) insertParametrizedArgument(arg interface{}) {
 	q.args = append(q.args, arg)
 	argPlaceholder := "$" + strconv.Itoa(len(q.args))
 
 	q.writeString(argPlaceholder)
 }
 
-func (q *sqlBuilder) reset() {
-	q.buff.Reset()
-	q.args = []interface{}{}
-}
-
-func ArgToString(value interface{}) string {
-	if isNil(value) {
+func argToString(value interface{}) string {
+	if utils.IsNil(value) {
 		return "NULL"
 	}
 
@@ -213,9 +208,8 @@ func ArgToString(value interface{}) string {
 	case bool:
 		if bindVal {
 			return "TRUE"
-		} else {
-			return "FALSE"
 		}
+		return "FALSE"
 	case int8:
 		return strconv.FormatInt(int64(bindVal), 10)
 	case int:
@@ -252,7 +246,7 @@ func ArgToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(utils.FormatTimestamp(bindVal)))
 	default:
-		return "[Unknown type]"
+		return "[Unsupported type]"
 	}
 }
 

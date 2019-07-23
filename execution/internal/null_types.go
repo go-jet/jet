@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// NullByteArray
+// NullByteArray struct
 type NullByteArray struct {
 	ByteArray []byte
 	Valid     bool
@@ -31,7 +31,7 @@ func (nb NullByteArray) Value() (driver.Value, error) {
 	return nb.ByteArray, nil
 }
 
-//NullTime
+// NullTime struct
 type NullTime struct {
 	Time  time.Time
 	Valid bool // Valid is true if Time is not NULL
@@ -51,6 +51,7 @@ func (nt NullTime) Value() (driver.Value, error) {
 	return nt.Time, nil
 }
 
+// NullInt32 struct
 type NullInt32 struct {
 	Int32 int32
 	Valid bool // Valid is true if Int64 is not NULL
@@ -83,6 +84,7 @@ func (n NullInt32) Value() (driver.Value, error) {
 	return n.Int32, nil
 }
 
+// NullInt16 struct
 type NullInt16 struct {
 	Int16 int16
 	Valid bool // Valid is true if Int64 is not NULL
@@ -115,6 +117,7 @@ func (n NullInt16) Value() (driver.Value, error) {
 	return n.Int16, nil
 }
 
+// NullFloat32 struct
 type NullFloat32 struct {
 	Float32 float32
 	Valid   bool // Valid is true if Int64 is not NULL

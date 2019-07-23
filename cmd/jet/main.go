@@ -4,8 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-jet/jet/generator/postgres"
+	_ "github.com/lib/pq"
 	"os"
-	"strconv"
 )
 
 var (
@@ -70,7 +70,7 @@ Usage of jet:
 
 	genData := postgres.DBConnection{
 		Host:     host,
-		Port:     strconv.Itoa(port),
+		Port:     port,
 		User:     user,
 		Password: password,
 		SslMode:  sslmode,

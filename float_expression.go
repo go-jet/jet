@@ -1,5 +1,6 @@
 package jet
 
+//FloatExpression is interface for SQL float columns
 type FloatExpression interface {
 	Expression
 	numericExpression
@@ -115,6 +116,9 @@ func newFloatExpressionWrap(expression Expression) FloatExpression {
 	return &floatExpressionWrap
 }
 
+// FloatExp is date expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as float expression.
+// Does not add sql cast to generated sql builder output.
 func FloatExp(expression Expression) FloatExpression {
 	return newFloatExpressionWrap(expression)
 }

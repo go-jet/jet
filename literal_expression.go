@@ -27,7 +27,7 @@ func (l literalExpression) serialize(statement statementType, out *sqlBuilder, o
 	if l.constant {
 		out.insertConstantArgument(l.value)
 	} else {
-		out.insertPreparedArgument(l.value)
+		out.insertParametrizedArgument(l.value)
 	}
 
 	return nil
@@ -38,6 +38,7 @@ type integerLiteralExpression struct {
 	integerInterfaceImpl
 }
 
+// Int is constructor for integer expressions literals.
 func Int(value int64) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
@@ -55,6 +56,7 @@ type boolLiteralExpression struct {
 	literalExpression
 }
 
+// Bool creates new bool literal expression
 func Bool(value bool) BoolExpression {
 	boolLiteralExpression := boolLiteralExpression{}
 
@@ -70,6 +72,7 @@ type floatLiteral struct {
 	literalExpression
 }
 
+// Float creates new float literal expression
 func Float(value float64) FloatExpression {
 	floatLiteral := floatLiteral{}
 	floatLiteral.literalExpression = *literal(value)
@@ -85,6 +88,7 @@ type stringLiteral struct {
 	literalExpression
 }
 
+// String creates new string literal expression
 func String(value string) StringExpression {
 	stringLiteral := stringLiteral{}
 	stringLiteral.literalExpression = *literal(value)
@@ -100,6 +104,7 @@ type timeLiteral struct {
 	literalExpression
 }
 
+// Time creates new time literal expression
 func Time(hour, minute, second, milliseconds int) TimeExpression {
 	timeLiteral := &timeLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
@@ -116,6 +121,7 @@ type timezLiteral struct {
 	literalExpression
 }
 
+// Timez creates new time with time zone literal expression
 func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
 	timezLiteral := &timezLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
@@ -132,6 +138,7 @@ type timestampLiteral struct {
 	literalExpression
 }
 
+// Timestamp creates new timestamp literal expression
 func Timestamp(year, month, day, hour, minute, second, milliseconds int) TimestampExpression {
 	timestampLiteral := &timestampLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d", year, month, day, hour, minute, second, milliseconds)
@@ -148,6 +155,7 @@ type timestampzLiteral struct {
 	literalExpression
 }
 
+// Timestampz creates new timestamp with time zone literal expression
 func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone int) TimestampzExpression {
 	timestampzLiteral := &timestampzLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
@@ -166,6 +174,7 @@ type dateLiteral struct {
 	literalExpression
 }
 
+//Date creates new date expression
 func Date(year, month, day int) DateExpression {
 	dateLiteral := &dateLiteral{}
 
@@ -226,6 +235,7 @@ func (n *wrap) serialize(statement statementType, out *sqlBuilder, options ...se
 	return err
 }
 
+// WRAP wraps list of expressions with brackets '(' and ')'
 func WRAP(expression ...Expression) Expression {
 	wrap := &wrap{expressions: expression}
 	wrap.expressionInterfaceImpl.parent = wrap
@@ -245,6 +255,8 @@ func (n *rawExpression) serialize(statement statementType, out *sqlBuilder, opti
 	return nil
 }
 
+// RAW can be used for any unsupported functions, operators or expressions.
+// For example: RAW("current_database()")
 func RAW(raw string) Expression {
 	rawExp := &rawExpression{raw: raw}
 	rawExp.expressionInterfaceImpl.parent = rawExp

@@ -1,5 +1,6 @@
 package jet
 
+// TimestampzExpression interface
 type TimestampzExpression interface {
 	Expression
 
@@ -63,6 +64,9 @@ func newTimestampzExpressionWrap(expression Expression) TimestampzExpression {
 	return &timestampzExpressionWrap
 }
 
+// TimestampzExp is timestamp with time zone expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as timestamp with time zone expression.
+// Does not add sql cast to generated sql builder output.
 func TimestampzExp(expression Expression) TimestampzExpression {
 	return newTimestampzExpressionWrap(expression)
 }

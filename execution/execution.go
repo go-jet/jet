@@ -7,16 +7,19 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
+	"github.com/go-jet/jet/internal/utils"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 )
 
-func Query(db DB, context context.Context, query string, args []interface{}, destinationPtr interface{}) error {
+// Query executes query with arguments over database connection with context and stores result into destination.
+// Destination can be either pointer to struct or pointer to slice of structs.
+func Query(context context.Context, db DB, query string, args []interface{}, destinationPtr interface{}) error {
 
-	if destinationPtr == nil {
-		return errors.New("jet: Destination is nil.")
+	if utils.IsNil(destinationPtr) {
+		return errors.New("jet: Destination is nil")
 	}
 
 	destinationPtrType := reflect.TypeOf(destinationPtr)
@@ -25,12 +28,12 @@ func Query(db DB, context context.Context, query string, args []interface{}, des
 	}
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		return queryToSlice(db, context, query, args, destinationPtr)
+		return queryToSlice(context, db, query, args, destinationPtr)
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		err := queryToSlice(db, context, query, args, tempSlicePtrValue.Interface())
+		err := queryToSlice(context, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return err
@@ -52,7 +55,7 @@ func Query(db DB, context context.Context, query string, args []interface{}, des
 	}
 }
 
-func queryToSlice(db DB, ctx context.Context, query string, args []interface{}, slicePtr interface{}) error {
+func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) error {
 	if db == nil {
 		return errors.New("jet: db is nil")
 	}
@@ -142,22 +145,22 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 		structPtrValue := getSliceElemPtrAt(slicePtrValue, index)
 
 		return mapRowToStruct(scanContext, groupKey, structPtrValue, field, true)
-	} else {
-		destinationStructPtr := newElemPtrValueForSlice(slicePtrValue)
+	}
 
-		updated, err = mapRowToStruct(scanContext, groupKey, destinationStructPtr, field)
+	destinationStructPtr := newElemPtrValueForSlice(slicePtrValue)
+
+	updated, err = mapRowToStruct(scanContext, groupKey, destinationStructPtr, field)
+
+	if err != nil {
+		return
+	}
+
+	if updated {
+		scanContext.uniqueDestObjectsMap[groupKey] = slicePtrValue.Elem().Len()
+		err = appendElemToSlice(slicePtrValue, destinationStructPtr)
 
 		if err != nil {
 			return
-		}
-
-		if updated {
-			scanContext.uniqueDestObjectsMap[groupKey] = slicePtrValue.Elem().Len()
-			err = appendElemToSlice(slicePtrValue, destinationStructPtr)
-
-			if err != nil {
-				return
-			}
 		}
 	}
 
@@ -481,9 +484,8 @@ func valueToString(value reflect.Value) string {
 	if value.Kind() == reflect.Ptr {
 		if value.IsNil() {
 			return "nil"
-		} else {
-			valueInterface = value.Elem().Interface()
 		}
+		valueInterface = value.Elem().Interface()
 	} else {
 		valueInterface = value.Interface()
 	}
@@ -655,13 +657,13 @@ func (s *scanContext) getGroupKey(structType reflect.Type, structField *reflect.
 
 	if groupKeyInfo, ok := s.groupKeyInfoCache[mapKey]; ok {
 		return s.constructGroupKey(groupKeyInfo)
-	} else {
-		groupKeyInfo := s.getGroupKeyInfo(structType, structField)
-
-		s.groupKeyInfoCache[mapKey] = groupKeyInfo
-
-		return s.constructGroupKey(groupKeyInfo)
 	}
+
+	groupKeyInfo := s.getGroupKeyInfo(structType, structField)
+
+	s.groupKeyInfoCache[mapKey] = groupKeyInfo
+
+	return s.constructGroupKey(groupKeyInfo)
 }
 
 func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
@@ -740,16 +742,6 @@ func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 	}
 
 	return index
-}
-
-func (s *scanContext) getCellValue(typeName, fieldName string) interface{} {
-	index := s.typeToColumnIndex(typeName, fieldName)
-
-	if index < 0 {
-		return nil
-	}
-
-	return s.rowElem(index)
 }
 
 func (s *scanContext) rowElem(index int) interface{} {

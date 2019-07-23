@@ -34,10 +34,7 @@ jobs:
             go get github.com/davecgh/go-spew/spew
             go get github.com/jstemmer/go-junit-report
 
-      - run: mkdir -p $TEST_RESULTS/unit-tests
-      - run: mkdir -p $TEST_RESULTS/integration-tests
-
-      - run: go test -v 2>&1 | go-junit-report > $TEST_RESULTS/unit-tests/results.xml
+            go install github.com/go-jet/jet/cmd/jet
 
       - run:
           name: Waiting for Postgres to be ready
@@ -51,12 +48,18 @@ jobs:
             echo Failed waiting for Postgres && exit 1
 
       - run:
-          name: Run integration tests
+          name: Init Postgres database
           command: |
             cd tests
             go run ./init/init.go
-            go test -v 2>&1 | go-junit-report > $TEST_RESULTS/integration-tests/results.xml
             cd ..
+
+      - run: mkdir -p $TEST_RESULTS
+      - run: go test -v . ./tests -coverpkg=github.com/go-jet/jet,github.com/go-jet/jet/execution/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
+
+      - run:
+          name: Upload code coverage
+          command: bash <(curl -s https://codecov.io/bash)
 
       - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
           path: /tmp/test-results

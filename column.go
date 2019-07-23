@@ -7,10 +7,11 @@ type column interface {
 	TableName() string
 
 	setTableName(table string)
-	setSubQuery(subQuery ExpressionTable)
+	setSubQuery(subQuery SelectTable)
 	defaultAlias() string
 }
 
+// Column is common column interface for all types of columns.
 type Column interface {
 	Expression
 	column
@@ -23,7 +24,7 @@ type columnImpl struct {
 	name      string
 	tableName string
 
-	subQuery ExpressionTable
+	subQuery SelectTable
 }
 
 func newColumn(name string, tableName string, parent Column) columnImpl {
@@ -49,7 +50,7 @@ func (c *columnImpl) setTableName(table string) {
 	c.tableName = table
 }
 
-func (c *columnImpl) setSubQuery(subQuery ExpressionTable) {
+func (c *columnImpl) setSubQuery(subQuery SelectTable) {
 	c.subQuery = subQuery
 }
 
@@ -62,7 +63,7 @@ func (c *columnImpl) defaultAlias() string {
 }
 
 func (c *columnImpl) serializeForOrderBy(statement statementType, out *sqlBuilder) error {
-	if statement == set_statement {
+	if statement == setStatement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.writeString(`"` + c.defaultAlias() + `"`) //always quote
 
@@ -104,13 +105,13 @@ func (c columnImpl) serialize(statement statementType, out *sqlBuilder, options 
 
 //------------------------------------------------------//
 
-// Redefined type to support list of columns as projection
+// ColumnList is redefined type to support list of columns as single projection
 type ColumnList []Column
 
 // projection interface implementation
 func (cl ColumnList) isProjectionType() {}
 
-func (cl ColumnList) from(subQuery ExpressionTable) projection {
+func (cl ColumnList) from(subQuery SelectTable) projection {
 	newProjectionList := ProjectionList{}
 
 	for _, column := range cl {
@@ -134,8 +135,11 @@ func (cl ColumnList) serializeForProjection(statement statementType, out *sqlBui
 
 // dummy column interface implementation
 
-func (cl ColumnList) Name() string                         { return "" }
-func (cl ColumnList) TableName() string                    { return "" }
-func (cl ColumnList) setTableName(name string)             {}
-func (cl ColumnList) setSubQuery(subQuery ExpressionTable) {}
-func (cl ColumnList) defaultAlias() string                 { return "" }
+// Name is placeholder for ColumnList to implement Column interface
+func (cl ColumnList) Name() string { return "" }
+
+// TableName is placeholder for ColumnList to implement Column interface
+func (cl ColumnList) TableName() string                { return "" }
+func (cl ColumnList) setTableName(name string)         {}
+func (cl ColumnList) setSubQuery(subQuery SelectTable) {}
+func (cl ColumnList) defaultAlias() string             { return "" }

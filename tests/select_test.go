@@ -10,7 +10,7 @@ import (
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
@@ -24,7 +24,7 @@ WHERE actor.actor_id = 1;
 		DISTINCT().
 		WHERE(Actor.ActorID.EQ(Int(1)))
 
-	assertStatementSql(t, query, expectedSql, int64(1))
+	assertStatementSql(t, query, expectedSQL, int64(1))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -42,7 +42,7 @@ WHERE actor.actor_id = 1;
 }
 
 func TestClassicSelect(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
      payment.customer_id AS "payment.customer_id",
      payment.staff_id AS "payment.staff_id",
@@ -74,7 +74,7 @@ LIMIT 30;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
-	assertStatementSql(t, query, expectedSql, int64(30))
+	assertStatementSql(t, query, expectedSQL, int64(30))
 
 	dest := []model.Payment{}
 
@@ -85,7 +85,7 @@ LIMIT 30;
 }
 
 func TestSelect_ScanToSlice(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
      customer.first_name AS "customer.first_name",
@@ -103,7 +103,7 @@ ORDER BY customer.customer_id ASC;
 
 	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &customers)
 	assert.NilError(t, err)
@@ -116,7 +116,7 @@ ORDER BY customer.customer_id ASC;
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
      (
           SELECT customer.customer_id AS "customer.customer_id"
@@ -156,12 +156,12 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
-	assertStatementSql(t, query, expectedSql, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+	assertStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 }
 
 func TestJoinQueryStruct(t *testing.T) {
 
-	expectedSql := `
+	expectedSQL := `
 SELECT film_actor.actor_id AS "film_actor.actor_id",
      film_actor.film_id AS "film_actor.film_id",
      film_actor.last_update AS "film_actor.last_update",
@@ -224,7 +224,7 @@ LIMIT 1000;
 			ORDER_BY(Film.FilmID.ASC()).
 			LIMIT(1000)
 
-		assertStatementSql(t, query, expectedSql, int64(1000))
+		assertStatementSql(t, query, expectedSQL, int64(1000))
 
 		var languageActorFilm []struct {
 			model.Language
@@ -253,7 +253,7 @@ LIMIT 1000;
 }
 
 func TestJoinQuerySlice(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT language.language_id AS "language.language_id",
      language.name AS "language.name",
      language.last_update AS "language.last_update",
@@ -290,7 +290,7 @@ LIMIT 15;
 		WHERE(Film.Rating.EQ(enum.MpaaRating.Nc17)).
 		LIMIT(15)
 
-	assertStatementSql(t, query, expectedSql, int64(15))
+	assertStatementSql(t, query, expectedSQL, int64(15))
 
 	err := query.Query(db, &filmsPerLanguage)
 
@@ -532,7 +532,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 2)
-	assertJson(t, dest, `
+	assertJSON(t, dest, `
 [
 	{
 		"CityID": 312,
@@ -657,7 +657,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 }
 
 func TestSelectFullJoin(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
      customer.first_name AS "customer.first_name",
@@ -685,7 +685,7 @@ ORDER BY customer.customer_id ASC;
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC())
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	allCustomersAndAddress := []struct {
 		Address  *model.Address
@@ -708,7 +708,7 @@ ORDER BY customer.customer_id ASC;
 }
 
 func TestSelectFullCrossJoin(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
      customer.first_name AS "customer.first_name",
@@ -738,7 +738,7 @@ LIMIT 1000;
 		ORDER_BY(Customer.CustomerID.ASC()).
 		LIMIT(1000)
 
-	assertStatementSql(t, query, expectedSql, int64(1000))
+	assertStatementSql(t, query, expectedSQL, int64(1000))
 
 	var customerAddresCrosJoined []struct {
 		model.Customer
@@ -753,7 +753,7 @@ LIMIT 1000;
 }
 
 func TestSelectSelfJoin(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT f1.film_id AS "f1.film_id",
      f1.title AS "f1.title",
      f1.description AS "f1.description",
@@ -793,7 +793,7 @@ ORDER BY f1.film_id ASC;
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	type F1 model.Film
 	type F2 model.Film
@@ -813,7 +813,7 @@ ORDER BY f1.film_id ASC;
 }
 
 func TestSelectAliasColumn(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT f1.title AS "thesame_length_films.title1",
      f2.title AS "thesame_length_films.title2",
      f1.length AS "thesame_length_films.length"
@@ -835,7 +835,7 @@ LIMIT 1000;
 		ORDER_BY(f1.Length.ASC(), f1.Title.ASC(), f2.Title.ASC()).
 		LIMIT(1000)
 
-	assertStatementSql(t, query, expectedSql, int64(1000))
+	assertStatementSql(t, query, expectedSQL, int64(1000))
 
 	type thesameLengthFilms struct {
 		Title1 string
@@ -886,11 +886,11 @@ FROM dvds.actor
 		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
 		AsTable("rFilms")
 
-	rFilmId := Film.FilmID.From(rRatingFilms)
+	rFilmID := Film.FilmID.From(rRatingFilms)
 
 	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmId)).
+		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmID)).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
@@ -928,7 +928,7 @@ FROM dvds.film;
 }
 
 func TestSelectQueryScalar(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT film.film_id AS "film.film_id",
      film.title AS "film.title",
      film.description AS "film.description",
@@ -960,7 +960,7 @@ ORDER BY film.film_id ASC;
 		WHERE(Film.RentalRate.EQ(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	maxRentalRateFilms := []model.Film{}
 	err := query.Query(db, &maxRentalRateFilms)
@@ -989,7 +989,7 @@ ORDER BY film.film_id ASC;
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT payment.customer_id AS "customer_payment_sum.customer_id",
      SUM(payment.amount) AS "customer_payment_sum.amount_sum",
      AVG(payment.amount) AS "customer_payment_sum.amount_avg",
@@ -1018,7 +1018,7 @@ ORDER BY SUM(payment.amount) ASC;
 			SUMf(Payment.Amount).GT(Float(100)),
 		)
 
-	assertStatementSql(t, customersPaymentQuery, expectedSql, float64(100))
+	assertStatementSql(t, customersPaymentQuery, expectedSQL, float64(100))
 
 	type CustomerPaymentSum struct {
 		CustomerID  int16
@@ -1047,7 +1047,7 @@ ORDER BY SUM(payment.amount) ASC;
 }
 
 func TestSelectGroupBy2(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
      customer.first_name AS "customer.first_name",
@@ -1077,18 +1077,18 @@ ORDER BY customer_payment_sum."amount_sum" ASC;
 		GROUP_BY(Payment.CustomerID).
 		AsTable("customer_payment_sum")
 
-	customerId := Payment.CustomerID.From(customersPayments)
+	customerID := Payment.CustomerID.From(customersPayments)
 	amountSum := FloatColumn("amount_sum").From(customersPayments)
 
 	query := Customer.
-		INNER_JOIN(customersPayments, Customer.CustomerID.EQ(customerId)).
+		INNER_JOIN(customersPayments, Customer.CustomerID.EQ(customerID)).
 		SELECT(
 			Customer.AllColumns,
 			amountSum.AS("CustomerWithAmounts.AmountSum"),
 		).
 		ORDER_BY(amountSum.ASC())
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	type CustomerWithAmounts struct {
 		Customer  *model.Customer
@@ -1123,7 +1123,7 @@ func TestSelectStaff(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	assertJson(t, staffs, `
+	assertJSON(t, staffs, `
 [
 	{
 		"StaffID": 1,
@@ -1157,7 +1157,7 @@ func TestSelectStaff(t *testing.T) {
 
 func TestSelectTimeColumns(t *testing.T) {
 
-	expectedSql := `
+	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
      payment.customer_id AS "payment.customer_id",
      payment.staff_id AS "payment.staff_id",
@@ -1173,7 +1173,7 @@ ORDER BY payment.payment_date ASC;
 		WHERE(Payment.PaymentDate.LT(Timestamp(2007, 02, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	assertStatementSql(t, query, expectedSql, "2007-02-14 22:16:01.000")
+	assertStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01.000")
 
 	payments := []model.Payment{}
 
@@ -1260,8 +1260,8 @@ func TestAllSetOperators(t *testing.T) {
 		UNION_ALL,
 		INTERSECT,
 		INTERSECT_ALL,
-		EXCEPT,
-		EXCEPT_ALL,
+		//EXCEPT,
+		//EXCEPT_ALL,
 	}
 
 	expectedDestLen := []int{
@@ -1304,63 +1304,15 @@ LIMIT 20;
 	assertStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
 
 	dest := []struct {
-		StaffIdNum string
+		StaffIDNum string
 	}{}
 
 	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 20)
-	assert.Equal(t, dest[0].StaffIdNum, "TWO")
-	assert.Equal(t, dest[1].StaffIdNum, "ONE")
-}
-
-func TestLockTable(t *testing.T) {
-	expectedSql := `
-LOCK TABLE dvds.address IN`
-
-	var testData = []TableLockMode{
-		LOCK_ACCESS_SHARE,
-		LOCK_ROW_SHARE,
-		LOCK_ROW_EXCLUSIVE,
-		LOCK_SHARE_UPDATE_EXCLUSIVE,
-		LOCK_SHARE,
-		LOCK_SHARE_ROW_EXCLUSIVE,
-		LOCK_EXCLUSIVE,
-		LOCK_ACCESS_EXCLUSIVE,
-	}
-
-	for _, lockMode := range testData {
-		query := Address.LOCK().IN(lockMode)
-
-		assertStatementSql(t, query, expectedSql+" "+string(lockMode)+" MODE;\n")
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-
-		assert.NilError(t, err)
-	}
-
-	for _, lockMode := range testData {
-		query := Address.LOCK().IN(lockMode).NOWAIT()
-
-		assertStatementSql(t, query, expectedSql+" "+string(lockMode)+" MODE NOWAIT;\n")
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-
-		assert.NilError(t, err)
-	}
+	assert.Equal(t, dest[0].StaffIDNum, "TWO")
+	assert.Equal(t, dest[1].StaffIDNum, "ONE")
 }
 
 func getRowLockTestData() map[SelectLock]string {
@@ -1373,7 +1325,7 @@ func getRowLockTestData() map[SelectLock]string {
 }
 
 func TestRowLock(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 SELECT *
 FROM dvds.address
 LIMIT 3
@@ -1385,7 +1337,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType)
 
-		assertStatementSql(t, query, expectedSql+" "+lockTypeStr+";\n", int64(3))
+		assertStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1401,7 +1353,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.NOWAIT())
 
-		assertStatementSql(t, query, expectedSql+" "+lockTypeStr+" NOWAIT;\n", int64(3))
+		assertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1417,7 +1369,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
-		assertStatementSql(t, query, expectedSql+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
+		assertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1433,7 +1385,7 @@ FOR`
 
 func TestQuickStart(t *testing.T) {
 
-	var expectedSql = `
+	var expectedSQL = `
 SELECT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
@@ -1488,7 +1440,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 		Film.FilmID.ASC(),
 	)
 
-	assertStatementSql(t, stmt, expectedSql, "English", "Action", int64(180))
+	assertStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
 
 	var dest []struct {
 		model.Actor
@@ -1506,7 +1458,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJsonFile(t, "./testdata/quick-start-dest.json", dest)
+	assertJSONFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1519,7 +1471,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJsonFile(t, "./testdata/quick-start-dest2.json", dest2)
+	assertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1529,22 +1481,22 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 		WHERE(Film.Length.GT(Int(180))).
 		AsTable("films")
 
-	filmId := Film.FilmID.From(filmLogerThan180)
-	filmLanguageId := Film.LanguageID.From(filmLogerThan180)
+	filmID := Film.FilmID.From(filmLogerThan180)
+	filmLanguageID := Film.LanguageID.From(filmLogerThan180)
 
 	categoriesNotAction := Category.
 		SELECT(Category.AllColumns).
 		WHERE(Category.Name.NOT_EQ(String("Action"))).
 		AsTable("categories")
 
-	categoryId := Category.CategoryID.From(categoriesNotAction)
+	categoryID := Category.CategoryID.From(categoriesNotAction)
 
 	stmt := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
-		INNER_JOIN(filmLogerThan180, filmId.EQ(FilmActor.FilmID)).
-		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageId)).
-		INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmId)).
-		INNER_JOIN(categoriesNotAction, categoryId.EQ(FilmCategory.CategoryID)).
+		INNER_JOIN(filmLogerThan180, filmID.EQ(FilmActor.FilmID)).
+		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageID)).
+		INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmID)).
+		INNER_JOIN(categoriesNotAction, categoryID.EQ(FilmCategory.CategoryID)).
 		SELECT(
 			Actor.AllColumns,
 			filmLogerThan180.AllColumns(),
@@ -1552,7 +1504,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 			categoriesNotAction.AllColumns(),
 		).ORDER_BY(
 		Actor.ActorID.ASC(),
-		filmId.ASC(),
+		filmID.ASC(),
 	)
 
 	var dest []struct {
@@ -1571,7 +1523,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJsonFile(t, "./testdata/quick-start-dest.json", dest)
+	assertJSONFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1584,5 +1536,5 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJsonFile(t, "./testdata/quick-start-dest2.json", dest2)
+	assertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
 }

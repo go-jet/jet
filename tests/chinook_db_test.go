@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
 	"gotest.tools/assert"
 	"io/ioutil"
+	"runtime"
 	"testing"
 	"time"
 )
@@ -104,7 +106,7 @@ func TestJoinEverything(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 275)
-	assertJsonFile(t, "./testdata/joined_everything.json", dest)
+	assertJSONFile(t, "./testdata/joined_everything.json", dest)
 }
 
 func TestSelfJoin(t *testing.T) {
@@ -144,7 +146,7 @@ ORDER BY "Employee"."EmployeeId";
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 8)
-	assertJson(t, dest[0:2], `
+	assertJSON(t, dest[0:2], `
 [
 	{
 		"EmployeeId": 1,
@@ -244,23 +246,21 @@ ORDER BY "Album.AlbumId";
 	assert.DeepEqual(t, dest[1], album2)
 }
 
-//func TestQueryWithContext(t *testing.T) {
-//
-//	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
-//	defer cancel()
-//
-//	dest := []model.Album{}
-//
-//	err := Album.
-//		CROSS_JOIN(Track).
-//		CROSS_JOIN(InvoiceLine).
-//		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
-//		QueryContext(db, ctx, &dest)
-//
-//	spew.Dump(dest)
-//
-//	assert.Error(t, err, "context deadline exceeded")
-//}
+func TestQueryWithContext(t *testing.T) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	defer cancel()
+
+	dest := []model.Album{}
+
+	err := Album.
+		CROSS_JOIN(Track).
+		CROSS_JOIN(InvoiceLine).
+		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
+		QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
 
 func TestExecWithContext(t *testing.T) {
 
@@ -271,7 +271,7 @@ func TestExecWithContext(t *testing.T) {
 		CROSS_JOIN(Track).
 		CROSS_JOIN(InvoiceLine).
 		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
-		ExecContext(db, ctx)
+		ExecContext(ctx, db)
 
 	assert.Error(t, err, "pq: canceling statement due to user request")
 }
@@ -283,7 +283,7 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		LIMIT(10).
 		AsTable("first10Artist")
 
-	artistId := Artist.ArtistId.From(first10Artist)
+	artistID := Artist.ArtistId.From(first10Artist)
 
 	first10Albums := Album.
 		SELECT(Album.AllColumns).
@@ -291,12 +291,12 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		LIMIT(10).
 		AsTable("first10Albums")
 
-	albumArtistId := Album.ArtistId.From(first10Albums)
+	albumArtistID := Album.ArtistId.From(first10Albums)
 
 	stmt := first10Artist.
-		INNER_JOIN(first10Albums, artistId.EQ(albumArtistId)).
+		INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)).
 		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
-		ORDER_BY(artistId)
+		ORDER_BY(artistID)
 
 	assertStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
@@ -335,22 +335,26 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	//spew.Dump(dest)
 }
 
-func assertJson(t *testing.T, data interface{}, expectedJson string) {
+func assertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
-	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJson)
+	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
 
-func assertJsonFile(t *testing.T, jsonFilePath string, data interface{}) {
-	fileJsonData, err := ioutil.ReadFile(jsonFilePath)
+func assertJSONFile(t *testing.T, jsonFilePath string, data interface{}) {
+	fileJSONData, err := ioutil.ReadFile(jsonFilePath)
 	assert.NilError(t, err)
+
+	if runtime.GOOS == "windows" {
+		fileJSONData = bytes.Replace(fileJSONData, []byte("\r\n"), []byte("\n"), -1)
+	}
 
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
-	assert.Assert(t, string(fileJsonData) == string(jsonData))
-	//assert.Equal(t, string(fileJsonData), string(jsonData))
+	assert.Assert(t, string(fileJSONData) == string(jsonData))
+	//assert.Equal(t, string(fileJSONData), string(jsonData))
 }
 
 func jsonPrint(v interface{}) {

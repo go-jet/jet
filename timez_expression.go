@@ -1,16 +1,25 @@
 package jet
 
+// TimezExpression interface 'time with time zone'
 type TimezExpression interface {
 	Expression
 
+	//EQ
 	EQ(rhs TimezExpression) BoolExpression
+	//NOT_EQ
 	NOT_EQ(rhs TimezExpression) BoolExpression
+	//IS_DISTINCT_FROM
 	IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression
+	//IS_NOT_DISTINCT_FROM
 	IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression
 
+	//LT
 	LT(rhs TimezExpression) BoolExpression
+	//LT_EQ
 	LT_EQ(rhs TimezExpression) BoolExpression
+	//GT
 	GT(rhs TimezExpression) BoolExpression
+	//GT_EQ
 	GT_EQ(rhs TimezExpression) BoolExpression
 }
 
@@ -58,15 +67,15 @@ type prefixTimezExpression struct {
 	prefixOpExpression
 }
 
-func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
-	timeExpr := prefixTimezExpression{}
-	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
-
-	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-	timeExpr.timezInterfaceImpl.parent = &timeExpr
-
-	return &timeExpr
-}
+//func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
+//	timeExpr := prefixTimezExpression{}
+//	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
+//
+//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
+//	timeExpr.timezInterfaceImpl.parent = &timeExpr
+//
+//	return &timeExpr
+//}
 
 //---------------------------------------------------//
 
@@ -81,6 +90,9 @@ func newTimezExpressionWrap(expression Expression) TimezExpression {
 	return &timezExpressionWrap
 }
 
+// TimezExp is time with time zone expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as time with time zone expression.
+// Does not add sql cast to generated sql builder output.
 func TimezExp(expression Expression) TimezExpression {
 	return newTimezExpressionWrap(expression)
 }

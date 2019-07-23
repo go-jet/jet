@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/execution"
+	"github.com/go-jet/jet/internal/utils"
 )
 
+// InsertStatement is interface for SQL INSERT statements
 type InsertStatement interface {
 	Statement
 
@@ -81,11 +83,11 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	queryData.newLine()
 	queryData.writeString("INSERT INTO")
 
-	if isNil(i.table) {
+	if utils.IsNil(i.table) {
 		return "", nil, errors.New("jet: table is nil")
 	}
 
-	err = i.table.serialize(insert_statement, queryData)
+	err = i.table.serialize(insertStatement, queryData)
 
 	if err != nil {
 		return
@@ -114,8 +116,8 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	if len(i.rows) > 0 {
 		queryData.writeString("VALUES")
 
-		for row_i, row := range i.rows {
-			if row_i > 0 {
+		for rowIndex, row := range i.rows {
+			if rowIndex > 0 {
 				queryData.writeString(",")
 			}
 
@@ -123,7 +125,7 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 			queryData.newLine()
 			queryData.writeString("(")
 
-			err = serializeClauseList(insert_statement, row, queryData)
+			err = serializeClauseList(insertStatement, row, queryData)
 
 			if err != nil {
 				return "", nil, err
@@ -135,14 +137,14 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if i.query != nil {
-		err = i.query.serialize(insert_statement, queryData)
+		err = i.query.serialize(insertStatement, queryData)
 
 		if err != nil {
 			return
 		}
 	}
 
-	if err = queryData.writeReturning(insert_statement, i.returning); err != nil {
+	if err = queryData.writeReturning(insertStatement, i.returning); err != nil {
 		return
 	}
 
@@ -155,14 +157,14 @@ func (i *insertStatementImpl) Query(db execution.DB, destination interface{}) er
 	return query(i, db, destination)
 }
 
-func (i *insertStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return queryContext(i, db, context, destination)
+func (i *insertStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+	return queryContext(context, i, db, destination)
 }
 
 func (i *insertStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
 	return exec(i, db)
 }
 
-func (i *insertStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return execContext(i, db, context)
+func (i *insertStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+	return execContext(context, i, db)
 }

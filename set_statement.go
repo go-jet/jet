@@ -4,28 +4,40 @@ import (
 	"errors"
 )
 
+// UNION effectively appends the result of sub-queries(select statements) into single query.
+// It eliminates duplicate rows from its result.
 func UNION(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement {
 	return newSetStatementImpl(union, false, toSelectList(lhs, rhs, selects...))
 }
 
+// UNION_ALL effectively appends the result of sub-queries(select statements) into single query.
+// It does not eliminates duplicate rows from its result.
 func UNION_ALL(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement {
 	return newSetStatementImpl(union, true, toSelectList(lhs, rhs, selects...))
 }
 
+// INTERSECT returns all rows that are in query results.
+// It eliminates duplicate rows from its result.
 func INTERSECT(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement {
 	return newSetStatementImpl(intersect, false, toSelectList(lhs, rhs, selects...))
 }
 
+// INTERSECT_ALL returns all rows that are in query results.
+// It does not eliminates duplicate rows from its result.
 func INTERSECT_ALL(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement {
 	return newSetStatementImpl(intersect, true, toSelectList(lhs, rhs, selects...))
 }
 
-func EXCEPT(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement {
-	return newSetStatementImpl(except, false, toSelectList(lhs, rhs, selects...))
+// EXCEPT returns all rows that are in the result of query lhs but not in the result of query rhs.
+// It eliminates duplicate rows from its result.
+func EXCEPT(lhs, rhs SelectStatement) SelectStatement {
+	return newSetStatementImpl(except, false, toSelectList(lhs, rhs))
 }
 
-func EXCEPT_ALL(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement {
-	return newSetStatementImpl(except, true, toSelectList(lhs, rhs, selects...))
+// EXCEPT_ALL returns all rows that are in the result of query lhs but not in the result of query rhs.
+// It does not eliminates duplicate rows from its result.
+func EXCEPT_ALL(lhs, rhs SelectStatement) SelectStatement {
+	return newSetStatementImpl(except, true, toSelectList(lhs, rhs))
 }
 
 func toSelectList(lhs, rhs SelectStatement, selects ...SelectStatement) []SelectStatement {
@@ -102,7 +114,7 @@ func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 	}
 
 	if len(s.selects) < 2 {
-		return errors.New("jet: UNION Statement must have at least two SELECT statements.")
+		return errors.New("jet: UNION Statement must have at least two SELECT statements")
 	}
 
 	out.newLine()
@@ -124,7 +136,7 @@ func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 			return errors.New("jet: select statement is nil")
 		}
 
-		err := selectStmt.serialize(set_statement, out)
+		err := selectStmt.serialize(setStatement, out)
 
 		if err != nil {
 			return err
@@ -136,7 +148,7 @@ func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 	out.writeString(")")
 
 	if s.orderBy != nil {
-		err := out.writeOrderBy(set_statement, s.orderBy)
+		err := out.writeOrderBy(setStatement, s.orderBy)
 		if err != nil {
 			return err
 		}
@@ -145,13 +157,13 @@ func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if s.limit >= 0 {
 		out.newLine()
 		out.writeString("LIMIT")
-		out.insertPreparedArgument(s.limit)
+		out.insertParametrizedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
 		out.newLine()
 		out.writeString("OFFSET")
-		out.insertPreparedArgument(s.offset)
+		out.insertParametrizedArgument(s.offset)
 	}
 
 	return nil

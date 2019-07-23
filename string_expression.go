@@ -1,5 +1,6 @@
 package jet
 
+// StringExpression interface
 type StringExpression interface {
 	Expression
 
@@ -108,6 +109,9 @@ func newStringExpressionWrap(expression Expression) StringExpression {
 	return &stringExpressionWrap
 }
 
+// StringExp is string expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as string expression.
+// Does not add sql cast to generated sql builder output.
 func StringExp(expression Expression) StringExpression {
 	return newStringExpressionWrap(expression)
 }

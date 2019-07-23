@@ -1,7 +1,6 @@
 package jet
 
 import (
-	"gotest.tools/assert"
 	"testing"
 )
 
@@ -157,13 +156,7 @@ func TestFuncLEAST(t *testing.T) {
 	assertClauseSerialize(t, LEAST(Float(11.2222), NULL, String("str")), "LEAST($1, NULL, $2)", float64(11.2222), "str")
 }
 
-func TestInterval(t *testing.T) {
-	query := INTERVAL(`6 years 5 months 4 days 3 hours 2 minutes 1 second`)
-
-	queryData := &sqlBuilder{}
-
-	err := query.serialize(select_statement, queryData)
-
-	assert.NilError(t, err)
-	assert.Equal(t, queryData.buff.String(), `INTERVAL $1`)
+func TestTO_ASCII(t *testing.T) {
+	assertClauseSerialize(t, TO_ASCII(String("Karel")), `TO_ASCII($1)`, "Karel")
+	assertClauseSerialize(t, TO_ASCII(String("Karel")), `TO_ASCII($1)`, "Karel")
 }

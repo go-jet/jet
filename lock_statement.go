@@ -7,8 +7,10 @@ import (
 	"github.com/go-jet/jet/execution"
 )
 
+// TableLockMode is a type of possible SQL table lock
 type TableLockMode string
 
+// Lock types for LockStatement.
 const (
 	LOCK_ACCESS_SHARE           = "ACCESS SHARE"
 	LOCK_ROW_SHARE              = "ROW SHARE"
@@ -20,6 +22,7 @@ const (
 	LOCK_ACCESS_EXCLUSIVE       = "ACCESS EXCLUSIVE"
 )
 
+// LockStatement interface for SQL LOCK statement
 type LockStatement interface {
 	Statement
 
@@ -33,6 +36,7 @@ type lockStatementImpl struct {
 	nowait   bool
 }
 
+// LOCK creates lock statement for list of tables.
 func LOCK(tables ...WritableTable) LockStatement {
 	return &lockStatementImpl{
 		tables: tables,
@@ -55,11 +59,11 @@ func (l *lockStatementImpl) DebugSql() (query string, err error) {
 
 func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) {
 	if l == nil {
-		return "", nil, errors.New("jet: nil Statement.")
+		return "", nil, errors.New("jet: nil Statement")
 	}
 
 	if len(l.tables) == 0 {
-		return "", nil, errors.New("jet: There is no table selected to be locked. ")
+		return "", nil, errors.New("jet: There is no table selected to be locked")
 	}
 
 	out := &sqlBuilder{}
@@ -72,7 +76,7 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 			out.writeString(", ")
 		}
 
-		err := table.serialize(lock_statement, out)
+		err := table.serialize(lockStatement, out)
 
 		if err != nil {
 			return "", nil, err
@@ -97,14 +101,14 @@ func (l *lockStatementImpl) Query(db execution.DB, destination interface{}) erro
 	return query(l, db, destination)
 }
 
-func (l *lockStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return queryContext(l, db, context, destination)
+func (l *lockStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+	return queryContext(context, l, db, destination)
 }
 
 func (l *lockStatementImpl) Exec(db execution.DB) (sql.Result, error) {
 	return exec(l, db)
 }
 
-func (l *lockStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return execContext(l, db, context)
+func (l *lockStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+	return execContext(context, l, db)
 }

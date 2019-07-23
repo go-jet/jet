@@ -46,7 +46,7 @@ FROM test_sample.person;
 	err := query.Query(db, &result)
 
 	assert.NilError(t, err)
-	assertJson(t, result, `
+	assertJSON(t, result, `
 [
 	{
 		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
@@ -72,7 +72,7 @@ FROM test_sample.person;
 
 func TestSelecSelfJoin1(t *testing.T) {
 
-	var expectedSql = `
+	var expectedSQL = `
 SELECT employee.employee_id AS "employee.employee_id",
      employee.first_name AS "employee.first_name",
      employee.last_name AS "employee.last_name",
@@ -97,7 +97,7 @@ ORDER BY employee.employee_id;
 		).
 		ORDER_BY(Employee.EmployeeID)
 
-	assertStatementSql(t, query, expectedSql)
+	assertStatementSql(t, query, expectedSQL)
 
 	type Manager model.Employee
 

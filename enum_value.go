@@ -6,6 +6,7 @@ type enumValue struct {
 	name string
 }
 
+// NewEnumValue creates new named enum value
 func NewEnumValue(name string) StringExpression {
 	enumValue := &enumValue{name: name}
 

@@ -6,7 +6,7 @@ import (
 )
 
 func TestUnionTwoSelect(t *testing.T) {
-	var expectedSql = `
+	var expectedSQL = `
 (
      (
           SELECT table1.col1 AS "table1.col1"
@@ -27,8 +27,8 @@ func TestUnionTwoSelect(t *testing.T) {
 
 	unionStmt2 := UNION(table1.SELECT(table1Col1), table2.SELECT(table2Col3))
 
-	assertStatement(t, unionStmt1, expectedSql)
-	assertStatement(t, unionStmt2, expectedSql)
+	assertStatement(t, unionStmt1, expectedSQL)
+	assertStatement(t, unionStmt2, expectedSQL)
 }
 
 func TestUnionNilSelect(t *testing.T) {
@@ -49,7 +49,7 @@ func TestUnionThreeSelect1(t *testing.T) {
 			table3.SELECT(table3Col1),
 		)
 
-	var expectedSql = `
+	var expectedSQL = `
 (
      
      (
@@ -71,7 +71,7 @@ func TestUnionThreeSelect1(t *testing.T) {
 );
 `
 
-	assertStatement(t, unionStmt1, expectedSql)
+	assertStatement(t, unionStmt1, expectedSQL)
 }
 
 func TestUnionThreeSelect2(t *testing.T) {
@@ -82,7 +82,7 @@ func TestUnionThreeSelect2(t *testing.T) {
 		table3.SELECT(table3Col1),
 	)
 
-	var expectedSql = `
+	var expectedSQL = `
 (
      (
           SELECT table1.col1 AS "table1.col1"
@@ -101,7 +101,7 @@ func TestUnionThreeSelect2(t *testing.T) {
 );
 `
 
-	assertStatement(t, unionStmt2, expectedSql)
+	assertStatement(t, unionStmt2, expectedSQL)
 }
 
 func TestUnionWithOrderBy(t *testing.T) {
@@ -155,7 +155,7 @@ OFFSET $2;
 }
 
 func TestUnionInUnion(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 (
      (
           SELECT table2.col3 AS "table2.col3",
@@ -182,7 +182,7 @@ func TestUnionInUnion(t *testing.T) {
 		UNION_ALL(table1.SELECT(table1Col1), table2.SELECT(table2Col3)),
 	)
 
-	assertStatement(t, query, expectedSql)
+	assertStatement(t, query, expectedSQL)
 }
 
 func TestUnionALL(t *testing.T) {

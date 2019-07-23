@@ -1,17 +1,19 @@
 package tests
 
 import (
+	"context"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestInsertValues(t *testing.T) {
 	cleanUpLinkTable(t)
 
-	var expectedSql = `
+	var expectedSQL = `
 INSERT INTO test_sample.link (id, url, name, description) VALUES
      (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
      (101, 'http://www.google.com', 'Google', DEFAULT),
@@ -28,7 +30,7 @@ RETURNING link.id AS "link.id",
 		VALUES(102, "http://www.yahoo.com", "Yahoo", nil).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, insertQuery, expectedSql,
+	assertStatementSql(t, insertQuery, expectedSQL,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		101, "http://www.google.com", "Google",
 		102, "http://www.yahoo.com", "Yahoo", nil)
@@ -74,7 +76,7 @@ RETURNING link.id AS "link.id",
 func TestInsertEmptyColumnList(t *testing.T) {
 	cleanUpLinkTable(t)
 
-	expectedSql := `
+	expectedSQL := `
 INSERT INTO test_sample.link VALUES
      (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
 `
@@ -82,7 +84,7 @@ INSERT INTO test_sample.link VALUES
 	stmt := Link.INSERT().
 		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT)
 
-	assertStatementSql(t, stmt, expectedSql,
+	assertStatementSql(t, stmt, expectedSQL,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
 	assertExec(t, stmt, 1)
@@ -90,7 +92,7 @@ INSERT INTO test_sample.link VALUES
 
 func TestInsertModelObject(t *testing.T) {
 	cleanUpLinkTable(t)
-	var expectedSql = `
+	var expectedSQL = `
 INSERT INTO test_sample.link (url, name) VALUES
      ('http://www.duckduckgo.com', 'Duck Duck go');
 `
@@ -104,19 +106,35 @@ INSERT INTO test_sample.link (url, name) VALUES
 		INSERT(Link.URL, Link.Name).
 		MODEL(linkData)
 
-	assertStatementSql(t, query, expectedSql, "http://www.duckduckgo.com", "Duck Duck go")
+	assertStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
 
-	result, err := query.Exec(db)
+	assertExec(t, query, 1)
+}
 
-	assert.NilError(t, err)
+func TestInsertModelObjectEmptyColumnList(t *testing.T) {
+	cleanUpLinkTable(t)
+	var expectedSQL = `
+INSERT INTO test_sample.link VALUES
+     (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
+`
 
-	rowsAffected, err := result.RowsAffected()
+	linkData := model.Link{
+		ID:   1000,
+		URL:  "http://www.duckduckgo.com",
+		Name: "Duck Duck go",
+	}
 
-	assert.Equal(t, rowsAffected, int64(1))
+	query := Link.
+		INSERT().
+		MODEL(linkData)
+
+	assertStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
+
+	assertExec(t, query, 1)
 }
 
 func TestInsertModelsObject(t *testing.T) {
-	expectedSql := `
+	expectedSQL := `
 INSERT INTO test_sample.link (url, name) VALUES
      ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
      ('http://www.google.com', 'Google'),
@@ -142,7 +160,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 		INSERT(Link.URL, Link.Name).
 		MODELS([]model.Link{tutorial, google, yahoo})
 
-	assertStatementSql(t, stmt, expectedSql,
+	assertStatementSql(t, stmt, expectedSQL,
 		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		"http://www.google.com", "Google",
 		"http://www.yahoo.com", "Yahoo")
@@ -151,7 +169,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 }
 
 func TestInsertUsingMutableColumns(t *testing.T) {
-	var expectedSql = `
+	var expectedSQL = `
 INSERT INTO test_sample.link (url, name, description) VALUES
      ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
      ('http://www.google.com', 'Google', NULL),
@@ -175,7 +193,7 @@ INSERT INTO test_sample.link (url, name, description) VALUES
 		MODEL(google).
 		MODELS([]model.Link{google, yahoo})
 
-	assertStatementSql(t, stmt, expectedSql,
+	assertStatementSql(t, stmt, expectedSQL,
 		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		"http://www.google.com", "Google", nil,
 		"http://www.google.com", "Google", nil,
@@ -190,7 +208,7 @@ func TestInsertQuery(t *testing.T) {
 		Exec(db)
 	assert.NilError(t, err)
 
-	var expectedSql = `
+	var expectedSQL = `
 INSERT INTO test_sample.link (url, name) (
      SELECT link.url AS "link.url",
           link.name AS "link.name"
@@ -212,7 +230,7 @@ RETURNING link.id AS "link.id",
 		).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, query, expectedSql, int64(0))
+	assertStatementSql(t, query, expectedSQL, int64(0))
 
 	dest := []model.Link{}
 
@@ -228,4 +246,38 @@ RETURNING link.id AS "link.id",
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(youtubeLinks), 2)
+}
+
+func TestInsertWithQueryContext(t *testing.T) {
+	cleanUpLinkTable(t)
+
+	stmt := Link.INSERT().
+		VALUES(1100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		RETURNING(Link.AllColumns)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	dest := []model.Link{}
+	err := stmt.QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestInsertWithExecContext(t *testing.T) {
+	cleanUpLinkTable(t)
+
+	stmt := Link.INSERT().
+		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	_, err := stmt.ExecContext(ctx, db)
+
+	assert.Error(t, err, "context deadline exceeded")
 }

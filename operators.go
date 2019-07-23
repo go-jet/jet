@@ -4,17 +4,19 @@ import "errors"
 
 //----------- Logical operators ---------------//
 
-// Returns negation of bool expression expr
+// NOT returns negation of bool expression result
 func NOT(exp BoolExpression) BoolExpression {
 	return newPrefixBoolOperator(exp, "NOT")
 }
 
+// BIT_NOT inverts every bit in integer expression result
 func BIT_NOT(expr IntegerExpression) IntegerExpression {
 	return newPrefixIntegerOperator(expr, "~")
 }
 
 //----------- Comparison operators ---------------//
 
+// EXISTS checks for existence of the rows in subQuery
 func EXISTS(subQuery SelectStatement) BoolExpression {
 	return newPrefixBoolOperator(subQuery, "EXISTS")
 }
@@ -59,12 +61,13 @@ func gtEq(lhs, rhs Expression) BoolExpression {
 
 // --------------- CASE operator -------------------//
 
-type CaseOperatorExpression interface {
+// CaseOperator is interface for SQL case operator
+type CaseOperator interface {
 	Expression
 
-	WHEN(condition Expression) CaseOperatorExpression
-	THEN(then Expression) CaseOperatorExpression
-	ELSE(els Expression) CaseOperatorExpression
+	WHEN(condition Expression) CaseOperator
+	THEN(then Expression) CaseOperator
+	ELSE(els Expression) CaseOperator
 }
 
 type caseOperatorImpl struct {
@@ -76,7 +79,8 @@ type caseOperatorImpl struct {
 	els        Expression
 }
 
-func CASE(expression ...Expression) CaseOperatorExpression {
+// CASE create CASE operator with optional list of expressions
+func CASE(expression ...Expression) CaseOperator {
 	caseExp := &caseOperatorImpl{}
 
 	if len(expression) > 0 {
@@ -88,17 +92,17 @@ func CASE(expression ...Expression) CaseOperatorExpression {
 	return caseExp
 }
 
-func (c *caseOperatorImpl) WHEN(when Expression) CaseOperatorExpression {
+func (c *caseOperatorImpl) WHEN(when Expression) CaseOperator {
 	c.when = append(c.when, when)
 	return c
 }
 
-func (c *caseOperatorImpl) THEN(then Expression) CaseOperatorExpression {
+func (c *caseOperatorImpl) THEN(then Expression) CaseOperator {
 	c.then = append(c.then, then)
 	return c
 }
 
-func (c *caseOperatorImpl) ELSE(els Expression) CaseOperatorExpression {
+func (c *caseOperatorImpl) ELSE(els Expression) CaseOperator {
 	c.els = els
 
 	return c

@@ -1,4 +1,4 @@
-package postgres_metadata
+package postgresmeta
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// ColumnInfo metadata struct
 type ColumnInfo struct {
 	Name       string
 	IsNullable bool
@@ -14,6 +15,7 @@ type ColumnInfo struct {
 	EnumName   string
 }
 
+// SqlBuilderColumnType returns type of jet sql builder column
 func (c ColumnInfo) SqlBuilderColumnType() string {
 	switch c.DataType {
 	case "boolean":
@@ -41,6 +43,7 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 	}
 }
 
+// GoBaseType returns model type for column info.
 func (c ColumnInfo) GoBaseType() string {
 	switch c.DataType {
 	case "USER-DEFINED":
@@ -72,6 +75,8 @@ func (c ColumnInfo) GoBaseType() string {
 	}
 }
 
+// GoModelType returns model type for column info with optional pointer if
+// column can be NULL.
 func (c ColumnInfo) GoModelType() string {
 	typeStr := c.GoBaseType()
 	if c.IsNullable {
@@ -81,6 +86,7 @@ func (c ColumnInfo) GoModelType() string {
 	return typeStr
 }
 
+// GoModelTag returns model field tag for column
 func (c ColumnInfo) GoModelTag(isPrimaryKey bool) string {
 	tags := []string{}
 

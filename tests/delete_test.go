@@ -1,17 +1,19 @@
 package tests
 
 import (
+	"context"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestDeleteWithWhere(t *testing.T) {
 	initForDeleteTest(t)
 
-	var expectedSql = `
+	var expectedSQL = `
 DELETE FROM test_sample.link
 WHERE link.name IN ('Gmail', 'Outlook');
 `
@@ -19,14 +21,14 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	assertStatementSql(t, deleteStmt, expectedSql, "Gmail", "Outlook")
+	assertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 	assertExec(t, deleteStmt, 2)
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {
 	initForDeleteTest(t)
 
-	var expectedSql = `
+	var expectedSQL = `
 DELETE FROM test_sample.link
 WHERE link.name IN ('Gmail', 'Outlook')
 RETURNING link.id AS "link.id",
@@ -39,7 +41,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, deleteStmt, expectedSql, "Gmail", "Outlook")
+	assertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 
 	dest := []model.Link{}
 
@@ -59,4 +61,39 @@ func initForDeleteTest(t *testing.T) {
 		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
 
 	assertExec(t, stmt, 2)
+}
+
+func TestDeleteQueryContext(t *testing.T) {
+	initForDeleteTest(t)
+
+	deleteStmt := Link.
+		DELETE().
+		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	dest := []model.Link{}
+	err := deleteStmt.QueryContext(ctx, db, &dest)
+
+	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestDeleteExecContext(t *testing.T) {
+	initForDeleteTest(t)
+
+	deleteStmt := Link.
+		DELETE().
+		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
+	defer cancel()
+
+	time.Sleep(10 * time.Millisecond)
+
+	_, err := deleteStmt.ExecContext(ctx, db)
+
+	assert.Error(t, err, "context deadline exceeded")
 }

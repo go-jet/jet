@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/execution"
+	"github.com/go-jet/jet/internal/utils"
 )
 
+// UpdateStatement is interface of SQL UPDATE statement
 type UpdateStatement interface {
 	Statement
 
@@ -61,11 +63,11 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	out.newLine()
 	out.writeString("UPDATE")
 
-	if isNil(u.table) {
+	if utils.IsNil(u.table) {
 		return "", nil, errors.New("jet: table to update is nil")
 	}
 
-	if err = u.table.serialize(update_statement, out); err != nil {
+	if err = u.table.serialize(updateStatement, out); err != nil {
 		return
 	}
 
@@ -100,7 +102,7 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		out.writeString("(")
 	}
 
-	err = serializeClauseList(update_statement, u.row, out)
+	err = serializeClauseList(updateStatement, u.row, out)
 
 	if err != nil {
 		return
@@ -114,11 +116,11 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return "", nil, errors.New("jet: WHERE clause not set")
 	}
 
-	if err = out.writeWhere(update_statement, u.where); err != nil {
+	if err = out.writeWhere(updateStatement, u.where); err != nil {
 		return
 	}
 
-	if err = out.writeReturning(update_statement, u.returning); err != nil {
+	if err = out.writeReturning(updateStatement, u.returning); err != nil {
 		return
 	}
 
@@ -134,14 +136,14 @@ func (u *updateStatementImpl) Query(db execution.DB, destination interface{}) er
 	return query(u, db, destination)
 }
 
-func (u *updateStatementImpl) QueryContext(db execution.DB, context context.Context, destination interface{}) error {
-	return queryContext(u, db, context, destination)
+func (u *updateStatementImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+	return queryContext(context, u, db, destination)
 }
 
 func (u *updateStatementImpl) Exec(db execution.DB) (res sql.Result, err error) {
 	return exec(u, db)
 }
 
-func (u *updateStatementImpl) ExecContext(db execution.DB, context context.Context) (res sql.Result, err error) {
-	return execContext(u, db, context)
+func (u *updateStatementImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+	return execContext(context, u, db)
 }

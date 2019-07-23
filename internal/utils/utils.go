@@ -6,24 +6,24 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 )
 
+// ToGoIdentifier converts database to Go identifier.
 func ToGoIdentifier(databaseIdentifier string) string {
-	if len(databaseIdentifier) == 0 {
-		return databaseIdentifier
-	}
-
 	return snaker.SnakeToCamel(replaceInvalidChars(databaseIdentifier))
 }
 
+// ToGoFileName converts database identifier to Go file name.
 func ToGoFileName(databaseIdentifier string) string {
 	return strings.ToLower(replaceInvalidChars(databaseIdentifier))
 }
 
+// SaveGoFile saves go file at folder dir, with name fileName and contents text.
 func SaveGoFile(dirPath, fileName string, text []byte) error {
 	newGoFilePath := filepath.Join(dirPath, fileName) + ".go"
 
@@ -49,6 +49,7 @@ func SaveGoFile(dirPath, fileName string, text []byte) error {
 	return nil
 }
 
+// EnsureDirPath ensures dir path exists. If path does not exist, creates new path.
 func EnsureDirPath(dirPath string) error {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 		err := os.MkdirAll(dirPath, os.ModePerm)
@@ -61,6 +62,7 @@ func EnsureDirPath(dirPath string) error {
 	return nil
 }
 
+// GenerateTemplate generates template with template text and template data.
 func GenerateTemplate(templateText string, templateData interface{}) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
@@ -82,6 +84,7 @@ func GenerateTemplate(templateText string, templateData interface{}) ([]byte, er
 	return buf.Bytes(), nil
 }
 
+// CleanUpGeneratedFiles deletes everything at folder dir.
 func CleanUpGeneratedFiles(dir string) error {
 	exist, err := DirExists(dir)
 
@@ -100,6 +103,7 @@ func CleanUpGeneratedFiles(dir string) error {
 	return nil
 }
 
+// DirExists checks if folder at path exist.
 func DirExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -118,8 +122,7 @@ func replaceInvalidChars(str string) string {
 	return str
 }
 
-// github.com/lib/pq
-// FormatTimestamp formats t into Postgres' text format for timestamps.
+// FormatTimestamp formats t into Postgres' text format for timestamps. From: github.com/lib/pq
 func FormatTimestamp(t time.Time) []byte {
 	// Need to send dates before 0001 A.D. with " BC" suffix, instead of the
 	// minus sign preferred by Go.
@@ -151,4 +154,8 @@ func FormatTimestamp(t time.Time) []byte {
 		b = append(b, " BC"...)
 	}
 	return b
+}
+
+func IsNil(v interface{}) bool {
+	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
