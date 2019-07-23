@@ -34,10 +34,9 @@ _*Support for additional databases will be added in future jet releases._
         * UPDATE (SET, WHERE, RETURNING), 
         * DELETE (WHERE, RETURNING),
         * LOCK (IN, NOWAIT)
- 2) Auto-generated Data Model types - Go struct mapped to database type (table or enum), used to store
- result of database queries.
- 3) Query execution with mapping to arbitrary destination structure - destination structure can be 
- created by combining auto-generated data model types. 
+ 2) Auto-generated Data Model types - Go structs mapped to database type (table or enum), used to store
+ result of database queries. Can be combined to create desired destination structure. 
+ 3) Query execution with result mapping to arbitrary destination structure. 
 
 ## Getting Started
 
@@ -66,15 +65,16 @@ Make sure GOPATH bin folder is added to the PATH environment variable.
 For this quick start example we will use sample _dvd rental_ database. Full database dump can be found in [./tests/init/data/dvds.sql](./tests/init/data/dvds.sql).
 Schema diagram of interest for example can be found [here](./examples/quick-start/diagram.png).
 
-#### Generate sql builder and model files
+#### Generate SQL Builder and Model files
 To generate jet SQL Builder and Data Model files from postgres database we need to call `jet` generator with postgres 
 connection parameters and root destination folder path for generated files.\
-Assuming we are running local postgres database, with user `jet`, database `jetdb` and schema `dvds` we will use this command:
+Assuming we are running local postgres database, with user `jetuser`, user password `jetpass`, database `jetdb` and 
+schema `dvds` we will use this command:
 ```sh
-jet -host=localhost -port=5432 -user=jet -password=jet -dbname=jetdb -schema=dvds -path=./gen
+jet -host=localhost -port=5432 -user=jetuser -password=jetpass -dbname=jetdb -schema=dvds -path=./gen
 ```
 ```sh
-Connecting to postgres database: host=localhost port=5432 user=jet password=jet dbname=jetdb sslmode=disable 
+Connecting to postgres database: host=localhost port=5432 user=jetuser password=jetpass dbname=jetdb sslmode=disable 
 Retrieving schema information...
     FOUND 15  table(s),  1  enum(s)
 Destination directory: ./gen/jetdb/dvds
@@ -85,11 +85,12 @@ Generating enum sql builder files...
 Generating enum model files...
 Done
 ```
+_*User has to have a permission to read information schema tables_
 
 As command output suggest, Jet will:
 - connect to postgres database and retrieve information about the _tables_ and _enums_ of `dvds` schema
 - delete everything in schema destination folder -  `./gen/jetdb/dvds`,   
-- and finally generate sql builder and model files for each schema tables and enums.  
+- and finally generate SQL Builder and Model files for each schema table and enum.  
 
 
 Generated files folder structure will look like this:
@@ -104,13 +105,13 @@ Generated files folder structure will look like this:
 |               |-- address.go
 |               |-- category.go
 |               ...
-|           |-- model                 # Plain Old Data for every table and enum
+|           |-- model                 # model files for each table and enum
 |           |   |-- actor.go
 |           |   |-- address.go
 |           |   |-- mpaa_rating.go
 |           |   ...
 ```
-Types from `table` and `enum` are used to write type safe SQL in Go, and `model` types are combined to store 
+Types from `table` and `enum` are used to write type safe SQL in Go, and `model` types can be combined to store 
 results of the SQL queries.
 
 #### Lets write some SQL queries in Go
@@ -150,12 +151,11 @@ stmt := SELECT(
     Film.FilmID.ASC(),
 )
 ```
-With package(dot) import above statements looks almost the same as native SQL.  
-Note that every column has a type. String column `Language.Name` and `Category.Name` can be compared only with 
+With package(dot) import above statements looks almost the same as native SQL. Note that every column has a type. String column `Language.Name` and `Category.Name` can be compared only with 
 string columns and expressions. `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns 
 and can be compared only with integer columns and expressions.
 
-__How to get parametrized SQL query?__
+__How to get parametrized SQL query from statement?__
 ```go
 query, args, err := stmt.Sql()
 ```
@@ -205,11 +205,12 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 </details>
     
-__How to get debug SQL that can be copy pasted to sql editor and executed?__
-```go
+__How to get debug SQL from statement?__  
+ ```go
 debugSql, err := stmt.DebugSql()
 ```
-debugSql - parametrized query where every parameter is replaced with appropriate string argument representation
+debugSql - query string that can be copy pasted to sql editor and executed. It's not intended to be used in production.
+
 <details>
   <summary>Click to see debug sql</summary>
   
@@ -255,7 +256,7 @@ Well formed SQL is just a first half the job. Lets see how can we make some sens
 above statement. Usually this is the most complex and tedious work, but with Jet it is the easiest.
 
 First we have to create desired structure to store query result set. 
-This is done be combining autogenerated model types or it can be done manually(see wiki for more information). 
+This is done be combining autogenerated model types or it can be done manually(see [wiki](https://github.com/go-jet/jet/wiki/Scan-to-arbitrary-destination) for more information). 
 
 Let's say this is our desired structure:  
 ```go
@@ -264,12 +265,15 @@ var dest []struct {
     
     Films []struct {
         model.Film
+        
         Language    model.Language
         Categories  []model.Category
     }
 }
 ```
-_There is no limitation for how big or nested destination structure can be._
+Because one actor can act in multiple films, `Films` field is a slice, and because each film belongs to one language
+`Langauge` field is just a single model struct.  
+_*There is no limitation of how big or nested destination structure can be._
 
 Now lets execute a above statement on open database connection db and store result into `dest`.
 
@@ -498,12 +502,12 @@ ORM sometimes can access the database once for every object needed. Now lets say
 different objects required from the database. This handler will last 3 seconds !!!.  
 
 With Jet, handler time lost on latency between server and database is constant. Because we can write complex query and 
-return result in one database call. Handler execution will be proportional to the number of rows returned from database. 
+return result in one database call. Handler execution will be only proportional to the number of rows returned from database. 
 ORM example replaced with jet will take just 30ms + 'result scan time' = 31ms (rough estimate).  
 
 With Jet you can even join the whole database and store the whole structured result in  in one query call. 
 This is exactly what is being done in one of the tests: [TestJoinEverything](/tests/chinook_db_test.go#L40). 
-The whole test database is joined and query result is stored in a structured variable in less than 1s. 
+The whole test database is joined and query result(~10,000 rows) is stored in a structured variable in less than 0.7s. 
 
 ##### How quickly bugs are found
 
