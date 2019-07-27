@@ -3,12 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/generator/mysql"
 	"github.com/go-jet/jet/generator/postgres"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"os"
 )
 
 var (
+	source string
+
 	host       string
 	port       int
 	user       string
@@ -22,6 +27,8 @@ var (
 )
 
 func init() {
+	flag.StringVar(&source, "source", jet.PostgreSQL, "Database name")
+
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
 	flag.StringVar(&user, "user", "", "Database user")
@@ -62,25 +69,49 @@ Usage of jet:
 
 	flag.Parse()
 
-	if host == "" || port == 0 || user == "" || dbName == "" || schemaName == "" {
-		fmt.Println("\njet: required flag missing")
-		flag.Usage()
-		os.Exit(-2)
+	var err error
+
+	switch source {
+	case jet.PostgreSQL:
+		if host == "" || port == 0 || user == "" || dbName == "" || schemaName == "" {
+			fmt.Println("\njet: required flag missing")
+			flag.Usage()
+			os.Exit(-2)
+		}
+
+		genData := postgres.DBConnection{
+			Host:     host,
+			Port:     port,
+			User:     user,
+			Password: password,
+			SslMode:  sslmode,
+			Params:   params,
+
+			DBName:     dbName,
+			SchemaName: schemaName,
+		}
+
+		err = postgres.Generate(destDir, genData)
+
+	case jet.MySql:
+		if host == "" || port == 0 || user == "" || dbName == "" {
+			fmt.Println("\njet: required flag missing")
+			flag.Usage()
+			os.Exit(-2)
+		}
+
+		dbConn := mysql.DBConnection{
+			Host:     host,
+			Port:     port,
+			User:     user,
+			Password: password,
+			SslMode:  sslmode,
+			Params:   params,
+			DBName:   dbName,
+		}
+
+		err = mysql.Generate(destDir, dbConn)
 	}
-
-	genData := postgres.DBConnection{
-		Host:     host,
-		Port:     port,
-		User:     user,
-		Password: password,
-		SslMode:  sslmode,
-		Params:   params,
-
-		DBName:     dbName,
-		SchemaName: schemaName,
-	}
-
-	err := postgres.Generate(destDir, genData)
 
 	if err != nil {
 		fmt.Println(err.Error())

@@ -1,4 +1,4 @@
-package postgres
+package template
 
 var autoGenWarningTemplate = `
 //
@@ -11,7 +11,7 @@ var autoGenWarningTemplate = `
 
 `
 
-var sqlBuilderTableTemplate = ` 
+var tableSQLBuilderTemplate = ` 
 {{define "column-list" -}}
 	{{- range $i, $c := . }}
 		{{- if gt $i 0 }}, {{end}}{{ToGoIdentifier $c.Name}}Column
@@ -22,6 +22,7 @@ package table
 
 import (
 	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/{{dialect}}"
 )
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
@@ -31,7 +32,7 @@ type {{.GoStructName}} struct {
 	
 	//Columns
 {{- range .Columns}}
-	{{ToGoIdentifier .Name}} jet.Column{{.SqlBuilderColumnType}}
+	{{ToGoIdentifier .Name}} {{dialect}}.Column{{.SqlBuilderColumnType}}
 {{- end}}
 
 	AllColumns     jet.ColumnList
@@ -50,7 +51,7 @@ func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{ToGoIdentifier .Name}}Column = jet.{{.SqlBuilderColumnType}}Column("{{.Name}}")
+		{{ToGoIdentifier .Name}}Column = {{dialect}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
 	{{- end}}
 	)
 
@@ -69,7 +70,7 @@ func new{{.GoStructName}}() *{{.GoStructName}} {
 
 `
 
-var dataModelTemplate = `package model
+var tableModelTemplate = `package model
 
 {{ if .GetImports }}
 import (
@@ -83,6 +84,22 @@ import (
 type {{ToGoIdentifier .Name}} struct {
 {{- range .Columns}}
 	{{ToGoIdentifier .Name}} {{.GoModelType}} ` + "{{.GoModelTag ($.IsPrimaryKey .Name)}}" + `
+{{- end}}
+}
+
+
+`
+var enumSQLBuilderTemplate = `package enum
+
+import "github.com/go-jet/jet"
+
+var {{ToGoIdentifier $.Name}} = &struct {
+{{- range $index, $element := .Values}}
+	{{ToGoIdentifier $element}} jet.StringExpression
+{{- end}}
+} {
+{{- range $index, $element := .Values}}
+	{{ToGoIdentifier $element}}: jet.NewEnumValue("{{$element}}"),
 {{- end}}
 }
 `
@@ -120,18 +137,4 @@ func (e {{ToGoIdentifier $.Name}}) String() string {
 	return string(e)
 }
 
-`
-var enumTypeTemplate = `package enum
-
-import "github.com/go-jet/jet"
-
-var {{ToGoIdentifier $.Name}} = &struct {
-{{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}} jet.StringExpression
-{{- end}}
-} {
-{{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}}: jet.NewEnumValue("{{$element}}"),
-{{- end}}
-}
 `

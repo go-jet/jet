@@ -1,8 +1,7 @@
-package postgresmeta
+package metadata
 
 import (
 	"database/sql"
-	"github.com/go-jet/jet/generator/internal/metadata"
 )
 
 // EnumInfo struct
@@ -16,17 +15,9 @@ func (e EnumInfo) Name() string {
 	return e.name
 }
 
-func getEnumInfos(db *sql.DB, schemaName string) ([]metadata.MetaData, error) {
-	query := `
-SELECT t.typname,  
-       e.enumlabel
-FROM pg_catalog.pg_type t 
-   JOIN pg_catalog.pg_enum e on t.oid = e.enumtypid  
-   JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
-WHERE n.nspname = $1
-ORDER BY n.nspname, t.typname, e.enumsortorder;`
+func getEnumInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName string) ([]MetaData, error) {
 
-	rows, err := db.Query(query, schemaName)
+	rows, err := db.Query(querySet.ListOfEnumsQuery(), schemaName)
 
 	if err != nil {
 		return nil, err
@@ -55,7 +46,7 @@ ORDER BY n.nspname, t.typname, e.enumsortorder;`
 		return nil, err
 	}
 
-	ret := []metadata.MetaData{}
+	ret := []MetaData{}
 
 	for enumName, enumValues := range enumsInfosMap {
 		ret = append(ret, EnumInfo{

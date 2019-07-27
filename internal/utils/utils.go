@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"bytes"
 	"github.com/go-jet/jet/internal/3rdparty/snaker"
 	"go/format"
 	"os"
@@ -9,7 +8,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 )
 
@@ -60,28 +58,6 @@ func EnsureDirPath(dirPath string) error {
 	}
 
 	return nil
-}
-
-// GenerateTemplate generates template with template text and template data.
-func GenerateTemplate(templateText string, templateData interface{}) ([]byte, error) {
-
-	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
-		"ToGoIdentifier": ToGoIdentifier,
-		"now": func() string {
-			return time.Now().Format(time.RFC850)
-		},
-	}).Parse(templateText)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, templateData); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
 }
 
 // CleanUpGeneratedFiles deletes everything at folder dir.

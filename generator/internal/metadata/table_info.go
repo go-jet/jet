@@ -1,4 +1,4 @@
-package postgresmeta
+package metadata
 
 import (
 	"database/sql"
@@ -68,17 +68,17 @@ func (t TableInfo) GoStructName() string {
 }
 
 // GetTableInfo returns table info metadata
-func GetTableInfo(db *sql.DB, dbName, schemaName, tableName string) (tableInfo TableInfo, err error) {
+func GetTableInfo(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName string) (tableInfo TableInfo, err error) {
 
 	tableInfo.SchemaName = schemaName
 	tableInfo.name = tableName
 
-	tableInfo.PrimaryKeys, err = getPrimaryKeys(db, dbName, schemaName, tableName)
+	tableInfo.PrimaryKeys, err = getPrimaryKeys(db, querySet, schemaName, tableName)
 	if err != nil {
 		return
 	}
 
-	tableInfo.Columns, err = getColumnInfos(db, dbName, schemaName, tableName)
+	tableInfo.Columns, err = getColumnInfos(db, querySet, schemaName, tableName)
 
 	if err != nil {
 		return
@@ -87,15 +87,9 @@ func GetTableInfo(db *sql.DB, dbName, schemaName, tableName string) (tableInfo T
 	return
 }
 
-func getPrimaryKeys(db *sql.DB, dbName, schemaName, tableName string) (map[string]bool, error) {
-	query := `
-SELECT c.column_name
-FROM information_schema.key_column_usage AS c
-LEFT JOIN information_schema.table_constraints AS t
-ON t.constraint_name = c.constraint_name
-WHERE t.table_catalog = $1 AND t.table_schema = $2 AND t.table_name = $3 AND t.constraint_type = 'PRIMARY KEY';
-`
-	rows, err := db.Query(query, dbName, schemaName, tableName)
+func getPrimaryKeys(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName string) (map[string]bool, error) {
+
+	rows, err := db.Query(querySet.PrimaryKeysQuery(), schemaName, tableName)
 
 	if err != nil {
 		return nil, err

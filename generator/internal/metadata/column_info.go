@@ -1,4 +1,4 @@
-package postgresmeta
+package metadata
 
 import (
 	"database/sql"
@@ -12,6 +12,7 @@ type ColumnInfo struct {
 	Name       string
 	IsNullable bool
 	DataType   string
+	IsUnsigned bool
 	EnumName   string
 }
 
@@ -20,11 +21,13 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 	switch c.DataType {
 	case "boolean":
 		return "Bool"
-	case "smallint", "integer", "bigint":
+	case "smallint", "integer", "bigint",
+		"tinyint", "mediumint", "int", "year": //MySQL
 		return "Integer"
 	case "date":
 		return "Date"
-	case "timestamp without time zone":
+	case "timestamp without time zone",
+		"timestamp": //MySQL:
 		return "Timestamp"
 	case "timestamp with time zone":
 		return "Timestampz"
@@ -32,10 +35,12 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 		return "Time"
 	case "time with time zone":
 		return "Timez"
-	case "USER-DEFINED", "text", "character", "character varying", "bytea", "uuid",
-		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY":
+	case "USER-DEFINED", "enum", "text", "character", "character varying", "bytea", "uuid",
+		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY",
+		"char", "varchar", "binary", "varbinary",
+		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
-	case "real", "numeric", "decimal", "double precision":
+	case "real", "numeric", "decimal", "double precision", "float":
 		return "Float"
 	default:
 		fmt.Println("Unsupported sql type: " + c.DataType + ", using string column instead for sql builder.")
@@ -46,22 +51,29 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 // GoBaseType returns model type for column info.
 func (c ColumnInfo) GoBaseType() string {
 	switch c.DataType {
-	case "USER-DEFINED":
+	case "USER-DEFINED", "enum":
 		return utils.ToGoIdentifier(c.EnumName)
 	case "boolean":
 		return "bool"
-	case "smallint":
+	case "tinyint":
+		return "int8"
+	case "smallint",
+		"year":
 		return "int16"
-	case "integer":
+	case "integer",
+		"mediumint", "int": //MySQL
 		return "int32"
 	case "bigint":
 		return "int64"
-	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone":
+	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone",
+		"timestamp": // MySQL
 		return "time.Time"
-	case "bytea":
+	case "bytea",
+		"tinyblob", "blob", "mediumblob", "longblob": //MySQL
 		return "[]byte"
 	case "text", "character", "character varying", "tsvector", "bit", "bit varying", "money", "json", "jsonb",
-		"xml", "point", "interval", "line", "ARRAY":
+		"xml", "point", "interval", "line", "ARRAY",
+		"char", "varchar", "binary", "varbinary", "tinytext", "mediumtext", "longtext": // MySQL
 		return "string"
 	case "real":
 		return "float32"
@@ -79,6 +91,11 @@ func (c ColumnInfo) GoBaseType() string {
 // column can be NULL.
 func (c ColumnInfo) GoModelType() string {
 	typeStr := c.GoBaseType()
+
+	if strings.Contains(typeStr, "int") && c.IsUnsigned {
+		typeStr = "u" + typeStr
+	}
+
 	if c.IsNullable {
 		return "*" + typeStr
 	}
@@ -101,15 +118,9 @@ func (c ColumnInfo) GoModelTag(isPrimaryKey bool) string {
 	return ""
 }
 
-func getColumnInfos(db *sql.DB, dbName, schemaName, tableName string) ([]ColumnInfo, error) {
+func getColumnInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName string) ([]ColumnInfo, error) {
 
-	query := `
-SELECT column_name, is_nullable, data_type, udt_name
-FROM information_schema.columns
-where table_catalog = $1 and table_schema = $2 and table_name = $3
-order by ordinal_position;`
-
-	rows, err := db.Query(query, dbName, schemaName, tableName)
+	rows, err := db.Query(querySet.ListOfColumnsQuery(), schemaName, tableName)
 
 	if err != nil {
 		return nil, err
@@ -121,7 +132,7 @@ order by ordinal_position;`
 	for rows.Next() {
 		columnInfo := ColumnInfo{}
 		var isNullable string
-		err := rows.Scan(&columnInfo.Name, &isNullable, &columnInfo.DataType, &columnInfo.EnumName)
+		err := rows.Scan(&columnInfo.Name, &isNullable, &columnInfo.DataType, &columnInfo.EnumName, &columnInfo.IsUnsigned)
 
 		columnInfo.IsNullable = isNullable == "YES"
 
