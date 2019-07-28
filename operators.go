@@ -108,6 +108,24 @@ func (c *caseOperatorImpl) ELSE(els Expression) CaseOperator {
 	return c
 }
 
+func (c *caseOperatorImpl) accept(visitor visitor) {
+	visitor.visit(c)
+
+	c.expression.accept(visitor)
+
+	for _, when := range c.when {
+		when.accept(visitor)
+	}
+
+	for _, then := range c.then {
+		then.accept(visitor)
+	}
+
+	if c.els != nil {
+		c.els.accept(visitor)
+	}
+}
+
 func (c *caseOperatorImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	if c == nil {
 		return errors.New("jet: Case Expression is nil. ")

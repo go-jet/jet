@@ -93,13 +93,13 @@ type binaryBoolExpression struct {
 }
 
 func newBinaryBoolOperator(lhs, rhs Expression, operator string) BoolExpression {
-	boolExpression := binaryBoolExpression{}
+	binaryBoolExpression := binaryBoolExpression{}
 
-	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
-	boolExpression.expressionInterfaceImpl.parent = &boolExpression
-	boolExpression.boolInterfaceImpl.parent = &boolExpression
+	binaryBoolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
+	binaryBoolExpression.expressionInterfaceImpl.parent = &binaryBoolExpression
+	binaryBoolExpression.boolInterfaceImpl.parent = &binaryBoolExpression
 
-	return &boolExpression
+	return &binaryBoolExpression
 }
 
 //---------------------------------------------------//

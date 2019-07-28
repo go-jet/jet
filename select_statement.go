@@ -18,7 +18,7 @@ var (
 // SelectStatement is interface for SQL SELECT statements
 type SelectStatement interface {
 	Statement
-	Expression
+	expression
 
 	DISTINCT() SelectStatement
 	FROM(table ReadableTable) SelectStatement
@@ -261,10 +261,29 @@ func (s *selectStatementImpl) serializeImpl(out *sqlBuilder) error {
 	return nil
 }
 
-func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := sqlBuilder{}
+func (s *selectStatementImpl) accept(visitor visitor) {
+	visitor.visit(s)
 
-	err = s.serializeImpl(&queryData)
+	if s.table != nil {
+		s.table.accept(visitor)
+	}
+
+	if s.where != nil {
+		s.where.accept(visitor)
+	}
+
+	if s.having != nil {
+		s.having.accept(visitor)
+	}
+}
+
+func (s *selectStatementImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+
+	queryData := &sqlBuilder{
+		dialect: detectDialect(s, dialect...),
+	}
+
+	err = s.serializeImpl(queryData)
 
 	if err != nil {
 		return "", nil, err
@@ -275,8 +294,8 @@ func (s *selectStatementImpl) Sql() (query string, args []interface{}, err error
 	return
 }
 
-func (s *selectStatementImpl) DebugSql() (query string, err error) {
-	return debugSql(s.parent)
+func (s *selectStatementImpl) DebugSql(dialect ...Dialect) (query string, err error) {
+	return debugSql(s.parent, dialect...)
 }
 
 func (s *selectStatementImpl) Query(db execution.DB, destination interface{}) error {

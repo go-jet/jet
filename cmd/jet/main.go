@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&source, "source", jet.PostgreSQL, "Database name")
+	flag.StringVar(&source, "source", string(jet.PostgreSQL.Name), "Database name")
 
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
@@ -72,7 +72,7 @@ Usage of jet:
 	var err error
 
 	switch source {
-	case jet.PostgreSQL:
+	case jet.PostgreSQL.Name:
 		if host == "" || port == 0 || user == "" || dbName == "" || schemaName == "" {
 			fmt.Println("\njet: required flag missing")
 			flag.Usage()
@@ -93,7 +93,7 @@ Usage of jet:
 
 		err = postgres.Generate(destDir, genData)
 
-	case jet.MySql:
+	case jet.MySql.Name:
 		if host == "" || port == 0 || user == "" || dbName == "" {
 			fmt.Println("\njet: required flag missing")
 			flag.Usage()

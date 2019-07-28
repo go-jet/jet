@@ -38,6 +38,12 @@ func (d *deleteStatementImpl) RETURNING(projections ...projection) DeleteStateme
 	return d
 }
 
+func (d *deleteStatementImpl) accept(visitor visitor) {
+	visitor.visit(d)
+
+	d.table.accept(visitor)
+}
+
 func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 	if d == nil {
 		return errors.New("jet: delete statement is nil")
@@ -68,8 +74,10 @@ func (d *deleteStatementImpl) serializeImpl(out *sqlBuilder) error {
 	return nil
 }
 
-func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := &sqlBuilder{}
+func (d *deleteStatementImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+	queryData := &sqlBuilder{
+		dialect: detectDialect(d, dialect...),
+	}
 
 	err = d.serializeImpl(queryData)
 
@@ -81,8 +89,8 @@ func (d *deleteStatementImpl) Sql() (query string, args []interface{}, err error
 	return
 }
 
-func (d *deleteStatementImpl) DebugSql() (query string, err error) {
-	return debugSql(d)
+func (d *deleteStatementImpl) DebugSql(dialect ...Dialect) (query string, err error) {
+	return debugSql(d, dialect...)
 }
 
 func (d *deleteStatementImpl) Query(db execution.DB, destination interface{}) error {

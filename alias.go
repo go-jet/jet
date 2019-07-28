@@ -28,7 +28,7 @@ func (a *alias) serializeForProjection(statement statementType, out *sqlBuilder)
 	}
 
 	out.writeString("AS")
-	out.writeQuotedString(a.alias)
+	out.writeAlias(a.alias)
 
 	return nil
 }

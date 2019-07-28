@@ -41,6 +41,15 @@ func (s *selectTableImpl) columns() []column {
 	return nil
 }
 
+func (s *selectTableImpl) accept(visitor visitor) {
+	visitor.visit(s)
+	s.selectStmt.accept(visitor)
+}
+
+func (s *selectTableImpl) dialect() Dialect {
+	return detectDialect(s.selectStmt)
+}
+
 func (s *selectTableImpl) AllColumns() ProjectionList {
 	return s.projections
 }

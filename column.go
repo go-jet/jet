@@ -20,6 +20,7 @@ type Column interface {
 // The base type for real materialized columns.
 type columnImpl struct {
 	expressionInterfaceImpl
+	noOpVisitorImpl
 
 	name      string
 	tableName string
@@ -65,7 +66,7 @@ func (c *columnImpl) defaultAlias() string {
 func (c *columnImpl) serializeForOrderBy(statement statementType, out *sqlBuilder) error {
 	if statement == setStatement {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
-		out.writeString(`"` + c.defaultAlias() + `"`) //always quote
+		out.writeAlias(c.defaultAlias()) //always quote
 
 		return nil
 	}
@@ -80,7 +81,8 @@ func (c columnImpl) serializeForProjection(statement statementType, out *sqlBuil
 		return err
 	}
 
-	out.writeString(`AS "` + c.defaultAlias() + `"`)
+	out.writeString("AS")
+	out.writeAlias(c.defaultAlias())
 
 	return nil
 }
@@ -90,7 +92,7 @@ func (c columnImpl) serialize(statement statementType, out *sqlBuilder, options 
 	if c.subQuery != nil {
 		out.writeIdentifier(c.subQuery.Alias())
 		out.writeByte('.')
-		out.writeQuotedString(c.defaultAlias())
+		out.writeAlias(c.defaultAlias())
 	} else {
 		if c.tableName != "" {
 			out.writeIdentifier(c.tableName)

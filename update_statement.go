@@ -57,8 +57,15 @@ func (u *updateStatementImpl) RETURNING(projections ...projection) UpdateStateme
 	return u
 }
 
-func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) {
-	out := &sqlBuilder{}
+func (u *updateStatementImpl) accept(visitor visitor) {
+	visitor.visit(u)
+	u.table.accept(visitor)
+}
+
+func (u *updateStatementImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+	out := &sqlBuilder{
+		dialect: detectDialect(u, dialect...),
+	}
 
 	out.newLine()
 	out.writeString("UPDATE")
@@ -124,12 +131,12 @@ func (u *updateStatementImpl) Sql() (sql string, args []interface{}, err error) 
 		return
 	}
 
-	sql, args = out.finalize()
+	query, args = out.finalize()
 	return
 }
 
-func (u *updateStatementImpl) DebugSql() (query string, err error) {
-	return debugSql(u)
+func (u *updateStatementImpl) DebugSql(dialect ...Dialect) (query string, err error) {
+	return debugSql(u, dialect...)
 }
 
 func (u *updateStatementImpl) Query(db execution.DB, destination interface{}) error {

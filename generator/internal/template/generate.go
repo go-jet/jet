@@ -3,6 +3,7 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/generator/internal/metadata"
 	"github.com/go-jet/jet/internal/utils"
 	"path/filepath"
@@ -10,7 +11,7 @@ import (
 	"time"
 )
 
-func GenerateFiles(destDir string, tables, enums []metadata.MetaData, dialect string) error {
+func GenerateFiles(destDir string, tables, enums []metadata.MetaData, dialect jet.Dialect) error {
 	if len(tables) == 0 && len(enums) == 0 {
 		return nil
 	}
@@ -59,7 +60,7 @@ func GenerateFiles(destDir string, tables, enums []metadata.MetaData, dialect st
 
 }
 
-func generate(dirPath, packageName string, template string, metaDataList []metadata.MetaData, dialect string) error {
+func generate(dirPath, packageName string, template string, metaDataList []metadata.MetaData, dialect jet.Dialect) error {
 	modelDirPath := filepath.Join(dirPath, packageName)
 
 	err := utils.EnsureDirPath(modelDirPath)
@@ -92,14 +93,14 @@ func generate(dirPath, packageName string, template string, metaDataList []metad
 }
 
 // GenerateTemplate generates template with template text and template data.
-func GenerateTemplate(templateText string, templateData interface{}, dialect string) ([]byte, error) {
+func GenerateTemplate(templateText string, templateData interface{}, dialect jet.Dialect) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"ToGoIdentifier": utils.ToGoIdentifier,
 		"now": func() string {
 			return time.Now().Format(time.RFC850)
 		},
-		"dialect": func() string {
+		"dialect": func() jet.Dialect {
 			return dialect
 		},
 	}).Parse(templateText)

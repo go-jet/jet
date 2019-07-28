@@ -4,19 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"github.com/go-jet/jet/execution"
-	"strconv"
 	"strings"
 )
 
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement interface {
+	acceptsVisitor
 	// Sql returns parametrized sql query with list of arguments.
 	// err is returned if statement is not composed correctly
-	Sql() (query string, args []interface{}, err error)
+	Sql(dialect ...Dialect) (query string, args []interface{}, err error)
 	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
 	// Do not use it in production. Use it only for debug purposes.
 	// err is returned if statement is not composed correctly
-	DebugSql() (query string, err error)
+	DebugSql(dialect ...Dialect) (query string, err error)
 
 	// Query executes statement over database connection db and stores row result in destination.
 	// Destination can be arbitrary structure
@@ -31,7 +31,8 @@ type Statement interface {
 	ExecContext(context context.Context, db execution.DB) (sql.Result, error)
 }
 
-func debugSql(statement Statement) (string, error) {
+func debugSql(statement Statement, overrideDialect ...Dialect) (string, error) {
+	dialect := detectDialect(statement, overrideDialect...)
 	sqlQuery, args, err := statement.Sql()
 
 	if err != nil {
@@ -41,7 +42,7 @@ func debugSql(statement Statement) (string, error) {
 	debugSQLQuery := sqlQuery
 
 	for i, arg := range args {
-		argPlaceholder := "$" + strconv.Itoa(i+1)
+		argPlaceholder := dialect.ArgumentPlaceholder(i + 1)
 		debugSQLQuery = strings.Replace(debugSQLQuery, argPlaceholder, argToString(arg), 1)
 	}
 

@@ -74,6 +74,14 @@ func newSetStatementImpl(operator string, all bool, selects []SelectStatement) S
 	return setStatement
 }
 
+func (s *setStatementImpl) accept(visitor visitor) {
+	visitor.visit(s)
+
+	for _, selects := range s.selects {
+		selects.accept(visitor)
+	}
+}
+
 func (s *setStatementImpl) projections() []projection {
 	if len(s.selects) > 0 {
 		return s.selects[0].projections()
@@ -169,8 +177,10 @@ func (s *setStatementImpl) serializeImpl(out *sqlBuilder) error {
 	return nil
 }
 
-func (s *setStatementImpl) Sql() (query string, args []interface{}, err error) {
-	queryData := &sqlBuilder{}
+func (s *setStatementImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+	queryData := &sqlBuilder{
+		dialect: detectDialect(s, dialect...),
+	}
 
 	err = s.serializeImpl(queryData)
 

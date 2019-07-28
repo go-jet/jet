@@ -5,6 +5,8 @@ import "fmt"
 // Representation of an escaped literal
 type literalExpression struct {
 	expressionInterfaceImpl
+	noOpVisitorImpl
+
 	value    interface{}
 	constant bool
 }
@@ -188,6 +190,7 @@ func Date(year, month, day int) DateExpression {
 //--------------------------------------------------//
 type nullLiteral struct {
 	expressionInterfaceImpl
+	noOpVisitorImpl
 }
 
 func newNullLiteral() Expression {
@@ -206,6 +209,7 @@ func (n *nullLiteral) serialize(statement statementType, out *sqlBuilder, option
 //--------------------------------------------------//
 type starLiteral struct {
 	expressionInterfaceImpl
+	noOpVisitorImpl
 }
 
 func newStarLiteral() Expression {
@@ -228,6 +232,12 @@ type wrap struct {
 	expressions []Expression
 }
 
+func (n *wrap) accept(visitor visitor) {
+	for _, exp := range n.expressions {
+		exp.accept(visitor)
+	}
+}
+
 func (n *wrap) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
 	out.writeString("(")
 	err := serializeExpressionList(statement, n.expressions, ", ", out)
@@ -247,6 +257,8 @@ func WRAP(expression ...Expression) Expression {
 
 type rawExpression struct {
 	expressionInterfaceImpl
+	noOpVisitorImpl
+
 	raw string
 }
 

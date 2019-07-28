@@ -73,36 +73,44 @@ func (i *insertStatementImpl) getColumns() []column {
 	return i.table.columns()
 }
 
-func (i *insertStatementImpl) DebugSql() (query string, err error) {
-	return debugSql(i)
+func (i *insertStatementImpl) accept(visitor visitor) {
+	visitor.visit(i)
+
+	i.table.accept(visitor)
 }
 
-func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) {
-	queryData := &sqlBuilder{}
+func (i *insertStatementImpl) DebugSql(dialect ...Dialect) (query string, err error) {
+	return debugSql(i, dialect...)
+}
 
-	queryData.newLine()
-	queryData.writeString("INSERT INTO")
+func (i *insertStatementImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+	out := &sqlBuilder{
+		dialect: detectDialect(i, dialect...),
+	}
+
+	out.newLine()
+	out.writeString("INSERT INTO")
 
 	if utils.IsNil(i.table) {
 		return "", nil, errors.New("jet: table is nil")
 	}
 
-	err = i.table.serialize(insertStatement, queryData)
+	err = i.table.serialize(insertStatement, out)
 
 	if err != nil {
 		return
 	}
 
 	if len(i.columns) > 0 {
-		queryData.writeString("(")
+		out.writeString("(")
 
-		err = serializeColumnNames(i.columns, queryData)
+		err = serializeColumnNames(i.columns, out)
 
 		if err != nil {
 			return
 		}
 
-		queryData.writeString(")")
+		out.writeString(")")
 	}
 
 	if len(i.rows) == 0 && i.query == nil {
@@ -114,41 +122,41 @@ func (i *insertStatementImpl) Sql() (sql string, args []interface{}, err error) 
 	}
 
 	if len(i.rows) > 0 {
-		queryData.writeString("VALUES")
+		out.writeString("VALUES")
 
 		for rowIndex, row := range i.rows {
 			if rowIndex > 0 {
-				queryData.writeString(",")
+				out.writeString(",")
 			}
 
-			queryData.increaseIdent()
-			queryData.newLine()
-			queryData.writeString("(")
+			out.increaseIdent()
+			out.newLine()
+			out.writeString("(")
 
-			err = serializeClauseList(insertStatement, row, queryData)
+			err = serializeClauseList(insertStatement, row, out)
 
 			if err != nil {
 				return "", nil, err
 			}
 
-			queryData.writeByte(')')
-			queryData.decreaseIdent()
+			out.writeByte(')')
+			out.decreaseIdent()
 		}
 	}
 
 	if i.query != nil {
-		err = i.query.serialize(insertStatement, queryData)
+		err = i.query.serialize(insertStatement, out)
 
 		if err != nil {
 			return
 		}
 	}
 
-	if err = queryData.writeReturning(insertStatement, i.returning); err != nil {
+	if err = out.writeReturning(insertStatement, i.returning); err != nil {
 		return
 	}
 
-	sql, args = queryData.finalize()
+	query, args = out.finalize()
 
 	return
 }

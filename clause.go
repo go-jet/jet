@@ -30,8 +30,9 @@ func contains(options []serializeOption, option serializeOption) bool {
 }
 
 type sqlBuilder struct {
-	buff bytes.Buffer
-	args []interface{}
+	dialect Dialect
+	buff    bytes.Buffer
+	args    []interface{}
 
 	lastChar byte
 	ident    int
@@ -162,8 +163,9 @@ func isPostSeparator(b byte) bool {
 	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
-func (q *sqlBuilder) writeQuotedString(str string) {
-	q.writeString(`"` + str + `"`)
+func (q *sqlBuilder) writeAlias(str string) {
+	aliasQuoteChar := string(q.dialect.AliasQuoteChar)
+	q.writeString(aliasQuoteChar + str + aliasQuoteChar)
 }
 
 func (q *sqlBuilder) writeString(str string) {
@@ -174,7 +176,8 @@ func (q *sqlBuilder) writeIdentifier(name string) {
 	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
 
 	if quoteWrap {
-		q.writeString(`"` + name + `"`)
+		identQuoteChar := string(q.dialect.IdentifierQuoteChar)
+		q.writeString(identQuoteChar + name + identQuoteChar)
 	} else {
 		q.writeString(name)
 	}
@@ -194,7 +197,7 @@ func (q *sqlBuilder) insertConstantArgument(arg interface{}) {
 
 func (q *sqlBuilder) insertParametrizedArgument(arg interface{}) {
 	q.args = append(q.args, arg)
-	argPlaceholder := "$" + strconv.Itoa(len(q.args))
+	argPlaceholder := q.dialect.ArgumentPlaceholder(len(q.args))
 
 	q.writeString(argPlaceholder)
 }

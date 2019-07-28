@@ -17,6 +17,7 @@ var table1ColBool = BoolColumn("col_bool")
 var table1ColDate = DateColumn("col_date")
 
 var table1 = NewTable(
+	PostgreSQL,
 	"db",
 	"table1",
 	table1Col1,
@@ -44,6 +45,7 @@ var table2ColTimestampz = TimestampzColumn("col_timestampz")
 var table2ColDate = DateColumn("col_date")
 
 var table2 = NewTable(
+	PostgreSQL,
 	"db",
 	"table2",
 	table2Col3,
@@ -63,6 +65,7 @@ var table3Col1 = IntegerColumn("col1")
 var table3ColInt = IntegerColumn("col_int")
 var table3StrCol = StringColumn("col2")
 var table3 = NewTable(
+	PostgreSQL,
 	"db",
 	"table3",
 	table3Col1,
@@ -70,7 +73,7 @@ var table3 = NewTable(
 	table3StrCol)
 
 func assertClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
-	out := sqlBuilder{}
+	out := sqlBuilder{dialect: PostgreSQL}
 	err := clause.serialize(selectStatement, &out)
 
 	assert.NilError(t, err)
@@ -80,7 +83,7 @@ func assertClauseSerialize(t *testing.T, clause clause, query string, args ...in
 }
 
 func assertClauseSerializeErr(t *testing.T, clause clause, errString string) {
-	out := sqlBuilder{}
+	out := sqlBuilder{dialect: PostgreSQL}
 	err := clause.serialize(selectStatement, &out)
 
 	//fmt.Println(out.buff.String())
@@ -89,7 +92,7 @@ func assertClauseSerializeErr(t *testing.T, clause clause, errString string) {
 }
 
 func assertProjectionSerialize(t *testing.T, projection projection, query string, args ...interface{}) {
-	out := sqlBuilder{}
+	out := sqlBuilder{dialect: PostgreSQL}
 	err := projection.serializeForProjection(selectStatement, &out)
 
 	assert.NilError(t, err)
@@ -99,7 +102,7 @@ func assertProjectionSerialize(t *testing.T, projection projection, query string
 }
 
 func assertStatement(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
-	queryStr, args, err := query.Sql()
+	queryStr, args, err := query.Sql(PostgreSQL)
 	assert.NilError(t, err)
 
 	//fmt.Println(queryStr)
@@ -108,7 +111,7 @@ func assertStatement(t *testing.T, query Statement, expectedQuery string, expect
 }
 
 func assertStatementErr(t *testing.T, stmt Statement, errorStr string) {
-	_, _, err := stmt.Sql()
+	_, _, err := stmt.Sql(PostgreSQL)
 
 	assert.Assert(t, err != nil)
 	assert.Error(t, err, errorStr)

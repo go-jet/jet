@@ -6,6 +6,7 @@ import (
 )
 
 type table interface {
+	dialect() Dialect
 	columns() []column
 }
 
@@ -42,6 +43,7 @@ type ReadableTable interface {
 	table
 	readableTable
 	clause
+	acceptsVisitor
 }
 
 // WritableTable interface
@@ -49,6 +51,7 @@ type WritableTable interface {
 	table
 	writableTable
 	clause
+	acceptsVisitor
 }
 
 // Table interface
@@ -57,6 +60,8 @@ type Table interface {
 	readableTable
 	writableTable
 	clause
+	acceptsVisitor
+
 	SchemaName() string
 	TableName() string
 	AS(alias string)
@@ -114,10 +119,11 @@ func (w *writableTableInterfaceImpl) LOCK() LockStatement {
 	return LOCK(w.parent)
 }
 
-// NewTable creates new table with schema name, table name and list of columns
-func NewTable(schemaName, name string, columns ...Column) Table {
+// NewTable creates new table with schema Name, table Name and list of columns
+func NewTable(Dialect Dialect, schemaName, name string, columns ...Column) Table {
 
 	t := &tableImpl{
+		Dialect:    Dialect,
 		schemaName: schemaName,
 		name:       name,
 		columnList: columns,
@@ -136,6 +142,7 @@ type tableImpl struct {
 	readableTableInterfaceImpl
 	writableTableInterfaceImpl
 
+	Dialect    Dialect
 	schemaName string
 	name       string
 	alias      string
@@ -166,6 +173,14 @@ func (t *tableImpl) columns() []column {
 	}
 
 	return ret
+}
+
+func (t *tableImpl) dialect() Dialect {
+	return t.Dialect
+}
+
+func (t *tableImpl) accept(visitor visitor) {
+	visitor.visit(t)
 }
 
 func (t *tableImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
@@ -233,6 +248,15 @@ func (t *joinTable) TableName() string {
 
 func (t *joinTable) columns() []column {
 	return append(t.lhs.columns(), t.rhs.columns()...)
+}
+
+func (t *joinTable) accept(visitor visitor) {
+	t.lhs.accept(visitor)
+	t.rhs.accept(visitor)
+}
+
+func (t *joinTable) dialect() Dialect {
+	return detectDialect(t)
 }
 
 func (t *joinTable) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) (err error) {

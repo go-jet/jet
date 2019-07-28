@@ -22,7 +22,7 @@ package table
 
 import (
 	"github.com/go-jet/jet"
-	"github.com/go-jet/jet/{{dialect}}"
+	"github.com/go-jet/jet/{{dialect.PackageName}}"
 )
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
@@ -32,7 +32,7 @@ type {{.GoStructName}} struct {
 	
 	//Columns
 {{- range .Columns}}
-	{{ToGoIdentifier .Name}} {{dialect}}.Column{{.SqlBuilderColumnType}}
+	{{ToGoIdentifier .Name}} {{dialect.PackageName}}.Column{{.SqlBuilderColumnType}}
 {{- end}}
 
 	AllColumns     jet.ColumnList
@@ -51,12 +51,12 @@ func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 func new{{.GoStructName}}() *{{.GoStructName}} {
 	var (
 	{{- range .Columns}}
-		{{ToGoIdentifier .Name}}Column = {{dialect}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
+		{{ToGoIdentifier .Name}}Column = {{dialect.PackageName}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
 	{{- end}}
 	)
 
 	return &{{.GoStructName}}{
-		Table: jet.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
+		Table: jet.NewTable(jet.{{dialect.Name}}, "{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
 
 		//Columns
 {{- range .Columns}}

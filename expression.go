@@ -7,6 +7,12 @@ import (
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
+	acceptsVisitor
+
+	expression
+}
+
+type expression interface {
 	clause
 	projection
 	groupByClause
@@ -95,7 +101,12 @@ func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpressio
 	return binaryExpression
 }
 
-func (c *binaryOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
+func (c *binaryOpExpression) accept(visitor visitor) {
+	c.lhs.accept(visitor)
+	c.rhs.accept(visitor)
+}
+
+func (c *binaryOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) (err error) {
 	if c == nil {
 		return errors.New("jet: binary Expression is nil")
 	}
@@ -112,21 +123,25 @@ func (c *binaryOpExpression) serialize(statement statementType, out *sqlBuilder,
 		out.writeString("(")
 	}
 
-	if err := c.lhs.serialize(statement, out); err != nil {
-		return err
-	}
+	if dialectOveride := out.dialect.serializeOverride(c.operator); dialectOveride != nil {
+		err = dialectOveride(c.lhs, c.rhs)(statement, out, options...)
+	} else {
+		if err := c.lhs.serialize(statement, out); err != nil {
+			return err
+		}
 
-	out.writeString(c.operator)
+		out.writeString(c.operator)
 
-	if err := c.rhs.serialize(statement, out); err != nil {
-		return err
+		if err := c.rhs.serialize(statement, out); err != nil {
+			return err
+		}
 	}
 
 	if wrap {
 		out.writeString(")")
 	}
 
-	return nil
+	return err
 }
 
 // A prefix operator Expression
@@ -142,6 +157,10 @@ func newPrefixExpression(expression Expression, operator string) prefixOpExpress
 	}
 
 	return prefixExpression
+}
+
+func (p *prefixOpExpression) accept(visitor visitor) {
+	p.expression.accept(visitor)
 }
 
 func (p *prefixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
@@ -174,6 +193,10 @@ func newPostfixOpExpression(expression Expression, operator string) postfixOpExp
 	}
 
 	return postfixOpExpression
+}
+
+func (p *postfixOpExpression) accept(visitor visitor) {
+	p.expression.accept(visitor)
 }
 
 func (p *postfixOpExpression) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {

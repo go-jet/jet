@@ -44,9 +44,27 @@ func CAST(expression Expression) cast {
 	}
 }
 
+func (b *castImpl) accept(visitor visitor) {
+	visitor.visit(b)
+
+	b.Expression.accept(visitor)
+}
+
 func (b *castImpl) serialize(statement statementType, out *sqlBuilder, options ...serializeOption) error {
-	err := b.Expression.serialize(statement, out, options...)
-	out.writeString("::" + b.castType)
+
+	if castOverride := out.dialect.CastOverride; castOverride != nil {
+		return castOverride(b.Expression, b.castType)(statement, out, options...)
+	}
+
+	out.writeString("CAST")
+	err := WRAP(b.Expression).serialize(statement, out, options...)
+	if err != nil {
+		return err
+	}
+
+	out.writeString("AS")
+	out.writeString(b.castType)
+
 	return err
 }
 

@@ -53,11 +53,19 @@ func (l *lockStatementImpl) NOWAIT() LockStatement {
 	return l
 }
 
-func (l *lockStatementImpl) DebugSql() (query string, err error) {
-	return debugSql(l)
+func (l *lockStatementImpl) DebugSql(dialect ...Dialect) (query string, err error) {
+	return debugSql(l, dialect...)
 }
 
-func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) {
+func (l *lockStatementImpl) accept(visitor visitor) {
+	visitor.visit(l)
+
+	for _, table := range l.tables {
+		table.accept(visitor)
+	}
+}
+
+func (l *lockStatementImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
 	if l == nil {
 		return "", nil, errors.New("jet: nil Statement")
 	}
@@ -66,7 +74,9 @@ func (l *lockStatementImpl) Sql() (query string, args []interface{}, err error) 
 		return "", nil, errors.New("jet: There is no table selected to be locked")
 	}
 
-	out := &sqlBuilder{}
+	out := &sqlBuilder{
+		dialect: detectDialect(l, dialect...),
+	}
 
 	out.newLine()
 	out.writeString("LOCK TABLE")
