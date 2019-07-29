@@ -93,7 +93,7 @@ Usage of jet:
 
 		err = postgres.Generate(destDir, genData)
 
-	case jet.MySql.Name:
+	case jet.MySQL.Name:
 		if host == "" || port == 0 || user == "" || dbName == "" {
 			fmt.Println("\njet: required flag missing")
 			flag.Usage()

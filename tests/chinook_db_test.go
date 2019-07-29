@@ -1,16 +1,12 @@
 package tests
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
 	"gotest.tools/assert"
-	"io/ioutil"
-	"runtime"
 	"testing"
 	"time"
 )
@@ -20,7 +16,7 @@ func TestSelect(t *testing.T) {
 		SELECT(Album.AllColumns).
 		ORDER_BY(Album.AlbumId.ASC())
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT "Album"."AlbumId" AS "Album.AlbumId",
      "Album"."Title" AS "Album.Title",
      "Album"."ArtistId" AS "Album.ArtistId"
@@ -106,7 +102,7 @@ func TestJoinEverything(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 275)
-	assertJSONFile(t, "./testdata/joined_everything.json", dest)
+	testutils.AssertJSONFile(t, "./testdata/joined_everything.json", dest)
 }
 
 func TestSelfJoin(t *testing.T) {
@@ -130,7 +126,7 @@ func TestSelfJoin(t *testing.T) {
 		).
 		ORDER_BY(Employee.EmployeeId)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT "Employee"."EmployeeId" AS "Employee.EmployeeId",
      "Employee"."FirstName" AS "Employee.FirstName",
      "Employee"."LastName" AS "Employee.LastName",
@@ -146,7 +142,7 @@ ORDER BY "Employee"."EmployeeId";
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 8)
-	assertJSON(t, dest[0:2], `
+	testutils.AssertJSON(t, dest[0:2], `
 [
 	{
 		"EmployeeId": 1,
@@ -214,7 +210,7 @@ func TestUnionForQuotedNames(t *testing.T) {
 		ORDER_BY(Album.AlbumId)
 
 	//fmt.Println(stmt.DebugSql())
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 (
      (
           SELECT "Album"."AlbumId" AS "Album.AlbumId",
@@ -298,7 +294,7 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
 		ORDER_BY(artistID)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
      "first10Artist"."Artist.Name" AS "Artist.Name",
      "first10Albums"."Album.AlbumId" AS "Album.AlbumId",
@@ -333,43 +329,6 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	assert.NilError(t, err)
 
 	//spew.Dump(dest)
-}
-
-func assertJSON(t *testing.T, data interface{}, expectedJSON string) {
-	jsonData, err := json.MarshalIndent(data, "", "\t")
-	assert.NilError(t, err)
-
-	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
-}
-
-func assertJSONFile(t *testing.T, jsonFilePath string, data interface{}) {
-	fileJSONData, err := ioutil.ReadFile(jsonFilePath)
-	assert.NilError(t, err)
-
-	if runtime.GOOS == "windows" {
-		fileJSONData = bytes.Replace(fileJSONData, []byte("\r\n"), []byte("\n"), -1)
-	}
-
-	jsonData, err := json.MarshalIndent(data, "", "\t")
-	assert.NilError(t, err)
-
-	assert.Assert(t, string(fileJSONData) == string(jsonData))
-	//assert.Equal(t, string(fileJSONData), string(jsonData))
-}
-
-func jsonPrint(v interface{}) {
-	jsonText, _ := json.MarshalIndent(v, "", "\t")
-	fmt.Println(string(jsonText))
-}
-
-func jsonSave(path string, v interface{}) {
-	jsonText, _ := json.MarshalIndent(v, "", "\t")
-
-	err := ioutil.WriteFile(path, jsonText, 0644)
-
-	if err != nil {
-		panic(err)
-	}
 }
 
 var album1 = model.Album{

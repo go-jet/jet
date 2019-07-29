@@ -2,6 +2,7 @@ package tests
 
 import (
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/enum"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
@@ -24,7 +25,7 @@ WHERE actor.actor_id = 1;
 		DISTINCT().
 		WHERE(Actor.ActorID.EQ(Int(1)))
 
-	assertStatementSql(t, query, expectedSQL, int64(1))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -35,7 +36,7 @@ WHERE actor.actor_id = 1;
 		ActorID:    1,
 		FirstName:  "Penelope",
 		LastName:   "Guiness",
-		LastUpdate: *timestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
+		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 	}
 
 	assert.DeepEqual(t, actor, expectedActor)
@@ -74,7 +75,7 @@ LIMIT 30;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
-	assertStatementSql(t, query, expectedSQL, int64(30))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(30))
 
 	dest := []model.Payment{}
 
@@ -103,7 +104,7 @@ ORDER BY customer.customer_id ASC;
 
 	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
-	assertStatementSql(t, query, expectedSQL)
+	testutils.AssertStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &customers)
 	assert.NilError(t, err)
@@ -156,7 +157,7 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
-	assertStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -224,7 +225,7 @@ LIMIT 1000;
 			ORDER_BY(Film.FilmID.ASC()).
 			LIMIT(1000)
 
-		assertStatementSql(t, query, expectedSQL, int64(1000))
+		testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
 
 		var languageActorFilm []struct {
 			model.Language
@@ -290,7 +291,7 @@ LIMIT 15;
 		WHERE(Film.Rating.EQ(enum.MpaaRating.Nc17)).
 		LIMIT(15)
 
-	assertStatementSql(t, query, expectedSQL, int64(15))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(15))
 
 	err := query.Query(db, &filmsPerLanguage)
 
@@ -325,7 +326,7 @@ func TestExecution1(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
      city.city AS "city.city",
      address.address_id AS "address.address_id",
@@ -399,7 +400,7 @@ func TestExecution2(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT city.city_id AS "my_city.id",
      city.city AS "myCity.Name",
      address.address_id AS "My_Address.id",
@@ -457,7 +458,7 @@ func TestExecution3(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT city.city_id AS "city_id",
      city.city AS "city_name",
      customer.customer_id AS "customer_id",
@@ -514,7 +515,7 @@ func TestExecution4(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
      city.city AS "city.city",
      customer.customer_id AS "customer.customer_id",
@@ -532,7 +533,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 2)
-	assertJSON(t, dest, `
+	testutils.AssertJSON(t, dest, `
 [
 	{
 		"CityID": 312,
@@ -685,7 +686,7 @@ ORDER BY customer.customer_id ASC;
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC())
 
-	assertStatementSql(t, query, expectedSQL)
+	testutils.AssertStatementSql(t, query, expectedSQL)
 
 	allCustomersAndAddress := []struct {
 		Address  *model.Address
@@ -738,7 +739,7 @@ LIMIT 1000;
 		ORDER_BY(Customer.CustomerID.ASC()).
 		LIMIT(1000)
 
-	assertStatementSql(t, query, expectedSQL, int64(1000))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
 
 	var customerAddresCrosJoined []struct {
 		model.Customer
@@ -793,7 +794,7 @@ ORDER BY f1.film_id ASC;
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
-	assertStatementSql(t, query, expectedSQL)
+	testutils.AssertStatementSql(t, query, expectedSQL)
 
 	type F1 model.Film
 	type F2 model.Film
@@ -835,7 +836,7 @@ LIMIT 1000;
 		ORDER_BY(f1.Length.ASC(), f1.Title.ASC(), f2.Title.ASC()).
 		LIMIT(1000)
 
-	assertStatementSql(t, query, expectedSQL, int64(1000))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
 
 	type thesameLengthFilms struct {
 		Title1 string
@@ -897,7 +898,7 @@ FROM dvds.actor
 			rRatingFilms.AllColumns(),
 		)
 
-	assertStatementSql(t, query, expectedQuery)
+	testutils.AssertStatementSql(t, query, expectedQuery)
 
 	dest := []model.Actor{}
 
@@ -915,7 +916,7 @@ FROM dvds.film;
 		MAXf(Film.RentalRate).AS("max_film_rate"),
 	)
 
-	assertStatementSql(t, query, expectedQuery)
+	testutils.AssertStatementSql(t, query, expectedQuery)
 
 	ret := struct {
 		MaxFilmRate float64
@@ -960,7 +961,7 @@ ORDER BY film.film_id ASC;
 		WHERE(Film.RentalRate.EQ(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
-	assertStatementSql(t, query, expectedSQL)
+	testutils.AssertStatementSql(t, query, expectedSQL)
 
 	maxRentalRateFilms := []model.Film{}
 	err := query.Query(db, &maxRentalRateFilms)
@@ -974,16 +975,16 @@ ORDER BY film.film_id ASC;
 	assert.DeepEqual(t, maxRentalRateFilms[0], model.Film{
 		FilmID:          2,
 		Title:           "Ace Goldfinger",
-		Description:     stringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
-		ReleaseYear:     int32Ptr(2006),
+		Description:     StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
+		ReleaseYear:     Int32Ptr(2006),
 		LanguageID:      1,
 		RentalRate:      4.99,
-		Length:          int16Ptr(48),
+		Length:          Int16Ptr(48),
 		ReplacementCost: 12.99,
 		Rating:          &gRating,
 		RentalDuration:  3,
-		LastUpdate:      *timestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-		SpecialFeatures: stringPtr("{Trailers,\"Deleted Scenes\"}"),
+		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+		SpecialFeatures: StringPtr("{Trailers,\"Deleted Scenes\"}"),
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
 }
@@ -1018,7 +1019,7 @@ ORDER BY SUM(payment.amount) ASC;
 			SUMf(Payment.Amount).GT(Float(100)),
 		)
 
-	assertStatementSql(t, customersPaymentQuery, expectedSQL, float64(100))
+	testutils.AssertStatementSql(t, customersPaymentQuery, expectedSQL, float64(100))
 
 	type CustomerPaymentSum struct {
 		CustomerID  int16
@@ -1088,7 +1089,7 @@ ORDER BY customer_payment_sum."amount_sum" ASC;
 		).
 		ORDER_BY(amountSum.ASC())
 
-	assertStatementSql(t, query, expectedSQL)
+	testutils.AssertStatementSql(t, query, expectedSQL)
 
 	type CustomerWithAmounts struct {
 		Customer  *model.Customer
@@ -1106,11 +1107,11 @@ ORDER BY customer_payment_sum."amount_sum" ASC;
 		FirstName:  "Brian",
 		LastName:   "Wyman",
 		AddressID:  323,
-		Email:      stringPtr("brian.wyman@sakilacustomer.org"),
+		Email:      StringPtr("brian.wyman@sakilacustomer.org"),
 		Activebool: true,
-		CreateDate: *timestampWithoutTimeZone("2006-02-14 00:00:00", 0),
-		LastUpdate: timestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
-		Active:     int32Ptr(1),
+		CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+		LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
+		Active:     Int32Ptr(1),
 	})
 
 	assert.Equal(t, customersWithAmounts[0].AmountSum, 27.93)
@@ -1123,7 +1124,7 @@ func TestSelectStaff(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	assertJSON(t, staffs, `
+	testutils.AssertJSON(t, staffs, `
 [
 	{
 		"StaffID": 1,
@@ -1173,7 +1174,7 @@ ORDER BY payment.payment_date ASC;
 		WHERE(Payment.PaymentDate.LT(Timestamp(2007, 02, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	assertStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01.000")
+	testutils.AssertStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01.000")
 
 	payments := []model.Payment{}
 
@@ -1190,7 +1191,7 @@ ORDER BY payment.payment_date ASC;
 		StaffID:     2,
 		RentalID:    1158,
 		Amount:      2.99,
-		PaymentDate: *timestampWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
+		PaymentDate: *testutils.TimestampWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
 	})
 }
 
@@ -1227,7 +1228,7 @@ OFFSET 20;
 		LIMIT(10).
 		OFFSET(20)
 
-	assertStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
+	testutils.AssertStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
 	dest := []model.Payment{}
 
@@ -1301,7 +1302,7 @@ LIMIT 20;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)
 
-	assertStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
+	testutils.AssertStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
 
 	dest := []struct {
 		StaffIDNum string
@@ -1337,7 +1338,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType)
 
-		assertStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
+		testutils.AssertStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1353,7 +1354,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.NOWAIT())
 
-		assertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
+		testutils.AssertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1369,7 +1370,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
-		assertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
+		testutils.AssertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1440,7 +1441,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 		Film.FilmID.ASC(),
 	)
 
-	assertStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
 
 	var dest []struct {
 		model.Actor
@@ -1458,7 +1459,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJSONFile(t, "./testdata/quick-start-dest.json", dest)
+	testutils.AssertJSONFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1471,7 +1472,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
+	testutils.AssertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1523,7 +1524,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	assertJSONFile(t, "./testdata/quick-start-dest.json", dest)
+	testutils.AssertJSONFile(t, "./testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1536,5 +1537,5 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	assertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
+	testutils.AssertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
 }

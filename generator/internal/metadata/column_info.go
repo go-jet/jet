@@ -27,7 +27,7 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 	case "date":
 		return "Date"
 	case "timestamp without time zone",
-		"timestamp": //MySQL:
+		"timestamp", "datetime": //MySQL:
 		return "Timestamp"
 	case "timestamp with time zone":
 		return "Timestampz"
@@ -40,7 +40,8 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 		"char", "varchar", "binary", "varbinary",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
-	case "real", "numeric", "decimal", "double precision", "float":
+	case "real", "numeric", "decimal", "double precision", "float",
+		"double": // MySQL
 		return "Float"
 	default:
 		fmt.Println("Unsupported sql type: " + c.DataType + ", using string column instead for sql builder.")
@@ -66,18 +67,19 @@ func (c ColumnInfo) GoBaseType() string {
 	case "bigint":
 		return "int64"
 	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone",
-		"timestamp": // MySQL
+		"timestamp", "datetime": // MySQL
 		return "time.Time"
 	case "bytea",
-		"tinyblob", "blob", "mediumblob", "longblob": //MySQL
+		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": //MySQL
 		return "[]byte"
 	case "text", "character", "character varying", "tsvector", "bit", "bit varying", "money", "json", "jsonb",
 		"xml", "point", "interval", "line", "ARRAY",
-		"char", "varchar", "binary", "varbinary", "tinytext", "mediumtext", "longtext": // MySQL
+		"char", "varchar", "tinytext", "mediumtext", "longtext": // MySQL
 		return "string"
 	case "real":
 		return "float32"
-	case "numeric", "decimal", "double precision":
+	case "numeric", "decimal", "double precision", "float",
+		"double": // MySQL
 		return "float64"
 	case "uuid":
 		return "uuid.UUID"

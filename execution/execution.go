@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
 	"github.com/go-jet/jet/internal/utils"
+	"github.com/go-sql-driver/mysql"
+	"github.com/google/uuid"
 	"reflect"
 	"strconv"
 	"strings"
@@ -126,7 +128,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 
 	sliceElemType := getSliceElemType(slicePtrValue)
 
-	if isGoBaseType(sliceElemType) {
+	if isSimpleModelType(sliceElemType) {
 		updated, err = mapRowToBaseTypeSlice(scanContext, slicePtrValue, field)
 		return
 	}
@@ -226,7 +228,7 @@ func (s *scanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 
 		if implementsScannerType(field.Type) {
 			fieldMap.implementsScanner = true
-		} else if !isGoBaseType(field.Type) {
+		} else if !isSimpleModelType(field.Type) {
 			fieldMap.complexType = true
 		}
 
@@ -497,12 +499,34 @@ func valueToString(value reflect.Value) string {
 	return fmt.Sprintf("%#v", valueInterface)
 }
 
-func isGoBaseType(objType reflect.Type) bool {
-	typeStr := objType.String()
+var timeType = reflect.TypeOf(time.Now())
+var uuidType = reflect.TypeOf(uuid.New())
 
-	switch typeStr {
-	case "string", "int", "int16", "int32", "int64", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
-		"*string", "*int", "*int16", "*int32", "*int64", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
+func isSimpleModelType(objType reflect.Type) bool {
+	objType = indirectType(objType)
+
+	switch objType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64,
+		reflect.String,
+		reflect.Bool:
+		return true
+	case reflect.Slice:
+		return objType.Elem().Kind() == reflect.Uint8 //[]byte
+	case reflect.Struct:
+		return objType == timeType || objType == uuidType // time.Time || uuid.UUID
+	}
+
+	return false
+}
+
+func tryAssign(source, destination reflect.Value) bool {
+	if source.Type().ConvertibleTo(destination.Type()) {
+		source = source.Convert(destination.Type())
+	}
+	if source.Type().AssignableTo(destination.Type()) {
+		destination.Set(source)
 		return true
 	}
 
@@ -510,35 +534,50 @@ func isGoBaseType(objType reflect.Type) bool {
 }
 
 func setReflectValue(source, destination reflect.Value) error {
-	var sourceElem reflect.Value
+
+	if tryAssign(source, destination) {
+		return nil
+	}
+
 	if destination.Kind() == reflect.Ptr {
 		if source.Kind() == reflect.Ptr {
-			sourceElem = source
+
+			if !source.IsNil() {
+				if destination.IsNil() {
+					initializeValueIfNilPtr(destination)
+				}
+
+				tryAssign(source.Elem(), destination.Elem())
+			}
 		} else {
 			if source.CanAddr() {
-				sourceElem = source.Addr()
+				source = source.Addr()
 			} else {
 				sourceCopy := reflect.New(source.Type())
 				sourceCopy.Elem().Set(source)
 
-				sourceElem = sourceCopy
+				source = sourceCopy
+			}
+
+			if tryAssign(source, destination) {
+				return nil
+			}
+
+			if tryAssign(source.Elem(), destination.Elem()) {
+				return nil
 			}
 		}
 	} else {
 		if source.Kind() == reflect.Ptr {
-			sourceElem = source.Elem()
-		} else {
-			sourceElem = source
+			source = source.Elem()
+		}
+
+		if tryAssign(source, destination) {
+			return nil
 		}
 	}
 
-	if !sourceElem.Type().AssignableTo(destination.Type()) {
-		return errors.New("jet: can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
-	}
-
-	destination.Set(sourceElem)
-
-	return nil
+	return errors.New("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
 }
 
 func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
@@ -555,33 +594,63 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	return values
 }
 
-var nullFloatType = reflect.TypeOf(internal.NullFloat32{})
-var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
+var int8Type = reflect.TypeOf(int8(1))
+var unit8Type = reflect.TypeOf(uint8(1))
+var int16Type = reflect.TypeOf(int16(1))
+var uint16Type = reflect.TypeOf(uint16(1))
+var int32Type = reflect.TypeOf(int32(1))
+var uint32Type = reflect.TypeOf(uint32(1))
+var int64Type = reflect.TypeOf(int64(1))
+var uint64Type = reflect.TypeOf(uint64(1))
+var float32Type = reflect.TypeOf(float32(1.1))
+var float64Type = reflect.TypeOf(float64(1.1))
+
+var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
+var nullUInt8Type = reflect.TypeOf(internal.NullUInt8{})
 var nullInt16Type = reflect.TypeOf(internal.NullInt16{})
+var nullUInt16Type = reflect.TypeOf(internal.NullUInt16{})
 var nullInt32Type = reflect.TypeOf(internal.NullInt32{})
+var nullUInt32Type = reflect.TypeOf(internal.NullUInt32{})
 var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
+var nullUInt64Type = reflect.TypeOf(internal.NullUInt64{})
+
+var nullFloat32Type = reflect.TypeOf(internal.NullFloat32{})
+var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
+
 var nullStringType = reflect.TypeOf(sql.NullString{})
+
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
+
 var nullTimeType = reflect.TypeOf(internal.NullTime{})
+var mySQLNullTime = reflect.TypeOf(mysql.NullTime{})
+
 var nullByteArrayType = reflect.TypeOf(internal.NullByteArray{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
+
+	switch columnType.ScanType() {
+	case mySQLNullTime:
+		return mySQLNullTime
+	}
+
 	switch columnType.DatabaseTypeName() {
-	case "INT2":
+	case "TINYINT":
+		return nullInt8Type
+	case "INT2", "SMALLINT", "YEAR":
 		return nullInt16Type
-	case "INT4":
+	case "INT4", "MEDIUMINT", "INT":
 		return nullInt32Type
-	case "INT8":
+	case "INT8", "BIGINT":
 		return nullInt64Type
-	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "UUID", "JSON", "JSONB", "INTERVAL", "POINT", "BIT", "VARBIT", "XML":
+	case "CHAR", "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "UUID", "JSON", "JSONB", "INTERVAL", "POINT", "BIT", "VARBIT", "XML":
 		return nullStringType
 	case "FLOAT4":
-		return nullFloatType
-	case "FLOAT8", "NUMERIC", "DECIMAL":
+		return nullFloat32Type
+	case "FLOAT8", "NUMERIC", "DECIMAL", "FLOAT", "DOUBLE":
 		return nullFloat64Type
 	case "BOOL":
 		return nullBoolType
-	case "BYTEA":
+	case "BYTEA", "BINARY", "VARBINARY", "BLOB":
 		return nullByteArrayType
 	case "DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
 		return nullTimeType
@@ -697,7 +766,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 		field := structType.Field(i)
 		newTypeName, fieldName := getTypeAndFieldName(typeName, field)
 
-		if !isGoBaseType(field.Type) {
+		if !isSimpleModelType(field.Type) {
 			var structType reflect.Type
 			if field.Type.Kind() == reflect.Struct {
 				structType = field.Type

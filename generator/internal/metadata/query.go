@@ -2,7 +2,6 @@ package metadata
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
 )
 
@@ -121,8 +120,6 @@ func (m *MySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]MetaD
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Println(enumValues)
 
 		enumValues = strings.Replace(enumValues[1:len(enumValues)-1], "'", "", -1)
 

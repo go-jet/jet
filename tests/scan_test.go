@@ -2,6 +2,7 @@ package tests
 
 import (
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/google/uuid"
@@ -158,7 +159,7 @@ func TestScanToStruct(t *testing.T) {
 		assert.Equal(t, *dest.StoreID, int16(1))
 	})
 
-	t.Run("type mismatch base type", func(t *testing.T) {
+	t.Run("type convert int32 to int", func(t *testing.T) {
 		type Inventory struct {
 			InventoryID int
 			FilmID      string
@@ -168,7 +169,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.Error(t, err, `jet: can't set int32 to int, at struct field: InventoryID int of type tests.Inventory. `)
+		assert.NilError(t, err)
 	})
 
 	t.Run("type mismatch scanner type", func(t *testing.T) {
@@ -483,10 +484,10 @@ func TestScanToSlice(t *testing.T) {
 			assert.NilError(t, err)
 			assert.Equal(t, len(dest), 2)
 			assert.DeepEqual(t, dest[0].Film, film1)
-			assert.DeepEqual(t, dest[0].IDs, []*int32{int32Ptr(1), int32Ptr(2), int32Ptr(3), int32Ptr(4),
-				int32Ptr(5), int32Ptr(6), int32Ptr(7), int32Ptr(8)})
+			assert.DeepEqual(t, dest[0].IDs, []*int32{Int32Ptr(1), Int32Ptr(2), Int32Ptr(3), Int32Ptr(4),
+				Int32Ptr(5), Int32Ptr(6), Int32Ptr(7), Int32Ptr(8)})
 			assert.DeepEqual(t, dest[1].Film, film2)
-			assert.DeepEqual(t, dest[1].IDs, []*int32{int32Ptr(9), int32Ptr(10)})
+			assert.DeepEqual(t, dest[1].IDs, []*int32{Int32Ptr(9), Int32Ptr(10)})
 		})
 
 		t.Run("complex struct 1", func(t *testing.T) {
@@ -677,23 +678,23 @@ func TestScanToSlice(t *testing.T) {
 var address256 = model.Address{
 	AddressID:  256,
 	Address:    "1497 Yuzhou Drive",
-	Address2:   stringPtr(""),
+	Address2:   StringPtr(""),
 	District:   "England",
 	CityID:     312,
-	PostalCode: stringPtr("3433"),
+	PostalCode: StringPtr("3433"),
 	Phone:      "246810237916",
-	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:45:30", 0),
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 09:45:30", 0),
 }
 
 var addres517 = model.Address{
 	AddressID:  517,
 	Address:    "548 Uruapan Street",
-	Address2:   stringPtr(""),
+	Address2:   StringPtr(""),
 	District:   "Ontario",
 	CityID:     312,
-	PostalCode: stringPtr("35653"),
+	PostalCode: StringPtr("35653"),
 	Phone:      "879347453467",
-	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:45:30", 0),
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 09:45:30", 0),
 }
 
 var customer256 = model.Customer{
@@ -701,12 +702,12 @@ var customer256 = model.Customer{
 	StoreID:    2,
 	FirstName:  "Mattie",
 	LastName:   "Hoffman",
-	Email:      stringPtr("mattie.hoffman@sakilacustomer.org"),
+	Email:      StringPtr("mattie.hoffman@sakilacustomer.org"),
 	AddressID:  256,
 	Activebool: true,
-	CreateDate: *timestampWithoutTimeZone("2006-02-14 00:00:00", 0),
-	LastUpdate: timestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
-	Active:     int32Ptr(1),
+	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
+	Active:     Int32Ptr(1),
 }
 
 var customer512 = model.Customer{
@@ -714,70 +715,70 @@ var customer512 = model.Customer{
 	StoreID:    1,
 	FirstName:  "Cecil",
 	LastName:   "Vines",
-	Email:      stringPtr("cecil.vines@sakilacustomer.org"),
+	Email:      StringPtr("cecil.vines@sakilacustomer.org"),
 	AddressID:  517,
 	Activebool: true,
-	CreateDate: *timestampWithoutTimeZone("2006-02-14 00:00:00", 0),
-	LastUpdate: timestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
-	Active:     int32Ptr(1),
+	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
+	Active:     Int32Ptr(1),
 }
 
 var countryUk = model.Country{
 	CountryID:  102,
 	Country:    "United Kingdom",
-	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:44:00", 0),
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 09:44:00", 0),
 }
 
 var cityLondon = model.City{
 	CityID:     312,
 	City:       "London",
 	CountryID:  102,
-	LastUpdate: *timestampWithoutTimeZone("2006-02-15 09:45:25", 0),
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 09:45:25", 0),
 }
 
 var inventory1 = model.Inventory{
 	InventoryID: 1,
 	FilmID:      1,
 	StoreID:     1,
-	LastUpdate:  *timestampWithoutTimeZone("2006-02-15 10:09:17", 0),
+	LastUpdate:  *testutils.TimestampWithoutTimeZone("2006-02-15 10:09:17", 0),
 }
 
 var inventory2 = model.Inventory{
 	InventoryID: 2,
 	FilmID:      1,
 	StoreID:     1,
-	LastUpdate:  *timestampWithoutTimeZone("2006-02-15 10:09:17", 0),
+	LastUpdate:  *testutils.TimestampWithoutTimeZone("2006-02-15 10:09:17", 0),
 }
 
 var film1 = model.Film{
 	FilmID:          1,
 	Title:           "Academy Dinosaur",
-	Description:     stringPtr("A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies"),
-	ReleaseYear:     int32Ptr(2006),
+	Description:     StringPtr("A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies"),
+	ReleaseYear:     Int32Ptr(2006),
 	LanguageID:      1,
 	RentalDuration:  6,
 	RentalRate:      0.99,
-	Length:          int16Ptr(86),
+	Length:          Int16Ptr(86),
 	ReplacementCost: 20.99,
 	Rating:          &pgRating,
-	LastUpdate:      *timestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-	SpecialFeatures: stringPtr("{\"Deleted Scenes\",\"Behind the Scenes\"}"),
+	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+	SpecialFeatures: StringPtr("{\"Deleted Scenes\",\"Behind the Scenes\"}"),
 	Fulltext:        "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 }
 
 var film2 = model.Film{
 	FilmID:          2,
 	Title:           "Ace Goldfinger",
-	Description:     stringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
-	ReleaseYear:     int32Ptr(2006),
+	Description:     StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
+	ReleaseYear:     Int32Ptr(2006),
 	LanguageID:      1,
 	RentalDuration:  3,
 	RentalRate:      4.99,
-	Length:          int16Ptr(48),
+	Length:          Int16Ptr(48),
 	ReplacementCost: 12.99,
 	Rating:          &gRating,
-	LastUpdate:      *timestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-	SpecialFeatures: stringPtr(`{Trailers,"Deleted Scenes"}`),
+	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
+	SpecialFeatures: StringPtr(`{Trailers,"Deleted Scenes"}`),
 	Fulltext:        `'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14`,
 }
 
@@ -785,7 +786,7 @@ var store1 = model.Store{
 	StoreID:        1,
 	ManagerStaffID: 1,
 	AddressID:      1,
-	LastUpdate:     *timestampWithoutTimeZone("2006-02-15 09:57:12", 0),
+	LastUpdate:     *testutils.TimestampWithoutTimeZone("2006-02-15 09:57:12", 0),
 }
 
 var pgRating = model.MpaaRating_Pg
@@ -794,5 +795,5 @@ var gRating = model.MpaaRating_G
 var language1 = model.Language{
 	LanguageID: 1,
 	Name:       "English             ",
-	LastUpdate: *timestampWithoutTimeZone("2006-02-15 10:02:19", 0),
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 10:02:19", 0),
 }

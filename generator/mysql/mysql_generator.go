@@ -38,7 +38,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	genPath := path.Join(destDir, dbConn.DBName)
 
-	err = template.GenerateFiles(genPath, dbInfo.TableInfos, dbInfo.EnumInfos, jet.MySql)
+	err = template.GenerateFiles(genPath, dbInfo.TableInfos, dbInfo.EnumInfos, jet.MySQL)
 
 	if err != nil {
 		return err

@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
@@ -30,7 +31,7 @@ RETURNING link.id AS "link.id",
 		VALUES(102, "http://www.yahoo.com", "Yahoo", nil).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, insertQuery, expectedSQL,
+	testutils.AssertStatementSql(t, insertQuery, expectedSQL,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		101, "http://www.google.com", "Google",
 		102, "http://www.yahoo.com", "Yahoo", nil)
@@ -84,7 +85,7 @@ INSERT INTO test_sample.link VALUES
 	stmt := Link.INSERT().
 		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT)
 
-	assertStatementSql(t, stmt, expectedSQL,
+	testutils.AssertStatementSql(t, stmt, expectedSQL,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
 	assertExec(t, stmt, 1)
@@ -106,7 +107,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 		INSERT(Link.URL, Link.Name).
 		MODEL(linkData)
 
-	assertStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
+	testutils.AssertStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
 
 	assertExec(t, query, 1)
 }
@@ -128,7 +129,7 @@ INSERT INTO test_sample.link VALUES
 		INSERT().
 		MODEL(linkData)
 
-	assertStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
+	testutils.AssertStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
 	assertExec(t, query, 1)
 }
@@ -160,7 +161,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 		INSERT(Link.URL, Link.Name).
 		MODELS([]model.Link{tutorial, google, yahoo})
 
-	assertStatementSql(t, stmt, expectedSQL,
+	testutils.AssertStatementSql(t, stmt, expectedSQL,
 		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		"http://www.google.com", "Google",
 		"http://www.yahoo.com", "Yahoo")
@@ -193,7 +194,7 @@ INSERT INTO test_sample.link (url, name, description) VALUES
 		MODEL(google).
 		MODELS([]model.Link{google, yahoo})
 
-	assertStatementSql(t, stmt, expectedSQL,
+	testutils.AssertStatementSql(t, stmt, expectedSQL,
 		"http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		"http://www.google.com", "Google", nil,
 		"http://www.google.com", "Google", nil,
@@ -230,7 +231,7 @@ RETURNING link.id AS "link.id",
 		).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, query, expectedSQL, int64(0))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(0))
 
 	dest := []model.Link{}
 

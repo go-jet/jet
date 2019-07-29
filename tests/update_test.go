@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
@@ -23,7 +24,7 @@ UPDATE test_sample.link
 SET (name, url) = ('Bong', 'http://bong.com')
 WHERE link.name = 'Bing';
 `
-	assertStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
+	testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
 
 	assertExec(t, query, 1)
 
@@ -68,7 +69,7 @@ SET (name, url) = ((
 WHERE link.name = 'Bing';
 `
 
-	assertStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
+	testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
 
 	assertExec(t, query, 1)
 }
@@ -92,7 +93,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.EQ(String("Ask"))).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, stmt, expectedSQL, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
+	testutils.AssertStatementSql(t, stmt, expectedSQL, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
 
 	links := []model.Link{}
 
@@ -126,7 +127,7 @@ SET (id, url, name, description) = (
 )
 WHERE link.id = 0;
 `
-	assertStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
 	assertExec(t, stmt, 1)
 }
@@ -151,7 +152,7 @@ SET (id, url, name, description) = (
 )
 WHERE link.id = 0;
 `
-	assertStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
 	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
 }
@@ -175,7 +176,7 @@ UPDATE test_sample.link
 SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 
 	assertExec(t, stmt, 1)
 }
@@ -202,7 +203,7 @@ UPDATE test_sample.link
 SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
 
 	assertExec(t, stmt, 1)
 }
@@ -238,7 +239,7 @@ UPDATE test_sample.link
 SET (id, url, name, description, rel) = ('http://www.duckduckgo.com', 'DuckDuckGo', NULL, NULL)
 WHERE link.id = 201;
 `
-	assertStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
 
 	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
 }

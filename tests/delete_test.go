@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
@@ -21,7 +22,7 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	assertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	testutils.AssertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 	assertExec(t, deleteStmt, 2)
 }
 
@@ -41,7 +42,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
 		RETURNING(Link.AllColumns)
 
-	assertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	testutils.AssertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 
 	dest := []model.Link{}
 

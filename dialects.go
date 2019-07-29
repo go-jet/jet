@@ -7,7 +7,7 @@ import (
 
 var (
 	PostgreSQL = newPostgresDialect()
-	MySql      = newMySQLDialect()
+	MySQL      = newMySQLDialect()
 )
 
 func newPostgresDialect() Dialect {

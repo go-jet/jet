@@ -2,6 +2,7 @@ package tests
 
 import (
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/uuid"
@@ -464,8 +465,8 @@ func TestSubQueryColumnReference(t *testing.T) {
           )
      ) AS "subQuery"`
 
-	subQueries[selectSubQuery] = expected{sql: selectexpectedSQL, args: []interface{}{int64(2)}}
 	subQueries[unionSubQuery] = expected{sql: unionexpectedSQL, args: []interface{}{int64(1), int64(1), int64(1)}}
+	subQueries[selectSubQuery] = expected{sql: selectexpectedSQL, args: []interface{}{int64(2)}}
 
 	for subQuery, expected := range subQueries {
 		boolColumn := AllTypes.Boolean.From(subQuery)
@@ -506,7 +507,7 @@ SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
      "subQuery"."aliasedColumn" AS "aliasedColumn"
 FROM`
 
-		assertStatementSql(t, stmt1, expectedSQL+expected.sql+";\n", expected.args...)
+		testutils.AssertStatementSql(t, stmt1, expectedSQL+expected.sql+";\n", expected.args...)
 
 		dest1 := []model.AllTypes{}
 		err := stmt1.Query(db, &dest1)
@@ -529,7 +530,7 @@ FROM`
 
 		//fmt.Println(stmt2.DebugSql())
 
-		assertStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
+		testutils.AssertStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
 
 		dest2 := []model.AllTypes{}
 		err = stmt2.Query(db, &dest2)
@@ -540,68 +541,68 @@ FROM`
 }
 
 var allTypesRow0 = model.AllTypes{
-	SmallintPtr:        int16Ptr(1),
+	SmallintPtr:        Int16Ptr(1),
 	Smallint:           1,
-	IntegerPtr:         int32Ptr(300),
+	IntegerPtr:         Int32Ptr(300),
 	Integer:            300,
-	BigintPtr:          int64Ptr(50000),
+	BigintPtr:          Int64Ptr(50000),
 	Bigint:             5000,
-	DecimalPtr:         float64Ptr(11.44),
+	DecimalPtr:         Float64Ptr(11.44),
 	Decimal:            11.44,
-	NumericPtr:         float64Ptr(55.77),
+	NumericPtr:         Float64Ptr(55.77),
 	Numeric:            55.77,
-	RealPtr:            float32Ptr(99.1),
+	RealPtr:            Float32Ptr(99.1),
 	Real:               99.1,
-	DoublePrecisionPtr: float64Ptr(11111111.22),
+	DoublePrecisionPtr: Float64Ptr(11111111.22),
 	DoublePrecision:    11111111.22,
 	Smallserial:        1,
 	Serial:             1,
 	Bigserial:          1,
 	//MoneyPtr: nil,
 	//Money:
-	CharacterVaryingPtr:  stringPtr("ABBA"),
+	CharacterVaryingPtr:  StringPtr("ABBA"),
 	CharacterVarying:     "ABBA",
-	CharacterPtr:         stringPtr("JOHN                                                                            "),
+	CharacterPtr:         StringPtr("JOHN                                                                            "),
 	Character:            "JOHN                                                                            ",
-	TextPtr:              stringPtr("Some text"),
+	TextPtr:              StringPtr("Some text"),
 	Text:                 "Some text",
-	ByteaPtr:             byteArrayPtr([]byte("bytea")),
+	ByteaPtr:             ByteArrayPtr([]byte("bytea")),
 	Bytea:                []byte("bytea"),
-	TimestampzPtr:        timestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
-	Timestampz:           *timestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
-	TimestampPtr:         timestampWithoutTimeZone("1999-01-08 04:05:06", 0),
-	Timestamp:            *timestampWithoutTimeZone("1999-01-08 04:05:06", 0),
-	DatePtr:              timestampWithoutTimeZone("1999-01-08 00:00:00", 0),
-	Date:                 *timestampWithoutTimeZone("1999-01-08 00:00:00", 0),
-	TimezPtr:             timeWithTimeZone("04:05:06 -0800"),
-	Timez:                *timeWithTimeZone("04:05:06 -0800"),
-	TimePtr:              timeWithoutTimeZone("04:05:06"),
-	Time:                 *timeWithoutTimeZone("04:05:06"),
-	IntervalPtr:          stringPtr("3 days 04:05:06"),
+	TimestampzPtr:        TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
+	Timestampz:           *TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
+	TimestampPtr:         testutils.TimestampWithoutTimeZone("1999-01-08 04:05:06", 0),
+	Timestamp:            *testutils.TimestampWithoutTimeZone("1999-01-08 04:05:06", 0),
+	DatePtr:              testutils.TimestampWithoutTimeZone("1999-01-08 00:00:00", 0),
+	Date:                 *testutils.TimestampWithoutTimeZone("1999-01-08 00:00:00", 0),
+	TimezPtr:             TimeWithTimeZone("04:05:06 -0800"),
+	Timez:                *TimeWithTimeZone("04:05:06 -0800"),
+	TimePtr:              TimeWithoutTimeZone("04:05:06"),
+	Time:                 *TimeWithoutTimeZone("04:05:06"),
+	IntervalPtr:          StringPtr("3 days 04:05:06"),
 	Interval:             "3 days 04:05:06",
-	BooleanPtr:           boolPtr(true),
+	BooleanPtr:           BoolPtr(true),
 	Boolean:              false,
-	PointPtr:             stringPtr("(2,3)"),
-	BitPtr:               stringPtr("101"),
+	PointPtr:             StringPtr("(2,3)"),
+	BitPtr:               StringPtr("101"),
 	Bit:                  "101",
-	BitVaryingPtr:        stringPtr("101111"),
+	BitVaryingPtr:        StringPtr("101111"),
 	BitVarying:           "101111",
-	TsvectorPtr:          stringPtr("'supernova':1"),
+	TsvectorPtr:          StringPtr("'supernova':1"),
 	Tsvector:             "'supernova':1",
-	UUIDPtr:              uuidPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+	UUIDPtr:              UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
 	UUID:                 uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
-	XMLPtr:               stringPtr("<Sub>abc</Sub>"),
+	XMLPtr:               StringPtr("<Sub>abc</Sub>"),
 	XML:                  "<Sub>abc</Sub>",
-	JSONPtr:              stringPtr(`{"a": 1, "b": 3}`),
+	JSONPtr:              StringPtr(`{"a": 1, "b": 3}`),
 	JSON:                 `{"a": 1, "b": 3}`,
-	JsonbPtr:             stringPtr(`{"a": 1, "b": 3}`),
+	JsonbPtr:             StringPtr(`{"a": 1, "b": 3}`),
 	Jsonb:                `{"a": 1, "b": 3}`,
-	IntegerArrayPtr:      stringPtr("{1,2,3}"),
+	IntegerArrayPtr:      StringPtr("{1,2,3}"),
 	IntegerArray:         "{1,2,3}",
-	TextArrayPtr:         stringPtr("{breakfast,consulting}"),
+	TextArrayPtr:         StringPtr("{breakfast,consulting}"),
 	TextArray:            "{breakfast,consulting}",
 	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
-	TextMultiDimArrayPtr: stringPtr("{{meeting,lunch},{training,presentation}}"),
+	TextMultiDimArrayPtr: StringPtr("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 }
 
@@ -634,15 +635,15 @@ var allTypesRow1 = model.AllTypes{
 	ByteaPtr:             nil,
 	Bytea:                []byte("bytea"),
 	TimestampzPtr:        nil,
-	Timestampz:           *timestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
+	Timestampz:           *TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
 	TimestampPtr:         nil,
-	Timestamp:            *timestampWithoutTimeZone("1999-01-08 04:05:06", 0),
+	Timestamp:            *testutils.TimestampWithoutTimeZone("1999-01-08 04:05:06", 0),
 	DatePtr:              nil,
-	Date:                 *timestampWithoutTimeZone("1999-01-08 00:00:00", 0),
+	Date:                 *testutils.TimestampWithoutTimeZone("1999-01-08 00:00:00", 0),
 	TimezPtr:             nil,
-	Timez:                *timeWithTimeZone("04:05:06 -0800"),
+	Timez:                *TimeWithTimeZone("04:05:06 -0800"),
 	TimePtr:              nil,
-	Time:                 *timeWithoutTimeZone("04:05:06"),
+	Time:                 *TimeWithoutTimeZone("04:05:06"),
 	IntervalPtr:          nil,
 	Interval:             "3 days 04:05:06",
 	BooleanPtr:           nil,

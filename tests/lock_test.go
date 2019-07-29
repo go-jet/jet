@@ -2,6 +2,7 @@ package tests
 
 import (
 	"context"
+	"github.com/go-jet/jet/internal/testutils"
 	"gotest.tools/assert"
 	"testing"
 	"time"
@@ -28,7 +29,7 @@ LOCK TABLE dvds.address IN`
 	for _, lockMode := range testData {
 		query := Address.LOCK().IN(lockMode)
 
-		assertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
+		testutils.AssertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
 
 		tx, _ := db.Begin()
 
@@ -44,7 +45,7 @@ LOCK TABLE dvds.address IN`
 	for _, lockMode := range testData {
 		query := Address.LOCK().IN(lockMode).NOWAIT()
 
-		assertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
+		testutils.AssertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
 
 		tx, _ := db.Begin()
 

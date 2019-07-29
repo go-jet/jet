@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
 	var err error
-	db, err = sql.Open("postgres", dbconfig.ConnectString)
+	db, err = sql.Open("postgres", dbconfig.PostgresConnectString)
 	if err != nil {
 		panic("Failed to connect to test db")
 	}
@@ -185,6 +185,7 @@ package table
 
 import (
 	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/postgres"
 )
 
 var Actor = newActorTable()
@@ -193,10 +194,10 @@ type ActorTable struct {
 	jet.Table
 
 	//Columns
-	ActorID    jet.ColumnInteger
-	FirstName  jet.ColumnString
-	LastName   jet.ColumnString
-	LastUpdate jet.ColumnTimestamp
+	ActorID    postgres.ColumnInteger
+	FirstName  postgres.ColumnString
+	LastName   postgres.ColumnString
+	LastUpdate postgres.ColumnTimestamp
 
 	AllColumns     jet.ColumnList
 	MutableColumns jet.ColumnList
@@ -213,14 +214,14 @@ func (a *ActorTable) AS(alias string) *ActorTable {
 
 func newActorTable() *ActorTable {
 	var (
-		ActorIDColumn    = jet.IntegerColumn("actor_id")
-		FirstNameColumn  = jet.StringColumn("first_name")
-		LastNameColumn   = jet.StringColumn("last_name")
-		LastUpdateColumn = jet.TimestampColumn("last_update")
+		ActorIDColumn    = postgres.IntegerColumn("actor_id")
+		FirstNameColumn  = postgres.StringColumn("first_name")
+		LastNameColumn   = postgres.StringColumn("last_name")
+		LastUpdateColumn = postgres.TimestampColumn("last_update")
 	)
 
 	return &ActorTable{
-		Table: jet.NewTable("dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
+		Table: jet.NewTable(jet.PostgreSQL, "dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
 
 		//Columns
 		ActorID:    ActorIDColumn,

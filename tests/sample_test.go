@@ -2,6 +2,7 @@ package tests
 
 import (
 	. "github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/uuid"
@@ -14,7 +15,7 @@ func TestUUIDType(t *testing.T) {
 		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
 		WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
 
-	assertStatementSql(t, query, `
+	testutils.AssertStatementSql(t, query, `
 SELECT all_types.uuid AS "all_types.uuid",
      all_types.uuid_ptr AS "all_types.uuid_ptr"
 FROM test_sample.all_types
@@ -26,14 +27,14 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	err := query.Query(db, &result)
 	assert.NilError(t, err)
 	assert.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
-	assert.DeepEqual(t, result.UUIDPtr, uuidPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	assert.DeepEqual(t, result.UUIDPtr, UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 }
 
 func TestEnumType(t *testing.T) {
 	query := Person.
 		SELECT(Person.AllColumns)
 
-	assertStatementSql(t, query, `
+	testutils.AssertStatementSql(t, query, `
 SELECT person.person_id AS "person.person_id",
      person.first_name AS "person.first_name",
      person.last_name AS "person.last_name",
@@ -46,7 +47,7 @@ FROM test_sample.person;
 	err := query.Query(db, &result)
 
 	assert.NilError(t, err)
-	assertJSON(t, result, `
+	testutils.AssertJSON(t, result, `
 [
 	{
 		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
@@ -97,7 +98,7 @@ ORDER BY employee.employee_id;
 		).
 		ORDER_BY(Employee.EmployeeID)
 
-	assertStatementSql(t, query, expectedSQL)
+	testutils.AssertStatementSql(t, query, expectedSQL)
 
 	type Manager model.Employee
 
@@ -115,7 +116,7 @@ ORDER BY employee.employee_id;
 		EmployeeID:     1,
 		FirstName:      "Windy",
 		LastName:       "Hays",
-		EmploymentDate: timestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
+		EmploymentDate: TimestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
 		ManagerID:      nil,
 	})
 
@@ -125,15 +126,15 @@ ORDER BY employee.employee_id;
 		EmployeeID:     8,
 		FirstName:      "Salley",
 		LastName:       "Lester",
-		EmploymentDate: timestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      int32Ptr(3),
+		EmploymentDate: TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
+		ManagerID:      Int32Ptr(3),
 	})
 }
 
 func TestWierdNamesTable(t *testing.T) {
 	stmt := WeirdNamesTable.SELECT(WeirdNamesTable.AllColumns)
 
-	assertStatementSql(t, stmt, `
+	testutils.AssertStatementSql(t, stmt, `
 SELECT "WEIRD NAMES TABLE".weird_column_name1 AS "WEIRD NAMES TABLE.weird_column_name1",
      "WEIRD NAMES TABLE"."Weird_Column_Name2" AS "WEIRD NAMES TABLE.Weird_Column_Name2",
      "WEIRD NAMES TABLE"."wEiRd_cOluMn_nAmE3" AS "WEIRD NAMES TABLE.wEiRd_cOluMn_nAmE3",
@@ -168,7 +169,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColumnName5: "Doe",
 		WeirdColumnName6: "Doe",
 		WeirdColumnName7: "Doe",
-		Weirdcolumnname8: stringPtr("Doe"),
+		Weirdcolumnname8: StringPtr("Doe"),
 		WeirdColName9:    "Doe",
 		WeirdColuName10:  "Doe",
 		WeirdColuName11:  "Doe",

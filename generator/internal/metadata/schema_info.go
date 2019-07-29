@@ -33,8 +33,6 @@ func GetSchemaInfo(db *sql.DB, schemaName string, querySet MetaDataQuerySet) (sc
 
 func getTableInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName string) ([]MetaData, error) {
 
-	fmt.Println(querySet.ListOfTablesQuery())
-
 	rows, err := db.Query(querySet.ListOfTablesQuery(), schemaName)
 
 	if err != nil {
@@ -50,8 +48,6 @@ func getTableInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName string) ([]
 		if err != nil {
 			return nil, err
 		}
-
-		fmt.Println(tableName)
 
 		tableInfo, err := GetTableInfo(db, querySet, schemaName, tableName)
 
