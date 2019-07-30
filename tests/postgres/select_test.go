@@ -1,4 +1,4 @@
-package tests
+package postgres
 
 import (
 	. "github.com/go-jet/jet"
@@ -1459,7 +1459,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, "./testdata/quick-start-dest.json", dest)
+	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1472,7 +1472,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
+	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest2.json", dest2)
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1524,7 +1524,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, "./testdata/quick-start-dest.json", dest)
+	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest.json", dest)
 
 	var dest2 []struct {
 		model.Category
@@ -1537,5 +1537,5 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, "./testdata/quick-start-dest2.json", dest2)
+	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest2.json", dest2)
 }

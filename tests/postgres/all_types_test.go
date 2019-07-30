@@ -1,4 +1,4 @@
-package tests
+package postgres
 
 import (
 	. "github.com/go-jet/jet"
@@ -240,9 +240,7 @@ LIMIT $5;
 
 	assert.NilError(t, err)
 
-	testutils.JsonPrint(dest)
-
-	testutils.AssertJSONFile(t, "./testdata/common_db_results/bool_operators.json", dest)
+	testutils.AssertJSONFile(t, "./testdata/common/bool_operators.json", dest)
 }
 
 func TestFloatOperators(t *testing.T) {

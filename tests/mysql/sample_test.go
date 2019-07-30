@@ -95,7 +95,7 @@ FROM test_sample.all_types;
 
 	testutils.JsonPrint(dest)
 
-	testutils.AssertJSONFile(t, "./testdata/common_db_results/bool_operators.json", dest)
+	testutils.AssertJSONFile(t, "./testdata/common/bool_operators.json", dest)
 }
 
 var allTypesJson = `

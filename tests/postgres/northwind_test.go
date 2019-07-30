@@ -1,4 +1,4 @@
-package tests
+package postgres
 
 import (
 	"github.com/go-jet/jet/internal/testutils"
@@ -62,5 +62,5 @@ func TestNorthwindJoinEverything(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/northwind-all.json", dest)
-	testutils.AssertJSONFile(t, "./testdata/northwind-all.json", dest)
+	testutils.AssertJSONFile(t, "./postgres/testdata/northwind-all.json", dest)
 }

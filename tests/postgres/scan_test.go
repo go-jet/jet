@@ -1,4 +1,4 @@
-package tests
+package postgres
 
 import (
 	. "github.com/go-jet/jet"
@@ -182,7 +182,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.Error(t, err, `Scan: unable to scan type int32 into UUID, at struct field: InventoryID uuid.UUID of type tests.Inventory. `)
+		assert.Error(t, err, `Scan: unable to scan type int32 into UUID, at struct field: InventoryID uuid.UUID of type postgres.Inventory. `)
 	})
 
 }

@@ -508,7 +508,7 @@ return result in one database call. Handler execution will be only proportional 
 ORM example replaced with jet will take just 30ms + 'result scan time' = 31ms (rough estimate).  
 
 With Jet you can even join the whole database and store the whole structured result in  in one query call. 
-This is exactly what is being done in one of the tests: [TestJoinEverything](/tests/chinook_db_test.go#L40). 
+This is exactly what is being done in one of the tests: [TestJoinEverything](/tests/postgres/chinook_db_test.go#L40). 
 The whole test database is joined and query result(~10,000 rows) is stored in a structured variable in less than 0.7s. 
 
 ##### How quickly bugs are found

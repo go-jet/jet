@@ -1,4 +1,4 @@
-package tests
+package postgres
 
 import (
 	"context"
@@ -102,7 +102,7 @@ func TestJoinEverything(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 275)
-	testutils.AssertJSONFile(t, "./testdata/joined_everything.json", dest)
+	testutils.AssertJSONFile(t, "./postgres/testdata/joined_everything.json", dest)
 }
 
 func TestSelfJoin(t *testing.T) {
