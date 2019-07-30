@@ -20,8 +20,8 @@ CREATE TABLE `all_types` (
    `medium_int` MEDIUMINT NOT NULL,
    `umedium_int` MEDIUMINT unsigned NOT NULL,
 
-   `int` INT NOT NULL,
-   `uint` INT unsigned NOT NULL,
+   `integer` INT NOT NULL,
+   `uinteger` INT unsigned NOT NULL,
 
    `big_int` bigint(20) NOT NULL,
     `ubig_int` bigint(20) unsigned NOT NULL,
@@ -56,6 +56,9 @@ CREATE TABLE `all_types` (
 
     `double` double NOT NULL,
     `double_ptr` double,
+
+    `real` real NOT NULL,
+    `real_ptr` real,
 
 -- bit values
 
@@ -110,8 +113,16 @@ CREATE TABLE `all_types` (
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 INSERT INTO `all_types` VALUES
-(false, true, -3,3,-14,14,-150,150,-1600,1600,-17000,17000,-3,3,-14,14,-150,150,-1600,1600,-17000,17000,1.11,1.11,2.22,2.22,3.33,3.33,4.44,4.44,_binary '\0',_binary '\0','2008-07-04','2008-07-04','2011-12-18 13:17:17','2011-12-18 13:17:17','2007-12-31 23:00:01','2007-12-31 23:00:01',2004,2004,'char','char','varchar','varchar',_binary 'binary\0\0\0\0\0\0\0\0\0\0\0\0\0\0',_binary 'binary\0\0\0\0\0\0\0\0\0\0\0\0\0\0',_binary 'varbinary',_binary 'varbinary',_binary 'blob',_binary 'blob','text','text','value1','value1','s1','s2','{\"key1\": \"value1\", \"key2\": \"value2\"}','{\"key1\": \"value1\", \"key2\": \"value2\"}'),
-(false, NULL, -3,3,-14,14,-150,150,-1600,1600,-17000,17000,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,1.11,NULL,2.22,NULL,3.33,NULL,4.44,NULL,_binary '\0',NULL,'2008-07-04',NULL,'2011-12-18 13:17:17',NULL,'2007-12-31 23:00:01',NULL,2004,NULL,'char',NULL,'varchar',NULL,_binary 'binary\0\0\0\0\0\0\0\0\0\0\0\0\0\0',NULL,_binary 'varbinary',NULL,_binary 'blob',NULL,'text',NULL,'value1',NULL,'s1',NULL,'{\"key1\": \"value1\", \"key2\": \"value2\"}',NULL);
+(false, true,
+-3,3,-14,14,-150,150,-1600,1600,-17000,17000,
+-3,3,-14,14,-150,150,-1600,1600,-17000,17000,
+1.11,1.11,2.22,2.22,3.33,3.33,4.44,4.44,5.55,5.55,
+_binary '\0',_binary '\0','2008-07-04','2008-07-04','2011-12-18 13:17:17','2011-12-18 13:17:17','2007-12-31 23:00:01','2007-12-31 23:00:01',2004,2004,'char','char','varchar','varchar',_binary 'binary\0\0\0\0\0\0\0\0\0\0\0\0\0\0',_binary 'binary\0\0\0\0\0\0\0\0\0\0\0\0\0\0',_binary 'varbinary',_binary 'varbinary',_binary 'blob',_binary 'blob','text','text','value1','value1','s1','s2','{\"key1\": \"value1\", \"key2\": \"value2\"}','{\"key1\": \"value1\", \"key2\": \"value2\"}'),
+(false, NULL,
+-3,3,-14,14,-150,150,-1600,1600,-17000,17000,
+NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+1.11,NULL,2.22,NULL,3.33,NULL,4.44,NULL,5.55,NULL,
+_binary '\0',NULL,'2008-07-04',NULL,'2011-12-18 13:17:17',NULL,'2007-12-31 23:00:01',NULL,2004,NULL,'char',NULL,'varchar',NULL,_binary 'binary\0\0\0\0\0\0\0\0\0\0\0\0\0\0',NULL,_binary 'varbinary',NULL,_binary 'blob',NULL,'text',NULL,'value1',NULL,'s1',NULL,'{\"key1\": \"value1\", \"key2\": \"value2\"}',NULL);
 
 
 

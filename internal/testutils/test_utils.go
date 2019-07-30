@@ -54,6 +54,7 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 	assert.Equal(t, queryStr, expectedQuery)
+
 	assert.DeepEqual(t, args, expectedArgs)
 }
 

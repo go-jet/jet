@@ -250,6 +250,10 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 		field := structType.Field(i)
 		fieldValue := structValue.Field(i)
 
+		if !fieldValue.CanSet() { // private field
+			continue
+		}
+
 		fieldMap := typeInf.fieldMappings[i]
 
 		if fieldMap.complexType {
@@ -466,6 +470,7 @@ func toCommonIdentifier(name string) string {
 }
 
 func initializeValueIfNilPtr(value reflect.Value) {
+
 	if !value.IsValid() || !value.CanSet() {
 		return
 	}

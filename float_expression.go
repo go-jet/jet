@@ -81,7 +81,7 @@ func (n *floatInterfaceImpl) MOD(expression NumericExpression) FloatExpression {
 }
 
 func (n *floatInterfaceImpl) POW(expression NumericExpression) FloatExpression {
-	return newBinaryFloatExpression(n.parent, expression, "^")
+	return POWER(n.parent, expression)
 }
 
 //---------------------------------------------------//

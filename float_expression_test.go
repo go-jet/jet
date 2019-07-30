@@ -70,8 +70,8 @@ func TestFloatExpressionMOD(t *testing.T) {
 }
 
 func TestFloatExpressionPOW(t *testing.T) {
-	assertPostgreClauseSerialize(t, table1ColFloat.POW(table2ColFloat), "(table1.col_float ^ table2.col_float)")
-	assertPostgreClauseSerialize(t, table1ColFloat.POW(Float(2.11)), "(table1.col_float ^ $1)", float64(2.11))
+	assertPostgreClauseSerialize(t, table1ColFloat.POW(table2ColFloat), "POWER(table1.col_float, table2.col_float)")
+	assertPostgreClauseSerialize(t, table1ColFloat.POW(Float(2.11)), "POWER(table1.col_float, $1)", float64(2.11))
 }
 
 func TestFloatExp(t *testing.T) {

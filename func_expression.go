@@ -11,7 +11,7 @@ func ROW(expressions ...Expression) Expression {
 
 // ABSf calculates absolute value from float expression
 func ABSf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("ABS", floatExpression)
+	return NewFloatFunc("ABS", floatExpression)
 }
 
 // ABSi calculates absolute value from int expression
@@ -19,62 +19,66 @@ func ABSi(integerExpression IntegerExpression) IntegerExpression {
 	return newIntegerFunc("ABS", integerExpression)
 }
 
+func POWER(base, exponent NumericExpression) FloatExpression {
+	return NewFloatFunc("POWER", base, exponent)
+}
+
 // SQRT calculates square root of numeric expression
 func SQRT(numericExpression NumericExpression) FloatExpression {
-	return newFloatFunc("SQRT", numericExpression)
+	return NewFloatFunc("SQRT", numericExpression)
 }
 
 // CBRT calculates cube root of numeric expression
 func CBRT(numericExpression NumericExpression) FloatExpression {
-	return newFloatFunc("CBRT", numericExpression)
+	return NewFloatFunc("CBRT", numericExpression)
 }
 
 // CEIL calculates ceil of float expression
 func CEIL(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("CEIL", floatExpression)
+	return NewFloatFunc("CEIL", floatExpression)
 }
 
 // FLOOR calculates floor of float expression
 func FLOOR(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("FLOOR", floatExpression)
+	return NewFloatFunc("FLOOR", floatExpression)
 }
 
 // ROUND calculates round of a float expressions with optional precision
 func ROUND(floatExpression FloatExpression, precision ...IntegerExpression) FloatExpression {
 	if len(precision) > 0 {
-		return newFloatFunc("ROUND", floatExpression, precision[0])
+		return NewFloatFunc("ROUND", floatExpression, precision[0])
 	}
-	return newFloatFunc("ROUND", floatExpression)
+	return NewFloatFunc("ROUND", floatExpression)
 }
 
 // SIGN returns sign of float expression
 func SIGN(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("SIGN", floatExpression)
+	return NewFloatFunc("SIGN", floatExpression)
 }
 
 // TRUNC calculates trunc of float expression with optional precision
 func TRUNC(floatExpression FloatExpression, precision ...IntegerExpression) FloatExpression {
 	if len(precision) > 0 {
-		return newFloatFunc("TRUNC", floatExpression, precision[0])
+		return NewFloatFunc("TRUNC", floatExpression, precision[0])
 	}
-	return newFloatFunc("TRUNC", floatExpression)
+	return NewFloatFunc("TRUNC", floatExpression)
 }
 
 // LN calculates natural algorithm of float expression
 func LN(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("LN", floatExpression)
+	return NewFloatFunc("LN", floatExpression)
 }
 
 // LOG calculates logarithm of float expression
 func LOG(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("LOG", floatExpression)
+	return NewFloatFunc("LOG", floatExpression)
 }
 
 // ----------------- Aggregate functions  -------------------//
 
 // AVG is aggregate function used to calculate avg value from numeric expression
 func AVG(numericExpression NumericExpression) FloatExpression {
-	return newFloatFunc("AVG", numericExpression)
+	return NewFloatFunc("AVG", numericExpression)
 }
 
 // BIT_AND is aggregate function used to calculates the bitwise AND of all non-null input values, or null if none.
@@ -109,7 +113,7 @@ func EVERY(boolExpression BoolExpression) BoolExpression {
 
 // MAXf is aggregate function. Returns maximum value of float expression across all input values
 func MAXf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("MAX", floatExpression)
+	return NewFloatFunc("MAX", floatExpression)
 }
 
 // MAXi is aggregate function. Returns maximum value of int expression across all input values
@@ -119,7 +123,7 @@ func MAXi(integerExpression IntegerExpression) IntegerExpression {
 
 // MINf is aggregate function. Returns minimum value of float expression across all input values
 func MINf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("MIN", floatExpression)
+	return NewFloatFunc("MIN", floatExpression)
 }
 
 // MINi is aggregate function. Returns minimum value of int expression across all input values
@@ -129,7 +133,7 @@ func MINi(integerExpression IntegerExpression) IntegerExpression {
 
 // SUMf is aggregate function. Returns sum of expression across all float expressions
 func SUMf(floatExpression FloatExpression) FloatExpression {
-	return newFloatFunc("SUM", floatExpression)
+	return NewFloatFunc("SUM", floatExpression)
 }
 
 // SUMi is aggregate function. Returns sum of expression across all integer expression.
@@ -350,7 +354,7 @@ func TO_DATE(dateStr, format StringExpression) DateExpression {
 
 // TO_NUMBER converts string to numeric using format
 func TO_NUMBER(floatStr, format StringExpression) FloatExpression {
-	return newFloatFunc("TO_NUMBER", floatStr, format)
+	return NewFloatFunc("TO_NUMBER", floatStr, format)
 }
 
 // TO_TIMESTAMP converts string to time stamp with time zone using format
@@ -537,7 +541,7 @@ type floatFunc struct {
 	floatInterfaceImpl
 }
 
-func newFloatFunc(name string, expressions ...Expression) FloatExpression {
+func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 	floatFunc := &floatFunc{}
 
 	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)

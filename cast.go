@@ -13,6 +13,8 @@ type cast interface {
 	AS_BIGINT() IntegerExpression
 	// Cast expression AS numeric type, using precision and optionally scale
 	AS_NUMERIC(precision int, scale ...int) FloatExpression
+	// Cast expression AS numeric type, using precision and optionally scale
+	AS_DECIMAL() FloatExpression
 	// Cast expression AS real type
 	AS_REAL() FloatExpression
 	// Cast expression AS double precision type
@@ -56,14 +58,14 @@ func (b *castImpl) serialize(statement statementType, out *sqlBuilder, options .
 		return castOverride(b.Expression, b.castType)(statement, out, options...)
 	}
 
-	out.writeString("CAST")
-	err := WRAP(b.Expression).serialize(statement, out, options...)
+	out.writeString("CAST(")
+	err := b.Expression.serialize(statement, out, options...)
 	if err != nil {
 		return err
 	}
 
 	out.writeString("AS")
-	out.writeString(b.castType)
+	out.writeString(b.castType + ")")
 
 	return err
 }
@@ -99,6 +101,11 @@ func (b *castImpl) AS_NUMERIC(precision int, scale ...int) FloatExpression {
 		b.castType = fmt.Sprintf("numeric(%d)", precision)
 	}
 
+	return FloatExp(b)
+}
+
+func (b *castImpl) AS_DECIMAL() FloatExpression {
+	b.castType = "decimal"
 	return FloatExp(b)
 }
 

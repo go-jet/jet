@@ -36,3 +36,26 @@ type ColumnTimestamp jet.ColumnTimestamp
 
 var TimestampColumn = jet.TimestampColumn
 var Timestamp = jet.Timestamp
+
+var CAST = jet.CAST
+
+// ----------------- FUNCTIONS ----------------------//
+
+var ABSf = jet.ABSf
+var ABSi = jet.ABSi
+var POWER = jet.POWER
+var SQRT = jet.SQRT
+
+func CBRT(number jet.NumericExpression) jet.FloatExpression {
+	return POWER(number, Float(1.0).DIV(Float(3.0)))
+}
+
+var CEIL = jet.CEIL
+var FLOOR = jet.FLOOR
+var ROUND = jet.ROUND
+var SIGN = jet.SIGN
+var TRUNC = TRUNCATE
+
+var TRUNCATE = func(floatExpression jet.FloatExpression, precision jet.IntegerExpression) jet.FloatExpression {
+	return jet.NewFloatFunc("TRUNCATE", floatExpression, precision)
+}

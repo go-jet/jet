@@ -5,6 +5,7 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
+	"github.com/go-jet/jet/tests/testdata/common"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 	"testing"
@@ -245,52 +246,100 @@ LIMIT $5;
 
 func TestFloatOperators(t *testing.T) {
 	query := AllTypes.SELECT(
-		AllTypes.Numeric.EQ(AllTypes.Numeric),
-		AllTypes.Decimal.EQ(Float(12)),
-		AllTypes.Real.EQ(Float(12.12)),
-		AllTypes.Numeric.IS_DISTINCT_FROM(AllTypes.Numeric),
-		AllTypes.Decimal.IS_DISTINCT_FROM(Float(12)),
-		AllTypes.Real.IS_DISTINCT_FROM(Float(12.12)),
-		AllTypes.Numeric.IS_NOT_DISTINCT_FROM(AllTypes.Numeric),
-		AllTypes.Decimal.IS_NOT_DISTINCT_FROM(Float(12)),
-		AllTypes.Real.IS_NOT_DISTINCT_FROM(Float(12.12)),
-		//AllTypes.Numeric.LT(AllTypes.Integer),
-		AllTypes.Numeric.LT(Float(124)),
-		AllTypes.Numeric.LT(Float(34.56)),
-		//AllTypes.Numeric.GT(AllTypes.Smallint),
-		AllTypes.Numeric.GT(Float(124)),
-		AllTypes.Numeric.GT(Float(34.56)),
+		AllTypes.Numeric.EQ(AllTypes.Numeric).AS("eq1"),
+		AllTypes.Decimal.EQ(Float(12.22)).AS("eq2"),
+		AllTypes.Real.EQ(Float(12.12)).AS("eq3"),
+		AllTypes.Numeric.IS_DISTINCT_FROM(AllTypes.Numeric).AS("distinct1"),
+		AllTypes.Decimal.IS_DISTINCT_FROM(Float(12)).AS("distinct2"),
+		AllTypes.Real.IS_DISTINCT_FROM(Float(12.12)).AS("distinct3"),
+		AllTypes.Numeric.IS_NOT_DISTINCT_FROM(AllTypes.Numeric).AS("not_distinct1"),
+		AllTypes.Decimal.IS_NOT_DISTINCT_FROM(Float(12)).AS("not_distinct2"),
+		AllTypes.Real.IS_NOT_DISTINCT_FROM(Float(12.12)).AS("not_distinct3"),
+		AllTypes.Numeric.LT(Float(124)).AS("lt1"),
+		AllTypes.Numeric.LT(Float(34.56)).AS("lt2"),
+		AllTypes.Numeric.GT(Float(124)).AS("gt1"),
+		AllTypes.Numeric.GT(Float(34.56)).AS("gt2"),
 
-		AllTypes.Real.ADD(AllTypes.RealPtr),
-		AllTypes.Real.ADD(Float(11.22)),
-		AllTypes.Real.SUB(AllTypes.RealPtr),
-		AllTypes.Real.SUB(Float(11.22)),
-		AllTypes.Real.MUL(AllTypes.RealPtr),
-		AllTypes.Real.MUL(Float(11.22)),
-		AllTypes.Real.DIV(AllTypes.RealPtr),
-		AllTypes.Real.DIV(Float(11.22)),
-		AllTypes.Decimal.MOD(AllTypes.Decimal),
-		AllTypes.Decimal.MOD(Float(11.22)),
-		AllTypes.Real.POW(AllTypes.RealPtr),
-		AllTypes.Real.POW(Float(11.22)),
+		TRUNC(AllTypes.Decimal.ADD(AllTypes.Decimal), Int(2)).AS("add1"),
+		TRUNC(AllTypes.Decimal.ADD(Float(11.22)), Int(2)).AS("add2"),
+		TRUNC(AllTypes.Decimal.SUB(AllTypes.DecimalPtr), Int(2)).AS("sub1"),
+		TRUNC(AllTypes.Decimal.SUB(Float(11.22)), Int(2)).AS("sub2"),
+		TRUNC(AllTypes.Decimal.MUL(AllTypes.DecimalPtr), Int(2)).AS("mul1"),
+		TRUNC(AllTypes.Decimal.MUL(Float(11.22)), Int(2)).AS("mul2"),
+		TRUNC(AllTypes.Decimal.DIV(AllTypes.DecimalPtr), Int(2)).AS("div1"),
+		TRUNC(AllTypes.Decimal.DIV(Float(11.22)), Int(2)).AS("div2"),
+		TRUNC(AllTypes.Decimal.MOD(AllTypes.DecimalPtr), Int(2)).AS("mod1"),
+		TRUNC(AllTypes.Decimal.MOD(Float(11.22)), Int(2)).AS("mod2"),
+		TRUNC(AllTypes.Decimal.POW(AllTypes.DecimalPtr), Int(2)).AS("pow1"),
+		TRUNC(AllTypes.Decimal.POW(Float(2.1)), Int(2)).AS("pow2"),
 
-		ABSf(AllTypes.Real),
-		SQRT(AllTypes.Real),
-		CBRT(AllTypes.Real),
-		CEIL(AllTypes.Real),
-		FLOOR(AllTypes.Real),
-		ROUND(AllTypes.Decimal),
-		ROUND(AllTypes.Decimal, AllTypes.Integer).AS("round"),
-		SIGN(AllTypes.Real),
-		TRUNC(AllTypes.Decimal),
-		TRUNC(AllTypes.Decimal, Int(1)),
-	)
+		TRUNC(ABSf(AllTypes.Decimal), Int(2)).AS("abs"),
+		TRUNC(POWER(AllTypes.Decimal, Float(2.1)), Int(2)).AS("power"),
+		TRUNC(SQRT(AllTypes.Decimal), Int(2)).AS("sqrt"),
+		TRUNC(CAST(CBRT(AllTypes.Decimal)).AS_DECIMAL(), Int(2)).AS("cbrt"),
 
-	//fmt.Println(query.DebugSql())
+		CEIL(AllTypes.Real).AS("ceil"),
+		FLOOR(AllTypes.Real).AS("floor"),
+		ROUND(AllTypes.Decimal).AS("round1"),
+		ROUND(AllTypes.Decimal, AllTypes.Integer).AS("round2"),
 
-	err := query.Query(db, &struct{}{})
+		SIGN(AllTypes.Real).AS("sign"),
+		TRUNC(AllTypes.Decimal, Int(1)).AS("trunc"),
+	).LIMIT(2)
+
+	queryStr, _, err := query.Sql()
+	assert.NilError(t, err)
+	assert.Equal(t, queryStr, `
+SELECT (all_types.numeric = all_types.numeric) AS "eq1",
+     (all_types.decimal = $1) AS "eq2",
+     (all_types.real = $2) AS "eq3",
+     (all_types.numeric IS DISTINCT FROM all_types.numeric) AS "distinct1",
+     (all_types.decimal IS DISTINCT FROM $3) AS "distinct2",
+     (all_types.real IS DISTINCT FROM $4) AS "distinct3",
+     (all_types.numeric IS NOT DISTINCT FROM all_types.numeric) AS "not_distinct1",
+     (all_types.decimal IS NOT DISTINCT FROM $5) AS "not_distinct2",
+     (all_types.real IS NOT DISTINCT FROM $6) AS "not_distinct3",
+     (all_types.numeric < $7) AS "lt1",
+     (all_types.numeric < $8) AS "lt2",
+     (all_types.numeric > $9) AS "gt1",
+     (all_types.numeric > $10) AS "gt2",
+     TRUNC((all_types.decimal + all_types.decimal), $11) AS "add1",
+     TRUNC((all_types.decimal + $12), $13) AS "add2",
+     TRUNC((all_types.decimal - all_types.decimal_ptr), $14) AS "sub1",
+     TRUNC((all_types.decimal - $15), $16) AS "sub2",
+     TRUNC((all_types.decimal * all_types.decimal_ptr), $17) AS "mul1",
+     TRUNC((all_types.decimal * $18), $19) AS "mul2",
+     TRUNC((all_types.decimal / all_types.decimal_ptr), $20) AS "div1",
+     TRUNC((all_types.decimal / $21), $22) AS "div2",
+     TRUNC((all_types.decimal % all_types.decimal_ptr), $23) AS "mod1",
+     TRUNC((all_types.decimal % $24), $25) AS "mod2",
+     TRUNC(POWER(all_types.decimal, all_types.decimal_ptr), $26) AS "pow1",
+     TRUNC(POWER(all_types.decimal, $27), $28) AS "pow2",
+     TRUNC(ABS(all_types.decimal), $29) AS "abs",
+     TRUNC(POWER(all_types.decimal, $30), $31) AS "power",
+     TRUNC(SQRT(all_types.decimal), $32) AS "sqrt",
+     TRUNC(CBRT(all_types.decimal)::decimal, $33) AS "cbrt",
+     CEIL(all_types.real) AS "ceil",
+     FLOOR(all_types.real) AS "floor",
+     ROUND(all_types.decimal) AS "round1",
+     ROUND(all_types.decimal, all_types.integer) AS "round2",
+     SIGN(all_types.real) AS "sign",
+     TRUNC(all_types.decimal, $34) AS "trunc"
+FROM test_sample.all_types
+LIMIT $35;
+`)
+
+	var dest []struct {
+		common.FloatExpressionTestResult `alias:"."`
+	}
+
+	err = query.Query(db, &dest)
 
 	assert.NilError(t, err)
+
+	//testutils.JsonPrint(dest)
+
+	testutils.AssertJSONFile(t, "./testdata/common/float_operators.json", dest)
 }
 
 func TestIntegerOperators(t *testing.T) {
@@ -591,12 +640,12 @@ var allTypesRow0 = model.AllTypes{
 	Integer:            300,
 	BigintPtr:          Int64Ptr(50000),
 	Bigint:             5000,
-	DecimalPtr:         Float64Ptr(11.44),
-	Decimal:            11.44,
-	NumericPtr:         Float64Ptr(55.77),
-	Numeric:            55.77,
-	RealPtr:            Float32Ptr(99.1),
-	Real:               99.1,
+	DecimalPtr:         Float64Ptr(1.11),
+	Decimal:            1.11,
+	NumericPtr:         Float64Ptr(2.22),
+	Numeric:            2.22,
+	RealPtr:            Float32Ptr(5.55),
+	Real:               5.55,
 	DoublePrecisionPtr: Float64Ptr(11111111.22),
 	DoublePrecision:    11111111.22,
 	Smallserial:        1,
@@ -658,11 +707,11 @@ var allTypesRow1 = model.AllTypes{
 	BigintPtr:          nil,
 	Bigint:             5000,
 	DecimalPtr:         nil,
-	Decimal:            11.44,
+	Decimal:            1.11,
 	NumericPtr:         nil,
-	Numeric:            55.77,
+	Numeric:            2.22,
 	RealPtr:            nil,
-	Real:               99.1,
+	Real:               5.55,
 	DoublePrecisionPtr: nil,
 	DoublePrecision:    11111111.22,
 	Smallserial:        2,
