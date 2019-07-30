@@ -22,7 +22,7 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	testutils.AssertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 	assertExec(t, deleteStmt, 2)
 }
 
@@ -42,7 +42,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
 		RETURNING(Link.AllColumns)
 
-	testutils.AssertStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 
 	dest := []model.Link{}
 

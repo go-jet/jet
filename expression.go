@@ -123,8 +123,11 @@ func (c *binaryOpExpression) serialize(statement statementType, out *sqlBuilder,
 		out.writeString("(")
 	}
 
-	if dialectOveride := out.dialect.serializeOverride(c.operator); dialectOveride != nil {
-		err = dialectOveride(c.lhs, c.rhs)(statement, out, options...)
+	if serializeOverride := out.dialect.serializeOverride(c.operator); serializeOverride != nil {
+
+		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs)
+		err = serializeOverrideFunc(statement, out, options...)
+
 	} else {
 		if err := c.lhs.serialize(statement, out); err != nil {
 			return err

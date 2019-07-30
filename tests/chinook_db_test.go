@@ -16,7 +16,7 @@ func TestSelect(t *testing.T) {
 		SELECT(Album.AllColumns).
 		ORDER_BY(Album.AlbumId.ASC())
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "Album"."AlbumId" AS "Album.AlbumId",
      "Album"."Title" AS "Album.Title",
      "Album"."ArtistId" AS "Album.ArtistId"
@@ -126,7 +126,7 @@ func TestSelfJoin(t *testing.T) {
 		).
 		ORDER_BY(Employee.EmployeeId)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "Employee"."EmployeeId" AS "Employee.EmployeeId",
      "Employee"."FirstName" AS "Employee.FirstName",
      "Employee"."LastName" AS "Employee.LastName",
@@ -210,7 +210,7 @@ func TestUnionForQuotedNames(t *testing.T) {
 		ORDER_BY(Album.AlbumId)
 
 	//fmt.Println(stmt.DebugSql())
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 (
      (
           SELECT "Album"."AlbumId" AS "Album.AlbumId",
@@ -294,7 +294,7 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
 		ORDER_BY(artistID)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
      "first10Artist"."Artist.Name" AS "Artist.Name",
      "first10Albums"."Album.AlbumId" AS "Album.AlbumId",

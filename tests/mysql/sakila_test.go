@@ -1,14 +1,11 @@
 package mysql
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
-	"gotest.tools/assert"
-	"reflect"
-
 	"github.com/go-jet/jet/tests/.gentestdata/sakila/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/sakila/table"
+	"gotest.tools/assert"
 
 	"testing"
 )
@@ -20,9 +17,8 @@ SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update"
 FROM sakila.actor
-WHERE actor.actor_id = 1;
+WHERE actor.actor_id = ?;
 `
-	spew.Dump(reflect.TypeOf(db.Driver()).String())
 
 	query := Actor.
 		SELECT(Actor.AllColumns).

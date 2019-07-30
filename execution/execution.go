@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
 	"github.com/go-jet/jet/internal/utils"
-	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"reflect"
 	"strconv"
@@ -521,10 +520,31 @@ func isSimpleModelType(objType reflect.Type) bool {
 	return false
 }
 
+func isIntegerType(value reflect.Type) bool {
+	switch value {
+	case int8Type, unit8Type, int16Type, uint16Type,
+		int32Type, uint32Type, int64Type, uint64Type:
+		return true
+	}
+
+	return false
+}
+
 func tryAssign(source, destination reflect.Value) bool {
 	if source.Type().ConvertibleTo(destination.Type()) {
 		source = source.Convert(destination.Type())
 	}
+
+	if isIntegerType(source.Type()) && destination.Type() == boolType {
+		intValue := source.Int()
+
+		if intValue == 1 {
+			source = reflect.ValueOf(true)
+		} else if intValue == 0 {
+			source = reflect.ValueOf(false)
+		}
+	}
+
 	if source.Type().AssignableTo(destination.Type()) {
 		destination.Set(source)
 		return true
@@ -594,6 +614,7 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	return values
 }
 
+var boolType = reflect.TypeOf(true)
 var int8Type = reflect.TypeOf(int8(1))
 var unit8Type = reflect.TypeOf(uint8(1))
 var int16Type = reflect.TypeOf(int16(1))
@@ -606,13 +627,17 @@ var float32Type = reflect.TypeOf(float32(1.1))
 var float64Type = reflect.TypeOf(float64(1.1))
 
 var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
-var nullUInt8Type = reflect.TypeOf(internal.NullUInt8{})
+
+//var nullUInt8Type = reflect.TypeOf(internal.NullUInt8{})
 var nullInt16Type = reflect.TypeOf(internal.NullInt16{})
-var nullUInt16Type = reflect.TypeOf(internal.NullUInt16{})
+
+//var nullUInt16Type = reflect.TypeOf(internal.NullUInt16{})
 var nullInt32Type = reflect.TypeOf(internal.NullInt32{})
-var nullUInt32Type = reflect.TypeOf(internal.NullUInt32{})
+
+//var nullUInt32Type = reflect.TypeOf(internal.NullUInt32{})
 var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
-var nullUInt64Type = reflect.TypeOf(internal.NullUInt64{})
+
+//var nullUInt64Type = reflect.TypeOf(internal.NullUInt64{})
 
 var nullFloat32Type = reflect.TypeOf(internal.NullFloat32{})
 var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
@@ -622,16 +647,10 @@ var nullStringType = reflect.TypeOf(sql.NullString{})
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
 
 var nullTimeType = reflect.TypeOf(internal.NullTime{})
-var mySQLNullTime = reflect.TypeOf(mysql.NullTime{})
 
 var nullByteArrayType = reflect.TypeOf(internal.NullByteArray{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
-
-	switch columnType.ScanType() {
-	case mySQLNullTime:
-		return mySQLNullTime
-	}
 
 	switch columnType.DatabaseTypeName() {
 	case "TINYINT":
@@ -652,7 +671,7 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullBoolType
 	case "BYTEA", "BINARY", "VARBINARY", "BLOB":
 		return nullByteArrayType
-	case "DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
+	case "DATE", "DATETIME", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
 		return nullTimeType
 	default:
 		return nullStringType

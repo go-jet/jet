@@ -47,10 +47,17 @@ func AssertJSONFile(t *testing.T, jsonFilePath string, data interface{}) {
 	assert.NilError(t, err)
 
 	assert.Assert(t, string(fileJSONData) == string(jsonData))
-	//assert.Equal(t, string(fileJSONData), string(jsonData))
+	//assert.DeepEqual(t, string(fileJSONData), string(jsonData))
 }
 
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
+	queryStr, args, err := query.Sql()
+	assert.NilError(t, err)
+	assert.Equal(t, queryStr, expectedQuery)
+	assert.DeepEqual(t, args, expectedArgs)
+}
+
+func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	_, args, err := query.Sql()
 	assert.NilError(t, err)
 	//assert.Equal(t, queryStr, expectedQuery)

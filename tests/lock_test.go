@@ -29,7 +29,7 @@ LOCK TABLE dvds.address IN`
 	for _, lockMode := range testData {
 		query := Address.LOCK().IN(lockMode)
 
-		testutils.AssertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
 
 		tx, _ := db.Begin()
 
@@ -45,7 +45,7 @@ LOCK TABLE dvds.address IN`
 	for _, lockMode := range testData {
 		query := Address.LOCK().IN(lockMode).NOWAIT()
 
-		testutils.AssertStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
 
 		tx, _ := db.Begin()
 

@@ -174,29 +174,75 @@ func TestStringOperators(t *testing.T) {
 
 func TestBoolOperators(t *testing.T) {
 	query := AllTypes.SELECT(
-		AllTypes.Boolean.EQ(AllTypes.BooleanPtr),
-		AllTypes.Boolean.EQ(Bool(true)),
-		AllTypes.Boolean.NOT_EQ(AllTypes.BooleanPtr),
-		AllTypes.Boolean.NOT_EQ(Bool(false)),
-		AllTypes.Boolean.IS_DISTINCT_FROM(AllTypes.BooleanPtr),
-		AllTypes.Boolean.IS_DISTINCT_FROM(Bool(true)),
-		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(AllTypes.BooleanPtr),
-		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(Bool(true)),
-		AllTypes.Boolean.IS_TRUE(),
-		AllTypes.Boolean.IS_NOT_TRUE(),
-		AllTypes.Boolean.IS_NOT_FALSE(),
-		AllTypes.Boolean.IS_UNKNOWN(),
-		AllTypes.Boolean.IS_NOT_UNKNOWN(),
+		AllTypes.Boolean.EQ(AllTypes.BooleanPtr).AS("EQ1"),
+		AllTypes.Boolean.EQ(Bool(true)).AS("EQ2"),
+		AllTypes.Boolean.NOT_EQ(AllTypes.BooleanPtr).AS("NEq1"),
+		AllTypes.Boolean.NOT_EQ(Bool(false)).AS("NEq2"),
+		AllTypes.Boolean.IS_DISTINCT_FROM(AllTypes.BooleanPtr).AS("distinct1"),
+		AllTypes.Boolean.IS_DISTINCT_FROM(Bool(true)).AS("distinct2"),
+		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(AllTypes.BooleanPtr).AS("not_distinct_1"),
+		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(Bool(true)).AS("NOTDISTINCT2"),
+		AllTypes.Boolean.IS_TRUE().AS("ISTRUE"),
+		AllTypes.Boolean.IS_NOT_TRUE().AS("isnottrue"),
+		AllTypes.Boolean.IS_FALSE().AS("is_False"),
+		AllTypes.Boolean.IS_NOT_FALSE().AS("is not false"),
+		AllTypes.Boolean.IS_UNKNOWN().AS("is unknown"),
+		AllTypes.Boolean.IS_NOT_UNKNOWN().AS("is_not_unknown"),
 
-		AllTypes.Boolean.AND(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)),
-		AllTypes.Boolean.OR(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)),
-	)
+		AllTypes.Boolean.AND(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)).AS("complex1"),
+		AllTypes.Boolean.OR(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)).AS("complex2"),
+	).LIMIT(2)
 
-	//fmt.Println(query.DebugSql())
+	//fmt.Println(query.Sql())
 
-	err := query.Query(db, &struct{}{})
+	testutils.AssertStatementSql(t, query, `
+SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
+     (all_types.boolean = $1) AS "EQ2",
+     (all_types.boolean != all_types.boolean_ptr) AS "NEq1",
+     (all_types.boolean != $2) AS "NEq2",
+     (all_types.boolean IS DISTINCT FROM all_types.boolean_ptr) AS "distinct1",
+     (all_types.boolean IS DISTINCT FROM $3) AS "distinct2",
+     (all_types.boolean IS NOT DISTINCT FROM all_types.boolean_ptr) AS "not_distinct_1",
+     (all_types.boolean IS NOT DISTINCT FROM $4) AS "NOTDISTINCT2",
+     all_types.boolean IS TRUE AS "ISTRUE",
+     all_types.boolean IS NOT TRUE AS "isnottrue",
+     all_types.boolean IS FALSE AS "is_False",
+     all_types.boolean IS NOT FALSE AS "is not false",
+     all_types.boolean IS UNKNOWN AS "is unknown",
+     all_types.boolean IS NOT UNKNOWN AS "is_not_unknown",
+     ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
+     ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
+FROM test_sample.all_types
+LIMIT $5;
+`, true, false, true, true, int64(2))
+
+	var dest []struct {
+		Eq1          *bool
+		Eq2          *bool
+		NEq1         *bool
+		NEq2         *bool
+		Distinct1    *bool
+		Distinct2    *bool
+		NotDistinct1 *bool
+		NotDistinct2 *bool
+		IsTrue       *bool
+		IsNotTrue    *bool
+		IsFalse      *bool
+		IsNotFalse   *bool
+		IsUnknown    *bool
+		IsNotUnknown *bool
+
+		Complex1 *bool
+		Complex2 *bool
+	}
+
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
+
+	testutils.JsonPrint(dest)
+
+	testutils.AssertJSONFile(t, "./testdata/common_db_results/bool_operators.json", dest)
 }
 
 func TestFloatOperators(t *testing.T) {
@@ -507,7 +553,7 @@ SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
      "subQuery"."aliasedColumn" AS "aliasedColumn"
 FROM`
 
-		testutils.AssertStatementSql(t, stmt1, expectedSQL+expected.sql+";\n", expected.args...)
+		testutils.AssertDebugStatementSql(t, stmt1, expectedSQL+expected.sql+";\n", expected.args...)
 
 		dest1 := []model.AllTypes{}
 		err := stmt1.Query(db, &dest1)
@@ -530,7 +576,7 @@ FROM`
 
 		//fmt.Println(stmt2.DebugSql())
 
-		testutils.AssertStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
+		testutils.AssertDebugStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
 
 		dest2 := []model.AllTypes{}
 		err = stmt2.Query(db, &dest2)

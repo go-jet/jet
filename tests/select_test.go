@@ -25,7 +25,7 @@ WHERE actor.actor_id = 1;
 		DISTINCT().
 		WHERE(Actor.ActorID.EQ(Int(1)))
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(1))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -75,7 +75,7 @@ LIMIT 30;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(30)
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(30))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(30))
 
 	dest := []model.Payment{}
 
@@ -104,7 +104,7 @@ ORDER BY customer.customer_id ASC;
 
 	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
-	testutils.AssertStatementSql(t, query, expectedSQL)
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &customers)
 	assert.NilError(t, err)
@@ -157,7 +157,7 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -225,7 +225,7 @@ LIMIT 1000;
 			ORDER_BY(Film.FilmID.ASC()).
 			LIMIT(1000)
 
-		testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
+		testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
 
 		var languageActorFilm []struct {
 			model.Language
@@ -291,7 +291,7 @@ LIMIT 15;
 		WHERE(Film.Rating.EQ(enum.MpaaRating.Nc17)).
 		LIMIT(15)
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(15))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(15))
 
 	err := query.Query(db, &filmsPerLanguage)
 
@@ -326,7 +326,7 @@ func TestExecution1(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
      city.city AS "city.city",
      address.address_id AS "address.address_id",
@@ -400,7 +400,7 @@ func TestExecution2(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "my_city.id",
      city.city AS "myCity.Name",
      address.address_id AS "My_Address.id",
@@ -458,7 +458,7 @@ func TestExecution3(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city_id",
      city.city AS "city_name",
      customer.customer_id AS "customer_id",
@@ -515,7 +515,7 @@ func TestExecution4(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
      city.city AS "city.city",
      customer.customer_id AS "customer.customer_id",
@@ -686,7 +686,7 @@ ORDER BY customer.customer_id ASC;
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC())
 
-	testutils.AssertStatementSql(t, query, expectedSQL)
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	allCustomersAndAddress := []struct {
 		Address  *model.Address
@@ -739,7 +739,7 @@ LIMIT 1000;
 		ORDER_BY(Customer.CustomerID.ASC()).
 		LIMIT(1000)
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
 
 	var customerAddresCrosJoined []struct {
 		model.Customer
@@ -794,7 +794,7 @@ ORDER BY f1.film_id ASC;
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
-	testutils.AssertStatementSql(t, query, expectedSQL)
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	type F1 model.Film
 	type F2 model.Film
@@ -836,7 +836,7 @@ LIMIT 1000;
 		ORDER_BY(f1.Length.ASC(), f1.Title.ASC(), f2.Title.ASC()).
 		LIMIT(1000)
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
 
 	type thesameLengthFilms struct {
 		Title1 string
@@ -898,7 +898,7 @@ FROM dvds.actor
 			rRatingFilms.AllColumns(),
 		)
 
-	testutils.AssertStatementSql(t, query, expectedQuery)
+	testutils.AssertDebugStatementSql(t, query, expectedQuery)
 
 	dest := []model.Actor{}
 
@@ -916,7 +916,7 @@ FROM dvds.film;
 		MAXf(Film.RentalRate).AS("max_film_rate"),
 	)
 
-	testutils.AssertStatementSql(t, query, expectedQuery)
+	testutils.AssertDebugStatementSql(t, query, expectedQuery)
 
 	ret := struct {
 		MaxFilmRate float64
@@ -961,7 +961,7 @@ ORDER BY film.film_id ASC;
 		WHERE(Film.RentalRate.EQ(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
-	testutils.AssertStatementSql(t, query, expectedSQL)
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	maxRentalRateFilms := []model.Film{}
 	err := query.Query(db, &maxRentalRateFilms)
@@ -1019,7 +1019,7 @@ ORDER BY SUM(payment.amount) ASC;
 			SUMf(Payment.Amount).GT(Float(100)),
 		)
 
-	testutils.AssertStatementSql(t, customersPaymentQuery, expectedSQL, float64(100))
+	testutils.AssertDebugStatementSql(t, customersPaymentQuery, expectedSQL, float64(100))
 
 	type CustomerPaymentSum struct {
 		CustomerID  int16
@@ -1089,7 +1089,7 @@ ORDER BY customer_payment_sum."amount_sum" ASC;
 		).
 		ORDER_BY(amountSum.ASC())
 
-	testutils.AssertStatementSql(t, query, expectedSQL)
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	type CustomerWithAmounts struct {
 		Customer  *model.Customer
@@ -1174,7 +1174,7 @@ ORDER BY payment.payment_date ASC;
 		WHERE(Payment.PaymentDate.LT(Timestamp(2007, 02, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	testutils.AssertStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01.000")
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01.000")
 
 	payments := []model.Payment{}
 
@@ -1228,7 +1228,7 @@ OFFSET 20;
 		LIMIT(10).
 		OFFSET(20)
 
-	testutils.AssertStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
+	testutils.AssertDebugStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
 	dest := []model.Payment{}
 
@@ -1302,7 +1302,7 @@ LIMIT 20;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)
 
-	testutils.AssertStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
+	testutils.AssertDebugStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
 
 	dest := []struct {
 		StaffIDNum string
@@ -1338,7 +1338,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType)
 
-		testutils.AssertStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1354,7 +1354,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.NOWAIT())
 
-		testutils.AssertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1370,7 +1370,7 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
-		testutils.AssertStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
 
 		tx, _ := db.Begin()
 
@@ -1441,7 +1441,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 		Film.FilmID.ASC(),
 	)
 
-	testutils.AssertStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
 
 	var dest []struct {
 		model.Actor

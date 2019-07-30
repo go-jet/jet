@@ -4,6 +4,9 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
+
+	. "github.com/go-jet/jet/mysql"
+
 	"gotest.tools/assert"
 	"testing"
 )
@@ -23,9 +26,83 @@ func TestAllTypes(t *testing.T) {
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 
+func TestBoolOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Boolean.EQ(AllTypes.BooleanPtr).AS("EQ1"),
+		AllTypes.Boolean.EQ(Bool(true)).AS("EQ2"),
+		AllTypes.Boolean.NOT_EQ(AllTypes.BooleanPtr).AS("NEq1"),
+		AllTypes.Boolean.NOT_EQ(Bool(false)).AS("NEq2"),
+		AllTypes.Boolean.IS_DISTINCT_FROM(AllTypes.BooleanPtr).AS("distinct1"),
+		AllTypes.Boolean.IS_DISTINCT_FROM(Bool(true)).AS("distinct2"),
+		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(AllTypes.BooleanPtr).AS("not_distinct_1"),
+		AllTypes.Boolean.IS_NOT_DISTINCT_FROM(Bool(true)).AS("NOTDISTINCT2"),
+		AllTypes.Boolean.IS_TRUE().AS("ISTRUE"),
+		AllTypes.Boolean.IS_NOT_TRUE().AS("isnottrue"),
+		AllTypes.Boolean.IS_FALSE().AS("is_False"),
+		AllTypes.Boolean.IS_NOT_FALSE().AS("is not false"),
+		AllTypes.Boolean.IS_UNKNOWN().AS("is unknown"),
+		AllTypes.Boolean.IS_NOT_UNKNOWN().AS("is_not_unknown"),
+
+		AllTypes.Boolean.AND(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)).AS("complex1"),
+		AllTypes.Boolean.OR(AllTypes.Boolean).EQ(AllTypes.Boolean.AND(AllTypes.Boolean)).AS("complex2"),
+	)
+
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
+     (all_types.boolean = ?) AS "EQ2",
+     (all_types.boolean != all_types.boolean_ptr) AS "NEq1",
+     (all_types.boolean != ?) AS "NEq2",
+     (NOT all_types.boolean <=> all_types.boolean_ptr) AS "distinct1",
+     (NOT all_types.boolean <=> ?) AS "distinct2",
+     (all_types.boolean <=> all_types.boolean_ptr) AS "not_distinct_1",
+     (all_types.boolean <=> ?) AS "NOTDISTINCT2",
+     all_types.boolean IS TRUE AS "ISTRUE",
+     all_types.boolean IS NOT TRUE AS "isnottrue",
+     all_types.boolean IS FALSE AS "is_False",
+     all_types.boolean IS NOT FALSE AS "is not false",
+     all_types.boolean IS UNKNOWN AS "is unknown",
+     all_types.boolean IS NOT UNKNOWN AS "is_not_unknown",
+     ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
+     ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
+FROM test_sample.all_types;
+`, true, false, true, true)
+
+	var dest []struct {
+		Eq1          *bool
+		Eq2          *bool
+		NEq1         *bool
+		NEq2         *bool
+		Distinct1    *bool
+		Distinct2    *bool
+		NotDistinct1 *bool
+		NotDistinct2 *bool
+		IsTrue       *bool
+		IsNotTrue    *bool
+		IsFalse      *bool
+		IsNotFalse   *bool
+		IsUnknown    *bool
+		IsNotUnknown *bool
+
+		Complex1 *bool
+		Complex2 *bool
+	}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	testutils.JsonPrint(dest)
+
+	testutils.AssertJSONFile(t, "./testdata/common_db_results/bool_operators.json", dest)
+}
+
 var allTypesJson = `
 [
 	{
+		"Boolean": false,
+		"BooleanPtr": true,
 		"TinyInt": -3,
 		"UtinyInt": 3,
 		"SmallInt": -14,
@@ -84,6 +161,8 @@ var allTypesJson = `
 		"JSONPtr": "{\"key1\": \"value1\", \"key2\": \"value2\"}"
 	},
 	{
+		"Boolean": false,
+		"BooleanPtr": null,
 		"TinyInt": -3,
 		"UtinyInt": 3,
 		"SmallInt": -14,

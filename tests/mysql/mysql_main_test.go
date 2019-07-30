@@ -2,11 +2,9 @@ package mysql
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/go-jet/jet/tests/dbconfig"
 
-	//_ "github.com/go-sql-driver/mysql"
-	_ "github.com/ziutek/mymysql/godrv"
+	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/pkg/profile"
 	"os"
@@ -18,10 +16,8 @@ var db *sql.DB
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
-	fmt.Println(dbconfig.MySQLConnectionString)
-
 	var err error
-	db, err = sql.Open("mysql", "jet:jet@tcp(localhost:3306)/")
+	db, err = sql.Open("mysql", dbconfig.MySQLConnectionString)
 	if err != nil {
 		panic("Failed to connect to test db" + err.Error())
 	}

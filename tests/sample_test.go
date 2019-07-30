@@ -15,7 +15,7 @@ func TestUUIDType(t *testing.T) {
 		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
 		WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
 
-	testutils.AssertStatementSql(t, query, `
+	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.uuid AS "all_types.uuid",
      all_types.uuid_ptr AS "all_types.uuid_ptr"
 FROM test_sample.all_types
@@ -34,7 +34,7 @@ func TestEnumType(t *testing.T) {
 	query := Person.
 		SELECT(Person.AllColumns)
 
-	testutils.AssertStatementSql(t, query, `
+	testutils.AssertDebugStatementSql(t, query, `
 SELECT person.person_id AS "person.person_id",
      person.first_name AS "person.first_name",
      person.last_name AS "person.last_name",
@@ -98,7 +98,7 @@ ORDER BY employee.employee_id;
 		).
 		ORDER_BY(Employee.EmployeeID)
 
-	testutils.AssertStatementSql(t, query, expectedSQL)
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	type Manager model.Employee
 
@@ -134,7 +134,7 @@ ORDER BY employee.employee_id;
 func TestWierdNamesTable(t *testing.T) {
 	stmt := WeirdNamesTable.SELECT(WeirdNamesTable.AllColumns)
 
-	testutils.AssertStatementSql(t, stmt, `
+	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "WEIRD NAMES TABLE".weird_column_name1 AS "WEIRD NAMES TABLE.weird_column_name1",
      "WEIRD NAMES TABLE"."Weird_Column_Name2" AS "WEIRD NAMES TABLE.Weird_Column_Name2",
      "WEIRD NAMES TABLE"."wEiRd_cOluMn_nAmE3" AS "WEIRD NAMES TABLE.wEiRd_cOluMn_nAmE3",

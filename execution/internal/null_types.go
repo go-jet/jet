@@ -43,8 +43,20 @@ type NullTime struct {
 }
 
 // Scan implements the Scanner interface.
-func (nt *NullTime) Scan(value interface{}) error {
-	nt.Time, nt.Valid = value.(time.Time)
+func (nt *NullTime) Scan(value interface{}) (err error) {
+	switch v := value.(type) {
+	case time.Time:
+		nt.Time, nt.Valid = v, true
+		return
+	case []byte:
+		nt.Time, nt.Valid = parseTime(string(v))
+		return
+	case string:
+		nt.Time, nt.Valid = parseTime(v)
+		return
+	}
+
+	nt.Valid = false
 	return nil
 }
 
@@ -54,6 +66,20 @@ func (nt NullTime) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return nt.Time, nil
+}
+
+const formatTime = "2006-01-02 15:04:05.999999"
+
+func parseTime(timeStr string) (t time.Time, valid bool) {
+
+	switch len(timeStr) {
+	case 10, 19, 21, 22, 23, 24, 25, 26:
+		format := formatTime[:len(timeStr)]
+		t, err := time.Parse(format, timeStr)
+		return t, err == nil
+	}
+
+	return t, false
 }
 
 //===============================================================//

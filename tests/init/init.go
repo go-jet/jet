@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/generator/mysql"
 	"github.com/go-jet/jet/generator/postgres"
 	"github.com/go-jet/jet/tests/dbconfig"
+	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"os"
