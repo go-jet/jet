@@ -72,7 +72,17 @@ var table3 = NewTable(
 	table3ColInt,
 	table3StrCol)
 
-func assertPostgreClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
+func AssertClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
+	out := sqlBuilder{dialect: Default}
+	err := clause.serialize(selectStatement, &out)
+
+	assert.NilError(t, err)
+
+	assert.DeepEqual(t, out.buff.String(), query)
+	assert.DeepEqual(t, out.args, args)
+}
+
+func AssertPostgreClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
 	out := sqlBuilder{dialect: PostgreSQL}
 	err := clause.serialize(selectStatement, &out)
 
@@ -82,7 +92,7 @@ func assertPostgreClauseSerialize(t *testing.T, clause clause, query string, arg
 	assert.DeepEqual(t, out.args, args)
 }
 
-func assertMySQLClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
+func AssertMySQLClauseSerialize(t *testing.T, clause clause, query string, args ...interface{}) {
 	out := sqlBuilder{dialect: MySQL}
 	err := clause.serialize(selectStatement, &out)
 

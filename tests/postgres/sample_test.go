@@ -116,7 +116,7 @@ ORDER BY employee.employee_id;
 		EmployeeID:     1,
 		FirstName:      "Windy",
 		LastName:       "Hays",
-		EmploymentDate: TimestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
+		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
 		ManagerID:      nil,
 	})
 
@@ -126,7 +126,7 @@ ORDER BY employee.employee_id;
 		EmployeeID:     8,
 		FirstName:      "Salley",
 		LastName:       "Lester",
-		EmploymentDate: TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
+		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
 		ManagerID:      Int32Ptr(3),
 	})
 }

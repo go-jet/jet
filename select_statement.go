@@ -7,14 +7,6 @@ import (
 	"github.com/go-jet/jet/execution"
 )
 
-// Select statements lock types
-var (
-	UPDATE        = newLock("UPDATE")
-	NO_KEY_UPDATE = newLock("NO KEY UPDATE")
-	SHARE         = newLock("SHARE")
-	KEY_SHARE     = newLock("KEY SHARE")
-)
-
 // SelectStatement is interface for SQL SELECT statements
 type SelectStatement interface {
 	Statement
@@ -327,7 +319,7 @@ type selectLockImpl struct {
 	noWait, skipLocked bool
 }
 
-func newLock(name string) func() SelectLock {
+func NewSelectLock(name string) func() SelectLock {
 	return func() SelectLock {
 		return newSelectLock(name)
 	}

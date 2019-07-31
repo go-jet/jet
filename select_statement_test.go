@@ -99,30 +99,6 @@ OFFSET $2;
 `, int64(10), int64(2))
 }
 
-func TestSelectLock(t *testing.T) {
-	assertStatement(t, SELECT(table1ColBool).FROM(table1).FOR(UPDATE()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR UPDATE;
-`)
-	assertStatement(t, SELECT(table1ColBool).FROM(table1).FOR(SHARE().NOWAIT()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR SHARE NOWAIT;
-`)
-
-	assertStatement(t, SELECT(table1ColBool).FROM(table1).FOR(KEY_SHARE().NOWAIT()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR KEY SHARE NOWAIT;
-`)
-	assertStatement(t, SELECT(table1ColBool).FROM(table1).FOR(NO_KEY_UPDATE().SKIP_LOCKED()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR NO KEY UPDATE SKIP LOCKED;
-`)
-}
-
 func TestSelectSets(t *testing.T) {
 	select1 := SELECT(table1ColBool).FROM(table1)
 	select2 := SELECT(table2ColBool).FROM(table2)

@@ -6,9 +6,9 @@ func TestColumn(t *testing.T) {
 	column := newColumn("col", "", nil)
 	column.expressionInterfaceImpl.parent = &column
 
-	assertPostgreClauseSerialize(t, column, "col")
+	AssertPostgreClauseSerialize(t, column, "col")
 	column.setTableName("table1")
-	assertPostgreClauseSerialize(t, column, "table1.col")
+	AssertPostgreClauseSerialize(t, column, "table1.col")
 	assertProjectionSerialize(t, &column, `table1.col AS "table1.col"`)
 	assertProjectionSerialize(t, column.AS("alias1"), `table1.col AS "alias1"`)
 }

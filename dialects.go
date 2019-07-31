@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	Default    = MySQL
 	PostgreSQL = newPostgresDialect()
 	MySQL      = newMySQLDialect()
 )

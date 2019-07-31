@@ -3,41 +3,48 @@ package mysql
 import "github.com/go-jet/jet"
 
 type ColumnBool jet.ColumnBool
+type BoolExpression jet.BoolExpression
 
 var BoolColumn = jet.BoolColumn
 var Bool = jet.Bool
 
 type ColumnString jet.ColumnString
+type StringExpression jet.StringExpression
 
 var StringColumn = jet.StringColumn
 var String = jet.String
 
 type ColumnInteger jet.ColumnInteger
+type IntegerExpression jet.IntegerExpression
 
 var IntegerColumn = jet.IntegerColumn
 var Int = jet.Int
 
 type ColumnFloat jet.ColumnFloat
+type FloatExpression jet.FloatExpression
 
 var FloatColumn = jet.FloatColumn
 var Float = jet.Float
 
 type ColumnDate jet.ColumnDate
+type DateExpression jet.DateExpression
 
 var DateColumn = jet.DateColumn
 var Date = jet.Date
 
 type ColumnDateTime jet.ColumnTimestamp
+type DateTimeExpression jet.TimestampExpression
 
 var DateTimeColumn = jet.TimestampColumn
 var DateTime = jet.Timestamp
 
 type ColumnTimestamp jet.ColumnTimestamp
+type TimestampExpression jet.TimestampExpression
 
 var TimestampColumn = jet.TimestampColumn
 var Timestamp = jet.Timestamp
 
-var CAST = jet.CAST
+type TimeExpression jet.TimeExpression
 
 // ----------------- FUNCTIONS ----------------------//
 
@@ -63,3 +70,5 @@ var TRUNCATE = func(floatExpression jet.FloatExpression, precision jet.IntegerEx
 var MINUSi = jet.MINUSi
 var MINUSf = jet.MINUSf
 var BIT_NOT = jet.BIT_NOT
+
+var SELECT = jet.SELECT

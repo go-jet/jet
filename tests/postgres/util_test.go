@@ -6,9 +6,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
-	"strings"
 	"testing"
-	"time"
 )
 
 func assertExec(t *testing.T, stmt jet.Statement, rowsAffected int64) {
@@ -60,43 +58,6 @@ func UUIDPtr(u string) *uuid.UUID {
 	newUUID := uuid.MustParse(u)
 
 	return &newUUID
-}
-
-func TimeWithoutTimeZone(t string) *time.Time {
-	newTime, err := time.Parse("15:04:05", t)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return &newTime
-}
-
-func TimeWithTimeZone(t string) *time.Time {
-	newTimez, err := time.Parse("15:04:05 -0700", t)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return &newTimez
-}
-
-func TimestampWithTimeZone(t string, precision int) *time.Time {
-
-	precisionStr := ""
-
-	if precision > 0 {
-		precisionStr = "." + strings.Repeat("9", precision)
-	}
-
-	newTime, err := time.Parse("2006-01-02 15:04:05"+precisionStr+" -0700 MST", t)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return &newTime
 }
 
 var customer0 = model.Customer{

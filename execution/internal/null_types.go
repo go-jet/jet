@@ -72,14 +72,19 @@ const formatTime = "2006-01-02 15:04:05.999999"
 
 func parseTime(timeStr string) (t time.Time, valid bool) {
 
+	var format string
+
 	switch len(timeStr) {
+	case 8:
+		format = formatTime[11:19]
 	case 10, 19, 21, 22, 23, 24, 25, 26:
-		format := formatTime[:len(timeStr)]
-		t, err := time.Parse(format, timeStr)
-		return t, err == nil
+		format = formatTime[:len(timeStr)]
+	default:
+		return t, false
 	}
 
-	return t, false
+	t, err := time.Parse(format, timeStr)
+	return t, err == nil
 }
 
 //===============================================================//
