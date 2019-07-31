@@ -8,12 +8,12 @@ DROP TABLE IF EXISTS test_sample.all_types;
 CREATE TABLE test_sample.ALL_TYPES
 (
     -- numeric
-    smallint_ptr smallint,
-    smallint smallint NOT NULL,
+    small_int_ptr smallint,
+    small_int smallint NOT NULL,
     integer_ptr  integer,
     integer integer NOT NULL,
-    bigint_ptr   bigint,
-    bigint bigint NOT NULL,
+    big_int_ptr   bigint,
+    big_int bigint NOT NULL,
     decimal_ptr decimal(10, 2),
     decimal decimal(10, 2) NOT NULL,
     numeric_ptr numeric(20, 3),
@@ -97,7 +97,7 @@ CREATE TABLE test_sample.ALL_TYPES
 );
 
 INSERT INTO test_sample.ALL_types(
-    smallint_ptr, "smallint", integer_ptr, "integer", bigint_ptr, "bigint", decimal_ptr, "decimal", numeric_ptr, "numeric", real_ptr, "real", double_precision_ptr, double_precision, smallserial, serial, bigserial,
+    small_int_ptr, "small_int", integer_ptr, "integer", big_int_ptr, "big_int", decimal_ptr, "decimal", numeric_ptr, "numeric", real_ptr, "real", double_precision_ptr, double_precision, smallserial, serial, bigserial,
 --     money_ptr, money,
     character_varying_ptr, character_varying, character_ptr, "character", text_ptr, text,
     bytea_ptr, bytea,
@@ -110,7 +110,7 @@ INSERT INTO test_sample.ALL_types(
     xml_ptr, xml,
     json_ptr, json, jsonb_ptr, jsonb,
     integer_array_ptr, integer_array, text_array_ptr, text_array, jsonb_array, text_multi_dim_array_ptr, text_multi_dim_array)
-VALUES (1, 1, 300, 300, 50000, 5000, 1.11, 1.11, 2.22, 2.22, 5.55, 5.55, 11111111.22, 11111111.22, DEFAULT, DEFAULT, DEFAULT,
+VALUES (14, 14, 300, 300, 50000, 5000, 1.11, 1.11, 2.22, 2.22, 5.55, 5.55, 11111111.22, 11111111.22, DEFAULT, DEFAULT, DEFAULT,
 --         100000, 100000,
         'ABBA', 'ABBA', 'JOHN', 'JOHN', 'Some text', 'Some text',
         'bytea', 'bytea',
@@ -124,7 +124,7 @@ VALUES (1, 1, 300, 300, 50000, 5000, 1.11, 1.11, 2.22, 2.22, 5.55, 5.55, 1111111
         '{"a": 1, "b": 3}', '{"a": 1, "b": 3}', '{"a": 1, "b": 3}', '{"a": 1, "b": 3}',
         '{1, 2, 3}', '{1, 2, 3}', '{"breakfast", "consulting"}', '{"breakfast", "consulting"}', ARRAY['{"a": 1, "b": 2}'::jsonb, '{"a":3, "b": 4}'::jsonb], '{{"meeting", "lunch"}, {"training", "presentation"}}', '{{"meeting", "lunch"}, {"training", "presentation"}}')
         ,
-       (NULL, 1, NULL, 300, NULL, 5000, NULL, 1.11, NULL, 2.22, NULL, 5.55, NULL, 11111111.22, DEFAULT, DEFAULT, DEFAULT,
+       (NULL, 14, NULL, 300, NULL, 5000, NULL, 1.11, NULL, 2.22, NULL, 5.55, NULL, 11111111.22, DEFAULT, DEFAULT, DEFAULT,
 --         NULL, 100000,
         NULL, 'ABBA', NULL, 'JOHN', NULL, 'Some text',
         NULL, 'bytea',

@@ -171,7 +171,8 @@ func (p *prefixOpExpression) serialize(statement statementType, out *sqlBuilder,
 		return errors.New("jet: Prefix Expression is nil")
 	}
 
-	out.writeString(p.operator + " ")
+	out.writeString("(")
+	out.writeString(p.operator)
 
 	if p.expression == nil {
 		return errors.New("jet: nil prefix Expression")
@@ -179,6 +180,8 @@ func (p *prefixOpExpression) serialize(statement statementType, out *sqlBuilder,
 	if err := p.expression.serialize(statement, out); err != nil {
 		return err
 	}
+
+	out.writeString(")")
 
 	return nil
 }

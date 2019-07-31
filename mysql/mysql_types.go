@@ -59,3 +59,7 @@ var TRUNC = TRUNCATE
 var TRUNCATE = func(floatExpression jet.FloatExpression, precision jet.IntegerExpression) jet.FloatExpression {
 	return jet.NewFloatFunc("TRUNCATE", floatExpression, precision)
 }
+
+var MINUSi = jet.MINUSi
+var MINUSf = jet.MINUSf
+var BIT_NOT = jet.BIT_NOT

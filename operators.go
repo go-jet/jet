@@ -2,6 +2,18 @@ package jet
 
 import "errors"
 
+// --------- Arithmetic operators -------------//
+
+// MINUSi changes the sign of the intExp.
+func MINUSi(intExp IntegerExpression) IntegerExpression {
+	return newPrefixIntegerOperator(intExp, "-")
+}
+
+// MINUSi changes the sign of the intExp.
+func MINUSf(floatExp FloatExpression) FloatExpression {
+	return newPrefixFloatOperator(floatExp, "-")
+}
+
 //----------- Logical operators ---------------//
 
 // NOT returns negation of bool expression result

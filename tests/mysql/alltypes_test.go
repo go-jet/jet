@@ -167,8 +167,8 @@ SELECT (all_types.numeric = all_types.numeric) AS "eq1",
      TRUNCATE((all_types.decimal / ?), ?) AS "div2",
      TRUNCATE((all_types.decimal % all_types.decimal_ptr), ?) AS "mod1",
      TRUNCATE((all_types.decimal % ?), ?) AS "mod2",
-     TRUNCATE(POWER(all_types.decimal, all_types.decimal_ptr), ?) AS "pow1",
-     TRUNCATE(POWER(all_types.decimal, ?), ?) AS "pow2",
+     TRUNCATE(POW(all_types.decimal, all_types.decimal_ptr), ?) AS "pow1",
+     TRUNCATE(POW(all_types.decimal, ?), ?) AS "pow2",
      TRUNCATE(ABS(all_types.decimal), ?) AS "abs",
      TRUNCATE(POWER(all_types.decimal, ?), ?) AS "power",
      TRUNCATE(SQRT(all_types.decimal), ?) AS "sqrt",
@@ -194,31 +194,170 @@ LIMIT ?;
 	testutils.AssertJSONFile(t, "./testdata/common/float_operators.json", dest)
 }
 
+func TestIntegerOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.BigInt,
+		AllTypes.BigIntPtr,
+		AllTypes.SmallInt,
+		AllTypes.SmallIntPtr,
+
+		AllTypes.BigInt.EQ(AllTypes.BigInt).AS("eq1"),
+		AllTypes.BigInt.EQ(Int(12)).AS("eq2"),
+
+		AllTypes.BigInt.NOT_EQ(AllTypes.BigIntPtr).AS("neq1"),
+		AllTypes.BigInt.NOT_EQ(Int(12)).AS("neq2"),
+
+		AllTypes.BigInt.IS_DISTINCT_FROM(AllTypes.BigInt).AS("distinct1"),
+		AllTypes.BigInt.IS_DISTINCT_FROM(Int(12)).AS("distinct2"),
+
+		AllTypes.BigInt.IS_NOT_DISTINCT_FROM(AllTypes.BigInt).AS("not distinct1"),
+		AllTypes.BigInt.IS_NOT_DISTINCT_FROM(Int(12)).AS("not distinct2"),
+
+		AllTypes.BigInt.LT(AllTypes.BigIntPtr).AS("lt1"),
+		AllTypes.BigInt.LT(Int(65)).AS("lt2"),
+
+		AllTypes.BigInt.LT_EQ(AllTypes.BigIntPtr).AS("lte1"),
+		AllTypes.BigInt.LT_EQ(Int(65)).AS("lte2"),
+
+		AllTypes.BigInt.GT(AllTypes.BigIntPtr).AS("gt1"),
+		AllTypes.BigInt.GT(Int(65)).AS("gt2"),
+
+		AllTypes.BigInt.GT_EQ(AllTypes.BigIntPtr).AS("gte1"),
+		AllTypes.BigInt.GT_EQ(Int(65)).AS("gte2"),
+
+		AllTypes.BigInt.ADD(AllTypes.BigInt).AS("add1"),
+		AllTypes.BigInt.ADD(Int(11)).AS("add2"),
+
+		AllTypes.BigInt.SUB(AllTypes.BigInt).AS("sub1"),
+		AllTypes.BigInt.SUB(Int(11)).AS("sub2"),
+
+		AllTypes.BigInt.MUL(AllTypes.BigInt).AS("mul1"),
+		AllTypes.BigInt.MUL(Int(11)).AS("mul2"),
+
+		AllTypes.BigInt.DIV(AllTypes.BigInt).AS("div1"),
+		AllTypes.BigInt.DIV(Int(11)).AS("div2"),
+
+		AllTypes.BigInt.MOD(AllTypes.BigInt).AS("mod1"),
+		AllTypes.BigInt.MOD(Int(11)).AS("mod2"),
+
+		AllTypes.SmallInt.POW(AllTypes.SmallInt.DIV(Int(3))).AS("pow1"),
+		AllTypes.SmallInt.POW(Int(6)).AS("pow2"),
+
+		AllTypes.SmallInt.BIT_AND(AllTypes.SmallInt).AS("bit_and1"),
+		AllTypes.SmallInt.BIT_AND(AllTypes.SmallInt).AS("bit_and2"),
+
+		AllTypes.SmallInt.BIT_OR(AllTypes.SmallInt).AS("bit or 1"),
+		AllTypes.SmallInt.BIT_OR(Int(22)).AS("bit or 2"),
+
+		AllTypes.SmallInt.BIT_XOR(AllTypes.SmallInt).AS("bit xor 1"),
+		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
+
+		BIT_NOT(MINUSi(AllTypes.SmallInt)).AS("bit_not_1"),
+		BIT_NOT(MINUSi(Int(11, true))).AS("bit_not_2"),
+
+		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int(2))).AS("bit shift left 1"),
+		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
+
+		AllTypes.SmallInt.BIT_SHIFT_RIGHT(AllTypes.SmallInt.DIV(Int(5))).AS("bit shift right 1"),
+		AllTypes.SmallInt.BIT_SHIFT_RIGHT(Int(1)).AS("bit shift right 2"),
+
+		ABSi(AllTypes.BigInt).AS("abs"),
+		SQRT(ABSi(AllTypes.BigInt)).AS("sqrt"),
+		CBRT(ABSi(AllTypes.BigInt)).AS("cbrt"),
+	).LIMIT(2)
+
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT all_types.big_int AS "all_types.big_int",
+     all_types.big_int_ptr AS "all_types.big_int_ptr",
+     all_types.small_int AS "all_types.small_int",
+     all_types.small_int_ptr AS "all_types.small_int_ptr",
+     (all_types.big_int = all_types.big_int) AS "eq1",
+     (all_types.big_int = ?) AS "eq2",
+     (all_types.big_int != all_types.big_int_ptr) AS "neq1",
+     (all_types.big_int != ?) AS "neq2",
+     (NOT all_types.big_int <=> all_types.big_int) AS "distinct1",
+     (NOT all_types.big_int <=> ?) AS "distinct2",
+     (all_types.big_int <=> all_types.big_int) AS "not distinct1",
+     (all_types.big_int <=> ?) AS "not distinct2",
+     (all_types.big_int < all_types.big_int_ptr) AS "lt1",
+     (all_types.big_int < ?) AS "lt2",
+     (all_types.big_int <= all_types.big_int_ptr) AS "lte1",
+     (all_types.big_int <= ?) AS "lte2",
+     (all_types.big_int > all_types.big_int_ptr) AS "gt1",
+     (all_types.big_int > ?) AS "gt2",
+     (all_types.big_int >= all_types.big_int_ptr) AS "gte1",
+     (all_types.big_int >= ?) AS "gte2",
+     (all_types.big_int + all_types.big_int) AS "add1",
+     (all_types.big_int + ?) AS "add2",
+     (all_types.big_int - all_types.big_int) AS "sub1",
+     (all_types.big_int - ?) AS "sub2",
+     (all_types.big_int * all_types.big_int) AS "mul1",
+     (all_types.big_int * ?) AS "mul2",
+     (all_types.big_int DIV all_types.big_int) AS "div1",
+     (all_types.big_int DIV ?) AS "div2",
+     (all_types.big_int % all_types.big_int) AS "mod1",
+     (all_types.big_int % ?) AS "mod2",
+     POW(all_types.small_int, (all_types.small_int DIV ?)) AS "pow1",
+     POW(all_types.small_int, ?) AS "pow2",
+     (all_types.small_int & all_types.small_int) AS "bit_and1",
+     (all_types.small_int & all_types.small_int) AS "bit_and2",
+     (all_types.small_int | all_types.small_int) AS "bit or 1",
+     (all_types.small_int | ?) AS "bit or 2",
+     (all_types.small_int ^ all_types.small_int) AS "bit xor 1",
+     (all_types.small_int ^ ?) AS "bit xor 2",
+     (~ (- all_types.small_int)) AS "bit_not_1",
+     (~ (- 11)) AS "bit_not_2",
+     (all_types.small_int << (all_types.small_int DIV ?)) AS "bit shift left 1",
+     (all_types.small_int << ?) AS "bit shift left 2",
+     (all_types.small_int >> (all_types.small_int DIV ?)) AS "bit shift right 1",
+     (all_types.small_int >> ?) AS "bit shift right 2",
+     ABS(all_types.big_int) AS "abs",
+     SQRT(ABS(all_types.big_int)) AS "sqrt",
+     POWER(ABS(all_types.big_int), (? / ?)) AS "cbrt"
+FROM test_sample.all_types
+LIMIT ?;
+`)
+
+	var dest []struct {
+		common.AllTypesIntegerExpResult `alias:"."`
+	}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	//testutils.JsonPrint(dest)
+
+	testutils.AssertJSONFile(t, "./testdata/common/int_operators.json", dest)
+}
+
 var allTypesJson = `
 [
 	{
 		"Boolean": false,
 		"BooleanPtr": true,
 		"TinyInt": -3,
-		"UtinyInt": 3,
-		"SmallInt": -14,
-		"UsmallInt": 14,
+		"UTinyInt": 3,
+		"SmallInt": 14,
+		"USmallInt": 14,
 		"MediumInt": -150,
-		"UmediumInt": 150,
+		"UMediumInt": 150,
 		"Integer": -1600,
-		"Uinteger": 1600,
-		"BigInt": -17000,
-		"UbigInt": 17000,
+		"UInteger": 1600,
+		"BigInt": 5000,
+		"UBigInt": 50000,
 		"TinyIntPtr": -3,
-		"UtinyIntPtr": 3,
-		"SmallIntPtr": -14,
-		"UsmallIntPtr": 14,
+		"UTinyIntPtr": 3,
+		"SmallIntPtr": 14,
+		"USmallIntPtr": 14,
 		"MediumIntPtr": -150,
-		"UmediumIntPtr": 150,
-		"IntPtr": -1600,
-		"UintPtr": 1600,
-		"BigIntPtr": -17000,
-		"UbigIntPtr": 17000,
+		"UMediumIntPtr": 150,
+		"IntegerPtr": -1600,
+		"UIntegerPtr": 1600,
+		"BigIntPtr": 50000,
+		"UBigIntPtr": 50000,
 		"Decimal": 1.11,
 		"DecimalPtr": 1.11,
 		"Numeric": 2.22,
@@ -262,25 +401,25 @@ var allTypesJson = `
 		"Boolean": false,
 		"BooleanPtr": null,
 		"TinyInt": -3,
-		"UtinyInt": 3,
-		"SmallInt": -14,
-		"UsmallInt": 14,
+		"UTinyInt": 3,
+		"SmallInt": 14,
+		"USmallInt": 14,
 		"MediumInt": -150,
-		"UmediumInt": 150,
+		"UMediumInt": 150,
 		"Integer": -1600,
-		"Uinteger": 1600,
-		"BigInt": -17000,
-		"UbigInt": 17000,
+		"UInteger": 1600,
+		"BigInt": 5000,
+		"UBigInt": 50000,
 		"TinyIntPtr": null,
-		"UtinyIntPtr": null,
+		"UTinyIntPtr": null,
 		"SmallIntPtr": null,
-		"UsmallIntPtr": null,
+		"USmallIntPtr": null,
 		"MediumIntPtr": null,
-		"UmediumIntPtr": null,
-		"IntPtr": null,
-		"UintPtr": null,
+		"UMediumIntPtr": null,
+		"IntegerPtr": null,
+		"UIntegerPtr": null,
 		"BigIntPtr": null,
-		"UbigIntPtr": null,
+		"UBigIntPtr": null,
 		"Decimal": 1.11,
 		"DecimalPtr": null,
 		"Numeric": 2.22,

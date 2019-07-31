@@ -19,6 +19,10 @@ func ABSi(integerExpression IntegerExpression) IntegerExpression {
 	return newIntegerFunc("ABS", integerExpression)
 }
 
+func POW(base, exponent NumericExpression) FloatExpression {
+	return NewFloatFunc("POW", base, exponent)
+}
+
 func POWER(base, exponent NumericExpression) FloatExpression {
 	return NewFloatFunc("POWER", base, exponent)
 }

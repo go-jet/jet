@@ -41,10 +41,13 @@ type integerLiteralExpression struct {
 }
 
 // Int is constructor for integer expressions literals.
-func Int(value int64) IntegerExpression {
+func Int(value int64, constant ...bool) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
 	numLiteral.literalExpression = *literal(value)
+	if len(constant) > 0 && constant[0] == true {
+		numLiteral.constant = true
+	}
 
 	numLiteral.literalExpression.parent = numLiteral
 	numLiteral.integerInterfaceImpl.parent = numLiteral

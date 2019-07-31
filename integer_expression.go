@@ -106,7 +106,7 @@ func (i *integerInterfaceImpl) MOD(expression IntegerExpression) IntegerExpressi
 }
 
 func (i *integerInterfaceImpl) POW(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "^")
+	return IntExp(POW(i.parent, expression))
 }
 
 func (i *integerInterfaceImpl) BIT_AND(expression IntegerExpression) IntegerExpression {
@@ -164,6 +164,24 @@ func newPrefixIntegerOperator(expression IntegerExpression, operator string) Int
 	integerExpression.integerInterfaceImpl.parent = &integerExpression
 
 	return &integerExpression
+}
+
+//---------------------------------------------------//
+type prefixFloatOpExpression struct {
+	expressionInterfaceImpl
+	floatInterfaceImpl
+
+	prefixOpExpression
+}
+
+func newPrefixFloatOperator(expression FloatExpression, operator string) FloatExpression {
+	floatOpExpression := prefixFloatOpExpression{}
+	floatOpExpression.prefixOpExpression = newPrefixExpression(expression, operator)
+
+	floatOpExpression.expressionInterfaceImpl.parent = &floatOpExpression
+	floatOpExpression.floatInterfaceImpl.parent = &floatOpExpression
+
+	return &floatOpExpression
 }
 
 //---------------------------------------------------//

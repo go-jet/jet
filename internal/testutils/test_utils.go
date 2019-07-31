@@ -46,8 +46,8 @@ func AssertJSONFile(t *testing.T, jsonFilePath string, data interface{}) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
-	assert.Assert(t, string(fileJSONData) == string(jsonData))
-	//assert.DeepEqual(t, string(fileJSONData), string(jsonData))
+	//assert.Assert(t, string(fileJSONData) == string(jsonData))
+	assert.DeepEqual(t, string(fileJSONData), string(jsonData))
 }
 
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
@@ -55,6 +55,9 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 	assert.NilError(t, err)
 	assert.Equal(t, queryStr, expectedQuery)
 
+	if len(expectedArgs) == 0 {
+		return
+	}
 	assert.DeepEqual(t, args, expectedArgs)
 }
 

@@ -62,6 +62,9 @@ func TestFloatExpressionMUL(t *testing.T) {
 func TestFloatExpressionDIV(t *testing.T) {
 	assertPostgreClauseSerialize(t, table1ColFloat.DIV(table2ColFloat), "(table1.col_float / table2.col_float)")
 	assertPostgreClauseSerialize(t, table1ColFloat.DIV(Float(2.11)), "(table1.col_float / $1)", float64(2.11))
+
+	assertMySQLClauseSerialize(t, table1ColFloat.DIV(table2ColFloat), "(table1.col_float / table2.col_float)")
+	assertMySQLClauseSerialize(t, table1ColFloat.DIV(Float(2.11)), "(table1.col_float / ?)", float64(2.11))
 }
 
 func TestFloatExpressionMOD(t *testing.T) {
@@ -70,8 +73,8 @@ func TestFloatExpressionMOD(t *testing.T) {
 }
 
 func TestFloatExpressionPOW(t *testing.T) {
-	assertPostgreClauseSerialize(t, table1ColFloat.POW(table2ColFloat), "POWER(table1.col_float, table2.col_float)")
-	assertPostgreClauseSerialize(t, table1ColFloat.POW(Float(2.11)), "POWER(table1.col_float, $1)", float64(2.11))
+	assertPostgreClauseSerialize(t, table1ColFloat.POW(table2ColFloat), "POW(table1.col_float, table2.col_float)")
+	assertPostgreClauseSerialize(t, table1ColFloat.POW(Float(2.11)), "POW(table1.col_float, $1)", float64(2.11))
 }
 
 func TestFloatExp(t *testing.T) {

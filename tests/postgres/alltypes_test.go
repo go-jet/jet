@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"fmt"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
@@ -58,10 +59,10 @@ func TestExpressionOperators(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Integer.IS_NULL(),
 		AllTypes.Timestamp.IS_NOT_NULL(),
-		AllTypes.SmallintPtr.IN(Int(11), Int(22), NULL),
-		AllTypes.SmallintPtr.IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
-		AllTypes.SmallintPtr.NOT_IN(Int(11), Int(22), NULL),
-		AllTypes.SmallintPtr.NOT_IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
+		AllTypes.SmallIntPtr.IN(Int(11), Int(22), NULL),
+		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
+		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL),
+		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
 
 		CAST(String("TRUE")).AS_BOOL(),
 		CAST(String("111")).AS_SMALLINT(),
@@ -87,7 +88,7 @@ func TestExpressionOperators(t *testing.T) {
 		TO_NUMBER(String("12,454"), String("99G999D9S")),
 		TO_TIMESTAMP(String("05 Dec 2000"), String("DD Mon YYYY")),
 
-		COALESCE(AllTypes.IntegerPtr, AllTypes.SmallintPtr, NULL, Int(11)),
+		COALESCE(AllTypes.IntegerPtr, AllTypes.SmallIntPtr, NULL, Int(11)),
 		NULLIF(AllTypes.Text, String("(none)")),
 		GREATEST(AllTypes.Numeric, AllTypes.NumericPtr),
 		LEAST(AllTypes.Numeric, AllTypes.NumericPtr),
@@ -313,8 +314,8 @@ SELECT (all_types.numeric = all_types.numeric) AS "eq1",
      TRUNC((all_types.decimal / $21), $22) AS "div2",
      TRUNC((all_types.decimal % all_types.decimal_ptr), $23) AS "mod1",
      TRUNC((all_types.decimal % $24), $25) AS "mod2",
-     TRUNC(POWER(all_types.decimal, all_types.decimal_ptr), $26) AS "pow1",
-     TRUNC(POWER(all_types.decimal, $27), $28) AS "pow2",
+     TRUNC(POW(all_types.decimal, all_types.decimal_ptr), $26) AS "pow1",
+     TRUNC(POW(all_types.decimal, $27), $28) AS "pow2",
      TRUNC(ABS(all_types.decimal), $29) AS "abs",
      TRUNC(POWER(all_types.decimal, $30), $31) AS "power",
      TRUNC(SQRT(all_types.decimal), $32) AS "sqrt",
@@ -344,53 +345,141 @@ LIMIT $35;
 
 func TestIntegerOperators(t *testing.T) {
 	query := AllTypes.SELECT(
-		AllTypes.Integer.EQ(AllTypes.IntegerPtr),
-		AllTypes.Bigint.EQ(Int(12)),
-		//AllTypes.Smallint.NOT_EQ(AllTypes.Real),
-		AllTypes.Integer.NOT_EQ(AllTypes.IntegerPtr),
-		AllTypes.Bigint.NOT_EQ(Int(12)),
-		AllTypes.Integer.LT(AllTypes.IntegerPtr),
-		AllTypes.Bigint.LT(Int(65)),
-		//AllTypes.Smallint.LT_EQ(AllTypes.Numeric),
-		AllTypes.Integer.LT_EQ(AllTypes.IntegerPtr),
-		AllTypes.Bigint.LT_EQ(Int(65)),
-		//AllTypes.Smallint.GT_EQ(AllTypes.Numeric),
-		AllTypes.Integer.GT(AllTypes.IntegerPtr),
-		AllTypes.Bigint.GT(Int(65)),
-		AllTypes.Integer.GT_EQ(AllTypes.IntegerPtr),
-		AllTypes.Bigint.GT_EQ(Int(65)),
+		AllTypes.BigInt,
+		AllTypes.BigIntPtr,
+		AllTypes.SmallInt,
+		AllTypes.SmallIntPtr,
 
-		AllTypes.Integer.ADD(AllTypes.Integer),
-		AllTypes.Integer.ADD(Int(11)),
-		AllTypes.Integer.SUB(AllTypes.Integer),
-		AllTypes.Integer.SUB(Int(11)),
-		AllTypes.Integer.MUL(AllTypes.Integer),
-		AllTypes.Integer.MUL(Int(11)),
-		AllTypes.Integer.DIV(AllTypes.Integer),
-		AllTypes.Integer.DIV(Int(11)),
-		AllTypes.Integer.MOD(AllTypes.Integer),
-		AllTypes.Integer.MOD(Int(11)),
-		AllTypes.Integer.POW(AllTypes.Smallint),
-		AllTypes.Integer.POW(Int(11)),
-		AllTypes.Integer.BIT_AND(AllTypes.Smallint),
-		AllTypes.Integer.BIT_OR(AllTypes.Smallint),
-		AllTypes.Integer.BIT_XOR(Int(11)),
-		BIT_NOT(AllTypes.Integer),
-		AllTypes.Integer.BIT_SHIFT_LEFT(AllTypes.Smallint),
-		AllTypes.Integer.BIT_SHIFT_LEFT(Int(11)),
-		AllTypes.Integer.BIT_SHIFT_RIGHT(AllTypes.Smallint),
-		AllTypes.Integer.BIT_SHIFT_RIGHT(Int(11)),
+		AllTypes.BigInt.EQ(AllTypes.BigInt).AS("eq1"),
+		AllTypes.BigInt.EQ(Int(12)).AS("eq2"),
 
-		ABSi(AllTypes.Integer),
-		SQRT(AllTypes.Integer),
-		CBRT(AllTypes.Integer),
-	)
+		AllTypes.BigInt.NOT_EQ(AllTypes.BigIntPtr).AS("neq1"),
+		AllTypes.BigInt.NOT_EQ(Int(12)).AS("neq2"),
 
-	//fmt.Println(query.DebugSql())
+		AllTypes.BigInt.IS_DISTINCT_FROM(AllTypes.BigInt).AS("distinct1"),
+		AllTypes.BigInt.IS_DISTINCT_FROM(Int(12)).AS("distinct2"),
 
-	err := query.Query(db, &struct{}{})
+		AllTypes.BigInt.IS_NOT_DISTINCT_FROM(AllTypes.BigInt).AS("not distinct1"),
+		AllTypes.BigInt.IS_NOT_DISTINCT_FROM(Int(12)).AS("not distinct2"),
+
+		AllTypes.BigInt.LT(AllTypes.BigIntPtr).AS("lt1"),
+		AllTypes.BigInt.LT(Int(65)).AS("lt2"),
+
+		AllTypes.BigInt.LT_EQ(AllTypes.BigIntPtr).AS("lte1"),
+		AllTypes.BigInt.LT_EQ(Int(65)).AS("lte2"),
+
+		AllTypes.BigInt.GT(AllTypes.BigIntPtr).AS("gt1"),
+		AllTypes.BigInt.GT(Int(65)).AS("gt2"),
+
+		AllTypes.BigInt.GT_EQ(AllTypes.BigIntPtr).AS("gte1"),
+		AllTypes.BigInt.GT_EQ(Int(65)).AS("gte2"),
+
+		AllTypes.BigInt.ADD(AllTypes.BigInt).AS("add1"),
+		AllTypes.BigInt.ADD(Int(11)).AS("add2"),
+
+		AllTypes.BigInt.SUB(AllTypes.BigInt).AS("sub1"),
+		AllTypes.BigInt.SUB(Int(11)).AS("sub2"),
+
+		AllTypes.BigInt.MUL(AllTypes.BigInt).AS("mul1"),
+		AllTypes.BigInt.MUL(Int(11)).AS("mul2"),
+
+		AllTypes.BigInt.DIV(AllTypes.BigInt).AS("div1"),
+		AllTypes.BigInt.DIV(Int(11)).AS("div2"),
+
+		AllTypes.BigInt.MOD(AllTypes.BigInt).AS("mod1"),
+		AllTypes.BigInt.MOD(Int(11)).AS("mod2"),
+
+		AllTypes.SmallInt.POW(AllTypes.SmallInt.DIV(Int(3))).AS("pow1"),
+		AllTypes.SmallInt.POW(Int(6)).AS("pow2"),
+
+		AllTypes.SmallInt.BIT_AND(AllTypes.SmallInt).AS("bit_and1"),
+		AllTypes.SmallInt.BIT_AND(AllTypes.SmallInt).AS("bit_and2"),
+
+		AllTypes.SmallInt.BIT_OR(AllTypes.SmallInt).AS("bit or 1"),
+		AllTypes.SmallInt.BIT_OR(Int(22)).AS("bit or 2"),
+
+		AllTypes.SmallInt.BIT_XOR(AllTypes.SmallInt).AS("bit xor 1"),
+		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
+
+		BIT_NOT(MINUSi(AllTypes.SmallInt)).AS("bit_not_1"),
+		BIT_NOT(MINUSi(Int(11, true))).AS("bit_not_2"),
+
+		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int(2))).AS("bit shift left 1"),
+		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
+
+		AllTypes.SmallInt.BIT_SHIFT_RIGHT(AllTypes.SmallInt.DIV(Int(5))).AS("bit shift right 1"),
+		AllTypes.SmallInt.BIT_SHIFT_RIGHT(Int(1)).AS("bit shift right 2"),
+
+		ABSi(AllTypes.BigInt).AS("abs"),
+		SQRT(ABSi(AllTypes.BigInt)).AS("sqrt"),
+		CBRT(ABSi(AllTypes.BigInt)).AS("cbrt"),
+	).LIMIT(2)
+
+	fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT all_types.big_int AS "all_types.big_int",
+     all_types.big_int_ptr AS "all_types.big_int_ptr",
+     all_types.small_int AS "all_types.small_int",
+     all_types.small_int_ptr AS "all_types.small_int_ptr",
+     (all_types.big_int = all_types.big_int) AS "eq1",
+     (all_types.big_int = $1) AS "eq2",
+     (all_types.big_int != all_types.big_int_ptr) AS "neq1",
+     (all_types.big_int != $2) AS "neq2",
+     (all_types.big_int IS DISTINCT FROM all_types.big_int) AS "distinct1",
+     (all_types.big_int IS DISTINCT FROM $3) AS "distinct2",
+     (all_types.big_int IS NOT DISTINCT FROM all_types.big_int) AS "not distinct1",
+     (all_types.big_int IS NOT DISTINCT FROM $4) AS "not distinct2",
+     (all_types.big_int < all_types.big_int_ptr) AS "lt1",
+     (all_types.big_int < $5) AS "lt2",
+     (all_types.big_int <= all_types.big_int_ptr) AS "lte1",
+     (all_types.big_int <= $6) AS "lte2",
+     (all_types.big_int > all_types.big_int_ptr) AS "gt1",
+     (all_types.big_int > $7) AS "gt2",
+     (all_types.big_int >= all_types.big_int_ptr) AS "gte1",
+     (all_types.big_int >= $8) AS "gte2",
+     (all_types.big_int + all_types.big_int) AS "add1",
+     (all_types.big_int + $9) AS "add2",
+     (all_types.big_int - all_types.big_int) AS "sub1",
+     (all_types.big_int - $10) AS "sub2",
+     (all_types.big_int * all_types.big_int) AS "mul1",
+     (all_types.big_int * $11) AS "mul2",
+     (all_types.big_int / all_types.big_int) AS "div1",
+     (all_types.big_int / $12) AS "div2",
+     (all_types.big_int % all_types.big_int) AS "mod1",
+     (all_types.big_int % $13) AS "mod2",
+     POW(all_types.small_int, (all_types.small_int / $14)) AS "pow1",
+     POW(all_types.small_int, $15) AS "pow2",
+     (all_types.small_int & all_types.small_int) AS "bit_and1",
+     (all_types.small_int & all_types.small_int) AS "bit_and2",
+     (all_types.small_int | all_types.small_int) AS "bit or 1",
+     (all_types.small_int | $16) AS "bit or 2",
+     (all_types.small_int # all_types.small_int) AS "bit xor 1",
+     (all_types.small_int # $17) AS "bit xor 2",
+     (~ (- all_types.small_int)) AS "bit_not_1",
+     (~ (- 11)) AS "bit_not_2",
+     (all_types.small_int << (all_types.small_int / $18)) AS "bit shift left 1",
+     (all_types.small_int << $19) AS "bit shift left 2",
+     (all_types.small_int >> (all_types.small_int / $20)) AS "bit shift right 1",
+     (all_types.small_int >> $21) AS "bit shift right 2",
+     ABS(all_types.big_int) AS "abs",
+     SQRT(ABS(all_types.big_int)) AS "sqrt",
+     CBRT(ABS(all_types.big_int)) AS "cbrt"
+FROM test_sample.all_types
+LIMIT $22;
+`)
+
+	var dest []struct {
+		common.AllTypesIntegerExpResult `alias:"."`
+	}
+
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
+
+	//testutils.JsonSave("./testdata/common/int_operators.json", dest)
+	//testutils.JsonPrint(dest)
+	testutils.AssertJSONFile(t, "./testdata/common/int_operators.json", dest)
 }
 
 func TestTimeOperators(t *testing.T) {
@@ -634,12 +723,12 @@ FROM`
 }
 
 var allTypesRow0 = model.AllTypes{
-	SmallintPtr:        Int16Ptr(1),
-	Smallint:           1,
+	SmallIntPtr:        Int16Ptr(14),
+	SmallInt:           14,
 	IntegerPtr:         Int32Ptr(300),
 	Integer:            300,
-	BigintPtr:          Int64Ptr(50000),
-	Bigint:             5000,
+	BigIntPtr:          Int64Ptr(50000),
+	BigInt:             5000,
 	DecimalPtr:         Float64Ptr(1.11),
 	Decimal:            1.11,
 	NumericPtr:         Float64Ptr(2.22),
@@ -700,12 +789,12 @@ var allTypesRow0 = model.AllTypes{
 }
 
 var allTypesRow1 = model.AllTypes{
-	SmallintPtr:        nil,
-	Smallint:           1,
+	SmallIntPtr:        nil,
+	SmallInt:           14,
 	IntegerPtr:         nil,
 	Integer:            300,
-	BigintPtr:          nil,
-	Bigint:             5000,
+	BigIntPtr:          nil,
+	BigInt:             5000,
 	DecimalPtr:         nil,
 	Decimal:            1.11,
 	NumericPtr:         nil,

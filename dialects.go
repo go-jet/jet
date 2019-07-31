@@ -28,6 +28,9 @@ func newMySQLDialect() Dialect {
 
 	mySQLDialect.SerializeOverrides["IS DISTINCT FROM"] = mysql_IS_DISTINCT_FROM
 	mySQLDialect.SerializeOverrides["IS NOT DISTINCT FROM"] = mysql_IS_NOT_DISTINCT_FROM
+	mySQLDialect.SerializeOverrides["/"] = mysql_DIVISION
+	mySQLDialect.SerializeOverrides["#"] = mysql_BIT_XOR
+
 	mySQLDialect.AliasQuoteChar = '"'
 	mySQLDialect.IdentifierQuoteChar = '"'
 	mySQLDialect.ArgumentPlaceholder = func(int) string {
@@ -61,6 +64,57 @@ func newDialect(name, packageName string) Dialect {
 	newDialect.SerializeOverrides = make(map[string]serializeOverride)
 
 	return newDialect
+}
+
+func mysql_BIT_XOR(expressions ...Expression) serializeFunc {
+	return func(statement statementType, out *sqlBuilder, options ...serializeOption) error {
+		if len(expressions) != 2 {
+			return errors.New("Invalid number of expressions for operator")
+		}
+
+		lhs := expressions[0]
+		rhs := expressions[1]
+
+		if err := lhs.serialize(statement, out, options...); err != nil {
+			return err
+		}
+
+		out.writeString("^")
+
+		if err := rhs.serialize(statement, out, options...); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func mysql_DIVISION(expressions ...Expression) serializeFunc {
+	return func(statement statementType, out *sqlBuilder, options ...serializeOption) error {
+		if len(expressions) != 2 {
+			return errors.New("Invalid number of expressions for operator")
+		}
+
+		lhs := expressions[0]
+		rhs := expressions[1]
+
+		if err := lhs.serialize(statement, out, options...); err != nil {
+			return err
+		}
+
+		_, isLhsInt := lhs.(IntegerExpression)
+		_, isRhsInt := rhs.(IntegerExpression)
+
+		if isLhsInt && isRhsInt {
+			out.writeString("DIV")
+		} else {
+			out.writeString("/")
+		}
+
+		if err := rhs.serialize(statement, out, options...); err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 func mysql_IS_NOT_DISTINCT_FROM(expressions ...Expression) serializeFunc {
