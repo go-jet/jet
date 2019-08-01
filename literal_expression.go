@@ -11,8 +11,13 @@ type literalExpression struct {
 	constant bool
 }
 
-func literal(value interface{}) *literalExpression {
+func literal(value interface{}, optionalConstant ...bool) *literalExpression {
 	exp := literalExpression{value: value}
+
+	if len(optionalConstant) > 0 {
+		exp.constant = optionalConstant[0]
+	}
+
 	exp.expressionInterfaceImpl.parent = &exp
 
 	return &exp
@@ -35,159 +40,60 @@ func (l literalExpression) serialize(statement statementType, out *sqlBuilder, o
 	return nil
 }
 
-type integerLiteralExpression struct {
-	literalExpression
-	integerInterfaceImpl
-}
-
 // Int is constructor for integer expressions literals.
 func Int(value int64, constant ...bool) IntegerExpression {
-	numLiteral := &integerLiteralExpression{}
-
-	numLiteral.literalExpression = *literal(value)
-	if len(constant) > 0 && constant[0] == true {
-		numLiteral.constant = true
-	}
-
-	numLiteral.literalExpression.parent = numLiteral
-	numLiteral.integerInterfaceImpl.parent = numLiteral
-
-	return numLiteral
-}
-
-//---------------------------------------------------//
-type boolLiteralExpression struct {
-	boolInterfaceImpl
-	literalExpression
+	return IntExp(literal(value, constant...))
 }
 
 // Bool creates new bool literal expression
 func Bool(value bool) BoolExpression {
-	boolLiteralExpression := boolLiteralExpression{}
-
-	boolLiteralExpression.literalExpression = *literal(value)
-	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
-
-	return &boolLiteralExpression
-}
-
-//---------------------------------------------------//
-type floatLiteral struct {
-	floatInterfaceImpl
-	literalExpression
+	return BoolExp(literal(value))
 }
 
 // Float creates new float literal expression
 func Float(value float64) FloatExpression {
-	floatLiteral := floatLiteral{}
-	floatLiteral.literalExpression = *literal(value)
-
-	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
-
-	return &floatLiteral
-}
-
-//---------------------------------------------------//
-type stringLiteral struct {
-	stringInterfaceImpl
-	literalExpression
+	return FloatExp(literal(value))
 }
 
 // String creates new string literal expression
 func String(value string) StringExpression {
-	stringLiteral := stringLiteral{}
-	stringLiteral.literalExpression = *literal(value)
-
-	stringLiteral.stringInterfaceImpl.parent = &stringLiteral
-
-	return &stringLiteral
-}
-
-//---------------------------------------------------//
-type timeLiteral struct {
-	timeInterfaceImpl
-	literalExpression
+	return StringExp(literal(value))
 }
 
 // Time creates new time literal expression
 func Time(hour, minute, second, milliseconds int) TimeExpression {
-	timeLiteral := &timeLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
-	timeLiteral.literalExpression = *literal(timeStr)
 
-	timeLiteral.timeInterfaceImpl.parent = timeLiteral
-
-	return timeLiteral
-}
-
-//---------------------------------------------------//
-type timezLiteral struct {
-	timezInterfaceImpl
-	literalExpression
+	return TimeExp(literal(timeStr))
 }
 
 // Timez creates new time with time zone literal expression
 func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
-	timezLiteral := &timezLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
-	timezLiteral.literalExpression = *literal(timeStr)
 
-	timezLiteral.timezInterfaceImpl.parent = timezLiteral
-
-	return timezLiteral
-}
-
-//---------------------------------------------------//
-type timestampLiteral struct {
-	timestampInterfaceImpl
-	literalExpression
+	return TimezExp(literal(timeStr))
 }
 
 // Timestamp creates new timestamp literal expression
 func Timestamp(year, month, day, hour, minute, second, milliseconds int) TimestampExpression {
-	timestampLiteral := &timestampLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d", year, month, day, hour, minute, second, milliseconds)
-	timestampLiteral.literalExpression = *literal(timeStr)
 
-	timestampLiteral.timestampInterfaceImpl.parent = timestampLiteral
-
-	return timestampLiteral
-}
-
-//---------------------------------------------------//
-type timestampzLiteral struct {
-	timestampzInterfaceImpl
-	literalExpression
+	return TimestampExp(literal(timeStr))
 }
 
 // Timestampz creates new timestamp with time zone literal expression
 func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone int) TimestampzExpression {
-	timestampzLiteral := &timestampzLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
 		year, month, day, hour, minute, second, milliseconds, timezone)
 
-	timestampzLiteral.literalExpression = *literal(timeStr)
-
-	timestampzLiteral.timestampzInterfaceImpl.parent = timestampzLiteral
-
-	return timestampzLiteral
-}
-
-//---------------------------------------------------//
-type dateLiteral struct {
-	dateInterfaceImpl
-	literalExpression
+	return TimestampzExp(literal(timeStr))
 }
 
 //Date creates new date expression
 func Date(year, month, day int) DateExpression {
-	dateLiteral := &dateLiteral{}
-
 	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
-	dateLiteral.literalExpression = *literal(timeStr)
-	dateLiteral.dateInterfaceImpl.parent = dateLiteral
 
-	return dateLiteral
+	return DateExp(literal(timeStr))
 }
 
 //--------------------------------------------------//
