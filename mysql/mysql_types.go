@@ -74,3 +74,8 @@ var MINUSf = jet.MINUSf
 var BIT_NOT = jet.BIT_NOT
 
 var SELECT = jet.SELECT
+
+//-----------------literals----------------------//
+
+var STAR = jet.STAR
+var NULL = jet.NULL

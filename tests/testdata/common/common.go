@@ -1,5 +1,14 @@
 package common
 
+type ExpressionTestResult struct {
+	IsNull      *bool
+	IsNotNull   *bool
+	In          *bool
+	InSelect    *bool
+	NotIn       *bool
+	NotInSelect *bool
+}
+
 type EqualityExpResult struct {
 	Eq1          *bool
 	Eq2          *bool

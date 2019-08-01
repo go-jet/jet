@@ -58,13 +58,68 @@ func TestAllTypesInsertQuery(t *testing.T) {
 
 func TestExpressionOperators(t *testing.T) {
 	query := AllTypes.SELECT(
-		AllTypes.Integer.IS_NULL(),
-		AllTypes.Timestamp.IS_NOT_NULL(),
-		AllTypes.SmallIntPtr.IN(Int(11), Int(22), NULL),
-		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
-		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL),
-		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.IntegerPtr)),
+		AllTypes.Integer.IS_NULL().AS("result.is_null"),
+		AllTypes.DatePtr.IS_NOT_NULL().AS("result.is_not_null"),
+		AllTypes.SmallIntPtr.IN(Int(11), Int(22)).AS("result.in"),
+		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.in_select"),
+		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL).AS("result.not_in"),
+		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
+	).LIMIT(2)
 
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT all_types.integer IS NULL AS "result.is_null",
+     all_types.date_ptr IS NOT NULL AS "result.is_not_null",
+     (all_types.small_int_ptr IN ($1, $2)) AS "result.in",
+     (all_types.small_int_ptr IN ((
+          SELECT all_types.integer AS "all_types.integer"
+          FROM test_sample.all_types
+     ))) AS "result.in_select",
+     (all_types.small_int_ptr NOT IN ($3, $4, NULL)) AS "result.not_in",
+     (all_types.small_int_ptr NOT IN ((
+          SELECT all_types.integer AS "all_types.integer"
+          FROM test_sample.all_types
+     ))) AS "result.not_in_select"
+FROM test_sample.all_types
+LIMIT $5;
+`, int64(11), int64(22), int64(11), int64(22), int64(2))
+
+	var dest []struct {
+		common.ExpressionTestResult `alias:"result.*"`
+	}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+
+	//testutils.JsonPrint(dest)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"IsNull": false,
+		"IsNotNull": true,
+		"In": false,
+		"InSelect": false,
+		"NotIn": null,
+		"NotInSelect": true
+	},
+	{
+		"IsNull": false,
+		"IsNotNull": false,
+		"In": null,
+		"InSelect": null,
+		"NotIn": null,
+		"NotInSelect": null
+	}
+]
+`)
+}
+
+func TestExpressionCast(t *testing.T) {
+
+	query := AllTypes.SELECT(
 		postgres.CAST(Int(150)).AS_CHAR(12),
 		postgres.CAST(String("TRUE")).AS_BOOL(),
 		postgres.CAST(String("111")).AS_SMALLINT(),
