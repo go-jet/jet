@@ -130,6 +130,10 @@ func (q *sqlBuilder) writeReturning(statement statementType, returning []project
 		return nil
 	}
 
+	if !q.dialect.SupportsReturning {
+		panic(q.dialect.Name + " dialect does not support RETURNING.")
+	}
+
 	q.newLine()
 	q.writeString("RETURNING")
 	q.increaseIdent()

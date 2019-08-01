@@ -20,6 +20,7 @@ func newPostgresDialect() Dialect {
 	postgresDialect.ArgumentPlaceholder = func(ord int) string {
 		return "$" + strconv.Itoa(ord)
 	}
+	postgresDialect.SupportsReturning = true
 
 	return postgresDialect
 }
@@ -38,6 +39,8 @@ func newMySQLDialect() Dialect {
 		return "?"
 	}
 
+	mySQLDialect.SupportsReturning = false
+
 	return mySQLDialect
 }
 
@@ -49,6 +52,8 @@ type Dialect struct {
 	AliasQuoteChar      byte
 	IdentifierQuoteChar byte
 	ArgumentPlaceholder queryPlaceholderFunc
+
+	SupportsReturning bool
 }
 
 func (d *Dialect) serializeOverride(operator string) serializeOverride {

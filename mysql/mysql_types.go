@@ -94,3 +94,4 @@ var UNION = jet.UNION
 
 var STAR = jet.STAR
 var NULL = jet.NULL
+var DEFAULT = jet.DEFAULT

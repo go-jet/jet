@@ -126,3 +126,16 @@ _binary '\0',NULL,'2008-07-04',NULL,'2011-12-18 13:17:17',NULL,'2007-12-31 23:0
 
 
 
+-- Link table --------------------
+
+DROP TABLE IF EXISTS test_sample.link;
+
+CREATE TABLE IF NOT EXISTS test_sample.link (
+    id int PRIMARY KEY AUTO_INCREMENT,
+    url VARCHAR (255) NOT NULL,
+    name VARCHAR (255) NOT NULL,
+    description VARCHAR (255)
+);
+
+INSERT INTO test_sample.link (ID, url, name, description) VALUES
+(0, 'http://www.youtube.com', 'Youtube' , '');
