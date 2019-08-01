@@ -41,6 +41,7 @@ func main() {
 func initMySQLDB() {
 
 	mySQLDBs := []string{
+		"dvds",
 		"test_sample",
 	}
 

@@ -47,7 +47,7 @@ FROM test_sample.person;
 	err := query.Query(db, &result)
 
 	assert.NilError(t, err)
-	testutils.AssertJSON(t, result, `
+	testutils.AssertJSON(t, `
 [
 	{
 		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
@@ -68,7 +68,7 @@ FROM test_sample.person;
 		"Mood": "ok"
 	}
 ]
-`)
+`, result)
 }
 
 func TestSelecSelfJoin1(t *testing.T) {

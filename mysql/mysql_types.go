@@ -73,7 +73,22 @@ var MINUSi = jet.MINUSi
 var MINUSf = jet.MINUSf
 var BIT_NOT = jet.BIT_NOT
 
+var SUMf = jet.SUMf
+var AVG = jet.AVG
+var MAXf = jet.MAXf
+var MINf = jet.MINf
+var COUNT = jet.COUNT
+
 var SELECT = jet.SELECT
+
+type SelectLock jet.SelectLock
+
+var (
+	UPDATE = jet.NewSelectLock("UPDATE")
+	SHARE  = jet.NewSelectLock("SHARE")
+)
+
+var UNION = jet.UNION
 
 //-----------------literals----------------------//
 

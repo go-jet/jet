@@ -24,7 +24,7 @@ func TestAllTypes(t *testing.T) {
 	assert.NilError(t, err)
 
 	//testutils.JsonPrint(dest)
-	testutils.AssertJSON(t, dest, allTypesJson)
+	testutils.AssertJSON(t, allTypesJson, dest)
 }
 
 func TestExpressionOperators(t *testing.T) {
@@ -66,7 +66,7 @@ LIMIT ?;
 
 	//testutils.JsonPrint(dest)
 
-	testutils.AssertJSON(t, dest, `
+	testutils.AssertJSON(t, `
 [
 	{
 		"IsNull": false,
@@ -85,7 +85,7 @@ LIMIT ?;
 		"NotInSelect": null
 	}
 ]
-`)
+`, dest)
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -155,7 +155,7 @@ FROM test_sample.all_types;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, "./testdata/common/bool_operators.json", dest)
+	testutils.AssertJSONFile(t, dest, "./testdata/common/bool_operators.json")
 }
 
 func TestFloatOperators(t *testing.T) {
@@ -252,7 +252,7 @@ LIMIT ?;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, "./testdata/common/float_operators.json", dest)
+	testutils.AssertJSONFile(t, dest, "./testdata/common/float_operators.json")
 }
 
 func TestIntegerOperators(t *testing.T) {
@@ -391,7 +391,7 @@ LIMIT ?;
 
 	//testutils.JsonPrint(dest)
 
-	testutils.AssertJSONFile(t, "./testdata/common/int_operators.json", dest)
+	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
 }
 
 var allTypesJson = `

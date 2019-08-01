@@ -92,7 +92,7 @@ func (c columnImpl) serialize(statement statementType, out *sqlBuilder, options 
 	if c.subQuery != nil {
 		out.writeIdentifier(c.subQuery.Alias())
 		out.writeByte('.')
-		out.writeAlias(c.defaultAlias())
+		out.writeIdentifier(c.defaultAlias(), true)
 	} else {
 		if c.tableName != "" {
 			out.writeIdentifier(c.tableName)

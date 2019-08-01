@@ -18,7 +18,7 @@ func JsonPrint(v interface{}) {
 	fmt.Println(string(jsonText))
 }
 
-func JsonSave(path string, v interface{}) {
+func JsonSave(v interface{}, path string) {
 	jsonText, _ := json.MarshalIndent(v, "", "\t")
 
 	err := ioutil.WriteFile(path, jsonText, 0644)
@@ -28,14 +28,14 @@ func JsonSave(path string, v interface{}) {
 	}
 }
 
-func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
+func AssertJSON(t *testing.T, expectedJSON string, data interface{}) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
 	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
 
-func AssertJSONFile(t *testing.T, jsonFilePath string, data interface{}) {
+func AssertJSONFile(t *testing.T, data interface{}, jsonFilePath string) {
 	fileJSONData, err := ioutil.ReadFile(jsonFilePath)
 	assert.NilError(t, err)
 

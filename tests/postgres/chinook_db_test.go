@@ -102,7 +102,7 @@ func TestJoinEverything(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 275)
-	testutils.AssertJSONFile(t, "./postgres/testdata/joined_everything.json", dest)
+	testutils.AssertJSONFile(t, dest, "./postgres/testdata/joined_everything.json")
 }
 
 func TestSelfJoin(t *testing.T) {
@@ -142,7 +142,7 @@ ORDER BY "Employee"."EmployeeId";
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 8)
-	testutils.AssertJSON(t, dest[0:2], `
+	testutils.AssertJSON(t, `
 [
 	{
 		"EmployeeId": 1,
@@ -197,7 +197,7 @@ ORDER BY "Employee"."EmployeeId";
 		}
 	}
 ]
-`)
+`, dest[0:2])
 
 }
 

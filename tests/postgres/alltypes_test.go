@@ -95,7 +95,7 @@ LIMIT $5;
 
 	//testutils.JsonPrint(dest)
 
-	testutils.AssertJSON(t, dest, `
+	testutils.AssertJSON(t, `
 [
 	{
 		"IsNull": false,
@@ -114,7 +114,7 @@ LIMIT $5;
 		"NotInSelect": null
 	}
 ]
-`)
+`, dest)
 }
 
 func TestExpressionCast(t *testing.T) {
@@ -299,7 +299,7 @@ LIMIT $5;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, "./testdata/common/bool_operators.json", dest)
+	testutils.AssertJSONFile(t, dest, "./testdata/common/bool_operators.json")
 }
 
 func TestFloatOperators(t *testing.T) {
@@ -397,7 +397,7 @@ LIMIT $35;
 
 	//testutils.JsonPrint(dest)
 
-	testutils.AssertJSONFile(t, "./testdata/common/float_operators.json", dest)
+	testutils.AssertJSONFile(t, dest, "./testdata/common/float_operators.json")
 }
 
 func TestIntegerOperators(t *testing.T) {
@@ -536,7 +536,7 @@ LIMIT $22;
 
 	//testutils.JsonSave("./testdata/common/int_operators.json", dest)
 	//testutils.JsonPrint(dest)
-	testutils.AssertJSONFile(t, "./testdata/common/int_operators.json", dest)
+	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
 }
 
 func TestTimeOperators(t *testing.T) {

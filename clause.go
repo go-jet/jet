@@ -172,10 +172,10 @@ func (q *sqlBuilder) writeString(str string) {
 	q.write([]byte(str))
 }
 
-func (q *sqlBuilder) writeIdentifier(name string) {
+func (q *sqlBuilder) writeIdentifier(name string, alwaysQuote ...bool) {
 	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
 
-	if quoteWrap {
+	if quoteWrap || len(alwaysQuote) > 0 {
 		identQuoteChar := string(q.dialect.IdentifierQuoteChar)
 		q.writeString(identQuoteChar + name + identQuoteChar)
 	} else {

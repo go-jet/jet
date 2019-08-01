@@ -534,7 +534,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 2)
-	testutils.AssertJSON(t, dest, `
+	testutils.AssertJSON(t, `
 [
 	{
 		"CityID": 312,
@@ -573,7 +573,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 		]
 	}
 ]
-`)
+`, dest)
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
@@ -992,60 +992,72 @@ ORDER BY film.film_id ASC;
 
 func TestSelectGroupByHaving(t *testing.T) {
 	expectedSQL := `
-SELECT payment.customer_id AS "customer_payment_sum.customer_id",
-     SUM(payment.amount) AS "customer_payment_sum.amount_sum",
-     AVG(payment.amount) AS "customer_payment_sum.amount_avg",
-     MAX(payment.amount) AS "customer_payment_sum.amount_max",
-     MIN(payment.amount) AS "customer_payment_sum.amount_min",
-     COUNT(payment.amount) AS "customer_payment_sum.amount_count"
+SELECT customer.customer_id AS "customer.customer_id",
+     customer.store_id AS "customer.store_id",
+     customer.first_name AS "customer.first_name",
+     customer.last_name AS "customer.last_name",
+     customer.email AS "customer.email",
+     customer.address_id AS "customer.address_id",
+     customer.activebool AS "customer.activebool",
+     customer.create_date AS "customer.create_date",
+     customer.last_update AS "customer.last_update",
+     customer.active AS "customer.active",
+     SUM(payment.amount) AS "amount.sum",
+     AVG(payment.amount) AS "amount.avg",
+     MAX(payment.amount) AS "amount.max",
+     MIN(payment.amount) AS "amount.min",
+     COUNT(payment.amount) AS "amount.count"
 FROM dvds.payment
-GROUP BY payment.customer_id
-HAVING SUM(payment.amount) > 100
-ORDER BY SUM(payment.amount) ASC;
+     INNER JOIN dvds.customer ON (customer.customer_id = payment.customer_id)
+GROUP BY customer.customer_id
+HAVING SUM(payment.amount) > 125.6
+ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 `
-	customersPaymentQuery := Payment.
+	query := Payment.
+		INNER_JOIN(Customer, Customer.CustomerID.EQ(Payment.CustomerID)).
 		SELECT(
-			Payment.CustomerID.AS("customer_payment_sum.customer_id"),
-			SUMf(Payment.Amount).AS("customer_payment_sum.amount_sum"),
-			AVG(Payment.Amount).AS("customer_payment_sum.amount_avg"),
-			MAXf(Payment.Amount).AS("customer_payment_sum.amount_max"),
-			MINf(Payment.Amount).AS("customer_payment_sum.amount_min"),
-			COUNT(Payment.Amount).AS("customer_payment_sum.amount_count"),
+			Customer.AllColumns,
+
+			SUMf(Payment.Amount).AS("amount.sum"),
+			AVG(Payment.Amount).AS("amount.avg"),
+			MAXf(Payment.Amount).AS("amount.max"),
+			MINf(Payment.Amount).AS("amount.min"),
+			COUNT(Payment.Amount).AS("amount.count"),
 		).
-		GROUP_BY(Payment.CustomerID).
-		ORDER_BY(
-			SUMf(Payment.Amount).ASC(),
-		).
+		GROUP_BY(Customer.CustomerID).
 		HAVING(
-			SUMf(Payment.Amount).GT(Float(100)),
+			SUMf(Payment.Amount).GT(Float(125.6)),
+		).
+		ORDER_BY(
+			Customer.CustomerID, SUMf(Payment.Amount).ASC(),
 		)
 
-	testutils.AssertDebugStatementSql(t, customersPaymentQuery, expectedSQL, float64(100))
+	//fmt.Println(query.DebugSql())
 
-	type CustomerPaymentSum struct {
-		CustomerID  int16
-		AmountSum   float64
-		AmountAvg   float64
-		AmountMax   float64
-		AmountMin   float64
-		AmountCount int64
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, float64(125.6))
+
+	var dest []struct {
+		model.Customer
+
+		Amount struct {
+			Sum   float64
+			Avg   float64
+			Max   float64
+			Min   float64
+			Count int64
+		} `alias:"amount"`
 	}
 
-	customerPaymentSum := []CustomerPaymentSum{}
-
-	err := customersPaymentQuery.Query(db, &customerPaymentSum)
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 
-	assert.Equal(t, len(customerPaymentSum), 296)
-	assert.DeepEqual(t, customerPaymentSum[0], CustomerPaymentSum{
-		CustomerID:  135,
-		AmountSum:   100.72,
-		AmountAvg:   3.597142857142857,
-		AmountMax:   7.99,
-		AmountMin:   0.99,
-		AmountCount: 28,
-	})
+	//testutils.JsonPrint(dest)
+
+	assert.Equal(t, len(dest), 104)
+
+	//testutils.JsonSave(dest, "postgres/testdata/customer_payment_sum.json")
+	testutils.AssertJSONFile(t, dest, "postgres/testdata/customer_payment_sum.json")
 }
 
 func TestSelectGroupBy2(t *testing.T) {
@@ -1125,7 +1137,7 @@ func TestSelectStaff(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSON(t, staffs, `
+	testutils.AssertJSON(t, `
 [
 	{
 		"StaffID": 1,
@@ -1154,7 +1166,7 @@ func TestSelectStaff(t *testing.T) {
 		"Picture": null
 	}
 ]
-`)
+`, staffs)
 }
 
 func TestSelectTimeColumns(t *testing.T) {
@@ -1460,7 +1472,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest.json", dest)
+	testutils.AssertJSONFile(t, dest, "./postgres/testdata/quick-start-dest.json")
 
 	var dest2 []struct {
 		model.Category
@@ -1473,7 +1485,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest2.json", dest2)
+	testutils.AssertJSONFile(t, dest2, "./postgres/testdata/quick-start-dest2.json")
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1525,7 +1537,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest.json", dest)
+	testutils.AssertJSONFile(t, dest, "./postgres/testdata/quick-start-dest.json")
 
 	var dest2 []struct {
 		model.Category
@@ -1538,5 +1550,5 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, "./postgres/testdata/quick-start-dest2.json", dest2)
+	testutils.AssertJSONFile(t, dest2, "./postgres/testdata/quick-start-dest2.json")
 }

@@ -33,7 +33,7 @@ func newMySQLDialect() Dialect {
 	mySQLDialect.SerializeOverrides["#"] = mysql_BIT_XOR
 
 	mySQLDialect.AliasQuoteChar = '"'
-	mySQLDialect.IdentifierQuoteChar = '"'
+	mySQLDialect.IdentifierQuoteChar = '`'
 	mySQLDialect.ArgumentPlaceholder = func(int) string {
 		return "?"
 	}
