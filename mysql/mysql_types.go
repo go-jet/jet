@@ -2,6 +2,8 @@ package mysql
 
 import "github.com/go-jet/jet"
 
+type Expression jet.Expression
+
 type ColumnBool jet.ColumnBool
 type BoolExpression jet.BoolExpression
 

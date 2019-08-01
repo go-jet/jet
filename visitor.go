@@ -27,7 +27,7 @@ func newDialectFinder() *DialectFinder {
 	}
 }
 
-func (f *DialectFinder) dialect() Dialect {
+func (f *DialectFinder) mustGetDialect() Dialect {
 	if len(f.dialects) == 0 {
 		panic("jet: can't detect dialect")
 	}
@@ -59,5 +59,5 @@ func detectDialect(element acceptsVisitor, dialectOverride ...Dialect) Dialect {
 	dialectFinder := newDialectFinder()
 	element.accept(dialectFinder)
 
-	return dialectFinder.dialect()
+	return dialectFinder.mustGetDialect()
 }

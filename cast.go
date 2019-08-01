@@ -1,24 +1,32 @@
 package jet
 
-type CastType string
+import "strconv"
 
 type Cast interface {
-	As(castType CastType) Expression
+	AS(castType string) Expression
+
+	AS_CHAR(lenght ...int) StringExpression
+	// Cast expression AS date type
+	AS_DATE() DateExpression
+	// Cast expression AS numeric type, using precision and optionally scale
+	AS_DECIMAL() FloatExpression
+	// Cast expression AS time type
+	AS_TIME() TimeExpression
 }
 
 type CastImpl struct {
 	expression Expression
 }
 
-func NewCastImpl(expression Expression) Cast {
+func NewCastImpl(expression Expression) CastImpl {
 	castImpl := CastImpl{
 		expression: expression,
 	}
 
-	return &castImpl
+	return castImpl
 }
 
-func (b *CastImpl) As(castType CastType) Expression {
+func (b *CastImpl) AS(castType string) Expression {
 	castExp := &castExpression{
 		expression: b.expression,
 		cast:       string(castType),
@@ -27,6 +35,29 @@ func (b *CastImpl) As(castType CastType) Expression {
 	castExp.expressionInterfaceImpl.parent = castExp
 
 	return castExp
+}
+
+func (b *CastImpl) AS_CHAR(lenght ...int) StringExpression {
+	if len(lenght) > 0 {
+		return StringExp(b.AS("CHAR(" + strconv.Itoa(lenght[0]) + ")"))
+	}
+
+	return StringExp(b.AS("CHAR"))
+}
+
+// Cast expression AS date type
+func (b *CastImpl) AS_DATE() DateExpression {
+	return DateExp(b.AS("DATE"))
+}
+
+// Cast expression AS date type
+func (b *CastImpl) AS_DECIMAL() FloatExpression {
+	return FloatExp(b.AS("DECIMAL"))
+}
+
+// Cast expression AS date type
+func (b *CastImpl) AS_TIME() TimeExpression {
+	return TimeExp(b.AS("TIME"))
 }
 
 type castExpression struct {

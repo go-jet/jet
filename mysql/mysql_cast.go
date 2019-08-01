@@ -5,51 +5,38 @@ import (
 )
 
 type cast interface {
-	AS_DATE() DateExpression
-	AS_TIME() TimeExpression
+	jet.Cast
+
 	AS_DATETIME() DateTimeExpression
-	AS_CHAR() StringExpression
 	AS_SIGNED() IntegerExpression
 	AS_UNSIGNED() IntegerExpression
 	AS_BINARY() StringExpression
 }
 
 type castImpl struct {
-	jet.Cast
+	jet.CastImpl
 }
 
 func CAST(expr jet.Expression) cast {
 	castImpl := &castImpl{}
 
-	castImpl.Cast = jet.NewCastImpl(expr)
+	castImpl.CastImpl = jet.NewCastImpl(expr)
 
 	return castImpl
 }
 
-func (c *castImpl) AS_DATE() DateExpression {
-	return jet.DateExp(c.As("DATE"))
-}
-
 func (c *castImpl) AS_DATETIME() DateTimeExpression {
-	return jet.TimestampExp(c.As("DATETIME"))
-}
-
-func (c *castImpl) AS_TIME() TimeExpression {
-	return jet.TimeExp(c.As("TIME"))
-}
-
-func (c *castImpl) AS_CHAR() StringExpression {
-	return jet.StringExp(c.As("CHAR"))
+	return jet.TimestampExp(c.AS("DATETIME"))
 }
 
 func (c *castImpl) AS_SIGNED() IntegerExpression {
-	return jet.IntExp(c.As("SIGNED"))
+	return jet.IntExp(c.AS("SIGNED"))
 }
 
 func (c *castImpl) AS_UNSIGNED() IntegerExpression {
-	return jet.IntExp(c.As("UNSIGNED"))
+	return jet.IntExp(c.AS("UNSIGNED"))
 }
 
 func (c *castImpl) AS_BINARY() StringExpression {
-	return jet.StringExp(c.As("BINARY"))
+	return jet.StringExp(c.AS("BINARY"))
 }

@@ -5,6 +5,10 @@ import (
 	"testing"
 )
 
+func TestExpressionCAST_AS(t *testing.T) {
+	jet.AssertPostgreClauseSerialize(t, CAST(String("test")).AS("text"), `$1::text`, "test")
+}
+
 func TestExpressionCAST_AS_BOOL(t *testing.T) {
 	jet.AssertPostgreClauseSerialize(t, CAST(Int(1)).AS_BOOL(), "$1::boolean", int64(1))
 	jet.AssertPostgreClauseSerialize(t, CAST(table2Col3).AS_BOOL(), "table2.col3::boolean")
@@ -41,7 +45,7 @@ func TestExpressionCAST_AS_TEXT(t *testing.T) {
 }
 
 func TestExpressionCAST_AS_DATE(t *testing.T) {
-	jet.AssertPostgreClauseSerialize(t, CAST(table2Col3).AS_DATE(), "table2.col3::date")
+	jet.AssertPostgreClauseSerialize(t, CAST(table2Col3).AS_DATE(), "table2.col3::DATE")
 }
 
 func TestExpressionCAST_AS_TIME(t *testing.T) {
