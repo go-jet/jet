@@ -23,26 +23,26 @@ func newUpdateStatement(table WritableTable, columns []column) UpdateStatement {
 	return &updateStatementImpl{
 		table:   table,
 		columns: columns,
-		row:     make([]clause, 0, len(columns)),
+		values:  make([]clause, 0, len(columns)),
 	}
 }
 
 type updateStatementImpl struct {
 	table     WritableTable
 	columns   []column
-	row       []clause
+	values    []clause
 	where     BoolExpression
 	returning []projection
 }
 
 func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {
-	u.row = unwindRowFromValues(value, values)
+	u.values = unwindRowFromValues(value, values)
 
 	return u
 }
 
 func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
-	u.row = unwindRowFromModel(u.columns, data)
+	u.values = unwindRowFromModel(u.columns, data)
 
 	return u
 }
@@ -82,41 +82,15 @@ func (u *updateStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		return "", nil, errors.New("jet: no columns selected")
 	}
 
-	if len(u.row) == 0 {
+	if len(u.values) == 0 {
 		return "", nil, errors.New("jet: no values to updated")
 	}
 
 	out.newLine()
 	out.writeString("SET")
 
-	if len(u.columns) > 1 {
-		out.writeString("(")
-	}
-
-	err = serializeColumnNames(u.columns, out)
-
-	if err != nil {
+	if err = out.dialect.UpdateAssigment(u.columns, u.values, out); err != nil {
 		return
-	}
-
-	if len(u.columns) > 1 {
-		out.writeString(")")
-	}
-
-	out.writeString("=")
-
-	if len(u.row) > 1 {
-		out.writeString("(")
-	}
-
-	err = serializeClauseList(updateStatement, u.row, out)
-
-	if err != nil {
-		return
-	}
-
-	if len(u.row) > 1 {
-		out.writeString(")")
 	}
 
 	if u.where == nil {

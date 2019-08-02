@@ -137,69 +137,6 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 	testutils.AssertJSONFile(t, dest, "mysql/testdata/customer_payment_sum.json")
 }
 
-func getRowLockTestData() map[SelectLock]string {
-	return map[SelectLock]string{
-		UPDATE(): "UPDATE",
-		SHARE():  "SHARE",
-	}
-}
-
-func TestRowLock(t *testing.T) {
-	expectedSQL := `
-SELECT *
-FROM dvds.address
-LIMIT 3
-OFFSET 1
-FOR`
-	query := Address.
-		SELECT(STAR).
-		LIMIT(3).
-		OFFSET(1)
-
-	for lockType, lockTypeStr := range getRowLockTestData() {
-		query.FOR(lockType)
-
-		expectedQuery := expectedSQL + " " + lockTypeStr + ";\n"
-		testutils.AssertDebugStatementSql(t, query, expectedQuery, int64(3), int64(1))
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-		assert.NilError(t, err)
-	}
-
-	for lockType, lockTypeStr := range getRowLockTestData() {
-		query.FOR(lockType.NOWAIT())
-
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3), int64(1))
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-		assert.NilError(t, err)
-	}
-
-	for lockType, lockTypeStr := range getRowLockTestData() {
-		query.FOR(lockType.SKIP_LOCKED())
-
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3), int64(1))
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-		assert.NilError(t, err)
-
-		err = tx.Rollback()
-		assert.NilError(t, err)
-	}
-}
-
 func TestSubQuery(t *testing.T) {
 
 	rRatingFilms := Film.
@@ -383,5 +320,68 @@ LIMIT ?;
 		//testutils.JsonSave(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
 
 		testutils.AssertJSONFile(t, dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
+	}
+}
+
+func getRowLockTestData() map[SelectLock]string {
+	return map[SelectLock]string{
+		UPDATE(): "UPDATE",
+		SHARE():  "SHARE",
+	}
+}
+
+func TestRowLock(t *testing.T) {
+	expectedSQL := `
+SELECT *
+FROM dvds.address
+LIMIT 3
+OFFSET 1
+FOR`
+	query := Address.
+		SELECT(STAR).
+		LIMIT(3).
+		OFFSET(1)
+
+	for lockType, lockTypeStr := range getRowLockTestData() {
+		query.FOR(lockType)
+
+		expectedQuery := expectedSQL + " " + lockTypeStr + ";\n"
+		testutils.AssertDebugStatementSql(t, query, expectedQuery, int64(3), int64(1))
+
+		tx, _ := db.Begin()
+
+		_, err := query.Exec(tx)
+		assert.NilError(t, err)
+
+		err = tx.Rollback()
+		assert.NilError(t, err)
+	}
+
+	for lockType, lockTypeStr := range getRowLockTestData() {
+		query.FOR(lockType.NOWAIT())
+
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3), int64(1))
+
+		tx, _ := db.Begin()
+
+		_, err := query.Exec(tx)
+		assert.NilError(t, err)
+
+		err = tx.Rollback()
+		assert.NilError(t, err)
+	}
+
+	for lockType, lockTypeStr := range getRowLockTestData() {
+		query.FOR(lockType.SKIP_LOCKED())
+
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3), int64(1))
+
+		tx, _ := db.Begin()
+
+		_, err := query.Exec(tx)
+		assert.NilError(t, err)
+
+		err = tx.Rollback()
+		assert.NilError(t, err)
 	}
 }

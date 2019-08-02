@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func assertExec(t *testing.T, stmt jet.Statement, rowsAffected int64) {
+func AssertExec(t *testing.T, stmt jet.Statement, rowsAffected int64) {
 	res, err := stmt.Exec(db)
 
 	assert.NilError(t, err)

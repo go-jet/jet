@@ -139,3 +139,17 @@ CREATE TABLE IF NOT EXISTS test_sample.link (
 
 INSERT INTO test_sample.link (ID, url, name, description) VALUES
 (0, 'http://www.youtube.com', 'Youtube' , '');
+
+-- Link2 table --------------------
+
+DROP TABLE IF EXISTS test_sample.link2;
+
+CREATE TABLE IF NOT EXISTS test_sample.link2 (
+    id int PRIMARY KEY AUTO_INCREMENT,
+    url VARCHAR (255) NOT NULL,
+    name VARCHAR (255) NOT NULL,
+    description VARCHAR (255)
+);
+
+INSERT INTO test_sample.link2 (ID, url, name, description) VALUES
+(0, 'http://www.youtube.com', 'Youtube' , '');

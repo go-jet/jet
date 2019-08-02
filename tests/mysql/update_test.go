@@ -1,11 +1,11 @@
-package postgres
+package mysql
 
 import (
 	"context"
 	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
-	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
-	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
+	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
+	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"gotest.tools/assert"
 	"testing"
 	"time"
@@ -21,12 +21,13 @@ func TestUpdateValues(t *testing.T) {
 
 	var expectedSQL = `
 UPDATE test_sample.link
-SET (name, url) = ('Bong', 'http://bong.com')
+SET name = 'Bong', url = 'http://bong.com'
 WHERE link.name = 'Bing';
 `
+
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
 
-	AssertExec(t, query, 1)
+	testutils.AssertExec(t, query, db)
 
 	links := []model.Link{}
 
@@ -51,41 +52,33 @@ func TestUpdateWithSubQueries(t *testing.T) {
 		UPDATE(Link.Name, Link.URL).
 		SET(
 			SELECT(String("Bong")),
-			SELECT(Link.URL).
-				FROM(Link).
-				WHERE(Link.Name.EQ(String("Bing"))),
+			SELECT(Link2.URL).
+				FROM(Link2).
+				WHERE(Link2.Name.EQ(String("Youtube"))),
 		).
 		WHERE(Link.Name.EQ(String("Bing")))
 
 	expectedSQL := `
 UPDATE test_sample.link
-SET (name, url) = ((
-     SELECT 'Bong'
-), (
-     SELECT link.url AS "link.url"
-     FROM test_sample.link
-     WHERE link.name = 'Bing'
-))
-WHERE link.name = 'Bing';
+SET name = (
+     SELECT ?
+), url = (
+     SELECT link2.url AS "link2.url"
+     FROM test_sample.link2
+     WHERE link2.name = ?
+)
+WHERE link.name = ?;
 `
+	testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
-
-	AssertExec(t, query, 1)
+	testutils.AssertExec(t, query, db)
 }
 
 func TestUpdateAndReturning(t *testing.T) {
-	setupLinkTableForUpdateTest(t)
-
-	expectedSQL := `
-UPDATE test_sample.link
-SET (name, url) = ('DuckDuckGo', 'http://www.duckduckgo.com')
-WHERE link.name = 'Ask'
-RETURNING link.id AS "link.id",
-          link.url AS "link.url",
-          link.name AS "link.name",
-          link.description AS "link.description";
-`
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, "jet: MySQL dialect does not support RETURNING.")
+	}()
 
 	stmt := Link.
 		UPDATE(Link.Name, Link.URL).
@@ -93,68 +86,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.EQ(String("Ask"))).
 		RETURNING(Link.AllColumns)
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
-
-	links := []model.Link{}
-
-	err := stmt.Query(db, &links)
-
-	assert.NilError(t, err)
-	assert.Equal(t, len(links), 2)
-	assert.Equal(t, links[0].Name, "DuckDuckGo")
-	assert.Equal(t, links[1].Name, "DuckDuckGo")
-}
-
-func TestUpdateWithSelect(t *testing.T) {
-
-	stmt := Link.UPDATE(Link.AllColumns).
-		SET(
-			Link.
-				SELECT(Link.AllColumns).
-				WHERE(Link.ID.EQ(Int(0))),
-		).
-		WHERE(Link.ID.EQ(Int(0)))
-
-	expectedSQL := `
-UPDATE test_sample.link
-SET (id, url, name, description) = (
-     SELECT link.id AS "link.id",
-          link.url AS "link.url",
-          link.name AS "link.name",
-          link.description AS "link.description"
-     FROM test_sample.link
-     WHERE link.id = 0
-)
-WHERE link.id = 0;
-`
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
-
-	AssertExec(t, stmt, 1)
-}
-
-func TestUpdateWithInvalidSelect(t *testing.T) {
-
-	stmt := Link.UPDATE(Link.AllColumns).
-		SET(
-			Link.
-				SELECT(Link.ID, Link.Name).
-				WHERE(Link.ID.EQ(Int(0))),
-		).
-		WHERE(Link.ID.EQ(Int(0)))
-
-	var expectedSQL = `
-UPDATE test_sample.link
-SET (id, url, name, description) = (
-     SELECT link.id AS "link.id",
-          link.name AS "link.name"
-     FROM test_sample.link
-     WHERE link.id = 0
-)
-WHERE link.id = 0;
-`
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
-
-	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
+	stmt.Query(db, &struct{}{})
 }
 
 func TestUpdateWithModelData(t *testing.T) {
@@ -173,12 +105,12 @@ func TestUpdateWithModelData(t *testing.T) {
 
 	expectedSQL := `
 UPDATE test_sample.link
-SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
-WHERE link.id = 201;
+SET id = ?, url = ?, name = ?, description = ?
+WHERE link.id = ?;
 `
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 
-	AssertExec(t, stmt, 1)
+	testutils.AssertExec(t, stmt, db)
 }
 
 func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
@@ -200,12 +132,14 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 
 	var expectedSQL = `
 UPDATE test_sample.link
-SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
+SET description = NULL, name = 'DuckDuckGo', url = 'http://www.duckduckgo.com'
 WHERE link.id = 201;
 `
+	//fmt.Println(stmt.DebugSql())
+
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
 
-	AssertExec(t, stmt, 1)
+	testutils.AssertExec(t, stmt, db)
 }
 
 func TestUpdateWithInvalidModelData(t *testing.T) {
@@ -234,14 +168,7 @@ func TestUpdateWithInvalidModelData(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.Ident))))
 
-	var expectedSQL = `
-UPDATE test_sample.link
-SET (id, url, name, description, rel) = ('http://www.duckduckgo.com', 'DuckDuckGo', NULL, NULL)
-WHERE link.id = 201;
-`
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
-
-	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
+	stmt.Sql()
 }
 
 func TestUpdateQueryContext(t *testing.T) {
@@ -293,10 +220,5 @@ func setupLinkTableForUpdateTest(t *testing.T) {
 		VALUES(204, "http://www.bing.com", "Bing", DEFAULT).
 		Exec(db)
 
-	assert.NilError(t, err)
-}
-
-func cleanUpLinkTable(t *testing.T) {
-	_, err := Link.DELETE().WHERE(Link.ID.GT(Int(0))).Exec(db)
 	assert.NilError(t, err)
 }

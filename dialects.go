@@ -21,6 +21,7 @@ func newPostgresDialect() Dialect {
 		return "$" + strconv.Itoa(ord)
 	}
 	postgresDialect.SupportsReturning = true
+	postgresDialect.UpdateAssigment = postgresUpdateAssigment
 
 	return postgresDialect
 }
@@ -40,6 +41,7 @@ func newMySQLDialect() Dialect {
 	}
 
 	mySQLDialect.SupportsReturning = false
+	mySQLDialect.UpdateAssigment = mysqlUpdateAssigment
 
 	return mySQLDialect
 }
@@ -52,12 +54,70 @@ type Dialect struct {
 	AliasQuoteChar      byte
 	IdentifierQuoteChar byte
 	ArgumentPlaceholder queryPlaceholderFunc
+	UpdateAssigment     func(columns []column, values []clause, out *sqlBuilder) (err error)
 
 	SupportsReturning bool
 }
 
 func (d *Dialect) serializeOverride(operator string) serializeOverride {
 	return d.SerializeOverrides[operator]
+}
+
+func mysqlUpdateAssigment(columns []column, values []clause, out *sqlBuilder) (err error) {
+
+	if len(columns) != len(values) {
+		return errors.New("jet: mismatch in numers of columns and values")
+	}
+
+	for i, column := range columns {
+		if i > 0 {
+			out.writeString(", ")
+		}
+
+		out.writeString(column.Name())
+
+		out.writeString(" = ")
+
+		if err = values[i].serialize(updateStatement, out); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func postgresUpdateAssigment(columns []column, values []clause, out *sqlBuilder) (err error) {
+	if len(columns) > 1 {
+		out.writeString("(")
+	}
+
+	err = serializeColumnNames(columns, out)
+
+	if err != nil {
+		return
+	}
+
+	if len(columns) > 1 {
+		out.writeString(")")
+	}
+
+	out.writeString("=")
+
+	if len(values) > 1 {
+		out.writeString("(")
+	}
+
+	err = serializeClauseList(updateStatement, values, out)
+
+	if err != nil {
+		return
+	}
+
+	if len(values) > 1 {
+		out.writeString(")")
+	}
+
+	return
 }
 
 type queryPlaceholderFunc func(ord int) string

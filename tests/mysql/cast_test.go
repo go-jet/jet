@@ -13,7 +13,7 @@ func TestCast(t *testing.T) {
 
 	query := SELECT(
 		CAST(String("test")).AS("CHAR CHARACTER SET utf8").AS("result.AS1"),
-		CAST(String("2011-02-02")).AS_DATE().AS("result.date"),
+		CAST(String("2011-02-02")).AS_DATE().AS("result.date1"),
 		CAST(String("14:06:10")).AS_TIME().AS("result.time"),
 		CAST(String("2011-02-02 14:06:10")).AS_DATETIME().AS("result.datetime"),
 
@@ -27,7 +27,7 @@ func TestCast(t *testing.T) {
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS CHAR CHARACTER SET utf8) AS "result.AS1",
-     CAST(? AS DATE) AS "result.date",
+     CAST(? AS DATE) AS "result.date1",
      CAST(? AS TIME) AS "result.time",
      CAST(? AS DATETIME) AS "result.datetime",
      CAST(? AS CHAR) AS "result.char1",
@@ -41,7 +41,7 @@ FROM test_sample.all_types;
 
 	type Result struct {
 		As1      string
-		Date     time.Time
+		Date1    time.Time
 		Time     time.Time
 		DateTime time.Time
 		Char1    string
@@ -59,7 +59,7 @@ FROM test_sample.all_types;
 
 	assert.DeepEqual(t, dest, Result{
 		As1:      "test",
-		Date:     *testutils.Date("2011-02-02"),
+		Date1:    *testutils.Date("2011-02-02"),
 		Time:     *testutils.TimeWithoutTimeZone("14:06:10"),
 		DateTime: *testutils.TimestampWithoutTimeZone("2011-02-02 14:06:10", 0),
 		Char1:    "150",

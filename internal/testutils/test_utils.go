@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/execution"
 	"gotest.tools/assert"
 	"io/ioutil"
 	"runtime"
@@ -28,6 +29,24 @@ func JsonSave(v interface{}, path string) {
 	}
 }
 
+func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected ...int64) {
+	res, err := stmt.Exec(db)
+
+	assert.NilError(t, err)
+	rows, err := res.RowsAffected()
+	assert.NilError(t, err)
+
+	if len(rowsAffected) > 0 {
+		assert.Equal(t, rows, rowsAffected[0])
+	}
+}
+
+func AssertExecErr(t *testing.T, stmt jet.Statement, db execution.DB, errorStr string) {
+	_, err := stmt.Exec(db)
+
+	assert.Error(t, err, errorStr)
+}
+
 func AssertJSON(t *testing.T, expectedJSON string, data interface{}) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
@@ -46,8 +65,8 @@ func AssertJSONFile(t *testing.T, data interface{}, jsonFilePath string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 
-	//assert.Assert(t, string(fileJSONData) == string(jsonData))
-	assert.DeepEqual(t, string(fileJSONData), string(jsonData))
+	assert.Assert(t, string(fileJSONData) == string(jsonData))
+	//assert.DeepEqual(t, string(fileJSONData), string(jsonData))
 }
 
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {

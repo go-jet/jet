@@ -23,7 +23,7 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
-	assertExec(t, deleteStmt, 2)
+	AssertExec(t, deleteStmt, 2)
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {
@@ -61,7 +61,7 @@ func initForDeleteTest(t *testing.T) {
 		VALUES("www.gmail.com", "Gmail", "Email service developed by Google").
 		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
 
-	assertExec(t, stmt, 2)
+	AssertExec(t, stmt, 2)
 }
 
 func TestDeleteQueryContext(t *testing.T) {

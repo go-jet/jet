@@ -88,7 +88,7 @@ INSERT INTO test_sample.link VALUES
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
-	assertExec(t, stmt, 1)
+	AssertExec(t, stmt, 1)
 }
 
 func TestInsertModelObject(t *testing.T) {
@@ -109,7 +109,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
 
-	assertExec(t, query, 1)
+	AssertExec(t, query, 1)
 }
 
 func TestInsertModelObjectEmptyColumnList(t *testing.T) {
@@ -131,7 +131,7 @@ INSERT INTO test_sample.link VALUES
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
-	assertExec(t, query, 1)
+	AssertExec(t, query, 1)
 }
 
 func TestInsertModelsObject(t *testing.T) {
@@ -166,7 +166,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 		"http://www.google.com", "Google",
 		"http://www.yahoo.com", "Yahoo")
 
-	assertExec(t, stmt, 3)
+	AssertExec(t, stmt, 3)
 }
 
 func TestInsertUsingMutableColumns(t *testing.T) {
@@ -200,7 +200,7 @@ INSERT INTO test_sample.link (url, name, description) VALUES
 		"http://www.google.com", "Google", nil,
 		"http://www.yahoo.com", "Yahoo", nil)
 
-	assertExec(t, stmt, 4)
+	AssertExec(t, stmt, 4)
 }
 
 func TestInsertQuery(t *testing.T) {

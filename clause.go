@@ -131,7 +131,7 @@ func (q *sqlBuilder) writeReturning(statement statementType, returning []project
 	}
 
 	if !q.dialect.SupportsReturning {
-		panic(q.dialect.Name + " dialect does not support RETURNING.")
+		panic("jet: " + q.dialect.Name + " dialect does not support RETURNING.")
 	}
 
 	q.newLine()
