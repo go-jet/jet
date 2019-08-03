@@ -3,9 +3,9 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/generator/internal/metadata"
 	"github.com/go-jet/jet/generator/internal/template"
+	"github.com/go-jet/jet/postgres"
 	"path"
 	"strconv"
 )
@@ -42,7 +42,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	genPath := path.Join(destDir, dbConn.DBName, dbConn.SchemaName)
 
-	err = template.GenerateFiles(genPath, schemaInfo.TableInfos, schemaInfo.EnumInfos, jet.PostgreSQL)
+	err = template.GenerateFiles(genPath, schemaInfo.TableInfos, schemaInfo.EnumInfos, postgres.Dialect)
 
 	if err != nil {
 		return err

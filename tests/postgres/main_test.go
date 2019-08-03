@@ -66,7 +66,12 @@ func TestGeneratedModel(t *testing.T) {
 const genTestDir2 = "./.gentestdata2"
 
 func TestCmdGenerator(t *testing.T) {
-	err := os.RemoveAll(genTestDir2)
+	goInstallJet := exec.Command("sh", "-c", "go install github.com/go-jet/jet/cmd/jet")
+	goInstallJet.Stderr = os.Stderr
+	err := goInstallJet.Run()
+	assert.NilError(t, err)
+
+	err = os.RemoveAll(genTestDir2)
 	assert.NilError(t, err)
 
 	cmd := exec.Command("jet", "-dbname=jetdb", "-host=localhost", "-port=5432",
@@ -163,20 +168,20 @@ func assertFileNameEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...str
 var mpaaRatingEnumFile = `
 package enum
 
-import "github.com/go-jet/jet"
+import "github.com/go-jet/jet/postgres"
 
 var MpaaRating = &struct {
-	G    jet.StringExpression
-	Pg   jet.StringExpression
-	Pg13 jet.StringExpression
-	R    jet.StringExpression
-	Nc17 jet.StringExpression
+	G    postgres.StringExpression
+	Pg   postgres.StringExpression
+	Pg13 postgres.StringExpression
+	R    postgres.StringExpression
+	Nc17 postgres.StringExpression
 }{
-	G:    jet.NewEnumValue("G"),
-	Pg:   jet.NewEnumValue("PG"),
-	Pg13: jet.NewEnumValue("PG-13"),
-	R:    jet.NewEnumValue("R"),
-	Nc17: jet.NewEnumValue("NC-17"),
+	G:    postgres.NewEnumValue("G"),
+	Pg:   postgres.NewEnumValue("PG"),
+	Pg13: postgres.NewEnumValue("PG-13"),
+	R:    postgres.NewEnumValue("R"),
+	Nc17: postgres.NewEnumValue("NC-17"),
 }
 `
 
@@ -184,14 +189,13 @@ var actorSQLBuilderFile = `
 package table
 
 import (
-	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/postgres"
 )
 
 var Actor = newActorTable()
 
 type ActorTable struct {
-	jet.Table
+	postgres.Table
 
 	//Columns
 	ActorID    postgres.ColumnInteger
@@ -199,8 +203,8 @@ type ActorTable struct {
 	LastName   postgres.ColumnString
 	LastUpdate postgres.ColumnTimestamp
 
-	AllColumns     jet.ColumnList
-	MutableColumns jet.ColumnList
+	AllColumns     postgres.IColumnList
+	MutableColumns postgres.IColumnList
 }
 
 // creates new ActorTable with assigned alias
@@ -221,7 +225,7 @@ func newActorTable() *ActorTable {
 	)
 
 	return &ActorTable{
-		Table: jet.NewTable(jet.PostgreSQL, "dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
+		Table: postgres.NewTable("dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
 
 		//Columns
 		ActorID:    ActorIDColumn,
@@ -229,8 +233,8 @@ func newActorTable() *ActorTable {
 		LastName:   LastNameColumn,
 		LastUpdate: LastUpdateColumn,
 
-		AllColumns:     jet.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn},
-		MutableColumns: jet.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn},
+		AllColumns:     postgres.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
+		MutableColumns: postgres.ColumnList(FirstNameColumn, LastNameColumn, LastUpdateColumn),
 	}
 }
 `

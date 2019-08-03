@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/jet"
 )
 
 type cast interface {
@@ -37,7 +37,7 @@ type castImpl struct {
 	jet.CastImpl
 }
 
-func CAST(expr jet.Expression) cast {
+func CAST(expr Expression) cast {
 	castImpl := &castImpl{}
 
 	castImpl.CastImpl = jet.NewCastImpl(expr)

@@ -3,8 +3,8 @@ package template
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/generator/internal/metadata"
+	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/utils"
 	"path/filepath"
 	"text/template"
@@ -93,7 +93,7 @@ func generate(dirPath, packageName string, template string, metaDataList []metad
 }
 
 // GenerateTemplate generates template with template text and template data.
-func GenerateTemplate(templateText string, templateData interface{}, dialect jet.Dialect) ([]byte, error) {
+func GenerateTemplate(templateText string, templateData interface{}, dialect1 jet.Dialect) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"ToGoIdentifier": utils.ToGoIdentifier,
@@ -101,7 +101,7 @@ func GenerateTemplate(templateText string, templateData interface{}, dialect jet
 			return time.Now().Format(time.RFC850)
 		},
 		"dialect": func() jet.Dialect {
-			return dialect
+			return dialect1
 		},
 	}).Parse(templateText)
 

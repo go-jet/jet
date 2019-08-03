@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
+	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
 	"gotest.tools/assert"

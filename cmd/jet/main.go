@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet"
-	"github.com/go-jet/jet/generator/mysql"
-	"github.com/go-jet/jet/generator/postgres"
+	mysqlgen "github.com/go-jet/jet/generator/mysql"
+	postgresgen "github.com/go-jet/jet/generator/postgres"
+	"github.com/go-jet/jet/mysql"
+	"github.com/go-jet/jet/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	"os"
@@ -27,7 +28,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&source, "source", string(jet.PostgreSQL.Name), "Database name")
+	flag.StringVar(&source, "source", postgres.Dialect.Name(), "Database name")
 
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
@@ -72,14 +73,14 @@ Usage of jet:
 	var err error
 
 	switch source {
-	case jet.PostgreSQL.Name:
+	case postgres.Dialect.Name():
 		if host == "" || port == 0 || user == "" || dbName == "" || schemaName == "" {
 			fmt.Println("\njet: required flag missing")
 			flag.Usage()
 			os.Exit(-2)
 		}
 
-		genData := postgres.DBConnection{
+		genData := postgresgen.DBConnection{
 			Host:     host,
 			Port:     port,
 			User:     user,
@@ -91,16 +92,16 @@ Usage of jet:
 			SchemaName: schemaName,
 		}
 
-		err = postgres.Generate(destDir, genData)
+		err = postgresgen.Generate(destDir, genData)
 
-	case jet.MySQL.Name:
+	case mysql.Dialect.Name():
 		if host == "" || port == 0 || user == "" || dbName == "" {
 			fmt.Println("\njet: required flag missing")
 			flag.Usage()
 			os.Exit(-2)
 		}
 
-		dbConn := mysql.DBConnection{
+		dbConn := mysqlgen.DBConnection{
 			Host:     host,
 			Port:     port,
 			User:     user,
@@ -110,7 +111,7 @@ Usage of jet:
 			DBName:   dbName,
 		}
 
-		err = mysql.Generate(destDir, dbConn)
+		err = mysqlgen.Generate(destDir, dbConn)
 	}
 
 	if err != nil {

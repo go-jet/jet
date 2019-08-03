@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
+	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
@@ -24,7 +24,7 @@ RETURNING link.id AS "link.id",
           link.name AS "link.name",
           link.description AS "link.description";
 `
-
+	Link.ID.Name()
 	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
 		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 		VALUES(101, "http://www.google.com", "Google", DEFAULT).

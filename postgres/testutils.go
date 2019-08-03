@@ -1,7 +1,9 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/jet"
+	"gotest.tools/assert"
+	"testing"
 )
 
 var table1Col1 = IntegerColumn("col1")
@@ -15,8 +17,7 @@ var table1ColTimestampz = TimestampzColumn("col_timestampz")
 var table1ColBool = BoolColumn("col_bool")
 var table1ColDate = DateColumn("col_date")
 
-var table1 = jet.NewTable(
-	jet.PostgreSQL,
+var table1 = NewTable(
 	"db",
 	"table1",
 	table1Col1,
@@ -43,8 +44,7 @@ var table2ColTimestamp = TimestampColumn("col_timestamp")
 var table2ColTimestampz = TimestampzColumn("col_timestampz")
 var table2ColDate = DateColumn("col_date")
 
-var table2 = jet.NewTable(
-	jet.PostgreSQL,
+var table2 = NewTable(
 	"db",
 	"table2",
 	table2Col3,
@@ -63,10 +63,54 @@ var table2 = jet.NewTable(
 var table3Col1 = IntegerColumn("col1")
 var table3ColInt = IntegerColumn("col_int")
 var table3StrCol = StringColumn("col2")
-var table3 = jet.NewTable(
-	jet.PostgreSQL,
+var table3 = NewTable(
 	"db",
 	"table3",
 	table3Col1,
 	table3ColInt,
 	table3StrCol)
+
+func assertClauseSerialize(t *testing.T, clause jet.Clause, query string, args ...interface{}) {
+	out := jet.SqlBuilder{Dialect: Dialect}
+	err := jet.Serialize(clause, jet.SelectStatementType, &out)
+
+	assert.NilError(t, err)
+
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
+}
+
+func assertClauseSerializeErr(t *testing.T, clause jet.Clause, errString string) {
+	out := jet.SqlBuilder{Dialect: Dialect}
+	err := jet.Serialize(clause, jet.SelectStatementType, &out)
+
+	//fmt.Println(out.buff.String())
+	assert.Assert(t, err != nil)
+	assert.Error(t, err, errString)
+}
+
+func assertProjectionSerialize(t *testing.T, projection jet.Projection, query string, args ...interface{}) {
+	out := jet.SqlBuilder{Dialect: Dialect}
+	err := jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
+
+	assert.NilError(t, err)
+
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
+}
+
+func assertStatement(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
+	queryStr, args, err := query.Sql()
+	assert.NilError(t, err)
+
+	//fmt.Println(queryStr)
+	assert.Equal(t, queryStr, expectedQuery)
+	assert.DeepEqual(t, args, expectedArgs)
+}
+
+func assertStatementErr(t *testing.T, stmt jet.Statement, errorStr string) {
+	_, _, err := stmt.Sql()
+
+	assert.Assert(t, err != nil)
+	assert.Error(t, err, errorStr)
+}

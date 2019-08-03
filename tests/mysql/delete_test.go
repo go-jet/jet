@@ -2,8 +2,8 @@ package mysql
 
 import (
 	"context"
-	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
+	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"gotest.tools/assert"

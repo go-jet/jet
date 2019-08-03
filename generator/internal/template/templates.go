@@ -21,22 +21,21 @@ var tableSQLBuilderTemplate = `
 package table
 
 import (
-	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/{{dialect.PackageName}}"
 )
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
 
 type {{.GoStructName}} struct {
-	jet.Table
+	{{dialect.PackageName}}.Table
 	
 	//Columns
 {{- range .Columns}}
 	{{ToGoIdentifier .Name}} {{dialect.PackageName}}.Column{{.SqlBuilderColumnType}}
 {{- end}}
 
-	AllColumns     jet.ColumnList
-	MutableColumns jet.ColumnList
+	AllColumns     {{dialect.PackageName}}.IColumnList
+	MutableColumns {{dialect.PackageName}}.IColumnList
 }
 
 // creates new {{.GoStructName}} with assigned alias
@@ -56,15 +55,15 @@ func new{{.GoStructName}}() *{{.GoStructName}} {
 	)
 
 	return &{{.GoStructName}}{
-		Table: jet.NewTable(jet.{{dialect.Name}}, "{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
+		Table: {{dialect.PackageName}}.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
 
 		//Columns
 {{- range .Columns}}
 		{{ToGoIdentifier .Name}}: {{ToGoIdentifier .Name}}Column,
 {{- end}}
 
-		AllColumns:     jet.ColumnList{ {{template "column-list" .Columns}} },
-		MutableColumns: jet.ColumnList{ {{template "column-list" .MutableColumns}} },
+		AllColumns:     {{dialect.PackageName}}.ColumnList( {{template "column-list" .Columns}} ),
+		MutableColumns: {{dialect.PackageName}}.ColumnList( {{template "column-list" .MutableColumns}} ),
 	}
 }
 
@@ -91,15 +90,15 @@ type {{ToGoIdentifier .Name}} struct {
 `
 var enumSQLBuilderTemplate = `package enum
 
-import "github.com/go-jet/jet"
+import "github.com/go-jet/jet/postgres"
 
 var {{ToGoIdentifier $.Name}} = &struct {
 {{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}} jet.StringExpression
+	{{ToGoIdentifier $element}} postgres.StringExpression
 {{- end}}
 } {
 {{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}}: jet.NewEnumValue("{{$element}}"),
+	{{ToGoIdentifier $element}}: postgres.NewEnumValue("{{$element}}"),
 {{- end}}
 }
 `

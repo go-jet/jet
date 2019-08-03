@@ -3,9 +3,9 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/generator/internal/metadata"
 	"github.com/go-jet/jet/generator/internal/template"
+	"github.com/go-jet/jet/mysql"
 	"path"
 )
 
@@ -38,7 +38,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	genPath := path.Join(destDir, dbConn.DBName)
 
-	err = template.GenerateFiles(genPath, dbInfo.TableInfos, dbInfo.EnumInfos, jet.MySQL)
+	err = template.GenerateFiles(genPath, dbInfo.TableInfos, dbInfo.EnumInfos, mysql.Dialect)
 
 	if err != nil {
 		return err

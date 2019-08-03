@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/enum"
@@ -1268,7 +1267,7 @@ func TestAllSetOperators(t *testing.T) {
 	select1 := Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17600)).AND(Payment.PaymentID.LT(Int(17610))))
 	select2 := Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17620)).AND(Payment.PaymentID.LT(Int(17630))))
 
-	type setOperator func(lhs, rhs jet.SelectStatement, selects ...jet.SelectStatement) jet.SelectStatement
+	type setOperator func(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement
 	operators := []setOperator{
 		UNION,
 		UNION_ALL,

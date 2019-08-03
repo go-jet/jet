@@ -2,8 +2,8 @@ package postgres
 
 import (
 	"context"
-	. "github.com/go-jet/jet"
 	"github.com/go-jet/jet/internal/testutils"
+	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"gotest.tools/assert"
@@ -191,7 +191,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 		Name: "DuckDuckGo",
 	}
 
-	updateColumnList := ColumnList{Link.Description, Link.Name, Link.URL}
+	updateColumnList := ColumnList(Link.Description, Link.Name, Link.URL)
 
 	stmt := Link.
 		UPDATE(updateColumnList).

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/go-jet/jet"
+	. "github.com/go-jet/jet/postgres"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
 )
 
@@ -15,7 +15,7 @@ func TestLockTable(t *testing.T) {
 	expectedSQL := `
 LOCK TABLE dvds.address IN`
 
-	var testData = []TableLockMode{
+	var testData = []string{
 		LOCK_ACCESS_SHARE,
 		LOCK_ROW_SHARE,
 		LOCK_ROW_EXCLUSIVE,

@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet"
+	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	"github.com/google/uuid"
