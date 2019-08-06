@@ -29,7 +29,6 @@ type SerializeFunc func(statement StatementType, out *SqlBuilder, options ...Ser
 type SerializeOverride func(expressions ...Expression) SerializeFunc
 
 type QueryPlaceholderFunc func(ord int) string
-
 type UpdateAssigmentFunc func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
 
 type DialectParams struct {

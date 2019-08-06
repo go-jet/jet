@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
@@ -495,28 +496,28 @@ func TestTimeExpressions(t *testing.T) {
 		CURRENT_TIME(3),
 	)
 
-	//fmt.Println(query.Sql())
+	fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
-SELECT ?,
+SELECT CAST(? AS TIME),
      all_types.time = all_types.time,
-     all_types.time = ?,
-     all_types.time = ?,
-     all_types.time = ?,
+     all_types.time = CAST(? AS TIME),
+     all_types.time = CAST(? AS TIME),
+     all_types.time = CAST(? AS TIME),
      all_types.time_ptr != all_types.time,
-     all_types.time_ptr != ?,
+     all_types.time_ptr != CAST(? AS TIME),
      NOT(all_types.time <=> all_types.time),
-     NOT(all_types.time <=> ?),
+     NOT(all_types.time <=> CAST(? AS TIME)),
      all_types.time <=> all_types.time,
-     all_types.time <=> ?,
+     all_types.time <=> CAST(? AS TIME),
      all_types.time < all_types.time,
-     all_types.time < ?,
+     all_types.time < CAST(? AS TIME),
      all_types.time <= all_types.time,
-     all_types.time <= ?,
+     all_types.time <= CAST(? AS TIME),
      all_types.time > all_types.time,
-     all_types.time > ?,
+     all_types.time > CAST(? AS TIME),
      all_types.time >= all_types.time,
-     all_types.time >= ?,
+     all_types.time >= CAST(? AS TIME),
      CURRENT_TIME,
      CURRENT_TIME(3)
 FROM test_sample.all_types;
@@ -562,23 +563,23 @@ func TestDateExpressions(t *testing.T) {
 	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
-SELECT ?,
+SELECT CAST(? AS DATE),
      all_types.date = all_types.date,
-     all_types.date = ?,
+     all_types.date = CAST(? AS DATE),
      all_types.date_ptr != all_types.date,
-     all_types.date_ptr != ?,
+     all_types.date_ptr != CAST(? AS DATE),
      NOT(all_types.date <=> all_types.date),
-     NOT(all_types.date <=> ?),
+     NOT(all_types.date <=> CAST(? AS DATE)),
      all_types.date <=> all_types.date,
-     all_types.date <=> ?,
+     all_types.date <=> CAST(? AS DATE),
      all_types.date < all_types.date,
-     all_types.date < ?,
+     all_types.date < CAST(? AS DATE),
      all_types.date <= all_types.date,
-     all_types.date <= ?,
+     all_types.date <= CAST(? AS DATE),
      all_types.date > all_types.date,
-     all_types.date > ?,
+     all_types.date > CAST(? AS DATE),
      all_types.date >= all_types.date,
-     all_types.date >= ?,
+     all_types.date >= CAST(? AS DATE),
      CURRENT_DATE
 FROM test_sample.all_types;
 `)
@@ -625,21 +626,21 @@ func TestDateTimeExpressions(t *testing.T) {
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.date_time = all_types.date_time,
-     all_types.date_time = '2019-06-06 10:02:46',
+     all_types.date_time = CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time_ptr != all_types.date_time,
-     all_types.date_time_ptr != '2019-06-06 10:02:46.1000',
+     all_types.date_time_ptr != CAST('2019-06-06 10:02:46.1000' AS DATETIME),
      NOT(all_types.date_time <=> all_types.date_time),
-     NOT(all_types.date_time <=> '2019-06-06 10:02:46'),
+     NOT(all_types.date_time <=> CAST('2019-06-06 10:02:46' AS DATETIME)),
      all_types.date_time <=> all_types.date_time,
-     all_types.date_time <=> '2019-06-06 10:02:46',
+     all_types.date_time <=> CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time < all_types.date_time,
-     all_types.date_time < '2019-06-06 10:02:46',
+     all_types.date_time < CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time <= all_types.date_time,
-     all_types.date_time <= '2019-06-06 10:02:46',
+     all_types.date_time <= CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time > all_types.date_time,
-     all_types.date_time > '2019-06-06 10:02:46',
+     all_types.date_time > CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time >= all_types.date_time,
-     all_types.date_time >= '2019-06-06 10:02:46',
+     all_types.date_time >= CAST('2019-06-06 10:02:46' AS DATETIME),
      NOW(),
      NOW(1)
 FROM test_sample.all_types;
@@ -683,25 +684,25 @@ func TestTimestampExpressions(t *testing.T) {
 		CURRENT_TIMESTAMP(2),
 	)
 
-	//fmt.Println(query.DebugSql())
+	fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.timestamp = all_types.timestamp,
-     all_types.timestamp = '2019-06-06 10:02:46',
+     all_types.timestamp = CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.timestamp_ptr != all_types.timestamp,
-     all_types.timestamp_ptr != '2019-06-06 10:02:46.1000',
+     all_types.timestamp_ptr != CAST('2019-06-06 10:02:46.1000' AS DATETIME),
      NOT(all_types.timestamp <=> all_types.timestamp),
-     NOT(all_types.timestamp <=> '2019-06-06 10:02:46'),
+     NOT(all_types.timestamp <=> CAST('2019-06-06 10:02:46' AS DATETIME)),
      all_types.timestamp <=> all_types.timestamp,
-     all_types.timestamp <=> '2019-06-06 10:02:46',
+     all_types.timestamp <=> CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.timestamp < all_types.timestamp,
-     all_types.timestamp < '2019-06-06 10:02:46',
+     all_types.timestamp < CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.timestamp <= all_types.timestamp,
-     all_types.timestamp <= '2019-06-06 10:02:46',
+     all_types.timestamp <= CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.timestamp > all_types.timestamp,
-     all_types.timestamp > '2019-06-06 10:02:46',
+     all_types.timestamp > CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.timestamp >= all_types.timestamp,
-     all_types.timestamp >= '2019-06-06 10:02:46',
+     all_types.timestamp >= CAST('2019-06-06 10:02:46' AS DATETIME),
      CURRENT_TIMESTAMP,
      CURRENT_TIMESTAMP(2)
 FROM test_sample.all_types;
@@ -716,20 +717,24 @@ func TestTimeLiterals(t *testing.T) {
 	loc, err := time.LoadLocation("Europe/Berlin")
 	assert.NilError(t, err)
 
-	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, loc)
+	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 351387237, loc)
 
 	query := SELECT(
-		DateT(timeT).AS("date"),
-		TimeT(timeT).AS("time"),
+		Date(timeT.Date()).AS("date"),
+		DateT(timeT).AS("dateT"),
+		Time(timeT.Clock()).AS("time"),
+		TimeT(timeT).AS("timeT"),
 		DateTimeT(timeT).AS("datetime"),
 		TimestampT(timeT).AS("timestamp"),
 	).FROM(AllTypes).LIMIT(1)
 
-	//fmt.Println(query.Sql())
+	fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS DATE) AS "date",
+     CAST(? AS DATE) AS "dateT",
      CAST(? AS TIME) AS "time",
+     CAST(? AS TIME) AS "timeT",
      CAST(? AS DATETIME) AS "datetime",
      CAST(? AS DATETIME) AS "timestamp"
 FROM test_sample.all_types
@@ -738,7 +743,9 @@ LIMIT ?;
 
 	var dest struct {
 		Date      time.Time
+		DateT     time.Time
 		Time      time.Time
+		TimeT     time.Time
 		DateTime  time.Time
 		Timestamp time.Time
 	}
@@ -746,12 +753,16 @@ LIMIT ?;
 	err = query.Query(db, &dest)
 	assert.NilError(t, err)
 
+	testutils.JsonPrint(dest)
+
 	testutils.AssertJSON(t, dest, `
 {
 	"Date": "2009-11-17T00:00:00Z",
-	"Time": "0000-01-01T19:34:59Z",
-	"DateTime": "2009-11-17T19:34:59Z",
-	"Timestamp": "2009-11-17T19:34:59Z"
+	"DateT": "2009-11-17T00:00:00Z",
+	"Time": "0000-01-01T20:34:58Z",
+	"TimeT": "0000-01-01T19:34:58Z",
+	"DateTime": "2009-11-17T19:34:58Z",
+	"Timestamp": "2009-11-17T19:34:58Z"
 }
 `)
 }
