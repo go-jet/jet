@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
@@ -26,7 +25,7 @@ func TestAllTypes(t *testing.T) {
 	assert.NilError(t, err)
 
 	//testutils.JsonPrint(dest)
-	testutils.AssertJSON(t, allTypesJson, dest)
+	testutils.AssertJSON(t, dest, allTypesJson)
 }
 
 func TestExpressionOperators(t *testing.T) {
@@ -71,7 +70,7 @@ LIMIT ?;
 
 	//testutils.JsonPrint(dest)
 
-	testutils.AssertJSON(t, `
+	testutils.AssertJSON(t, dest, `
 [
 	{
 		"IsNull": false,
@@ -90,7 +89,7 @@ LIMIT ?;
 		"NotInSelect": null
 	}
 ]
-`, dest)
+`)
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -452,7 +451,7 @@ func TestStringOperators(t *testing.T) {
 	//fmt.Println(query.Sql())
 	//fmt.Println(args[15])
 
-	fmt.Println(query.Sql())
+	// fmt.Println(query.Sql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -496,7 +495,7 @@ func TestTimeExpressions(t *testing.T) {
 		CURRENT_TIME(3),
 	)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT ?,
@@ -622,7 +621,7 @@ func TestDateTimeExpressions(t *testing.T) {
 		NOW(1),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.date_time = all_types.date_time,
@@ -684,7 +683,7 @@ func TestTimestampExpressions(t *testing.T) {
 		CURRENT_TIMESTAMP(2),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.timestamp = all_types.timestamp,
@@ -710,6 +709,51 @@ FROM test_sample.all_types;
 	err := query.Query(db, &struct{}{})
 
 	assert.NilError(t, err)
+}
+
+func TestTimeLiterals(t *testing.T) {
+
+	loc, err := time.LoadLocation("Europe/Berlin")
+	assert.NilError(t, err)
+
+	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, loc)
+
+	query := SELECT(
+		DateT(timeT).AS("date"),
+		TimeT(timeT).AS("time"),
+		DateTimeT(timeT).AS("datetime"),
+		TimestampT(timeT).AS("timestamp"),
+	).FROM(AllTypes).LIMIT(1)
+
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT CAST(? AS DATE) AS "date",
+     CAST(? AS TIME) AS "time",
+     CAST(? AS DATETIME) AS "datetime",
+     CAST(? AS DATETIME) AS "timestamp"
+FROM test_sample.all_types
+LIMIT ?;
+`)
+
+	var dest struct {
+		Date      time.Time
+		Time      time.Time
+		DateTime  time.Time
+		Timestamp time.Time
+	}
+
+	err = query.Query(db, &dest)
+	assert.NilError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+{
+	"Date": "2009-11-17T00:00:00Z",
+	"Time": "0000-01-01T19:34:59Z",
+	"DateTime": "2009-11-17T19:34:59Z",
+	"Timestamp": "2009-11-17T19:34:59Z"
+}
+`)
 }
 
 var allTypesJson = `

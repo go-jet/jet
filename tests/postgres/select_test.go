@@ -533,7 +533,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 2)
-	testutils.AssertJSON(t, `
+	testutils.AssertJSON(t, dest, `
 [
 	{
 		"CityID": 312,
@@ -572,7 +572,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 		]
 	}
 ]
-`, dest)
+`)
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
@@ -1136,7 +1136,7 @@ func TestSelectStaff(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSON(t, `
+	testutils.AssertJSON(t, staffs, `
 [
 	{
 		"StaffID": 1,
@@ -1165,7 +1165,7 @@ func TestSelectStaff(t *testing.T) {
 		"Picture": null
 	}
 ]
-`, staffs)
+`)
 }
 
 func TestSelectTimeColumns(t *testing.T) {

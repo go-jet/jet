@@ -142,7 +142,7 @@ ORDER BY "Employee"."EmployeeId";
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 8)
-	testutils.AssertJSON(t, `
+	testutils.AssertJSON(t, dest[0:2], `
 [
 	{
 		"EmployeeId": 1,
@@ -197,7 +197,7 @@ ORDER BY "Employee"."EmployeeId";
 		}
 	}
 ]
-`, dest[0:2])
+`)
 
 }
 

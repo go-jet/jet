@@ -151,11 +151,19 @@ func Time(hour, minute, second int, milliseconds ...int) TimeExpression {
 	return TimeExp(literal(timeStr))
 }
 
+func TimeT(t time.Time) TimeExpression {
+	return TimeExp(literal(t))
+}
+
 // Timez creates new time with time zone literal expression
 func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
 	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
 
 	return TimezExp(literal(timeStr))
+}
+
+func TimezT(t time.Time) TimezExpression {
+	return TimezExp(literal(t))
 }
 
 // Timestamp creates new timestamp literal expression
@@ -167,6 +175,10 @@ func Timestamp(year int, month time.Month, day, hour, minute, second int, millis
 	return TimestampExp(literal(timeStr))
 }
 
+func TimestampT(t time.Time) TimestampExpression {
+	return TimestampExp(literal(t))
+}
+
 // Timestampz creates new timestamp with time zone literal expression
 func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone int) TimestampzExpression {
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
@@ -175,11 +187,19 @@ func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone i
 	return TimestampzExp(literal(timeStr))
 }
 
+func TimestampzT(t time.Time) TimestampzExpression {
+	return TimestampzExp(literal(t))
+}
+
 //Date creates new date expression
 func Date(year int, month time.Month, day int) DateExpression {
 	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
 
 	return DateExp(literal(timeStr))
+}
+
+func DateT(t time.Time) DateExpression {
+	return DateExp(literal(t))
 }
 
 //--------------------------------------------------//

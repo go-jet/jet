@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestAllTypesSelect(t *testing.T) {
@@ -95,7 +96,7 @@ LIMIT $5;
 
 	//testutils.JsonPrint(dest)
 
-	testutils.AssertJSON(t, `
+	testutils.AssertJSON(t, dest, `
 [
 	{
 		"IsNull": false,
@@ -114,7 +115,7 @@ LIMIT $5;
 		"NotInSelect": null
 	}
 ]
-`, dest)
+`)
 }
 
 func TestExpressionCast(t *testing.T) {
@@ -789,6 +790,54 @@ FROM`
 		assert.NilError(t, err)
 		assert.DeepEqual(t, dest1, dest2)
 	}
+}
+
+func TestTimeLiterals(t *testing.T) {
+
+	loc, err := time.LoadLocation("Europe/Berlin")
+	assert.NilError(t, err)
+
+	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, loc)
+
+	query := SELECT(
+		DateT(timeT).AS("date"),
+		TimeT(timeT).AS("time"),
+		TimezT(timeT).AS("timez"),
+		TimestampT(timeT).AS("timestamp"),
+		TimestampzT(timeT).AS("timestampz"),
+	).FROM(AllTypes).
+		LIMIT(1)
+
+	testutils.AssertStatementSql(t, query, `
+SELECT $1::DATE AS "date",
+     $2::time without time zone AS "time",
+     $3::time with time zone AS "timez",
+     $4::timestamp without time zone AS "timestamp",
+     $5::timestamp with time zone AS "timestampz"
+FROM test_sample.all_types
+LIMIT $6;
+`)
+
+	var dest struct {
+		Date       time.Time
+		Time       time.Time
+		Timez      time.Time
+		Timestamp  time.Time
+		Timestampz time.Time
+	}
+
+	err = query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"Date": "2009-11-17T00:00:00Z",
+	"Time": "0000-01-01T20:34:58.651387Z",
+	"Timez": "0000-01-01T20:34:58.651387+01:00",
+	"Timestamp": "2009-11-17T20:34:58.651387Z",
+	"Timestampz": "2009-11-17T20:34:58.651387+01:00"
+}
+`)
 }
 
 var allTypesRow0 = model.AllTypes{

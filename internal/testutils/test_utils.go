@@ -47,7 +47,7 @@ func AssertExecErr(t *testing.T, stmt jet.Statement, db execution.DB, errorStr s
 	assert.Error(t, err, errorStr)
 }
 
-func AssertJSON(t *testing.T, expectedJSON string, data interface{}) {
+func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
 

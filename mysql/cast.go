@@ -8,6 +8,7 @@ type cast interface {
 	jet.Cast
 
 	AS_DATETIME() DateTimeExpression
+	AS_TIMESTAMP() TimestampExpression
 	AS_SIGNED() IntegerExpression
 	AS_UNSIGNED() IntegerExpression
 	AS_BINARY() StringExpression
@@ -26,6 +27,10 @@ func CAST(expr jet.Expression) cast {
 }
 
 func (c *castImpl) AS_DATETIME() DateTimeExpression {
+	return jet.TimestampExp(c.AS("DATETIME"))
+}
+
+func (c *castImpl) AS_TIMESTAMP() TimestampExpression {
 	return jet.TimestampExp(c.AS("DATETIME"))
 }
 
