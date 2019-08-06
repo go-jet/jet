@@ -715,21 +715,21 @@ func TestTimestampExpressions(t *testing.T) {
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.timestamp = all_types.timestamp,
-     all_types.timestamp = CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.timestamp = TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp_ptr != all_types.timestamp,
-     all_types.timestamp_ptr != CAST('2019-06-06 10:02:46.1000' AS DATETIME),
+     all_types.timestamp_ptr != TIMESTAMP('2019-06-06 10:02:46.1000'),
      NOT(all_types.timestamp <=> all_types.timestamp),
-     NOT(all_types.timestamp <=> CAST('2019-06-06 10:02:46' AS DATETIME)),
+     NOT(all_types.timestamp <=> TIMESTAMP('2019-06-06 10:02:46')),
      all_types.timestamp <=> all_types.timestamp,
-     all_types.timestamp <=> CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.timestamp <=> TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp < all_types.timestamp,
-     all_types.timestamp < CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.timestamp < TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp <= all_types.timestamp,
-     all_types.timestamp <= CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.timestamp <= TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp > all_types.timestamp,
-     all_types.timestamp > CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.timestamp > TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp >= all_types.timestamp,
-     all_types.timestamp >= CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.timestamp >= TIMESTAMP('2019-06-06 10:02:46'),
      CURRENT_TIMESTAMP,
      CURRENT_TIMESTAMP(2)
 FROM test_sample.all_types;
@@ -752,7 +752,8 @@ func TestTimeLiterals(t *testing.T) {
 		Time(timeT.Clock()).AS("time"),
 		TimeT(timeT).AS("timeT"),
 		DateTimeT(timeT).AS("datetime"),
-		TimestampT(timeT).AS("timestamp"),
+		Timestamp(2019, 8, 6, 10, 10, 30, 123456).AS("timestamp"),
+		TimestampT(timeT).AS("timestampT"),
 	).FROM(AllTypes).LIMIT(1)
 
 	fmt.Println(query.Sql())
@@ -763,18 +764,20 @@ SELECT CAST(? AS DATE) AS "date",
      CAST(? AS TIME) AS "time",
      CAST(? AS TIME) AS "timeT",
      CAST(? AS DATETIME) AS "datetime",
-     CAST(? AS DATETIME) AS "timestamp"
+     TIMESTAMP(?) AS "timestamp",
+     TIMESTAMP(?) AS "timestampT"
 FROM test_sample.all_types
 LIMIT ?;
 `)
 
 	var dest struct {
-		Date      time.Time
-		DateT     time.Time
-		Time      time.Time
-		TimeT     time.Time
-		DateTime  time.Time
-		Timestamp time.Time
+		Date       time.Time
+		DateT      time.Time
+		Time       time.Time
+		TimeT      time.Time
+		DateTime   time.Time
+		Timestamp  time.Time
+		TimestampT time.Time
 	}
 
 	err = query.Query(db, &dest)
@@ -789,7 +792,8 @@ LIMIT ?;
 	"Time": "0000-01-01T20:34:58Z",
 	"TimeT": "0000-01-01T19:34:58Z",
 	"DateTime": "2009-11-17T19:34:58Z",
-	"Timestamp": "2009-11-17T19:34:58Z"
+	"Timestamp": "2019-08-06T10:10:30.123456Z",
+	"TimestampT": "2009-11-17T19:34:58.351387Z"
 }
 `)
 }

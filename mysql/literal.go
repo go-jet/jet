@@ -32,8 +32,8 @@ var DateTimeT = func(t time.Time) DateTimeExpression {
 	return CAST(jet.TimestampT(t)).AS_DATETIME()
 }
 var Timestamp = func(year int, month time.Month, day, hour, minute, second int, milliseconds ...int) TimestampExpression {
-	return CAST(jet.Timestamp(year, month, day, hour, minute, second, milliseconds...)).AS_TIMESTAMP()
+	return TIMESTAMP(StringExp(jet.Timestamp(year, month, day, hour, minute, second, milliseconds...)))
 }
 var TimestampT = func(t time.Time) TimestampExpression {
-	return CAST(jet.TimestampT(t)).AS_TIMESTAMP()
+	return TIMESTAMP(StringExp(jet.TimestampT(t)))
 }

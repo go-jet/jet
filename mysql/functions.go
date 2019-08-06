@@ -113,6 +113,14 @@ func NOW(fsp ...int) DateTimeExpression {
 	return jet.NewTimestampFunc("NOW")
 }
 
+func TIMESTAMP(str StringExpression) TimestampExpression {
+	return jet.NewTimestampFunc("TIMESTAMP", str)
+}
+
+func UNIX_TIMESTAMP(str StringExpression) TimestampExpression {
+	return jet.NewTimestampFunc("UNIX_TIMESTAMP", str)
+}
+
 // --------------- Conditional Expressions Functions -------------//
 var COALESCE = jet.COALESCE
 var NULLIF = jet.NULLIF
