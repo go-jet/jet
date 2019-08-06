@@ -18,7 +18,6 @@ type Dialect interface {
 	Name() string
 	PackageName() string
 	SerializeOverride(operator string) SerializeOverride
-	CastOverride() CastOverride
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
@@ -31,14 +30,12 @@ type SerializeOverride func(expressions ...Expression) SerializeFunc
 
 type QueryPlaceholderFunc func(ord int) string
 
-type CastOverride func(expression Expression, castType string) SerializeFunc
 type UpdateAssigmentFunc func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
 
 type DialectParams struct {
 	Name                string
 	PackageName         string
 	SerializeOverrides  map[string]SerializeOverride
-	CastOverride        CastOverride
 	AliasQuoteChar      byte
 	IdentifierQuoteChar byte
 	ArgumentPlaceholder QueryPlaceholderFunc
@@ -52,7 +49,6 @@ func NewDialect(params DialectParams) Dialect {
 		name:                params.Name,
 		packageName:         params.PackageName,
 		serializeOverrides:  params.SerializeOverrides,
-		castOverride:        params.CastOverride,
 		aliasQuoteChar:      params.AliasQuoteChar,
 		identifierQuoteChar: params.IdentifierQuoteChar,
 		argumentPlaceholder: params.ArgumentPlaceholder,
@@ -65,7 +61,6 @@ type dialectImpl struct {
 	name                string
 	packageName         string
 	serializeOverrides  map[string]SerializeOverride
-	castOverride        CastOverride
 	aliasQuoteChar      byte
 	identifierQuoteChar byte
 	argumentPlaceholder QueryPlaceholderFunc
@@ -84,10 +79,6 @@ func (d *dialectImpl) PackageName() string {
 
 func (d *dialectImpl) SerializeOverride(operator string) SerializeOverride {
 	return d.serializeOverrides[operator]
-}
-
-func (d *dialectImpl) CastOverride() CastOverride {
-	return d.castOverride
 }
 
 func (d *dialectImpl) AliasQuoteChar() byte {
