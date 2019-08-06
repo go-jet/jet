@@ -31,6 +31,6 @@ var DateExp = jet.DateExp
 var TimestampExp = jet.TimestampExp
 var TimestampzExp = jet.TimestampzExp
 
-var RAW = jet.RAW
+var Raw = jet.Raw
 
 var NewEnumValue = jet.NewEnumValue

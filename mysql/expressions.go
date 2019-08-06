@@ -29,4 +29,4 @@ var DateExp = jet.DateExp
 var DateTimeExp = jet.TimestampExp
 var TimestampExp = jet.TimestampExp
 
-var RAW = jet.RAW
+var Raw = jet.Raw

@@ -152,7 +152,7 @@ func TestExpressionCast(t *testing.T) {
 		GREATEST(AllTypes.Numeric, AllTypes.NumericPtr),
 		LEAST(AllTypes.Numeric, AllTypes.NumericPtr),
 
-		RAW("current_database()"),
+		Raw("current_database()"),
 	)
 
 	//fmt.Println(query.DebugSql())

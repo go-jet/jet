@@ -6,6 +6,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/go-jet/jet/tests/testdata/common"
+	"github.com/google/uuid"
 	"time"
 
 	. "github.com/go-jet/jet/mysql"
@@ -29,6 +30,32 @@ func TestAllTypes(t *testing.T) {
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 
+func TestUUID(t *testing.T) {
+
+	query := AllTypes.
+		SELECT(
+			Raw("uuid()").AS("uuid"),
+			String("dc8daae3-b83b-11e9-8eb4-98ded00c39c6").AS("str_uuid"),
+			Raw("unhex(replace('dc8daae3-b83b-11e9-8eb4-98ded00c39c6','-',''))").AS("bin_uuid"),
+		).LIMIT(1)
+
+	//fmt.Println(query.DebugSql())
+
+	var dest struct {
+		UUID    uuid.UUID
+		StrUUID *uuid.UUID
+		BinUUID uuid.UUID
+	}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.Assert(t, dest.StrUUID != nil)
+	assert.Assert(t, dest.UUID.String() != uuid.UUID{}.String())
+	assert.Assert(t, dest.StrUUID.String() != uuid.UUID{}.String())
+	assert.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
+}
+
 func TestExpressionOperators(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Integer.IS_NULL().AS("result.is_null"),
@@ -38,7 +65,7 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL).AS("result.not_in"),
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
 
-		RAW("DATABASE()"),
+		Raw("DATABASE()"),
 	).LIMIT(2)
 
 	//fmt.Println(query.Sql())
