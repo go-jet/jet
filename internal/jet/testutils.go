@@ -79,12 +79,8 @@ func assertClauseSerialize(t *testing.T, clause Clause, query string, args ...in
 
 	assert.NilError(t, err)
 
-	assert.DeepEqual(t, out.DebugSQL(), query)
-
-	if len(args) > 0 {
-		assert.DeepEqual(t, out.Args, args)
-	}
-
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
 }
 
 func assertClauseSerializeErr(t *testing.T, clause Clause, errString string) {
@@ -102,22 +98,19 @@ func assertProjectionSerialize(t *testing.T, projection Projection, query string
 
 	assert.NilError(t, err)
 
-	assert.DeepEqual(t, out.DebugSQL(), query)
-
-	if len(args) > 0 {
-		assert.DeepEqual(t, out.Args, args)
-	}
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
 }
 
 func assertStatement(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
-	queryStr, err := query.DebugSql()
+	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 
 	fmt.Println(queryStr)
 
 	//fmt.Println(queryStr)
 	assert.Equal(t, queryStr, expectedQuery)
-	//assert.DeepEqual(t, args, expectedArgs)
+	assert.DeepEqual(t, args, expectedArgs)
 }
 
 func assertStatementErr(t *testing.T, stmt Statement, errorStr string) {

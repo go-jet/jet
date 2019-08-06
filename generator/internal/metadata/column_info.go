@@ -31,7 +31,8 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 		return "Timestamp"
 	case "timestamp with time zone":
 		return "Timestampz"
-	case "time without time zone":
+	case "time without time zone",
+		"time": //MySQL
 		return "Time"
 	case "time with time zone":
 		return "Timez"
@@ -67,7 +68,7 @@ func (c ColumnInfo) GoBaseType() string {
 	case "bigint":
 		return "int64"
 	case "date", "timestamp without time zone", "timestamp with time zone", "time with time zone", "time without time zone",
-		"timestamp", "datetime": // MySQL
+		"timestamp", "datetime", "time": // MySQL
 		return "time.Time"
 	case "bytea",
 		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": //MySQL

@@ -21,6 +21,7 @@ func TestArgToString(t *testing.T) {
 	assert.Equal(t, argToString(uint(32)), "32")
 	assert.Equal(t, argToString(uint32(32)), "32")
 	assert.Equal(t, argToString(uint64(64)), "64")
+	assert.Equal(t, argToString(float64(1.11)), "1.11")
 
 	assert.Equal(t, argToString("john"), "'john'")
 	assert.Equal(t, argToString([]byte("john")), "'john'")

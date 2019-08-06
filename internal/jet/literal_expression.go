@@ -1,9 +1,20 @@
 package jet
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+	"time"
+)
 
 // Representation of an escaped literal
-type literalExpression struct {
+type LiteralExpression interface {
+	Expression
+
+	Value() interface{}
+	SetConstant(constant bool)
+}
+
+type literalExpressionImpl struct {
 	expressionInterfaceImpl
 	noOpVisitorImpl
 
@@ -11,8 +22,8 @@ type literalExpression struct {
 	constant bool
 }
 
-func literal(value interface{}, optionalConstant ...bool) *literalExpression {
-	exp := literalExpression{value: value}
+func literal(value interface{}, optionalConstant ...bool) *literalExpressionImpl {
+	exp := literalExpressionImpl{value: value}
 
 	if len(optionalConstant) > 0 {
 		exp.constant = optionalConstant[0]
@@ -23,14 +34,14 @@ func literal(value interface{}, optionalConstant ...bool) *literalExpression {
 	return &exp
 }
 
-func constLiteral(value interface{}) *literalExpression {
+func constLiteral(value interface{}) *literalExpressionImpl {
 	exp := literal(value)
 	exp.constant = true
 
 	return exp
 }
 
-func (l literalExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (l *literalExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 	if l.constant {
 		out.insertConstantArgument(l.value)
 	} else {
@@ -40,29 +51,102 @@ func (l literalExpression) serialize(statement StatementType, out *SqlBuilder, o
 	return nil
 }
 
+func (l *literalExpressionImpl) Value() interface{} {
+	return l.value
+}
+
+func (l *literalExpressionImpl) SetConstant(constant bool) {
+	l.constant = constant
+}
+
+type integerLiteralExpression struct {
+	literalExpressionImpl
+	integerInterfaceImpl
+}
+
 // Int is constructor for integer expressions literals.
 func Int(value int64, constant ...bool) IntegerExpression {
-	return IntExp(literal(value, constant...))
+	numLiteral := &integerLiteralExpression{}
+
+	numLiteral.literalExpressionImpl = *literal(value)
+	if len(constant) > 0 && constant[0] == true {
+		numLiteral.constant = true
+	}
+
+	numLiteral.literalExpressionImpl.parent = numLiteral
+	numLiteral.integerInterfaceImpl.parent = numLiteral
+
+	return numLiteral
+}
+
+//---------------------------------------------------//
+type boolLiteralExpression struct {
+	boolInterfaceImpl
+	literalExpressionImpl
 }
 
 // Bool creates new bool literal expression
 func Bool(value bool) BoolExpression {
-	return BoolExp(literal(value))
+	boolLiteralExpression := boolLiteralExpression{}
+
+	boolLiteralExpression.literalExpressionImpl = *literal(value)
+	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
+
+	return &boolLiteralExpression
+}
+
+//---------------------------------------------------//
+type floatLiteral struct {
+	floatInterfaceImpl
+	literalExpressionImpl
 }
 
 // Float creates new float literal expression
 func Float(value float64) FloatExpression {
-	return FloatExp(literal(value))
+	floatLiteral := floatLiteral{}
+	floatLiteral.literalExpressionImpl = *literal(value)
+
+	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
+
+	return &floatLiteral
+}
+
+//---------------------------------------------------//
+type stringLiteral struct {
+	stringInterfaceImpl
+	literalExpressionImpl
 }
 
 // String creates new string literal expression
-func String(value string) StringExpression {
-	return StringExp(literal(value))
+func String(value string, constant ...bool) StringExpression {
+	stringLiteral := stringLiteral{}
+	stringLiteral.literalExpressionImpl = *literal(value)
+	if len(constant) > 0 && constant[0] == true {
+		stringLiteral.constant = true
+	}
+
+	stringLiteral.stringInterfaceImpl.parent = &stringLiteral
+
+	return &stringLiteral
+}
+
+func formatMilliseconds(milliseconds ...int) string {
+	if len(milliseconds) > 0 {
+		if milliseconds[0] < 1000 {
+			return fmt.Sprintf(".%03d", milliseconds[0])
+		} else {
+			return "." + strconv.Itoa(milliseconds[0])
+		}
+	}
+
+	return ""
 }
 
 // Time creates new time literal expression
-func Time(hour, minute, second, milliseconds int) TimeExpression {
-	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d", hour, minute, second, milliseconds)
+func Time(hour, minute, second int, milliseconds ...int) TimeExpression {
+	timeStr := fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
+
+	timeStr += formatMilliseconds(milliseconds...)
 
 	return TimeExp(literal(timeStr))
 }
@@ -75,8 +159,10 @@ func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
 }
 
 // Timestamp creates new timestamp literal expression
-func Timestamp(year, month, day, hour, minute, second, milliseconds int) TimestampExpression {
-	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d", year, month, day, hour, minute, second, milliseconds)
+func Timestamp(year int, month time.Month, day, hour, minute, second int, milliseconds ...int) TimestampExpression {
+	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+
+	timeStr += formatMilliseconds(milliseconds...)
 
 	return TimestampExp(literal(timeStr))
 }
@@ -90,7 +176,7 @@ func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone i
 }
 
 //Date creates new date expression
-func Date(year, month, day int) DateExpression {
+func Date(year int, month time.Month, day int) DateExpression {
 	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
 
 	return DateExp(literal(timeStr))

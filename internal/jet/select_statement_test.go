@@ -19,16 +19,17 @@ FROM db.table2;
 
 func TestSelectLiterals(t *testing.T) {
 	assertStatement(t, SELECT(Int(1), Float(2.2), Bool(false)).FROM(table1), `
-SELECT 1,
-     2.2,
-     FALSE
+SELECT $1,
+     $2,
+     $3
 FROM db.table1;
-`)
+`, int64(1), 2.2, false)
 }
 
 func TestSelectDistinct(t *testing.T) {
-	assertStatement(t, SELECT(table1ColBool).DISTINCT(), `
-SELECT DISTINCT table1.col_bool AS "table1.col_bool";
+	assertStatement(t, SELECT(table1ColBool).DISTINCT().FROM(table1), `
+SELECT DISTINCT table1.col_bool AS "table1.col_bool"
+FROM db.table1;
 `)
 }
 

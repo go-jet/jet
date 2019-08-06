@@ -1,10 +1,17 @@
 package jet
 
+import (
+	"errors"
+	"strconv"
+)
+
 var ANSII = NewDialect(DialectParams{ // just for tests
-	AliasQuoteChar: '"',
+	AliasQuoteChar:      '"',
+	IdentifierQuoteChar: '"',
 	ArgumentPlaceholder: func(ord int) string {
-		return "#"
+		return "$" + strconv.Itoa(ord)
 	},
+	SupportsReturning: true,
 })
 
 type Dialect interface {
@@ -15,7 +22,7 @@ type Dialect interface {
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
-	UpdateAssigment() func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
+	SetClause() func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
 	SupportsReturning() bool
 }
 
@@ -35,7 +42,7 @@ type DialectParams struct {
 	AliasQuoteChar      byte
 	IdentifierQuoteChar byte
 	ArgumentPlaceholder QueryPlaceholderFunc
-	UpdateAssigment     func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
+	SetClause           func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
 
 	SupportsReturning bool
 }
@@ -49,7 +56,7 @@ func NewDialect(params DialectParams) Dialect {
 		aliasQuoteChar:      params.AliasQuoteChar,
 		identifierQuoteChar: params.IdentifierQuoteChar,
 		argumentPlaceholder: params.ArgumentPlaceholder,
-		updateAssigment:     params.UpdateAssigment,
+		setClause:           params.SetClause,
 		supportsReturning:   params.SupportsReturning,
 	}
 }
@@ -62,7 +69,7 @@ type dialectImpl struct {
 	aliasQuoteChar      byte
 	identifierQuoteChar byte
 	argumentPlaceholder QueryPlaceholderFunc
-	updateAssigment     UpdateAssigmentFunc
+	setClause           UpdateAssigmentFunc
 
 	supportsReturning bool
 }
@@ -95,10 +102,40 @@ func (d *dialectImpl) ArgumentPlaceholder() QueryPlaceholderFunc {
 	return d.argumentPlaceholder
 }
 
-func (d *dialectImpl) UpdateAssigment() func(columns []IColumn, values []Clause, out *SqlBuilder) (err error) {
-	return d.updateAssigment
+func (d *dialectImpl) SetClause() func(columns []IColumn, values []Clause, out *SqlBuilder) (err error) {
+	if d.setClause != nil {
+		return d.setClause
+	}
+	return setClause
 }
 
 func (d *dialectImpl) SupportsReturning() bool {
 	return d.supportsReturning
+}
+
+func setClause(columns []IColumn, values []Clause, out *SqlBuilder) (err error) {
+
+	if len(columns) != len(values) {
+		return errors.New("jet: mismatch in numers of columns and values")
+	}
+
+	for i, column := range columns {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if column == nil {
+			return errors.New("jet: nil column in columns list")
+		}
+
+		out.WriteString(column.Name())
+
+		out.WriteString(" = ")
+
+		if err = Serialize(values[i], UpdateStatementType, out); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

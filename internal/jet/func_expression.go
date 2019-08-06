@@ -204,14 +204,13 @@ func CHR(integerExpression IntegerExpression) StringExpression {
 	return newStringFunc("CHR", integerExpression)
 }
 
-//
-//func CONCAT(expressions ...Expression) StringExpression {
-//	return newStringFunc("CONCAT", expressions...)
-//}
-//
-//func CONCAT_WS(expressions ...Expression) StringExpression {
-//	return newStringFunc("CONCAT_WS", expressions...)
-//}
+func CONCAT(expressions ...Expression) StringExpression {
+	return newStringFunc("CONCAT", expressions...)
+}
+
+func CONCAT_WS(expressions ...Expression) StringExpression {
+	return newStringFunc("CONCAT_WS", expressions...)
+}
 
 // CONVERT converts string to dest_encoding. The original encoding is
 // specified by src_encoding. The string must be valid in this encoding.
@@ -243,11 +242,11 @@ func DECODE(data StringExpression, format StringExpression) StringExpression {
 	return newStringFunc("DECODE", data, format)
 }
 
-//func FORMAT(formatStr StringExpression, formatArgs ...expressions) StringExpression {
-//	args := []expressions{formatStr}
-//	args = append(args, formatArgs...)
-//	return newStringFunc("FORMAT", args...)
-//}
+func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
+	args := []Expression{formatStr}
+	args = append(args, formatArgs...)
+	return newStringFunc("FORMAT", args...)
+}
 
 // INITCAP converts the first letter of each word to upper case
 // and the rest to lower case. Words are sequences of alphanumeric
@@ -344,6 +343,14 @@ func TO_HEX(number IntegerExpression) StringExpression {
 	return newStringFunc("TO_HEX", number)
 }
 
+func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType ...string) BoolExpression {
+	if len(matchType) > 0 {
+		return newBoolFunc("REGEXP_LIKE", stringExp, pattern, String(matchType[0], true))
+	}
+
+	return newBoolFunc("REGEXP_LIKE", stringExp, pattern)
+}
+
 //----------Data Type Formatting Functions ----------------------//
 
 // TO_CHAR converts expression to string with format
@@ -425,9 +432,9 @@ func LOCALTIMESTAMP(precision ...int) TimestampExpression {
 	var timestampFunc *timestampFunc
 
 	if len(precision) > 0 {
-		timestampFunc = newTimestampFunc("LOCALTIMESTAMP", constLiteral(precision[0]))
+		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP", constLiteral(precision[0]))
 	} else {
-		timestampFunc = newTimestampFunc("LOCALTIMESTAMP")
+		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP")
 	}
 
 	timestampFunc.noBrackets = true
@@ -504,6 +511,12 @@ func (f *funcExpressionImpl) accept(visitor visitor) {
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 	if f == nil {
 		return errors.New("jet: Function expressions is nil. ")
+	}
+
+	if serializeOverride := out.Dialect.SerializeOverride(f.name); serializeOverride != nil {
+
+		serializeOverrideFunc := serializeOverride(f.expressions...)
+		return serializeOverrideFunc(statement, out, options...)
 	}
 
 	addBrackets := !f.noBrackets || len(f.expressions) > 0
@@ -629,7 +642,7 @@ type timestampFunc struct {
 	timestampInterfaceImpl
 }
 
-func newTimestampFunc(name string, expressions ...Expression) *timestampFunc {
+func NewTimestampFunc(name string, expressions ...Expression) *timestampFunc {
 	timestampFunc := &timestampFunc{}
 
 	timestampFunc.funcExpressionImpl = *newFunc(name, expressions, timestampFunc)

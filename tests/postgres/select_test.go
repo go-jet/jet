@@ -1273,8 +1273,6 @@ func TestAllSetOperators(t *testing.T) {
 		UNION_ALL,
 		INTERSECT,
 		INTERSECT_ALL,
-		//EXCEPT,
-		//EXCEPT_ALL,
 	}
 
 	expectedDestLen := []int{

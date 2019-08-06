@@ -30,10 +30,10 @@ CREATE TABLE test_sample.ALL_TYPES
 --     money_ptr money,
 --     money     money NOT NULL,
 
-    character_varying_ptr character varying(100),
-    character_varying character varying(200) NOT NULL,
-    character_ptr character(80),
-    character character(80) NOT NULL,
+    var_char_ptr character varying(100),
+    var_char character varying(200) NOT NULL,
+    char_ptr character(80),
+    char character(80) NOT NULL,
     text_ptr text,
     text text NOT NULL,
 
@@ -99,7 +99,7 @@ CREATE TABLE test_sample.ALL_TYPES
 INSERT INTO test_sample.ALL_types(
     small_int_ptr, "small_int", integer_ptr, "integer", big_int_ptr, "big_int", decimal_ptr, "decimal", numeric_ptr, "numeric", real_ptr, "real", double_precision_ptr, double_precision, smallserial, serial, bigserial,
 --     money_ptr, money,
-    character_varying_ptr, character_varying, character_ptr, "character", text_ptr, text,
+    var_char_ptr, var_char, char_ptr, char, text_ptr, text,
     bytea_ptr, bytea,
     timestampz_ptr, timestampz, timestamp_ptr, "timestamp", date_ptr, date, timez_ptr, timez, time_ptr, "time", interval_ptr, "interval",
     boolean_ptr, "boolean",

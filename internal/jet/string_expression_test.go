@@ -66,14 +66,9 @@ func TestStringNOT_LIKE(t *testing.T) {
 	assertClauseSerialize(t, table3StrCol.NOT_LIKE(String("JOHN")), "(table3.col2 NOT LIKE $1)", "JOHN")
 }
 
-func TestStringSIMILAR_TO(t *testing.T) {
-	assertClauseSerialize(t, table3StrCol.SIMILAR_TO(table2ColStr), "(table3.col2 SIMILAR TO table2.col_str)")
-	assertClauseSerialize(t, table3StrCol.SIMILAR_TO(String("JOHN")), "(table3.col2 SIMILAR TO $1)", "JOHN")
-}
-
-func TestStringNOT_SIMILAR_TO(t *testing.T) {
-	assertClauseSerialize(t, table3StrCol.NOT_SIMILAR_TO(table2ColStr), "(table3.col2 NOT SIMILAR TO table2.col_str)")
-	assertClauseSerialize(t, table3StrCol.NOT_SIMILAR_TO(String("JOHN")), "(table3.col2 NOT SIMILAR TO $1)", "JOHN")
+func TestStringREGEXP_LIKE(t *testing.T) {
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(table2ColStr), "REGEXP_LIKE(table3.col2, table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), "c"), "REGEXP_LIKE(table3.col2, $1, 'c')", "JOHN")
 }
 
 func TestStringExp(t *testing.T) {

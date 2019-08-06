@@ -38,6 +38,7 @@ var SUMi = jet.SUMi
 
 //--------------------- String functions ------------------//
 
+var REGEXP_LIKE = jet.REGEXP_LIKE
 var BIT_LENGTH = jet.BIT_LENGTH
 var CHAR_LENGTH = jet.CHAR_LENGTH
 var OCTET_LENGTH = jet.OCTET_LENGTH
@@ -47,11 +48,25 @@ var BTRIM = jet.BTRIM
 var LTRIM = jet.LTRIM
 var RTRIM = jet.RTRIM
 var CHR = jet.CHR
+
+var CONCAT = func(expressions ...Expression) StringExpression {
+	return jet.CONCAT(explicitCasts(expressions...)...)
+}
+
+func CONCAT_WS(expressions ...Expression) StringExpression {
+	return jet.CONCAT_WS(explicitCasts(expressions...)...)
+}
+
 var CONVERT = jet.CONVERT
 var CONVERT_FROM = jet.CONVERT_FROM
 var CONVERT_TO = jet.CONVERT_TO
 var ENCODE = jet.ENCODE
 var DECODE = jet.DECODE
+
+func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
+	return jet.FORMAT(formatStr, explicitCasts(formatArgs...)...)
+}
+
 var INITCAP = jet.INITCAP
 var LEFT = jet.LEFT
 var RIGHT = jet.RIGHT
@@ -91,3 +106,32 @@ var GREATEST = jet.GREATEST
 var LEAST = jet.LEAST
 var EXISTS = jet.EXISTS
 var CASE = jet.CASE
+
+func explicitCasts(expressions ...Expression) []jet.Expression {
+	ret := []jet.Expression{}
+
+	for _, exp := range expressions {
+		ret = append(ret, explicitCast(exp))
+	}
+
+	return ret
+}
+
+func explicitCast(expresion Expression) jet.Expression {
+	if _, ok := expresion.(jet.LiteralExpression); !ok {
+		return expresion
+	}
+
+	switch expresion.(type) {
+	case jet.BoolExpression:
+		return CAST(expresion).AS_BOOL()
+	case jet.IntegerExpression:
+		return CAST(expresion).AS_INTEGER()
+	case jet.FloatExpression:
+		return CAST(expresion).AS_NUMERIC()
+	case jet.StringExpression:
+		return CAST(expresion).AS_TEXT()
+	}
+
+	return expresion
+}

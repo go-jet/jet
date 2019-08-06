@@ -9,6 +9,7 @@ type cast interface {
 	jet.Cast
 	// Cast expression AS bool type
 	AS_BOOL() BoolExpression
+
 	// Cast expression AS smallint type
 	AS_SMALLINT() IntegerExpression
 	// Cast expression AS integer type
@@ -16,7 +17,7 @@ type cast interface {
 	// Cast expression AS bigint type
 	AS_BIGINT() IntegerExpression
 	// Cast expression AS numeric type, using precision and optionally scale
-	AS_NUMERIC(precision int, scale ...int) FloatExpression
+	AS_NUMERIC(precisionAndScale ...int) FloatExpression
 
 	// Cast expression AS real type
 	AS_REAL() FloatExpression
@@ -24,6 +25,8 @@ type cast interface {
 	AS_DOUBLE() FloatExpression
 	// Cast expression AS text type
 	AS_TEXT() StringExpression
+
+	AS_BYTEA() StringExpression
 
 	// Cast expression AS time with time timezone type
 	AS_TIMEZ() TimezExpression
@@ -64,16 +67,17 @@ func (b *castImpl) AS_BIGINT() IntegerExpression {
 }
 
 // Cast expression AS numeric type, using precision and optionally scale
-func (b *castImpl) AS_NUMERIC(precision int, scale ...int) FloatExpression {
-	var castType string
+func (b *castImpl) AS_NUMERIC(precisionAndScale ...int) FloatExpression {
+	var castArgs string
 
-	if len(scale) > 0 {
-		castType = fmt.Sprintf("numeric(%d, %d)", precision, scale[0])
-	} else {
-		castType = fmt.Sprintf("numeric(%d)", precision)
+	var argLen = len(precisionAndScale)
+	if argLen >= 2 {
+		castArgs = fmt.Sprintf("(%d, %d)", precisionAndScale[0], precisionAndScale[1])
+	} else if argLen == 1 {
+		castArgs = fmt.Sprintf("(%d)", precisionAndScale[0])
 	}
 
-	return jet.FloatExp(b.AS(castType))
+	return jet.FloatExp(b.AS("numeric" + castArgs))
 }
 
 // Cast expression AS real type
@@ -89,6 +93,11 @@ func (b *castImpl) AS_DOUBLE() FloatExpression {
 // Cast expression AS text type
 func (b *castImpl) AS_TEXT() StringExpression {
 	return jet.StringExp(b.AS("text"))
+}
+
+// Cast expression AS text type
+func (b *castImpl) AS_BYTEA() StringExpression {
+	return jet.StringExp(b.AS("bytea"))
 }
 
 // Cast expression AS date type

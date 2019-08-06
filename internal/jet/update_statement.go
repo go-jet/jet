@@ -89,7 +89,7 @@ func (u *updateStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 	out.newLine()
 	out.WriteString("SET")
 
-	if err = out.Dialect.UpdateAssigment()(u.columns, u.values, out); err != nil {
+	if err = out.Dialect.SetClause()(u.columns, u.values, out); err != nil {
 		return
 	}
 

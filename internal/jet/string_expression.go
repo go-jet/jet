@@ -1,5 +1,9 @@
 package jet
 
+const (
+	StringConcatOperator = "||"
+)
+
 // StringExpression interface
 type StringExpression interface {
 	Expression
@@ -18,8 +22,8 @@ type StringExpression interface {
 
 	LIKE(pattern StringExpression) BoolExpression
 	NOT_LIKE(pattern StringExpression) BoolExpression
-	SIMILAR_TO(pattern StringExpression) BoolExpression
-	NOT_SIMILAR_TO(pattern StringExpression) BoolExpression
+
+	REGEXP_LIKE(pattern StringExpression, matchType ...string) BoolExpression
 }
 
 type stringInterfaceImpl struct {
@@ -59,7 +63,7 @@ func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
 }
 
 func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {
-	return newBinaryStringExpression(s.parent, rhs, "||")
+	return newBinaryStringExpression(s.parent, rhs, StringConcatOperator)
 }
 
 func (s *stringInterfaceImpl) LIKE(pattern StringExpression) BoolExpression {
@@ -70,12 +74,8 @@ func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression 
 	return newBinaryBoolOperator(s.parent, pattern, "NOT LIKE")
 }
 
-func (s *stringInterfaceImpl) SIMILAR_TO(pattern StringExpression) BoolExpression {
-	return newBinaryBoolOperator(s.parent, pattern, "SIMILAR TO")
-}
-
-func (s *stringInterfaceImpl) NOT_SIMILAR_TO(pattern StringExpression) BoolExpression {
-	return newBinaryBoolOperator(s.parent, pattern, "NOT SIMILAR TO")
+func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, matchType ...string) BoolExpression {
+	return REGEXP_LIKE(s.parent, pattern, matchType...)
 }
 
 //---------------------------------------------------//

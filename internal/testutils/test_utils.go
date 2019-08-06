@@ -84,11 +84,14 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	_, args, err := query.Sql()
 	assert.NilError(t, err)
 	//assert.Equal(t, queryStr, expectedQuery)
-	assert.DeepEqual(t, args, expectedArgs)
+	if len(expectedArgs) > 0 {
+		assert.DeepEqual(t, args, expectedArgs)
+	}
 
 	debuqSql, err := query.DebugSql()
 
 	assert.NilError(t, err)
+
 	assert.Equal(t, debuqSql, expectedQuery)
 }
 

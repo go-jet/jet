@@ -1,10 +1,12 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/go-jet/jet/tests/testdata/common"
+	"time"
 
 	. "github.com/go-jet/jet/mysql"
 
@@ -35,6 +37,8 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.in_select"),
 		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL).AS("result.not_in"),
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
+
+		RAW("DATABASE()"),
 	).LIMIT(2)
 
 	//fmt.Println(query.Sql())
@@ -51,7 +55,8 @@ SELECT all_types.integer IS NULL AS "result.is_null",
      (all_types.small_int_ptr NOT IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.not_in_select"
+     ))) AS "result.not_in_select",
+     DATABASE()
 FROM test_sample.all_types
 LIMIT ?;
 `, int64(11), int64(22), int64(11), int64(22), int64(2))
@@ -116,8 +121,8 @@ SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
      (all_types.boolean = ?) AS "EQ2",
      (all_types.boolean != all_types.boolean_ptr) AS "NEq1",
      (all_types.boolean != ?) AS "NEq2",
-     (NOT all_types.boolean <=> all_types.boolean_ptr) AS "distinct1",
-     (NOT all_types.boolean <=> ?) AS "distinct2",
+     (NOT(all_types.boolean <=> all_types.boolean_ptr)) AS "distinct1",
+     (NOT(all_types.boolean <=> ?)) AS "distinct2",
      (all_types.boolean <=> all_types.boolean_ptr) AS "not_distinct_1",
      (all_types.boolean <=> ?) AS "NOTDISTINCT2",
      all_types.boolean IS TRUE AS "ISTRUE",
@@ -208,9 +213,9 @@ func TestFloatOperators(t *testing.T) {
 SELECT (all_types.numeric = all_types.numeric) AS "eq1",
      (all_types.decimal = ?) AS "eq2",
      (all_types.real = ?) AS "eq3",
-     (NOT all_types.numeric <=> all_types.numeric) AS "distinct1",
-     (NOT all_types.decimal <=> ?) AS "distinct2",
-     (NOT all_types.real <=> ?) AS "distinct3",
+     (NOT(all_types.numeric <=> all_types.numeric)) AS "distinct1",
+     (NOT(all_types.decimal <=> ?)) AS "distinct2",
+     (NOT(all_types.real <=> ?)) AS "distinct3",
      (all_types.numeric <=> all_types.numeric) AS "not_distinct1",
      (all_types.decimal <=> ?) AS "not_distinct2",
      (all_types.real <=> ?) AS "not_distinct3",
@@ -338,8 +343,8 @@ SELECT all_types.big_int AS "all_types.big_int",
      (all_types.big_int = ?) AS "eq2",
      (all_types.big_int != all_types.big_int_ptr) AS "neq1",
      (all_types.big_int != ?) AS "neq2",
-     (NOT all_types.big_int <=> all_types.big_int) AS "distinct1",
-     (NOT all_types.big_int <=> ?) AS "distinct2",
+     (NOT(all_types.big_int <=> all_types.big_int)) AS "distinct1",
+     (NOT(all_types.big_int <=> ?)) AS "distinct2",
      (all_types.big_int <=> all_types.big_int) AS "not distinct1",
      (all_types.big_int <=> ?) AS "not distinct2",
      (all_types.big_int < all_types.big_int_ptr) AS "lt1",
@@ -394,6 +399,319 @@ LIMIT ?;
 	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
 }
 
+func TestStringOperators(t *testing.T) {
+	query := AllTypes.SELECT(
+		AllTypes.Text.EQ(AllTypes.Char),
+		AllTypes.Text.EQ(String("Text")),
+		AllTypes.Text.NOT_EQ(AllTypes.VarCharPtr),
+		AllTypes.Text.NOT_EQ(String("Text")),
+		AllTypes.Text.GT(AllTypes.Text),
+		AllTypes.Text.GT(String("Text")),
+		AllTypes.Text.GT_EQ(AllTypes.TextPtr),
+		AllTypes.Text.GT_EQ(String("Text")),
+		AllTypes.Text.LT(AllTypes.Char),
+		AllTypes.Text.LT(String("Text")),
+		AllTypes.Text.LT_EQ(AllTypes.VarCharPtr),
+		AllTypes.Text.LT_EQ(String("Text")),
+		AllTypes.Text.CONCAT(String("text2")),
+		AllTypes.Text.CONCAT(Int(11)),
+		AllTypes.Text.LIKE(String("abc")),
+		AllTypes.Text.NOT_LIKE(String("_b_")),
+		AllTypes.Text.REGEXP_LIKE(String("aba")),
+		AllTypes.Text.REGEXP_LIKE(String("aba"), "c"),
+		String("ABA").REGEXP_LIKE(String("aba"), "i"),
+
+		BIT_LENGTH(AllTypes.Text),
+		CHAR_LENGTH(AllTypes.Char),
+		OCTET_LENGTH(AllTypes.Text),
+		LOWER(AllTypes.VarCharPtr),
+		UPPER(AllTypes.Char),
+		LTRIM(AllTypes.VarCharPtr),
+		RTRIM(AllTypes.VarCharPtr),
+		CONCAT(String("string1"), Int(1), Float(11.12)),
+		CONCAT_WS(String("string1"), Int(1), Float(11.12)),
+		FORMAT(String("Hello %s, %1$s"), String("World")),
+		LEFT(String("abcde"), Int(2)),
+		RIGHT(String("abcde"), Int(2)),
+		LENGTH(String("jose")),
+		LPAD(String("Hi"), Int(5), String("xy")),
+		RPAD(String("Hi"), Int(5), String("xy")),
+		MD5(AllTypes.VarCharPtr),
+		REPEAT(AllTypes.Text, Int(33)),
+		REPLACE(AllTypes.Char, String("BA"), String("AB")),
+		REVERSE(AllTypes.VarCharPtr),
+		SUBSTR(AllTypes.CharPtr, Int(3)),
+		SUBSTR(AllTypes.CharPtr, Int(3), Int(2)),
+		REGEXP_LIKE(String("ABA"), String("aba")),
+		REGEXP_LIKE(String("ABA"), String("aba"), "i"),
+		REGEXP_LIKE(AllTypes.Text, String("aba"), "i"),
+	)
+
+	//_, args, _ := query.Sql()
+
+	//fmt.Println(query.Sql())
+	//fmt.Println(args[15])
+
+	fmt.Println(query.Sql())
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
+
+func TestTimeExpressions(t *testing.T) {
+
+	query := AllTypes.SELECT(
+		Time(timeT.Clock()),
+
+		AllTypes.Time.EQ(AllTypes.Time),
+		AllTypes.Time.EQ(Time(23, 6, 6)),
+		AllTypes.Time.EQ(Time(22, 6, 6, 11)),
+		AllTypes.Time.EQ(Time(21, 6, 6, 11111)),
+
+		AllTypes.TimePtr.NOT_EQ(AllTypes.Time),
+		AllTypes.TimePtr.NOT_EQ(Time(20, 16, 6)),
+
+		AllTypes.Time.IS_DISTINCT_FROM(AllTypes.Time),
+		AllTypes.Time.IS_DISTINCT_FROM(Time(19, 26, 6)),
+
+		AllTypes.Time.IS_NOT_DISTINCT_FROM(AllTypes.Time),
+		AllTypes.Time.IS_NOT_DISTINCT_FROM(Time(18, 36, 6)),
+
+		AllTypes.Time.LT(AllTypes.Time),
+		AllTypes.Time.LT(Time(17, 46, 6)),
+
+		AllTypes.Time.LT_EQ(AllTypes.Time),
+		AllTypes.Time.LT_EQ(Time(16, 56, 56)),
+
+		AllTypes.Time.GT(AllTypes.Time),
+		AllTypes.Time.GT(Time(15, 16, 46)),
+
+		AllTypes.Time.GT_EQ(AllTypes.Time),
+		AllTypes.Time.GT_EQ(Time(14, 26, 36)),
+
+		CURRENT_TIME(),
+		CURRENT_TIME(3),
+	)
+
+	fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT ?,
+     all_types.time = all_types.time,
+     all_types.time = ?,
+     all_types.time = ?,
+     all_types.time = ?,
+     all_types.time_ptr != all_types.time,
+     all_types.time_ptr != ?,
+     NOT(all_types.time <=> all_types.time),
+     NOT(all_types.time <=> ?),
+     all_types.time <=> all_types.time,
+     all_types.time <=> ?,
+     all_types.time < all_types.time,
+     all_types.time < ?,
+     all_types.time <= all_types.time,
+     all_types.time <= ?,
+     all_types.time > all_types.time,
+     all_types.time > ?,
+     all_types.time >= all_types.time,
+     all_types.time >= ?,
+     CURRENT_TIME,
+     CURRENT_TIME(3)
+FROM test_sample.all_types;
+`, "20:34:58", "23:06:06", "22:06:06.011", "21:06:06.11111", "20:16:06",
+		"19:26:06", "18:36:06", "17:46:06", "16:56:56", "15:16:46", "14:26:36")
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestDateExpressions(t *testing.T) {
+	query := AllTypes.SELECT(
+		Date(timeT.Date()),
+
+		AllTypes.Date.EQ(AllTypes.Date),
+		AllTypes.Date.EQ(Date(2019, 6, 6)),
+
+		AllTypes.DatePtr.NOT_EQ(AllTypes.Date),
+		AllTypes.DatePtr.NOT_EQ(Date(2019, 1, 6)),
+
+		AllTypes.Date.IS_DISTINCT_FROM(AllTypes.Date),
+		AllTypes.Date.IS_DISTINCT_FROM(Date(2019, 2, 6)),
+
+		AllTypes.Date.IS_NOT_DISTINCT_FROM(AllTypes.Date),
+		AllTypes.Date.IS_NOT_DISTINCT_FROM(Date(2019, 3, 6)),
+
+		AllTypes.Date.LT(AllTypes.Date),
+		AllTypes.Date.LT(Date(2019, 4, 6)),
+
+		AllTypes.Date.LT_EQ(AllTypes.Date),
+		AllTypes.Date.LT_EQ(Date(2019, 5, 5)),
+
+		AllTypes.Date.GT(AllTypes.Date),
+		AllTypes.Date.GT(Date(2019, 1, 4)),
+
+		AllTypes.Date.GT_EQ(AllTypes.Date),
+		AllTypes.Date.GT_EQ(Date(2019, 2, 3)),
+
+		CURRENT_DATE(),
+	)
+
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, `
+SELECT ?,
+     all_types.date = all_types.date,
+     all_types.date = ?,
+     all_types.date_ptr != all_types.date,
+     all_types.date_ptr != ?,
+     NOT(all_types.date <=> all_types.date),
+     NOT(all_types.date <=> ?),
+     all_types.date <=> all_types.date,
+     all_types.date <=> ?,
+     all_types.date < all_types.date,
+     all_types.date < ?,
+     all_types.date <= all_types.date,
+     all_types.date <= ?,
+     all_types.date > all_types.date,
+     all_types.date > ?,
+     all_types.date >= all_types.date,
+     all_types.date >= ?,
+     CURRENT_DATE
+FROM test_sample.all_types;
+`)
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestDateTimeExpressions(t *testing.T) {
+
+	var dateTime = DateTime(2019, 6, 6, 10, 2, 46)
+
+	query := AllTypes.SELECT(
+		AllTypes.DateTime.EQ(AllTypes.DateTime),
+		AllTypes.DateTime.EQ(dateTime),
+
+		AllTypes.DateTimePtr.NOT_EQ(AllTypes.DateTime),
+		AllTypes.DateTimePtr.NOT_EQ(DateTime(2019, 6, 6, 10, 2, 46, 1000)),
+
+		AllTypes.DateTime.IS_DISTINCT_FROM(AllTypes.DateTime),
+		AllTypes.DateTime.IS_DISTINCT_FROM(dateTime),
+
+		AllTypes.DateTime.IS_NOT_DISTINCT_FROM(AllTypes.DateTime),
+		AllTypes.DateTime.IS_NOT_DISTINCT_FROM(dateTime),
+
+		AllTypes.DateTime.LT(AllTypes.DateTime),
+		AllTypes.DateTime.LT(dateTime),
+
+		AllTypes.DateTime.LT_EQ(AllTypes.DateTime),
+		AllTypes.DateTime.LT_EQ(dateTime),
+
+		AllTypes.DateTime.GT(AllTypes.DateTime),
+		AllTypes.DateTime.GT(dateTime),
+
+		AllTypes.DateTime.GT_EQ(AllTypes.DateTime),
+		AllTypes.DateTime.GT_EQ(dateTime),
+
+		NOW(),
+		NOW(1),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	testutils.AssertDebugStatementSql(t, query, `
+SELECT all_types.date_time = all_types.date_time,
+     all_types.date_time = '2019-06-06 10:02:46',
+     all_types.date_time_ptr != all_types.date_time,
+     all_types.date_time_ptr != '2019-06-06 10:02:46.1000',
+     NOT(all_types.date_time <=> all_types.date_time),
+     NOT(all_types.date_time <=> '2019-06-06 10:02:46'),
+     all_types.date_time <=> all_types.date_time,
+     all_types.date_time <=> '2019-06-06 10:02:46',
+     all_types.date_time < all_types.date_time,
+     all_types.date_time < '2019-06-06 10:02:46',
+     all_types.date_time <= all_types.date_time,
+     all_types.date_time <= '2019-06-06 10:02:46',
+     all_types.date_time > all_types.date_time,
+     all_types.date_time > '2019-06-06 10:02:46',
+     all_types.date_time >= all_types.date_time,
+     all_types.date_time >= '2019-06-06 10:02:46',
+     NOW(),
+     NOW(1)
+FROM test_sample.all_types;
+`)
+
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
+func TestTimestampExpressions(t *testing.T) {
+
+	var timestamp = Timestamp(2019, 6, 6, 10, 2, 46)
+
+	query := AllTypes.SELECT(
+		AllTypes.Timestamp.EQ(AllTypes.Timestamp),
+		AllTypes.Timestamp.EQ(timestamp),
+
+		AllTypes.TimestampPtr.NOT_EQ(AllTypes.Timestamp),
+		AllTypes.TimestampPtr.NOT_EQ(Timestamp(2019, 6, 6, 10, 2, 46, 1000)),
+
+		AllTypes.Timestamp.IS_DISTINCT_FROM(AllTypes.Timestamp),
+		AllTypes.Timestamp.IS_DISTINCT_FROM(timestamp),
+
+		AllTypes.Timestamp.IS_NOT_DISTINCT_FROM(AllTypes.Timestamp),
+		AllTypes.Timestamp.IS_NOT_DISTINCT_FROM(timestamp),
+
+		AllTypes.Timestamp.LT(AllTypes.Timestamp),
+		AllTypes.Timestamp.LT(timestamp),
+
+		AllTypes.Timestamp.LT_EQ(AllTypes.Timestamp),
+		AllTypes.Timestamp.LT_EQ(timestamp),
+
+		AllTypes.Timestamp.GT(AllTypes.Timestamp),
+		AllTypes.Timestamp.GT(timestamp),
+
+		AllTypes.Timestamp.GT_EQ(AllTypes.Timestamp),
+		AllTypes.Timestamp.GT_EQ(timestamp),
+
+		CURRENT_TIMESTAMP(),
+		CURRENT_TIMESTAMP(2),
+	)
+
+	fmt.Println(query.DebugSql())
+
+	testutils.AssertDebugStatementSql(t, query, `
+SELECT all_types.timestamp = all_types.timestamp,
+     all_types.timestamp = '2019-06-06 10:02:46',
+     all_types.timestamp_ptr != all_types.timestamp,
+     all_types.timestamp_ptr != '2019-06-06 10:02:46.1000',
+     NOT(all_types.timestamp <=> all_types.timestamp),
+     NOT(all_types.timestamp <=> '2019-06-06 10:02:46'),
+     all_types.timestamp <=> all_types.timestamp,
+     all_types.timestamp <=> '2019-06-06 10:02:46',
+     all_types.timestamp < all_types.timestamp,
+     all_types.timestamp < '2019-06-06 10:02:46',
+     all_types.timestamp <= all_types.timestamp,
+     all_types.timestamp <= '2019-06-06 10:02:46',
+     all_types.timestamp > all_types.timestamp,
+     all_types.timestamp > '2019-06-06 10:02:46',
+     all_types.timestamp >= all_types.timestamp,
+     all_types.timestamp >= '2019-06-06 10:02:46',
+     CURRENT_TIMESTAMP,
+     CURRENT_TIMESTAMP(2)
+FROM test_sample.all_types;
+`)
+	err := query.Query(db, &struct{}{})
+
+	assert.NilError(t, err)
+}
+
 var allTypesJson = `
 [
 	{
@@ -431,6 +749,8 @@ var allTypesJson = `
 		"RealPtr": 5.55,
 		"Bit": "\u0000\u0003",
 		"BitPtr": "\u0000\u0003",
+		"Time": "0000-01-01T10:11:12Z",
+		"TimePtr": "0000-01-01T10:11:12Z",
 		"Date": "2008-07-04T00:00:00Z",
 		"DatePtr": "2008-07-04T00:00:00Z",
 		"DateTime": "2011-12-18T13:17:17Z",
@@ -441,8 +761,8 @@ var allTypesJson = `
 		"YearPtr": 2004,
 		"Char": "char",
 		"CharPtr": "char",
-		"Varchar": "varchar",
-		"VarcharPtr": "varchar",
+		"VarChar": "varchar",
+		"VarCharPtr": "varchar",
 		"Binary": "YmluYXJ5AAAAAAAAAAAAAAAAAAA=",
 		"BinaryPtr": "YmluYXJ5AAAAAAAAAAAAAAAAAAA=",
 		"VarBinary": "dmFyYmluYXJ5",
@@ -493,6 +813,8 @@ var allTypesJson = `
 		"RealPtr": null,
 		"Bit": "\u0000\u0003",
 		"BitPtr": null,
+		"Time": "0000-01-01T10:11:12Z",
+		"TimePtr": null,
 		"Date": "2008-07-04T00:00:00Z",
 		"DatePtr": null,
 		"DateTime": "2011-12-18T13:17:17Z",
@@ -503,8 +825,8 @@ var allTypesJson = `
 		"YearPtr": null,
 		"Char": "char",
 		"CharPtr": null,
-		"Varchar": "varchar",
-		"VarcharPtr": null,
+		"VarChar": "varchar",
+		"VarCharPtr": null,
 		"Binary": "YmluYXJ5AAAAAAAAAAAAAAAAAAA=",
 		"BinaryPtr": null,
 		"VarBinary": "dmFyYmluYXJ5",

@@ -3,6 +3,15 @@ package postgres
 import "github.com/go-jet/jet/internal/jet"
 
 type SelectStatement jet.SelectStatement
+type SelectTable jet.SelectTable
+type SelectLock jet.SelectLock
+
+var (
+	UPDATE        = jet.NewSelectLock("UPDATE")
+	NO_KEY_UPDATE = jet.NewSelectLock("NO KEY UPDATE")
+	SHARE         = jet.NewSelectLock("SHARE")
+	KEY_SHARE     = jet.NewSelectLock("KEY SHARE")
+)
 
 var SELECT = jet.SELECT
 
@@ -31,12 +40,3 @@ func toJetSelects(selects ...SelectStatement) []jet.SelectStatement {
 
 	return ret
 }
-
-type SelectLock jet.SelectLock
-
-var (
-	UPDATE        = jet.NewSelectLock("UPDATE")
-	NO_KEY_UPDATE = jet.NewSelectLock("NO KEY UPDATE")
-	SHARE         = jet.NewSelectLock("SHARE")
-	KEY_SHARE     = jet.NewSelectLock("KEY SHARE")
-)
