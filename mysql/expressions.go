@@ -30,3 +30,5 @@ var DateTimeExp = jet.TimestampExp
 var TimestampExp = jet.TimestampExp
 
 var Raw = jet.Raw
+
+var NewEnumValue = jet.NewEnumValue
