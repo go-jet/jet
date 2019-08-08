@@ -90,15 +90,15 @@ type {{ToGoIdentifier .Name}} struct {
 `
 var enumSQLBuilderTemplate = `package enum
 
-import "github.com/go-jet/jet/postgres"
+import "github.com/go-jet/jet/{{dialect.PackageName}}"
 
 var {{ToGoIdentifier $.Name}} = &struct {
 {{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}} postgres.StringExpression
+	{{ToGoIdentifier $element}} {{dialect.PackageName}}.StringExpression
 {{- end}}
 } {
 {{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}}: postgres.NewEnumValue("{{$element}}"),
+	{{ToGoIdentifier $element}}: {{dialect.PackageName}}.NewEnumValue("{{$element}}"),
 {{- end}}
 }
 `
