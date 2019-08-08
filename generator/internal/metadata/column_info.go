@@ -85,7 +85,7 @@ func (c ColumnInfo) GoBaseType() string {
 	case "uuid":
 		return "uuid.UUID"
 	default:
-		fmt.Println("Unsupported sql type: " + c.DataType + ", " + c.EnumName + ", using string instead for model type.")
+		fmt.Println("Unsupported sql type: " + c.DataType + ", using string instead for model type.")
 		return "string"
 	}
 }

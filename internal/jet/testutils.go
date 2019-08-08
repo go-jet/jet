@@ -1,7 +1,6 @@
 package jet
 
 import (
-	"fmt"
 	"gotest.tools/assert"
 	"testing"
 )
@@ -106,9 +105,6 @@ func assertStatement(t *testing.T, query Statement, expectedQuery string, expect
 	queryStr, args, err := query.Sql()
 	assert.NilError(t, err)
 
-	fmt.Println(queryStr)
-
-	//fmt.Println(queryStr)
 	assert.Equal(t, queryStr, expectedQuery)
 	assert.DeepEqual(t, args, expectedArgs)
 }

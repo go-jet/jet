@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
@@ -26,7 +25,7 @@ func TestAllTypes(t *testing.T) {
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 
@@ -96,7 +95,7 @@ LIMIT ?;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 [
@@ -421,7 +420,7 @@ LIMIT ?;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
 }
@@ -523,7 +522,7 @@ func TestTimeExpressions(t *testing.T) {
 		CURRENT_TIME(3),
 	)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS TIME),
@@ -711,7 +710,7 @@ func TestTimestampExpressions(t *testing.T) {
 		CURRENT_TIMESTAMP(2),
 	)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.timestamp = all_types.timestamp,
@@ -756,7 +755,7 @@ func TestTimeLiterals(t *testing.T) {
 		TimestampT(timeT).AS("timestampT"),
 	).FROM(AllTypes).LIMIT(1)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS DATE) AS "date",
@@ -783,7 +782,7 @@ LIMIT ?;
 	err = query.Query(db, &dest)
 	assert.NilError(t, err)
 
-	testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 {

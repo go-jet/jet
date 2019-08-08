@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/postgres"
 	. "github.com/go-jet/jet/postgres"
@@ -94,7 +93,7 @@ LIMIT $5;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 [
@@ -233,11 +232,7 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	//_, args, _ := query.Sql()
-
 	//fmt.Println(query.Sql())
-	//fmt.Println(args[15])
-	fmt.Println(query.Sql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -408,7 +403,7 @@ LIMIT $35;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/common/float_operators.json")
 }
@@ -485,7 +480,7 @@ func TestIntegerOperators(t *testing.T) {
 		CBRT(ABSi(AllTypes.BigInt)).AS("cbrt"),
 	).LIMIT(2)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT all_types.big_int AS "all_types.big_int",
@@ -547,8 +542,8 @@ LIMIT $22;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonSave("./testdata/common/int_operators.json", dest)
-	//testutils.JsonPrint(dest)
+	//testutils.SaveJsonFile("./testdata/common/int_operators.json", dest)
+	//testutils.PrintJson(dest)
 	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
 }
 

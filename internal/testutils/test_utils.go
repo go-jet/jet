@@ -8,26 +8,13 @@ import (
 	"github.com/go-jet/jet/internal/jet"
 	"gotest.tools/assert"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
 	"time"
 )
-
-func JsonPrint(v interface{}) {
-	jsonText, _ := json.MarshalIndent(v, "", "\t")
-	fmt.Println(string(jsonText))
-}
-
-func JsonSave(v interface{}, path string) {
-	jsonText, _ := json.MarshalIndent(v, "", "\t")
-
-	err := ioutil.WriteFile(path, jsonText, 0644)
-
-	if err != nil {
-		panic(err)
-	}
-}
 
 func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected ...int64) {
 	res, err := stmt.Exec(db)
@@ -47,6 +34,16 @@ func AssertExecErr(t *testing.T, stmt jet.Statement, db execution.DB, errorStr s
 	assert.Error(t, err, errorStr)
 }
 
+func getFullPath(relativePath string) string {
+	goPath := os.Getenv("GOPATH")
+	return filepath.Join(goPath, "src/github.com/go-jet/jet/tests", relativePath)
+}
+
+func PrintJson(v interface{}) {
+	jsonText, _ := json.MarshalIndent(v, "", "\t")
+	fmt.Println(string(jsonText))
+}
+
 func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
@@ -54,8 +51,21 @@ func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
 
-func AssertJSONFile(t *testing.T, data interface{}, jsonFilePath string) {
-	fileJSONData, err := ioutil.ReadFile(jsonFilePath)
+func SaveJsonFile(v interface{}, testRelativePath string) {
+	jsonText, _ := json.MarshalIndent(v, "", "\t")
+
+	filePath := getFullPath(testRelativePath)
+	err := ioutil.WriteFile(filePath, jsonText, 0644)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
+func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
+
+	filePath := getFullPath(testRelativePath)
+	fileJSONData, err := ioutil.ReadFile(filePath)
 	assert.NilError(t, err)
 
 	if runtime.GOOS == "windows" {

@@ -14,6 +14,14 @@ jobs:
           POSTGRES_PASSWORD: jet
           POSTGRES_DB: jetdb
 
+      - image: circleci/php:7.1-apache-node-browsers # The primary container where steps are run
+      - image: circleci/mysql:8.0.4
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: user
+          MYSQL_PASSWORD: passw0rd
+
     working_directory: /go/src/github.com/go-jet/jet
 
     environment: # environment variables for the build itself
@@ -28,6 +36,7 @@ jobs:
           command: |
             go get github.com/google/uuid
             go get github.com/lib/pq
+            go get github.com/go-sql-driver/mysql
 
             go get github.com/pkg/profile
             go get gotest.tools/assert
@@ -48,14 +57,29 @@ jobs:
             echo Failed waiting for Postgres && exit 1
 
       - run:
-          name: Init Postgres database
+          name: Waiting for MySQL to be ready
           command: |
-            cd tests
-            go run ./init/init.go
-            cd ..
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - run:
+          name: Install MySQL CLI;
+          command: |
+            sudo apt-get install default-mysql-client
+
+      - run:
+         name: Init Postgres and MySQL database
+         command: |
+           cd tests
+           go run ./init/init.go
+           cd ..
 
       - run: mkdir -p $TEST_RESULTS
-      - run: go test -v . ./tests -coverpkg=github.com/go-jet/jet,github.com/go-jet/jet/execution/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
+      - run: go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/mysql/...,github.com/go-jet/jet/execution/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
       - run:
           name: Upload code coverage

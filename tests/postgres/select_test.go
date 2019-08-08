@@ -1051,11 +1051,11 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	assert.Equal(t, len(dest), 104)
 
-	//testutils.JsonSave(dest, "postgres/testdata/customer_payment_sum.json")
+	//testutils.SaveJsonFile(dest, "postgres/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "postgres/testdata/customer_payment_sum.json")
 }
 

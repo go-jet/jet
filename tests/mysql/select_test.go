@@ -63,8 +63,8 @@ ORDER BY actor.actor_id;
 	assert.Equal(t, len(dest), 200)
 	assert.DeepEqual(t, dest[0], actor1)
 
-	//testutils.JsonPrint(dest)
-	//testutils.JsonSave(dest, "mysql/testdata/all_actors.json")
+	//testutils.PrintJson(dest)
+	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
 	testutils.AssertJSONFile(t, dest, "mysql/testdata/all_actors.json")
 }
 
@@ -129,11 +129,11 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 
 	assert.NilError(t, err)
 
-	//testutils.JsonPrint(dest)
+	//testutils.PrintJson(dest)
 
 	assert.Equal(t, len(dest), 174)
 
-	//testutils.JsonSave(dest, "mysql/testdata/customer_payment_sum.json")
+	//testutils.SaveJsonFile(dest, "mysql/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "mysql/testdata/customer_payment_sum.json")
 }
 
@@ -169,7 +169,7 @@ func TestSubQuery(t *testing.T) {
 	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 
-	//testutils.JsonSave(dest, "mysql/testdata/r_rating_films.json")
+	//testutils.SaveJsonFile(dest, "mysql/testdata/r_rating_films.json")
 	testutils.AssertJSONFile(t, dest, "mysql/testdata/r_rating_films.json")
 }
 
@@ -317,7 +317,7 @@ LIMIT ?;
 		//assert.Equal(t, len(dest[0].Films), 10)
 		//assert.Equal(t, len(dest[0].Films[0].Actors), 10)
 
-		//testutils.JsonSave(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
+		//testutils.SaveJsonFile(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
 
 		testutils.AssertJSONFile(t, dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
 	}
