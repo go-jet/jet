@@ -628,31 +628,16 @@ var int32Type = reflect.TypeOf(int32(1))
 var uint32Type = reflect.TypeOf(uint32(1))
 var int64Type = reflect.TypeOf(int64(1))
 var uint64Type = reflect.TypeOf(uint64(1))
-var float32Type = reflect.TypeOf(float32(1.1))
-var float64Type = reflect.TypeOf(float64(1.1))
-
-var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
-
-//var nullUInt8Type = reflect.TypeOf(internal.NullUInt8{})
-var nullInt16Type = reflect.TypeOf(internal.NullInt16{})
-
-//var nullUInt16Type = reflect.TypeOf(internal.NullUInt16{})
-var nullInt32Type = reflect.TypeOf(internal.NullInt32{})
-
-//var nullUInt32Type = reflect.TypeOf(internal.NullUInt32{})
-var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
-
-//var nullUInt64Type = reflect.TypeOf(internal.NullUInt64{})
-
-var nullFloat32Type = reflect.TypeOf(internal.NullFloat32{})
-var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
-
-var nullStringType = reflect.TypeOf(sql.NullString{})
 
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
-
+var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
+var nullInt16Type = reflect.TypeOf(internal.NullInt16{})
+var nullInt32Type = reflect.TypeOf(internal.NullInt32{})
+var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
+var nullFloat32Type = reflect.TypeOf(internal.NullFloat32{})
+var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
+var nullStringType = reflect.TypeOf(sql.NullString{})
 var nullTimeType = reflect.TypeOf(internal.NullTime{})
-
 var nullByteArrayType = reflect.TypeOf(internal.NullByteArray{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
