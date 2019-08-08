@@ -112,7 +112,7 @@ CREATE TABLE `all_types` (
     `json` json NOT NULL,
     `json_ptr` json
 
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO `all_types` VALUES
 (false, true,

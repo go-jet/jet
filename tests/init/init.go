@@ -46,8 +46,11 @@ func initMySQLDB() {
 	}
 
 	for _, dbName := range mySQLDBs {
-		cmdLine := fmt.Sprintf("mysql -u %s -p%s %s < %s",
+		cmdLine := fmt.Sprintf("mysql -h 127.0.0.1 -u %s -p%s %s < %s",
 			dbconfig.MySQLUser, dbconfig.MySQLPassword, dbName, "./init/data/mysql/"+dbName+".sql")
+
+		fmt.Println(cmdLine)
+
 		cmd := exec.Command("sh", "-c", cmdLine)
 
 		cmd.Stderr = os.Stderr

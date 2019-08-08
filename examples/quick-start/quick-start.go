@@ -97,7 +97,7 @@ func jsonSave(path string, v interface{}) {
 	}
 }
 
-func printStatementInfo(stmt Statement) {
+func printStatementInfo(stmt SelectStatement) {
 	query, args, err := stmt.Sql()
 	panicOnError(err)
 

@@ -51,6 +51,25 @@ func (t *timestampzInterfaceImpl) GT_EQ(rhs TimestampzExpression) BoolExpression
 	return gtEq(t.parent, rhs)
 }
 
+//---------------------------------------------------//
+
+type prefixTimestampzOperator struct {
+	expressionInterfaceImpl
+	timestampzInterfaceImpl
+
+	prefixOpExpression
+}
+
+func NewPrefixTimestampOperator(operator string, expression Expression) TimestampzExpression {
+	timeExpr := prefixTimestampzOperator{}
+	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
+
+	timeExpr.expressionInterfaceImpl.parent = &timeExpr
+	timeExpr.timestampzInterfaceImpl.parent = &timeExpr
+
+	return &timeExpr
+}
+
 //-------------------------------------------------
 
 type timestampzExpressionWrapper struct {

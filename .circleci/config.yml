@@ -8,14 +8,14 @@ jobs:
       # specify the version
       - image: circleci/golang:1.11
 
-      - image: circleci/postgres:10.6-alpine
+      - image: circleci/postgres:10.8-alpine
         environment: # environment variables for primary container
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
           POSTGRES_DB: jetdb
 
-      - image: circleci/php:7.1-apache-node-browsers # The primary container where steps are run
-      - image: circleci/mysql:8.0.4
+      - image: circleci/mysql:8.0
+        command: [--default-authentication-plugin=mysql_native_password]
         environment:
           MYSQL_ROOT_PASSWORD: jet
           MYSQL_DATABASE: dvds
@@ -30,7 +30,6 @@ jobs:
     steps:
       - checkout
 
-      # specify any bash command here prefixed with `run: `
       - run:
           name: Install dependencies
           command: |
@@ -71,17 +70,23 @@ jobs:
           command: |
             sudo apt-get install default-mysql-client
 
-      - run: cat /var/run/mysqld/mysqld.sock
+      - run:
+          name: Init MySQL database
+          command: |
+            mysql -h 127.0.0.1 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
+            mysql -h 127.0.0.1 -u root -pjet -e "set global sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -u jet -pjet -e "create database test_sample"
 
       - run:
-         name: Init Postgres and MySQL database
+         name: Init Postgres database
          command: |
            cd tests
-           go run ./init/init.go
+           go run ./init/init.go -testsuite all
            cd ..
 
+
       - run: mkdir -p $TEST_RESULTS
-      - run: go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/mysql/...,github.com/go-jet/jet/execution/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
+      - run: go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/mysql/...,github.com/go-jet/jet/execution/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out # 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
       - run:
           name: Upload code coverage

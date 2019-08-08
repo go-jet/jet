@@ -803,6 +803,8 @@ func TestTimeLiterals(t *testing.T) {
 	).FROM(AllTypes).
 		LIMIT(1)
 
+	//fmt.Println(query.Sql())
+
 	testutils.AssertStatementSql(t, query, `
 SELECT $1::DATE AS "date",
      $2::time without time zone AS "time",
@@ -814,23 +816,25 @@ LIMIT $6;
 `)
 
 	var dest struct {
-		Date       time.Time
-		Time       time.Time
-		Timez      time.Time
-		Timestamp  time.Time
-		Timestampz time.Time
+		Date      time.Time
+		Time      time.Time
+		Timez     time.Time
+		Timestamp time.Time
+		//Timestampz time.Time
 	}
 
 	err = query.Query(db, &dest)
 
 	assert.NilError(t, err)
+
+	//testutils.PrintJson(dest)
+
 	testutils.AssertJSON(t, dest, `
 {
 	"Date": "2009-11-17T00:00:00Z",
 	"Time": "0000-01-01T20:34:58.651387Z",
 	"Timez": "0000-01-01T20:34:58.651387+01:00",
-	"Timestamp": "2009-11-17T20:34:58.651387Z",
-	"Timestampz": "2009-11-17T20:34:58.651387+01:00"
+	"Timestamp": "2009-11-17T20:34:58.651387Z"
 }
 `)
 }

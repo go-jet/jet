@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/generator/internal/metadata"
 	"github.com/go-jet/jet/generator/internal/template"
+	"github.com/go-jet/jet/internal/utils"
 	"github.com/go-jet/jet/mysql"
 	"path"
 )
@@ -26,7 +27,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer utils.DBClose(db)
 
 	fmt.Println("Retrieving database information...")
 	// No schemas in MySQL

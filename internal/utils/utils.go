@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"database/sql"
 	"github.com/go-jet/jet/internal/3rdparty/snaker"
 	"go/format"
 	"os"
@@ -77,6 +78,14 @@ func CleanUpGeneratedFiles(dir string) error {
 	}
 
 	return nil
+}
+
+func DBClose(db *sql.DB) {
+	if db == nil {
+		return
+	}
+
+	db.Close()
 }
 
 // DirExists checks if folder at path exist.

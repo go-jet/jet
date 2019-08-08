@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/generator/internal/metadata"
 	"github.com/go-jet/jet/generator/internal/template"
+	"github.com/go-jet/jet/internal/utils"
 	"github.com/go-jet/jet/postgres"
 	"path"
 	"strconv"
@@ -27,7 +28,7 @@ type DBConnection struct {
 func Generate(destDir string, dbConn DBConnection) error {
 
 	db, err := openConnection(dbConn)
-	defer db.Close()
+	defer utils.DBClose(db)
 
 	if err != nil {
 		return err
