@@ -17,10 +17,10 @@ jobs:
       - image: circleci/php:7.1-apache-node-browsers # The primary container where steps are run
       - image: circleci/mysql:8.0.4
         environment:
-          MYSQL_ROOT_PASSWORD: rootpw
-          MYSQL_DATABASE: test_db
-          MYSQL_USER: user
-          MYSQL_PASSWORD: passw0rd
+          MYSQL_ROOT_PASSWORD: jet
+          MYSQL_DATABASE: dvds
+          MYSQL_USER: jet
+          MYSQL_PASSWORD: jet
 
     working_directory: /go/src/github.com/go-jet/jet
 
@@ -70,6 +70,8 @@ jobs:
           name: Install MySQL CLI;
           command: |
             sudo apt-get install default-mysql-client
+
+      - run: cat /var/run/mysqld/mysqld.sock
 
       - run:
          name: Init Postgres and MySQL database
