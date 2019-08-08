@@ -215,6 +215,112 @@ LIMIT ?;
 		LIMIT(12)
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestSelectUNION(t *testing.T) {
+	expectedSQL := `
+(
+     (
+          SELECT payment.payment_id AS "payment.payment_id"
+          FROM dvds.payment
+          LIMIT ?
+          OFFSET ?
+     )
+     UNION
+     (
+          SELECT payment.payment_id AS "payment.payment_id"
+          FROM dvds.payment
+          LIMIT ?
+          OFFSET ?
+     )
+)
+LIMIT ?;
+`
+	query := UNION(
+		Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
+		Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
+	).LIMIT(1)
+
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(10), int64(1), int64(2), int64(1))
+
+	query2 := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
+		UNION(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).LIMIT(1)
+
+	testutils.AssertStatementSql(t, query2, expectedSQL, int64(1), int64(10), int64(1), int64(2), int64(1))
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestSelectINTERSECT(t *testing.T) {
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, "jet: MySQL does not support INTERSECT operator.")
+	}()
+
+	query := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
+		INTERSECT(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).LIMIT(1)
+
+	//fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestSelectEXCEPT(t *testing.T) {
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, "jet: MySQL does not support EXCEPT operator.")
+	}()
+
+	query := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
+		EXCEPT(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).LIMIT(1)
+
+	//fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestSelectUNION_ALL(t *testing.T) {
+	expectedSQL := `
+(
+     (
+          SELECT payment.payment_id AS "payment.payment_id"
+          FROM dvds.payment
+          LIMIT ?
+          OFFSET ?
+     )
+     UNION ALL
+     (
+          SELECT payment.payment_id AS "payment.payment_id"
+          FROM dvds.payment
+          LIMIT ?
+          OFFSET ?
+     )
+);
+`
+	query := UNION_ALL(
+		Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
+		Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
+	)
+
+	//fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(10), int64(1), int64(2))
+
+	query2 := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
+		UNION_ALL(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2))
+
+	testutils.AssertStatementSql(t, query2, expectedSQL, int64(1), int64(10), int64(1), int64(2))
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
 }
 
 func TestJoinQueryStruct(t *testing.T) {

@@ -15,10 +15,6 @@ var (
 
 var UNION = jet.UNION
 var UNION_ALL = jet.UNION_ALL
-var INTERSECT = jet.INTERSECT
-var INTERSECT_ALL = jet.INTERSECT_ALL
-var EXCEPT = jet.EXCEPT
-var EXCEPT_ALL = jet.EXCEPT_ALL
 
 //-----------------literals----------------------//
 
