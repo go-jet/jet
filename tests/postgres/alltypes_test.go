@@ -466,8 +466,8 @@ func TestIntegerOperators(t *testing.T) {
 		AllTypes.SmallInt.BIT_XOR(AllTypes.SmallInt).AS("bit xor 1"),
 		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
 
-		BIT_NOT(MINUSi(AllTypes.SmallInt)).AS("bit_not_1"),
-		BIT_NOT(MINUSi(Int(11))).AS("bit_not_2"),
+		BIT_NOT(Int(-1).MUL(AllTypes.SmallInt)).AS("bit_not_1"),
+		BIT_NOT(Int(-11, true)).AS("bit_not_2"),
 
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int(2))).AS("bit shift left 1"),
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
@@ -521,17 +521,17 @@ SELECT all_types.big_int AS "all_types.big_int",
      (all_types.small_int | $16) AS "bit or 2",
      (all_types.small_int # all_types.small_int) AS "bit xor 1",
      (all_types.small_int # $17) AS "bit xor 2",
-     (~ all_types.small_int) AS "bit_not_1",
-     (~ 11) AS "bit_not_2",
-     (all_types.small_int << (all_types.small_int / $18)) AS "bit shift left 1",
-     (all_types.small_int << $19) AS "bit shift left 2",
-     (all_types.small_int >> (all_types.small_int / $20)) AS "bit shift right 1",
-     (all_types.small_int >> $21) AS "bit shift right 2",
+     (~ ($18 * all_types.small_int)) AS "bit_not_1",
+     (~ -11) AS "bit_not_2",
+     (all_types.small_int << (all_types.small_int / $19)) AS "bit shift left 1",
+     (all_types.small_int << $20) AS "bit shift left 2",
+     (all_types.small_int >> (all_types.small_int / $21)) AS "bit shift right 1",
+     (all_types.small_int >> $22) AS "bit shift right 2",
      ABS(all_types.big_int) AS "abs",
      SQRT(ABS(all_types.big_int)) AS "sqrt",
      CBRT(ABS(all_types.big_int)) AS "cbrt"
 FROM test_sample.all_types
-LIMIT $22;
+LIMIT $23;
 `)
 
 	var dest []struct {

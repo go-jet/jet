@@ -99,8 +99,3 @@ func TestIntExpressionIntExp(t *testing.T) {
 	assertClauseSerialize(t, IntExp(table1ColFloat.ADD(table2ColFloat)).ADD(Int(11)),
 		"((table1.col_float + table2.col_float) + $1)", int64(11))
 }
-
-func TestIntExpression_MINUSi(t *testing.T) {
-	assertClauseSerialize(t, MINUSi(table2ColInt), "(- table2.col_int)")
-	assertClauseSerialize(t, MINUSi(Int(3)), "(- $1)", int64(3))
-}
