@@ -61,7 +61,7 @@ func (t *timezInterfaceImpl) GT_EQ(rhs TimezExpression) BoolExpression {
 
 //---------------------------------------------------//
 type prefixTimezExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	timezInterfaceImpl
 
 	prefixOpExpression
@@ -71,8 +71,8 @@ type prefixTimezExpression struct {
 //	timeExpr := prefixTimezExpression{}
 //	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
 //
-//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-//	timeExpr.timezInterfaceImpl.parent = &timeExpr
+//	timeExpr.ExpressionInterfaceImpl.Parent = &timeExpr
+//	timeExpr.timezInterfaceImpl.Parent = &timeExpr
 //
 //	return &timeExpr
 //}

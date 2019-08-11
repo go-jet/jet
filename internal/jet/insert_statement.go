@@ -35,23 +35,23 @@ func newInsertStatement(t WritableTable, columns []IColumn) InsertStatement {
 type insertStatementImpl struct {
 	table     WritableTable
 	columns   []IColumn
-	rows      [][]Clause
+	rows      [][]Serializer
 	query     SelectStatement
 	returning []Projection
 }
 
 func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
-	i.rows = append(i.rows, unwindRowFromValues(value, values))
+	i.rows = append(i.rows, UnwindRowFromValues(value, values))
 	return i
 }
 
 func (i *insertStatementImpl) MODEL(data interface{}) InsertStatement {
-	i.rows = append(i.rows, unwindRowFromModel(i.getColumns(), data))
+	i.rows = append(i.rows, UnwindRowFromModel(i.getColumns(), data))
 	return i
 }
 
 func (i *insertStatementImpl) MODELS(data interface{}) InsertStatement {
-	i.rows = append(i.rows, unwindRowsFromModels(i.getColumns(), data)...)
+	i.rows = append(i.rows, UnwindRowsFromModels(i.getColumns(), data)...)
 	return i
 }
 
@@ -113,6 +113,8 @@ func (i *insertStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		out.WriteString(")")
 	}
 
+	//TODO:
+
 	if len(i.rows) == 0 && i.query == nil {
 		return "", nil, errors.New("jet: no row values or query specified")
 	}
@@ -152,7 +154,7 @@ func (i *insertStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		}
 	}
 
-	if err = out.writeReturning(InsertStatementType, i.returning); err != nil {
+	if err = out.WriteReturning(InsertStatementType, i.returning); err != nil {
 		return
 	}
 

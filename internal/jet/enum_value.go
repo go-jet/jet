@@ -1,7 +1,7 @@
 package jet
 
 type enumValue struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	stringInterfaceImpl
 	noOpVisitorImpl
 
@@ -12,7 +12,7 @@ type enumValue struct {
 func NewEnumValue(name string) StringExpression {
 	enumValue := &enumValue{name: name}
 
-	enumValue.expressionInterfaceImpl.parent = enumValue
+	enumValue.ExpressionInterfaceImpl.Parent = enumValue
 	enumValue.stringInterfaceImpl.parent = enumValue
 
 	return enumValue

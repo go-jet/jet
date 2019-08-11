@@ -23,26 +23,26 @@ func newUpdateStatement(table WritableTable, columns []IColumn) UpdateStatement 
 	return &updateStatementImpl{
 		table:   table,
 		columns: columns,
-		values:  make([]Clause, 0, len(columns)),
+		values:  make([]Serializer, 0, len(columns)),
 	}
 }
 
 type updateStatementImpl struct {
 	table     WritableTable
 	columns   []IColumn
-	values    []Clause
+	values    []Serializer
 	where     BoolExpression
 	returning []Projection
 }
 
 func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {
-	u.values = unwindRowFromValues(value, values)
+	u.values = UnwindRowFromValues(value, values)
 
 	return u
 }
 
 func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
-	u.values = unwindRowFromModel(u.columns, data)
+	u.values = UnwindRowFromModel(u.columns, data)
 
 	return u
 }
@@ -101,7 +101,7 @@ func (u *updateStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		return
 	}
 
-	if err = out.writeReturning(UpdateStatementType, u.returning); err != nil {
+	if err = out.WriteReturning(UpdateStatementType, u.returning); err != nil {
 		return
 	}
 

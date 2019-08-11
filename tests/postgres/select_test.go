@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/enum"
@@ -157,7 +159,12 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
+	fmt.Println(query.DebugSql())
+
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -1240,6 +1247,8 @@ OFFSET 20;
 		LIMIT(10).
 		OFFSET(20)
 
+	fmt.Println(query.DebugSql())
+
 	testutils.AssertDebugStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
 	dest := []model.Payment{}
@@ -1267,7 +1276,7 @@ func TestAllSetOperators(t *testing.T) {
 	select1 := Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17600)).AND(Payment.PaymentID.LT(Int(17610))))
 	select2 := Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17620)).AND(Payment.PaymentID.LT(Int(17630))))
 
-	type setOperator func(lhs, rhs SelectStatement, selects ...SelectStatement) SelectStatement
+	type setOperator func(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) SetStatement
 	operators := []setOperator{
 		UNION,
 		UNION_ALL,

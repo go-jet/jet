@@ -15,7 +15,7 @@ func TestLockTable(t *testing.T) {
 	expectedSQL := `
 LOCK TABLE dvds.address IN`
 
-	var testData = []string{
+	var testData = []TableLockMode{
 		LOCK_ACCESS_SHARE,
 		LOCK_ROW_SHARE,
 		LOCK_ROW_EXCLUSIVE,

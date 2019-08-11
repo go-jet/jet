@@ -80,7 +80,7 @@ func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, matchType ..
 
 //---------------------------------------------------//
 type binaryStringExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	stringInterfaceImpl
 
 	binaryOpExpression
@@ -90,7 +90,7 @@ func newBinaryStringExpression(lhs, rhs Expression, operator string) StringExpre
 	boolExpression := binaryStringExpression{}
 
 	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
-	boolExpression.expressionInterfaceImpl.parent = &boolExpression
+	boolExpression.ExpressionInterfaceImpl.Parent = &boolExpression
 	boolExpression.stringInterfaceImpl.parent = &boolExpression
 
 	return &boolExpression

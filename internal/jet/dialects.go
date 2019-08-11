@@ -21,7 +21,7 @@ type Dialect interface {
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
-	SetClause() func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
+	SetClause() func(columns []IColumn, values []Serializer, out *SqlBuilder) (err error)
 	SupportsReturning() bool
 }
 
@@ -29,7 +29,7 @@ type SerializeFunc func(statement StatementType, out *SqlBuilder, options ...Ser
 type SerializeOverride func(expressions ...Expression) SerializeFunc
 
 type QueryPlaceholderFunc func(ord int) string
-type UpdateAssigmentFunc func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
+type UpdateAssigmentFunc func(columns []IColumn, values []Serializer, out *SqlBuilder) (err error)
 
 type DialectParams struct {
 	Name                string
@@ -38,7 +38,7 @@ type DialectParams struct {
 	AliasQuoteChar      byte
 	IdentifierQuoteChar byte
 	ArgumentPlaceholder QueryPlaceholderFunc
-	SetClause           func(columns []IColumn, values []Clause, out *SqlBuilder) (err error)
+	SetClause           func(columns []IColumn, values []Serializer, out *SqlBuilder) (err error)
 
 	SupportsReturning bool
 }
@@ -92,7 +92,7 @@ func (d *dialectImpl) ArgumentPlaceholder() QueryPlaceholderFunc {
 	return d.argumentPlaceholder
 }
 
-func (d *dialectImpl) SetClause() func(columns []IColumn, values []Clause, out *SqlBuilder) (err error) {
+func (d *dialectImpl) SetClause() func(columns []IColumn, values []Serializer, out *SqlBuilder) (err error) {
 	if d.setClause != nil {
 		return d.setClause
 	}
@@ -103,7 +103,7 @@ func (d *dialectImpl) SupportsReturning() bool {
 	return d.supportsReturning
 }
 
-func setClause(columns []IColumn, values []Clause, out *SqlBuilder) (err error) {
+func setClause(columns []IColumn, values []Serializer, out *SqlBuilder) (err error) {
 
 	if len(columns) != len(values) {
 		return errors.New("jet: mismatch in numers of columns and values")

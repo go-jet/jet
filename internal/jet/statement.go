@@ -3,6 +3,7 @@ package jet
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"github.com/go-jet/jet/execution"
 	"strings"
 )
@@ -31,9 +32,66 @@ type Statement interface {
 	ExecContext(context context.Context, db execution.DB) (sql.Result, error)
 }
 
+type SerializerStatement interface {
+	Serializer
+	Statement
+}
+
+type StatementWithProjections interface {
+	Statement
+	HasProjections
+	Serializer
+}
+
+type HasProjections interface {
+	projections() []Projection
+}
+
+type SerializerStatementInterfaceImpl struct {
+	noOpVisitorImpl
+	Parent        SerializerStatement
+	Dialect       Dialect
+	StatementType StatementType
+}
+
+func (s *SerializerStatementInterfaceImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+
+	queryData := &SqlBuilder{Dialect: s.Dialect}
+
+	err = s.Parent.serialize(s.StatementType, queryData, noWrap)
+
+	if err != nil {
+		return "", nil, err
+	}
+
+	query, args = queryData.finalize()
+
+	return
+}
+
+func (s *SerializerStatementInterfaceImpl) DebugSql(dialect ...Dialect) (query string, err error) {
+	return debugSql(s.Parent, s.Dialect)
+}
+
+func (s *SerializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
+	return query(s.Parent, db, destination)
+}
+
+func (s *SerializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+	return queryContext(context, s.Parent, db, destination)
+}
+
+func (s *SerializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
+	return exec(s.Parent, db)
+}
+
+func (s *SerializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+	return execContext(context, s.Parent, db)
+}
+
 func debugSql(statement Statement, overrideDialect ...Dialect) (string, error) {
 	dialect := detectDialect(statement, overrideDialect...)
-	sqlQuery, args, err := statement.Sql()
+	sqlQuery, args, err := statement.Sql(dialect)
 
 	if err != nil {
 		return "", err
@@ -99,4 +157,69 @@ func execContext(context context.Context, statement Statement, db execution.DB) 
 	}
 
 	return db.ExecContext(context, query, args...)
+}
+
+type ExpressionStatementImpl struct {
+	ExpressionInterfaceImpl
+	StatementImpl
+}
+
+func (s *ExpressionStatementImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
+	return s.serialize(statement, out)
+}
+
+func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) StatementImpl {
+	return StatementImpl{
+		SerializerStatementInterfaceImpl: SerializerStatementInterfaceImpl{
+			Parent:        parent,
+			Dialect:       Dialect,
+			StatementType: statementType,
+		},
+		Clauses: clauses,
+	}
+}
+
+type StatementImpl struct {
+	SerializerStatementInterfaceImpl
+	acceptsVisitor
+
+	Clauses []Clause
+}
+
+func (s *StatementImpl) projections() []Projection {
+	for _, clause := range s.Clauses {
+		if selectClause, ok := clause.(ClauseWithProjections); ok {
+			return selectClause.projections()
+		}
+	}
+
+	return nil
+}
+
+func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+	if s == nil {
+		return errors.New("jet: Select expression is nil. ")
+	}
+
+	if !contains(options, noWrap) {
+		out.WriteString("(")
+
+		out.increaseIdent()
+	}
+
+	for _, clause := range s.Clauses {
+		err := clause.Serialize(statement, out)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	if !contains(options, noWrap) {
+		out.decreaseIdent()
+		out.newLine()
+		out.WriteString(")")
+	}
+
+	return nil
 }

@@ -478,7 +478,7 @@ func LEAST(value Expression, values ...Expression) Expression {
 //--------------------------------------------------------------------//
 
 type funcExpressionImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	name        string
 	expressions []Expression
@@ -492,9 +492,9 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	}
 
 	if parent != nil {
-		funcExp.expressionInterfaceImpl.parent = parent
+		funcExp.ExpressionInterfaceImpl.Parent = parent
 	} else {
-		funcExp.expressionInterfaceImpl.parent = funcExp
+		funcExp.ExpressionInterfaceImpl.Parent = funcExp
 	}
 
 	return funcExp

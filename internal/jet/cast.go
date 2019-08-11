@@ -32,7 +32,7 @@ func (b *CastImpl) AS(castType string) Expression {
 		cast:       string(castType),
 	}
 
-	castExp.expressionInterfaceImpl.parent = castExp
+	castExp.ExpressionInterfaceImpl.Parent = castExp
 
 	return castExp
 }
@@ -61,7 +61,7 @@ func (b *CastImpl) AS_TIME() TimeExpression {
 }
 
 type castExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	expression Expression
 	cast       string

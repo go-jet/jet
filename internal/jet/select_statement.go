@@ -10,14 +10,14 @@ import (
 // SelectStatement is interface for SQL SELECT statements
 type SelectStatement interface {
 	Statement
-	expression
+	IExpression
 
 	DISTINCT() SelectStatement
 	FROM(table ReadableTable) SelectStatement
 	WHERE(expression BoolExpression) SelectStatement
-	GROUP_BY(groupByClauses ...groupByClause) SelectStatement
+	GROUP_BY(groupByClauses ...GroupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
-	ORDER_BY(orderByClauses ...orderByClause) SelectStatement
+	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
 	FOR(lock SelectLock) SelectStatement
@@ -40,17 +40,17 @@ func SELECT(projection1 Projection, projections ...Projection) SelectStatement {
 }
 
 type selectStatementImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	parent SelectStatement
 
 	table          ReadableTable
 	distinct       bool
 	projectionList []Projection
 	where          BoolExpression
-	groupBy        []groupByClause
+	groupBy        []GroupByClause
 	having         BoolExpression
 
-	orderBy       []orderByClause
+	orderBy       []OrderByClause
 	limit, offset int64
 
 	lockFor SelectLock
@@ -65,7 +65,7 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 		distinct:       false,
 	}
 
-	newSelect.expressionInterfaceImpl.parent = newSelect
+	newSelect.ExpressionInterfaceImpl.Parent = newSelect
 	newSelect.parent = newSelect
 
 	return newSelect
@@ -77,7 +77,8 @@ func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
 }
 
 func (s *selectStatementImpl) AsTable(alias string) SelectTable {
-	return newSelectTable(s.parent, alias)
+	//return newSelectTable(s.parent, alias)
+	panic("UNimplemented.")
 }
 
 func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
@@ -85,7 +86,7 @@ func (s *selectStatementImpl) WHERE(expression BoolExpression) SelectStatement {
 	return s.parent
 }
 
-func (s *selectStatementImpl) GROUP_BY(groupByClauses ...groupByClause) SelectStatement {
+func (s *selectStatementImpl) GROUP_BY(groupByClauses ...GroupByClause) SelectStatement {
 	s.groupBy = groupByClauses
 	return s.parent
 }
@@ -95,7 +96,7 @@ func (s *selectStatementImpl) HAVING(expression BoolExpression) SelectStatement 
 	return s.parent
 }
 
-func (s *selectStatementImpl) ORDER_BY(clauses ...orderByClause) SelectStatement {
+func (s *selectStatementImpl) ORDER_BY(clauses ...OrderByClause) SelectStatement {
 	s.orderBy = clauses
 	return s.parent
 }
@@ -308,7 +309,7 @@ func (s *selectStatementImpl) ExecContext(context context.Context, db execution.
 
 // SelectLock is interface for SELECT statement locks
 type SelectLock interface {
-	Clause
+	Serializer
 
 	NOWAIT() SelectLock
 	SKIP_LOCKED() SelectLock

@@ -45,7 +45,7 @@ func (f *DialectFinder) mustGetDialect() Dialect {
 
 func (f *DialectFinder) visit(element acceptsVisitor) {
 
-	if table, ok := element.(table); ok {
+	if table, ok := element.(TableBase); ok {
 		dialect := table.dialect()
 		f.dialects[dialect.Name()] = dialect
 	}

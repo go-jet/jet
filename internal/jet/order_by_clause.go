@@ -3,7 +3,7 @@ package jet
 import "errors"
 
 // OrderByClause
-type orderByClause interface {
+type OrderByClause interface {
 	serializeForOrderBy(statement StatementType, out *SqlBuilder) error
 }
 
@@ -30,6 +30,6 @@ func (o *orderByClauseImpl) serializeForOrderBy(statement StatementType, out *Sq
 	return nil
 }
 
-func newOrderByClause(expression Expression, ascent bool) orderByClause {
+func newOrderByClause(expression Expression, ascent bool) OrderByClause {
 	return &orderByClauseImpl{expression: expression, ascent: ascent}
 }

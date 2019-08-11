@@ -24,7 +24,7 @@ func NewDialect() jet.Dialect {
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},
-		SetClause:         postgresSetClause,
+		//SetClause:         postgresSetClause,
 		SupportsReturning: true,
 	}
 
@@ -57,40 +57,6 @@ func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
 		out.WriteString("::" + castType)
 		return nil
 	}
-}
-
-func postgresSetClause(columns []jet.IColumn, values []jet.Clause, out *jet.SqlBuilder) (err error) {
-	if len(columns) > 1 {
-		out.WriteString("(")
-	}
-
-	err = jet.SerializeColumnNames(columns, out)
-
-	if err != nil {
-		return
-	}
-
-	if len(columns) > 1 {
-		out.WriteString(")")
-	}
-
-	out.WriteString("=")
-
-	if len(values) > 1 {
-		out.WriteString("(")
-	}
-
-	err = jet.SerializeClauseList(jet.UpdateStatementType, values, out)
-
-	if err != nil {
-		return
-	}
-
-	if len(values) > 1 {
-		out.WriteString(")")
-	}
-
-	return
 }
 
 func postgres_REGEXP_LIKE_function(expressions ...jet.Expression) jet.SerializeFunc {

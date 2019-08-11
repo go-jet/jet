@@ -14,7 +14,7 @@ func newAlias(expression Expression, aliasName string) Projection {
 
 func (a *alias) fromImpl(subQuery SelectTable) Projection {
 	column := newColumn(a.alias, "", nil)
-	column.parent = &column
+	column.Parent = &column
 	column.subQuery = subQuery
 
 	return &column

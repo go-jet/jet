@@ -67,7 +67,7 @@ func (d *deleteStatementImpl) serializeImpl(out *SqlBuilder) error {
 		return err
 	}
 
-	if err := out.writeReturning(DeleteStatementType, d.returning); err != nil {
+	if err := out.WriteReturning(DeleteStatementType, d.returning); err != nil {
 		return err
 	}
 

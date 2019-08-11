@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func serializeOrderByClauseList(statement StatementType, orderByClauses []orderByClause, out *SqlBuilder) error {
+func serializeOrderByClauseList(statement StatementType, orderByClauses []OrderByClause, out *SqlBuilder) error {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
@@ -24,7 +24,7 @@ func serializeOrderByClauseList(statement StatementType, orderByClauses []orderB
 	return nil
 }
 
-func serializeGroupByClauseList(statement StatementType, clauses []groupByClause, out *SqlBuilder) (err error) {
+func serializeGroupByClauseList(statement StatementType, clauses []GroupByClause, out *SqlBuilder) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -43,7 +43,7 @@ func serializeGroupByClauseList(statement StatementType, clauses []groupByClause
 	return nil
 }
 
-func SerializeClauseList(statement StatementType, clauses []Clause, out *SqlBuilder) (err error) {
+func SerializeClauseList(statement StatementType, clauses []Serializer, out *SqlBuilder) (err error) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -124,18 +124,18 @@ func ColumnListToProjectionList(columns []Column) []Projection {
 	return ret
 }
 
-func valueToClause(value interface{}) Clause {
-	if clause, ok := value.(Clause); ok {
+func valueToClause(value interface{}) Serializer {
+	if clause, ok := value.(Serializer); ok {
 		return clause
 	}
 
 	return literal(value)
 }
 
-func unwindRowFromModel(columns []IColumn, data interface{}) []Clause {
+func UnwindRowFromModel(columns []IColumn, data interface{}) []Serializer {
 	structValue := reflect.Indirect(reflect.ValueOf(data))
 
-	row := []Clause{}
+	row := []Serializer{}
 
 	mustBe(structValue, reflect.Struct)
 
@@ -163,23 +163,23 @@ func unwindRowFromModel(columns []IColumn, data interface{}) []Clause {
 	return row
 }
 
-func unwindRowsFromModels(columns []IColumn, data interface{}) [][]Clause {
+func UnwindRowsFromModels(columns []IColumn, data interface{}) [][]Serializer {
 	sliceValue := reflect.Indirect(reflect.ValueOf(data))
 	mustBe(sliceValue, reflect.Slice)
 
-	rows := [][]Clause{}
+	rows := [][]Serializer{}
 
 	for i := 0; i < sliceValue.Len(); i++ {
 		structValue := sliceValue.Index(i)
 
-		rows = append(rows, unwindRowFromModel(columns, structValue.Interface()))
+		rows = append(rows, UnwindRowFromModel(columns, structValue.Interface()))
 	}
 
 	return rows
 }
 
-func unwindRowFromValues(value interface{}, values []interface{}) []Clause {
-	row := []Clause{}
+func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
+	row := []Serializer{}
 
 	allValues := append([]interface{}{value}, values...)
 

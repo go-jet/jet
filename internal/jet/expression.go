@@ -9,14 +9,14 @@ import (
 type Expression interface {
 	acceptsVisitor
 
-	expression
+	IExpression
 }
 
-type expression interface {
-	Clause
+type IExpression interface {
+	Serializer
 	Projection
-	groupByClause
-	orderByClause
+	GroupByClause
+	OrderByClause
 
 	// Test expression whether it is a NULL value.
 	IS_NULL() BoolExpression
@@ -32,57 +32,57 @@ type expression interface {
 	AS(alias string) Projection
 
 	// Expression will be used to sort query result in ascending order
-	ASC() orderByClause
+	ASC() OrderByClause
 	// Expression will be used to sort query result in ascending order
-	DESC() orderByClause
+	DESC() OrderByClause
 }
 
-type expressionInterfaceImpl struct {
-	parent Expression
+type ExpressionInterfaceImpl struct {
+	Parent Expression
 }
 
-func (e *expressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
-	return e.parent
+func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
+	return e.Parent
 }
 
-func (e *expressionInterfaceImpl) IS_NULL() BoolExpression {
-	return newPostifxBoolExpression(e.parent, "IS NULL")
+func (e *ExpressionInterfaceImpl) IS_NULL() BoolExpression {
+	return newPostifxBoolExpression(e.Parent, "IS NULL")
 }
 
-func (e *expressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
-	return newPostifxBoolExpression(e.parent, "IS NOT NULL")
+func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
+	return newPostifxBoolExpression(e.Parent, "IS NOT NULL")
 }
 
-func (e *expressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperator(e.parent, WRAP(expressions...), "IN")
+func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
+	return newBinaryBoolOperator(e.Parent, WRAP(expressions...), "IN")
 }
 
-func (e *expressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperator(e.parent, WRAP(expressions...), "NOT IN")
+func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
+	return newBinaryBoolOperator(e.Parent, WRAP(expressions...), "NOT IN")
 }
 
-func (e *expressionInterfaceImpl) AS(alias string) Projection {
-	return newAlias(e.parent, alias)
+func (e *ExpressionInterfaceImpl) AS(alias string) Projection {
+	return newAlias(e.Parent, alias)
 }
 
-func (e *expressionInterfaceImpl) ASC() orderByClause {
-	return newOrderByClause(e.parent, true)
+func (e *ExpressionInterfaceImpl) ASC() OrderByClause {
+	return newOrderByClause(e.Parent, true)
 }
 
-func (e *expressionInterfaceImpl) DESC() orderByClause {
-	return newOrderByClause(e.parent, false)
+func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
+	return newOrderByClause(e.Parent, false)
 }
 
-func (e *expressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SqlBuilder) error {
-	return e.parent.serialize(statement, out, noWrap)
+func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SqlBuilder) error {
+	return e.Parent.serialize(statement, out, noWrap)
 }
 
-func (e *expressionInterfaceImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
-	return e.parent.serialize(statement, out, noWrap)
+func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
+	return e.Parent.serialize(statement, out, noWrap)
 }
 
-func (e *expressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
-	return e.parent.serialize(statement, out, noWrap)
+func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
+	return e.Parent.serialize(statement, out, noWrap)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)

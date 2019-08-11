@@ -86,7 +86,7 @@ func (n *floatInterfaceImpl) POW(expression NumericExpression) FloatExpression {
 
 //---------------------------------------------------//
 type binaryFloatExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	floatInterfaceImpl
 
 	binaryOpExpression
@@ -97,7 +97,7 @@ func newBinaryFloatExpression(lhs, rhs Expression, operator string) FloatExpress
 
 	floatExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
 
-	floatExpression.expressionInterfaceImpl.parent = &floatExpression
+	floatExpression.ExpressionInterfaceImpl.Parent = &floatExpression
 	floatExpression.floatInterfaceImpl.parent = &floatExpression
 
 	return &floatExpression

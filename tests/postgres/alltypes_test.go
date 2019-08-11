@@ -678,8 +678,7 @@ func TestSubQueryColumnReference(t *testing.T) {
 		).
 			AsTable("subQuery")
 
-	unionexpectedSQL := `
-     (
+	unionexpectedSQL := ` (
           (
                SELECT all_types.boolean AS "all_types.boolean",
                     all_types.integer AS "all_types.integer",
@@ -774,8 +773,6 @@ FROM`
 			subQuery.AllColumns(),
 		).
 			FROM(subQuery)
-
-		//fmt.Println(stmt2.DebugSql())
 
 		testutils.AssertDebugStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
 

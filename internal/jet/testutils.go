@@ -72,7 +72,7 @@ var table3 = NewTable(
 	table3ColInt,
 	table3StrCol)
 
-func assertClauseSerialize(t *testing.T, clause Clause, query string, args ...interface{}) {
+func assertClauseSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
 	out := SqlBuilder{Dialect: ANSII}
 	err := clause.serialize(SelectStatementType, &out)
 
@@ -82,7 +82,7 @@ func assertClauseSerialize(t *testing.T, clause Clause, query string, args ...in
 	assert.DeepEqual(t, out.Args, args)
 }
 
-func assertClauseSerializeErr(t *testing.T, clause Clause, errString string) {
+func assertClauseSerializeErr(t *testing.T, clause Serializer, errString string) {
 	out := SqlBuilder{Dialect: ANSII}
 	err := clause.serialize(SelectStatementType, &out)
 

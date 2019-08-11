@@ -86,7 +86,7 @@ func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
 
 //---------------------------------------------------//
 type binaryBoolExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	boolInterfaceImpl
 
 	binaryOpExpression
@@ -96,7 +96,7 @@ func newBinaryBoolOperator(lhs, rhs Expression, operator string) BoolExpression 
 	binaryBoolExpression := binaryBoolExpression{}
 
 	binaryBoolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
-	binaryBoolExpression.expressionInterfaceImpl.parent = &binaryBoolExpression
+	binaryBoolExpression.ExpressionInterfaceImpl.Parent = &binaryBoolExpression
 	binaryBoolExpression.boolInterfaceImpl.parent = &binaryBoolExpression
 
 	return &binaryBoolExpression
@@ -104,7 +104,7 @@ func newBinaryBoolOperator(lhs, rhs Expression, operator string) BoolExpression 
 
 //---------------------------------------------------//
 type prefixBoolExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	boolInterfaceImpl
 
 	prefixOpExpression
@@ -114,7 +114,7 @@ func newPrefixBoolOperator(expression Expression, operator string) BoolExpressio
 	exp := prefixBoolExpression{}
 	exp.prefixOpExpression = newPrefixExpression(expression, operator)
 
-	exp.expressionInterfaceImpl.parent = &exp
+	exp.ExpressionInterfaceImpl.Parent = &exp
 	exp.boolInterfaceImpl.parent = &exp
 
 	return &exp
@@ -122,7 +122,7 @@ func newPrefixBoolOperator(expression Expression, operator string) BoolExpressio
 
 //---------------------------------------------------//
 type postfixBoolOpExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	boolInterfaceImpl
 
 	postfixOpExpression
@@ -132,7 +132,7 @@ func newPostifxBoolExpression(expression Expression, operator string) BoolExpres
 	exp := postfixBoolOpExpression{}
 	exp.postfixOpExpression = newPostfixOpExpression(expression, operator)
 
-	exp.expressionInterfaceImpl.parent = &exp
+	exp.ExpressionInterfaceImpl.Parent = &exp
 	exp.boolInterfaceImpl.parent = &exp
 
 	return &exp

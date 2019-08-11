@@ -50,11 +50,11 @@ var RTRIM = jet.RTRIM
 var CHR = jet.CHR
 
 var CONCAT = func(expressions ...Expression) StringExpression {
-	return jet.CONCAT(explicitCasts(expressions...)...)
+	return jet.CONCAT(explicitLiteralCasts(expressions...)...)
 }
 
 func CONCAT_WS(expressions ...Expression) StringExpression {
-	return jet.CONCAT_WS(explicitCasts(expressions...)...)
+	return jet.CONCAT_WS(explicitLiteralCasts(expressions...)...)
 }
 
 var CONVERT = jet.CONVERT
@@ -64,7 +64,7 @@ var ENCODE = jet.ENCODE
 var DECODE = jet.DECODE
 
 func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
-	return jet.FORMAT(formatStr, explicitCasts(formatArgs...)...)
+	return jet.FORMAT(formatStr, explicitLiteralCasts(formatArgs...)...)
 }
 
 var INITCAP = jet.INITCAP
@@ -107,17 +107,17 @@ var LEAST = jet.LEAST
 var EXISTS = jet.EXISTS
 var CASE = jet.CASE
 
-func explicitCasts(expressions ...Expression) []jet.Expression {
+func explicitLiteralCasts(expressions ...Expression) []jet.Expression {
 	ret := []jet.Expression{}
 
 	for _, exp := range expressions {
-		ret = append(ret, explicitCast(exp))
+		ret = append(ret, explicitLiteralCast(exp))
 	}
 
 	return ret
 }
 
-func explicitCast(expresion Expression) jet.Expression {
+func explicitLiteralCast(expresion Expression) jet.Expression {
 	if _, ok := expresion.(jet.LiteralExpression); !ok {
 		return expresion
 	}

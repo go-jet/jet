@@ -5,7 +5,19 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 )
 
-type table interface {
+type SerializerTable interface {
+	Serializer
+	Columns() []IColumn
+	//SchemaName() string
+	//TableName() string
+	//AS(alias string)
+}
+
+type TableInterface interface {
+	Columns() []IColumn
+}
+
+type TableBase interface {
 	dialect() Dialect
 	columns() []IColumn
 }
@@ -40,26 +52,26 @@ type writableTable interface {
 
 // ReadableTable interface
 type ReadableTable interface {
-	table
+	TableBase
 	readableTable
-	Clause
+	Serializer
 	acceptsVisitor
 }
 
 // WritableTable interface
 type WritableTable interface {
-	table
+	TableBase
 	writableTable
-	Clause
+	Serializer
 	acceptsVisitor
 }
 
 // Table interface
 type Table interface {
-	table
+	TableBase
 	readableTable
 	writableTable
-	Clause
+	Serializer
 	acceptsVisitor
 
 	SchemaName() string
@@ -78,25 +90,25 @@ func (r *readableTableInterfaceImpl) SELECT(projection1 Projection, projections 
 
 // Creates a inner join tableName Expression using onCondition.
 func (r *readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, innerJoin, onCondition)
+	return newJoinTable(r.parent, table, InnerJoin, onCondition)
 }
 
 // Creates a left join tableName Expression using onCondition.
 func (r *readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, leftJoin, onCondition)
+	return newJoinTable(r.parent, table, LeftJoin, onCondition)
 }
 
 // Creates a right join tableName Expression using onCondition.
 func (r *readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, rightJoin, onCondition)
+	return newJoinTable(r.parent, table, RightJoin, onCondition)
 }
 
 func (r *readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, fullJoin, onCondition)
+	return newJoinTable(r.parent, table, FullJoin, onCondition)
 }
 
 func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) ReadableTable {
-	return newJoinTable(r.parent, table, crossJoin, nil)
+	return newJoinTable(r.parent, table, CrossJoin, nil)
 }
 
 type writableTableInterfaceImpl struct {
@@ -104,11 +116,11 @@ type writableTableInterfaceImpl struct {
 }
 
 func (w *writableTableInterfaceImpl) INSERT(columns ...IColumn) InsertStatement {
-	return newInsertStatement(w.parent, unwidColumnList(columns))
+	return newInsertStatement(w.parent, UnwidColumnList(columns))
 }
 
 func (w *writableTableInterfaceImpl) UPDATE(column IColumn, columns ...IColumn) UpdateStatement {
-	return newUpdateStatement(w.parent, unwindColumns(column, columns...))
+	return newUpdateStatement(w.parent, UnwindColumns(column, columns...))
 }
 
 func (w *writableTableInterfaceImpl) DELETE() DeleteStatement {
@@ -200,14 +212,14 @@ func (t *tableImpl) serialize(statement StatementType, out *SqlBuilder, options 
 	return nil
 }
 
-type joinType int
+type JoinType int
 
 const (
-	innerJoin joinType = iota
-	leftJoin
-	rightJoin
-	fullJoin
-	crossJoin
+	InnerJoin JoinType = iota
+	LeftJoin
+	RightJoin
+	FullJoin
+	CrossJoin
 )
 
 // Join expressions are pseudo readable tables.
@@ -216,15 +228,15 @@ type joinTable struct {
 
 	lhs         ReadableTable
 	rhs         ReadableTable
-	joinType    joinType
+	joinType    JoinType
 	onCondition BoolExpression
 }
 
 func newJoinTable(
 	lhs ReadableTable,
 	rhs ReadableTable,
-	joinType joinType,
-	onCondition BoolExpression) ReadableTable {
+	joinType JoinType,
+	onCondition BoolExpression) *joinTable {
 
 	joinTable := &joinTable{
 		lhs:         lhs,
@@ -275,15 +287,15 @@ func (t *joinTable) serialize(statement StatementType, out *SqlBuilder, options 
 	out.newLine()
 
 	switch t.joinType {
-	case innerJoin:
+	case InnerJoin:
 		out.WriteString("INNER JOIN")
-	case leftJoin:
+	case LeftJoin:
 		out.WriteString("LEFT JOIN")
-	case rightJoin:
+	case RightJoin:
 		out.WriteString("RIGHT JOIN")
-	case fullJoin:
+	case FullJoin:
 		out.WriteString("FULL JOIN")
-	case crossJoin:
+	case CrossJoin:
 		out.WriteString("CROSS JOIN")
 	}
 
@@ -295,7 +307,7 @@ func (t *joinTable) serialize(statement StatementType, out *SqlBuilder, options 
 		return
 	}
 
-	if t.onCondition == nil && t.joinType != crossJoin {
+	if t.onCondition == nil && t.joinType != CrossJoin {
 		return errors.New("jet: join condition is nil")
 	}
 
@@ -309,7 +321,7 @@ func (t *joinTable) serialize(statement StatementType, out *SqlBuilder, options 
 	return nil
 }
 
-func unwindColumns(column1 IColumn, columns ...IColumn) []IColumn {
+func UnwindColumns(column1 IColumn, columns ...IColumn) []IColumn {
 	columnList := []IColumn{}
 
 	if val, ok := column1.(IColumnList); ok {
@@ -325,7 +337,7 @@ func unwindColumns(column1 IColumn, columns ...IColumn) []IColumn {
 	return columnList
 }
 
-func unwidColumnList(columns []IColumn) []IColumn {
+func UnwidColumnList(columns []IColumn) []IColumn {
 	ret := []IColumn{}
 
 	for _, col := range columns {

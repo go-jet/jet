@@ -66,7 +66,7 @@ func newSetStatementImpl(operator string, all bool, selects []SelectStatement) S
 		selects:  selects,
 	}
 
-	setStatement.selectStatementImpl.expressionInterfaceImpl.parent = setStatement
+	setStatement.selectStatementImpl.ExpressionInterfaceImpl.Parent = setStatement
 	setStatement.selectStatementImpl.parent = setStatement
 	setStatement.limit = -1
 	setStatement.offset = -1
