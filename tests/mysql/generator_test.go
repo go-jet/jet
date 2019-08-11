@@ -11,14 +11,14 @@ import (
 	"testing"
 )
 
-const genTestDir2 = "./.gentestdata2/mysql"
+const genTestDirRoot = "./.gentestdata3"
+const genTestDir3 = "./.gentestdata3/mysql"
 
 func TestGenerator(t *testing.T) {
-
-	err := os.RemoveAll(genTestDir2)
+	err := os.RemoveAll(genTestDir3)
 	assert.NilError(t, err)
 
-	err = mysql.Generate(genTestDir2, mysql.DBConnection{
+	err = mysql.Generate(genTestDir3, mysql.DBConnection{
 		Host:     dbconfig.MySqLHost,
 		Port:     dbconfig.MySQLPort,
 		User:     dbconfig.MySQLUser,
@@ -30,7 +30,7 @@ func TestGenerator(t *testing.T) {
 
 	assertGeneratedFiles(t)
 
-	err = os.RemoveAll(genTestDir2)
+	err = os.RemoveAll(genTestDirRoot)
 	assert.NilError(t, err)
 }
 
@@ -40,11 +40,11 @@ func TestCmdGenerator(t *testing.T) {
 	err := goInstallJet.Run()
 	assert.NilError(t, err)
 
-	err = os.RemoveAll(genTestDir2)
+	err = os.RemoveAll(genTestDir3)
 	assert.NilError(t, err)
 
 	cmd := exec.Command("jet", "-source=MySQL", "-dbname=dvds", "-host=localhost", "-port=3306",
-		"-user=jet", "-password=jet", "-path="+genTestDir2)
+		"-user=jet", "-password=jet", "-path="+genTestDir3)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -54,37 +54,37 @@ func TestCmdGenerator(t *testing.T) {
 
 	assertGeneratedFiles(t)
 
-	err = os.RemoveAll(genTestDir2)
+	err = os.RemoveAll(genTestDirRoot)
 	assert.NilError(t, err)
 }
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
-	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/mysql/dvds/table")
+	tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
 	assert.NilError(t, err)
 
 	assertFileNameEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go")
 
-	assertFileContent(t, "./.gentestdata2/mysql/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
+	assertFileContent(t, genTestDir3+"/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
 
 	// Enums SQL Builder files
-	enumFiles, err := ioutil.ReadDir("./.gentestdata2/mysql/dvds/enum")
+	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
 	assert.NilError(t, err)
 
 	assertFileNameEqual(t, enumFiles, "film_list_rating.go", "film_rating.go", "nicer_but_slower_film_list_rating.go")
-	assertFileContent(t, "./.gentestdata2/mysql/dvds/enum/film_rating.go", "\npackage enum", mpaaRatingEnumFile)
+	assertFileContent(t, genTestDir3+"/dvds/enum/film_rating.go", "\npackage enum", mpaaRatingEnumFile)
 
 	// Model files
-	modelFiles, err := ioutil.ReadDir("./.gentestdata2/mysql/dvds/model")
+	modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
 	assert.NilError(t, err)
 
 	assertFileNameEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go", "film_list_rating.go", "film_rating.go", "nicer_but_slower_film_list_rating.go")
 
-	assertFileContent(t, "./.gentestdata2/mysql/dvds/model/actor.go", "\npackage model", actorModelFile)
+	assertFileContent(t, genTestDir3+"/dvds/model/actor.go", "\npackage model", actorModelFile)
 }
 
 func assertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {

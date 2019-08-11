@@ -17,19 +17,24 @@ type readableTable interface {
 	SELECT(projection jet.Projection, projections ...jet.Projection) SelectStatement
 
 	// Creates a inner join tableName Expression using onCondition.
-	INNER_JOIN(table ReadableTable, onCondition BoolExpression) Table
+	INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable
 
 	// Creates a left join tableName Expression using onCondition.
-	LEFT_JOIN(table ReadableTable, onCondition BoolExpression) Table
+	LEFT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable
 
 	// Creates a right join tableName Expression using onCondition.
-	RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) Table
+	RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable
 
 	// Creates a full join tableName Expression using onCondition.
-	FULL_JOIN(table ReadableTable, onCondition BoolExpression) Table
+	FULL_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable
 
 	// Creates a cross join tableName Expression using onCondition.
-	CROSS_JOIN(table ReadableTable) Table
+	CROSS_JOIN(table ReadableTable) joinSelectUpdateTable
+}
+
+type joinSelectUpdateTable interface {
+	ReadableTable
+	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
 }
 
 type ReadableTable interface {
@@ -47,25 +52,25 @@ func (r *readableTableInterfaceImpl) SELECT(projection1 jet.Projection, projecti
 }
 
 // Creates a inner join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) Table {
+func (r *readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.InnerJoin, onCondition)
 }
 
 // Creates a left join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) Table {
+func (r *readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.LeftJoin, onCondition)
 }
 
 // Creates a right join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) Table {
+func (r *readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.RightJoin, onCondition)
 }
 
-func (r *readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) Table {
+func (r *readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.FullJoin, onCondition)
 }
 
-func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) Table {
+func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
 }
 

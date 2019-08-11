@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
+	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"gotest.tools/assert"
@@ -202,6 +203,19 @@ func TestUpdateExecContext(t *testing.T) {
 	_, err := updateStmt.ExecContext(ctx, db)
 
 	assert.Error(t, err, "context deadline exceeded")
+}
+
+func TestUpdateWithJoin(t *testing.T) {
+	query := table.Staff.
+		INNER_JOIN(table.Address, table.Address.AddressID.EQ(table.Staff.AddressID)).
+		UPDATE(table.Staff.LastName).
+		SET(String("New name")).
+		WHERE(table.Staff.StaffID.EQ(Int(1)))
+
+	//fmt.Println(query.DebugSql())
+
+	_, err := query.Exec(db)
+	assert.NilError(t, err)
 }
 
 func setupLinkTableForUpdateTest(t *testing.T) {

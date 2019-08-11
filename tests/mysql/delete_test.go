@@ -26,6 +26,25 @@ WHERE link.name IN ('Gmail', 'Outlook');
 	testutils.AssertExec(t, deleteStmt, db, 2)
 }
 
+func TestDeleteWithWhereOrderByLimit(t *testing.T) {
+	initForDeleteTest(t)
+
+	var expectedSQL = `
+DELETE FROM test_sample.link
+WHERE link.name IN ('Gmail', 'Outlook')
+ORDER BY link.name
+LIMIT 1;
+`
+	deleteStmt := Link.
+		DELETE().
+		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
+		ORDER_BY(Link.Name).
+		LIMIT(1)
+
+	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook", int64(1))
+	testutils.AssertExec(t, deleteStmt, db, 1)
+}
+
 func TestDeleteQueryContext(t *testing.T) {
 	initForDeleteTest(t)
 
