@@ -15,6 +15,7 @@ const (
 	DeleteStatementType StatementType = "DELETE"
 	SetStatementType    StatementType = "SET"
 	LockStatementType   StatementType = "LOCK"
+	UnLockStatementType StatementType = "UNLOCK"
 )
 
 type Serializer interface {

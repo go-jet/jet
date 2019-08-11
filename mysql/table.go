@@ -2,12 +2,6 @@ package mysql
 
 import "github.com/go-jet/jet/internal/jet"
 
-//type Table jet.Table
-//
-//func NewTable(schemaName, name string, columns ...jet.Column) Table {
-//	return jet.NewTable(Dialect, schemaName, name, columns...)
-//}
-
 type Table interface {
 	jet.SerializerTable
 	readableTable
@@ -15,9 +9,7 @@ type Table interface {
 	INSERT(columns ...jet.Column) InsertStatement
 	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
 	DELETE() DeleteStatement
-	//LOCK() LockStatement
-
-	//As(alias string)
+	LOCK() LockStatement
 }
 
 type readableTable interface {
@@ -94,21 +86,21 @@ type tableImpl struct {
 	parent Table
 }
 
-func (w *tableImpl) INSERT(columns ...jet.Column) InsertStatement {
-	return newInsertStatement(w.parent, jet.UnwidColumnList(columns))
+func (t *tableImpl) INSERT(columns ...jet.Column) InsertStatement {
+	return newInsertStatement(t.parent, jet.UnwidColumnList(columns))
 }
 
-func (w *tableImpl) UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement {
-	return newUpdateStatement(w.parent, jet.UnwindColumns(column, columns...))
+func (t *tableImpl) UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement {
+	return newUpdateStatement(t.parent, jet.UnwindColumns(column, columns...))
 }
 
-func (w *tableImpl) DELETE() DeleteStatement {
-	return newDeleteStatement(w.parent)
+func (t *tableImpl) DELETE() DeleteStatement {
+	return newDeleteStatement(t.parent)
 }
 
-//func (w *tableInterfaceImpl) LOCK() LockStatement {
-//	return LOCK(w.parent)
-//}
+func (t *tableImpl) LOCK() LockStatement {
+	return LOCK(t.parent)
+}
 
 type joinTable2 struct {
 	tableImpl
