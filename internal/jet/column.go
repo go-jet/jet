@@ -2,7 +2,7 @@
 
 package jet
 
-type IColumn interface {
+type Column interface {
 	Name() string
 	TableName() string
 
@@ -12,9 +12,9 @@ type IColumn interface {
 }
 
 // Column is common column interface for all types of columns.
-type Column interface {
+type ColumnExpression interface {
+	Column
 	Expression
-	IColumn
 }
 
 // The base type for real materialized columns.
@@ -28,7 +28,7 @@ type columnImpl struct {
 	subQuery SelectTable
 }
 
-func newColumn(name string, tableName string, parent Column) columnImpl {
+func newColumn(name string, tableName string, parent ColumnExpression) columnImpl {
 	bc := columnImpl{
 		name:      name,
 		tableName: tableName,
@@ -109,19 +109,19 @@ func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options 
 
 type IColumnList interface {
 	Projection
-	IColumn
+	Column
 
-	Columns() []Column
+	Columns() []ColumnExpression
 }
 
-func ColumnList(columns ...Column) IColumnList {
+func ColumnList(columns ...ColumnExpression) IColumnList {
 	return columnListImpl(columns)
 }
 
 // ColumnList is redefined type to support list of columns as single Projection
-type columnListImpl []Column
+type columnListImpl []ColumnExpression
 
-func (cl columnListImpl) Columns() []Column {
+func (cl columnListImpl) Columns() []ColumnExpression {
 	return cl
 }
 

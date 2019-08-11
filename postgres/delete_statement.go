@@ -15,7 +15,7 @@ type deleteStatementImpl struct {
 
 	Delete    jet.ClauseStatementBegin
 	Where     jet.ClauseWhere
-	Returning jet.ClauseReturning
+	Returning ClauseReturning
 }
 
 func newDeleteStatement(table WritableTable) DeleteStatement {

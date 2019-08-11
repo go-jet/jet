@@ -12,12 +12,12 @@ type Table interface {
 	jet.SerializerTable
 	readableTable
 
-	INSERT(columns ...jet.IColumn) InsertStatement
-	UPDATE(column jet.IColumn, columns ...jet.IColumn) UpdateStatement
+	INSERT(columns ...jet.Column) InsertStatement
+	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
 	DELETE() DeleteStatement
 	//LOCK() LockStatement
 
-	AS(alias string)
+	//As(alias string)
 }
 
 type readableTable interface {
@@ -41,8 +41,8 @@ type readableTable interface {
 }
 
 type ReadableTable interface {
-	jet.SerializerTable
 	readableTable
+	jet.Serializer
 }
 
 type readableTableInterfaceImpl struct {
@@ -77,9 +77,9 @@ func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) Table {
 	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
 }
 
-func NewTable(schemaName, name string, columns ...jet.Column) Table {
+func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 	t := &tableImpl{
-		TableImpl2: jet.NewTable2(Dialect, schemaName, name, columns...),
+		TableImpl: jet.NewTable(schemaName, name, columns...),
 	}
 
 	t.readableTableInterfaceImpl.parent = t
@@ -89,16 +89,16 @@ func NewTable(schemaName, name string, columns ...jet.Column) Table {
 }
 
 type tableImpl struct {
-	jet.TableImpl2
+	jet.TableImpl
 	readableTableInterfaceImpl
 	parent Table
 }
 
-func (w *tableImpl) INSERT(columns ...jet.IColumn) InsertStatement {
+func (w *tableImpl) INSERT(columns ...jet.Column) InsertStatement {
 	return newInsertStatement(w.parent, jet.UnwidColumnList(columns))
 }
 
-func (w *tableImpl) UPDATE(column jet.IColumn, columns ...jet.IColumn) UpdateStatement {
+func (w *tableImpl) UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement {
 	return newUpdateStatement(w.parent, jet.UnwindColumns(column, columns...))
 }
 

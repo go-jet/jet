@@ -36,7 +36,7 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SqlBuilder) e
 		return errors.New("jet: no column selected for Projection")
 	}
 
-	return out.writeProjections(statementType, s.Projections)
+	return out.WriteProjections(statementType, s.Projections)
 }
 
 type ClauseFrom struct {
@@ -77,9 +77,9 @@ func (c *ClauseGroupBy) Serialize(statementType StatementType, out *SqlBuilder) 
 	out.NewLine()
 	out.WriteString("GROUP BY")
 
-	out.increaseIdent()
+	out.IncreaseIdent()
 	err := serializeGroupByClauseList(statementType, c.List, out)
-	out.decreaseIdent()
+	out.DecreaseIdent()
 
 	return err
 }
@@ -173,15 +173,10 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 
 	wrap := s.OrderBy.List != nil || s.Limit.Count >= 0 || s.Offset.Count >= 0
 
-	//if wrap {
-	//	out.WriteString("(")
-	//	out.increaseIdent()
-	//}
-
 	if wrap {
 		out.NewLine()
 		out.WriteString("(")
-		out.increaseIdent()
+		out.IncreaseIdent()
 	}
 
 	for i, selectStmt := range s.Selects {
@@ -207,7 +202,7 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 	}
 
 	if wrap {
-		out.decreaseIdent()
+		out.DecreaseIdent()
 		out.NewLine()
 		out.WriteString(")")
 	}
@@ -223,12 +218,6 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 	if err := s.Offset.Serialize(statementType, out); err != nil {
 		return err
 	}
-
-	//if wrap {
-	//	out.decreaseIdent()
-	//	out.newLine()
-	//	out.WriteString(")")
-	//}
 
 	return nil
 }
@@ -253,7 +242,7 @@ func (u *ClauseUpdate) Serialize(statementType StatementType, out *SqlBuilder) e
 }
 
 type ClauseSet struct {
-	Columns []IColumn
+	Columns []Column
 	Values  []Serializer
 }
 
@@ -265,7 +254,7 @@ func (s *ClauseSet) Serialize(statementType StatementType, out *SqlBuilder) erro
 		return errors.New("jet: mismatch in numers of columns and values")
 	}
 
-	out.increaseIdent(4)
+	out.IncreaseIdent(4)
 	for i, column := range s.Columns {
 		if i > 0 {
 			out.WriteString(", ")
@@ -280,26 +269,26 @@ func (s *ClauseSet) Serialize(statementType StatementType, out *SqlBuilder) erro
 
 		out.WriteString(" = ")
 
-		if err := Serialize(s.Values[i], UpdateStatementType, out); err != nil {
+		if err := s.Values[i].serialize(UpdateStatementType, out); err != nil {
 			return err
 		}
 	}
-	out.decreaseIdent(4)
+	out.DecreaseIdent(4)
 
 	return nil
 }
 
-type ClauseReturning struct {
-	Projections []Projection
-}
-
-func (r *ClauseReturning) Serialize(statementType StatementType, out *SqlBuilder) error {
-	return out.WriteReturning(statementType, r.Projections)
-}
-
 type ClauseInsert struct {
 	Table   SerializerTable
-	Columns []IColumn
+	Columns []Column
+}
+
+func (i *ClauseInsert) GetColumns() []Column {
+	if len(i.Columns) > 0 {
+		return i.Columns
+	}
+
+	return i.Table.Columns()
 }
 
 func (i *ClauseInsert) Serialize(statementType StatementType, out *SqlBuilder) error {
@@ -347,7 +336,7 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) e
 			out.WriteString(",")
 		}
 
-		out.increaseIdent()
+		out.IncreaseIdent()
 		out.NewLine()
 		out.WriteString("(")
 
@@ -358,7 +347,7 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) e
 		}
 
 		out.writeByte(')')
-		out.decreaseIdent()
+		out.DecreaseIdent()
 	}
 	return nil
 }
@@ -456,238 +445,6 @@ func (i *ClauseIn) Serialize(statementType StatementType, out *SqlBuilder) error
 	out.WriteString("IN")
 	out.WriteString(string(i.LockMode))
 	out.WriteString("MODE")
-
-	return nil
-}
-
-// NewTable creates new table with schema Name, table Name and list of columns
-func NewTable2(Dialect Dialect, schemaName, name string, columns ...Column) TableImpl2 {
-
-	t := TableImpl2{
-		Dialect:    Dialect,
-		schemaName: schemaName,
-		name:       name,
-		columnList: columns,
-	}
-
-	for _, c := range columns {
-		c.SetTableName(name)
-	}
-
-	return t
-}
-
-type TableImpl2 struct {
-	Dialect    Dialect
-	schemaName string
-	name       string
-	alias      string
-	columnList []Column
-}
-
-func (t *TableImpl2) AS(alias string) {
-	t.alias = alias
-
-	for _, c := range t.columnList {
-		c.SetTableName(alias)
-	}
-}
-
-func (t *TableImpl2) SchemaName() string {
-	return t.schemaName
-}
-
-func (t *TableImpl2) TableName() string {
-	return t.name
-}
-
-func (t *TableImpl2) Columns() []IColumn {
-	ret := []IColumn{}
-
-	for _, col := range t.columnList {
-		ret = append(ret, col)
-	}
-
-	return ret
-}
-
-func (t *TableImpl2) dialect() Dialect {
-	return t.Dialect
-}
-
-func (t *TableImpl2) accept(visitor visitor) {
-	visitor.visit(t)
-}
-
-func (t *TableImpl2) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if t == nil {
-		return errors.New("jet: tableImpl is nil. ")
-	}
-
-	out.writeIdentifier(t.schemaName)
-	out.WriteString(".")
-	out.writeIdentifier(t.name)
-
-	if len(t.alias) > 0 {
-		out.WriteString("AS")
-		out.writeIdentifier(t.alias)
-	}
-
-	return nil
-}
-
-// Join expressions are pseudo readable tables.
-type JoinTableImpl struct {
-	lhs         Serializer
-	rhs         Serializer
-	joinType    JoinType
-	onCondition BoolExpression
-}
-
-func NewJoinTableImpl(lhs Serializer, rhs Serializer, joinType JoinType, onCondition BoolExpression) JoinTableImpl {
-
-	joinTable := JoinTableImpl{
-		lhs:         lhs,
-		rhs:         rhs,
-		joinType:    joinType,
-		onCondition: onCondition,
-	}
-
-	return joinTable
-}
-
-func (t *JoinTableImpl) SchemaName() string {
-	return ""
-}
-
-func (t *JoinTableImpl) TableName() string {
-	return ""
-}
-
-func (t *JoinTableImpl) Columns() []IColumn {
-	//return append(t.lhs.columns(), t.rhs.columns()...)
-	panic("Unimplemented")
-}
-
-func (t *JoinTableImpl) accept(visitor visitor) {
-	//t.lhs.accept(visitor)
-	//t.rhs.accept(visitor)
-	//TODO: uncoment
-}
-
-func (t *JoinTableImpl) dialect() Dialect {
-	return detectDialect(t)
-}
-
-func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) (err error) {
-	if t == nil {
-		return errors.New("jet: Join table is nil. ")
-	}
-
-	if utils.IsNil(t.lhs) {
-		return errors.New("jet: left hand side of join operation is nil table")
-	}
-
-	if err = t.lhs.serialize(statement, out); err != nil {
-		return
-	}
-
-	out.NewLine()
-
-	switch t.joinType {
-	case InnerJoin:
-		out.WriteString("INNER JOIN")
-	case LeftJoin:
-		out.WriteString("LEFT JOIN")
-	case RightJoin:
-		out.WriteString("RIGHT JOIN")
-	case FullJoin:
-		out.WriteString("FULL JOIN")
-	case CrossJoin:
-		out.WriteString("CROSS JOIN")
-	}
-
-	if utils.IsNil(t.rhs) {
-		return errors.New("jet: right hand side of join operation is nil table")
-	}
-
-	if err = t.rhs.serialize(statement, out); err != nil {
-		return
-	}
-
-	if t.onCondition == nil && t.joinType != CrossJoin {
-		return errors.New("jet: join condition is nil")
-	}
-
-	if t.onCondition != nil {
-		out.WriteString("ON")
-		if err = t.onCondition.serialize(statement, out); err != nil {
-			return
-		}
-	}
-
-	return nil
-}
-
-// SelectTable is interface for SELECT sub-queries
-type SelectTable interface {
-	Alias() string
-	AllColumns() ProjectionList
-}
-
-type SelectTableImpl2 struct {
-	selectStmt StatementWithProjections
-	alias      string
-
-	projections []Projection
-}
-
-func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTableImpl2 {
-	selectTable := SelectTableImpl2{selectStmt: selectStmt, alias: alias}
-
-	for _, projection := range selectStmt.projections() {
-		newProjection := projection.fromImpl(&selectTable)
-
-		selectTable.projections = append(selectTable.projections, newProjection)
-	}
-
-	return selectTable
-}
-
-func (s *SelectTableImpl2) Alias() string {
-	return s.alias
-}
-
-func (s *SelectTableImpl2) Columns() []IColumn {
-	return nil
-}
-
-func (s *SelectTableImpl2) accept(visitor visitor) {
-	visitor.visit(s)
-	s.selectStmt.accept(visitor)
-}
-
-func (s *SelectTableImpl2) dialect() Dialect {
-	return detectDialect(s.selectStmt)
-}
-
-func (s *SelectTableImpl2) AllColumns() ProjectionList {
-	return s.projections
-}
-
-func (s *SelectTableImpl2) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if s == nil {
-		return errors.New("jet: Expression table is nil. ")
-	}
-
-	err := s.selectStmt.serialize(statement, out)
-
-	if err != nil {
-		return err
-	}
-
-	out.WriteString("AS")
-	out.writeIdentifier(s.alias)
 
 	return nil
 }

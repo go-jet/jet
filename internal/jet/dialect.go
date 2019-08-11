@@ -1,17 +1,5 @@
 package jet
 
-import (
-	"strconv"
-)
-
-var ANSII = NewDialect(DialectParams{ // just for tests
-	AliasQuoteChar:      '"',
-	IdentifierQuoteChar: '"',
-	ArgumentPlaceholder: func(ord int) string {
-		return "$" + strconv.Itoa(ord)
-	},
-})
-
 type Dialect interface {
 	Name() string
 	PackageName() string
@@ -25,7 +13,7 @@ type SerializeFunc func(statement StatementType, out *SqlBuilder, options ...Ser
 type SerializeOverride func(expressions ...Expression) SerializeFunc
 
 type QueryPlaceholderFunc func(ord int) string
-type UpdateAssigmentFunc func(columns []IColumn, values []Serializer, out *SqlBuilder) (err error)
+type UpdateAssigmentFunc func(columns []Column, values []Serializer, out *SqlBuilder) (err error)
 
 type DialectParams struct {
 	Name                string

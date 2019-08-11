@@ -4,7 +4,9 @@ import (
 	"testing"
 )
 
-var subQuery = table1.SELECT(table1ColFloat, table1ColInt).AsTable("sub_query")
+var subQuery = &SelectTableImpl2{
+	alias: "sub_query",
+}
 
 func TestNewBoolColumn(t *testing.T) {
 	boolColumn := BoolColumn("colBool").From(subQuery)

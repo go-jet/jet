@@ -20,7 +20,7 @@ type updateStatementImpl struct {
 	Where  jet.ClauseWhere
 }
 
-func newUpdateStatement(table Table, columns []jet.IColumn) UpdateStatement {
+func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 	update := &updateStatementImpl{}
 	update.StatementImpl = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
 		&update.Set, &update.Where)

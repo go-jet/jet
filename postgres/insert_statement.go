@@ -19,9 +19,9 @@ type InsertStatement interface {
 	RETURNING(projections ...jet.Projection) InsertStatement
 }
 
-func newInsertStatement(table WritableTable, columns []jet.IColumn) InsertStatement {
+func newInsertStatement(table WritableTable, columns []jet.Column) InsertStatement {
 	newInsert := &insertStatementImpl{}
-	newInsert.StatementImpl = jet.NewStatementImpl(Dialect, jet.DeleteStatementType, newInsert,
+	newInsert.StatementImpl = jet.NewStatementImpl(Dialect, jet.InsertStatementType, newInsert,
 		&newInsert.Insert, &newInsert.Values, &newInsert.Select, &newInsert.Returning)
 
 	newInsert.Insert.Table = table
@@ -36,7 +36,7 @@ type insertStatementImpl struct {
 	Insert    jet.ClauseInsert
 	Values    jet.ClauseValues
 	Select    jet.ClauseQuery
-	Returning jet.ClauseReturning
+	Returning ClauseReturning
 }
 
 func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
@@ -45,12 +45,12 @@ func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) I
 }
 
 func (i *insertStatementImpl) MODEL(data interface{}) InsertStatement {
-	i.Values.Rows = append(i.Values.Rows, jet.UnwindRowFromModel(i.getColumns(), data))
+	i.Values.Rows = append(i.Values.Rows, jet.UnwindRowFromModel(i.Insert.GetColumns(), data))
 	return i
 }
 
 func (i *insertStatementImpl) MODELS(data interface{}) InsertStatement {
-	i.Values.Rows = append(i.Values.Rows, jet.UnwindRowsFromModels(i.getColumns(), data)...)
+	i.Values.Rows = append(i.Values.Rows, jet.UnwindRowsFromModels(i.Insert.GetColumns(), data)...)
 	return i
 }
 
@@ -62,12 +62,4 @@ func (i *insertStatementImpl) RETURNING(projections ...jet.Projection) InsertSta
 func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
 	i.Select.Query = selectStatement
 	return i
-}
-
-func (i *insertStatementImpl) getColumns() []jet.IColumn {
-	if len(i.Insert.Columns) > 0 {
-		return i.Insert.Columns
-	}
-
-	return i.Insert.Table.Columns()
 }

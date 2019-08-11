@@ -24,7 +24,7 @@ func (s *SqlBuilder) DebugSQL() string {
 
 const defaultIdent = 5
 
-func (q *SqlBuilder) increaseIdent(ident ...int) {
+func (q *SqlBuilder) IncreaseIdent(ident ...int) {
 	if len(ident) > 0 {
 		q.ident += ident[0]
 	} else {
@@ -32,7 +32,7 @@ func (q *SqlBuilder) increaseIdent(ident ...int) {
 	}
 }
 
-func (q *SqlBuilder) decreaseIdent(ident ...int) {
+func (q *SqlBuilder) DecreaseIdent(ident ...int) {
 	toDecrease := defaultIdent
 
 	if len(ident) > 0 {
@@ -46,10 +46,10 @@ func (q *SqlBuilder) decreaseIdent(ident ...int) {
 	q.ident -= toDecrease
 }
 
-func (q *SqlBuilder) writeProjections(statement StatementType, projections []Projection) error {
-	q.increaseIdent()
+func (q *SqlBuilder) WriteProjections(statement StatementType, projections []Projection) error {
+	q.IncreaseIdent()
 	err := SerializeProjectionList(statement, projections, q)
-	q.decreaseIdent()
+	q.DecreaseIdent()
 	return err
 }
 
@@ -57,9 +57,9 @@ func (q *SqlBuilder) writeFrom(statement StatementType, table Serializer) error 
 	q.NewLine()
 	q.WriteString("FROM")
 
-	q.increaseIdent()
+	q.IncreaseIdent()
 	err := table.serialize(statement, q)
-	q.decreaseIdent()
+	q.DecreaseIdent()
 
 	return err
 }
@@ -68,9 +68,9 @@ func (q *SqlBuilder) writeWhere(statement StatementType, where Expression) error
 	q.NewLine()
 	q.WriteString("WHERE")
 
-	q.increaseIdent()
+	q.IncreaseIdent()
 	err := where.serialize(statement, q, noWrap)
-	q.decreaseIdent()
+	q.DecreaseIdent()
 
 	return err
 }
@@ -79,9 +79,9 @@ func (q *SqlBuilder) writeGroupBy(statement StatementType, groupBy []GroupByClau
 	q.NewLine()
 	q.WriteString("GROUP BY")
 
-	q.increaseIdent()
+	q.IncreaseIdent()
 	err := serializeGroupByClauseList(statement, groupBy, q)
-	q.decreaseIdent()
+	q.DecreaseIdent()
 
 	return err
 }
@@ -90,9 +90,9 @@ func (q *SqlBuilder) writeOrderBy(statement StatementType, orderBy []OrderByClau
 	q.NewLine()
 	q.WriteString("ORDER BY")
 
-	q.increaseIdent()
+	q.IncreaseIdent()
 	err := serializeOrderByClauseList(statement, orderBy, q)
-	q.decreaseIdent()
+	q.DecreaseIdent()
 
 	return err
 }
@@ -101,9 +101,9 @@ func (q *SqlBuilder) writeHaving(statement StatementType, having Expression) err
 	q.NewLine()
 	q.WriteString("HAVING")
 
-	q.increaseIdent()
+	q.IncreaseIdent()
 	err := having.serialize(statement, q, noWrap)
-	q.decreaseIdent()
+	q.DecreaseIdent()
 
 	return err
 }
@@ -115,9 +115,9 @@ func (q *SqlBuilder) WriteReturning(statement StatementType, returning []Project
 
 	q.NewLine()
 	q.WriteString("RETURNING")
-	q.increaseIdent()
+	q.IncreaseIdent()
 
-	return q.writeProjections(statement, returning)
+	return q.WriteProjections(statement, returning)
 }
 
 func (q *SqlBuilder) NewLine() {

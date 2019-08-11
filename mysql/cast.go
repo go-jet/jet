@@ -14,13 +14,13 @@ type cast interface {
 }
 
 type castImpl struct {
-	jet.CastImpl
+	jet.Cast
 }
 
 func CAST(expr jet.Expression) cast {
 	castImpl := &castImpl{}
 
-	castImpl.CastImpl = jet.NewCastImpl(expr)
+	castImpl.Cast = jet.NewCastImpl(expr)
 
 	return castImpl
 }

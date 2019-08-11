@@ -25,7 +25,7 @@ type LockStatement interface {
 
 func LOCK(tables ...jet.SerializerTable) LockStatement {
 	newLock := &lockStatementImpl{}
-	newLock.StatementImpl = jet.NewStatementImpl(Dialect, jet.DeleteStatementType, newLock,
+	newLock.StatementImpl = jet.NewStatementImpl(Dialect, jet.LockStatementType, newLock,
 		&newLock.StatementBegin, &newLock.In, &newLock.NoWait)
 
 	newLock.StatementBegin.Name = "LOCK TABLE"

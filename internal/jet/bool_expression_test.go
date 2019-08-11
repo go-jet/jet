@@ -71,19 +71,6 @@ func TestBoolLiteral(t *testing.T) {
 	assertClauseSerialize(t, Bool(false), "$1", false)
 }
 
-func TestExists(t *testing.T) {
-	assertClauseSerialize(t, EXISTS(
-		table2.
-			SELECT(Int(1)).
-			WHERE(table1Col1.EQ(table2Col3)),
-	),
-		`(EXISTS (
-     SELECT $1
-     FROM db.table2
-     WHERE table1.col1 = table2.col3
-))`, int64(1))
-}
-
 func TestBoolExp(t *testing.T) {
 	assertClauseSerialize(t, BoolExp(String("true")), "$1", "true")
 	assertClauseSerialize(t, BoolExp(String("true")).IS_TRUE(), "$1 IS TRUE", "true")

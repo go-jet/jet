@@ -3,7 +3,7 @@ package jet
 // ColumnBool is interface for SQL boolean columns.
 type ColumnBool interface {
 	BoolExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnBool
 }
@@ -42,7 +42,7 @@ func BoolColumn(name string) ColumnBool {
 // ColumnFloat is interface for SQL real, numeric, decimal or double precision column.
 type ColumnFloat interface {
 	FloatExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnFloat
 }
@@ -80,7 +80,7 @@ func FloatColumn(name string) ColumnFloat {
 // ColumnInteger is interface for SQL smallint, integer, bigint columns.
 type ColumnInteger interface {
 	IntegerExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnInteger
 }
@@ -118,7 +118,7 @@ func IntegerColumn(name string) ColumnInteger {
 // bytea, uuid columns and enums types.
 type ColumnString interface {
 	StringExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnString
 }
@@ -155,7 +155,7 @@ func StringColumn(name string) ColumnString {
 // ColumnTime is interface for SQL time column.
 type ColumnTime interface {
 	TimeExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnTime
 }
@@ -190,7 +190,7 @@ func TimeColumn(name string) ColumnTime {
 // ColumnTimez is interface of SQL time with time zone columns.
 type ColumnTimez interface {
 	TimezExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnTimez
 }
@@ -227,7 +227,7 @@ func TimezColumn(name string) ColumnTimez {
 // ColumnTimestamp is interface of SQL timestamp columns.
 type ColumnTimestamp interface {
 	TimestampExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnTimestamp
 }
@@ -264,7 +264,7 @@ func TimestampColumn(name string) ColumnTimestamp {
 // ColumnTimestampz is interface of SQL timestamp with timezone columns.
 type ColumnTimestampz interface {
 	TimestampzExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnTimestampz
 }
@@ -301,7 +301,7 @@ func TimestampzColumn(name string) ColumnTimestampz {
 // ColumnDate is interface of SQL date columns.
 type ColumnDate interface {
 	DateExpression
-	IColumn
+	Column
 
 	From(subQuery SelectTable) ColumnDate
 }

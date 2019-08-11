@@ -33,3 +33,16 @@ func TestIntExpressionBIT_XOR(t *testing.T) {
 	assertClauseSerialize(t, table1ColInt.BIT_XOR(table2ColInt), "(table1.col_int ^ table2.col_int)")
 	assertClauseSerialize(t, table1ColInt.BIT_XOR(Int(11)), "(table1.col_int ^ ?)", int64(11))
 }
+
+func TestExists(t *testing.T) {
+	assertClauseSerialize(t, EXISTS(
+		table2.
+			SELECT(Int(1)).
+			WHERE(table1Col1.EQ(table2Col3)),
+	),
+		`(EXISTS (
+     SELECT ?
+     FROM db.table2
+     WHERE table1.col1 = table2.col3
+))`, int64(1))
+}

@@ -2,7 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/internal/jet"
 
-type Column jet.Column
+type Column jet.ColumnExpression
 
 type IColumnList jet.IColumnList
 

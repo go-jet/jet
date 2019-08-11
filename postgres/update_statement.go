@@ -22,10 +22,10 @@ type updateStatementImpl struct {
 	Update    jet.ClauseUpdate
 	Set       ClauseSet
 	Where     jet.ClauseWhere
-	Returning jet.ClauseReturning
+	Returning ClauseReturning
 }
 
-func newUpdateStatement(table WritableTable, columns []jet.IColumn) UpdateStatement {
+func newUpdateStatement(table WritableTable, columns []jet.Column) UpdateStatement {
 	update := &updateStatementImpl{}
 	update.StatementImpl = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
 		&update.Set, &update.Where, &update.Returning)
@@ -58,7 +58,7 @@ func (u *updateStatementImpl) RETURNING(projections ...jet.Projection) UpdateSta
 }
 
 type ClauseSet struct {
-	Columns []jet.IColumn
+	Columns []jet.Column
 	Values  []jet.Serializer
 }
 

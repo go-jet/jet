@@ -64,6 +64,8 @@ func assertClauseSerialize(t *testing.T, clause jet.Serializer, query string, ar
 
 	assert.NilError(t, err)
 
+	//fmt.Println(out.Buff.String())
+
 	assert.DeepEqual(t, out.Buff.String(), query)
 	assert.DeepEqual(t, out.Args, args)
 }

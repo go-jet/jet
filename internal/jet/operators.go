@@ -17,7 +17,7 @@ func BIT_NOT(expr IntegerExpression) IntegerExpression {
 //----------- Comparison operators ---------------//
 
 // EXISTS checks for existence of the rows in subQuery
-func EXISTS(subQuery SelectStatement) BoolExpression {
+func EXISTS(subQuery Expression) BoolExpression {
 	return newPrefixBoolOperator(subQuery, "EXISTS")
 }
 

@@ -98,7 +98,7 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 	return nil
 }
 
-func SerializeColumnNames(columns []IColumn, out *SqlBuilder) error {
+func SerializeColumnNames(columns []Column, out *SqlBuilder) error {
 	for i, col := range columns {
 		if i > 0 {
 			out.WriteString(", ")
@@ -114,7 +114,7 @@ func SerializeColumnNames(columns []IColumn, out *SqlBuilder) error {
 	return nil
 }
 
-func ColumnListToProjectionList(columns []Column) []Projection {
+func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
 	var ret []Projection
 
 	for _, column := range columns {
@@ -132,7 +132,7 @@ func valueToClause(value interface{}) Serializer {
 	return literal(value)
 }
 
-func UnwindRowFromModel(columns []IColumn, data interface{}) []Serializer {
+func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 	structValue := reflect.Indirect(reflect.ValueOf(data))
 
 	row := []Serializer{}
@@ -163,7 +163,7 @@ func UnwindRowFromModel(columns []IColumn, data interface{}) []Serializer {
 	return row
 }
 
-func UnwindRowsFromModels(columns []IColumn, data interface{}) [][]Serializer {
+func UnwindRowsFromModels(columns []Column, data interface{}) [][]Serializer {
 	sliceValue := reflect.Indirect(reflect.ValueOf(data))
 	mustBe(sliceValue, reflect.Slice)
 

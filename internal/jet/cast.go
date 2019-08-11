@@ -18,12 +18,12 @@ type CastImpl struct {
 	expression Expression
 }
 
-func NewCastImpl(expression Expression) CastImpl {
+func NewCastImpl(expression Expression) Cast {
 	castImpl := CastImpl{
 		expression: expression,
 	}
 
-	return castImpl
+	return &castImpl
 }
 
 func (b *CastImpl) AS(castType string) Expression {

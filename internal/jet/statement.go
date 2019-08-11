@@ -204,7 +204,7 @@ func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, opti
 	if !contains(options, noWrap) {
 		out.WriteString("(")
 
-		out.increaseIdent()
+		out.IncreaseIdent()
 	}
 
 	for _, clause := range s.Clauses {
@@ -216,7 +216,7 @@ func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, opti
 	}
 
 	if !contains(options, noWrap) {
-		out.decreaseIdent()
+		out.DecreaseIdent()
 		out.NewLine()
 		out.WriteString(")")
 	}
