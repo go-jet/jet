@@ -83,7 +83,7 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 	for i, col := range projections {
 		if i > 0 {
 			out.WriteString(",")
-			out.newLine()
+			out.NewLine()
 		}
 
 		if col == nil {

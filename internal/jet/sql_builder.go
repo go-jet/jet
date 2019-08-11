@@ -24,16 +24,26 @@ func (s *SqlBuilder) DebugSQL() string {
 
 const defaultIdent = 5
 
-func (q *SqlBuilder) increaseIdent() {
-	q.ident += defaultIdent
+func (q *SqlBuilder) increaseIdent(ident ...int) {
+	if len(ident) > 0 {
+		q.ident += ident[0]
+	} else {
+		q.ident += defaultIdent
+	}
 }
 
-func (q *SqlBuilder) decreaseIdent() {
-	if q.ident < defaultIdent {
+func (q *SqlBuilder) decreaseIdent(ident ...int) {
+	toDecrease := defaultIdent
+
+	if len(ident) > 0 {
+		toDecrease = ident[0]
+	}
+
+	if q.ident < toDecrease {
 		q.ident = 0
 	}
 
-	q.ident -= defaultIdent
+	q.ident -= toDecrease
 }
 
 func (q *SqlBuilder) writeProjections(statement StatementType, projections []Projection) error {
@@ -44,7 +54,7 @@ func (q *SqlBuilder) writeProjections(statement StatementType, projections []Pro
 }
 
 func (q *SqlBuilder) writeFrom(statement StatementType, table Serializer) error {
-	q.newLine()
+	q.NewLine()
 	q.WriteString("FROM")
 
 	q.increaseIdent()
@@ -55,7 +65,7 @@ func (q *SqlBuilder) writeFrom(statement StatementType, table Serializer) error 
 }
 
 func (q *SqlBuilder) writeWhere(statement StatementType, where Expression) error {
-	q.newLine()
+	q.NewLine()
 	q.WriteString("WHERE")
 
 	q.increaseIdent()
@@ -66,7 +76,7 @@ func (q *SqlBuilder) writeWhere(statement StatementType, where Expression) error
 }
 
 func (q *SqlBuilder) writeGroupBy(statement StatementType, groupBy []GroupByClause) error {
-	q.newLine()
+	q.NewLine()
 	q.WriteString("GROUP BY")
 
 	q.increaseIdent()
@@ -77,7 +87,7 @@ func (q *SqlBuilder) writeGroupBy(statement StatementType, groupBy []GroupByClau
 }
 
 func (q *SqlBuilder) writeOrderBy(statement StatementType, orderBy []OrderByClause) error {
-	q.newLine()
+	q.NewLine()
 	q.WriteString("ORDER BY")
 
 	q.increaseIdent()
@@ -88,7 +98,7 @@ func (q *SqlBuilder) writeOrderBy(statement StatementType, orderBy []OrderByClau
 }
 
 func (q *SqlBuilder) writeHaving(statement StatementType, having Expression) error {
-	q.newLine()
+	q.NewLine()
 	q.WriteString("HAVING")
 
 	q.increaseIdent()
@@ -103,18 +113,14 @@ func (q *SqlBuilder) WriteReturning(statement StatementType, returning []Project
 		return nil
 	}
 
-	if !q.Dialect.SupportsReturning() {
-		panic("jet: " + q.Dialect.Name() + " dialect does not support RETURNING.")
-	}
-
-	q.newLine()
+	q.NewLine()
 	q.WriteString("RETURNING")
 	q.increaseIdent()
 
 	return q.writeProjections(statement, returning)
 }
 
-func (q *SqlBuilder) newLine() {
+func (q *SqlBuilder) NewLine() {
 	q.write([]byte{'\n'})
 	q.write(bytes.Repeat([]byte{' '}, q.ident))
 }

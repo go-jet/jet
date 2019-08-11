@@ -109,7 +109,7 @@ func (s *setStatementImpl) serialize(statement StatementType, out *SqlBuilder, o
 
 	if wrap {
 		out.decreaseIdent()
-		out.newLine()
+		out.NewLine()
 		out.WriteString(")")
 	}
 
@@ -129,19 +129,19 @@ func (s *setStatementImpl) serializeImpl(out *SqlBuilder) error {
 		return setOverride()(SelectStatementType, out)
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("(")
 	out.increaseIdent()
 
 	for i, selectStmt := range s.selects {
-		out.newLine()
+		out.NewLine()
 		if i > 0 {
 			out.WriteString(s.operator)
 
 			if s.all {
 				out.WriteString("ALL")
 			}
-			out.newLine()
+			out.NewLine()
 		}
 
 		if selectStmt == nil {
@@ -156,7 +156,7 @@ func (s *setStatementImpl) serializeImpl(out *SqlBuilder) error {
 	}
 
 	out.decreaseIdent()
-	out.newLine()
+	out.NewLine()
 	out.WriteString(")")
 
 	if s.orderBy != nil {
@@ -167,13 +167,13 @@ func (s *setStatementImpl) serializeImpl(out *SqlBuilder) error {
 	}
 
 	if s.limit >= 0 {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("LIMIT")
 		out.insertParametrizedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("OFFSET")
 		out.insertParametrizedArgument(s.offset)
 	}

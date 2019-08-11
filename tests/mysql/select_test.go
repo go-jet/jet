@@ -257,36 +257,6 @@ LIMIT ?;
 	assert.NilError(t, err)
 }
 
-func TestSelectINTERSECT(t *testing.T) {
-	defer func() {
-		r := recover()
-		assert.Equal(t, r, "jet: MySQL does not support INTERSECT operator.")
-	}()
-
-	query := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
-		INTERSECT(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).LIMIT(1)
-
-	//fmt.Println(query.DebugSql())
-
-	err := query.Query(db, &struct{}{})
-	assert.NilError(t, err)
-}
-
-func TestSelectEXCEPT(t *testing.T) {
-	defer func() {
-		r := recover()
-		assert.Equal(t, r, "jet: MySQL does not support EXCEPT operator.")
-	}()
-
-	query := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
-		EXCEPT(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).LIMIT(1)
-
-	//fmt.Println(query.DebugSql())
-
-	err := query.Query(db, &struct{}{})
-	assert.NilError(t, err)
-}
-
 func TestSelectUNION_ALL(t *testing.T) {
 	expectedSQL := `
 (
@@ -303,21 +273,29 @@ func TestSelectUNION_ALL(t *testing.T) {
           LIMIT ?
           OFFSET ?
      )
-);
+)
+ORDER BY "payment.payment_id"
+LIMIT ?
+OFFSET ?;
 `
 	query := UNION_ALL(
 		Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
 		Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
-	)
+	).ORDER_BY(Payment.PaymentID).
+		LIMIT(4).
+		OFFSET(3)
 
 	//fmt.Println(query.Sql())
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(10), int64(1), int64(2))
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(10), int64(1), int64(2), int64(4), int64(3))
 
 	query2 := Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10).
-		UNION_ALL(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2))
+		UNION_ALL(Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2)).
+		ORDER_BY(Payment.PaymentID).
+		LIMIT(4).
+		OFFSET(3)
 
-	testutils.AssertStatementSql(t, query2, expectedSQL, int64(1), int64(10), int64(1), int64(2))
+	testutils.AssertStatementSql(t, query2, expectedSQL, int64(1), int64(10), int64(1), int64(2), int64(4), int64(3))
 
 	err := query.Query(db, &struct{}{})
 	assert.NilError(t, err)

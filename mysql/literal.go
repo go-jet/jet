@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+var STAR = jet.STAR
+var NULL = jet.NULL
+var DEFAULT = jet.DEFAULT
+
 var Bool = jet.Bool
 var Int = jet.Int
 var Float = jet.Float

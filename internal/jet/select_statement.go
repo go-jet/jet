@@ -163,7 +163,7 @@ func (s *selectStatementImpl) serialize(statement StatementType, out *SqlBuilder
 		return err
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString(")")
 
 	return nil
@@ -174,7 +174,7 @@ func (s *selectStatementImpl) serializeImpl(out *SqlBuilder) error {
 		return errors.New("jet: Select expression is nil. ")
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("SELECT")
 
 	if s.distinct {
@@ -230,19 +230,19 @@ func (s *selectStatementImpl) serializeImpl(out *SqlBuilder) error {
 	}
 
 	if s.limit >= 0 {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("LIMIT")
 		out.insertParametrizedArgument(s.limit)
 	}
 
 	if s.offset >= 0 {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("OFFSET")
 		out.insertParametrizedArgument(s.offset)
 	}
 
 	if s.lockFor != nil {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("FOR")
 		err := s.lockFor.serialize(SelectStatementType, out)
 

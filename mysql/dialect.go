@@ -15,8 +15,6 @@ func NewDialect() jet.Dialect {
 	serializeOverrides["/"] = mysql_DIVISION
 	serializeOverrides["#"] = mysql_BIT_XOR
 	serializeOverrides[jet.StringConcatOperator] = mysql_CONCAT_operator
-	serializeOverrides[jet.Except] = mysql_EXCEPT
-	serializeOverrides[jet.Intersect] = mysql_INTERSECT
 
 	mySQLDialectParams := jet.DialectParams{
 		Name:                "MySQL",
@@ -27,22 +25,9 @@ func NewDialect() jet.Dialect {
 		ArgumentPlaceholder: func(int) string {
 			return "?"
 		},
-		SupportsReturning: false,
 	}
 
 	return jet.NewDialect(mySQLDialectParams)
-}
-
-func mysql_EXCEPT(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
-		panic("jet: MySQL does not support EXCEPT operator.")
-	}
-}
-
-func mysql_INTERSECT(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
-		panic("jet: MySQL does not support INTERSECT operator.")
-	}
 }
 
 func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {

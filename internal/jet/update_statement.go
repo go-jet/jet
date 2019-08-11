@@ -67,7 +67,7 @@ func (u *updateStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		Dialect: detectDialect(u, dialect...),
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("UPDATE")
 
 	if utils.IsNil(u.table) {
@@ -86,12 +86,8 @@ func (u *updateStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		return "", nil, errors.New("jet: no values to updated")
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("SET")
-
-	if err = out.Dialect.SetClause()(u.columns, u.values, out); err != nil {
-		return
-	}
 
 	if u.where == nil {
 		return "", nil, errors.New("jet: WHERE clause not set")

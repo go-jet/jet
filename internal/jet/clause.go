@@ -25,7 +25,7 @@ func (s *ClauseSelect) projections() []Projection {
 }
 
 func (s *ClauseSelect) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString("SELECT")
 
 	if s.Distinct {
@@ -74,7 +74,7 @@ func (c *ClauseGroupBy) Serialize(statementType StatementType, out *SqlBuilder) 
 		return nil
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("GROUP BY")
 
 	out.increaseIdent()
@@ -114,7 +114,7 @@ type ClauseLimit struct {
 
 func (l *ClauseLimit) Serialize(statementType StatementType, out *SqlBuilder) error {
 	if l.Count >= 0 {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("LIMIT")
 		out.insertParametrizedArgument(l.Count)
 	}
@@ -128,7 +128,7 @@ type ClauseOffset struct {
 
 func (o *ClauseOffset) Serialize(statementType StatementType, out *SqlBuilder) error {
 	if o.Count >= 0 {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("OFFSET")
 		out.insertParametrizedArgument(o.Count)
 	}
@@ -145,7 +145,7 @@ func (f *ClauseFor) Serialize(statementType StatementType, out *SqlBuilder) erro
 		return nil
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("FOR")
 	return f.Lock.serialize(statementType, out)
 }
@@ -179,20 +179,20 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 	//}
 
 	if wrap {
-		out.newLine()
+		out.NewLine()
 		out.WriteString("(")
 		out.increaseIdent()
 	}
 
 	for i, selectStmt := range s.Selects {
-		out.newLine()
+		out.NewLine()
 		if i > 0 {
 			out.WriteString(s.Operator)
 
 			if s.All {
 				out.WriteString("ALL")
 			}
-			out.newLine()
+			out.NewLine()
 		}
 
 		if selectStmt == nil {
@@ -208,7 +208,7 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 
 	if wrap {
 		out.decreaseIdent()
-		out.newLine()
+		out.NewLine()
 		out.WriteString(")")
 	}
 
@@ -238,7 +238,7 @@ type ClauseUpdate struct {
 }
 
 func (u *ClauseUpdate) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString("UPDATE")
 
 	if utils.IsNil(u.Table) {
@@ -258,42 +258,33 @@ type ClauseSet struct {
 }
 
 func (s *ClauseSet) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString("SET")
 
-	if len(s.Columns) == 0 {
-		return errors.New("jet: no columns selected")
+	if len(s.Columns) != len(s.Values) {
+		return errors.New("jet: mismatch in numers of columns and values")
 	}
 
-	if len(s.Columns) > 1 {
-		out.WriteString("(")
+	out.increaseIdent(4)
+	for i, column := range s.Columns {
+		if i > 0 {
+			out.WriteString(", ")
+			out.NewLine()
+		}
+
+		if column == nil {
+			return errors.New("jet: nil column in columns list")
+		}
+
+		out.WriteString(column.Name())
+
+		out.WriteString(" = ")
+
+		if err := Serialize(s.Values[i], UpdateStatementType, out); err != nil {
+			return err
+		}
 	}
-
-	err := SerializeColumnNames(s.Columns, out)
-
-	if err != nil {
-		return err
-	}
-
-	if len(s.Columns) > 1 {
-		out.WriteString(")")
-	}
-
-	out.WriteString("=")
-
-	if len(s.Values) > 1 {
-		out.WriteString("(")
-	}
-
-	err = SerializeClauseList(statementType, s.Values, out)
-
-	if err != nil {
-		return err
-	}
-
-	if len(s.Values) > 1 {
-		out.WriteString(")")
-	}
+	out.decreaseIdent(4)
 
 	return nil
 }
@@ -312,7 +303,7 @@ type ClauseInsert struct {
 }
 
 func (i *ClauseInsert) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString("INSERT INTO")
 
 	if utils.IsNil(i.Table) {
@@ -357,7 +348,7 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) e
 		}
 
 		out.increaseIdent()
-		out.newLine()
+		out.NewLine()
 		out.WriteString("(")
 
 		err := SerializeClauseList(statementType, row, out)
@@ -389,7 +380,7 @@ type ClauseDelete struct {
 }
 
 func (d *ClauseDelete) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString("DELETE FROM")
 
 	if d.Table == nil {
@@ -409,7 +400,7 @@ type ClauseStatementBegin struct {
 }
 
 func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString(d.Name)
 
 	for i, table := range d.Tables {
@@ -433,7 +424,7 @@ type ClauseString struct {
 }
 
 func (d *ClauseString) Serialize(statementType StatementType, out *SqlBuilder) error {
-	out.newLine()
+	out.NewLine()
 	out.WriteString(d.Name)
 	out.WriteString(d.Data)
 	return nil
@@ -573,7 +564,7 @@ func (t *JoinTableImpl) TableName() string {
 	return ""
 }
 
-func (t *JoinTableImpl) columns() []IColumn {
+func (t *JoinTableImpl) Columns() []IColumn {
 	//return append(t.lhs.columns(), t.rhs.columns()...)
 	panic("Unimplemented")
 }
@@ -601,7 +592,7 @@ func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, opti
 		return
 	}
 
-	out.newLine()
+	out.NewLine()
 
 	switch t.joinType {
 	case InnerJoin:
@@ -667,7 +658,7 @@ func (s *SelectTableImpl2) Alias() string {
 	return s.alias
 }
 
-func (s *SelectTableImpl2) columns() []IColumn {
+func (s *SelectTableImpl2) Columns() []IColumn {
 	return nil
 }
 

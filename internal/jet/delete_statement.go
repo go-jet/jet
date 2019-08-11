@@ -48,7 +48,7 @@ func (d *deleteStatementImpl) serializeImpl(out *SqlBuilder) error {
 	if d == nil {
 		return errors.New("jet: delete statement is nil")
 	}
-	out.newLine()
+	out.NewLine()
 	out.WriteString("DELETE FROM")
 
 	if d.table == nil {

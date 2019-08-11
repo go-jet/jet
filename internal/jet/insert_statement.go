@@ -88,7 +88,7 @@ func (i *insertStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 		Dialect: detectDialect(i, dialect...),
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("INSERT INTO")
 
 	if utils.IsNil(i.table) {
@@ -132,7 +132,7 @@ func (i *insertStatementImpl) Sql(dialect ...Dialect) (query string, args []inte
 			}
 
 			out.increaseIdent()
-			out.newLine()
+			out.NewLine()
 			out.WriteString("(")
 
 			err = SerializeClauseList(InsertStatementType, row, out)

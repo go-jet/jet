@@ -27,8 +27,6 @@ var TRUNCATE = func(floatExpression jet.FloatExpression, precision jet.IntegerEx
 	return jet.NewFloatFunc("TRUNCATE", floatExpression, precision)
 }
 
-//var MINUSi = jet.MINUSi
-//var MINUSf = jet.MINUSf
 var BIT_NOT = jet.BIT_NOT
 
 // ----------------- Aggregate functions  -------------------//

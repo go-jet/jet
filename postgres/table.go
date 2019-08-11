@@ -120,10 +120,6 @@ func NewTable(schemaName, name string, columns ...jet.Column) Table {
 		TableImpl2: jet.NewTable2(Dialect, schemaName, name, columns...),
 	}
 
-	for _, c := range columns {
-		c.SetTableName(name)
-	}
-
 	t.readableTableInterfaceImpl.parent = t
 	t.writableTableInterfaceImpl.parent = t
 

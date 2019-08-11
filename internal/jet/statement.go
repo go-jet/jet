@@ -217,7 +217,7 @@ func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, opti
 
 	if !contains(options, noWrap) {
 		out.decreaseIdent()
-		out.newLine()
+		out.NewLine()
 		out.WriteString(")")
 	}
 

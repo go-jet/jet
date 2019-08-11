@@ -7,10 +7,7 @@ import (
 
 type SerializerTable interface {
 	Serializer
-	Columns() []IColumn
-	//SchemaName() string
-	//TableName() string
-	//AS(alias string)
+	TableInterface
 }
 
 type TableInterface interface {
@@ -284,7 +281,7 @@ func (t *joinTable) serialize(statement StatementType, out *SqlBuilder, options 
 		return
 	}
 
-	out.newLine()
+	out.NewLine()
 
 	switch t.joinType {
 	case InnerJoin:

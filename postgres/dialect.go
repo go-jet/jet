@@ -24,8 +24,6 @@ func NewDialect() jet.Dialect {
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},
-		//SetClause:         postgresSetClause,
-		SupportsReturning: true,
 	}
 
 	return jet.NewDialect(dialectParams)

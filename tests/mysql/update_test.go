@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
@@ -21,10 +22,12 @@ func TestUpdateValues(t *testing.T) {
 
 	var expectedSQL = `
 UPDATE test_sample.link
-SET name = 'Bong', url = 'http://bong.com'
+SET name = 'Bong', 
+    url = 'http://bong.com'
 WHERE link.name = 'Bing';
 `
 
+	fmt.Println(query.DebugSql())
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
 
 	testutils.AssertExec(t, query, db)
@@ -61,32 +64,19 @@ func TestUpdateWithSubQueries(t *testing.T) {
 	expectedSQL := `
 UPDATE test_sample.link
 SET name = (
-     SELECT ?
-), url = (
-     SELECT link2.url AS "link2.url"
-     FROM test_sample.link2
-     WHERE link2.name = ?
-)
+         SELECT ?
+    ), 
+    url = (
+         SELECT link2.url AS "link2.url"
+         FROM test_sample.link2
+         WHERE link2.name = ?
+    )
 WHERE link.name = ?;
 `
+	fmt.Println(query.Sql())
 	testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
 
 	testutils.AssertExec(t, query, db)
-}
-
-func TestUpdateAndReturning(t *testing.T) {
-	defer func() {
-		r := recover()
-		assert.Equal(t, r, "jet: MySQL dialect does not support RETURNING.")
-	}()
-
-	stmt := Link.
-		UPDATE(Link.Name, Link.URL).
-		SET("DuckDuckGo", "http://www.duckduckgo.com").
-		WHERE(Link.Name.EQ(String("Ask"))).
-		RETURNING(Link.AllColumns)
-
-	stmt.Query(db, &struct{}{})
 }
 
 func TestUpdateWithModelData(t *testing.T) {
@@ -105,9 +95,13 @@ func TestUpdateWithModelData(t *testing.T) {
 
 	expectedSQL := `
 UPDATE test_sample.link
-SET id = ?, url = ?, name = ?, description = ?
+SET id = ?, 
+    url = ?, 
+    name = ?, 
+    description = ?
 WHERE link.id = ?;
 `
+	fmt.Println(stmt.Sql())
 	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 
 	testutils.AssertExec(t, stmt, db)
@@ -132,7 +126,9 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 
 	var expectedSQL = `
 UPDATE test_sample.link
-SET description = NULL, name = 'DuckDuckGo', url = 'http://www.duckduckgo.com'
+SET description = NULL, 
+    name = 'DuckDuckGo', 
+    url = 'http://www.duckduckgo.com'
 WHERE link.id = 201;
 `
 	//fmt.Println(stmt.DebugSql())

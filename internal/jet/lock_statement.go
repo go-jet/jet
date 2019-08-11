@@ -66,7 +66,7 @@ func (l *lockStatementImpl) Sql(dialect ...Dialect) (query string, args []interf
 		Dialect: detectDialect(l, dialect...),
 	}
 
-	out.newLine()
+	out.NewLine()
 	out.WriteString("LOCK TABLE")
 
 	for i, table := range l.tables {

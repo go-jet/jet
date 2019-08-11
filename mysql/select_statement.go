@@ -1,14 +1,12 @@
-package postgres
+package mysql
 
 import "github.com/go-jet/jet/internal/jet"
 
 type SelectLock = jet.SelectLock
 
 var (
-	UPDATE        = jet.NewSelectLock("UPDATE")
-	NO_KEY_UPDATE = jet.NewSelectLock("NO KEY UPDATE")
-	SHARE         = jet.NewSelectLock("SHARE")
-	KEY_SHARE     = jet.NewSelectLock("KEY SHARE")
+	UPDATE = jet.NewSelectLock("UPDATE")
+	SHARE  = jet.NewSelectLock("SHARE")
 )
 
 type SelectStatement interface {
@@ -28,10 +26,6 @@ type SelectStatement interface {
 
 	UNION(rhs SelectStatement) SetStatement
 	UNION_ALL(rhs SelectStatement) SetStatement
-	INTERSECT(rhs SelectStatement) SetStatement
-	INTERSECT_ALL(rhs SelectStatement) SetStatement
-	EXCEPT(rhs SelectStatement) SetStatement
-	EXCEPT_ALL(rhs SelectStatement) SetStatement
 
 	AsTable(alias string) SelectTable
 }

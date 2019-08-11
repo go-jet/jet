@@ -1,6 +1,9 @@
 package postgres
 
-import "github.com/go-jet/jet/internal/jet"
+import (
+	"errors"
+	"github.com/go-jet/jet/internal/jet"
+)
 
 // UpdateStatement is interface of SQL UPDATE statement
 type UpdateStatement interface {
@@ -17,7 +20,7 @@ type updateStatementImpl struct {
 	jet.StatementImpl
 
 	Update    jet.ClauseUpdate
-	Set       jet.ClauseSet
+	Set       ClauseSet
 	Where     jet.ClauseWhere
 	Returning jet.ClauseReturning
 }
@@ -52,4 +55,50 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 func (u *updateStatementImpl) RETURNING(projections ...jet.Projection) UpdateStatement {
 	u.Returning.Projections = projections
 	return u
+}
+
+type ClauseSet struct {
+	Columns []jet.IColumn
+	Values  []jet.Serializer
+}
+
+func (s *ClauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) error {
+	out.NewLine()
+	out.WriteString("SET")
+
+	if len(s.Columns) == 0 {
+		return errors.New("jet: no columns selected")
+	}
+
+	if len(s.Columns) > 1 {
+		out.WriteString("(")
+	}
+
+	err := jet.SerializeColumnNames(s.Columns, out)
+
+	if err != nil {
+		return err
+	}
+
+	if len(s.Columns) > 1 {
+		out.WriteString(")")
+	}
+
+	out.WriteString("=")
+
+	if len(s.Values) > 1 {
+		out.WriteString("(")
+	}
+
+	err = jet.SerializeClauseList(statementType, s.Values, out)
+
+	if err != nil {
+		return err
+	}
+
+	if len(s.Values) > 1 {
+		out.WriteString(")")
+	}
+
+	return nil
 }
