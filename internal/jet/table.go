@@ -75,13 +75,13 @@ func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options 
 		return errors.New("jet: tableImpl is nil. ")
 	}
 
-	out.writeIdentifier(t.schemaName)
+	out.WriteIdentifier(t.schemaName)
 	out.WriteString(".")
-	out.writeIdentifier(t.name)
+	out.WriteIdentifier(t.name)
 
 	if len(t.alias) > 0 {
 		out.WriteString("AS")
-		out.writeIdentifier(t.alias)
+		out.WriteIdentifier(t.alias)
 	}
 
 	return nil

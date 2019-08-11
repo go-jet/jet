@@ -28,7 +28,7 @@ func (a *alias) serializeForProjection(statement StatementType, out *SqlBuilder)
 	}
 
 	out.WriteString("AS")
-	out.writeAlias(a.alias)
+	out.WriteAlias(a.alias)
 
 	return nil
 }

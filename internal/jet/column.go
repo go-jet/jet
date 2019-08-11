@@ -66,7 +66,7 @@ func (c *columnImpl) DefaultAlias() string {
 func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
-		out.writeAlias(c.DefaultAlias()) //always quote
+		out.WriteAlias(c.DefaultAlias()) //always quote
 
 		return nil
 	}
@@ -82,7 +82,7 @@ func (c columnImpl) serializeForProjection(statement StatementType, out *SqlBuil
 	}
 
 	out.WriteString("AS")
-	out.writeAlias(c.DefaultAlias())
+	out.WriteAlias(c.DefaultAlias())
 
 	return nil
 }
@@ -90,16 +90,16 @@ func (c columnImpl) serializeForProjection(statement StatementType, out *SqlBuil
 func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 
 	if c.subQuery != nil {
-		out.writeIdentifier(c.subQuery.Alias())
-		out.writeByte('.')
-		out.writeIdentifier(c.DefaultAlias(), true)
+		out.WriteIdentifier(c.subQuery.Alias())
+		out.WriteByte('.')
+		out.WriteIdentifier(c.DefaultAlias(), true)
 	} else {
 		if c.tableName != "" {
-			out.writeIdentifier(c.tableName)
-			out.writeByte('.')
+			out.WriteIdentifier(c.tableName)
+			out.WriteByte('.')
 		}
 
-		out.writeIdentifier(c.name)
+		out.WriteIdentifier(c.name)
 	}
 
 	return nil

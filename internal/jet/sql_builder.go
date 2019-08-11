@@ -51,73 +51,6 @@ func (s *SqlBuilder) WriteProjections(statement StatementType, projections []Pro
 	return err
 }
 
-func (s *SqlBuilder) writeFrom(statement StatementType, table Serializer) error {
-	s.NewLine()
-	s.WriteString("FROM")
-
-	s.IncreaseIdent()
-	err := table.serialize(statement, s)
-	s.DecreaseIdent()
-
-	return err
-}
-
-func (s *SqlBuilder) writeWhere(statement StatementType, where Expression) error {
-	s.NewLine()
-	s.WriteString("WHERE")
-
-	s.IncreaseIdent()
-	err := where.serialize(statement, s, noWrap)
-	s.DecreaseIdent()
-
-	return err
-}
-
-func (s *SqlBuilder) writeGroupBy(statement StatementType, groupBy []GroupByClause) error {
-	s.NewLine()
-	s.WriteString("GROUP BY")
-
-	s.IncreaseIdent()
-	err := serializeGroupByClauseList(statement, groupBy, s)
-	s.DecreaseIdent()
-
-	return err
-}
-
-func (s *SqlBuilder) writeOrderBy(statement StatementType, orderBy []OrderByClause) error {
-	s.NewLine()
-	s.WriteString("ORDER BY")
-
-	s.IncreaseIdent()
-	err := serializeOrderByClauseList(statement, orderBy, s)
-	s.DecreaseIdent()
-
-	return err
-}
-
-func (s *SqlBuilder) writeHaving(statement StatementType, having Expression) error {
-	s.NewLine()
-	s.WriteString("HAVING")
-
-	s.IncreaseIdent()
-	err := having.serialize(statement, s, noWrap)
-	s.DecreaseIdent()
-
-	return err
-}
-
-func (s *SqlBuilder) WriteReturning(statement StatementType, returning []Projection) error {
-	if len(returning) == 0 {
-		return nil
-	}
-
-	s.NewLine()
-	s.WriteString("RETURNING")
-	s.IncreaseIdent()
-
-	return s.WriteProjections(statement, returning)
-}
-
 func (s *SqlBuilder) NewLine() {
 	s.write([]byte{'\n'})
 	s.write(bytes.Repeat([]byte{' '}, s.ident))
@@ -144,7 +77,7 @@ func isPostSeparator(b byte) bool {
 	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
-func (s *SqlBuilder) writeAlias(str string) {
+func (s *SqlBuilder) WriteAlias(str string) {
 	aliasQuoteChar := string(s.Dialect.AliasQuoteChar())
 	s.WriteString(aliasQuoteChar + str + aliasQuoteChar)
 }
@@ -153,7 +86,7 @@ func (s *SqlBuilder) WriteString(str string) {
 	s.write([]byte(str))
 }
 
-func (s *SqlBuilder) writeIdentifier(name string, alwaysQuote ...bool) {
+func (s *SqlBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
 	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
 
 	if quoteWrap || len(alwaysQuote) > 0 {
@@ -164,7 +97,7 @@ func (s *SqlBuilder) writeIdentifier(name string, alwaysQuote ...bool) {
 	}
 }
 
-func (s *SqlBuilder) writeByte(b byte) {
+func (s *SqlBuilder) WriteByte(b byte) {
 	s.write([]byte{b})
 }
 

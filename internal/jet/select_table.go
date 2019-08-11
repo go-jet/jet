@@ -52,7 +52,7 @@ func (s *SelectTableImpl2) serialize(statement StatementType, out *SqlBuilder, o
 	}
 
 	out.WriteString("AS")
-	out.writeIdentifier(s.alias)
+	out.WriteIdentifier(s.alias)
 
 	return nil
 }

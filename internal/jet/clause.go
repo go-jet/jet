@@ -43,11 +43,18 @@ type ClauseFrom struct {
 	Table Serializer
 }
 
-func (f *ClauseFrom) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (f *ClauseFrom) Serialize(statementType StatementType, s *SqlBuilder) error {
 	if f.Table == nil {
 		return nil
 	}
-	return out.writeFrom(statementType, f.Table)
+	s.NewLine()
+	s.WriteString("FROM")
+
+	s.IncreaseIdent()
+	err := f.Table.serialize(statementType, s)
+	s.DecreaseIdent()
+
+	return err
 }
 
 type ClauseWhere struct {
@@ -55,14 +62,21 @@ type ClauseWhere struct {
 	Mandatory bool
 }
 
-func (c *ClauseWhere) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (c *ClauseWhere) Serialize(statementType StatementType, s *SqlBuilder) error {
 	if c.Condition == nil {
 		if c.Mandatory {
 			return errors.New("jet: WHERE clause not set")
 		}
 		return nil
 	}
-	return out.writeWhere(statementType, c.Condition)
+	s.NewLine()
+	s.WriteString("WHERE")
+
+	s.IncreaseIdent()
+	err := c.Condition.serialize(statementType, s, noWrap)
+	s.DecreaseIdent()
+
+	return err
 }
 
 type ClauseGroupBy struct {
@@ -88,24 +102,38 @@ type ClauseHaving struct {
 	Condition BoolExpression
 }
 
-func (c *ClauseHaving) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (c *ClauseHaving) Serialize(statementType StatementType, s *SqlBuilder) error {
 	if c.Condition == nil {
 		return nil
 	}
 
-	return out.writeHaving(statementType, c.Condition)
+	s.NewLine()
+	s.WriteString("HAVING")
+
+	s.IncreaseIdent()
+	err := c.Condition.serialize(statementType, s, noWrap)
+	s.DecreaseIdent()
+
+	return err
 }
 
 type ClauseOrderBy struct {
 	List []OrderByClause
 }
 
-func (o *ClauseOrderBy) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (o *ClauseOrderBy) Serialize(statementType StatementType, s *SqlBuilder) error {
 	if o.List == nil {
 		return nil
 	}
 
-	return out.writeOrderBy(statementType, o.List)
+	s.NewLine()
+	s.WriteString("ORDER BY")
+
+	s.IncreaseIdent()
+	err := serializeOrderByClauseList(statementType, o.List, s)
+	s.DecreaseIdent()
+
+	return err
 }
 
 type ClauseLimit struct {
@@ -346,7 +374,7 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) e
 			return err
 		}
 
-		out.writeByte(')')
+		out.WriteByte(')')
 		out.DecreaseIdent()
 	}
 	return nil
