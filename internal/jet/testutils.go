@@ -86,7 +86,7 @@ func assertStatement(t *testing.T, query Statement, expectedQuery string, expect
 }
 
 func assertStatementErr(t *testing.T, stmt Statement, errorStr string) {
-	_, _, err := stmt.Sql(DefaultDialect)
+	_, _, err := stmt.Sql()
 
 	assert.Assert(t, err != nil)
 	assert.Error(t, err, errorStr)

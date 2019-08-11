@@ -16,126 +16,124 @@ type SqlBuilder struct {
 
 	lastChar byte
 	ident    int
-}
 
-func (s *SqlBuilder) DebugSQL() string {
-	return queryStringToDebugString(s.Buff.String(), s.Args, s.Dialect)
+	debug bool
 }
 
 const defaultIdent = 5
 
-func (q *SqlBuilder) IncreaseIdent(ident ...int) {
+func (s *SqlBuilder) IncreaseIdent(ident ...int) {
 	if len(ident) > 0 {
-		q.ident += ident[0]
+		s.ident += ident[0]
 	} else {
-		q.ident += defaultIdent
+		s.ident += defaultIdent
 	}
 }
 
-func (q *SqlBuilder) DecreaseIdent(ident ...int) {
+func (s *SqlBuilder) DecreaseIdent(ident ...int) {
 	toDecrease := defaultIdent
 
 	if len(ident) > 0 {
 		toDecrease = ident[0]
 	}
 
-	if q.ident < toDecrease {
-		q.ident = 0
+	if s.ident < toDecrease {
+		s.ident = 0
 	}
 
-	q.ident -= toDecrease
+	s.ident -= toDecrease
 }
 
-func (q *SqlBuilder) WriteProjections(statement StatementType, projections []Projection) error {
-	q.IncreaseIdent()
-	err := SerializeProjectionList(statement, projections, q)
-	q.DecreaseIdent()
+func (s *SqlBuilder) WriteProjections(statement StatementType, projections []Projection) error {
+	s.IncreaseIdent()
+	err := SerializeProjectionList(statement, projections, s)
+	s.DecreaseIdent()
 	return err
 }
 
-func (q *SqlBuilder) writeFrom(statement StatementType, table Serializer) error {
-	q.NewLine()
-	q.WriteString("FROM")
+func (s *SqlBuilder) writeFrom(statement StatementType, table Serializer) error {
+	s.NewLine()
+	s.WriteString("FROM")
 
-	q.IncreaseIdent()
-	err := table.serialize(statement, q)
-	q.DecreaseIdent()
-
-	return err
-}
-
-func (q *SqlBuilder) writeWhere(statement StatementType, where Expression) error {
-	q.NewLine()
-	q.WriteString("WHERE")
-
-	q.IncreaseIdent()
-	err := where.serialize(statement, q, noWrap)
-	q.DecreaseIdent()
+	s.IncreaseIdent()
+	err := table.serialize(statement, s)
+	s.DecreaseIdent()
 
 	return err
 }
 
-func (q *SqlBuilder) writeGroupBy(statement StatementType, groupBy []GroupByClause) error {
-	q.NewLine()
-	q.WriteString("GROUP BY")
+func (s *SqlBuilder) writeWhere(statement StatementType, where Expression) error {
+	s.NewLine()
+	s.WriteString("WHERE")
 
-	q.IncreaseIdent()
-	err := serializeGroupByClauseList(statement, groupBy, q)
-	q.DecreaseIdent()
-
-	return err
-}
-
-func (q *SqlBuilder) writeOrderBy(statement StatementType, orderBy []OrderByClause) error {
-	q.NewLine()
-	q.WriteString("ORDER BY")
-
-	q.IncreaseIdent()
-	err := serializeOrderByClauseList(statement, orderBy, q)
-	q.DecreaseIdent()
+	s.IncreaseIdent()
+	err := where.serialize(statement, s, noWrap)
+	s.DecreaseIdent()
 
 	return err
 }
 
-func (q *SqlBuilder) writeHaving(statement StatementType, having Expression) error {
-	q.NewLine()
-	q.WriteString("HAVING")
+func (s *SqlBuilder) writeGroupBy(statement StatementType, groupBy []GroupByClause) error {
+	s.NewLine()
+	s.WriteString("GROUP BY")
 
-	q.IncreaseIdent()
-	err := having.serialize(statement, q, noWrap)
-	q.DecreaseIdent()
+	s.IncreaseIdent()
+	err := serializeGroupByClauseList(statement, groupBy, s)
+	s.DecreaseIdent()
 
 	return err
 }
 
-func (q *SqlBuilder) WriteReturning(statement StatementType, returning []Projection) error {
+func (s *SqlBuilder) writeOrderBy(statement StatementType, orderBy []OrderByClause) error {
+	s.NewLine()
+	s.WriteString("ORDER BY")
+
+	s.IncreaseIdent()
+	err := serializeOrderByClauseList(statement, orderBy, s)
+	s.DecreaseIdent()
+
+	return err
+}
+
+func (s *SqlBuilder) writeHaving(statement StatementType, having Expression) error {
+	s.NewLine()
+	s.WriteString("HAVING")
+
+	s.IncreaseIdent()
+	err := having.serialize(statement, s, noWrap)
+	s.DecreaseIdent()
+
+	return err
+}
+
+func (s *SqlBuilder) WriteReturning(statement StatementType, returning []Projection) error {
 	if len(returning) == 0 {
 		return nil
 	}
 
-	q.NewLine()
-	q.WriteString("RETURNING")
-	q.IncreaseIdent()
+	s.NewLine()
+	s.WriteString("RETURNING")
+	s.IncreaseIdent()
 
-	return q.WriteProjections(statement, returning)
+	return s.WriteProjections(statement, returning)
 }
 
-func (q *SqlBuilder) NewLine() {
-	q.write([]byte{'\n'})
-	q.write(bytes.Repeat([]byte{' '}, q.ident))
+func (s *SqlBuilder) NewLine() {
+	s.write([]byte{'\n'})
+	s.write(bytes.Repeat([]byte{' '}, s.ident))
 }
 
-func (q *SqlBuilder) write(data []byte) {
+func (s *SqlBuilder) write(data []byte) {
 	if len(data) == 0 {
 		return
 	}
 
-	if !isPreSeparator(q.lastChar) && !isPostSeparator(data[0]) && q.Buff.Len() > 0 {
-		q.Buff.WriteByte(' ')
+	if !isPreSeparator(s.lastChar) && !isPostSeparator(data[0]) && s.Buff.Len() > 0 {
+		s.Buff.WriteByte(' ')
 	}
 
-	q.Buff.Write(data)
-	q.lastChar = data[len(data)-1]
+	s.Buff.Write(data)
+	s.lastChar = data[len(data)-1]
 }
 
 func isPreSeparator(b byte) bool {
@@ -146,43 +144,48 @@ func isPostSeparator(b byte) bool {
 	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
-func (q *SqlBuilder) writeAlias(str string) {
-	aliasQuoteChar := string(q.Dialect.AliasQuoteChar())
-	q.WriteString(aliasQuoteChar + str + aliasQuoteChar)
+func (s *SqlBuilder) writeAlias(str string) {
+	aliasQuoteChar := string(s.Dialect.AliasQuoteChar())
+	s.WriteString(aliasQuoteChar + str + aliasQuoteChar)
 }
 
-func (q *SqlBuilder) WriteString(str string) {
-	q.write([]byte(str))
+func (s *SqlBuilder) WriteString(str string) {
+	s.write([]byte(str))
 }
 
-func (q *SqlBuilder) writeIdentifier(name string, alwaysQuote ...bool) {
+func (s *SqlBuilder) writeIdentifier(name string, alwaysQuote ...bool) {
 	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
 
 	if quoteWrap || len(alwaysQuote) > 0 {
-		identQuoteChar := string(q.Dialect.IdentifierQuoteChar())
-		q.WriteString(identQuoteChar + name + identQuoteChar)
+		identQuoteChar := string(s.Dialect.IdentifierQuoteChar())
+		s.WriteString(identQuoteChar + name + identQuoteChar)
 	} else {
-		q.WriteString(name)
+		s.WriteString(name)
 	}
 }
 
-func (q *SqlBuilder) writeByte(b byte) {
-	q.write([]byte{b})
+func (s *SqlBuilder) writeByte(b byte) {
+	s.write([]byte{b})
 }
 
-func (q *SqlBuilder) finalize() (string, []interface{}) {
-	return q.Buff.String() + ";\n", q.Args
+func (s *SqlBuilder) finalize() (string, []interface{}) {
+	return s.Buff.String() + ";\n", s.Args
 }
 
-func (q *SqlBuilder) insertConstantArgument(arg interface{}) {
-	q.WriteString(argToString(arg))
+func (s *SqlBuilder) insertConstantArgument(arg interface{}) {
+	s.WriteString(argToString(arg))
 }
 
-func (q *SqlBuilder) insertParametrizedArgument(arg interface{}) {
-	q.Args = append(q.Args, arg)
-	argPlaceholder := q.Dialect.ArgumentPlaceholder()(len(q.Args))
+func (s *SqlBuilder) insertParametrizedArgument(arg interface{}) {
+	if s.debug {
+		s.insertConstantArgument(arg)
+		return
+	}
 
-	q.WriteString(argPlaceholder)
+	s.Args = append(s.Args, arg)
+	argPlaceholder := s.Dialect.ArgumentPlaceholder()(len(s.Args))
+
+	s.WriteString(argPlaceholder)
 }
 
 func argToString(value interface{}) string {

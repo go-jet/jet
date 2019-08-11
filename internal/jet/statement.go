@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/go-jet/jet/execution"
-	"strings"
 )
 
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
@@ -13,11 +12,11 @@ type Statement interface {
 	acceptsVisitor
 	// Sql returns parametrized sql query with list of arguments.
 	// err is returned if statement is not composed correctly
-	Sql(dialect ...Dialect) (query string, args []interface{}, err error)
+	Sql() (query string, args []interface{}, err error)
 	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
 	// Do not use it in production. Use it only for debug purposes.
 	// err is returned if statement is not composed correctly
-	DebugSql(dialect ...Dialect) (query string, err error)
+	DebugSql() (query string, err error)
 
 	// Query executes statement over database connection db and stores row result in destination.
 	// Destination can be arbitrary structure
@@ -49,16 +48,16 @@ type HasProjections interface {
 
 type SerializerStatementInterfaceImpl struct {
 	noOpVisitorImpl
-	Parent        SerializerStatement
-	Dialect       Dialect
-	StatementType StatementType
+	dialect       Dialect
+	statementType StatementType
+	parent        SerializerStatement
 }
 
-func (s *SerializerStatementInterfaceImpl) Sql(dialect ...Dialect) (query string, args []interface{}, err error) {
+func (s *SerializerStatementInterfaceImpl) Sql() (query string, args []interface{}, err error) {
 
-	queryData := &SqlBuilder{Dialect: s.Dialect}
+	queryData := &SqlBuilder{Dialect: s.dialect}
 
-	err = s.Parent.serialize(s.StatementType, queryData, noWrap)
+	err = s.parent.serialize(s.statementType, queryData, noWrap)
 
 	if err != nil {
 		return "", nil, err
@@ -69,58 +68,22 @@ func (s *SerializerStatementInterfaceImpl) Sql(dialect ...Dialect) (query string
 	return
 }
 
-func (s *SerializerStatementInterfaceImpl) DebugSql(dialect ...Dialect) (query string, err error) {
-	return debugSql(s.Parent, s.Dialect)
-}
+func (s *SerializerStatementInterfaceImpl) DebugSql() (query string, err error) {
+	sqlBuilder := &SqlBuilder{Dialect: s.dialect, debug: true}
 
-func (s *SerializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
-	return query(s.Parent, db, destination)
-}
-
-func (s *SerializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
-	return queryContext(context, s.Parent, db, destination)
-}
-
-func (s *SerializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
-	return exec(s.Parent, db)
-}
-
-func (s *SerializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	return execContext(context, s.Parent, db)
-}
-
-func debugSql(statement Statement, overrideDialect ...Dialect) (string, error) {
-	dialect := detectDialect(statement, overrideDialect...)
-	sqlQuery, args, err := statement.Sql(dialect)
+	err = s.parent.serialize(s.statementType, sqlBuilder, noWrap)
 
 	if err != nil {
 		return "", err
 	}
 
-	//debugSQLQuery := sqlQuery
-	//
-	//for i, arg := range args {
-	//	argPlaceholder := dialect.ArgumentPlaceholder()(i + 1)
-	//	debugSQLQuery = strings.Replace(debugSQLQuery, argPlaceholder, argToString(arg), 1)
-	//}
-	//
-	//return debugSQLQuery, nil
-	return queryStringToDebugString(sqlQuery, args, dialect), nil
+	query, _ = sqlBuilder.finalize()
+
+	return
 }
 
-func queryStringToDebugString(sqlQuery string, args []interface{}, dialect Dialect) string {
-	debugSQLQuery := sqlQuery
-
-	for i, arg := range args {
-		argPlaceholder := dialect.ArgumentPlaceholder()(i + 1)
-		debugSQLQuery = strings.Replace(debugSQLQuery, argPlaceholder, argToString(arg), 1)
-	}
-
-	return debugSQLQuery
-}
-
-func query(statement Statement, db execution.DB, destination interface{}) error {
-	query, args, err := statement.Sql()
+func (s *SerializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
+	query, args, err := s.Sql()
 
 	if err != nil {
 		return err
@@ -129,8 +92,8 @@ func query(statement Statement, db execution.DB, destination interface{}) error 
 	return execution.Query(context.Background(), db, query, args, destination)
 }
 
-func queryContext(context context.Context, statement Statement, db execution.DB, destination interface{}) error {
-	query, args, err := statement.Sql()
+func (s *SerializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+	query, args, err := s.Sql()
 
 	if err != nil {
 		return err
@@ -139,8 +102,8 @@ func queryContext(context context.Context, statement Statement, db execution.DB,
 	return execution.Query(context, db, query, args, destination)
 }
 
-func exec(statement Statement, db execution.DB) (res sql.Result, err error) {
-	query, args, err := statement.Sql()
+func (s *SerializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
+	query, args, err := s.Sql()
 
 	if err != nil {
 		return
@@ -149,8 +112,8 @@ func exec(statement Statement, db execution.DB) (res sql.Result, err error) {
 	return db.Exec(query, args...)
 }
 
-func execContext(context context.Context, statement Statement, db execution.DB) (res sql.Result, err error) {
-	query, args, err := statement.Sql()
+func (s *SerializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+	query, args, err := s.Sql()
 
 	if err != nil {
 		return
@@ -171,9 +134,9 @@ func (s *ExpressionStatementImpl) serializeForProjection(statement StatementType
 func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) StatementImpl {
 	return StatementImpl{
 		SerializerStatementInterfaceImpl: SerializerStatementInterfaceImpl{
-			Parent:        parent,
-			Dialect:       Dialect,
-			StatementType: statementType,
+			parent:        parent,
+			dialect:       Dialect,
+			statementType: statementType,
 		},
 		Clauses: clauses,
 	}

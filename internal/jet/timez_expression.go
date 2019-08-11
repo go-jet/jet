@@ -71,8 +71,8 @@ type prefixTimezExpression struct {
 //	timeExpr := prefixTimezExpression{}
 //	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
 //
-//	timeExpr.ExpressionInterfaceImpl.Parent = &timeExpr
-//	timeExpr.timezInterfaceImpl.Parent = &timeExpr
+//	timeExpr.ExpressionInterfaceImpl.parent = &timeExpr
+//	timeExpr.timezInterfaceImpl.parent = &timeExpr
 //
 //	return &timeExpr
 //}

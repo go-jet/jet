@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
@@ -15,6 +16,8 @@ func TestSelect(t *testing.T) {
 	stmt := Album.
 		SELECT(Album.AllColumns).
 		ORDER_BY(Album.AlbumId.ASC())
+
+	fmt.Println(stmt.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "Album"."AlbumId" AS "Album.AlbumId",
