@@ -6,9 +6,9 @@ type Column interface {
 	Name() string
 	TableName() string
 
-	SetTableName(table string)
-	SetSubQuery(subQuery SelectTable)
-	DefaultAlias() string
+	setTableName(table string)
+	setSubQuery(subQuery SelectTable)
+	defaultAlias() string
 }
 
 // Column is common column interface for all types of columns.
@@ -46,15 +46,15 @@ func (c *columnImpl) TableName() string {
 	return c.tableName
 }
 
-func (c *columnImpl) SetTableName(table string) {
+func (c *columnImpl) setTableName(table string) {
 	c.tableName = table
 }
 
-func (c *columnImpl) SetSubQuery(subQuery SelectTable) {
+func (c *columnImpl) setSubQuery(subQuery SelectTable) {
 	c.subQuery = subQuery
 }
 
-func (c *columnImpl) DefaultAlias() string {
+func (c *columnImpl) defaultAlias() string {
 	if c.tableName != "" {
 		return c.tableName + "." + c.name
 	}
@@ -65,7 +65,7 @@ func (c *columnImpl) DefaultAlias() string {
 func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
-		out.WriteAlias(c.DefaultAlias()) //always quote
+		out.WriteAlias(c.defaultAlias()) //always quote
 
 		return nil
 	}
@@ -81,7 +81,7 @@ func (c columnImpl) serializeForProjection(statement StatementType, out *SqlBuil
 	}
 
 	out.WriteString("AS")
-	out.WriteAlias(c.DefaultAlias())
+	out.WriteAlias(c.defaultAlias())
 
 	return nil
 }
@@ -91,7 +91,7 @@ func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options 
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
 		out.WriteByte('.')
-		out.WriteIdentifier(c.DefaultAlias(), true)
+		out.WriteIdentifier(c.defaultAlias(), true)
 	} else {
 		if c.tableName != "" {
 			out.WriteIdentifier(c.tableName)
@@ -110,7 +110,7 @@ type IColumnList interface {
 	Projection
 	Column
 
-	Columns() []ColumnExpression
+	columns() []ColumnExpression
 }
 
 func ColumnList(columns ...ColumnExpression) IColumnList {
@@ -120,7 +120,7 @@ func ColumnList(columns ...ColumnExpression) IColumnList {
 // ColumnList is redefined type to support list of columns as single Projection
 type columnListImpl []ColumnExpression
 
-func (cl columnListImpl) Columns() []ColumnExpression {
+func (cl columnListImpl) columns() []ColumnExpression {
 	return cl
 }
 
@@ -153,6 +153,6 @@ func (cl columnListImpl) Name() string { return "" }
 
 // TableName is placeholder for ColumnList to implement Column interface
 func (cl columnListImpl) TableName() string                { return "" }
-func (cl columnListImpl) SetTableName(name string)         {}
-func (cl columnListImpl) SetSubQuery(subQuery SelectTable) {}
-func (cl columnListImpl) DefaultAlias() string             { return "" }
+func (cl columnListImpl) setTableName(name string)         {}
+func (cl columnListImpl) setSubQuery(subQuery SelectTable) {}
+func (cl columnListImpl) defaultAlias() string             { return "" }

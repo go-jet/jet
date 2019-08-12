@@ -146,7 +146,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 		structField := structValue.FieldByName(structFieldName)
 
 		if !structField.IsValid() {
-			panic("missing struct field for column : " + column.Name())
+			panic("missing struct field for column : " + columnName)
 		}
 
 		var field interface{}

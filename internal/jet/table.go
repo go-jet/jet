@@ -11,7 +11,7 @@ type SerializerTable interface {
 }
 
 type TableInterface interface {
-	Columns() []Column
+	columns() []Column
 	SchemaName() string
 	TableName() string
 	AS(alias string)
@@ -27,7 +27,7 @@ func NewTable(schemaName, name string, columns ...ColumnExpression) TableImpl {
 	}
 
 	for _, c := range columns {
-		c.SetTableName(name)
+		c.setTableName(name)
 	}
 
 	return t
@@ -44,7 +44,7 @@ func (t *TableImpl) AS(alias string) {
 	t.alias = alias
 
 	for _, c := range t.columnList {
-		c.SetTableName(alias)
+		c.setTableName(alias)
 	}
 }
 
@@ -56,7 +56,7 @@ func (t *TableImpl) TableName() string {
 	return t.name
 }
 
-func (t *TableImpl) Columns() []Column {
+func (t *TableImpl) columns() []Column {
 	ret := []Column{}
 
 	for _, col := range t.columnList {
@@ -114,6 +114,9 @@ func NewJoinTableImpl(lhs Serializer, rhs Serializer, joinType JoinType, onCondi
 }
 
 func (t *JoinTableImpl) SchemaName() string {
+	if table, ok := t.lhs.(TableInterface); ok {
+		return table.SchemaName()
+	}
 	return ""
 }
 
@@ -122,8 +125,16 @@ func (t *JoinTableImpl) TableName() string {
 }
 
 func (t *JoinTableImpl) Columns() []Column {
-	//return append(t.lhs.columns(), t.rhs.columns()...)
-	panic("Unimplemented")
+	var ret []Column
+
+	if lhsTable, ok := t.lhs.(TableInterface); ok {
+		ret = append(ret, lhsTable.columns()...)
+	}
+	if rhsTable, ok := t.rhs.(TableInterface); ok {
+		ret = append(ret, rhsTable.columns()...)
+	}
+
+	return ret
 }
 
 func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) (err error) {
@@ -180,7 +191,7 @@ func UnwindColumns(column1 Column, columns ...Column) []Column {
 	columnList := []Column{}
 
 	if val, ok := column1.(IColumnList); ok {
-		for _, col := range val.Columns() {
+		for _, col := range val.columns() {
 			columnList = append(columnList, col)
 		}
 		columnList = append(columnList, columns...)
@@ -197,7 +208,7 @@ func UnwidColumnList(columns []Column) []Column {
 
 	for _, col := range columns {
 		if columnList, ok := col.(IColumnList); ok {
-			for _, c := range columnList.Columns() {
+			for _, c := range columnList.columns() {
 				ret = append(ret, c)
 			}
 		} else {

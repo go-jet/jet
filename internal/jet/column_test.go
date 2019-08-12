@@ -7,7 +7,7 @@ func TestColumn(t *testing.T) {
 	column.ExpressionInterfaceImpl.Parent = &column
 
 	assertClauseSerialize(t, column, "col")
-	column.SetTableName("table1")
+	column.setTableName("table1")
 	assertClauseSerialize(t, column, "table1.col")
 	assertProjectionSerialize(t, &column, `table1.col AS "table1.col"`)
 	assertProjectionSerialize(t, column.AS("alias1"), `table1.col AS "alias1"`)

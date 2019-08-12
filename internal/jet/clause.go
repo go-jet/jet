@@ -316,7 +316,7 @@ func (i *ClauseInsert) GetColumns() []Column {
 		return i.Columns
 	}
 
-	return i.Table.Columns()
+	return i.Table.columns()
 }
 
 func (i *ClauseInsert) Serialize(statementType StatementType, out *SqlBuilder) error {

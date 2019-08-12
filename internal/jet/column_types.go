@@ -16,8 +16,8 @@ type boolColumnImpl struct {
 
 func (i *boolColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newBoolColumn := BoolColumn(i.name)
-	newBoolColumn.SetTableName(i.tableName)
-	newBoolColumn.SetSubQuery(subQuery)
+	newBoolColumn.setTableName(i.tableName)
+	newBoolColumn.setSubQuery(subQuery)
 
 	return newBoolColumn
 }
@@ -54,8 +54,8 @@ type floatColumnImpl struct {
 
 func (i *floatColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newFloatColumn := FloatColumn(i.name)
-	newFloatColumn.SetTableName(i.tableName)
-	newFloatColumn.SetSubQuery(subQuery)
+	newFloatColumn.setTableName(i.tableName)
+	newFloatColumn.setSubQuery(subQuery)
 
 	return newFloatColumn
 }
@@ -93,8 +93,8 @@ type integerColumnImpl struct {
 
 func (i *integerColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newIntColumn := IntegerColumn(i.name)
-	newIntColumn.SetTableName(i.tableName)
-	newIntColumn.SetSubQuery(subQuery)
+	newIntColumn.setTableName(i.tableName)
+	newIntColumn.setSubQuery(subQuery)
 
 	return newIntColumn
 }
@@ -131,8 +131,8 @@ type stringColumnImpl struct {
 
 func (i *stringColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newStrColumn := StringColumn(i.name)
-	newStrColumn.SetTableName(i.tableName)
-	newStrColumn.SetSubQuery(subQuery)
+	newStrColumn.setTableName(i.tableName)
+	newStrColumn.setSubQuery(subQuery)
 
 	return newStrColumn
 }
@@ -167,8 +167,8 @@ type timeColumnImpl struct {
 
 func (i *timeColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newTimeColumn := TimeColumn(i.name)
-	newTimeColumn.SetTableName(i.tableName)
-	newTimeColumn.SetSubQuery(subQuery)
+	newTimeColumn.setTableName(i.tableName)
+	newTimeColumn.setSubQuery(subQuery)
 
 	return newTimeColumn
 }
@@ -203,8 +203,8 @@ type timezColumnImpl struct {
 
 func (i *timezColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newTimezColumn := TimezColumn(i.name)
-	newTimezColumn.SetTableName(i.tableName)
-	newTimezColumn.SetSubQuery(subQuery)
+	newTimezColumn.setTableName(i.tableName)
+	newTimezColumn.setSubQuery(subQuery)
 
 	return newTimezColumn
 }
@@ -240,8 +240,8 @@ type timestampColumnImpl struct {
 
 func (i *timestampColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newTimestampColumn := TimestampColumn(i.name)
-	newTimestampColumn.SetTableName(i.tableName)
-	newTimestampColumn.SetSubQuery(subQuery)
+	newTimestampColumn.setTableName(i.tableName)
+	newTimestampColumn.setSubQuery(subQuery)
 
 	return newTimestampColumn
 }
@@ -277,8 +277,8 @@ type timestampzColumnImpl struct {
 
 func (i *timestampzColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newTimestampzColumn := TimestampzColumn(i.name)
-	newTimestampzColumn.SetTableName(i.tableName)
-	newTimestampzColumn.SetSubQuery(subQuery)
+	newTimestampzColumn.setTableName(i.tableName)
+	newTimestampzColumn.setSubQuery(subQuery)
 
 	return newTimestampzColumn
 }
@@ -314,8 +314,8 @@ type dateColumnImpl struct {
 
 func (i *dateColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	newDateColumn := DateColumn(i.name)
-	newDateColumn.SetTableName(i.tableName)
-	newDateColumn.SetSubQuery(subQuery)
+	newDateColumn.setTableName(i.tableName)
+	newDateColumn.setSubQuery(subQuery)
 
 	return newDateColumn
 }
