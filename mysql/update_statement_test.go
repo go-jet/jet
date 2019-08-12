@@ -17,7 +17,7 @@ WHERE table1.col_int >= ?;
 
 	fmt.Println(stmt.Sql())
 
-	assertStatement(t, stmt, expectedSQL, 1, int64(33))
+	assertStatementSql(t, stmt, expectedSQL, 1, int64(33))
 }
 
 func TestUpdateWithValues(t *testing.T) {
@@ -33,7 +33,7 @@ WHERE table1.col_int >= ?;
 
 	fmt.Println(stmt.Sql())
 
-	assertStatement(t, stmt, expectedSQL, 1, 22.2, int64(33))
+	assertStatementSql(t, stmt, expectedSQL, 1, 22.2, int64(33))
 }
 
 func TestUpdateOneColumnWithSelect(t *testing.T) {
@@ -54,10 +54,10 @@ WHERE table1.col1 = ?;
 
 	//fmt.Println(stmt.Sql())
 
-	assertStatement(t, stmt, expectedSQL, int64(2))
+	assertStatementSql(t, stmt, expectedSQL, int64(2))
 }
 
 func TestInvalidInputs(t *testing.T) {
-	assertStatementErr(t, table1.UPDATE(table1ColInt).SET(1), "jet: WHERE clause not set")
-	assertStatementErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list")
+	assertStatementSqlErr(t, table1.UPDATE(table1ColInt).SET(1), "jet: WHERE clause not set")
+	assertStatementSqlErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list")
 }

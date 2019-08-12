@@ -11,9 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"testing"
-	"time"
 )
 
 func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected ...int64) {
@@ -90,6 +88,13 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 	assert.DeepEqual(t, args, expectedArgs)
 }
 
+func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
+	_, _, err := stmt.Sql()
+
+	assert.Assert(t, err != nil)
+	assert.Error(t, err, errorStr)
+}
+
 func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	_, args, err := query.Sql()
 	assert.NilError(t, err)
@@ -105,66 +110,33 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	assert.Equal(t, debuqSql, expectedQuery)
 }
 
-func Date(t string) *time.Time {
-	newTime, err := time.Parse("2006-01-02", t)
+func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
+	out := jet.SqlBuilder{Dialect: dialect}
+	err := jet.Serialize(clause, jet.SelectStatementType, &out)
 
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 
-	return &newTime
+	//fmt.Println(out.Buff.String())
+
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
 }
 
-func TimestampWithoutTimeZone(t string, precision int) *time.Time {
+func AssertClauseSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer, errString string) {
+	out := jet.SqlBuilder{Dialect: dialect}
+	err := jet.Serialize(clause, jet.SelectStatementType, &out)
 
-	precisionStr := ""
-
-	if precision > 0 {
-		precisionStr = "." + strings.Repeat("9", precision)
-	}
-
-	newTime, err := time.Parse("2006-01-02 15:04:05"+precisionStr+" +0000", t+" +0000")
-
-	if err != nil {
-		panic(err)
-	}
-
-	return &newTime
+	//fmt.Println(out.buff.String())
+	assert.Assert(t, err != nil)
+	assert.Error(t, err, errString)
 }
 
-func TimeWithoutTimeZone(t string) *time.Time {
-	newTime, err := time.Parse("15:04:05", t)
+func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet.Projection, query string, args ...interface{}) {
+	out := jet.SqlBuilder{Dialect: dialect}
+	err := jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
 
-	if err != nil {
-		panic(err)
-	}
+	assert.NilError(t, err)
 
-	return &newTime
-}
-
-func TimeWithTimeZone(t string) *time.Time {
-	newTimez, err := time.Parse("15:04:05 -0700", t)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return &newTimez
-}
-
-func TimestampWithTimeZone(t string, precision int) *time.Time {
-
-	precisionStr := ""
-
-	if precision > 0 {
-		precisionStr = "." + strings.Repeat("9", precision)
-	}
-
-	newTime, err := time.Parse("2006-01-02 15:04:05"+precisionStr+" -0700 MST", t)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return &newTime
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
 }

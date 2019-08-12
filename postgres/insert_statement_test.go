@@ -13,14 +13,14 @@ import (
 //}
 
 func TestInsertNilValue(t *testing.T) {
-	assertStatement(t, table1.INSERT(table1Col1).VALUES(nil), `
+	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(nil), `
 INSERT INTO db.table1 (col1) VALUES
      ($1);
 `, nil)
 }
 
 func TestInsertSingleValue(t *testing.T) {
-	assertStatement(t, table1.INSERT(table1Col1).VALUES(1), `
+	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(1), `
 INSERT INTO db.table1 (col1) VALUES
      ($1);
 `, int(1))
@@ -29,7 +29,7 @@ INSERT INTO db.table1 (col1) VALUES
 func TestInsertWithColumnList(t *testing.T) {
 	columnList := ColumnList(table3ColInt, table3StrCol)
 
-	assertStatement(t, table3.INSERT(columnList).VALUES(1, 3), `
+	assertStatementSql(t, table3.INSERT(columnList).VALUES(1, 3), `
 INSERT INTO db.table3 (col_int, col2) VALUES
      ($1, $2);
 `, 1, 3)
@@ -38,14 +38,14 @@ INSERT INTO db.table3 (col_int, col2) VALUES
 func TestInsertDate(t *testing.T) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	assertStatement(t, table1.INSERT(table1ColTime).VALUES(date), `
+	assertStatementSql(t, table1.INSERT(table1ColTime).VALUES(date), `
 INSERT INTO db.table1 (col_time) VALUES
      ($1);
 `, date)
 }
 
 func TestInsertMultipleValues(t *testing.T) {
-	assertStatement(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
+	assertStatementSql(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
 INSERT INTO db.table1 (col1, col_float, col3) VALUES
      ($1, $2, $3);
 `, 1, 2, 3)
@@ -57,7 +57,7 @@ func TestInsertMultipleRows(t *testing.T) {
 		VALUES(11, 22).
 		VALUES(111, 222)
 
-	assertStatement(t, stmt, `
+	assertStatementSql(t, stmt, `
 INSERT INTO db.table1 (col1, col_float) VALUES
      ($1, $2),
      ($3, $4),
@@ -88,7 +88,7 @@ INSERT INTO db.table1 (col1, col_float) VALUES
      ($3, $4);
 `
 
-	assertStatement(t, stmt, expectedSQL, int(1), float64(1.11), int(1), float64(1.11))
+	assertStatementSql(t, stmt, expectedSQL, int(1), float64(1.11), int(1), float64(1.11))
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
@@ -132,7 +132,7 @@ INSERT INTO db.table1 (col1) (
      FROM db.table1
 );
 `
-	assertStatement(t, stmt, expectedSQL)
+	assertStatementSql(t, stmt, expectedSQL)
 }
 
 func TestInsertDefaultValue(t *testing.T) {
@@ -144,5 +144,5 @@ INSERT INTO db.table1 (col1, col_float) VALUES
      (DEFAULT, $1);
 `
 
-	assertStatement(t, stmt, expectedSQL, "two")
+	assertStatementSql(t, stmt, expectedSQL, "two")
 }

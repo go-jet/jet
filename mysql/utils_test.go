@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"github.com/go-jet/jet/internal/jet"
-	"gotest.tools/assert"
+	"github.com/go-jet/jet/internal/testutils"
 	"testing"
 )
 
@@ -59,48 +59,16 @@ var table3 = NewTable(
 	table3StrCol)
 
 func assertClauseSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
-	out := jet.SqlBuilder{Dialect: Dialect}
-	err := jet.Serialize(clause, jet.SelectStatementType, &out)
-
-	assert.NilError(t, err)
-
-	//fmt.Println(out.Buff.String())
-
-	assert.DeepEqual(t, out.Buff.String(), query)
-	assert.DeepEqual(t, out.Args, args)
+	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
 }
 
 func assertClauseSerializeErr(t *testing.T, clause jet.Serializer, errString string) {
-	out := jet.SqlBuilder{Dialect: Dialect}
-	err := jet.Serialize(clause, jet.SelectStatementType, &out)
-
-	//fmt.Println(out.buff.String())
-	assert.Assert(t, err != nil)
-	assert.Error(t, err, errString)
+	testutils.AssertClauseSerializeErr(t, Dialect, clause, errString)
 }
 
 func assertProjectionSerialize(t *testing.T, projection jet.Projection, query string, args ...interface{}) {
-	out := jet.SqlBuilder{Dialect: Dialect}
-	err := jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
-
-	assert.NilError(t, err)
-
-	assert.DeepEqual(t, out.Buff.String(), query)
-	assert.DeepEqual(t, out.Args, args)
+	testutils.AssertProjectionSerialize(t, Dialect, projection, query, args...)
 }
 
-func assertStatement(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
-	queryStr, args, err := query.Sql()
-	assert.NilError(t, err)
-
-	//fmt.Println(queryStr)
-	assert.Equal(t, queryStr, expectedQuery)
-	assert.DeepEqual(t, args, expectedArgs)
-}
-
-func assertStatementErr(t *testing.T, stmt jet.Statement, errorStr string) {
-	_, _, err := stmt.Sql()
-
-	assert.Assert(t, err != nil)
-	assert.Error(t, err, errorStr)
-}
+var assertStatementSql = testutils.AssertStatementSql
+var assertStatementSqlErr = testutils.AssertStatementSqlErr
