@@ -20,7 +20,6 @@ type ColumnExpression interface {
 // The base type for real materialized columns.
 type columnImpl struct {
 	ExpressionInterfaceImpl
-	noOpVisitorImpl
 
 	name      string
 	tableName string

@@ -3,7 +3,6 @@ package jet
 type enumValue struct {
 	ExpressionInterfaceImpl
 	stringInterfaceImpl
-	noOpVisitorImpl
 
 	name string
 }

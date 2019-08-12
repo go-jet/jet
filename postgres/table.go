@@ -31,10 +31,8 @@ type writableTable interface {
 
 // ReadableTable interface
 type ReadableTable interface {
-	//table
 	readableTable
 	jet.Serializer
-	//acceptsVisitor
 }
 
 type WritableTable interface {
@@ -44,15 +42,9 @@ type WritableTable interface {
 }
 
 type Table interface {
-	//table
 	readableTable
 	writableTable
 	jet.SerializerTable
-	//acceptsVisitor
-
-	//SchemaName() string
-	//TableName() string
-	//As(alias string)
 }
 
 type readableTableInterfaceImpl struct {

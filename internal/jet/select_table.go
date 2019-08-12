@@ -31,11 +31,6 @@ func (s *SelectTableImpl2) Alias() string {
 	return s.alias
 }
 
-func (s *SelectTableImpl2) accept(visitor visitor) {
-	visitor.visit(s)
-	s.selectStmt.accept(visitor)
-}
-
 func (s *SelectTableImpl2) AllColumns() ProjectionList {
 	return s.projections
 }

@@ -1,9 +1,5 @@
 package jet
 
-const (
-	StringConcatOperator = "||"
-)
-
 // StringExpression interface
 type StringExpression interface {
 	Expression

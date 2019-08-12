@@ -16,7 +16,6 @@ type LiteralExpression interface {
 
 type literalExpressionImpl struct {
 	ExpressionInterfaceImpl
-	noOpVisitorImpl
 
 	value    interface{}
 	constant bool
@@ -205,7 +204,6 @@ func DateT(t time.Time) DateExpression {
 //--------------------------------------------------//
 type nullLiteral struct {
 	ExpressionInterfaceImpl
-	noOpVisitorImpl
 }
 
 func newNullLiteral() Expression {
@@ -224,7 +222,6 @@ func (n *nullLiteral) serialize(statement StatementType, out *SqlBuilder, option
 //--------------------------------------------------//
 type starLiteral struct {
 	ExpressionInterfaceImpl
-	noOpVisitorImpl
 }
 
 func newStarLiteral() Expression {
@@ -247,12 +244,6 @@ type wrap struct {
 	expressions []Expression
 }
 
-func (n *wrap) accept(visitor visitor) {
-	for _, exp := range n.expressions {
-		exp.accept(visitor)
-	}
-}
-
 func (n *wrap) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 	out.WriteString("(")
 	err := serializeExpressionList(statement, n.expressions, ", ", out)
@@ -272,7 +263,6 @@ func WRAP(expression ...Expression) Expression {
 
 type rawExpression struct {
 	ExpressionInterfaceImpl
-	noOpVisitorImpl
 
 	raw string
 }

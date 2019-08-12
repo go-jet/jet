@@ -7,12 +7,6 @@ import (
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
-	acceptsVisitor
-
-	IExpression
-}
-
-type IExpression interface {
 	Serializer
 	Projection
 	GroupByClause
@@ -101,11 +95,6 @@ func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpressio
 	return binaryExpression
 }
 
-func (c *binaryOpExpression) accept(visitor visitor) {
-	c.lhs.accept(visitor)
-	c.rhs.accept(visitor)
-}
-
 func (c *binaryOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) (err error) {
 	if c == nil {
 		return errors.New("jet: binary Expression is nil")
@@ -162,10 +151,6 @@ func newPrefixExpression(expression Expression, operator string) prefixOpExpress
 	return prefixExpression
 }
 
-func (p *prefixOpExpression) accept(visitor visitor) {
-	p.expression.accept(visitor)
-}
-
 func (p *prefixOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 	if p == nil {
 		return errors.New("jet: Prefix Expression is nil")
@@ -199,10 +184,6 @@ func newPostfixOpExpression(expression Expression, operator string) postfixOpExp
 	}
 
 	return postfixOpExpression
-}
-
-func (p *postfixOpExpression) accept(visitor visitor) {
-	p.expression.accept(visitor)
 }
 
 func (p *postfixOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {

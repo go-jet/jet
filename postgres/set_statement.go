@@ -52,7 +52,7 @@ type SetStatement interface {
 type SetOperators interface {
 	jet.Statement
 	jet.HasProjections
-	jet.IExpression
+	jet.Expression
 
 	UNION(rhs SelectStatement) SetStatement
 	UNION_ALL(rhs SelectStatement) SetStatement

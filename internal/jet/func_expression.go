@@ -500,14 +500,6 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	return funcExp
 }
 
-func (f *funcExpressionImpl) accept(visitor visitor) {
-	visitor.visit(f)
-
-	for _, exp := range f.expressions {
-		exp.accept(visitor)
-	}
-}
-
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 	if f == nil {
 		return errors.New("jet: Function expressions is nil. ")

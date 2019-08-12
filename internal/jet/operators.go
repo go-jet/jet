@@ -2,6 +2,10 @@ package jet
 
 import "errors"
 
+const (
+	StringConcatOperator = "||"
+)
+
 //----------- Logical operators ---------------//
 
 // NOT returns negation of bool expression result
@@ -106,24 +110,6 @@ func (c *caseOperatorImpl) ELSE(els Expression) CaseOperator {
 	c.els = els
 
 	return c
-}
-
-func (c *caseOperatorImpl) accept(visitor visitor) {
-	visitor.visit(c)
-
-	c.expression.accept(visitor)
-
-	for _, when := range c.when {
-		when.accept(visitor)
-	}
-
-	for _, then := range c.then {
-		then.accept(visitor)
-	}
-
-	if c.els != nil {
-		c.els.accept(visitor)
-	}
 }
 
 func (c *caseOperatorImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {

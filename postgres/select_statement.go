@@ -14,7 +14,7 @@ var (
 type SelectStatement interface {
 	jet.Statement
 	jet.HasProjections
-	jet.IExpression
+	jet.Expression
 
 	DISTINCT() SelectStatement
 	FROM(table ReadableTable) SelectStatement

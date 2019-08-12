@@ -9,7 +9,6 @@ import (
 
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement interface {
-	acceptsVisitor
 	// Sql returns parametrized sql query with list of arguments.
 	// err is returned if statement is not composed correctly
 	Sql() (query string, args []interface{}, err error)
@@ -47,7 +46,6 @@ type HasProjections interface {
 }
 
 type SerializerStatementInterfaceImpl struct {
-	noOpVisitorImpl
 	dialect       Dialect
 	statementType StatementType
 	parent        SerializerStatement
@@ -144,7 +142,6 @@ func NewStatementImpl(Dialect Dialect, statementType StatementType, parent Seria
 
 type StatementImpl struct {
 	SerializerStatementInterfaceImpl
-	acceptsVisitor
 
 	Clauses []Clause
 }

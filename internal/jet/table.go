@@ -66,10 +66,6 @@ func (t *TableImpl) Columns() []Column {
 	return ret
 }
 
-func (t *TableImpl) accept(visitor visitor) {
-	visitor.visit(t)
-}
-
 func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 	if t == nil {
 		return errors.New("jet: tableImpl is nil. ")
@@ -128,12 +124,6 @@ func (t *JoinTableImpl) TableName() string {
 func (t *JoinTableImpl) Columns() []Column {
 	//return append(t.lhs.columns(), t.rhs.columns()...)
 	panic("Unimplemented")
-}
-
-func (t *JoinTableImpl) accept(visitor visitor) {
-	//t.lhs.accept(visitor)
-	//t.rhs.accept(visitor)
-	//TODO: remove
 }
 
 func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) (err error) {

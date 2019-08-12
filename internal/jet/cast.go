@@ -67,10 +67,6 @@ type castExpression struct {
 	cast       string
 }
 
-func (b *castExpression) accept(visitor visitor) {
-	b.expression.accept(visitor)
-}
-
 func (b *castExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
 
 	expression := b.expression
