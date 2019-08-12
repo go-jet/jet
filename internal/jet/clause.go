@@ -348,6 +348,31 @@ func (i *ClauseInsert) Serialize(statementType StatementType, out *SqlBuilder) e
 	return nil
 }
 
+type ClauseValuesQuery struct {
+	ClauseValues
+	ClauseQuery
+}
+
+func (v *ClauseValuesQuery) Serialize(statementType StatementType, out *SqlBuilder) error {
+	if len(v.Rows) == 0 && v.Query == nil {
+		return errors.New("jet: no row values or query specified")
+	}
+
+	if len(v.Rows) > 0 && v.Query != nil {
+		return errors.New("jet: only row values or query has to be specified")
+	}
+
+	if err := v.ClauseValues.Serialize(statementType, out); err != nil {
+		return err
+	}
+
+	if err := v.ClauseQuery.Serialize(statementType, out); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type ClauseValues struct {
 	Rows [][]Serializer
 }

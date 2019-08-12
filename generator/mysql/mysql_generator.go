@@ -48,7 +48,6 @@ func Generate(destDir string, dbConn DBConnection) error {
 	return nil
 }
 
-// TODO reuse
 func openConnection(dbConn DBConnection) (*sql.DB, error) {
 	var connString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
 	db, err := sql.Open("mysql", connString)
