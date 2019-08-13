@@ -24,6 +24,7 @@ func TestArgToString(t *testing.T) {
 	assert.Equal(t, argToString(float64(1.11)), "1.11")
 
 	assert.Equal(t, argToString("john"), "'john'")
+	assert.Equal(t, argToString("It's text"), "'It''s text'")
 	assert.Equal(t, argToString([]byte("john")), "'john'")
 	assert.Equal(t, argToString(uuid.MustParse("b68dbff4-a87d-11e9-a7f2-98ded00c39c6")), "'b68dbff4-a87d-11e9-a7f2-98ded00c39c6'")
 

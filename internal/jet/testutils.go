@@ -67,6 +67,18 @@ func assertClauseSerializeErr(t *testing.T, clause Serializer, errString string)
 	assert.Error(t, err, errString)
 }
 
+func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
+	out := SqlBuilder{Dialect: DefaultDialect, debug: true}
+	err := clause.serialize(SelectStatementType, &out)
+
+	assert.NilError(t, err)
+
+	//fmt.Println(out.Buff.String())
+
+	assert.DeepEqual(t, out.Buff.String(), query)
+	assert.DeepEqual(t, out.Args, args)
+}
+
 func assertProjectionSerialize(t *testing.T, projection Projection, query string, args ...interface{}) {
 	out := SqlBuilder{Dialect: DefaultDialect}
 	err := projection.serializeForProjection(SelectStatementType, &out)

@@ -26,6 +26,7 @@ var BoolExp = jet.BoolExp
 var IntExp = jet.IntExp
 var FloatExp = jet.FloatExp
 var TimeExp = jet.TimeExp
+var StringExp = jet.StringExp
 var TimezExp = jet.TimezExp
 var DateExp = jet.DateExp
 var TimestampExp = jet.TimestampExp

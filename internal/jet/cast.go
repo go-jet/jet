@@ -1,17 +1,7 @@
 package jet
 
-import "strconv"
-
 type Cast interface {
 	AS(castType string) Expression
-
-	AS_CHAR(lenght ...int) StringExpression
-	// Cast expression AS date type
-	AS_DATE() DateExpression
-	// Cast expression AS numeric type, using precision and optionally scale
-	AS_DECIMAL() FloatExpression
-	// Cast expression AS time type
-	AS_TIME() TimeExpression
 }
 
 type CastImpl struct {
@@ -35,29 +25,6 @@ func (b *CastImpl) AS(castType string) Expression {
 	castExp.ExpressionInterfaceImpl.Parent = castExp
 
 	return castExp
-}
-
-func (b *CastImpl) AS_CHAR(lenght ...int) StringExpression {
-	if len(lenght) > 0 {
-		return StringExp(b.AS("CHAR(" + strconv.Itoa(lenght[0]) + ")"))
-	}
-
-	return StringExp(b.AS("CHAR"))
-}
-
-// Cast expression AS date type
-func (b *CastImpl) AS_DATE() DateExpression {
-	return DateExp(b.AS("DATE"))
-}
-
-// Cast expression AS date type
-func (b *CastImpl) AS_DECIMAL() FloatExpression {
-	return FloatExp(b.AS("DECIMAL"))
-}
-
-// Cast expression AS date type
-func (b *CastImpl) AS_TIME() TimeExpression {
-	return TimeExp(b.AS("TIME"))
 }
 
 type castExpression struct {

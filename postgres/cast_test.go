@@ -44,7 +44,7 @@ func TestExpressionCAST_AS_TEXT(t *testing.T) {
 }
 
 func TestExpressionCAST_AS_DATE(t *testing.T) {
-	assertClauseSerialize(t, CAST(table2Col3).AS_DATE(), "table2.col3::DATE")
+	assertClauseSerialize(t, CAST(table2Col3).AS_DATE(), "table2.col3::date")
 }
 
 func TestExpressionCAST_AS_TIME(t *testing.T) {

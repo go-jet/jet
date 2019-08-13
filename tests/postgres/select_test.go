@@ -10,6 +10,7 @@ import (
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
 	"gotest.tools/assert"
 	"testing"
+	"time"
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
@@ -1185,15 +1186,15 @@ SELECT payment.payment_id AS "payment.payment_id",
      payment.amount AS "payment.amount",
      payment.payment_date AS "payment.payment_date"
 FROM dvds.payment
-WHERE payment.payment_date < '2007-02-14 22:16:01.000'::timestamp without time zone
+WHERE payment.payment_date < '2007-02-14 22:16:01'::timestamp without time zone
 ORDER BY payment.payment_date ASC;
 `
 
 	query := Payment.SELECT(Payment.AllColumns).
-		WHERE(Payment.PaymentDate.LT(Timestamp(2007, 02, 14, 22, 16, 01, 0))).
+		WHERE(Payment.PaymentDate.LT(Timestamp(2007, time.February, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01.000")
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01")
 
 	payments := []model.Payment{}
 

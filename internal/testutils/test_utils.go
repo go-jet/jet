@@ -119,7 +119,11 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Seriali
 	//fmt.Println(out.Buff.String())
 
 	assert.DeepEqual(t, out.Buff.String(), query)
-	assert.DeepEqual(t, out.Args, args)
+
+	if len(args) > 0 {
+		assert.DeepEqual(t, out.Args, args)
+	}
+
 }
 
 func AssertClauseSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer, errString string) {

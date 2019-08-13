@@ -2,11 +2,10 @@ package jet
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 )
 
-// Representation of an escaped literal
+// LiteralExpression is representation of an escaped literal
 type LiteralExpression interface {
 	Expression
 
@@ -129,76 +128,149 @@ func String(value string, constant ...bool) StringExpression {
 	return &stringLiteral
 }
 
-func formatMilliseconds(milliseconds ...int) string {
-	if len(milliseconds) > 0 {
-		if milliseconds[0] < 1000 {
-			return fmt.Sprintf(".%03d", milliseconds[0])
-		} else {
-			return "." + strconv.Itoa(milliseconds[0])
-		}
-	}
+//---------------------------------------------------//
 
-	return ""
+type timeLiteral struct {
+	timeInterfaceImpl
+	literalExpressionImpl
 }
 
 // Time creates new time literal expression
-func Time(hour, minute, second int, milliseconds ...int) TimeExpression {
+func Time(hour, minute, second int, nanoseconds ...time.Duration) TimeExpression {
+	timeLiteral := &timeLiteral{}
 	timeStr := fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
+	timeStr += formatNanoseconds(nanoseconds...)
+	timeLiteral.literalExpressionImpl = *literal(timeStr)
 
-	timeStr += formatMilliseconds(milliseconds...)
+	timeLiteral.timeInterfaceImpl.parent = timeLiteral
 
-	return TimeExp(literal(timeStr))
+	return timeLiteral
 }
 
 func TimeT(t time.Time) TimeExpression {
-	return TimeExp(literal(t))
+	timeLiteral := &timeLiteral{}
+	timeLiteral.literalExpressionImpl = *literal(t)
+	timeLiteral.timeInterfaceImpl.parent = timeLiteral
+
+	return timeLiteral
+}
+
+//---------------------------------------------------//
+
+type timezLiteral struct {
+	timezInterfaceImpl
+	literalExpressionImpl
 }
 
 // Timez creates new time with time zone literal expression
-func Timez(hour, minute, second, milliseconds, timezone int) TimezExpression {
-	timeStr := fmt.Sprintf("%02d:%02d:%02d.%03d %+03d", hour, minute, second, milliseconds, timezone)
+func Timez(hour, minute, second int, nanoseconds time.Duration, timezone string) TimezExpression {
+	timezLiteral := timezLiteral{}
+	timeStr := fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
+	timeStr += formatNanoseconds(nanoseconds)
+	timeStr += " " + timezone
+	timezLiteral.literalExpressionImpl = *literal(timeStr)
 
 	return TimezExp(literal(timeStr))
 }
 
 func TimezT(t time.Time) TimezExpression {
-	return TimezExp(literal(t))
+	timeLiteral := &timezLiteral{}
+	timeLiteral.literalExpressionImpl = *literal(t)
+	timeLiteral.timezInterfaceImpl.parent = timeLiteral
+
+	return timeLiteral
+}
+
+//---------------------------------------------------//
+
+type timestampLiteral struct {
+	timestampInterfaceImpl
+	literalExpressionImpl
 }
 
 // Timestamp creates new timestamp literal expression
-func Timestamp(year int, month time.Month, day, hour, minute, second int, milliseconds ...int) TimestampExpression {
+func Timestamp(year int, month time.Month, day, hour, minute, second int, nanoseconds ...time.Duration) TimestampExpression {
+	timestamp := &timestampLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
-
-	timeStr += formatMilliseconds(milliseconds...)
-
-	return TimestampExp(literal(timeStr))
+	timeStr += formatNanoseconds(nanoseconds...)
+	timestamp.literalExpressionImpl = *literal(timeStr)
+	timestamp.timestampInterfaceImpl.parent = timestamp
+	return timestamp
 }
 
 func TimestampT(t time.Time) TimestampExpression {
-	return TimestampExp(literal(t))
+	timestamp := &timestampLiteral{}
+	timestamp.literalExpressionImpl = *literal(t)
+	timestamp.timestampInterfaceImpl.parent = timestamp
+	return timestamp
 }
 
-// Timestampz creates new timestamp with time zone literal expression
-func Timestampz(year, month, day, hour, minute, second, milliseconds, timezone int) TimestampzExpression {
-	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d.%03d %+04d",
-		year, month, day, hour, minute, second, milliseconds, timezone)
+//---------------------------------------------------//
 
-	return TimestampzExp(literal(timeStr))
+type timestampzLiteral struct {
+	timestampzInterfaceImpl
+	literalExpressionImpl
+}
+
+// Timestamp creates new timestamp literal expression
+func Timestampz(year int, month time.Month, day, hour, minute, second int, nanoseconds time.Duration, timezone string) TimestampzExpression {
+	timestamp := &timestampzLiteral{}
+	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
+	timeStr += formatNanoseconds(nanoseconds)
+	timeStr += " " + timezone
+
+	timestamp.literalExpressionImpl = *literal(timeStr)
+	timestamp.timestampzInterfaceImpl.parent = timestamp
+	return timestamp
 }
 
 func TimestampzT(t time.Time) TimestampzExpression {
-	return TimestampzExp(literal(t))
+	timestamp := &timestampzLiteral{}
+	timestamp.literalExpressionImpl = *literal(t)
+	timestamp.timestampzInterfaceImpl.parent = timestamp
+	return timestamp
+}
+
+//---------------------------------------------------//
+
+type dateLiteral struct {
+	dateInterfaceImpl
+	literalExpressionImpl
 }
 
 //Date creates new date expression
 func Date(year int, month time.Month, day int) DateExpression {
-	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
+	dateLiteral := &dateLiteral{}
 
-	return DateExp(literal(timeStr))
+	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
+	dateLiteral.literalExpressionImpl = *literal(timeStr)
+	dateLiteral.dateInterfaceImpl.parent = dateLiteral
+
+	return dateLiteral
 }
 
 func DateT(t time.Time) DateExpression {
-	return DateExp(literal(t))
+	dateLiteral := &dateLiteral{}
+	dateLiteral.literalExpressionImpl = *literal(t)
+	dateLiteral.dateInterfaceImpl.parent = dateLiteral
+
+	return dateLiteral
+}
+
+func formatNanoseconds(nanoseconds ...time.Duration) string {
+	if len(nanoseconds) > 0 && nanoseconds[0] != 0 {
+		duration := fmt.Sprintf("%09d", nanoseconds[0])
+		i := len(duration) - 1
+		for ; i >= 3; i-- {
+			if duration[i] != '0' {
+				break
+			}
+		}
+
+		return "." + duration[0:i+1]
+	}
+
+	return ""
 }
 
 //--------------------------------------------------//

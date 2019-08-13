@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
@@ -494,8 +495,8 @@ func TestTimeExpressions(t *testing.T) {
 
 		AllTypes.Time.EQ(AllTypes.Time),
 		AllTypes.Time.EQ(Time(23, 6, 6)),
-		AllTypes.Time.EQ(Time(22, 6, 6, 11)),
-		AllTypes.Time.EQ(Time(21, 6, 6, 11111)),
+		AllTypes.Time.EQ(Time(22, 6, 6, 11*time.Millisecond)),
+		AllTypes.Time.EQ(Time(21, 6, 6, 11111*time.Microsecond)),
 
 		AllTypes.TimePtr.NOT_EQ(AllTypes.Time),
 		AllTypes.TimePtr.NOT_EQ(Time(20, 16, 6)),
@@ -547,7 +548,7 @@ SELECT CAST(? AS TIME),
      CURRENT_TIME,
      CURRENT_TIME(3)
 FROM test_sample.all_types;
-`, "20:34:58", "23:06:06", "22:06:06.011", "21:06:06.11111", "20:16:06",
+`, "20:34:58", "23:06:06", "22:06:06.011", "21:06:06.011111", "20:16:06",
 		"19:26:06", "18:36:06", "17:46:06", "16:56:56", "15:16:46", "14:26:36")
 
 	err := query.Query(db, &struct{}{})
@@ -624,7 +625,7 @@ func TestDateTimeExpressions(t *testing.T) {
 		AllTypes.DateTime.EQ(dateTime),
 
 		AllTypes.DateTimePtr.NOT_EQ(AllTypes.DateTime),
-		AllTypes.DateTimePtr.NOT_EQ(DateTime(2019, 6, 6, 10, 2, 46, 1000)),
+		AllTypes.DateTimePtr.NOT_EQ(DateTime(2019, 6, 6, 10, 2, 46, 100*time.Millisecond)),
 
 		AllTypes.DateTime.IS_DISTINCT_FROM(AllTypes.DateTime),
 		AllTypes.DateTime.IS_DISTINCT_FROM(dateTime),
@@ -654,7 +655,7 @@ func TestDateTimeExpressions(t *testing.T) {
 SELECT all_types.date_time = all_types.date_time,
      all_types.date_time = CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time_ptr != all_types.date_time,
-     all_types.date_time_ptr != CAST('2019-06-06 10:02:46.1000' AS DATETIME),
+     all_types.date_time_ptr != CAST('2019-06-06 10:02:46.100' AS DATETIME),
      NOT(all_types.date_time <=> all_types.date_time),
      NOT(all_types.date_time <=> CAST('2019-06-06 10:02:46' AS DATETIME)),
      all_types.date_time <=> all_types.date_time,
@@ -686,7 +687,7 @@ func TestTimestampExpressions(t *testing.T) {
 		AllTypes.Timestamp.EQ(timestamp),
 
 		AllTypes.TimestampPtr.NOT_EQ(AllTypes.Timestamp),
-		AllTypes.TimestampPtr.NOT_EQ(Timestamp(2019, 6, 6, 10, 2, 46, 1000)),
+		AllTypes.TimestampPtr.NOT_EQ(Timestamp(2019, 6, 6, 10, 2, 46, 100*time.Millisecond)),
 
 		AllTypes.Timestamp.IS_DISTINCT_FROM(AllTypes.Timestamp),
 		AllTypes.Timestamp.IS_DISTINCT_FROM(timestamp),
@@ -716,7 +717,7 @@ func TestTimestampExpressions(t *testing.T) {
 SELECT all_types.timestamp = all_types.timestamp,
      all_types.timestamp = TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp_ptr != all_types.timestamp,
-     all_types.timestamp_ptr != TIMESTAMP('2019-06-06 10:02:46.1000'),
+     all_types.timestamp_ptr != TIMESTAMP('2019-06-06 10:02:46.100'),
      NOT(all_types.timestamp <=> all_types.timestamp),
      NOT(all_types.timestamp <=> TIMESTAMP('2019-06-06 10:02:46')),
      all_types.timestamp <=> all_types.timestamp,
@@ -751,11 +752,11 @@ func TestTimeLiterals(t *testing.T) {
 		Time(timeT.Clock()).AS("time"),
 		TimeT(timeT).AS("timeT"),
 		DateTimeT(timeT).AS("datetime"),
-		Timestamp(2019, 8, 6, 10, 10, 30, 123456).AS("timestamp"),
+		Timestamp(2019, 8, 6, 10, 10, 30, 123456*time.Millisecond).AS("timestamp"),
 		TimestampT(timeT).AS("timestampT"),
 	).FROM(AllTypes).LIMIT(1)
 
-	//fmt.Println(query.Sql())
+	fmt.Println(query.DebugSql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS DATE) AS "date",
