@@ -20,15 +20,9 @@ func (a *alias) fromImpl(subQuery SelectTable) Projection {
 	return &column
 }
 
-func (a *alias) serializeForProjection(statement StatementType, out *SqlBuilder) error {
-	err := a.expression.serialize(statement, out)
-
-	if err != nil {
-		return err
-	}
+func (a *alias) serializeForProjection(statement StatementType, out *SqlBuilder) {
+	a.expression.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteAlias(a.alias)
-
-	return nil
 }

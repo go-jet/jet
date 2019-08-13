@@ -5,8 +5,8 @@ import (
 )
 
 func TestBoolExpressionEQ(t *testing.T) {
-	assertClauseSerializeErr(t, table1ColBool.EQ(nil), "jet: nil rhs")
 	assertClauseSerialize(t, table1ColBool.EQ(table2ColBool), "(table1.col_bool = table2.col_bool)")
+	assertClauseSerializeErr(t, table1ColBool.EQ(nil), "jet: rhs is nil for '=' operator")
 }
 
 func TestBoolExpressionNOT_EQ(t *testing.T) {

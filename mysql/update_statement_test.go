@@ -59,5 +59,5 @@ WHERE table1.col1 = ?;
 
 func TestInvalidInputs(t *testing.T) {
 	assertStatementSqlErr(t, table1.UPDATE(table1ColInt).SET(1), "jet: WHERE clause not set")
-	assertStatementSqlErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list")
+	assertStatementSqlErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list for SET clause")
 }

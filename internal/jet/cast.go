@@ -34,23 +34,18 @@ type castExpression struct {
 	cast       string
 }
 
-func (b *castExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (b *castExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 
 	expression := b.expression
 	castType := b.cast
 
 	if castOverride := out.Dialect.SerializeOverride("CAST"); castOverride != nil {
-		return castOverride(expression, String(castType))(statement, out, options...)
+		castOverride(expression, String(castType))(statement, out, options...)
+		return
 	}
 
 	out.WriteString("CAST(")
-	err := expression.serialize(statement, out, options...)
-	if err != nil {
-		return err
-	}
-
+	expression.serialize(statement, out, options...)
 	out.WriteString("AS")
 	out.WriteString(castType + ")")
-
-	return err
 }

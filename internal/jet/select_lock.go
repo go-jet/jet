@@ -33,7 +33,7 @@ func (s *selectLockImpl) SKIP_LOCKED() SelectLock {
 	return s
 }
 
-func (s *selectLockImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (s *selectLockImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString(s.lockStrength)
 
 	if s.noWait {
@@ -43,6 +43,4 @@ func (s *selectLockImpl) serialize(statement StatementType, out *SqlBuilder, opt
 	if s.skipLocked {
 		out.WriteString("SKIP LOCKED")
 	}
-
-	return nil
 }

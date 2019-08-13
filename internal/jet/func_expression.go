@@ -1,7 +1,5 @@
 package jet
 
-import "errors"
-
 // ROW is construct one table row from list of expressions.
 func ROW(expressions ...Expression) Expression {
 	return newFunc("ROW", expressions, nil)
@@ -500,15 +498,11 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	return funcExp
 }
 
-func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if f == nil {
-		return errors.New("jet: Function expressions is nil. ")
-	}
-
+func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	if serializeOverride := out.Dialect.SerializeOverride(f.name); serializeOverride != nil {
-
 		serializeOverrideFunc := serializeOverride(f.expressions...)
-		return serializeOverrideFunc(statement, out, options...)
+		serializeOverrideFunc(statement, out, options...)
+		return
 	}
 
 	addBrackets := !f.noBrackets || len(f.expressions) > 0
@@ -519,16 +513,11 @@ func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder,
 		out.WriteString(f.name)
 	}
 
-	err := serializeExpressionList(statement, f.expressions, ", ", out)
-	if err != nil {
-		return err
-	}
+	serializeExpressionList(statement, f.expressions, ", ", out)
 
 	if addBrackets {
 		out.WriteString(")")
 	}
-
-	return nil
 }
 
 type boolFunc struct {

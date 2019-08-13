@@ -1,7 +1,6 @@
 package jet
 
 import (
-	"errors"
 	"github.com/go-jet/jet/internal/utils"
 )
 
@@ -66,9 +65,9 @@ func (t *TableImpl) columns() []Column {
 	return ret
 }
 
-func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	if t == nil {
-		return errors.New("jet: tableImpl is nil. ")
+		panic("jet: tableImpl is nil")
 	}
 
 	out.WriteIdentifier(t.schemaName)
@@ -79,8 +78,6 @@ func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options 
 		out.WriteString("AS")
 		out.WriteIdentifier(t.alias)
 	}
-
-	return nil
 }
 
 type JoinType int
@@ -137,18 +134,16 @@ func (t *JoinTableImpl) Columns() []Column {
 	return ret
 }
 
-func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) (err error) {
+func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	if t == nil {
-		return errors.New("jet: Join table is nil. ")
+		panic("jet: Join table is nil. ")
 	}
 
 	if utils.IsNil(t.lhs) {
-		return errors.New("jet: left hand side of join operation is nil table")
+		panic("jet: left hand side of join operation is nil table")
 	}
 
-	if err = t.lhs.serialize(statement, out); err != nil {
-		return
-	}
+	t.lhs.serialize(statement, out)
 
 	out.NewLine()
 
@@ -166,25 +161,19 @@ func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, opti
 	}
 
 	if utils.IsNil(t.rhs) {
-		return errors.New("jet: right hand side of join operation is nil table")
+		panic("jet: right hand side of join operation is nil table")
 	}
 
-	if err = t.rhs.serialize(statement, out); err != nil {
-		return
-	}
+	t.rhs.serialize(statement, out)
 
 	if t.onCondition == nil && t.joinType != CrossJoin {
-		return errors.New("jet: join condition is nil")
+		panic("jet: join condition is nil")
 	}
 
 	if t.onCondition != nil {
 		out.WriteString("ON")
-		if err = t.onCondition.serialize(statement, out); err != nil {
-			return
-		}
+		t.onCondition.serialize(statement, out)
 	}
-
-	return nil
 }
 
 func UnwindColumns(column1 Column, columns ...Column) []Column {

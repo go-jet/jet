@@ -1,22 +1,20 @@
 package jet
 
-import "errors"
-
 // SelectTable is interface for SELECT sub-queries
 type SelectTable interface {
 	Alias() string
 	AllColumns() ProjectionList
 }
 
-type SelectTableImpl2 struct {
+type SelectTableImpl struct {
 	selectStmt StatementWithProjections
 	alias      string
 
 	projections []Projection
 }
 
-func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTableImpl2 {
-	selectTable := SelectTableImpl2{selectStmt: selectStmt, alias: alias}
+func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTableImpl {
+	selectTable := SelectTableImpl{selectStmt: selectStmt, alias: alias}
 
 	for _, projection := range selectStmt.projections() {
 		newProjection := projection.fromImpl(&selectTable)
@@ -27,27 +25,21 @@ func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTab
 	return selectTable
 }
 
-func (s *SelectTableImpl2) Alias() string {
+func (s *SelectTableImpl) Alias() string {
 	return s.alias
 }
 
-func (s *SelectTableImpl2) AllColumns() ProjectionList {
+func (s *SelectTableImpl) AllColumns() ProjectionList {
 	return s.projections
 }
 
-func (s *SelectTableImpl2) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (s *SelectTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	if s == nil {
-		return errors.New("jet: Expression table is nil. ")
+		panic("jet: expression table is nil. ")
 	}
 
-	err := s.selectStmt.serialize(statement, out)
-
-	if err != nil {
-		return err
-	}
+	s.selectStmt.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteIdentifier(s.alias)
-
-	return nil
 }

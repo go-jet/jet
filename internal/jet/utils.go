@@ -1,30 +1,22 @@
 package jet
 
 import (
-	"errors"
 	"github.com/go-jet/jet/internal/utils"
 	"reflect"
-	"strings"
 )
 
-func serializeOrderByClauseList(statement StatementType, orderByClauses []OrderByClause, out *SqlBuilder) error {
+func serializeOrderByClauseList(statement StatementType, orderByClauses []OrderByClause, out *SqlBuilder) {
 
 	for i, value := range orderByClauses {
 		if i > 0 {
 			out.WriteString(", ")
 		}
 
-		err := value.serializeForOrderBy(statement, out)
-
-		if err != nil {
-			return err
-		}
+		value.serializeForOrderBy(statement, out)
 	}
-
-	return nil
 }
 
-func serializeGroupByClauseList(statement StatementType, clauses []GroupByClause, out *SqlBuilder) (err error) {
+func serializeGroupByClauseList(statement StatementType, clauses []GroupByClause, out *SqlBuilder) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -32,18 +24,14 @@ func serializeGroupByClauseList(statement StatementType, clauses []GroupByClause
 		}
 
 		if c == nil {
-			return errors.New("jet: nil clause")
+			panic("jet: nil clause")
 		}
 
-		if err = c.serializeForGroupBy(statement, out); err != nil {
-			return
-		}
+		c.serializeForGroupBy(statement, out)
 	}
-
-	return nil
 }
 
-func SerializeClauseList(statement StatementType, clauses []Serializer, out *SqlBuilder) (err error) {
+func SerializeClauseList(statement StatementType, clauses []Serializer, out *SqlBuilder) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -51,35 +39,25 @@ func SerializeClauseList(statement StatementType, clauses []Serializer, out *Sql
 		}
 
 		if c == nil {
-			return errors.New("jet: nil clause")
+			panic("jet: nil clause")
 		}
 
-		if err = c.serialize(statement, out); err != nil {
-			return
-		}
+		c.serialize(statement, out)
 	}
-
-	return nil
 }
 
-func serializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SqlBuilder) error {
+func serializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SqlBuilder) {
 
 	for i, value := range expressions {
 		if i > 0 {
 			out.WriteString(separator)
 		}
 
-		err := value.serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
+		value.serialize(statement, out)
 	}
-
-	return nil
 }
 
-func SerializeProjectionList(statement StatementType, projections []Projection, out *SqlBuilder) error {
+func SerializeProjectionList(statement StatementType, projections []Projection, out *SqlBuilder) {
 	for i, col := range projections {
 		if i > 0 {
 			out.WriteString(",")
@@ -87,31 +65,25 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 		}
 
 		if col == nil {
-			return errors.New("jet: Projection is nil")
+			panic("jet: Projection is nil")
 		}
 
-		if err := col.serializeForProjection(statement, out); err != nil {
-			return err
-		}
+		col.serializeForProjection(statement, out)
 	}
-
-	return nil
 }
 
-func SerializeColumnNames(columns []Column, out *SqlBuilder) error {
+func SerializeColumnNames(columns []Column, out *SqlBuilder) {
 	for i, col := range columns {
 		if i > 0 {
 			out.WriteString(", ")
 		}
 
 		if col == nil {
-			return errors.New("jet: nil column in columns list")
+			panic("jet: nil column in columns list")
 		}
 
 		out.WriteString(col.Name())
 	}
-
-	return nil
 }
 
 func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
@@ -137,7 +109,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 
 	row := []Serializer{}
 
-	mustBe(structValue, reflect.Struct)
+	utils.ValueMustBe(structValue, reflect.Struct, "jet: data has to be a struct")
 
 	for _, column := range columns {
 		columnName := column.Name()
@@ -165,7 +137,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 
 func UnwindRowsFromModels(columns []Column, data interface{}) [][]Serializer {
 	sliceValue := reflect.Indirect(reflect.ValueOf(data))
-	mustBe(sliceValue, reflect.Slice)
+	utils.ValueMustBe(sliceValue, reflect.Slice, "jet: data has to be a slice.")
 
 	rows := [][]Serializer{}
 
@@ -188,18 +160,4 @@ func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
 	}
 
 	return row
-}
-
-func mustBe(v reflect.Value, expectedKinds ...reflect.Kind) {
-	indirectV := reflect.Indirect(v)
-	types := []string{}
-
-	for _, expectedKind := range expectedKinds {
-		types = append(types, expectedKind.String())
-		if k := indirectV.Kind(); k == expectedKind {
-			return
-		}
-	}
-
-	panic("argument mismatch: expected " + strings.Join(types, " or ") + ", got " + v.Type().String())
 }

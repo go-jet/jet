@@ -48,9 +48,7 @@ var table3 = NewTable("db", "table3", table3Col1, table3ColInt, table3StrCol)
 
 func assertClauseSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
 	out := SqlBuilder{Dialect: DefaultDialect}
-	err := clause.serialize(SelectStatementType, &out)
-
-	assert.NilError(t, err)
+	clause.serialize(SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
 
@@ -59,19 +57,18 @@ func assertClauseSerialize(t *testing.T, clause Serializer, query string, args .
 }
 
 func assertClauseSerializeErr(t *testing.T, clause Serializer, errString string) {
-	out := SqlBuilder{Dialect: DefaultDialect}
-	err := clause.serialize(SelectStatementType, &out)
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, errString)
+	}()
 
-	//fmt.Println(out.buff.String())
-	assert.Assert(t, err != nil)
-	assert.Error(t, err, errString)
+	out := SqlBuilder{Dialect: DefaultDialect}
+	clause.serialize(SelectStatementType, &out)
 }
 
 func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
 	out := SqlBuilder{Dialect: DefaultDialect, debug: true}
-	err := clause.serialize(SelectStatementType, &out)
-
-	assert.NilError(t, err)
+	clause.serialize(SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
 
@@ -81,25 +78,8 @@ func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, a
 
 func assertProjectionSerialize(t *testing.T, projection Projection, query string, args ...interface{}) {
 	out := SqlBuilder{Dialect: DefaultDialect}
-	err := projection.serializeForProjection(SelectStatementType, &out)
-
-	assert.NilError(t, err)
+	projection.serializeForProjection(SelectStatementType, &out)
 
 	assert.DeepEqual(t, out.Buff.String(), query)
 	assert.DeepEqual(t, out.Args, args)
-}
-
-func assertStatement(t *testing.T, query Statement, expectedQuery string, expectedArgs ...interface{}) {
-	queryStr, args, err := query.Sql()
-	assert.NilError(t, err)
-
-	assert.Equal(t, queryStr, expectedQuery)
-	assert.DeepEqual(t, args, expectedArgs)
-}
-
-func assertStatementErr(t *testing.T, stmt Statement, errorStr string) {
-	_, _, err := stmt.Sql()
-
-	assert.Assert(t, err != nil)
-	assert.Error(t, err, errorStr)
 }

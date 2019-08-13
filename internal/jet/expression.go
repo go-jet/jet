@@ -1,9 +1,5 @@
 package jet
 
-import (
-	"errors"
-)
-
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
@@ -67,16 +63,16 @@ func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
 	return newOrderByClause(e.Parent, false)
 }
 
-func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SqlBuilder) error {
-	return e.Parent.serialize(statement, out, noWrap)
+func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SqlBuilder) {
+	e.Parent.serialize(statement, out, noWrap)
 }
 
-func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
-	return e.Parent.serialize(statement, out, noWrap)
+func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
+	e.Parent.serialize(statement, out, noWrap)
 }
 
-func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
-	return e.Parent.serialize(statement, out, noWrap)
+func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) {
+	e.Parent.serialize(statement, out, noWrap)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -95,15 +91,12 @@ func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpressio
 	return binaryExpression
 }
 
-func (c *binaryOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) (err error) {
-	if c == nil {
-		return errors.New("jet: binary Expression is nil")
-	}
+func (c *binaryOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	if c.lhs == nil {
-		return errors.New("jet: nil lhs")
+		panic("jet: lhs is nil for '" + c.operator + "' operator")
 	}
 	if c.rhs == nil {
-		return errors.New("jet: nil rhs")
+		panic("jet: rhs is nil for '" + c.operator + "' operator")
 	}
 
 	wrap := !contains(options, noWrap)
@@ -113,27 +106,17 @@ func (c *binaryOpExpression) serialize(statement StatementType, out *SqlBuilder,
 	}
 
 	if serializeOverride := out.Dialect.SerializeOverride(c.operator); serializeOverride != nil {
-
 		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs)
-		err = serializeOverrideFunc(statement, out, options...)
-
+		serializeOverrideFunc(statement, out, options...)
 	} else {
-		if err := c.lhs.serialize(statement, out); err != nil {
-			return err
-		}
-
+		c.lhs.serialize(statement, out)
 		out.WriteString(c.operator)
-
-		if err := c.rhs.serialize(statement, out); err != nil {
-			return err
-		}
+		c.rhs.serialize(statement, out)
 	}
 
 	if wrap {
 		out.WriteString(")")
 	}
-
-	return err
 }
 
 // A prefix operator Expression
@@ -151,24 +134,17 @@ func newPrefixExpression(expression Expression, operator string) prefixOpExpress
 	return prefixExpression
 }
 
-func (p *prefixOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if p == nil {
-		return errors.New("jet: Prefix Expression is nil")
-	}
-
+func (p *prefixOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	out.WriteString(p.operator)
 
 	if p.expression == nil {
-		return errors.New("jet: nil prefix Expression")
+		panic("jet: nil prefix expression in prefix operator " + p.operator)
 	}
-	if err := p.expression.serialize(statement, out); err != nil {
-		return err
-	}
+
+	p.expression.serialize(statement, out)
 
 	out.WriteString(")")
-
-	return nil
 }
 
 // A postifx operator Expression
@@ -186,19 +162,12 @@ func newPostfixOpExpression(expression Expression, operator string) postfixOpExp
 	return postfixOpExpression
 }
 
-func (p *postfixOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if p == nil {
-		return errors.New("jet: Postifx operator Expression is nil")
+func (p *postfixOpExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+	if p.expression == nil {
+		panic("jet: nil prefix expression in postfix operator " + p.operator)
 	}
 
-	if p.expression == nil {
-		return errors.New("jet: nil prefix Expression")
-	}
-	if err := p.expression.serialize(statement, out); err != nil {
-		return err
-	}
+	p.expression.serialize(statement, out)
 
 	out.WriteString(p.operator)
-
-	return nil
 }

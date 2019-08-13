@@ -9,11 +9,9 @@ type Dialect interface {
 	ArgumentPlaceholder() QueryPlaceholderFunc
 }
 
-type SerializeFunc func(statement StatementType, out *SqlBuilder, options ...SerializeOption) error
+type SerializeFunc func(statement StatementType, out *SqlBuilder, options ...SerializeOption)
 type SerializeOverride func(expressions ...Expression) SerializeFunc
-
 type QueryPlaceholderFunc func(ord int) string
-type UpdateAssigmentFunc func(columns []Column, values []Serializer, out *SqlBuilder) (err error)
 
 type DialectParams struct {
 	Name                string
@@ -42,7 +40,6 @@ type dialectImpl struct {
 	aliasQuoteChar      byte
 	identifierQuoteChar byte
 	argumentPlaceholder QueryPlaceholderFunc
-	setClause           UpdateAssigmentFunc
 
 	supportsReturning bool
 }

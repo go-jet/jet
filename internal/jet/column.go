@@ -62,31 +62,25 @@ func (c *columnImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
+func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.WriteAlias(c.defaultAlias()) //always quote
 
-		return nil
+		return
 	}
 
-	return c.serialize(statement, out)
+	c.serialize(statement, out)
 }
 
-func (c columnImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
-	err := c.serialize(statement, out)
-
-	if err != nil {
-		return err
-	}
+func (c columnImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
+	c.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteAlias(c.defaultAlias())
-
-	return nil
 }
 
-func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
@@ -100,8 +94,6 @@ func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options 
 
 		out.WriteIdentifier(c.name)
 	}
-
-	return nil
 }
 
 //------------------------------------------------------//
@@ -134,16 +126,10 @@ func (cl columnListImpl) fromImpl(subQuery SelectTable) Projection {
 	return newProjectionList
 }
 
-func (cl columnListImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
+func (cl columnListImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
 	projections := ColumnListToProjectionList(cl)
 
-	err := SerializeProjectionList(statement, projections, out)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	SerializeProjectionList(statement, projections, out)
 }
 
 // dummy column interface implementation

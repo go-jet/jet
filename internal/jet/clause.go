@@ -1,12 +1,11 @@
 package jet
 
 import (
-	"errors"
 	"github.com/go-jet/jet/internal/utils"
 )
 
 type Clause interface {
-	Serialize(statementType StatementType, out *SqlBuilder) error
+	Serialize(statementType StatementType, out *SqlBuilder)
 }
 
 type ClauseWithProjections interface {
@@ -24,7 +23,7 @@ func (s *ClauseSelect) projections() []Projection {
 	return s.Projections
 }
 
-func (s *ClauseSelect) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (s *ClauseSelect) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString("SELECT")
 
@@ -33,28 +32,26 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SqlBuilder) e
 	}
 
 	if len(s.Projections) == 0 {
-		return errors.New("jet: no column selected for Projection")
+		panic("jet: SELECT clause has to have at least one projection")
 	}
 
-	return out.WriteProjections(statementType, s.Projections)
+	out.WriteProjections(statementType, s.Projections)
 }
 
 type ClauseFrom struct {
 	Table Serializer
 }
 
-func (f *ClauseFrom) Serialize(statementType StatementType, s *SqlBuilder) error {
+func (f *ClauseFrom) Serialize(statementType StatementType, out *SqlBuilder) {
 	if f.Table == nil {
-		return nil
+		return
 	}
-	s.NewLine()
-	s.WriteString("FROM")
+	out.NewLine()
+	out.WriteString("FROM")
 
-	s.IncreaseIdent()
-	err := f.Table.serialize(statementType, s)
-	s.DecreaseIdent()
-
-	return err
+	out.IncreaseIdent()
+	f.Table.serialize(statementType, out)
+	out.DecreaseIdent()
 }
 
 type ClauseWhere struct {
@@ -62,120 +59,108 @@ type ClauseWhere struct {
 	Mandatory bool
 }
 
-func (c *ClauseWhere) Serialize(statementType StatementType, s *SqlBuilder) error {
+func (c *ClauseWhere) Serialize(statementType StatementType, out *SqlBuilder) {
 	if c.Condition == nil {
 		if c.Mandatory {
-			return errors.New("jet: WHERE clause not set")
+			panic("jet: WHERE clause not set")
 		}
-		return nil
+		return
 	}
-	s.NewLine()
-	s.WriteString("WHERE")
+	out.NewLine()
+	out.WriteString("WHERE")
 
-	s.IncreaseIdent()
-	err := c.Condition.serialize(statementType, s, noWrap)
-	s.DecreaseIdent()
-
-	return err
+	out.IncreaseIdent()
+	c.Condition.serialize(statementType, out, noWrap)
+	out.DecreaseIdent()
 }
 
 type ClauseGroupBy struct {
 	List []GroupByClause
 }
 
-func (c *ClauseGroupBy) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (c *ClauseGroupBy) Serialize(statementType StatementType, out *SqlBuilder) {
 	if len(c.List) == 0 {
-		return nil
+		return
 	}
 
 	out.NewLine()
 	out.WriteString("GROUP BY")
 
 	out.IncreaseIdent()
-	err := serializeGroupByClauseList(statementType, c.List, out)
+	serializeGroupByClauseList(statementType, c.List, out)
 	out.DecreaseIdent()
-
-	return err
 }
 
 type ClauseHaving struct {
 	Condition BoolExpression
 }
 
-func (c *ClauseHaving) Serialize(statementType StatementType, s *SqlBuilder) error {
+func (c *ClauseHaving) Serialize(statementType StatementType, out *SqlBuilder) {
 	if c.Condition == nil {
-		return nil
+		return
 	}
 
-	s.NewLine()
-	s.WriteString("HAVING")
+	out.NewLine()
+	out.WriteString("HAVING")
 
-	s.IncreaseIdent()
-	err := c.Condition.serialize(statementType, s, noWrap)
-	s.DecreaseIdent()
-
-	return err
+	out.IncreaseIdent()
+	c.Condition.serialize(statementType, out, noWrap)
+	out.DecreaseIdent()
 }
 
 type ClauseOrderBy struct {
 	List []OrderByClause
 }
 
-func (o *ClauseOrderBy) Serialize(statementType StatementType, s *SqlBuilder) error {
+func (o *ClauseOrderBy) Serialize(statementType StatementType, out *SqlBuilder) {
 	if o.List == nil {
-		return nil
+		return
 	}
 
-	s.NewLine()
-	s.WriteString("ORDER BY")
+	out.NewLine()
+	out.WriteString("ORDER BY")
 
-	s.IncreaseIdent()
-	err := serializeOrderByClauseList(statementType, o.List, s)
-	s.DecreaseIdent()
-
-	return err
+	out.IncreaseIdent()
+	serializeOrderByClauseList(statementType, o.List, out)
+	out.DecreaseIdent()
 }
 
 type ClauseLimit struct {
 	Count int64
 }
 
-func (l *ClauseLimit) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (l *ClauseLimit) Serialize(statementType StatementType, out *SqlBuilder) {
 	if l.Count >= 0 {
 		out.NewLine()
 		out.WriteString("LIMIT")
 		out.insertParametrizedArgument(l.Count)
 	}
-
-	return nil
 }
 
 type ClauseOffset struct {
 	Count int64
 }
 
-func (o *ClauseOffset) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (o *ClauseOffset) Serialize(statementType StatementType, out *SqlBuilder) {
 	if o.Count >= 0 {
 		out.NewLine()
 		out.WriteString("OFFSET")
 		out.insertParametrizedArgument(o.Count)
 	}
-
-	return nil
 }
 
 type ClauseFor struct {
 	Lock SelectLock
 }
 
-func (f *ClauseFor) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (f *ClauseFor) Serialize(statementType StatementType, out *SqlBuilder) {
 	if f.Lock == nil {
-		return nil
+		return
 	}
 
 	out.NewLine()
 	out.WriteString("FOR")
-	return f.Lock.serialize(statementType, out)
+	f.Lock.serialize(statementType, out)
 }
 
 type ClauseSetStmtOperator struct {
@@ -194,9 +179,9 @@ func (s *ClauseSetStmtOperator) projections() []Projection {
 	return nil
 }
 
-func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlBuilder) {
 	if len(s.Selects) < 2 {
-		return errors.New("jet: UNION Statement must have at least two SELECT statements")
+		panic("jet: UNION Statement must contain at least two SELECT statements")
 	}
 
 	wrap := s.OrderBy.List != nil || s.Limit.Count >= 0 || s.Offset.Count >= 0
@@ -219,14 +204,10 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 		}
 
 		if selectStmt == nil {
-			return errors.New("jet: select statement is nil")
+			panic("jet: select statement of '" + s.Operator + "' is nil")
 		}
 
-		err := selectStmt.serialize(statementType, out)
-
-		if err != nil {
-			return err
-		}
+		selectStmt.serialize(statementType, out)
 	}
 
 	if wrap {
@@ -235,38 +216,24 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 		out.WriteString(")")
 	}
 
-	if err := s.OrderBy.Serialize(statementType, out); err != nil {
-		return err
-	}
-
-	if err := s.Limit.Serialize(statementType, out); err != nil {
-		return err
-	}
-
-	if err := s.Offset.Serialize(statementType, out); err != nil {
-		return err
-	}
-
-	return nil
+	s.OrderBy.Serialize(statementType, out)
+	s.Limit.Serialize(statementType, out)
+	s.Offset.Serialize(statementType, out)
 }
 
 type ClauseUpdate struct {
 	Table SerializerTable
 }
 
-func (u *ClauseUpdate) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (u *ClauseUpdate) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString("UPDATE")
 
 	if utils.IsNil(u.Table) {
-		return errors.New("jet: table to update is nil")
+		panic("jet: table to update is nil")
 	}
 
-	if err := u.Table.serialize(statementType, out); err != nil {
-		return err
-	}
-
-	return nil
+	u.Table.serialize(statementType, out)
 }
 
 type ClauseSet struct {
@@ -274,12 +241,12 @@ type ClauseSet struct {
 	Values  []Serializer
 }
 
-func (s *ClauseSet) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (s *ClauseSet) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString("SET")
 
 	if len(s.Columns) != len(s.Values) {
-		return errors.New("jet: mismatch in numers of columns and values")
+		panic("jet: mismatch in numbers of columns and values for SET clause")
 	}
 
 	out.IncreaseIdent(4)
@@ -290,20 +257,16 @@ func (s *ClauseSet) Serialize(statementType StatementType, out *SqlBuilder) erro
 		}
 
 		if column == nil {
-			return errors.New("jet: nil column in columns list")
+			panic("jet: nil column in columns list for SET clause")
 		}
 
 		out.WriteString(column.Name())
 
 		out.WriteString(" = ")
 
-		if err := s.Values[i].serialize(UpdateStatementType, out); err != nil {
-			return err
-		}
+		s.Values[i].serialize(UpdateStatementType, out)
 	}
 	out.DecreaseIdent(4)
-
-	return nil
 }
 
 type ClauseInsert struct {
@@ -319,33 +282,23 @@ func (i *ClauseInsert) GetColumns() []Column {
 	return i.Table.columns()
 }
 
-func (i *ClauseInsert) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (i *ClauseInsert) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString("INSERT INTO")
 
 	if utils.IsNil(i.Table) {
-		return errors.New("jet: table is nil")
+		panic("jet: table is nil for INSERT clause")
 	}
 
-	err := i.Table.serialize(statementType, out)
-
-	if err != nil {
-		return err
-	}
+	i.Table.serialize(statementType, out)
 
 	if len(i.Columns) > 0 {
 		out.WriteString("(")
 
-		err = SerializeColumnNames(i.Columns, out)
-
-		if err != nil {
-			return err
-		}
+		SerializeColumnNames(i.Columns, out)
 
 		out.WriteString(")")
 	}
-
-	return nil
 }
 
 type ClauseValuesQuery struct {
@@ -353,33 +306,26 @@ type ClauseValuesQuery struct {
 	ClauseQuery
 }
 
-func (v *ClauseValuesQuery) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (v *ClauseValuesQuery) Serialize(statementType StatementType, out *SqlBuilder) {
 	if len(v.Rows) == 0 && v.Query == nil {
-		return errors.New("jet: no row values or query specified")
+		panic("jet: VALUES or QUERY has to be specified for INSERT statement")
 	}
 
 	if len(v.Rows) > 0 && v.Query != nil {
-		return errors.New("jet: only row values or query has to be specified")
+		panic("jet: VALUES or QUERY has to be specified for INSERT statement")
 	}
 
-	if err := v.ClauseValues.Serialize(statementType, out); err != nil {
-		return err
-	}
-
-	if err := v.ClauseQuery.Serialize(statementType, out); err != nil {
-		return err
-	}
-
-	return nil
+	v.ClauseValues.Serialize(statementType, out)
+	v.ClauseQuery.Serialize(statementType, out)
 }
 
 type ClauseValues struct {
 	Rows [][]Serializer
 }
 
-func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) {
 	if len(v.Rows) == 0 {
-		return nil
+		return
 	}
 
 	out.WriteString("VALUES")
@@ -393,47 +339,38 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SqlBuilder) e
 		out.NewLine()
 		out.WriteString("(")
 
-		err := SerializeClauseList(statementType, row, out)
-
-		if err != nil {
-			return err
-		}
+		SerializeClauseList(statementType, row, out)
 
 		out.WriteByte(')')
 		out.DecreaseIdent()
 	}
-	return nil
 }
 
 type ClauseQuery struct {
 	Query SerializerStatement
 }
 
-func (v *ClauseQuery) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (v *ClauseQuery) Serialize(statementType StatementType, out *SqlBuilder) {
 	if v.Query == nil {
-		return nil
+		return
 	}
 
-	return v.Query.serialize(statementType, out)
+	v.Query.serialize(statementType, out)
 }
 
 type ClauseDelete struct {
 	Table SerializerTable
 }
 
-func (d *ClauseDelete) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (d *ClauseDelete) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString("DELETE FROM")
 
 	if d.Table == nil {
-		return errors.New("jet: nil tableName")
+		panic("jet: nil table in DELETE clause")
 	}
 
-	if err := d.Table.serialize(statementType, out); err != nil {
-		return err
-	}
-
-	return nil
+	d.Table.serialize(statementType, out)
 }
 
 type ClauseStatementBegin struct {
@@ -441,7 +378,7 @@ type ClauseStatementBegin struct {
 	Tables []SerializerTable
 }
 
-func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString(d.Name)
 
@@ -450,14 +387,8 @@ func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SqlBu
 			out.WriteString(", ")
 		}
 
-		err := table.serialize(statementType, out)
-
-		if err != nil {
-			return err
-		}
+		table.serialize(statementType, out)
 	}
-
-	return nil
 }
 
 type ClauseString struct {
@@ -465,11 +396,10 @@ type ClauseString struct {
 	Data string
 }
 
-func (d *ClauseString) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (d *ClauseString) Serialize(statementType StatementType, out *SqlBuilder) {
 	out.NewLine()
 	out.WriteString(d.Name)
 	out.WriteString(d.Data)
-	return nil
 }
 
 type ClauseOptional struct {
@@ -477,27 +407,23 @@ type ClauseOptional struct {
 	Show bool
 }
 
-func (d *ClauseOptional) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (d *ClauseOptional) Serialize(statementType StatementType, out *SqlBuilder) {
 	if !d.Show {
-		return nil
+		return
 	}
-	//out.newLine()
 	out.WriteString(d.Name)
-	return nil
 }
 
 type ClauseIn struct {
 	LockMode string
 }
 
-func (i *ClauseIn) Serialize(statementType StatementType, out *SqlBuilder) error {
+func (i *ClauseIn) Serialize(statementType StatementType, out *SqlBuilder) {
 	if i.LockMode == "" {
-		return nil
+		return
 	}
 
 	out.WriteString("IN")
 	out.WriteString(string(i.LockMode))
 	out.WriteString("MODE")
-
-	return nil
 }

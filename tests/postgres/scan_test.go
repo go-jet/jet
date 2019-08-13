@@ -18,33 +18,23 @@ var query = Inventory.
 func TestScanToInvalidDestination(t *testing.T) {
 
 	t.Run("nil dest", func(t *testing.T) {
-		err := query.Query(db, nil)
-
-		assert.Error(t, err, "jet: Destination is nil")
+		testutils.AssertQueryPanicErr(t, query, db, nil, "jet: destination is nil")
 	})
 
 	t.Run("struct dest", func(t *testing.T) {
-		err := query.Query(db, struct{}{})
-
-		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, query, db, struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("slice dest", func(t *testing.T) {
-		err := query.Query(db, []struct{}{})
-
-		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, query, db, []struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("slice of pointers to pointer dest", func(t *testing.T) {
-		err := query.Query(db, []**struct{}{})
-
-		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, query, db, []**struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("map dest", func(t *testing.T) {
-		err := query.Query(db, []map[string]string{})
-
-		assert.Error(t, err, "jet: Destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, query, db, []map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 }
 
@@ -126,9 +116,7 @@ func TestScanToStruct(t *testing.T) {
 			Inventory **model.Inventory
 		}{}
 
-		err := query.Query(db, &dest)
-
-		assert.Error(t, err, "jet: Unsupported dest type: Inventory **model.Inventory")
+		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported dest type: Inventory **model.Inventory")
 	})
 
 	t.Run("invalid dest 2", func(t *testing.T) {
@@ -136,9 +124,7 @@ func TestScanToStruct(t *testing.T) {
 			Inventory ***model.Inventory
 		}{}
 
-		err := query.Query(db, &dest)
-
-		assert.Error(t, err, "jet: Unsupported dest type: Inventory ***model.Inventory")
+		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported dest type: Inventory ***model.Inventory")
 	})
 
 	t.Run("custom struct", func(t *testing.T) {
@@ -669,9 +655,7 @@ func TestScanToSlice(t *testing.T) {
 			}
 		}
 
-		err := query.Query(db, &dest)
-
-		assert.Error(t, err, "jet: Unsupported dest type: Cities []**struct { *model.City }")
+		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'.")
 	})
 }
 

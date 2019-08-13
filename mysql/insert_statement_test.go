@@ -7,7 +7,7 @@ import (
 )
 
 func TestInvalidInsert(t *testing.T) {
-	assertStatementSqlErr(t, table1.INSERT(table1Col1), "jet: no row values or query specified")
+	assertStatementSqlErr(t, table1.INSERT(table1Col1), "jet: VALUES or QUERY has to be specified for INSERT statement")
 	assertStatementSqlErr(t, table1.INSERT(nil).VALUES(1), "jet: nil column in columns list")
 }
 
@@ -114,7 +114,7 @@ func TestInsertFromNonStructModel(t *testing.T) {
 
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, "argument mismatch: expected struct, got []int")
+		assert.Equal(t, r, "jet: data has to be a struct")
 	}()
 
 	table2.INSERT(table2ColInt).MODEL([]int{})

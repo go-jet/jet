@@ -1,10 +1,8 @@
 package jet
 
-import "errors"
-
 // OrderByClause
 type OrderByClause interface {
-	serializeForOrderBy(statement StatementType, out *SqlBuilder) error
+	serializeForOrderBy(statement StatementType, out *SqlBuilder)
 }
 
 type orderByClauseImpl struct {
@@ -12,22 +10,18 @@ type orderByClauseImpl struct {
 	ascent     bool
 }
 
-func (o *orderByClauseImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) error {
+func (o *orderByClauseImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) {
 	if o.expression == nil {
-		return errors.New("jet: nil orderBy by clause")
+		panic("jet: nil expression in ORDER BY clause")
 	}
 
-	if err := o.expression.serializeForOrderBy(statement, out); err != nil {
-		return err
-	}
+	o.expression.serializeForOrderBy(statement, out)
 
 	if o.ascent {
 		out.WriteString("ASC")
 	} else {
 		out.WriteString("DESC")
 	}
-
-	return nil
 }
 
 func newOrderByClause(expression Expression, ascent bool) OrderByClause {

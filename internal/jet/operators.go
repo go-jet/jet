@@ -1,7 +1,5 @@
 package jet
 
-import "errors"
-
 const (
 	StringConcatOperator = "||"
 )
@@ -112,55 +110,33 @@ func (c *caseOperatorImpl) ELSE(els Expression) CaseOperator {
 	return c
 }
 
-func (c *caseOperatorImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if c == nil {
-		return errors.New("jet: Case Expression is nil. ")
-	}
-
+func (c *caseOperatorImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString("(CASE")
 
 	if c.expression != nil {
-		err := c.expression.serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
+		c.expression.serialize(statement, out)
 	}
 
 	if len(c.when) == 0 || len(c.then) == 0 {
-		return errors.New("jet: Invalid case Statement. There should be at least one when/then Expression pair. ")
+		panic("jet: invalid case Statement. There should be at least one WHEN/THEN pair. ")
 	}
 
 	if len(c.when) != len(c.then) {
-		return errors.New("jet: When and then Expression count mismatch. ")
+		panic("jet: WHEN and THEN expression count mismatch. ")
 	}
 
 	for i, when := range c.when {
 		out.WriteString("WHEN")
-		err := when.serialize(statement, out, noWrap)
-
-		if err != nil {
-			return err
-		}
+		when.serialize(statement, out, noWrap)
 
 		out.WriteString("THEN")
-		err = c.then[i].serialize(statement, out, noWrap)
-
-		if err != nil {
-			return err
-		}
+		c.then[i].serialize(statement, out, noWrap)
 	}
 
 	if c.els != nil {
 		out.WriteString("ELSE")
-		err := c.els.serialize(statement, out, noWrap)
-
-		if err != nil {
-			return err
-		}
+		c.els.serialize(statement, out, noWrap)
 	}
 
 	out.WriteString("END)")
-
-	return nil
 }

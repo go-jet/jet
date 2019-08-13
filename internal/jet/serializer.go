@@ -19,11 +19,11 @@ const (
 )
 
 type Serializer interface {
-	serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error
+	serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption)
 }
 
-func Serialize(exp Serializer, statementType StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	return exp.serialize(statementType, out, options...)
+func Serialize(exp Serializer, statementType StatementType, out *SqlBuilder, options ...SerializeOption) {
+	exp.serialize(statementType, out, options...)
 }
 
 func contains(options []SerializeOption, option SerializeOption) bool {

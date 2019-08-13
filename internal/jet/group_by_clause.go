@@ -1,5 +1,5 @@
 package jet
 
 type GroupByClause interface {
-	serializeForGroupBy(statement StatementType, out *SqlBuilder) error
+	serializeForGroupBy(statement StatementType, out *SqlBuilder)
 }

@@ -8,13 +8,13 @@ type SelectTable interface {
 }
 
 type selectTableImpl struct {
-	jet.SelectTableImpl2
+	jet.SelectTableImpl
 	readableTableInterfaceImpl
 }
 
 func newSelectTable(selectStmt jet.StatementWithProjections, alias string) SelectTable {
 	subQuery := &selectTableImpl{
-		SelectTableImpl2: jet.NewSelectTable(selectStmt, alias),
+		SelectTableImpl: jet.NewSelectTable(selectStmt, alias),
 	}
 
 	subQuery.readableTableInterfaceImpl.parent = subQuery

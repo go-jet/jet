@@ -8,14 +8,13 @@ type ClauseReturning struct {
 	Projections []jet.Projection
 }
 
-func (r *ClauseReturning) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) error {
+func (r *ClauseReturning) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
 	if len(r.Projections) == 0 {
-		return nil
+		return
 	}
 
 	out.NewLine()
 	out.WriteString("RETURNING")
 	out.IncreaseIdent()
-
-	return out.WriteProjections(statementType, r.Projections)
+	out.WriteProjections(statementType, r.Projections)
 }

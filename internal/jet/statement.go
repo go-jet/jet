@@ -3,19 +3,16 @@ package jet
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"github.com/go-jet/jet/execution"
 )
 
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement interface {
 	// Sql returns parametrized sql query with list of arguments.
-	// err is returned if statement is not composed correctly
-	Sql() (query string, args []interface{}, err error)
+	Sql() (query string, args []interface{})
 	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
 	// Do not use it in production. Use it only for debug purposes.
-	// err is returned if statement is not composed correctly
-	DebugSql() (query string, err error)
+	DebugSql() (query string)
 
 	// Query executes statement over database connection db and stores row result in destination.
 	// Destination can be arbitrary structure
@@ -51,71 +48,44 @@ type SerializerStatementInterfaceImpl struct {
 	parent        SerializerStatement
 }
 
-func (s *SerializerStatementInterfaceImpl) Sql() (query string, args []interface{}, err error) {
+func (s *SerializerStatementInterfaceImpl) Sql() (query string, args []interface{}) {
 
 	queryData := &SqlBuilder{Dialect: s.dialect}
 
-	err = s.parent.serialize(s.statementType, queryData, noWrap)
-
-	if err != nil {
-		return "", nil, err
-	}
+	s.parent.serialize(s.statementType, queryData, noWrap)
 
 	query, args = queryData.finalize()
-
 	return
 }
 
-func (s *SerializerStatementInterfaceImpl) DebugSql() (query string, err error) {
+func (s *SerializerStatementInterfaceImpl) DebugSql() (query string) {
 	sqlBuilder := &SqlBuilder{Dialect: s.dialect, debug: true}
 
-	err = s.parent.serialize(s.statementType, sqlBuilder, noWrap)
-
-	if err != nil {
-		return "", err
-	}
+	s.parent.serialize(s.statementType, sqlBuilder, noWrap)
 
 	query, _ = sqlBuilder.finalize()
-
 	return
 }
 
 func (s *SerializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
-	query, args, err := s.Sql()
-
-	if err != nil {
-		return err
-	}
+	query, args := s.Sql()
 
 	return execution.Query(context.Background(), db, query, args, destination)
 }
 
 func (s *SerializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
-	query, args, err := s.Sql()
-
-	if err != nil {
-		return err
-	}
+	query, args := s.Sql()
 
 	return execution.Query(context, db, query, args, destination)
 }
 
 func (s *SerializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
-	query, args, err := s.Sql()
-
-	if err != nil {
-		return
-	}
-
+	query, args := s.Sql()
 	return db.Exec(query, args...)
 }
 
 func (s *SerializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
-	query, args, err := s.Sql()
-
-	if err != nil {
-		return
-	}
+	query, args := s.Sql()
 
 	return db.ExecContext(context, query, args...)
 }
@@ -125,8 +95,8 @@ type ExpressionStatementImpl struct {
 	StatementImpl
 }
 
-func (s *ExpressionStatementImpl) serializeForProjection(statement StatementType, out *SqlBuilder) error {
-	return s.serialize(statement, out)
+func (s *ExpressionStatementImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
+	s.serialize(statement, out)
 }
 
 func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) StatementImpl {
@@ -156,23 +126,15 @@ func (s *StatementImpl) projections() []Projection {
 	return nil
 }
 
-func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
-	if s == nil {
-		return errors.New("jet: Select expression is nil. ")
-	}
+func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 
 	if !contains(options, noWrap) {
 		out.WriteString("(")
-
 		out.IncreaseIdent()
 	}
 
 	for _, clause := range s.Clauses {
-		err := clause.Serialize(statement, out)
-
-		if err != nil {
-			return err
-		}
+		clause.Serialize(statement, out)
 	}
 
 	if !contains(options, noWrap) {
@@ -180,6 +142,4 @@ func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, opti
 		out.NewLine()
 		out.WriteString(")")
 	}
-
-	return nil
 }

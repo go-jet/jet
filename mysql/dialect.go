@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"errors"
 	"github.com/go-jet/jet/internal/jet"
 )
 
@@ -31,63 +30,49 @@ func NewDialect() jet.Dialect {
 }
 
 func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		if len(expressions) != 2 {
-			return errors.New("jet: invalid number of expressions for operator")
+			panic("jet: invalid number of expressions for operator XOR")
 		}
 
 		lhs := expressions[0]
 		rhs := expressions[1]
 
-		if err := jet.Serialize(lhs, statement, out, options...); err != nil {
-			return err
-		}
+		jet.Serialize(lhs, statement, out, options...)
 
 		out.WriteString("^")
 
-		if err := jet.Serialize(rhs, statement, out, options...); err != nil {
-			return err
-		}
-		return nil
+		jet.Serialize(rhs, statement, out, options...)
 	}
 }
 
 func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		if len(expressions) != 2 {
-			return errors.New("jet: invalid number of expressions for operator")
+			panic("jet: invalid number of expressions for operator CONCAT")
 		}
-
 		out.WriteString("CONCAT(")
 
-		if err := jet.Serialize(expressions[0], statement, out, options...); err != nil {
-			return err
-		}
+		jet.Serialize(expressions[0], statement, out, options...)
 
 		out.WriteString(", ")
 
-		if err := jet.Serialize(expressions[1], statement, out, options...); err != nil {
-			return err
-		}
+		jet.Serialize(expressions[1], statement, out, options...)
 
 		out.WriteString(")")
-
-		return nil
 	}
 }
 
 func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		if len(expressions) != 2 {
-			return errors.New("jet: invalid number of expressions for operator")
+			panic("jet: invalid number of expressions for operator DIV")
 		}
 
 		lhs := expressions[0]
 		rhs := expressions[1]
 
-		if err := jet.Serialize(lhs, statement, out, options...); err != nil {
-			return err
-		}
+		jet.Serialize(lhs, statement, out, options...)
 
 		_, isLhsInt := lhs.(IntegerExpression)
 		_, isRhsInt := rhs.(IntegerExpression)
@@ -98,44 +83,26 @@ func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
 			out.WriteString("/")
 		}
 
-		if err := jet.Serialize(rhs, statement, out, options...); err != nil {
-			return err
-		}
-		return nil
+		jet.Serialize(rhs, statement, out, options...)
 	}
 }
 
 func mysql_IS_NOT_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		if len(expressions) != 2 {
-			return errors.New("jet: invalid number of expressions for operator")
-		}
-		if err := jet.Serialize(expressions[0], statement, out); err != nil {
-			return err
+			panic("jet: invalid number of expressions for operator")
 		}
 
+		jet.Serialize(expressions[0], statement, out)
 		out.WriteString("<=>")
-
-		if err := jet.Serialize(expressions[1], statement, out); err != nil {
-			return err
-		}
-
-		return nil
+		jet.Serialize(expressions[1], statement, out)
 	}
 }
 
 func mysql_IS_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		out.WriteString("NOT(")
-
-		err := mysql_IS_NOT_DISTINCT_FROM(expressions...)(statement, out, options...)
-
-		if err != nil {
-			return err
-		}
-
+		mysql_IS_NOT_DISTINCT_FROM(expressions...)(statement, out, options...)
 		out.WriteString(")")
-
-		return nil
 	}
 }

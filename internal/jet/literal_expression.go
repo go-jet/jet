@@ -39,14 +39,12 @@ func constLiteral(value interface{}) *literalExpressionImpl {
 	return exp
 }
 
-func (l *literalExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (l *literalExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	if l.constant {
 		out.insertConstantArgument(l.value)
 	} else {
 		out.insertParametrizedArgument(l.value)
 	}
-
-	return nil
 }
 
 func (l *literalExpressionImpl) Value() interface{} {
@@ -286,9 +284,8 @@ func newNullLiteral() Expression {
 	return nullExpression
 }
 
-func (n *nullLiteral) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (n *nullLiteral) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString("NULL")
-	return nil
 }
 
 //--------------------------------------------------//
@@ -304,9 +301,8 @@ func newStarLiteral() Expression {
 	return starExpression
 }
 
-func (n *starLiteral) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (n *starLiteral) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString("*")
-	return nil
 }
 
 //---------------------------------------------------//
@@ -316,11 +312,10 @@ type wrap struct {
 	expressions []Expression
 }
 
-func (n *wrap) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (n *wrap) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString("(")
-	err := serializeExpressionList(statement, n.expressions, ", ", out)
+	serializeExpressionList(statement, n.expressions, ", ", out)
 	out.WriteString(")")
-	return err
 }
 
 // WRAP wraps list of expressions with brackets '(' and ')'
@@ -339,9 +334,8 @@ type rawExpression struct {
 	raw string
 }
 
-func (n *rawExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) error {
+func (n *rawExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
 	out.WriteString(n.raw)
-	return nil
 }
 
 // Raw can be used for any unsupported functions, operators or expressions.

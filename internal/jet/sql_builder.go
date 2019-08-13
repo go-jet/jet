@@ -44,11 +44,10 @@ func (s *SqlBuilder) DecreaseIdent(ident ...int) {
 	s.ident -= toDecrease
 }
 
-func (s *SqlBuilder) WriteProjections(statement StatementType, projections []Projection) error {
+func (s *SqlBuilder) WriteProjections(statement StatementType, projections []Projection) {
 	s.IncreaseIdent()
-	err := SerializeProjectionList(statement, projections, s)
+	SerializeProjectionList(statement, projections, s)
 	s.DecreaseIdent()
-	return err
 }
 
 func (s *SqlBuilder) NewLine() {

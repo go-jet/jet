@@ -353,8 +353,8 @@ func TestFloatOperators(t *testing.T) {
 		TRUNC(AllTypes.Decimal, Int(1)).AS("trunc"),
 	).LIMIT(2)
 
-	queryStr, _, err := query.Sql()
-	assert.NilError(t, err)
+	queryStr, _ := query.Sql()
+
 	assert.Equal(t, queryStr, `
 SELECT (all_types.numeric = all_types.numeric) AS "eq1",
      (all_types.decimal = $1) AS "eq2",
@@ -399,7 +399,7 @@ LIMIT $35;
 		common.FloatExpressionTestResult `alias:"."`
 	}
 
-	err = query.Query(db, &dest)
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 

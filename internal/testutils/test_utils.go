@@ -78,8 +78,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 }
 
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
-	queryStr, args, err := query.Sql()
-	assert.NilError(t, err)
+	queryStr, args := query.Sql()
 	assert.Equal(t, queryStr, expectedQuery)
 
 	if len(expectedArgs) == 0 {
@@ -89,32 +88,28 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 }
 
 func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
-	_, _, err := stmt.Sql()
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, errorStr)
+	}()
 
-	assert.Assert(t, err != nil)
-	assert.Error(t, err, errorStr)
+	stmt.Sql()
 }
 
 func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
-	_, args, err := query.Sql()
-	assert.NilError(t, err)
-	//assert.Equal(t, queryStr, expectedQuery)
+	_, args := query.Sql()
+
 	if len(expectedArgs) > 0 {
 		assert.DeepEqual(t, args, expectedArgs)
 	}
 
-	debuqSql, err := query.DebugSql()
-
-	assert.NilError(t, err)
-
+	debuqSql := query.DebugSql()
 	assert.Equal(t, debuqSql, expectedQuery)
 }
 
 func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
 	out := jet.SqlBuilder{Dialect: dialect}
-	err := jet.Serialize(clause, jet.SelectStatementType, &out)
-
-	assert.NilError(t, err)
+	jet.Serialize(clause, jet.SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
 
@@ -123,24 +118,31 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Seriali
 	if len(args) > 0 {
 		assert.DeepEqual(t, out.Args, args)
 	}
-
 }
 
 func AssertClauseSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer, errString string) {
-	out := jet.SqlBuilder{Dialect: dialect}
-	err := jet.Serialize(clause, jet.SelectStatementType, &out)
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, errString)
+	}()
 
-	//fmt.Println(out.buff.String())
-	assert.Assert(t, err != nil)
-	assert.Error(t, err, errString)
+	out := jet.SqlBuilder{Dialect: dialect}
+	jet.Serialize(clause, jet.SelectStatementType, &out)
 }
 
 func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet.Projection, query string, args ...interface{}) {
 	out := jet.SqlBuilder{Dialect: dialect}
-	err := jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
-
-	assert.NilError(t, err)
+	jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
 
 	assert.DeepEqual(t, out.Buff.String(), query)
 	assert.DeepEqual(t, out.Args, args)
+}
+
+func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db execution.DB, dest interface{}, errString string) {
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, errString)
+	}()
+
+	stmt.Query(db, dest)
 }

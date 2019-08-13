@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"errors"
 	"github.com/go-jet/jet/internal/jet"
 	"strconv"
 	"strings"
@@ -30,9 +29,9 @@ func NewDialect() jet.Dialect {
 }
 
 func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
-			return errors.New("jet: invalid number of expressions for operator")
+			panic("jet: invalid number of expressions for operator")
 		}
 
 		expression := expressions[0]
@@ -40,32 +39,27 @@ func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
 		litExpr, ok := expressions[1].(jet.LiteralExpression)
 
 		if !ok {
-			return errors.New("jet: cast invalid cast type")
+			panic("jet: cast invalid cast type")
 		}
 
 		castType, ok := litExpr.Value().(string)
 
 		if !ok {
-			return errors.New("jet: cast type is not string")
+			panic("jet: cast type is not string")
 		}
 
-		if err := jet.Serialize(expression, statement, out, options...); err != nil {
-			return err
-		}
+		jet.Serialize(expression, statement, out, options...)
 		out.WriteString("::" + castType)
-		return nil
 	}
 }
 
 func postgres_REGEXP_LIKE_function(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) error {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
-			return errors.New("jet: invalid number of expressions for operator")
+			panic("jet: invalid number of expressions for operator")
 		}
 
-		if err := jet.Serialize(expressions[0], statement, out, options...); err != nil {
-			return err
-		}
+		jet.Serialize(expressions[0], statement, out, options...)
 
 		caseSensitive := false
 
@@ -83,10 +77,6 @@ func postgres_REGEXP_LIKE_function(expressions ...jet.Expression) jet.SerializeF
 			out.WriteString("~*")
 		}
 
-		if err := jet.Serialize(expressions[1], statement, out, options...); err != nil {
-			return err
-		}
-
-		return nil
+		jet.Serialize(expressions[1], statement, out, options...)
 	}
 }

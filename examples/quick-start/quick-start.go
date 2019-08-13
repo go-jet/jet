@@ -24,7 +24,6 @@ const (
 )
 
 func main() {
-
 	// Connect to database
 	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", Host, Port, User, Password, DBName)
 
@@ -98,16 +97,14 @@ func jsonSave(path string, v interface{}) {
 }
 
 func printStatementInfo(stmt SelectStatement) {
-	query, args, err := stmt.Sql()
-	panicOnError(err)
+	query, args := stmt.Sql()
 
 	fmt.Println("Parameterized query: ")
 	fmt.Println(query)
 	fmt.Println("Arguments: ")
 	fmt.Println(args)
 
-	debugSQL, err := stmt.DebugSql()
-	panicOnError(err)
+	debugSQL := stmt.DebugSql()
 
 	fmt.Println("\n\n==============================")
 

@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"errors"
 	"github.com/go-jet/jet/internal/jet"
 )
 
@@ -62,23 +61,19 @@ type ClauseSet struct {
 	Values  []jet.Serializer
 }
 
-func (s *ClauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) error {
+func (s *ClauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
 	out.NewLine()
 	out.WriteString("SET")
 
 	if len(s.Columns) == 0 {
-		return errors.New("jet: no columns selected")
+		panic("jet: no columns selected")
 	}
 
 	if len(s.Columns) > 1 {
 		out.WriteString("(")
 	}
 
-	err := jet.SerializeColumnNames(s.Columns, out)
-
-	if err != nil {
-		return err
-	}
+	jet.SerializeColumnNames(s.Columns, out)
 
 	if len(s.Columns) > 1 {
 		out.WriteString(")")
@@ -90,15 +85,9 @@ func (s *ClauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuild
 		out.WriteString("(")
 	}
 
-	err = jet.SerializeClauseList(statementType, s.Values, out)
-
-	if err != nil {
-		return err
-	}
+	jet.SerializeClauseList(statementType, s.Values, out)
 
 	if len(s.Values) > 1 {
 		out.WriteString(")")
 	}
-
-	return nil
 }

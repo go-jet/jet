@@ -144,3 +144,28 @@ func FormatTimestamp(t time.Time) []byte {
 func IsNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
+
+func MustBe(v interface{}, kind reflect.Kind, errorStr string) {
+	if reflect.TypeOf(v).Kind() != kind {
+		panic(errorStr)
+	}
+}
+
+func ValueMustBe(v reflect.Value, kind reflect.Kind, errorStr string) {
+	if v.Kind() != kind {
+		panic(errorStr)
+	}
+}
+
+func TypeMustBe(v reflect.Type, kind reflect.Kind, errorStr string) {
+	if v.Kind() != kind {
+		panic(errorStr)
+	}
+}
+
+func MustBeInitializedPtr(val interface{}, errorStr string) {
+	if IsNil(val) {
+		panic(errorStr)
+	}
+
+}

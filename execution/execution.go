@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
 	"github.com/go-jet/jet/internal/utils"
@@ -19,14 +18,11 @@ import (
 // Destination can be either pointer to struct or pointer to slice of structs.
 func Query(context context.Context, db DB, query string, args []interface{}, destinationPtr interface{}) error {
 
-	if utils.IsNil(destinationPtr) {
-		return errors.New("jet: Destination is nil")
-	}
+	utils.MustBeInitializedPtr(db, "jet: db is nil")
+	utils.MustBeInitializedPtr(destinationPtr, "jet: destination is nil")
+	utils.MustBe(destinationPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
 
 	destinationPtrType := reflect.TypeOf(destinationPtr)
-	if destinationPtrType.Kind() != reflect.Ptr {
-		return errors.New("jet: Destination has to be a pointer to slice or pointer to struct")
-	}
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
 		return queryToSlice(context, db, query, args, destinationPtr)
@@ -52,24 +48,11 @@ func Query(context context.Context, db DB, query string, args []interface{}, des
 		}
 		return nil
 	} else {
-		return errors.New("jet: unsupported destination type")
+		panic("jet: destination has to be a pointer to slice or pointer to struct")
 	}
 }
 
 func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) error {
-	if db == nil {
-		return errors.New("jet: db is nil")
-	}
-
-	if slicePtr == nil {
-		return errors.New("jet: Destination is nil. ")
-	}
-
-	destinationType := reflect.TypeOf(slicePtr)
-	if destinationType.Kind() != reflect.Ptr && destinationType.Elem().Kind() != reflect.Slice {
-		return errors.New("jet: Destination has to be a pointer to slice. ")
-	}
-
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -132,9 +115,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 		return
 	}
 
-	if sliceElemType.Kind() != reflect.Struct {
-		return false, errors.New("jet: Unsupported dest type: " + field.Name + " " + field.Type.String())
-	}
+	utils.TypeMustBe(sliceElemType, reflect.Struct, "jet: unsupported slice element type at '"+fieldToString(field)+"'.")
 
 	structGroupKey := scanContext.getGroupKey(sliceElemType, field)
 
@@ -315,9 +296,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 
 func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
 
-	if destPtrValue.Kind() != reflect.Ptr {
-		return false, errors.New("jet: Internal error. ")
-	}
+	utils.ValueMustBe(destPtrValue, reflect.Ptr, "jet: internal error. Destination is not pointer.")
 
 	destValueKind := destPtrValue.Elem().Kind()
 
@@ -326,7 +305,7 @@ func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrVa
 	} else if destValueKind == reflect.Slice {
 		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
 	} else {
-		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+		panic("jet: unsupported dest type: " + structField.Name + " " + structField.Type.String())
 	}
 }
 
@@ -336,14 +315,12 @@ func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest re
 
 	if dest.Kind() != reflect.Ptr {
 		destPtrValue = dest.Addr()
-	} else if dest.Kind() == reflect.Ptr {
+	} else {
 		if dest.IsNil() {
 			destPtrValue = reflect.New(dest.Type().Elem())
 		} else {
 			destPtrValue = dest
 		}
-	} else {
-		return false, errors.New("jet: Internal error. ")
 	}
 
 	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
@@ -602,7 +579,7 @@ func setReflectValue(source, destination reflect.Value) error {
 		}
 	}
 
-	return errors.New("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
+	panic("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
 }
 
 func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
@@ -868,4 +845,12 @@ func indirectType(reflectType reflect.Type) reflect.Type {
 		return reflectType
 	}
 	return reflectType.Elem()
+}
+
+func fieldToString(field *reflect.StructField) string {
+	if field == nil {
+		return ""
+	}
+
+	return field.Name + " " + field.Type.String()
 }
