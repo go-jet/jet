@@ -115,7 +115,7 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 		return
 	}
 
-	utils.TypeMustBe(sliceElemType, reflect.Struct, "jet: unsupported slice element type at '"+fieldToString(field)+"'.")
+	utils.TypeMustBe(sliceElemType, reflect.Struct, "jet: unsupported slice element type"+fieldToString(field))
 
 	structGroupKey := scanContext.getGroupKey(sliceElemType, field)
 
@@ -270,7 +270,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				err = scanner.Scan(cellValue)
 
 				if err != nil {
-					err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
+					panic("jet: " + err.Error() + ", " + fieldToString(&field) + " of type " + structType.String())
 					return
 				}
 				updated = true
@@ -280,12 +280,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				if cellValue != nil {
 					updated = true
 					initializeValueIfNilPtr(fieldValue)
-					err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
-
-					if err != nil {
-						err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
-						return
-					}
+					setReflectValue(reflect.ValueOf(cellValue), fieldValue)
 				}
 			}
 		}
@@ -381,7 +376,7 @@ func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
 
 func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) error {
 	if slicePtrValue.IsNil() {
-		panic("Slice is nil")
+		panic("jet: internal, slice is nil")
 	}
 	sliceValue := slicePtrValue.Elem()
 	sliceElemType := sliceValue.Type().Elem()
@@ -392,8 +387,12 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) e
 		newElemValue = objPtrValue.Elem()
 	}
 
+	if newElemValue.Type().ConvertibleTo(sliceElemType) {
+		newElemValue = newElemValue.Convert(sliceElemType)
+	}
+
 	if !newElemValue.Type().AssignableTo(sliceElemType) {
-		return fmt.Errorf("jet: can't append %s to %s slice ", newElemValue.Type().String(), sliceValue.Type().String())
+		panic("jet: can't append " + newElemValue.Type().String() + " to " + sliceValue.Type().String() + " slice")
 	}
 
 	sliceValue.Set(reflect.Append(sliceValue, newElemValue))
@@ -473,7 +472,7 @@ func valueToString(value reflect.Value) string {
 		valueInterface = value.Interface()
 	}
 
-	if t, ok := valueInterface.(time.Time); ok {
+	if t, ok := valueInterface.(fmt.Stringer); ok {
 		return t.String()
 	}
 
@@ -535,21 +534,24 @@ func tryAssign(source, destination reflect.Value) bool {
 	return false
 }
 
-func setReflectValue(source, destination reflect.Value) error {
+func setReflectValue(source, destination reflect.Value) {
 
 	if tryAssign(source, destination) {
-		return nil
+		return
 	}
 
 	if destination.Kind() == reflect.Ptr {
 		if source.Kind() == reflect.Ptr {
-
 			if !source.IsNil() {
 				if destination.IsNil() {
 					initializeValueIfNilPtr(destination)
 				}
 
-				tryAssign(source.Elem(), destination.Elem())
+				if tryAssign(source.Elem(), destination.Elem()) {
+					return
+				}
+			} else {
+				return
 			}
 		} else {
 			if source.CanAddr() {
@@ -562,20 +564,23 @@ func setReflectValue(source, destination reflect.Value) error {
 			}
 
 			if tryAssign(source, destination) {
-				return nil
+				return
 			}
 
 			if tryAssign(source.Elem(), destination.Elem()) {
-				return nil
+				return
 			}
 		}
 	} else {
 		if source.Kind() == reflect.Ptr {
+			if source.IsNil() {
+				return
+			}
 			source = source.Elem()
 		}
 
 		if tryAssign(source, destination) {
-			return nil
+			return
 		}
 	}
 
@@ -804,7 +809,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 	valuer, ok := s.row[index].(driver.Valuer)
 
 	if !ok {
-		panic("Scan value doesn't implement driver.Valuer")
+		panic("jet: internal error, scan value doesn't implement driver.Valuer")
 	}
 
 	value, err := valuer.Value()
@@ -852,5 +857,5 @@ func fieldToString(field *reflect.StructField) string {
 		return ""
 	}
 
-	return field.Name + " " + field.Type.String()
+	return " at '" + field.Name + " " + field.Type.String() + "'"
 }

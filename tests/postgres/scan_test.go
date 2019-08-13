@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+	"github.com/go-jet/jet/execution"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
@@ -34,7 +36,15 @@ func TestScanToInvalidDestination(t *testing.T) {
 	})
 
 	t.Run("map dest", func(t *testing.T) {
+		testutils.AssertQueryPanicErr(t, query, db, &map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
+	})
+
+	t.Run("map dest", func(t *testing.T) {
 		testutils.AssertQueryPanicErr(t, query, db, []map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
+	})
+
+	t.Run("map dest", func(t *testing.T) {
+		testutils.AssertQueryPanicErr(t, query, db, &[]map[string]string{}, "jet: unsupported slice element type")
 	})
 }
 
@@ -42,6 +52,12 @@ func TestScanToValidDestination(t *testing.T) {
 	t.Run("pointer to struct", func(t *testing.T) {
 		err := query.Query(db, &struct{}{})
 
+		assert.NilError(t, err)
+	})
+
+	t.Run("global query function scan", func(t *testing.T) {
+		queryStr, args := query.Sql()
+		err := execution.Query(nil, db, queryStr, args, &struct{}{})
 		assert.NilError(t, err)
 	})
 
@@ -74,6 +90,8 @@ func TestScanToStruct(t *testing.T) {
 	query := Inventory.
 		SELECT(Inventory.AllColumns).
 		ORDER_BY(Inventory.InventoryID)
+
+	fmt.Println(query.DebugSql())
 
 	t.Run("one struct", func(t *testing.T) {
 		dest := model.Inventory{}
@@ -166,11 +184,19 @@ func TestScanToStruct(t *testing.T) {
 
 		dest := Inventory{}
 
-		err := query.Query(db, &dest)
-
-		assert.Error(t, err, `Scan: unable to scan type int32 into UUID, at struct field: InventoryID uuid.UUID of type postgres.Inventory. `)
+		testutils.AssertQueryPanicErr(t, query, db, &dest, `jet: Scan: unable to scan type int32 into UUID,  at 'InventoryID uuid.UUID' of type postgres.Inventory`)
 	})
 
+	t.Run("type mismatch base type", func(t *testing.T) {
+		type Inventory struct {
+			InventoryID int32
+			FilmID      bool
+		}
+
+		dest := []Inventory{}
+
+		testutils.AssertQueryPanicErr(t, query.OFFSET(10), db, &dest, `jet: can't set int16 to bool`)
+	})
 }
 
 func TestScanToNestedStruct(t *testing.T) {
@@ -410,11 +436,18 @@ func TestScanToSlice(t *testing.T) {
 
 		})
 
-		t.Run("slice type mismatch ", func(t *testing.T) {
+		t.Run("slice type convertible", func(t *testing.T) {
 			var dest []int
 
 			err := query.Query(db, &dest)
-			assert.Error(t, err, `jet: can't append int32 to []int slice `)
+			assert.NilError(t, err)
+		})
+
+		t.Run("slice type mismatch", func(t *testing.T) {
+			var dest []bool
+
+			testutils.AssertQueryPanicErr(t, query, db, &dest, `jet: can't append int32 to []bool slice`)
+			//assert.Error(t, err, `jet: can't append int32 to []bool slice `)
 		})
 	})
 
@@ -655,7 +688,7 @@ func TestScanToSlice(t *testing.T) {
 			}
 		}
 
-		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'.")
+		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'")
 	})
 }
 

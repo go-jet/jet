@@ -49,8 +49,10 @@ func Generate(destDir string, dbConn DBConnection) error {
 }
 
 func openConnection(dbConn DBConnection) (*sql.DB, error) {
-	var connString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
-	db, err := sql.Open("mysql", connString)
+	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
+	db, err := sql.Open("mysql", connectionString)
+
+	fmt.Println("Connecting to MySQL database: " + connectionString)
 
 	if err != nil {
 		return nil, err
