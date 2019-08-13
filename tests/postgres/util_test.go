@@ -23,6 +23,7 @@ func assertExecErr(t *testing.T, stmt jet.Statement, errorStr string) {
 
 	assert.Error(t, err, errorStr)
 }
+
 func BoolPtr(b bool) *bool {
 	return &b
 }

@@ -469,3 +469,30 @@ FOR`
 		assert.NilError(t, err)
 	}
 }
+
+func TestExpressionWrappers(t *testing.T) {
+	query := SELECT(
+		BoolExp(Raw("true")),
+		IntExp(Raw("11")),
+		FloatExp(Raw("11.22")),
+		StringExp(Raw("'stringer'")),
+		TimeExp(Raw("'raw'")),
+		TimestampExp(Raw("'raw'")),
+		DateTimeExp(Raw("'raw'")),
+		DateExp(Raw("'date'")),
+	)
+
+	testutils.AssertStatementSql(t, query, `
+SELECT true,
+     11,
+     11.22,
+     'stringer',
+     'raw',
+     'raw',
+     'raw',
+     'date';
+`)
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
