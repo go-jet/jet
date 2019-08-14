@@ -10,17 +10,14 @@ type SelectTableImpl struct {
 	selectStmt StatementWithProjections
 	alias      string
 
-	projections []Projection
+	projections ProjectionList
 }
 
 func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTableImpl {
 	selectTable := SelectTableImpl{selectStmt: selectStmt, alias: alias}
 
-	for _, projection := range selectStmt.projections() {
-		newProjection := projection.fromImpl(&selectTable)
-
-		selectTable.projections = append(selectTable.projections, newProjection)
-	}
+	projectionList := selectStmt.projections().fromImpl(&selectTable)
+	selectTable.projections = projectionList.(ProjectionList)
 
 	return selectTable
 }

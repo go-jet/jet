@@ -11,7 +11,7 @@ type Clause interface {
 type ClauseWithProjections interface {
 	Clause
 
-	projections() []Projection
+	projections() ProjectionList
 }
 
 type ClauseSelect struct {
@@ -19,7 +19,7 @@ type ClauseSelect struct {
 	Projections []Projection
 }
 
-func (s *ClauseSelect) projections() []Projection {
+func (s *ClauseSelect) projections() ProjectionList {
 	return s.Projections
 }
 
@@ -172,7 +172,7 @@ type ClauseSetStmtOperator struct {
 	Offset   ClauseOffset
 }
 
-func (s *ClauseSetStmtOperator) projections() []Projection {
+func (s *ClauseSetStmtOperator) projections() ProjectionList {
 	if len(s.Selects) > 0 {
 		return s.Selects[0].projections()
 	}

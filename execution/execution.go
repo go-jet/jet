@@ -271,7 +271,6 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 
 				if err != nil {
 					panic("jet: " + err.Error() + ", " + fieldToString(&field) + " of type " + structType.String())
-					return
 				}
 				updated = true
 			} else {

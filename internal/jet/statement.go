@@ -39,7 +39,7 @@ type StatementWithProjections interface {
 }
 
 type HasProjections interface {
-	projections() []Projection
+	projections() ProjectionList
 }
 
 type SerializerStatementInterfaceImpl struct {
@@ -116,7 +116,7 @@ type StatementImpl struct {
 	Clauses []Clause
 }
 
-func (s *StatementImpl) projections() []Projection {
+func (s *StatementImpl) projections() ProjectionList {
 	for _, clause := range s.Clauses {
 		if selectClause, ok := clause.(ClauseWithProjections); ok {
 			return selectClause.projections()

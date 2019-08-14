@@ -53,8 +53,8 @@ var CONCAT = func(expressions ...Expression) StringExpression {
 	return jet.CONCAT(explicitLiteralCasts(expressions...)...)
 }
 
-func CONCAT_WS(expressions ...Expression) StringExpression {
-	return jet.CONCAT_WS(explicitLiteralCasts(expressions...)...)
+func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression {
+	return jet.CONCAT_WS(explicitLiteralCast(separator), explicitLiteralCasts(expressions...)...)
 }
 
 var CONVERT = jet.CONVERT

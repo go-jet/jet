@@ -17,10 +17,12 @@ func ABSi(integerExpression IntegerExpression) IntegerExpression {
 	return newIntegerFunc("ABS", integerExpression)
 }
 
+// POW calculates power of base with exponent
 func POW(base, exponent NumericExpression) FloatExpression {
 	return NewFloatFunc("POW", base, exponent)
 }
 
+// POWER calculates power of base with exponent
 func POWER(base, exponent NumericExpression) FloatExpression {
 	return NewFloatFunc("POWER", base, exponent)
 }
@@ -202,12 +204,14 @@ func CHR(integerExpression IntegerExpression) StringExpression {
 	return newStringFunc("CHR", integerExpression)
 }
 
+// CONCAT adds two or more expressions together
 func CONCAT(expressions ...Expression) StringExpression {
 	return newStringFunc("CONCAT", expressions...)
 }
 
-func CONCAT_WS(expressions ...Expression) StringExpression {
-	return newStringFunc("CONCAT_WS", expressions...)
+// CONCAT_WS adds two or more expressions together with a separator.
+func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression {
+	return newStringFunc("CONCAT_WS", append([]Expression{separator}, expressions...)...)
 }
 
 // CONVERT converts string to dest_encoding. The original encoding is
@@ -240,6 +244,7 @@ func DECODE(data StringExpression, format StringExpression) StringExpression {
 	return newStringFunc("DECODE", data, format)
 }
 
+// FORMAT formats a number to a format like "#,###,###.##", rounded to a specified number of decimal places, then it returns the result as a string.
 func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
 	args := []Expression{formatStr}
 	args = append(args, formatArgs...)
@@ -341,6 +346,7 @@ func TO_HEX(number IntegerExpression) StringExpression {
 	return newStringFunc("TO_HEX", number)
 }
 
+// REGEXP_LIKE Returns 1 if the string expr matches the regular expression specified by the pattern pat, 0 otherwise.
 func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType ...string) BoolExpression {
 	if len(matchType) > 0 {
 		return newBoolFunc("REGEXP_LIKE", stringExp, pattern, String(matchType[0], true))
