@@ -5,27 +5,27 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 )
 
-// TableInfo metadata struct
-type TableInfo struct {
+// TableMetaData metadata struct
+type TableMetaData struct {
 	SchemaName  string
 	name        string
 	PrimaryKeys map[string]bool
-	Columns     []ColumnInfo
+	Columns     []ColumnMetaData
 }
 
 // Name returns table info name
-func (t TableInfo) Name() string {
+func (t TableMetaData) Name() string {
 	return t.name
 }
 
 // IsPrimaryKey returns if column is a part of primary key
-func (t TableInfo) IsPrimaryKey(column string) bool {
+func (t TableMetaData) IsPrimaryKey(column string) bool {
 	return t.PrimaryKeys[column]
 }
 
 // MutableColumns returns list of mutable columns for table
-func (t TableInfo) MutableColumns() []ColumnInfo {
-	ret := []ColumnInfo{}
+func (t TableMetaData) MutableColumns() []ColumnMetaData {
+	ret := []ColumnMetaData{}
 
 	for _, column := range t.Columns {
 		if t.IsPrimaryKey(column.Name) {
@@ -39,11 +39,11 @@ func (t TableInfo) MutableColumns() []ColumnInfo {
 }
 
 // GetImports returns model imports for table.
-func (t TableInfo) GetImports() []string {
+func (t TableMetaData) GetImports() []string {
 	imports := map[string]string{}
 
 	for _, column := range t.Columns {
-		columnType := column.GoBaseType()
+		columnType := column.GoBaseType
 
 		switch columnType {
 		case "time.Time":
@@ -63,12 +63,12 @@ func (t TableInfo) GetImports() []string {
 }
 
 // GoStructName returns go struct name for sql builder
-func (t TableInfo) GoStructName() string {
+func (t TableMetaData) GoStructName() string {
 	return utils.ToGoIdentifier(t.name) + "Table"
 }
 
 // GetTableInfo returns table info metadata
-func GetTableInfo(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName string) (tableInfo TableInfo, err error) {
+func GetTableInfo(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (tableInfo TableMetaData, err error) {
 
 	tableInfo.SchemaName = schemaName
 	tableInfo.name = tableName
@@ -78,7 +78,7 @@ func GetTableInfo(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName s
 		return
 	}
 
-	tableInfo.Columns, err = getColumnInfos(db, querySet, schemaName, tableName)
+	tableInfo.Columns, err = getColumnsMetaData(db, querySet, schemaName, tableName)
 
 	if err != nil {
 		return
@@ -87,7 +87,7 @@ func GetTableInfo(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName s
 	return
 }
 
-func getPrimaryKeys(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName string) (map[string]bool, error) {
+func getPrimaryKeys(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (map[string]bool, error) {
 
 	rows, err := db.Query(querySet.PrimaryKeysQuery(), schemaName, tableName)
 

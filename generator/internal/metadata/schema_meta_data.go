@@ -5,14 +5,14 @@ import (
 	"fmt"
 )
 
-// SchemaInfo metadata struct
-type SchemaInfo struct {
+// SchemaMetaData struct
+type SchemaMetaData struct {
 	TableInfos []MetaData
 	EnumInfos  []MetaData
 }
 
 // GetSchemaInfo returns schema information from db connection.
-func GetSchemaInfo(db *sql.DB, schemaName string, querySet MetaDataQuerySet) (schemaInfo SchemaInfo, err error) {
+func GetSchemaInfo(db *sql.DB, schemaName string, querySet DialectQuerySet) (schemaInfo SchemaMetaData, err error) {
 
 	schemaInfo.TableInfos, err = getTableInfos(db, querySet, schemaName)
 
@@ -31,7 +31,7 @@ func GetSchemaInfo(db *sql.DB, schemaName string, querySet MetaDataQuerySet) (sc
 	return
 }
 
-func getTableInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName string) ([]MetaData, error) {
+func getTableInfos(db *sql.DB, querySet DialectQuerySet, schemaName string) ([]MetaData, error) {
 
 	rows, err := db.Query(querySet.ListOfTablesQuery(), schemaName)
 

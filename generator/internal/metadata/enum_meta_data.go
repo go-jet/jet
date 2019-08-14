@@ -4,18 +4,18 @@ import (
 	"database/sql"
 )
 
-// EnumInfo struct
-type EnumInfo struct {
+// EnumMetaData struct
+type EnumMetaData struct {
 	name   string
 	Values []string
 }
 
 // Name returns enum name
-func (e EnumInfo) Name() string {
+func (e EnumMetaData) Name() string {
 	return e.name
 }
 
-func getEnumInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName string) ([]MetaData, error) {
+func getEnumInfos(db *sql.DB, querySet DialectQuerySet, schemaName string) ([]MetaData, error) {
 
 	rows, err := db.Query(querySet.ListOfEnumsQuery(), schemaName)
 
@@ -49,7 +49,7 @@ func getEnumInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName string) ([]M
 	ret := []MetaData{}
 
 	for enumName, enumValues := range enumsInfosMap {
-		ret = append(ret, EnumInfo{
+		ret = append(ret, EnumMetaData{
 			enumName,
 			enumValues,
 		})

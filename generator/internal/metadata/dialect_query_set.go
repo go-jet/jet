@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-type MetaDataQuerySet interface {
+type DialectQuerySet interface {
 	ListOfTablesQuery() string
 	PrimaryKeysQuery() string
 	ListOfColumnsQuery() string
@@ -123,7 +123,7 @@ func (m *MySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]MetaD
 
 		enumValues = strings.Replace(enumValues[1:len(enumValues)-1], "'", "", -1)
 
-		ret = append(ret, EnumInfo{
+		ret = append(ret, EnumMetaData{
 			name:   enumName,
 			Values: strings.Split(enumValues, ","),
 		})

@@ -55,8 +55,10 @@ func TestCmdGenerator(t *testing.T) {
 	err = os.RemoveAll(genTestDir2)
 	assert.NilError(t, err)
 
-	cmd := exec.Command("jet", "-dbname=jetdb", "-host=localhost", "-port=5432",
+	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost", "-port=5432",
 		"-user=jet", "-password=jet", "-schema=dvds", "-path="+genTestDir2)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 
 	err = cmd.Run()
 	assert.NilError(t, err)

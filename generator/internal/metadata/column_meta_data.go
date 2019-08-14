@@ -7,17 +7,37 @@ import (
 	"strings"
 )
 
-// ColumnInfo metadata struct
-type ColumnInfo struct {
+// ColumnMetaData struct
+type ColumnMetaData struct {
 	Name       string
 	IsNullable bool
 	DataType   string
-	IsUnsigned bool
 	EnumName   string
+	IsUnsigned bool
+
+	SqlBuilderColumnType string
+	GoBaseType           string
+	GoModelType          string
 }
 
-// SqlBuilderColumnType returns type of jet sql builder column
-func (c ColumnInfo) SqlBuilderColumnType() string {
+func NewColumnMetaData(name string, isNullable bool, dataType string, enumName string, isUnsigned bool) ColumnMetaData {
+	columnMetaData := ColumnMetaData{
+		Name:       name,
+		IsNullable: isNullable,
+		DataType:   dataType,
+		EnumName:   enumName,
+		IsUnsigned: isUnsigned,
+	}
+
+	columnMetaData.SqlBuilderColumnType = columnMetaData.getSqlBuilderColumnType()
+	columnMetaData.GoBaseType = columnMetaData.getGoBaseType()
+	columnMetaData.GoModelType = columnMetaData.getGoModelType()
+
+	return columnMetaData
+}
+
+// getSqlBuilderColumnType returns type of jet sql builder column
+func (c ColumnMetaData) getSqlBuilderColumnType() string {
 	switch c.DataType {
 	case "boolean":
 		return "Bool"
@@ -45,13 +65,13 @@ func (c ColumnInfo) SqlBuilderColumnType() string {
 		"double": // MySQL
 		return "Float"
 	default:
-		fmt.Println("Unsupported sql type: " + c.DataType + ", using string column instead for sql builder.")
+		fmt.Println("- [SQL Builder] Unsupported sql column '" + c.Name + " " + c.DataType + "', using StringColumn instead.")
 		return "String"
 	}
 }
 
-// GoBaseType returns model type for column info.
-func (c ColumnInfo) GoBaseType() string {
+// getGoBaseType returns model type for column info.
+func (c ColumnMetaData) getGoBaseType() string {
 	switch c.DataType {
 	case "USER-DEFINED", "enum":
 		return utils.ToGoIdentifier(c.EnumName)
@@ -85,15 +105,15 @@ func (c ColumnInfo) GoBaseType() string {
 	case "uuid":
 		return "uuid.UUID"
 	default:
-		fmt.Println("Unsupported sql type: " + c.DataType + ", using string instead for model type.")
+		fmt.Println("- [Model      ] Unsupported sql column '" + c.Name + " " + c.DataType + "', using string instead.")
 		return "string"
 	}
 }
 
 // GoModelType returns model type for column info with optional pointer if
 // column can be NULL.
-func (c ColumnInfo) GoModelType() string {
-	typeStr := c.GoBaseType()
+func (c ColumnMetaData) getGoModelType() string {
+	typeStr := c.GoBaseType
 
 	if strings.Contains(typeStr, "int") && c.IsUnsigned {
 		typeStr = "u" + typeStr
@@ -107,7 +127,7 @@ func (c ColumnInfo) GoModelType() string {
 }
 
 // GoModelTag returns model field tag for column
-func (c ColumnInfo) GoModelTag(isPrimaryKey bool) string {
+func (c ColumnMetaData) GoModelTag(isPrimaryKey bool) string {
 	tags := []string{}
 
 	if isPrimaryKey {
@@ -121,7 +141,7 @@ func (c ColumnInfo) GoModelTag(isPrimaryKey bool) string {
 	return ""
 }
 
-func getColumnInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName string) ([]ColumnInfo, error) {
+func getColumnsMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) ([]ColumnMetaData, error) {
 
 	rows, err := db.Query(querySet.ListOfColumnsQuery(), schemaName, tableName)
 
@@ -130,20 +150,18 @@ func getColumnInfos(db *sql.DB, querySet MetaDataQuerySet, schemaName, tableName
 	}
 	defer rows.Close()
 
-	ret := []ColumnInfo{}
+	ret := []ColumnMetaData{}
 
 	for rows.Next() {
-		columnInfo := ColumnInfo{}
-		var isNullable string
-		err := rows.Scan(&columnInfo.Name, &isNullable, &columnInfo.DataType, &columnInfo.EnumName, &columnInfo.IsUnsigned)
-
-		columnInfo.IsNullable = isNullable == "YES"
+		var name, isNullable, dataType, enumName string
+		var isUnsigned bool
+		err := rows.Scan(&name, &isNullable, &dataType, &enumName, &isUnsigned)
 
 		if err != nil {
 			return nil, err
 		}
 
-		ret = append(ret, columnInfo)
+		ret = append(ret, NewColumnMetaData(name, isNullable == "YES", dataType, enumName, isUnsigned))
 	}
 
 	err = rows.Err()
