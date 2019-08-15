@@ -98,7 +98,6 @@ jobs:
 
       - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: /tmp/test-results
-
   build-mariadb:
     docker:
       # specify the version
@@ -157,3 +156,10 @@ jobs:
           name: Run MariaDB tests
           command: |
             go test -v  ./tests/mysql/ -source=MariaDB
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - build-mariadb
