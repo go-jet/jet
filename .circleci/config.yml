@@ -133,10 +133,10 @@ jobs:
 
             go install github.com/go-jet/jet/cmd/jet
 
-#      - run:
-#          name: Install MySQL CLI;
-#          command: |
-#            sudo apt-get install default-mysql-client
+      - run:
+          name: Install MySQL CLI;
+          command: |
+            sudo apt-get install default-mysql-client
 
       - run:
           name: Init MariaDB database
