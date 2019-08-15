@@ -103,7 +103,7 @@ jobs:
       # specify the version
       - image: circleci/golang:1.11
 
-      - image: circleci/mariadb:10.4
+      - image: circleci/mariadb:10.3
         command: [--default-authentication-plugin=mysql_native_password]
         environment:
           MYSQL_ROOT_PASSWORD: jet
