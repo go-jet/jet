@@ -8,13 +8,13 @@ jobs:
       # specify the version
       - image: circleci/golang:1.11
 
-      - image: circleci/postgres:10.10-alpine
+      - image: circleci/postgres:9.6-alpine
         environment: # environment variables for primary container
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
           POSTGRES_DB: jetdb
 
-      - image: circleci/mysql:8.0.1
+      - image: circleci/mysql:5.7
         command: [--default-authentication-plugin=mysql_native_password]
         environment:
           MYSQL_ROOT_PASSWORD: jet
@@ -103,7 +103,7 @@ jobs:
       # specify the version
       - image: circleci/golang:1.11
 
-      - image: circleci/mariadb:10.4
+      - image: circleci/mariadb:10.2
         command: [--default-authentication-plugin=mysql_native_password]
         environment:
           MYSQL_ROOT_PASSWORD: jet
