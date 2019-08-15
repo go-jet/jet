@@ -174,6 +174,10 @@ func TestSubQuery(t *testing.T) {
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
+	if sourceIsMariaDB() {
+		return
+	}
+
 	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
      (
@@ -183,19 +187,17 @@ SELECT payment.payment_id AS "payment.payment_id",
      ),
      (
           (
-               (
-                    SELECT payment.payment_id AS "payment.payment_id"
-                    FROM dvds.payment
-                    LIMIT ?
-                    OFFSET ?
-               )
-               UNION
-               (
-                    SELECT payment.payment_id AS "payment.payment_id"
-                    FROM dvds.payment
-                    LIMIT ?
-                    OFFSET ?
-               )
+               SELECT payment.payment_id AS "payment.payment_id"
+               FROM dvds.payment
+               LIMIT ?
+               OFFSET ?
+          )
+          UNION
+          (
+               SELECT payment.payment_id AS "payment.payment_id"
+               FROM dvds.payment
+               LIMIT ?
+               OFFSET ?
           )
           LIMIT ?
      )
@@ -223,19 +225,17 @@ LIMIT ?;
 func TestSelectUNION(t *testing.T) {
 	expectedSQL := `
 (
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
-     UNION
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
+)
+UNION
+(
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
 )
 LIMIT ?;
 `
@@ -260,19 +260,17 @@ LIMIT ?;
 func TestSelectUNION_ALL(t *testing.T) {
 	expectedSQL := `
 (
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
-     UNION ALL
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
+)
+UNION ALL
+(
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
 )
 ORDER BY "payment.payment_id"
 LIMIT ?
@@ -408,6 +406,11 @@ LIMIT ?;
 }
 
 func getRowLockTestData() map[SelectLock]string {
+	if sourceIsMariaDB() {
+		return map[SelectLock]string{
+			UPDATE(): "UPDATE",
+		}
+	}
 	return map[SelectLock]string{
 		UPDATE(): "UPDATE",
 		SHARE():  "SHARE",
@@ -455,6 +458,10 @@ FOR`
 		assert.NilError(t, err)
 	}
 
+	if sourceIsMariaDB() {
+		return
+	}
+
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
@@ -492,6 +499,26 @@ SELECT true,
      'raw',
      'date';
 `)
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestLockInShareMode(t *testing.T) {
+	expectedSQL := `
+SELECT *
+FROM dvds.address
+LIMIT 3
+OFFSET 1
+LOCK IN SHARE MODE;
+`
+	query := Address.
+		SELECT(STAR).
+		LIMIT(3).
+		OFFSET(1).
+		LOCK_IN_SHARE_MODE()
+
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &struct{}{})
 	assert.NilError(t, err)

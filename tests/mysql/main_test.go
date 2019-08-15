@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"flag"
 	"github.com/go-jet/jet/tests/dbconfig"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -12,6 +13,19 @@ import (
 )
 
 var db *sql.DB
+
+var source string
+
+const MariaDB = "MariaDB"
+
+func init() {
+	flag.StringVar(&source, "source", "", "MySQL or MariaDB")
+	flag.Parse()
+}
+
+func sourceIsMariaDB() bool {
+	return source == MariaDB
+}
 
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()

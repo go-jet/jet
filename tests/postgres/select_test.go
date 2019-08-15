@@ -128,19 +128,17 @@ SELECT payment.payment_id AS "payment.payment_id",
      ),
      (
           (
-               (
-                    SELECT payment.payment_id AS "payment.payment_id"
-                    FROM dvds.payment
-                    LIMIT 1
-                    OFFSET 10
-               )
-               UNION
-               (
-                    SELECT payment.payment_id AS "payment.payment_id"
-                    FROM dvds.payment
-                    LIMIT 1
-                    OFFSET 2
-               )
+               SELECT payment.payment_id AS "payment.payment_id"
+               FROM dvds.payment
+               LIMIT 1
+               OFFSET 10
+          )
+          UNION
+          (
+               SELECT payment.payment_id AS "payment.payment_id"
+               FROM dvds.payment
+               LIMIT 1
+               OFFSET 2
           )
           LIMIT 1
      )
@@ -1217,19 +1215,17 @@ ORDER BY payment.payment_date ASC;
 func TestUnion(t *testing.T) {
 	expectedQuery := `
 (
-     (
-          SELECT payment.payment_id AS "payment.payment_id",
-               payment.amount AS "payment.amount"
-          FROM dvds.payment
-          WHERE payment.amount <= 100
-     )
-     UNION ALL
-     (
-          SELECT payment.payment_id AS "payment.payment_id",
-               payment.amount AS "payment.amount"
-          FROM dvds.payment
-          WHERE payment.amount >= 200
-     )
+     SELECT payment.payment_id AS "payment.payment_id",
+          payment.amount AS "payment.amount"
+     FROM dvds.payment
+     WHERE payment.amount <= 100
+)
+UNION ALL
+(
+     SELECT payment.payment_id AS "payment.payment_id",
+          payment.amount AS "payment.amount"
+     FROM dvds.payment
+     WHERE payment.amount >= 200
 )
 ORDER BY "payment.payment_id" ASC, "payment.amount" DESC
 LIMIT 10

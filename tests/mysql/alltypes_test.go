@@ -26,6 +26,12 @@ func TestAllTypes(t *testing.T) {
 
 	assert.NilError(t, err)
 
+	assert.Equal(t, len(dest), 2)
+
+	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
+		dest[1].TimestampPtr = nil
+	}
+
 	//testutils.PrintJson(dest)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
@@ -788,7 +794,20 @@ LIMIT ?;
 
 	//testutils.PrintJson(dest)
 
-	testutils.AssertJSON(t, dest, `
+	if sourceIsMariaDB() {
+		testutils.AssertJSON(t, dest, `
+{
+	"Date": "2009-11-17T00:00:00Z",
+	"DateT": "2009-11-17T00:00:00Z",
+	"Time": "0000-01-01T20:34:58Z",
+	"TimeT": "0000-01-01T19:34:58Z",
+	"DateTime": "2009-11-17T19:34:58Z",
+	"Timestamp": "2019-08-06T10:10:30Z",
+	"TimestampT": "2009-11-17T19:34:58Z"
+}
+`)
+	} else {
+		testutils.AssertJSON(t, dest, `
 {
 	"Date": "2009-11-17T00:00:00Z",
 	"DateT": "2009-11-17T00:00:00Z",
@@ -799,6 +818,8 @@ LIMIT ?;
 	"TimestampT": "2009-11-17T19:34:58.351387Z"
 }
 `)
+	}
+
 }
 
 var allTypesJson = `

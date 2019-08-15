@@ -23,6 +23,7 @@ type SelectStatement interface {
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
 	FOR(lock SelectLock) SelectStatement
+	LOCK_IN_SHARE_MODE() SelectStatement
 
 	UNION(rhs SelectStatement) SetStatement
 	UNION_ALL(rhs SelectStatement) SetStatement
@@ -39,7 +40,7 @@ func newSelectStatement(table ReadableTable, projections []jet.Projection) Selec
 	newSelect := &selectStatementImpl{}
 	newSelect.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
 		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.OrderBy,
-		&newSelect.Limit, &newSelect.Offset, &newSelect.For)
+		&newSelect.Limit, &newSelect.Offset, &newSelect.For, &newSelect.ShareLock)
 
 	newSelect.ExpressionStatementImpl.ExpressionInterfaceImpl.Parent = newSelect
 
@@ -47,6 +48,8 @@ func newSelectStatement(table ReadableTable, projections []jet.Projection) Selec
 	newSelect.From.Table = table
 	newSelect.Limit.Count = -1
 	newSelect.Offset.Count = -1
+	newSelect.ShareLock.Name = "LOCK IN SHARE MODE"
+	newSelect.ShareLock.InNewLine = true
 
 	newSelect.setOperatorsImpl.parent = newSelect
 
@@ -57,15 +60,16 @@ type selectStatementImpl struct {
 	jet.ExpressionStatementImpl
 	setOperatorsImpl
 
-	Select  jet.ClauseSelect
-	From    jet.ClauseFrom
-	Where   jet.ClauseWhere
-	GroupBy jet.ClauseGroupBy
-	Having  jet.ClauseHaving
-	OrderBy jet.ClauseOrderBy
-	Limit   jet.ClauseLimit
-	Offset  jet.ClauseOffset
-	For     jet.ClauseFor
+	Select    jet.ClauseSelect
+	From      jet.ClauseFrom
+	Where     jet.ClauseWhere
+	GroupBy   jet.ClauseGroupBy
+	Having    jet.ClauseHaving
+	OrderBy   jet.ClauseOrderBy
+	Limit     jet.ClauseLimit
+	Offset    jet.ClauseOffset
+	For       jet.ClauseFor
+	ShareLock jet.ClauseOptional
 }
 
 func (s *selectStatementImpl) DISTINCT() SelectStatement {
@@ -110,6 +114,11 @@ func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
 
 func (s *selectStatementImpl) FOR(lock SelectLock) SelectStatement {
 	s.For.Lock = lock
+	return s
+}
+
+func (s *selectStatementImpl) LOCK_IN_SHARE_MODE() SelectStatement {
+	s.ShareLock.Show = true
 	return s
 }
 

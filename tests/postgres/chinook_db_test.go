@@ -215,21 +215,19 @@ func TestUnionForQuotedNames(t *testing.T) {
 	//fmt.Println(stmt.DebugSql())
 	testutils.AssertDebugStatementSql(t, stmt, `
 (
-     (
-          SELECT "Album"."AlbumId" AS "Album.AlbumId",
-               "Album"."Title" AS "Album.Title",
-               "Album"."ArtistId" AS "Album.ArtistId"
-          FROM chinook."Album"
-          WHERE "Album"."AlbumId" = 1
-     )
-     UNION ALL
-     (
-          SELECT "Album"."AlbumId" AS "Album.AlbumId",
-               "Album"."Title" AS "Album.Title",
-               "Album"."ArtistId" AS "Album.ArtistId"
-          FROM chinook."Album"
-          WHERE "Album"."AlbumId" = 2
-     )
+     SELECT "Album"."AlbumId" AS "Album.AlbumId",
+          "Album"."Title" AS "Album.Title",
+          "Album"."ArtistId" AS "Album.ArtistId"
+     FROM chinook."Album"
+     WHERE "Album"."AlbumId" = 1
+)
+UNION ALL
+(
+     SELECT "Album"."AlbumId" AS "Album.AlbumId",
+          "Album"."Title" AS "Album.Title",
+          "Album"."ArtistId" AS "Album.ArtistId"
+     FROM chinook."Album"
+     WHERE "Album"."AlbumId" = 2
 )
 ORDER BY "Album.AlbumId";
 `, int64(1), int64(2))
