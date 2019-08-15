@@ -95,10 +95,10 @@ ORDER BY ordinal_position;
 
 func (m *MySqlQuerySet) ListOfEnumsQuery() string {
 	return `
-SELECT (CASE DATA_TYPE WHEN 'enum' then CONCAT(TABLE_NAME, '_', COLUMN_NAME) ELSE '' END ), SUBSTRING(COLUMN_TYPE,5)
-FROM information_schema.columns 
-WHERE table_schema = ?
-AND DATA_TYPE = 'enum';
+SELECT (CASE c.DATA_TYPE WHEN 'enum' then CONCAT(c.TABLE_NAME, '_', c.COLUMN_NAME) ELSE '' END ), SUBSTRING(c.COLUMN_TYPE,5)
+FROM information_schema.columns as c
+	INNER JOIN information_schema.tables  as t on (t.table_schema = c.table_schema AND t.table_name = c.table_name)
+WHERE c.table_schema = ? AND DATA_TYPE = 'enum' AND t.TABLE_TYPE = 'BASE TABLE';
 `
 }
 
