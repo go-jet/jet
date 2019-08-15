@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 var testSuite string
@@ -24,12 +25,14 @@ func init() {
 
 func main() {
 
+	testSuite = strings.ToLower(testSuite)
+
 	if testSuite == "postgres" {
 		initPostgresDB()
 		return
 	}
 
-	if testSuite == "mysql" {
+	if testSuite == "mysql" || testSuite == "mariadb" {
 		initMySQLDB()
 		return
 	}
