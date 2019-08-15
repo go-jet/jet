@@ -445,8 +445,11 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.LIKE(String("abc")),
 		AllTypes.Text.NOT_LIKE(String("_b_")),
 		AllTypes.Text.REGEXP_LIKE(String("aba")),
-		AllTypes.Text.REGEXP_LIKE(String("aba"), "c"),
-		String("ABA").REGEXP_LIKE(String("aba"), "i"),
+		AllTypes.Text.REGEXP_LIKE(String("aba"), false),
+		String("ABA").REGEXP_LIKE(String("aba"), true),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("aba")),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("aba"), false),
+		String("ABA").NOT_REGEXP_LIKE(String("aba"), true),
 
 		BIT_LENGTH(AllTypes.Text),
 		CHAR_LENGTH(AllTypes.Char),

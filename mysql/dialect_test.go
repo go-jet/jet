@@ -46,3 +46,17 @@ func TestExists(t *testing.T) {
      WHERE table1.col1 = table2.col3
 ))`, int64(1))
 }
+
+func TestString_REGEXP_LIKE_operator(t *testing.T) {
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(table2ColStr), "(table3.col2 REGEXP table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN")), "(table3.col2 REGEXP ?)", "JOHN")
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), false), "(table3.col2 REGEXP ?)", "JOHN")
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), true), "(table3.col2 REGEXP BINARY ?)", "JOHN")
+}
+
+func TestString_NOT_REGEXP_LIKE_operator(t *testing.T) {
+	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(table2ColStr), "(table3.col2 NOT REGEXP table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN")), "(table3.col2 NOT REGEXP ?)", "JOHN")
+	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), false), "(table3.col2 NOT REGEXP ?)", "JOHN")
+	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), true), "(table3.col2 NOT REGEXP BINARY ?)", "JOHN")
+}

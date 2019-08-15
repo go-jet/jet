@@ -38,7 +38,6 @@ var SUMi = jet.SUMi
 
 //--------------------- String functions ------------------//
 
-var REGEXP_LIKE = jet.REGEXP_LIKE
 var BIT_LENGTH = jet.BIT_LENGTH
 var CHAR_LENGTH = jet.CHAR_LENGTH
 var OCTET_LENGTH = jet.OCTET_LENGTH

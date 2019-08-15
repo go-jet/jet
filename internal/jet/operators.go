@@ -1,7 +1,9 @@
 package jet
 
 const (
-	StringConcatOperator = "||"
+	StringConcatOperator        = "||"
+	StringRegexpLikeOperator    = "REGEXP"
+	StringNotRegexpLikeOperator = "NOT REGEXP"
 )
 
 //----------- Logical operators ---------------//

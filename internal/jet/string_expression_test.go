@@ -67,8 +67,13 @@ func TestStringNOT_LIKE(t *testing.T) {
 }
 
 func TestStringREGEXP_LIKE(t *testing.T) {
-	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(table2ColStr), "REGEXP_LIKE(table3.col2, table2.col_str)")
-	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), "c"), "REGEXP_LIKE(table3.col2, $1, 'c')", "JOHN")
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(table2ColStr), "(table3.col2 REGEXP table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), true), "(table3.col2 REGEXP $1)", "JOHN")
+}
+
+func TestStringNOT_REGEXP_LIKE(t *testing.T) {
+	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(table2ColStr), "(table3.col2 NOT REGEXP table2.col_str)")
+	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), true), "(table3.col2 NOT REGEXP $1)", "JOHN")
 }
 
 func TestStringExp(t *testing.T) {

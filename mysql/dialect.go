@@ -9,6 +9,8 @@ var Dialect = NewDialect()
 func NewDialect() jet.Dialect {
 
 	serializeOverrides := map[string]jet.SerializeOverride{}
+	serializeOverrides[jet.StringRegexpLikeOperator] = mysql_REGEXP_LIKE_operator
+	serializeOverrides[jet.StringNotRegexpLikeOperator] = mysql_NOT_REGEXP_LIKE_operator
 	serializeOverrides["IS DISTINCT FROM"] = mysql_IS_DISTINCT_FROM
 	serializeOverrides["IS NOT DISTINCT FROM"] = mysql_IS_NOT_DISTINCT_FROM
 	serializeOverrides["/"] = mysql_DIVISION
@@ -31,7 +33,7 @@ func NewDialect() jet.Dialect {
 
 func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
-		if len(expressions) != 2 {
+		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator XOR")
 		}
 
@@ -48,7 +50,7 @@ func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
 
 func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
-		if len(expressions) != 2 {
+		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator CONCAT")
 		}
 		out.WriteString("CONCAT(")
@@ -65,7 +67,7 @@ func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
 
 func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
-		if len(expressions) != 2 {
+		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator DIV")
 		}
 
@@ -89,7 +91,7 @@ func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
 
 func mysql_IS_NOT_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
-		if len(expressions) != 2 {
+		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}
 
@@ -104,5 +106,57 @@ func mysql_IS_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
 		out.WriteString("NOT(")
 		mysql_IS_NOT_DISTINCT_FROM(expressions...)(statement, out, options...)
 		out.WriteString(")")
+	}
+}
+
+func mysql_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+		if len(expressions) < 2 {
+			panic("jet: invalid number of expressions for operator")
+		}
+
+		jet.Serialize(expressions[0], statement, out, options...)
+
+		caseSensitive := false
+
+		if len(expressions) >= 3 {
+			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
+				caseSensitive = stringLiteral.Value().(bool)
+			}
+		}
+
+		out.WriteString("REGEXP")
+
+		if caseSensitive {
+			out.WriteString("BINARY")
+		}
+
+		jet.Serialize(expressions[1], statement, out, options...)
+	}
+}
+
+func mysql_NOT_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
+	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+		if len(expressions) < 2 {
+			panic("jet: invalid number of expressions for operator")
+		}
+
+		jet.Serialize(expressions[0], statement, out, options...)
+
+		caseSensitive := false
+
+		if len(expressions) >= 3 {
+			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
+				caseSensitive = stringLiteral.Value().(bool)
+			}
+		}
+
+		out.WriteString("NOT REGEXP")
+
+		if caseSensitive {
+			out.WriteString("BINARY")
+		}
+
+		jet.Serialize(expressions[1], statement, out, options...)
 	}
 }

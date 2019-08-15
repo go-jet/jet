@@ -179,9 +179,10 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.CONCAT(Int(11)),
 		AllTypes.Text.LIKE(String("abc")),
 		AllTypes.Text.NOT_LIKE(String("_b_")),
-		AllTypes.Text.REGEXP_LIKE(String("aba")),
-		AllTypes.Text.REGEXP_LIKE(String("aba"), "c"),
-		AllTypes.Text.REGEXP_LIKE(String("aba"), "i"),
+		AllTypes.Text.REGEXP_LIKE(String("^t")),
+		AllTypes.Text.REGEXP_LIKE(String("^t"), true),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("^t")),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("^t"), true),
 
 		BIT_LENGTH(String("length")),
 		CHAR_LENGTH(AllTypes.Char),
@@ -232,7 +233,7 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	//fmt.Println(query.Sql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
