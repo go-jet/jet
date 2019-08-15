@@ -110,7 +110,7 @@ func (c *binaryOpExpression) serialize(statement StatementType, out *SqlBuilder,
 		out.WriteString("(")
 	}
 
-	if serializeOverride := out.Dialect.SerializeOverride(c.operator); serializeOverride != nil {
+	if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
 		serializeOverrideFunc(statement, out, options...)
 	} else {

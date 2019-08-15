@@ -433,7 +433,8 @@ LIMIT ?;
 }
 
 func TestStringOperators(t *testing.T) {
-	query := AllTypes.SELECT(
+
+	var projectionList = []Projection{
 		AllTypes.Text.EQ(AllTypes.Char),
 		AllTypes.Text.EQ(String("Text")),
 		AllTypes.Text.NOT_EQ(AllTypes.VarCharPtr),
@@ -478,17 +479,24 @@ func TestStringOperators(t *testing.T) {
 		REVERSE(AllTypes.VarCharPtr),
 		SUBSTR(AllTypes.CharPtr, Int(3)),
 		SUBSTR(AllTypes.CharPtr, Int(3), Int(2)),
-		REGEXP_LIKE(String("ABA"), String("aba")),
-		REGEXP_LIKE(String("ABA"), String("aba"), "i"),
-		REGEXP_LIKE(AllTypes.Text, String("aba"), "i"),
-	)
+	}
 
+	if !sourceIsMariaDB() {
+		projectionList = append(projectionList, []Projection{
+			REGEXP_LIKE(String("ABA"), String("aba")),
+			REGEXP_LIKE(String("ABA"), String("aba"), "i"),
+			REGEXP_LIKE(AllTypes.Text, String("aba"), "i"),
+		}...)
+	}
 	//_, args, _ := query.Sql()
 
 	//fmt.Println(query.Sql())
 	//fmt.Println(args[15])
 
-	// fmt.Println(query.Sql())
+	query := SELECT(projectionList[0], projectionList[1:]...).
+		FROM(AllTypes)
+
+	fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -765,7 +773,7 @@ func TestTimeLiterals(t *testing.T) {
 		TimestampT(timeT).AS("timestampT"),
 	).FROM(AllTypes).LIMIT(1)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS DATE) AS "date",

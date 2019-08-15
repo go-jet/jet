@@ -505,7 +505,7 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 }
 
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.SerializeOverride(f.name); serializeOverride != nil {
+	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(f.expressions...)
 		serializeOverrideFunc(statement, out, options...)
 		return

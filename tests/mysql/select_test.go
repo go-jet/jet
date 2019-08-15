@@ -69,6 +69,10 @@ ORDER BY actor.actor_id;
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
+	if sourceIsMariaDB() {
+		return
+	}
+
 	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",

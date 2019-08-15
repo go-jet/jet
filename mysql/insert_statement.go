@@ -4,7 +4,7 @@ import "github.com/go-jet/jet/internal/jet"
 
 // InsertStatement is interface for SQL INSERT statements
 type InsertStatement interface {
-	jet.Statement
+	Statement
 
 	// Insert row of values
 	VALUES(value interface{}, values ...interface{}) InsertStatement

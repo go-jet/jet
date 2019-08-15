@@ -8,21 +8,21 @@ var Dialect = NewDialect()
 
 func NewDialect() jet.Dialect {
 
-	serializeOverrides := map[string]jet.SerializeOverride{}
-	serializeOverrides[jet.StringRegexpLikeOperator] = mysql_REGEXP_LIKE_operator
-	serializeOverrides[jet.StringNotRegexpLikeOperator] = mysql_NOT_REGEXP_LIKE_operator
-	serializeOverrides["IS DISTINCT FROM"] = mysql_IS_DISTINCT_FROM
-	serializeOverrides["IS NOT DISTINCT FROM"] = mysql_IS_NOT_DISTINCT_FROM
-	serializeOverrides["/"] = mysql_DIVISION
-	serializeOverrides["#"] = mysql_BIT_XOR
-	serializeOverrides[jet.StringConcatOperator] = mysql_CONCAT_operator
+	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
+	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = mysql_REGEXP_LIKE_operator
+	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = mysql_NOT_REGEXP_LIKE_operator
+	operatorSerializeOverrides["IS DISTINCT FROM"] = mysql_IS_DISTINCT_FROM
+	operatorSerializeOverrides["IS NOT DISTINCT FROM"] = mysql_IS_NOT_DISTINCT_FROM
+	operatorSerializeOverrides["/"] = mysql_DIVISION
+	operatorSerializeOverrides["#"] = mysql_BIT_XOR
+	operatorSerializeOverrides[jet.StringConcatOperator] = mysql_CONCAT_operator
 
 	mySQLDialectParams := jet.DialectParams{
-		Name:                "MySQL",
-		PackageName:         "mysql",
-		SerializeOverrides:  serializeOverrides,
-		AliasQuoteChar:      '"',
-		IdentifierQuoteChar: '`',
+		Name:                       "MySQL",
+		PackageName:                "mysql",
+		OperatorSerializeOverrides: operatorSerializeOverrides,
+		AliasQuoteChar:             '"',
+		IdentifierQuoteChar:        '`',
 		ArgumentPlaceholder: func(int) string {
 			return "?"
 		},

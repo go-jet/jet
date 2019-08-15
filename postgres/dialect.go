@@ -9,17 +9,17 @@ var Dialect = NewDialect()
 
 func NewDialect() jet.Dialect {
 
-	serializeOverrides := map[string]jet.SerializeOverride{}
-	serializeOverrides[jet.StringRegexpLikeOperator] = postgres_REGEXP_LIKE_operator
-	serializeOverrides[jet.StringNotRegexpLikeOperator] = postgres_NOT_REGEXP_LIKE_operator
-	serializeOverrides["CAST"] = postgresCAST
+	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
+	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgres_REGEXP_LIKE_operator
+	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = postgres_NOT_REGEXP_LIKE_operator
+	operatorSerializeOverrides["CAST"] = postgresCAST
 
 	dialectParams := jet.DialectParams{
-		Name:                "PostgreSQL",
-		PackageName:         "postgres",
-		SerializeOverrides:  serializeOverrides,
-		AliasQuoteChar:      '"',
-		IdentifierQuoteChar: '"',
+		Name:                       "PostgreSQL",
+		PackageName:                "postgres",
+		OperatorSerializeOverrides: operatorSerializeOverrides,
+		AliasQuoteChar:             '"',
+		IdentifierQuoteChar:        '"',
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},

@@ -14,7 +14,7 @@ type Table interface {
 
 type readableTable interface {
 	// Generates a select query on the current tableName.
-	SELECT(projection jet.Projection, projections ...jet.Projection) SelectStatement
+	SELECT(projection Projection, projections ...Projection) SelectStatement
 
 	// Creates a inner join tableName Expression using onCondition.
 	INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable
@@ -47,8 +47,8 @@ type readableTableInterfaceImpl struct {
 }
 
 // Generates a select query on the current tableName.
-func (r *readableTableInterfaceImpl) SELECT(projection1 jet.Projection, projections ...jet.Projection) SelectStatement {
-	return newSelectStatement(r.parent, append([]jet.Projection{projection1}, projections...))
+func (r *readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
+	return newSelectStatement(r.parent, append([]Projection{projection1}, projections...))
 }
 
 // Creates a inner join tableName Expression using onCondition.
