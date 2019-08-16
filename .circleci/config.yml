@@ -127,7 +127,7 @@ jobs:
     steps:
       - checkout
 
-      -run:
+      - run:
         name: Submodule init
         command: |
           git submodule init
