@@ -65,10 +65,14 @@ ORDER BY actor.actor_id;
 
 	//testutils.PrintJson(dest)
 	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
-	testutils.AssertJSONFile(t, dest, "mysql/testdata/all_actors.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/all_actors.json")
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
+	if sourceIsMariaDB() {
+		return
+	}
+
 	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
@@ -134,7 +138,7 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 	assert.Equal(t, len(dest), 174)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/customer_payment_sum.json")
-	testutils.AssertJSONFile(t, dest, "mysql/testdata/customer_payment_sum.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/customer_payment_sum.json")
 }
 
 func TestSubQuery(t *testing.T) {
@@ -170,10 +174,14 @@ func TestSubQuery(t *testing.T) {
 	assert.NilError(t, err)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/r_rating_films.json")
-	testutils.AssertJSONFile(t, dest, "mysql/testdata/r_rating_films.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/r_rating_films.json")
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
+	if sourceIsMariaDB() {
+		return
+	}
+
 	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
      (
@@ -183,19 +191,17 @@ SELECT payment.payment_id AS "payment.payment_id",
      ),
      (
           (
-               (
-                    SELECT payment.payment_id AS "payment.payment_id"
-                    FROM dvds.payment
-                    LIMIT ?
-                    OFFSET ?
-               )
-               UNION
-               (
-                    SELECT payment.payment_id AS "payment.payment_id"
-                    FROM dvds.payment
-                    LIMIT ?
-                    OFFSET ?
-               )
+               SELECT payment.payment_id AS "payment.payment_id"
+               FROM dvds.payment
+               LIMIT ?
+               OFFSET ?
+          )
+          UNION
+          (
+               SELECT payment.payment_id AS "payment.payment_id"
+               FROM dvds.payment
+               LIMIT ?
+               OFFSET ?
           )
           LIMIT ?
      )
@@ -223,19 +229,17 @@ LIMIT ?;
 func TestSelectUNION(t *testing.T) {
 	expectedSQL := `
 (
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
-     UNION
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
+)
+UNION
+(
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
 )
 LIMIT ?;
 `
@@ -260,19 +264,17 @@ LIMIT ?;
 func TestSelectUNION_ALL(t *testing.T) {
 	expectedSQL := `
 (
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
-     UNION ALL
-     (
-          SELECT payment.payment_id AS "payment.payment_id"
-          FROM dvds.payment
-          LIMIT ?
-          OFFSET ?
-     )
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
+)
+UNION ALL
+(
+     SELECT payment.payment_id AS "payment.payment_id"
+     FROM dvds.payment
+     LIMIT ?
+     OFFSET ?
 )
 ORDER BY "payment.payment_id"
 LIMIT ?
@@ -403,11 +405,16 @@ LIMIT ?;
 
 		//testutils.SaveJsonFile(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
 
-		testutils.AssertJSONFile(t, dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
+		testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/lang_film_actor_inventory_rental.json")
 	}
 }
 
 func getRowLockTestData() map[SelectLock]string {
+	if sourceIsMariaDB() {
+		return map[SelectLock]string{
+			UPDATE(): "UPDATE",
+		}
+	}
 	return map[SelectLock]string{
 		UPDATE(): "UPDATE",
 		SHARE():  "SHARE",
@@ -455,6 +462,10 @@ FOR`
 		assert.NilError(t, err)
 	}
 
+	if sourceIsMariaDB() {
+		return
+	}
+
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
@@ -492,6 +503,26 @@ SELECT true,
      'raw',
      'date';
 `)
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestLockInShareMode(t *testing.T) {
+	expectedSQL := `
+SELECT *
+FROM dvds.address
+LIMIT 3
+OFFSET 1
+LOCK IN SHARE MODE;
+`
+	query := Address.
+		SELECT(STAR).
+		LIMIT(3).
+		OFFSET(1).
+		LOCK_IN_SHARE_MODE()
+
+	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &struct{}{})
 	assert.NilError(t, err)

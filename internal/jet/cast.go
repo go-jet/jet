@@ -39,7 +39,7 @@ func (b *castExpression) serialize(statement StatementType, out *SqlBuilder, opt
 	expression := b.expression
 	castType := b.cast
 
-	if castOverride := out.Dialect.SerializeOverride("CAST"); castOverride != nil {
+	if castOverride := out.Dialect.OperatorSerializeOverride("CAST"); castOverride != nil {
 		castOverride(expression, String(castType))(statement, out, options...)
 		return
 	}

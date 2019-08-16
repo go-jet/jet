@@ -1,7 +1,9 @@
 package jet
 
 const (
-	StringConcatOperator = "||"
+	StringConcatOperator        = "||"
+	StringRegexpLikeOperator    = "REGEXP"
+	StringNotRegexpLikeOperator = "NOT REGEXP"
 )
 
 //----------- Logical operators ---------------//
@@ -13,6 +15,9 @@ func NOT(exp BoolExpression) BoolExpression {
 
 // BIT_NOT inverts every bit in integer expression result
 func BIT_NOT(expr IntegerExpression) IntegerExpression {
+	if literalExp, ok := expr.(LiteralExpression); ok {
+		literalExp.SetConstant(true)
+	}
 	return newPrefixIntegerOperator(expr, "~")
 }
 

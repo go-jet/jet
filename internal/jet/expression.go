@@ -77,15 +77,20 @@ func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, o
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
 type binaryOpExpression struct {
-	lhs, rhs Expression
-	operator string
+	lhs, rhs        Expression
+	additionalParam Expression
+	operator        string
 }
 
-func newBinaryExpression(lhs, rhs Expression, operator string) binaryOpExpression {
+func newBinaryExpression(lhs, rhs Expression, operator string, additionalParam ...Expression) binaryOpExpression {
 	binaryExpression := binaryOpExpression{
 		lhs:      lhs,
 		rhs:      rhs,
 		operator: operator,
+	}
+
+	if len(additionalParam) > 0 {
+		binaryExpression.additionalParam = additionalParam[0]
 	}
 
 	return binaryExpression
@@ -105,8 +110,8 @@ func (c *binaryOpExpression) serialize(statement StatementType, out *SqlBuilder,
 		out.WriteString("(")
 	}
 
-	if serializeOverride := out.Dialect.SerializeOverride(c.operator); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs)
+	if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
+		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
 		serializeOverrideFunc(statement, out, options...)
 	} else {
 		c.lhs.serialize(statement, out)

@@ -73,7 +73,7 @@ func assertGeneratedFiles(t *testing.T) {
 	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, enumFiles, "film_list_rating.go", "film_rating.go", "nicer_but_slower_film_list_rating.go")
+	assertFileNameEqual(t, enumFiles, "film_rating.go")
 	assertFileContent(t, genTestDir3+"/dvds/enum/film_rating.go", "\npackage enum", mpaaRatingEnumFile)
 
 	// Model files
@@ -82,7 +82,7 @@ func assertGeneratedFiles(t *testing.T) {
 
 	assertFileNameEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
-		"payment.go", "rental.go", "staff.go", "store.go", "film_list_rating.go", "film_rating.go", "nicer_but_slower_film_list_rating.go")
+		"payment.go", "rental.go", "staff.go", "store.go", "film_rating.go")
 
 	assertFileContent(t, genTestDir3+"/dvds/model/actor.go", "\npackage model", actorModelFile)
 }

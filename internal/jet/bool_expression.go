@@ -92,10 +92,10 @@ type binaryBoolExpression struct {
 	binaryOpExpression
 }
 
-func newBinaryBoolOperator(lhs, rhs Expression, operator string) BoolExpression {
+func newBinaryBoolOperator(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
 	binaryBoolExpression := binaryBoolExpression{}
 
-	binaryBoolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
+	binaryBoolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator, additionalParams...)
 	binaryBoolExpression.ExpressionInterfaceImpl.Parent = &binaryBoolExpression
 	binaryBoolExpression.boolInterfaceImpl.parent = &binaryBoolExpression
 

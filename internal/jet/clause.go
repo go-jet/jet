@@ -184,14 +184,6 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 		panic("jet: UNION Statement must contain at least two SELECT statements")
 	}
 
-	wrap := s.OrderBy.List != nil || s.Limit.Count >= 0 || s.Offset.Count >= 0
-
-	if wrap {
-		out.NewLine()
-		out.WriteString("(")
-		out.IncreaseIdent()
-	}
-
 	for i, selectStmt := range s.Selects {
 		out.NewLine()
 		if i > 0 {
@@ -208,12 +200,6 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SqlB
 		}
 
 		selectStmt.serialize(statementType, out)
-	}
-
-	if wrap {
-		out.DecreaseIdent()
-		out.NewLine()
-		out.WriteString(")")
 	}
 
 	s.OrderBy.Serialize(statementType, out)
@@ -391,25 +377,18 @@ func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SqlBu
 	}
 }
 
-type ClauseString struct {
-	Name string
-	Data string
-}
-
-func (d *ClauseString) Serialize(statementType StatementType, out *SqlBuilder) {
-	out.NewLine()
-	out.WriteString(d.Name)
-	out.WriteString(d.Data)
-}
-
 type ClauseOptional struct {
-	Name string
-	Show bool
+	Name      string
+	Show      bool
+	InNewLine bool
 }
 
 func (d *ClauseOptional) Serialize(statementType StatementType, out *SqlBuilder) {
 	if !d.Show {
 		return
+	}
+	if d.InNewLine {
+		out.NewLine()
 	}
 	out.WriteString(d.Name)
 }

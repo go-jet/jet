@@ -31,6 +31,14 @@ jobs:
       - checkout
 
       - run:
+          name: Submodule init
+          command: |
+            git submodule init
+            git submodule update
+            cd ./tests/testdata && git fetch && git checkout master
+
+
+      - run:
           name: Install dependencies
           command: |
             go get github.com/google/uuid
@@ -71,10 +79,10 @@ jobs:
             sudo apt-get install default-mysql-client
 
       - run:
-          name: Init MySQL database
+          name: Create MySQL user and databases
           command: |
             mysql -h 127.0.0.1 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -u root -pjet -e "set global sql_mode = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
             mysql -h 127.0.0.1 -u jet -pjet -e "create database test_sample"
 
       - run:
@@ -98,4 +106,75 @@ jobs:
 
       - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: /tmp/test-results
+  build-mariadb:
+    docker:
+      # specify the version
+      - image: circleci/golang:1.11
 
+      - image: circleci/mariadb:10.3
+        command: [--default-authentication-plugin=mysql_native_password]
+        environment:
+          MYSQL_ROOT_PASSWORD: jet
+          MYSQL_DATABASE: dvds
+          MYSQL_USER: jet
+          MYSQL_PASSWORD: jet
+
+    working_directory: /go/src/github.com/go-jet/jet
+
+    environment: # environment variables for the build itself
+      TEST_RESULTS: /tmp/test-results # path to where test results will be saved
+
+    steps:
+      - checkout
+
+      - run:
+          name: Submodule init
+          command: |
+            git submodule init
+            git submodule update
+            cd ./tests/testdata && git fetch && git checkout master
+
+      - run:
+          name: Install dependencies
+          command: |
+            go get github.com/google/uuid
+            go get github.com/lib/pq
+            go get github.com/go-sql-driver/mysql
+
+            go get github.com/pkg/profile
+            go get gotest.tools/assert
+            go get github.com/davecgh/go-spew/spew
+            go get github.com/jstemmer/go-junit-report
+
+            go install github.com/go-jet/jet/cmd/jet
+
+      - run:
+          name: Install MySQL CLI;
+          command: |
+            sudo apt-get install default-mysql-client
+
+      - run:
+          name: Init MariaDB database
+          command: |
+            mysql -h 127.0.0.1 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
+            mysql -h 127.0.0.1 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -u jet -pjet -e "create database test_sample"
+
+      - run:
+          name: Init MariaDB database
+          command: |
+            cd tests
+            go run ./init/init.go -testsuite MariaDB
+            cd ..
+
+      - run:
+          name: Run MariaDB tests
+          command: |
+            go test -v  ./tests/mysql/ -source=MariaDB
+
+workflows:
+  version: 2
+  build_and_test:
+    jobs:
+      - build
+      - build-mariadb

@@ -349,7 +349,7 @@ func TO_HEX(number IntegerExpression) StringExpression {
 // REGEXP_LIKE Returns 1 if the string expr matches the regular expression specified by the pattern pat, 0 otherwise.
 func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType ...string) BoolExpression {
 	if len(matchType) > 0 {
-		return newBoolFunc("REGEXP_LIKE", stringExp, pattern, String(matchType[0], true))
+		return newBoolFunc("REGEXP_LIKE", stringExp, pattern, ConstLiteral(matchType[0]))
 	}
 
 	return newBoolFunc("REGEXP_LIKE", stringExp, pattern)
@@ -391,7 +391,7 @@ func CURRENT_TIME(precision ...int) TimezExpression {
 	var timezFunc *timezFunc
 
 	if len(precision) > 0 {
-		timezFunc = newTimezFunc("CURRENT_TIME", constLiteral(precision[0]))
+		timezFunc = newTimezFunc("CURRENT_TIME", ConstLiteral(precision[0]))
 	} else {
 		timezFunc = newTimezFunc("CURRENT_TIME")
 	}
@@ -406,7 +406,7 @@ func CURRENT_TIMESTAMP(precision ...int) TimestampzExpression {
 	var timestampzFunc *timestampzFunc
 
 	if len(precision) > 0 {
-		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", constLiteral(precision[0]))
+		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", ConstLiteral(precision[0]))
 	} else {
 		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP")
 	}
@@ -421,7 +421,7 @@ func LOCALTIME(precision ...int) TimeExpression {
 	var timeFunc *timeFunc
 
 	if len(precision) > 0 {
-		timeFunc = newTimeFunc("LOCALTIME", constLiteral(precision[0]))
+		timeFunc = newTimeFunc("LOCALTIME", ConstLiteral(precision[0]))
 	} else {
 		timeFunc = newTimeFunc("LOCALTIME")
 	}
@@ -436,7 +436,7 @@ func LOCALTIMESTAMP(precision ...int) TimestampExpression {
 	var timestampFunc *timestampFunc
 
 	if len(precision) > 0 {
-		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP", constLiteral(precision[0]))
+		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP", ConstLiteral(precision[0]))
 	} else {
 		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP")
 	}
@@ -505,7 +505,7 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 }
 
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.SerializeOverride(f.name); serializeOverride != nil {
+	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(f.expressions...)
 		serializeOverrideFunc(statement, out, options...)
 		return

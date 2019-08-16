@@ -3,7 +3,8 @@ package jet
 type Dialect interface {
 	Name() string
 	PackageName() string
-	SerializeOverride(operator string) SerializeOverride
+	OperatorSerializeOverride(operator string) SerializeOverride
+	FunctionSerializeOverride(function string) SerializeOverride
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
@@ -14,32 +15,35 @@ type SerializeOverride func(expressions ...Expression) SerializeFunc
 type QueryPlaceholderFunc func(ord int) string
 
 type DialectParams struct {
-	Name                string
-	PackageName         string
-	SerializeOverrides  map[string]SerializeOverride
-	AliasQuoteChar      byte
-	IdentifierQuoteChar byte
-	ArgumentPlaceholder QueryPlaceholderFunc
+	Name                       string
+	PackageName                string
+	OperatorSerializeOverrides map[string]SerializeOverride
+	FunctionSerializeOverrides map[string]SerializeOverride
+	AliasQuoteChar             byte
+	IdentifierQuoteChar        byte
+	ArgumentPlaceholder        QueryPlaceholderFunc
 }
 
 func NewDialect(params DialectParams) Dialect {
 	return &dialectImpl{
-		name:                params.Name,
-		packageName:         params.PackageName,
-		serializeOverrides:  params.SerializeOverrides,
-		aliasQuoteChar:      params.AliasQuoteChar,
-		identifierQuoteChar: params.IdentifierQuoteChar,
-		argumentPlaceholder: params.ArgumentPlaceholder,
+		name:                       params.Name,
+		packageName:                params.PackageName,
+		operatorSerializeOverrides: params.OperatorSerializeOverrides,
+		functionSerializeOverrides: params.FunctionSerializeOverrides,
+		aliasQuoteChar:             params.AliasQuoteChar,
+		identifierQuoteChar:        params.IdentifierQuoteChar,
+		argumentPlaceholder:        params.ArgumentPlaceholder,
 	}
 }
 
 type dialectImpl struct {
-	name                string
-	packageName         string
-	serializeOverrides  map[string]SerializeOverride
-	aliasQuoteChar      byte
-	identifierQuoteChar byte
-	argumentPlaceholder QueryPlaceholderFunc
+	name                       string
+	packageName                string
+	operatorSerializeOverrides map[string]SerializeOverride
+	functionSerializeOverrides map[string]SerializeOverride
+	aliasQuoteChar             byte
+	identifierQuoteChar        byte
+	argumentPlaceholder        QueryPlaceholderFunc
 
 	supportsReturning bool
 }
@@ -52,8 +56,18 @@ func (d *dialectImpl) PackageName() string {
 	return d.packageName
 }
 
-func (d *dialectImpl) SerializeOverride(operator string) SerializeOverride {
-	return d.serializeOverrides[operator]
+func (d *dialectImpl) OperatorSerializeOverride(operator string) SerializeOverride {
+	if d.operatorSerializeOverrides == nil {
+		return nil
+	}
+	return d.operatorSerializeOverrides[operator]
+}
+
+func (d *dialectImpl) FunctionSerializeOverride(function string) SerializeOverride {
+	if d.functionSerializeOverrides == nil {
+		return nil
+	}
+	return d.functionSerializeOverrides[function]
 }
 
 func (d *dialectImpl) AliasQuoteChar() byte {

@@ -19,7 +19,8 @@ type StringExpression interface {
 	LIKE(pattern StringExpression) BoolExpression
 	NOT_LIKE(pattern StringExpression) BoolExpression
 
-	REGEXP_LIKE(pattern StringExpression, matchType ...string) BoolExpression
+	REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression
+	NOT_REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression
 }
 
 type stringInterfaceImpl struct {
@@ -70,11 +71,16 @@ func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression 
 	return newBinaryBoolOperator(s.parent, pattern, "NOT LIKE")
 }
 
-func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, matchType ...string) BoolExpression {
-	return REGEXP_LIKE(s.parent, pattern, matchType...)
+func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
+	return newBinaryBoolOperator(s.parent, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+}
+
+func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
+	return newBinaryBoolOperator(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
 }
 
 //---------------------------------------------------//
+
 type binaryStringExpression struct {
 	ExpressionInterfaceImpl
 	stringInterfaceImpl

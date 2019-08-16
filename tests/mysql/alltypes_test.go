@@ -5,7 +5,7 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"github.com/go-jet/jet/tests/testdata/common"
+	"github.com/go-jet/jet/tests/testdata/results/common"
 	"github.com/google/uuid"
 	"time"
 
@@ -25,6 +25,12 @@ func TestAllTypes(t *testing.T) {
 		Query(db, &dest)
 
 	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 2)
+
+	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
+		return
+	}
 
 	//testutils.PrintJson(dest)
 	testutils.AssertJSON(t, dest, allTypesJson)
@@ -187,7 +193,7 @@ FROM test_sample.all_types;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/bool_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
 
 func TestFloatOperators(t *testing.T) {
@@ -284,7 +290,7 @@ LIMIT ?;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/float_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/float_operators.json")
 }
 
 func TestIntegerOperators(t *testing.T) {
@@ -423,11 +429,12 @@ LIMIT ?;
 
 	//testutils.PrintJson(dest)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/int_operators.json")
 }
 
 func TestStringOperators(t *testing.T) {
-	query := AllTypes.SELECT(
+
+	var projectionList = []Projection{
 		AllTypes.Text.EQ(AllTypes.Char),
 		AllTypes.Text.EQ(String("Text")),
 		AllTypes.Text.NOT_EQ(AllTypes.VarCharPtr),
@@ -445,8 +452,11 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.LIKE(String("abc")),
 		AllTypes.Text.NOT_LIKE(String("_b_")),
 		AllTypes.Text.REGEXP_LIKE(String("aba")),
-		AllTypes.Text.REGEXP_LIKE(String("aba"), "c"),
-		String("ABA").REGEXP_LIKE(String("aba"), "i"),
+		AllTypes.Text.REGEXP_LIKE(String("aba"), false),
+		String("ABA").REGEXP_LIKE(String("aba"), true),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("aba")),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("aba"), false),
+		String("ABA").NOT_REGEXP_LIKE(String("aba"), true),
 
 		BIT_LENGTH(AllTypes.Text),
 		CHAR_LENGTH(AllTypes.Char),
@@ -469,17 +479,24 @@ func TestStringOperators(t *testing.T) {
 		REVERSE(AllTypes.VarCharPtr),
 		SUBSTR(AllTypes.CharPtr, Int(3)),
 		SUBSTR(AllTypes.CharPtr, Int(3), Int(2)),
-		REGEXP_LIKE(String("ABA"), String("aba")),
-		REGEXP_LIKE(String("ABA"), String("aba"), "i"),
-		REGEXP_LIKE(AllTypes.Text, String("aba"), "i"),
-	)
+	}
 
+	if !sourceIsMariaDB() {
+		projectionList = append(projectionList, []Projection{
+			REGEXP_LIKE(String("ABA"), String("aba")),
+			REGEXP_LIKE(String("ABA"), String("aba"), "i"),
+			REGEXP_LIKE(AllTypes.Text, String("aba"), "i"),
+		}...)
+	}
 	//_, args, _ := query.Sql()
 
 	//fmt.Println(query.Sql())
 	//fmt.Println(args[15])
 
-	// fmt.Println(query.Sql())
+	query := SELECT(projectionList[0], projectionList[1:]...).
+		FROM(AllTypes)
+
+	fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -756,7 +773,7 @@ func TestTimeLiterals(t *testing.T) {
 		TimestampT(timeT).AS("timestampT"),
 	).FROM(AllTypes).LIMIT(1)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS DATE) AS "date",
@@ -785,7 +802,20 @@ LIMIT ?;
 
 	//testutils.PrintJson(dest)
 
-	testutils.AssertJSON(t, dest, `
+	if sourceIsMariaDB() {
+		testutils.AssertJSON(t, dest, `
+{
+	"Date": "2009-11-17T00:00:00Z",
+	"DateT": "2009-11-17T00:00:00Z",
+	"Time": "0000-01-01T20:34:58Z",
+	"TimeT": "0000-01-01T19:34:58Z",
+	"DateTime": "2009-11-17T19:34:58Z",
+	"Timestamp": "2019-08-06T10:10:30Z",
+	"TimestampT": "2009-11-17T19:34:58Z"
+}
+`)
+	} else {
+		testutils.AssertJSON(t, dest, `
 {
 	"Date": "2009-11-17T00:00:00Z",
 	"DateT": "2009-11-17T00:00:00Z",
@@ -796,6 +826,8 @@ LIMIT ?;
 	"TimestampT": "2009-11-17T19:34:58.351387Z"
 }
 `)
+	}
+
 }
 
 var allTypesJson = `

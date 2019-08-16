@@ -12,6 +12,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 var testSuite string
@@ -24,12 +25,14 @@ func init() {
 
 func main() {
 
+	testSuite = strings.ToLower(testSuite)
+
 	if testSuite == "postgres" {
 		initPostgresDB()
 		return
 	}
 
-	if testSuite == "mysql" {
+	if testSuite == "mysql" || testSuite == "mariadb" {
 		initMySQLDB()
 		return
 	}
@@ -47,7 +50,7 @@ func initMySQLDB() {
 
 	for _, dbName := range mySQLDBs {
 		cmdLine := fmt.Sprintf("mysql -h 127.0.0.1 -u %s -p%s %s < %s",
-			dbconfig.MySQLUser, dbconfig.MySQLPassword, dbName, "./init/data/mysql/"+dbName+".sql")
+			dbconfig.MySQLUser, dbconfig.MySQLPassword, dbName, "./testdata/init/mysql/"+dbName+".sql")
 
 		fmt.Println(cmdLine)
 
@@ -71,7 +74,6 @@ func initMySQLDB() {
 
 		panicOnError(err)
 	}
-
 }
 
 func initPostgresDB() {
@@ -93,7 +95,7 @@ func initPostgresDB() {
 
 	for _, schemaName := range schemaNames {
 
-		execFile(db, "./init/data/postgres/"+schemaName+".sql")
+		execFile(db, "./testdata/init/postgres/"+schemaName+".sql")
 
 		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
 			Host:       dbconfig.Host,

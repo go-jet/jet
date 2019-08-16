@@ -3,7 +3,7 @@ package mysql
 import "github.com/go-jet/jet/internal/jet"
 
 type DeleteStatement interface {
-	jet.Statement
+	Statement
 
 	WHERE(expression BoolExpression) DeleteStatement
 	ORDER_BY(orderByClauses ...jet.OrderByClause) DeleteStatement

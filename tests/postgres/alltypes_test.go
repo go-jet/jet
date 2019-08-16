@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/go-jet/jet/tests/testdata/common"
+	"github.com/go-jet/jet/tests/testdata/results/common"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 	"testing"
@@ -179,9 +179,10 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.CONCAT(Int(11)),
 		AllTypes.Text.LIKE(String("abc")),
 		AllTypes.Text.NOT_LIKE(String("_b_")),
-		AllTypes.Text.REGEXP_LIKE(String("aba")),
-		AllTypes.Text.REGEXP_LIKE(String("aba"), "c"),
-		AllTypes.Text.REGEXP_LIKE(String("aba"), "i"),
+		AllTypes.Text.REGEXP_LIKE(String("^t")),
+		AllTypes.Text.REGEXP_LIKE(String("^t"), true),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("^t")),
+		AllTypes.Text.NOT_REGEXP_LIKE(String("^t"), true),
 
 		BIT_LENGTH(String("length")),
 		CHAR_LENGTH(AllTypes.Char),
@@ -232,7 +233,7 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	//fmt.Println(query.Sql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
 
@@ -307,7 +308,7 @@ LIMIT $5;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/bool_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
 
 func TestFloatOperators(t *testing.T) {
@@ -405,7 +406,7 @@ LIMIT $35;
 
 	//testutils.PrintJson(dest)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/float_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/float_operators.json")
 }
 
 func TestIntegerOperators(t *testing.T) {
@@ -467,7 +468,7 @@ func TestIntegerOperators(t *testing.T) {
 		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
 
 		BIT_NOT(Int(-1).MUL(AllTypes.SmallInt)).AS("bit_not_1"),
-		BIT_NOT(Int(-11, true)).AS("bit_not_2"),
+		BIT_NOT(Int(-11)).AS("bit_not_2"),
 
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int(2))).AS("bit shift left 1"),
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
@@ -544,7 +545,7 @@ LIMIT $23;
 
 	//testutils.SaveJsonFile("./testdata/common/int_operators.json", dest)
 	//testutils.PrintJson(dest)
-	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/int_operators.json")
 }
 
 func TestTimeExpression(t *testing.T) {
