@@ -36,16 +36,6 @@ func SELECT(projection Projection, projections ...Projection) SelectStatement {
 	return newSelectStatement(nil, append([]Projection{projection}, projections...))
 }
 
-func toJetProjectionList(projections []Projection) []jet.Projection {
-	ret := []jet.Projection{}
-
-	for _, projection := range projections {
-		ret = append(ret, projection)
-	}
-
-	return ret
-}
-
 func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 	newSelect := &selectStatementImpl{}
 	newSelect.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,

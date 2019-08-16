@@ -30,7 +30,7 @@ type castImpl struct {
 	jet.Cast
 }
 
-func CAST(expr jet.Expression) cast {
+func CAST(expr Expression) cast {
 	castImpl := &castImpl{}
 
 	castImpl.Cast = jet.NewCastImpl(expr)

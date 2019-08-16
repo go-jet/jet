@@ -37,11 +37,11 @@ type SelectStatement interface {
 }
 
 //SELECT creates new SelectStatement with list of projections
-func SELECT(projection jet.Projection, projections ...jet.Projection) SelectStatement {
-	return newSelectStatement(nil, append([]jet.Projection{projection}, projections...))
+func SELECT(projection Projection, projections ...Projection) SelectStatement {
+	return newSelectStatement(nil, append([]Projection{projection}, projections...))
 }
 
-func newSelectStatement(table ReadableTable, projections []jet.Projection) SelectStatement {
+func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 	newSelect := &selectStatementImpl{}
 	newSelect.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
 		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.OrderBy,
@@ -49,7 +49,7 @@ func newSelectStatement(table ReadableTable, projections []jet.Projection) Selec
 
 	newSelect.ExpressionStatementImpl.ExpressionInterfaceImpl.Parent = newSelect
 
-	newSelect.Select.Projections = projections
+	newSelect.Select.Projections = toJetProjectionList(projections)
 	newSelect.From.Table = table
 	newSelect.Limit.Count = -1
 	newSelect.Offset.Count = -1

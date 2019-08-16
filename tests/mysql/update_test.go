@@ -139,6 +139,35 @@ WHERE link.id = 201;
 	testutils.AssertExec(t, stmt, db)
 }
 
+func TestUpdateWithModelDataAndMutableColumns(t *testing.T) {
+
+	setupLinkTableForUpdateTest(t)
+
+	link := model.Link{
+		ID:   201,
+		URL:  "http://www.duckduckgo.com",
+		Name: "DuckDuckGo",
+	}
+
+	stmt := Link.
+		UPDATE(Link.MutableColumns).
+		MODEL(link).
+		WHERE(Link.ID.EQ(Int(int64(link.ID))))
+
+	var expectedSQL = `
+UPDATE test_sample.link
+SET url = 'http://www.duckduckgo.com', 
+    name = 'DuckDuckGo', 
+    description = NULL
+WHERE link.id = 201;
+`
+	fmt.Println(stmt.DebugSql())
+
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+
+	testutils.AssertExec(t, stmt, db)
+}
+
 func TestUpdateWithInvalidModelData(t *testing.T) {
 	defer func() {
 		r := recover()

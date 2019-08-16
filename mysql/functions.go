@@ -180,7 +180,7 @@ func CURRENT_TIMESTAMP(precision ...int) TimestampExpression {
 // NOW returns current datetime
 func NOW(fsp ...int) DateTimeExpression {
 	if len(fsp) > 0 {
-		return jet.NewTimestampFunc("NOW", Int(int64(fsp[0]), true))
+		return jet.NewTimestampFunc("NOW", jet.ConstLiteral(int64(fsp[0])))
 	}
 	return jet.NewTimestampFunc("NOW")
 }

@@ -32,7 +32,7 @@ func literal(value interface{}, optionalConstant ...bool) *literalExpressionImpl
 	return &exp
 }
 
-func constLiteral(value interface{}) *literalExpressionImpl {
+func ConstLiteral(value interface{}) *literalExpressionImpl {
 	exp := literal(value)
 	exp.constant = true
 
@@ -61,13 +61,10 @@ type integerLiteralExpression struct {
 }
 
 // Int is constructor for integer expressions literals.
-func Int(value int64, constant ...bool) IntegerExpression {
+func Int(value int64) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
 	numLiteral.literalExpressionImpl = *literal(value)
-	if len(constant) > 0 && constant[0] == true {
-		numLiteral.constant = true
-	}
 
 	numLiteral.literalExpressionImpl.Parent = numLiteral
 	numLiteral.integerInterfaceImpl.parent = numLiteral
@@ -114,12 +111,9 @@ type stringLiteral struct {
 }
 
 // String creates new string literal expression
-func String(value string, constant ...bool) StringExpression {
+func String(value string) StringExpression {
 	stringLiteral := stringLiteral{}
 	stringLiteral.literalExpressionImpl = *literal(value)
-	if len(constant) > 0 && constant[0] == true {
-		stringLiteral.constant = true
-	}
 
 	stringLiteral.stringInterfaceImpl.parent = &stringLiteral
 

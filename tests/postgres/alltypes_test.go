@@ -468,7 +468,7 @@ func TestIntegerOperators(t *testing.T) {
 		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
 
 		BIT_NOT(Int(-1).MUL(AllTypes.SmallInt)).AS("bit_not_1"),
-		BIT_NOT(Int(-11, true)).AS("bit_not_2"),
+		BIT_NOT(Int(-11)).AS("bit_not_2"),
 
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int(2))).AS("bit shift left 1"),
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
