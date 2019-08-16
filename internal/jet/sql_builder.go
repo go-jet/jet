@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type SqlBuilder struct {
@@ -86,9 +87,7 @@ func (s *SqlBuilder) WriteString(str string) {
 }
 
 func (s *SqlBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
-	quoteWrap := name != strings.ToLower(name) || strings.ContainsAny(name, ". -")
-
-	if quoteWrap || len(alwaysQuote) > 0 {
+	if shouldQuoteIdentifier(name) || len(alwaysQuote) > 0 {
 		identQuoteChar := string(s.Dialect.IdentifierQuoteChar())
 		s.WriteString(identQuoteChar + name + identQuoteChar)
 	} else {
@@ -169,6 +168,18 @@ func argToString(value interface{}) string {
 	default:
 		return "[Unsupported type]"
 	}
+}
+
+func shouldQuoteIdentifier(identifier string) bool {
+	for _, c := range identifier {
+		if unicode.IsNumber(c) || c == '_' {
+			continue
+		}
+		if c > unicode.MaxASCII || !unicode.IsLetter(c) || unicode.IsUpper(c) {
+			return true
+		}
+	}
+	return false
 }
 
 func stringQuote(value string) string {
