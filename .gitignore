@@ -18,4 +18,4 @@
 # Test files
 gen
 .gentestdata
-.tests/init/data/
+.tests/testdata/

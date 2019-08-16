@@ -35,7 +35,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-            cd ./tests/init/data && git fetch && git checkout master
+            cd ./tests/testdata && git fetch && git checkout master
 
 
       - run:
@@ -132,7 +132,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-            cd ./tests/init/data && git fetch && git checkout master
+            cd ./tests/testdata && git fetch && git checkout master
 
       - run:
           name: Install dependencies
