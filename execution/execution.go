@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"errors"
 	"fmt"
 	"github.com/go-jet/jet/execution/internal"
 	"github.com/go-jet/jet/internal/utils"
+	"github.com/google/uuid"
 	"reflect"
 	"strconv"
 	"strings"
@@ -18,14 +18,11 @@ import (
 // Destination can be either pointer to struct or pointer to slice of structs.
 func Query(context context.Context, db DB, query string, args []interface{}, destinationPtr interface{}) error {
 
-	if utils.IsNil(destinationPtr) {
-		return errors.New("jet: Destination is nil")
-	}
+	utils.MustBeInitializedPtr(db, "jet: db is nil")
+	utils.MustBeInitializedPtr(destinationPtr, "jet: destination is nil")
+	utils.MustBe(destinationPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
 
 	destinationPtrType := reflect.TypeOf(destinationPtr)
-	if destinationPtrType.Kind() != reflect.Ptr {
-		return errors.New("jet: Destination has to be a pointer to slice or pointer to struct")
-	}
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
 		return queryToSlice(context, db, query, args, destinationPtr)
@@ -51,24 +48,11 @@ func Query(context context.Context, db DB, query string, args []interface{}, des
 		}
 		return nil
 	} else {
-		return errors.New("jet: unsupported destination type")
+		panic("jet: destination has to be a pointer to slice or pointer to struct")
 	}
 }
 
 func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) error {
-	if db == nil {
-		return errors.New("jet: db is nil")
-	}
-
-	if slicePtr == nil {
-		return errors.New("jet: Destination is nil. ")
-	}
-
-	destinationType := reflect.TypeOf(slicePtr)
-	if destinationType.Kind() != reflect.Ptr && destinationType.Elem().Kind() != reflect.Slice {
-		return errors.New("jet: Destination has to be a pointer to slice. ")
-	}
-
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -126,14 +110,12 @@ func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue refl
 
 	sliceElemType := getSliceElemType(slicePtrValue)
 
-	if isGoBaseType(sliceElemType) {
+	if isSimpleModelType(sliceElemType) {
 		updated, err = mapRowToBaseTypeSlice(scanContext, slicePtrValue, field)
 		return
 	}
 
-	if sliceElemType.Kind() != reflect.Struct {
-		return false, errors.New("jet: Unsupported dest type: " + field.Name + " " + field.Type.String())
-	}
+	utils.TypeMustBe(sliceElemType, reflect.Struct, "jet: unsupported slice element type"+fieldToString(field))
 
 	structGroupKey := scanContext.getGroupKey(sliceElemType, field)
 
@@ -226,7 +208,7 @@ func (s *scanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 
 		if implementsScannerType(field.Type) {
 			fieldMap.implementsScanner = true
-		} else if !isGoBaseType(field.Type) {
+		} else if !isSimpleModelType(field.Type) {
 			fieldMap.complexType = true
 		}
 
@@ -248,6 +230,10 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 	for i := 0; i < structValue.NumField(); i++ {
 		field := structType.Field(i)
 		fieldValue := structValue.Field(i)
+
+		if !fieldValue.CanSet() { // private field
+			continue
+		}
 
 		fieldMap := typeInf.fieldMappings[i]
 
@@ -284,8 +270,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				err = scanner.Scan(cellValue)
 
 				if err != nil {
-					err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
-					return
+					panic("jet: " + err.Error() + ", " + fieldToString(&field) + " of type " + structType.String())
 				}
 				updated = true
 			} else {
@@ -294,12 +279,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				if cellValue != nil {
 					updated = true
 					initializeValueIfNilPtr(fieldValue)
-					err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
-
-					if err != nil {
-						err = fmt.Errorf("%s, at struct field: %s %s of type %s. ", err.Error(), field.Name, field.Type.String(), structType.String())
-						return
-					}
+					setReflectValue(reflect.ValueOf(cellValue), fieldValue)
 				}
 			}
 		}
@@ -310,9 +290,7 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 
 func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
 
-	if destPtrValue.Kind() != reflect.Ptr {
-		return false, errors.New("jet: Internal error. ")
-	}
+	utils.ValueMustBe(destPtrValue, reflect.Ptr, "jet: internal error. Destination is not pointer.")
 
 	destValueKind := destPtrValue.Elem().Kind()
 
@@ -321,7 +299,7 @@ func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrVa
 	} else if destValueKind == reflect.Slice {
 		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
 	} else {
-		return false, errors.New("jet: Unsupported dest type: " + structField.Name + " " + structField.Type.String())
+		panic("jet: unsupported dest type: " + structField.Name + " " + structField.Type.String())
 	}
 }
 
@@ -331,14 +309,12 @@ func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest re
 
 	if dest.Kind() != reflect.Ptr {
 		destPtrValue = dest.Addr()
-	} else if dest.Kind() == reflect.Ptr {
+	} else {
 		if dest.IsNil() {
 			destPtrValue = reflect.New(dest.Type().Elem())
 		} else {
 			destPtrValue = dest
 		}
-	} else {
-		return false, errors.New("jet: Internal error. ")
 	}
 
 	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
@@ -399,7 +375,7 @@ func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
 
 func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) error {
 	if slicePtrValue.IsNil() {
-		panic("Slice is nil")
+		panic("jet: internal, slice is nil")
 	}
 	sliceValue := slicePtrValue.Elem()
 	sliceElemType := sliceValue.Type().Elem()
@@ -410,8 +386,12 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) e
 		newElemValue = objPtrValue.Elem()
 	}
 
+	if newElemValue.Type().ConvertibleTo(sliceElemType) {
+		newElemValue = newElemValue.Convert(sliceElemType)
+	}
+
 	if !newElemValue.Type().AssignableTo(sliceElemType) {
-		return fmt.Errorf("jet: can't append %s to %s slice ", newElemValue.Type().String(), sliceValue.Type().String())
+		panic("jet: can't append " + newElemValue.Type().String() + " to " + sliceValue.Type().String() + " slice")
 	}
 
 	sliceValue.Set(reflect.Append(sliceValue, newElemValue))
@@ -465,6 +445,7 @@ func toCommonIdentifier(name string) string {
 }
 
 func initializeValueIfNilPtr(value reflect.Value) {
+
 	if !value.IsValid() || !value.CanSet() {
 		return
 	}
@@ -490,55 +471,119 @@ func valueToString(value reflect.Value) string {
 		valueInterface = value.Interface()
 	}
 
-	if t, ok := valueInterface.(time.Time); ok {
+	if t, ok := valueInterface.(fmt.Stringer); ok {
 		return t.String()
 	}
 
 	return fmt.Sprintf("%#v", valueInterface)
 }
 
-func isGoBaseType(objType reflect.Type) bool {
-	typeStr := objType.String()
+var timeType = reflect.TypeOf(time.Now())
+var uuidType = reflect.TypeOf(uuid.New())
 
-	switch typeStr {
-	case "string", "int", "int16", "int32", "int64", "float32", "float64", "time.Time", "bool", "[]byte", "[]uint8",
-		"*string", "*int", "*int16", "*int32", "*int64", "*float32", "*float64", "*time.Time", "*bool", "*[]byte", "*[]uint8":
+func isSimpleModelType(objType reflect.Type) bool {
+	objType = indirectType(objType)
+
+	switch objType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+		reflect.Float32, reflect.Float64,
+		reflect.String,
+		reflect.Bool:
+		return true
+	case reflect.Slice:
+		return objType.Elem().Kind() == reflect.Uint8 //[]byte
+	case reflect.Struct:
+		return objType == timeType || objType == uuidType // time.Time || uuid.UUID
+	}
+
+	return false
+}
+
+func isIntegerType(value reflect.Type) bool {
+	switch value {
+	case int8Type, unit8Type, int16Type, uint16Type,
+		int32Type, uint32Type, int64Type, uint64Type:
 		return true
 	}
 
 	return false
 }
 
-func setReflectValue(source, destination reflect.Value) error {
-	var sourceElem reflect.Value
+func tryAssign(source, destination reflect.Value) bool {
+	if source.Type().ConvertibleTo(destination.Type()) {
+		source = source.Convert(destination.Type())
+	}
+
+	if isIntegerType(source.Type()) && destination.Type() == boolType {
+		intValue := source.Int()
+
+		if intValue == 1 {
+			source = reflect.ValueOf(true)
+		} else if intValue == 0 {
+			source = reflect.ValueOf(false)
+		}
+	}
+
+	if source.Type().AssignableTo(destination.Type()) {
+		destination.Set(source)
+		return true
+	}
+
+	return false
+}
+
+func setReflectValue(source, destination reflect.Value) {
+
+	if tryAssign(source, destination) {
+		return
+	}
+
 	if destination.Kind() == reflect.Ptr {
 		if source.Kind() == reflect.Ptr {
-			sourceElem = source
+			if !source.IsNil() {
+				if destination.IsNil() {
+					initializeValueIfNilPtr(destination)
+				}
+
+				if tryAssign(source.Elem(), destination.Elem()) {
+					return
+				}
+			} else {
+				return
+			}
 		} else {
 			if source.CanAddr() {
-				sourceElem = source.Addr()
+				source = source.Addr()
 			} else {
 				sourceCopy := reflect.New(source.Type())
 				sourceCopy.Elem().Set(source)
 
-				sourceElem = sourceCopy
+				source = sourceCopy
+			}
+
+			if tryAssign(source, destination) {
+				return
+			}
+
+			if tryAssign(source.Elem(), destination.Elem()) {
+				return
 			}
 		}
 	} else {
 		if source.Kind() == reflect.Ptr {
-			sourceElem = source.Elem()
-		} else {
-			sourceElem = source
+			if source.IsNil() {
+				return
+			}
+			source = source.Elem()
+		}
+
+		if tryAssign(source, destination) {
+			return
 		}
 	}
 
-	if !sourceElem.Type().AssignableTo(destination.Type()) {
-		return errors.New("jet: can't set " + sourceElem.Type().String() + " to " + destination.Type().String())
-	}
-
-	destination.Set(sourceElem)
-
-	return nil
+	panic("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
 }
 
 func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
@@ -555,35 +600,49 @@ func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
 	return values
 }
 
-var nullFloatType = reflect.TypeOf(internal.NullFloat32{})
-var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
+var boolType = reflect.TypeOf(true)
+var int8Type = reflect.TypeOf(int8(1))
+var unit8Type = reflect.TypeOf(uint8(1))
+var int16Type = reflect.TypeOf(int16(1))
+var uint16Type = reflect.TypeOf(uint16(1))
+var int32Type = reflect.TypeOf(int32(1))
+var uint32Type = reflect.TypeOf(uint32(1))
+var int64Type = reflect.TypeOf(int64(1))
+var uint64Type = reflect.TypeOf(uint64(1))
+
+var nullBoolType = reflect.TypeOf(sql.NullBool{})
+var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
 var nullInt16Type = reflect.TypeOf(internal.NullInt16{})
 var nullInt32Type = reflect.TypeOf(internal.NullInt32{})
 var nullInt64Type = reflect.TypeOf(sql.NullInt64{})
+var nullFloat32Type = reflect.TypeOf(internal.NullFloat32{})
+var nullFloat64Type = reflect.TypeOf(sql.NullFloat64{})
 var nullStringType = reflect.TypeOf(sql.NullString{})
-var nullBoolType = reflect.TypeOf(sql.NullBool{})
 var nullTimeType = reflect.TypeOf(internal.NullTime{})
 var nullByteArrayType = reflect.TypeOf(internal.NullByteArray{})
 
 func newScanType(columnType *sql.ColumnType) reflect.Type {
+
 	switch columnType.DatabaseTypeName() {
-	case "INT2":
+	case "TINYINT":
+		return nullInt8Type
+	case "INT2", "SMALLINT", "YEAR":
 		return nullInt16Type
-	case "INT4":
+	case "INT4", "MEDIUMINT", "INT":
 		return nullInt32Type
-	case "INT8":
+	case "INT8", "BIGINT":
 		return nullInt64Type
-	case "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "UUID", "JSON", "JSONB", "INTERVAL", "POINT", "BIT", "VARBIT", "XML":
+	case "CHAR", "VARCHAR", "TEXT", "", "_TEXT", "TSVECTOR", "BPCHAR", "UUID", "JSON", "JSONB", "INTERVAL", "POINT", "BIT", "VARBIT", "XML":
 		return nullStringType
 	case "FLOAT4":
-		return nullFloatType
-	case "FLOAT8", "NUMERIC", "DECIMAL":
+		return nullFloat32Type
+	case "FLOAT8", "NUMERIC", "DECIMAL", "FLOAT", "DOUBLE":
 		return nullFloat64Type
 	case "BOOL":
 		return nullBoolType
-	case "BYTEA":
+	case "BYTEA", "BINARY", "VARBINARY", "BLOB":
 		return nullByteArrayType
-	case "DATE", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
+	case "DATE", "DATETIME", "TIMESTAMP", "TIMESTAMPTZ", "TIME", "TIMETZ":
 		return nullTimeType
 	default:
 		return nullStringType
@@ -697,7 +756,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 		field := structType.Field(i)
 		newTypeName, fieldName := getTypeAndFieldName(typeName, field)
 
-		if !isGoBaseType(field.Type) {
+		if !isSimpleModelType(field.Type) {
 			var structType reflect.Type
 			if field.Type.Kind() == reflect.Struct {
 				structType = field.Type
@@ -749,7 +808,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 	valuer, ok := s.row[index].(driver.Valuer)
 
 	if !ok {
-		panic("Scan value doesn't implement driver.Valuer")
+		panic("jet: internal error, scan value doesn't implement driver.Valuer")
 	}
 
 	value, err := valuer.Value()
@@ -790,4 +849,12 @@ func indirectType(reflectType reflect.Type) reflect.Type {
 		return reflectType
 	}
 	return reflectType.Elem()
+}
+
+func fieldToString(field *reflect.StructField) string {
+	if field == nil {
+		return ""
+	}
+
+	return " at '" + field.Name + " " + field.Type.String() + "'"
 }

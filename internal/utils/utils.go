@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"bytes"
+	"database/sql"
 	"github.com/go-jet/jet/internal/3rdparty/snaker"
 	"go/format"
 	"os"
@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 )
 
@@ -62,28 +61,6 @@ func EnsureDirPath(dirPath string) error {
 	return nil
 }
 
-// GenerateTemplate generates template with template text and template data.
-func GenerateTemplate(templateText string, templateData interface{}) ([]byte, error) {
-
-	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
-		"ToGoIdentifier": ToGoIdentifier,
-		"now": func() string {
-			return time.Now().Format(time.RFC850)
-		},
-	}).Parse(templateText)
-
-	if err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, templateData); err != nil {
-		return nil, err
-	}
-
-	return buf.Bytes(), nil
-}
-
 // CleanUpGeneratedFiles deletes everything at folder dir.
 func CleanUpGeneratedFiles(dir string) error {
 	exist, err := DirExists(dir)
@@ -101,6 +78,14 @@ func CleanUpGeneratedFiles(dir string) error {
 	}
 
 	return nil
+}
+
+func DBClose(db *sql.DB) {
+	if db == nil {
+		return
+	}
+
+	db.Close()
 }
 
 // DirExists checks if folder at path exist.
@@ -158,4 +143,29 @@ func FormatTimestamp(t time.Time) []byte {
 
 func IsNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
+}
+
+func MustBe(v interface{}, kind reflect.Kind, errorStr string) {
+	if reflect.TypeOf(v).Kind() != kind {
+		panic(errorStr)
+	}
+}
+
+func ValueMustBe(v reflect.Value, kind reflect.Kind, errorStr string) {
+	if v.Kind() != kind {
+		panic(errorStr)
+	}
+}
+
+func TypeMustBe(v reflect.Type, kind reflect.Kind, errorStr string) {
+	if v.Kind() != kind {
+		panic(errorStr)
+	}
+}
+
+func MustBeInitializedPtr(val interface{}, errorStr string) {
+	if IsNil(val) {
+		panic(errorStr)
+	}
+
 }
