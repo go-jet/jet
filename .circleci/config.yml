@@ -30,7 +30,7 @@ jobs:
     steps:
       - checkout
 
-      -run:
+      - run:
           name: Submodule init
           command: |
             git submodule init
@@ -128,11 +128,11 @@ jobs:
       - checkout
 
       - run:
-        name: Submodule init
-        command: |
-          git submodule init
-          git submodule update
-          cd ./tests/init/data && git fetch && git checkout master
+          name: Submodule init
+          command: |
+            git submodule init
+            git submodule update
+            cd ./tests/init/data && git fetch && git checkout master
 
       - run:
           name: Install dependencies
