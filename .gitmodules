@@ -1,0 +1,3 @@
+[submodule "tests/init/data"]
+	path = tests/init/data
+	url = https://github.com/go-jet/jet-test-data
