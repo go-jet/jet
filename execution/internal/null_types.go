@@ -2,6 +2,7 @@ package internal
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -17,13 +18,16 @@ type NullByteArray struct {
 // Scan implements the Scanner interface.
 func (nb *NullByteArray) Scan(value interface{}) error {
 	switch v := value.(type) {
+	case nil:
+		nb.Valid = false
+		return nil
 	case []byte:
 		nb.ByteArray = append(v[:0:0], v...)
 		nb.Valid = true
+		return nil
 	default:
-		nb.Valid = false
+		return fmt.Errorf("can't scan []byte from %v", value)
 	}
-	return nil
 }
 
 // Value implements the driver Valuer interface.
@@ -45,6 +49,9 @@ type NullTime struct {
 // Scan implements the Scanner interface.
 func (nt *NullTime) Scan(value interface{}) (err error) {
 	switch v := value.(type) {
+	case nil:
+		nt.Valid = false
+		return
 	case time.Time:
 		nt.Time, nt.Valid = v, true
 		return
@@ -54,10 +61,9 @@ func (nt *NullTime) Scan(value interface{}) (err error) {
 	case string:
 		nt.Time, nt.Valid = parseTime(v)
 		return
+	default:
+		return fmt.Errorf("can't scan time from %v", value)
 	}
-
-	nt.Valid = false
-	return nil
 }
 
 // Value implements the driver Valuer interface.
@@ -96,26 +102,26 @@ type NullInt8 struct {
 }
 
 // Scan implements the Scanner interface.
-func (n *NullInt8) Scan(value interface{}) error {
-
+func (n *NullInt8) Scan(value interface{}) (err error) {
 	switch v := value.(type) {
+	case nil:
+		n.Valid = false
+		return
 	case int64:
 		n.Int8, n.Valid = int8(v), true
-		return nil
+		return
 	case int8:
 		n.Int8, n.Valid = v, true
-		return nil
+		return
 	case []byte:
 		intV, err := strconv.ParseInt(string(v), 10, 8)
 		if err == nil {
 			n.Int8, n.Valid = int8(intV), true
-			return nil
 		}
+		return err
+	default:
+		return fmt.Errorf("can't scan int8 from %v", value)
 	}
-
-	n.Valid = false
-
-	return nil
 }
 
 // Value implements the driver Valuer interface.
@@ -138,6 +144,9 @@ type NullInt16 struct {
 func (n *NullInt16) Scan(value interface{}) error {
 
 	switch v := value.(type) {
+	case nil:
+		n.Valid = false
+		return nil
 	case int64:
 		n.Int16, n.Valid = int16(v), true
 		return nil
@@ -154,13 +163,11 @@ func (n *NullInt16) Scan(value interface{}) error {
 		intV, err := strconv.ParseInt(string(v), 10, 16)
 		if err == nil {
 			n.Int16, n.Valid = int16(intV), true
-			return nil
 		}
+		return nil
+	default:
+		return fmt.Errorf("can't scan int16 from %v", value)
 	}
-
-	n.Valid = false
-
-	return nil
 }
 
 // Value implements the driver Valuer interface.
@@ -181,8 +188,10 @@ type NullInt32 struct {
 
 // Scan implements the Scanner interface.
 func (n *NullInt32) Scan(value interface{}) error {
-
 	switch v := value.(type) {
+	case nil:
+		n.Valid = false
+		return nil
 	case int64:
 		n.Int32, n.Valid = int32(v), true
 		return nil
@@ -205,13 +214,11 @@ func (n *NullInt32) Scan(value interface{}) error {
 		intV, err := strconv.ParseInt(string(v), 10, 32)
 		if err == nil {
 			n.Int32, n.Valid = int32(intV), true
-			return nil
 		}
+		return nil
+	default:
+		return fmt.Errorf("can't scan int32 from %v", value)
 	}
-
-	n.Valid = false
-
-	return nil
 }
 
 // Value implements the driver Valuer interface.
@@ -233,17 +240,18 @@ type NullFloat32 struct {
 // Scan implements the Scanner interface.
 func (n *NullFloat32) Scan(value interface{}) error {
 	switch v := value.(type) {
+	case nil:
+		n.Valid = false
+		return nil
 	case float64:
 		n.Float32, n.Valid = float32(v), true
 		return nil
 	case float32:
 		n.Float32, n.Valid = v, true
 		return nil
+	default:
+		return fmt.Errorf("can't scan float32 from %v", value)
 	}
-
-	n.Valid = false
-
-	return nil
 }
 
 // Value implements the driver Valuer interface.
