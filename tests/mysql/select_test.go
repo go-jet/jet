@@ -65,7 +65,7 @@ ORDER BY actor.actor_id;
 
 	//testutils.PrintJson(dest)
 	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
-	testutils.AssertJSONFile(t, dest, "mysql/testdata/all_actors.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/all_actors.json")
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
@@ -138,7 +138,7 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 	assert.Equal(t, len(dest), 174)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/customer_payment_sum.json")
-	testutils.AssertJSONFile(t, dest, "mysql/testdata/customer_payment_sum.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/customer_payment_sum.json")
 }
 
 func TestSubQuery(t *testing.T) {
@@ -174,7 +174,7 @@ func TestSubQuery(t *testing.T) {
 	assert.NilError(t, err)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/r_rating_films.json")
-	testutils.AssertJSONFile(t, dest, "mysql/testdata/r_rating_films.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/r_rating_films.json")
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
@@ -405,7 +405,7 @@ LIMIT ?;
 
 		//testutils.SaveJsonFile(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
 
-		testutils.AssertJSONFile(t, dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
+		testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/lang_film_actor_inventory_rental.json")
 	}
 }
 

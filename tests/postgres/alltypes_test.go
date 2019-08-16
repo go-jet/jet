@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/go-jet/jet/tests/testdata/common"
+	"github.com/go-jet/jet/tests/testdata/results/common"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
 	"testing"
@@ -308,7 +308,7 @@ LIMIT $5;
 
 	assert.NilError(t, err)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/bool_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
 
 func TestFloatOperators(t *testing.T) {
@@ -406,7 +406,7 @@ LIMIT $35;
 
 	//testutils.PrintJson(dest)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/common/float_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/float_operators.json")
 }
 
 func TestIntegerOperators(t *testing.T) {
@@ -545,7 +545,7 @@ LIMIT $23;
 
 	//testutils.SaveJsonFile("./testdata/common/int_operators.json", dest)
 	//testutils.PrintJson(dest)
-	testutils.AssertJSONFile(t, dest, "./testdata/common/int_operators.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/common/int_operators.json")
 }
 
 func TestTimeExpression(t *testing.T) {

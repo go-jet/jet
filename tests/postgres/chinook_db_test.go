@@ -105,7 +105,7 @@ func TestJoinEverything(t *testing.T) {
 
 	assert.NilError(t, err)
 	assert.Equal(t, len(dest), 275)
-	testutils.AssertJSONFile(t, dest, "./postgres/testdata/joined_everything.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
 }
 
 func TestSelfJoin(t *testing.T) {

@@ -1061,7 +1061,7 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 	assert.Equal(t, len(dest), 104)
 
 	//testutils.SaveJsonFile(dest, "postgres/testdata/customer_payment_sum.json")
-	testutils.AssertJSONFile(t, dest, "postgres/testdata/customer_payment_sum.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
 }
 
 func TestSelectGroupBy2(t *testing.T) {
@@ -1506,7 +1506,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, dest, "./postgres/testdata/quick-start-dest.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
 
 	var dest2 []struct {
 		model.Category
@@ -1519,7 +1519,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, dest2, "./postgres/testdata/quick-start-dest2.json")
+	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
@@ -1571,7 +1571,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, dest, "./postgres/testdata/quick-start-dest.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
 
 	var dest2 []struct {
 		model.Category
@@ -1584,7 +1584,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, dest2, "./postgres/testdata/quick-start-dest2.json")
+	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
 func TestExpressionWrappers(t *testing.T) {

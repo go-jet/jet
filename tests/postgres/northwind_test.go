@@ -62,5 +62,5 @@ func TestNorthwindJoinEverything(t *testing.T) {
 	assert.NilError(t, err)
 
 	//jsonSave("./testdata/northwind-all.json", dest)
-	testutils.AssertJSONFile(t, dest, "./postgres/testdata/northwind-all.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/northwind-all.json")
 }
