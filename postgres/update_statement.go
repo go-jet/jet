@@ -6,7 +6,7 @@ import (
 
 // UpdateStatement is interface of SQL UPDATE statement
 type UpdateStatement interface {
-	jet.Statement
+	Statement
 
 	SET(value interface{}, values ...interface{}) UpdateStatement
 	MODEL(data interface{}) UpdateStatement

@@ -4,48 +4,45 @@ import "github.com/go-jet/jet/internal/jet"
 
 // UNION effectively appends the result of sub-queries(select statements) into single query.
 // It eliminates duplicate rows from its result.
-func UNION(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) SetStatement {
-	return newSetStatementImpl(Union, false, toSelectList(lhs, rhs, selects...))
+func UNION(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+	return newSetStatementImpl(union, false, toSelectList(lhs, rhs, selects...))
 }
 
 // UNION_ALL effectively appends the result of sub-queries(select statements) into single query.
 // It does not eliminates duplicate rows from its result.
-func UNION_ALL(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) SetStatement {
-	return newSetStatementImpl(Union, true, toSelectList(lhs, rhs, selects...))
+func UNION_ALL(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+	return newSetStatementImpl(union, true, toSelectList(lhs, rhs, selects...))
 }
 
-type SetStatement interface {
-	SetOperators
+type setStatement interface {
+	setOperators
 
-	ORDER_BY(orderByClauses ...jet.OrderByClause) SetStatement
+	ORDER_BY(orderByClauses ...jet.OrderByClause) setStatement
 
-	LIMIT(limit int64) SetStatement
-	OFFSET(offset int64) SetStatement
+	LIMIT(limit int64) setStatement
+	OFFSET(offset int64) setStatement
 
 	AsTable(alias string) SelectTable
 }
 
-type SetStatementFinal interface {
-}
-
-type SetOperators interface {
+type setOperators interface {
 	jet.Statement
 	jet.HasProjections
 	jet.Expression
 
-	UNION(rhs SelectStatement) SetStatement
-	UNION_ALL(rhs SelectStatement) SetStatement
+	UNION(rhs SelectStatement) setStatement
+	UNION_ALL(rhs SelectStatement) setStatement
 }
 
 type setOperatorsImpl struct {
-	parent SetOperators
+	parent setOperators
 }
 
-func (s *setOperatorsImpl) UNION(rhs SelectStatement) SetStatement {
+func (s *setOperatorsImpl) UNION(rhs SelectStatement) setStatement {
 	return UNION(s.parent, rhs)
 }
 
-func (s *setOperatorsImpl) UNION_ALL(rhs SelectStatement) SetStatement {
+func (s *setOperatorsImpl) UNION_ALL(rhs SelectStatement) setStatement {
 	return UNION_ALL(s.parent, rhs)
 }
 
@@ -57,7 +54,7 @@ type setStatementImpl struct {
 	setOperator jet.ClauseSetStmtOperator
 }
 
-func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithProjections) SetStatement {
+func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithProjections) setStatement {
 	newSetStatement := &setStatementImpl{}
 	newSetStatement.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SetStatementType, newSetStatement,
 		&newSetStatement.setOperator)
@@ -76,17 +73,17 @@ func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithP
 	return newSetStatement
 }
 
-func (s *setStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) SetStatement {
+func (s *setStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) setStatement {
 	s.setOperator.OrderBy.List = orderByClauses
 	return s
 }
 
-func (s *setStatementImpl) LIMIT(limit int64) SetStatement {
+func (s *setStatementImpl) LIMIT(limit int64) setStatement {
 	s.setOperator.Limit.Count = limit
 	return s
 }
 
-func (s *setStatementImpl) OFFSET(offset int64) SetStatement {
+func (s *setStatementImpl) OFFSET(offset int64) setStatement {
 	s.setOperator.Offset.Count = offset
 	return s
 }
@@ -96,7 +93,7 @@ func (s *setStatementImpl) AsTable(alias string) SelectTable {
 }
 
 const (
-	Union = "UNION"
+	union = "UNION"
 )
 
 func toSelectList(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) []jet.StatementWithProjections {

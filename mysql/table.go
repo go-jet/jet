@@ -2,6 +2,7 @@ package mysql
 
 import "github.com/go-jet/jet/internal/jet"
 
+// Table is interface for MySQL tables
 type Table interface {
 	jet.SerializerTable
 	readableTable
@@ -37,6 +38,7 @@ type joinSelectUpdateTable interface {
 	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
 }
 
+// ReadableTable interface
 type ReadableTable interface {
 	readableTable
 	jet.Serializer
@@ -74,6 +76,7 @@ func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectU
 	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
 }
 
+// NewTable creates new table with schema Name, table Name and list of columns
 func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 	t := &tableImpl{
 		TableImpl: jet.NewTable(schemaName, name, columns...),

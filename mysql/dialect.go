@@ -4,9 +4,10 @@ import (
 	"github.com/go-jet/jet/internal/jet"
 )
 
-var Dialect = NewDialect()
+// Dialect is implementation of MySQL dialect for SQL Builder serialisation.
+var Dialect = newDialect()
 
-func NewDialect() jet.Dialect {
+func newDialect() jet.Dialect {
 
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
 	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = mysql_REGEXP_LIKE_operator

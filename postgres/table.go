@@ -36,7 +36,7 @@ type ReadableTable interface {
 }
 
 type WritableTable interface {
-	jet.TableInterface
+	jet.Table
 	writableTable
 	jet.Serializer
 }

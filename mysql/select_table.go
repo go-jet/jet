@@ -2,6 +2,7 @@ package mysql
 
 import "github.com/go-jet/jet/internal/jet"
 
+// SelectTable is interface for MySQL sub-queries
 type SelectTable interface {
 	ReadableTable
 	jet.SelectTable

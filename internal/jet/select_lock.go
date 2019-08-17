@@ -1,11 +1,11 @@
 package jet
 
-// SelectLock is interface for SELECT statement locks
-type SelectLock interface {
+// RowLock is interface for SELECT statement row lock types
+type RowLock interface {
 	Serializer
 
-	NOWAIT() SelectLock
-	SKIP_LOCKED() SelectLock
+	NOWAIT() RowLock
+	SKIP_LOCKED() RowLock
 }
 
 type selectLockImpl struct {
@@ -13,22 +13,22 @@ type selectLockImpl struct {
 	noWait, skipLocked bool
 }
 
-func NewSelectLock(name string) func() SelectLock {
-	return func() SelectLock {
+func NewSelectLock(name string) func() RowLock {
+	return func() RowLock {
 		return newSelectLock(name)
 	}
 }
 
-func newSelectLock(lockStrength string) SelectLock {
+func newSelectLock(lockStrength string) RowLock {
 	return &selectLockImpl{lockStrength: lockStrength}
 }
 
-func (s *selectLockImpl) NOWAIT() SelectLock {
+func (s *selectLockImpl) NOWAIT() RowLock {
 	s.noWait = true
 	return s
 }
 
-func (s *selectLockImpl) SKIP_LOCKED() SelectLock {
+func (s *selectLockImpl) SKIP_LOCKED() RowLock {
 	s.skipLocked = true
 	return s
 }

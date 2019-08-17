@@ -2,6 +2,7 @@ package mysql
 
 import "github.com/go-jet/jet/internal/jet"
 
+// DeleteStatement is interface for MySQL DELETE statement
 type DeleteStatement interface {
 	Statement
 
@@ -37,12 +38,12 @@ func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 	return d
 }
 
-func (s *deleteStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) DeleteStatement {
-	s.OrderBy.List = orderByClauses
-	return s
+func (d *deleteStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) DeleteStatement {
+	d.OrderBy.List = orderByClauses
+	return d
 }
 
-func (s *deleteStatementImpl) LIMIT(limit int64) DeleteStatement {
-	s.Limit.Count = limit
-	return s
+func (d *deleteStatementImpl) LIMIT(limit int64) DeleteStatement {
+	d.Limit.Count = limit
+	return d
 }

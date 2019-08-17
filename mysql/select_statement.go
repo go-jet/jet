@@ -2,13 +2,16 @@ package mysql
 
 import "github.com/go-jet/jet/internal/jet"
 
-type SelectLock = jet.SelectLock
+// RowLock is interface for SELECT statement row lock types
+type RowLock = jet.RowLock
 
+// Row lock types
 var (
 	UPDATE = jet.NewSelectLock("UPDATE")
 	SHARE  = jet.NewSelectLock("SHARE")
 )
 
+// SelectStatement is interface for MySQL SELECT statement
 type SelectStatement interface {
 	Statement
 	jet.HasProjections
@@ -22,11 +25,11 @@ type SelectStatement interface {
 	ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
-	FOR(lock SelectLock) SelectStatement
+	FOR(lock RowLock) SelectStatement
 	LOCK_IN_SHARE_MODE() SelectStatement
 
-	UNION(rhs SelectStatement) SetStatement
-	UNION_ALL(rhs SelectStatement) SetStatement
+	UNION(rhs SelectStatement) setStatement
+	UNION_ALL(rhs SelectStatement) setStatement
 
 	AsTable(alias string) SelectTable
 }
@@ -112,7 +115,7 @@ func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) FOR(lock SelectLock) SelectStatement {
+func (s *selectStatementImpl) FOR(lock RowLock) SelectStatement {
 	s.For.Lock = lock
 	return s
 }

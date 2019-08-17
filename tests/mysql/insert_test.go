@@ -89,6 +89,7 @@ INSERT INTO test_sample.link VALUES
 		ORDER_BY(Link.ID).
 		Query(db, &insertedLinks)
 
+	assert.NilError(t, err)
 	assert.Equal(t, len(insertedLinks), 1)
 	assert.DeepEqual(t, insertedLinks[0], postgreTutorial)
 }

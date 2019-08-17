@@ -17,7 +17,7 @@ const (
 )
 
 type LockStatement interface {
-	jet.Statement
+	Statement
 
 	IN(lockMode TableLockMode) LockStatement
 	NOWAIT() LockStatement

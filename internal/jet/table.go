@@ -6,10 +6,10 @@ import (
 
 type SerializerTable interface {
 	Serializer
-	TableInterface
+	Table
 }
 
-type TableInterface interface {
+type Table interface {
 	columns() []Column
 	SchemaName() string
 	TableName() string
@@ -111,7 +111,7 @@ func NewJoinTableImpl(lhs Serializer, rhs Serializer, joinType JoinType, onCondi
 }
 
 func (t *JoinTableImpl) SchemaName() string {
-	if table, ok := t.lhs.(TableInterface); ok {
+	if table, ok := t.lhs.(Table); ok {
 		return table.SchemaName()
 	}
 	return ""
@@ -124,10 +124,10 @@ func (t *JoinTableImpl) TableName() string {
 func (t *JoinTableImpl) Columns() []Column {
 	var ret []Column
 
-	if lhsTable, ok := t.lhs.(TableInterface); ok {
+	if lhsTable, ok := t.lhs.(Table); ok {
 		ret = append(ret, lhsTable.columns()...)
 	}
-	if rhsTable, ok := t.rhs.(TableInterface); ok {
+	if rhsTable, ok := t.rhs.(Table); ok {
 		ret = append(ret, rhsTable.columns()...)
 	}
 

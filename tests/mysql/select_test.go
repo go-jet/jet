@@ -409,13 +409,13 @@ LIMIT ?;
 	}
 }
 
-func getRowLockTestData() map[SelectLock]string {
+func getRowLockTestData() map[RowLock]string {
 	if sourceIsMariaDB() {
-		return map[SelectLock]string{
+		return map[RowLock]string{
 			UPDATE(): "UPDATE",
 		}
 	}
-	return map[SelectLock]string{
+	return map[RowLock]string{
 		UPDATE(): "UPDATE",
 		SHARE():  "SHARE",
 	}

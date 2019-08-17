@@ -105,9 +105,9 @@ func (b *castImpl) AS_TEXT() StringExpression {
 	return StringExp(b.AS("text"))
 }
 
-func (b *castImpl) AS_CHAR(lenght ...int) StringExpression {
-	if len(lenght) > 0 {
-		return StringExp(b.AS("char(" + strconv.Itoa(lenght[0]) + ")"))
+func (b *castImpl) AS_CHAR(length ...int) StringExpression {
+	if len(length) > 0 {
+		return StringExp(b.AS("char(" + strconv.Itoa(length[0]) + ")"))
 	}
 
 	return StringExp(b.AS("char"))

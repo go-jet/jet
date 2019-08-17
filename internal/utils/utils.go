@@ -80,6 +80,7 @@ func CleanUpGeneratedFiles(dir string) error {
 	return nil
 }
 
+// DBClose closes non nil db connection
 func DBClose(db *sql.DB) {
 	if db == nil {
 		return
@@ -141,31 +142,35 @@ func FormatTimestamp(t time.Time) []byte {
 	return b
 }
 
+// IsNill check if v is nil
 func IsNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
 
+// MustBe panics with errorStr error, if v interface is not of reflect kind
 func MustBe(v interface{}, kind reflect.Kind, errorStr string) {
 	if reflect.TypeOf(v).Kind() != kind {
 		panic(errorStr)
 	}
 }
 
+// ValueMustBe panics with errorStr error, if v value is not of reflect kind
 func ValueMustBe(v reflect.Value, kind reflect.Kind, errorStr string) {
 	if v.Kind() != kind {
 		panic(errorStr)
 	}
 }
 
+// TypeMustBe panics with errorStr error, if v type is not of reflect kind
 func TypeMustBe(v reflect.Type, kind reflect.Kind, errorStr string) {
 	if v.Kind() != kind {
 		panic(errorStr)
 	}
 }
 
+// MustBeInitializedPtr panics with errorStr if val interface is nil
 func MustBeInitializedPtr(val interface{}, errorStr string) {
 	if IsNil(val) {
 		panic(errorStr)
 	}
-
 }

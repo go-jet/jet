@@ -1,5 +1,6 @@
 package jet
 
+// Projection is interface for all projection types. Types that can be part of, for instance SELECT clause.
 type Projection interface {
 	serializeForProjection(statement StatementType, out *SqlBuilder)
 	fromImpl(subQuery SelectTable) Projection

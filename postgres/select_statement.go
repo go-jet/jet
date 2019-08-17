@@ -2,7 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/internal/jet"
 
-type SelectLock = jet.SelectLock
+type RowLock = jet.RowLock
 
 var (
 	UPDATE        = jet.NewSelectLock("UPDATE")
@@ -12,9 +12,9 @@ var (
 )
 
 type SelectStatement interface {
-	jet.Statement
+	Statement
 	jet.HasProjections
-	jet.Expression
+	Expression
 
 	DISTINCT() SelectStatement
 	FROM(table ReadableTable) SelectStatement
@@ -24,14 +24,14 @@ type SelectStatement interface {
 	ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
-	FOR(lock SelectLock) SelectStatement
+	FOR(lock RowLock) SelectStatement
 
-	UNION(rhs SelectStatement) SetStatement
-	UNION_ALL(rhs SelectStatement) SetStatement
-	INTERSECT(rhs SelectStatement) SetStatement
-	INTERSECT_ALL(rhs SelectStatement) SetStatement
-	EXCEPT(rhs SelectStatement) SetStatement
-	EXCEPT_ALL(rhs SelectStatement) SetStatement
+	UNION(rhs SelectStatement) setStatement
+	UNION_ALL(rhs SelectStatement) setStatement
+	INTERSECT(rhs SelectStatement) setStatement
+	INTERSECT_ALL(rhs SelectStatement) setStatement
+	EXCEPT(rhs SelectStatement) setStatement
+	EXCEPT_ALL(rhs SelectStatement) setStatement
 
 	AsTable(alias string) SelectTable
 }
@@ -114,7 +114,7 @@ func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) FOR(lock SelectLock) SelectStatement {
+func (s *selectStatementImpl) FOR(lock RowLock) SelectStatement {
 	s.For.Lock = lock
 	return s
 }

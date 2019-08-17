@@ -79,10 +79,10 @@ var MINi = jet.MINi
 // MINf is aggregate function. Returns minimum value of float expression across all input values
 var MINf = jet.MINf
 
-// SUMi is aggregate function. Returns sum of expression across all integer expression.
+// SUMi is aggregate function. Returns sum of integer expression.
 var SUMi = jet.SUMi
 
-// SUMi is aggregate function. Returns sum of expression across all integer expression.
+// SUMf is aggregate function. Returns sum of float expression.
 var SUMf = jet.SUMf
 
 //--------------------- String functions ------------------//
@@ -164,6 +164,7 @@ var SUBSTR = jet.SUBSTR
 var REGEXP_LIKE = jet.REGEXP_LIKE
 
 //----------------- Date/Time Functions and Operators ------------//
+
 // CURRENT_DATE returns current date
 var CURRENT_DATE = jet.CURRENT_DATE
 
@@ -205,4 +206,5 @@ var CASE = jet.CASE
 
 //----------------- Bit operators ---------------//
 
+// BIT_NOT inverts every bit in integer expression
 var BIT_NOT = jet.BIT_NOT

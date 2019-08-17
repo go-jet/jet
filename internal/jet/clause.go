@@ -150,7 +150,7 @@ func (o *ClauseOffset) Serialize(statementType StatementType, out *SqlBuilder) {
 }
 
 type ClauseFor struct {
-	Lock SelectLock
+	Lock RowLock
 }
 
 func (f *ClauseFor) Serialize(statementType StatementType, out *SqlBuilder) {

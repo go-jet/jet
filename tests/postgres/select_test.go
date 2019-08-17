@@ -1363,8 +1363,8 @@ LIMIT 20;
 	assert.Equal(t, dest[1].StaffIDNum, "ONE")
 }
 
-func getRowLockTestData() map[SelectLock]string {
-	return map[SelectLock]string{
+func getRowLockTestData() map[RowLock]string {
+	return map[RowLock]string{
 		UPDATE():        "UPDATE",
 		NO_KEY_UPDATE(): "NO KEY UPDATE",
 		SHARE():         "SHARE",

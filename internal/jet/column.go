@@ -2,6 +2,7 @@
 
 package jet
 
+// Column is common column interface for all types of columns.
 type Column interface {
 	Name() string
 	TableName() string
@@ -11,7 +12,6 @@ type Column interface {
 	defaultAlias() string
 }
 
-// Column is common column interface for all types of columns.
 type ColumnExpression interface {
 	Column
 	Expression
