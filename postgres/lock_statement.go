@@ -28,7 +28,7 @@ type LockStatement interface {
 // LOCK creates LockStatement from list of tables
 func LOCK(tables ...jet.SerializerTable) LockStatement {
 	newLock := &lockStatementImpl{}
-	newLock.StatementImpl = jet.NewStatementImpl(Dialect, jet.LockStatementType, newLock,
+	newLock.SerializerStatement = jet.NewStatementImpl(Dialect, jet.LockStatementType, newLock,
 		&newLock.StatementBegin, &newLock.In, &newLock.NoWait)
 
 	newLock.StatementBegin.Name = "LOCK TABLE"
@@ -38,7 +38,7 @@ func LOCK(tables ...jet.SerializerTable) LockStatement {
 }
 
 type lockStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 
 	StatementBegin jet.ClauseStatementBegin
 	In             jet.ClauseIn

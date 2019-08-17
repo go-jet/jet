@@ -30,7 +30,7 @@ func newDialect() jet.Dialect {
 }
 
 func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}
@@ -55,7 +55,7 @@ func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
 }
 
 func postgres_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}
@@ -81,7 +81,7 @@ func postgres_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeF
 }
 
 func postgres_NOT_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}

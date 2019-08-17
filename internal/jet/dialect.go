@@ -1,5 +1,6 @@
 package jet
 
+// Dialect interface
 type Dialect interface {
 	Name() string
 	PackageName() string
@@ -10,10 +11,16 @@ type Dialect interface {
 	ArgumentPlaceholder() QueryPlaceholderFunc
 }
 
-type SerializeFunc func(statement StatementType, out *SqlBuilder, options ...SerializeOption)
+// SerializeFunc func
+type SerializeFunc func(statement StatementType, out *SQLBuilder, options ...SerializeOption)
+
+// SerializeOverride func
 type SerializeOverride func(expressions ...Expression) SerializeFunc
+
+// QueryPlaceholderFunc func
 type QueryPlaceholderFunc func(ord int) string
 
+// DialectParams struct
 type DialectParams struct {
 	Name                       string
 	PackageName                string
@@ -24,6 +31,7 @@ type DialectParams struct {
 	ArgumentPlaceholder        QueryPlaceholderFunc
 }
 
+// NewDialect creates new dialect with params
 func NewDialect(params DialectParams) Dialect {
 	return &dialectImpl{
 		name:                       params.Name,

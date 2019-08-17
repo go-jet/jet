@@ -47,7 +47,7 @@ func (s *setOperatorsImpl) UNION_ALL(rhs SelectStatement) setStatement {
 }
 
 type setStatementImpl struct {
-	jet.ExpressionStatementImpl
+	jet.ExpressionStatement
 
 	setOperatorsImpl
 
@@ -56,9 +56,8 @@ type setStatementImpl struct {
 
 func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithProjections) setStatement {
 	newSetStatement := &setStatementImpl{}
-	newSetStatement.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SetStatementType, newSetStatement,
+	newSetStatement.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SetStatementType, newSetStatement,
 		&newSetStatement.setOperator)
-	newSetStatement.ExpressionStatementImpl.ExpressionInterfaceImpl.Parent = newSetStatement
 
 	newSetStatement.setOperator.Operator = operator
 	newSetStatement.setOperator.All = all
@@ -67,8 +66,6 @@ func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithP
 	newSetStatement.setOperator.Offset.Count = -1
 
 	newSetStatement.setOperatorsImpl.parent = newSetStatement
-
-	newSetStatement.Clauses = []jet.Clause{&newSetStatement.setOperator}
 
 	return newSetStatement
 }

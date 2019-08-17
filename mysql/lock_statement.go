@@ -17,13 +17,13 @@ func LOCK(tables ...jet.SerializerTable) LockStatement {
 		Write: jet.ClauseOptional{Name: "WRITE"},
 	}
 
-	newLock.StatementImpl = jet.NewStatementImpl(Dialect, jet.LockStatementType, newLock, &newLock.Lock, &newLock.Read, &newLock.Write)
+	newLock.SerializerStatement = jet.NewStatementImpl(Dialect, jet.LockStatementType, newLock, &newLock.Lock, &newLock.Read, &newLock.Write)
 
 	return newLock
 }
 
 type lockStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 
 	Lock  jet.ClauseStatementBegin
 	Read  jet.ClauseOptional
@@ -46,12 +46,12 @@ func UNLOCK_TABLES() Statement {
 		Unlock: jet.ClauseStatementBegin{Name: "UNLOCK TABLES"},
 	}
 
-	newUnlock.StatementImpl = jet.NewStatementImpl(Dialect, jet.UnLockStatementType, newUnlock, &newUnlock.Unlock)
+	newUnlock.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UnLockStatementType, newUnlock, &newUnlock.Unlock)
 
 	return newUnlock
 }
 
 type unlockStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 	Unlock jet.ClauseStatementBegin
 }

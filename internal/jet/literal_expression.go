@@ -14,7 +14,7 @@ type LiteralExpression interface {
 }
 
 type literalExpressionImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	value    interface{}
 	constant bool
@@ -27,11 +27,12 @@ func literal(value interface{}, optionalConstant ...bool) *literalExpressionImpl
 		exp.constant = optionalConstant[0]
 	}
 
-	exp.ExpressionInterfaceImpl.Parent = &exp
+	exp.expressionInterfaceImpl.Parent = &exp
 
 	return &exp
 }
 
+// ConstLiteral is injected directly to SQL query, and does not appear in argument list.
 func ConstLiteral(value interface{}) *literalExpressionImpl {
 	exp := literal(value)
 	exp.constant = true
@@ -39,7 +40,7 @@ func ConstLiteral(value interface{}) *literalExpressionImpl {
 	return exp
 }
 
-func (l *literalExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (l *literalExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if l.constant {
 		out.insertConstantArgument(l.value)
 	} else {
@@ -272,46 +273,46 @@ func formatNanoseconds(nanoseconds ...time.Duration) string {
 
 //--------------------------------------------------//
 type nullLiteral struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 }
 
 func newNullLiteral() Expression {
 	nullExpression := &nullLiteral{}
 
-	nullExpression.ExpressionInterfaceImpl.Parent = nullExpression
+	nullExpression.expressionInterfaceImpl.Parent = nullExpression
 
 	return nullExpression
 }
 
-func (n *nullLiteral) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (n *nullLiteral) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("NULL")
 }
 
 //--------------------------------------------------//
 type starLiteral struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 }
 
 func newStarLiteral() Expression {
 	starExpression := &starLiteral{}
 
-	starExpression.ExpressionInterfaceImpl.Parent = starExpression
+	starExpression.expressionInterfaceImpl.Parent = starExpression
 
 	return starExpression
 }
 
-func (n *starLiteral) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (n *starLiteral) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("*")
 }
 
 //---------------------------------------------------//
 
 type wrap struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	expressions []Expression
 }
 
-func (n *wrap) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (n *wrap) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	serializeExpressionList(statement, n.expressions, ", ", out)
 	out.WriteString(")")
@@ -320,7 +321,7 @@ func (n *wrap) serialize(statement StatementType, out *SqlBuilder, options ...Se
 // WRAP wraps list of expressions with brackets '(' and ')'
 func WRAP(expression ...Expression) Expression {
 	wrap := &wrap{expressions: expression}
-	wrap.ExpressionInterfaceImpl.Parent = wrap
+	wrap.expressionInterfaceImpl.Parent = wrap
 
 	return wrap
 }
@@ -328,12 +329,12 @@ func WRAP(expression ...Expression) Expression {
 //---------------------------------------------------//
 
 type rawExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	raw string
 }
 
-func (n *rawExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(n.raw)
 }
 
@@ -341,7 +342,7 @@ func (n *rawExpression) serialize(statement StatementType, out *SqlBuilder, opti
 // For example: Raw("current_database()")
 func Raw(raw string) Expression {
 	rawExp := &rawExpression{raw: raw}
-	rawExp.ExpressionInterfaceImpl.Parent = rawExp
+	rawExp.expressionInterfaceImpl.Parent = rawExp
 
 	return rawExp
 }

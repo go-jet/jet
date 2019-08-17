@@ -20,7 +20,7 @@ func (a *alias) fromImpl(subQuery SelectTable) Projection {
 	return &column
 }
 
-func (a *alias) serializeForProjection(statement StatementType, out *SqlBuilder) {
+func (a *alias) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	a.expression.serialize(statement, out)
 
 	out.WriteString("AS")

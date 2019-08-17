@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var DefaultDialect = NewDialect(DialectParams{ // just for tests
+var defaultDialect = NewDialect(DialectParams{ // just for tests
 	AliasQuoteChar:      '"',
 	IdentifierQuoteChar: '"',
 	ArgumentPlaceholder: func(ord int) string {
@@ -47,7 +47,7 @@ var table3StrCol = StringColumn("col2")
 var table3 = NewTable("db", "table3", table3Col1, table3ColInt, table3StrCol)
 
 func assertClauseSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
-	out := SqlBuilder{Dialect: DefaultDialect}
+	out := SQLBuilder{Dialect: defaultDialect}
 	clause.serialize(SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
@@ -62,12 +62,12 @@ func assertClauseSerializeErr(t *testing.T, clause Serializer, errString string)
 		assert.Equal(t, r, errString)
 	}()
 
-	out := SqlBuilder{Dialect: DefaultDialect}
+	out := SQLBuilder{Dialect: defaultDialect}
 	clause.serialize(SelectStatementType, &out)
 }
 
 func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
-	out := SqlBuilder{Dialect: DefaultDialect, debug: true}
+	out := SQLBuilder{Dialect: defaultDialect, debug: true}
 	clause.serialize(SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
@@ -77,7 +77,7 @@ func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, a
 }
 
 func assertProjectionSerialize(t *testing.T, projection Projection, query string, args ...interface{}) {
-	out := SqlBuilder{Dialect: DefaultDialect}
+	out := SQLBuilder{Dialect: defaultDialect}
 	projection.serializeForProjection(SelectStatementType, &out)
 
 	assert.DeepEqual(t, out.Buff.String(), query)

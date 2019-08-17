@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Date creates time from t string
 func Date(t string) *time.Time {
 	newTime, err := time.Parse("2006-01-02", t)
 
@@ -15,6 +16,7 @@ func Date(t string) *time.Time {
 	return &newTime
 }
 
+// TimestampWithoutTimeZone creates time from t
 func TimestampWithoutTimeZone(t string, precision int) *time.Time {
 
 	precisionStr := ""
@@ -32,6 +34,7 @@ func TimestampWithoutTimeZone(t string, precision int) *time.Time {
 	return &newTime
 }
 
+// TimeWithoutTimeZone creates time from t
 func TimeWithoutTimeZone(t string) *time.Time {
 	newTime, err := time.Parse("15:04:05", t)
 
@@ -42,6 +45,7 @@ func TimeWithoutTimeZone(t string) *time.Time {
 	return &newTime
 }
 
+// TimeWithTimeZone creates time from t
 func TimeWithTimeZone(t string) *time.Time {
 	newTimez, err := time.Parse("15:04:05 -0700", t)
 
@@ -52,6 +56,7 @@ func TimeWithTimeZone(t string) *time.Time {
 	return &newTimez
 }
 
+// TimestampWithTimeZone creates time from t
 func TimestampWithTimeZone(t string, precision int) *time.Time {
 
 	precisionStr := ""

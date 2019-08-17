@@ -33,7 +33,7 @@ func newDialect() jet.Dialect {
 }
 
 func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator XOR")
 		}
@@ -50,7 +50,7 @@ func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
 }
 
 func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator CONCAT")
 		}
@@ -67,7 +67,7 @@ func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
 }
 
 func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator DIV")
 		}
@@ -91,7 +91,7 @@ func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
 }
 
 func mysql_IS_NOT_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}
@@ -103,7 +103,7 @@ func mysql_IS_NOT_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc
 }
 
 func mysql_IS_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		out.WriteString("NOT(")
 		mysql_IS_NOT_DISTINCT_FROM(expressions...)(statement, out, options...)
 		out.WriteString(")")
@@ -111,7 +111,7 @@ func mysql_IS_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
 }
 
 func mysql_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}
@@ -137,7 +137,7 @@ func mysql_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc
 }
 
 func mysql_NOT_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
-	return func(statement jet.StatementType, out *jet.SqlBuilder, options ...jet.SerializeOption) {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
 		}

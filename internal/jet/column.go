@@ -12,6 +12,7 @@ type Column interface {
 	defaultAlias() string
 }
 
+// ColumnExpression interface
 type ColumnExpression interface {
 	Column
 	Expression
@@ -19,7 +20,7 @@ type ColumnExpression interface {
 
 // The base type for real materialized columns.
 type columnImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	name      string
 	tableName string
@@ -33,7 +34,7 @@ func newColumn(name string, tableName string, parent ColumnExpression) columnImp
 		tableName: tableName,
 	}
 
-	bc.ExpressionInterfaceImpl.Parent = parent
+	bc.expressionInterfaceImpl.Parent = parent
 
 	return bc
 }
@@ -62,7 +63,7 @@ func (c *columnImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) {
+func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.WriteAlias(c.defaultAlias()) //always quote
@@ -73,14 +74,14 @@ func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SqlBuilde
 	c.serialize(statement, out)
 }
 
-func (c columnImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
+func (c columnImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	c.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteAlias(c.defaultAlias())
 }
 
-func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (c columnImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
@@ -129,7 +130,7 @@ func (cl columnListImpl) fromImpl(subQuery SelectTable) Projection {
 	return newProjectionList
 }
 
-func (cl columnListImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
+func (cl columnListImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	projections := ColumnListToProjectionList(cl)
 
 	SerializeProjectionList(statement, projections, out)

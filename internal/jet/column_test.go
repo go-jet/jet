@@ -4,7 +4,7 @@ import "testing"
 
 func TestColumn(t *testing.T) {
 	column := newColumn("col", "", nil)
-	column.ExpressionInterfaceImpl.Parent = &column
+	column.expressionInterfaceImpl.Parent = &column
 
 	assertClauseSerialize(t, column, "col")
 	column.setTableName("table1")

@@ -10,7 +10,8 @@ import (
 	"unicode"
 )
 
-type SqlBuilder struct {
+// SQLBuilder generates output SQL
+type SQLBuilder struct {
 	Dialect Dialect
 	Buff    bytes.Buffer
 	Args    []interface{}
@@ -23,7 +24,8 @@ type SqlBuilder struct {
 
 const defaultIdent = 5
 
-func (s *SqlBuilder) IncreaseIdent(ident ...int) {
+// IncreaseIdent adds ident or defaultIdent number of spaces to each new line
+func (s *SQLBuilder) IncreaseIdent(ident ...int) {
 	if len(ident) > 0 {
 		s.ident += ident[0]
 	} else {
@@ -31,7 +33,8 @@ func (s *SqlBuilder) IncreaseIdent(ident ...int) {
 	}
 }
 
-func (s *SqlBuilder) DecreaseIdent(ident ...int) {
+// DecreaseIdent removes ident or defaultIdent number of spaces for each new line
+func (s *SQLBuilder) DecreaseIdent(ident ...int) {
 	toDecrease := defaultIdent
 
 	if len(ident) > 0 {
@@ -45,18 +48,20 @@ func (s *SqlBuilder) DecreaseIdent(ident ...int) {
 	s.ident -= toDecrease
 }
 
-func (s *SqlBuilder) WriteProjections(statement StatementType, projections []Projection) {
+// WriteProjections func
+func (s *SQLBuilder) WriteProjections(statement StatementType, projections []Projection) {
 	s.IncreaseIdent()
 	SerializeProjectionList(statement, projections, s)
 	s.DecreaseIdent()
 }
 
-func (s *SqlBuilder) NewLine() {
+// NewLine adds new line to output SQL
+func (s *SQLBuilder) NewLine() {
 	s.write([]byte{'\n'})
 	s.write(bytes.Repeat([]byte{' '}, s.ident))
 }
 
-func (s *SqlBuilder) write(data []byte) {
+func (s *SQLBuilder) write(data []byte) {
 	if len(data) == 0 {
 		return
 	}
@@ -77,16 +82,19 @@ func isPostSeparator(b byte) bool {
 	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
 }
 
-func (s *SqlBuilder) WriteAlias(str string) {
+// WriteAlias is used to add alias to output SQL
+func (s *SQLBuilder) WriteAlias(str string) {
 	aliasQuoteChar := string(s.Dialect.AliasQuoteChar())
 	s.WriteString(aliasQuoteChar + str + aliasQuoteChar)
 }
 
-func (s *SqlBuilder) WriteString(str string) {
+// WriteString writes sting to output SQL
+func (s *SQLBuilder) WriteString(str string) {
 	s.write([]byte(str))
 }
 
-func (s *SqlBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
+// WriteIdentifier adds identifier to output SQL
+func (s *SQLBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
 	if shouldQuoteIdentifier(name) || len(alwaysQuote) > 0 {
 		identQuoteChar := string(s.Dialect.IdentifierQuoteChar())
 		s.WriteString(identQuoteChar + name + identQuoteChar)
@@ -95,19 +103,20 @@ func (s *SqlBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
 	}
 }
 
-func (s *SqlBuilder) WriteByte(b byte) {
+// WriteByte writes byte to output SQL
+func (s *SQLBuilder) WriteByte(b byte) {
 	s.write([]byte{b})
 }
 
-func (s *SqlBuilder) finalize() (string, []interface{}) {
+func (s *SQLBuilder) finalize() (string, []interface{}) {
 	return s.Buff.String() + ";\n", s.Args
 }
 
-func (s *SqlBuilder) insertConstantArgument(arg interface{}) {
+func (s *SQLBuilder) insertConstantArgument(arg interface{}) {
 	s.WriteString(argToString(arg))
 }
 
-func (s *SqlBuilder) insertParametrizedArgument(arg interface{}) {
+func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
 	if s.debug {
 		s.insertConstantArgument(arg)
 		return
@@ -139,7 +148,7 @@ func argToString(value interface{}) string {
 	case int32:
 		return strconv.FormatInt(int64(bindVal), 10)
 	case int64:
-		return strconv.FormatInt(int64(bindVal), 10)
+		return strconv.FormatInt(bindVal, 10)
 
 	case uint8:
 		return strconv.FormatUint(uint64(bindVal), 10)

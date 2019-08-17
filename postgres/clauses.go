@@ -8,7 +8,7 @@ type clauseReturning struct {
 	Projections []jet.Projection
 }
 
-func (r *clauseReturning) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
+func (r *clauseReturning) Serialize(statementType jet.StatementType, out *jet.SQLBuilder) {
 	if len(r.Projections) == 0 {
 		return
 	}

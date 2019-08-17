@@ -10,12 +10,12 @@ import (
 	"path"
 )
 
+// DBConnection contains MySQL connection details
 type DBConnection struct {
 	Host     string
 	Port     int
 	User     string
 	Password string
-	SslMode  string
 	Params   string
 
 	DBName string
@@ -31,7 +31,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	fmt.Println("Retrieving database information...")
 	// No schemas in MySQL
-	dbInfo, err := metadata.GetSchemaInfo(db, dbConn.DBName, &metadata.MySqlQuerySet{})
+	dbInfo, err := metadata.GetSchemaInfo(db, dbConn.DBName, &mySqlQuerySet{})
 
 	if err != nil {
 		return err

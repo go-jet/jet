@@ -131,7 +131,7 @@ func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) 
 
 //---------------------------------------------------//
 type binaryIntegerExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	integerInterfaceImpl
 
 	binaryOpExpression
@@ -140,7 +140,7 @@ type binaryIntegerExpression struct {
 func newBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
 	integerExpression := binaryIntegerExpression{}
 
-	integerExpression.ExpressionInterfaceImpl.Parent = &integerExpression
+	integerExpression.expressionInterfaceImpl.Parent = &integerExpression
 	integerExpression.integerInterfaceImpl.parent = &integerExpression
 
 	integerExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
@@ -150,7 +150,7 @@ func newBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) Int
 
 //---------------------------------------------------//
 type prefixIntegerOpExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	integerInterfaceImpl
 
 	prefixOpExpression
@@ -160,7 +160,7 @@ func newPrefixIntegerOperator(expression IntegerExpression, operator string) Int
 	integerExpression := prefixIntegerOpExpression{}
 	integerExpression.prefixOpExpression = newPrefixExpression(expression, operator)
 
-	integerExpression.ExpressionInterfaceImpl.Parent = &integerExpression
+	integerExpression.expressionInterfaceImpl.Parent = &integerExpression
 	integerExpression.integerInterfaceImpl.parent = &integerExpression
 
 	return &integerExpression
@@ -168,7 +168,7 @@ func newPrefixIntegerOperator(expression IntegerExpression, operator string) Int
 
 //---------------------------------------------------//
 type prefixFloatOpExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	floatInterfaceImpl
 
 	prefixOpExpression
@@ -178,7 +178,7 @@ func newPrefixFloatOperator(expression FloatExpression, operator string) FloatEx
 	floatOpExpression := prefixFloatOpExpression{}
 	floatOpExpression.prefixOpExpression = newPrefixExpression(expression, operator)
 
-	floatOpExpression.ExpressionInterfaceImpl.Parent = &floatOpExpression
+	floatOpExpression.expressionInterfaceImpl.Parent = &floatOpExpression
 	floatOpExpression.floatInterfaceImpl.parent = &floatOpExpression
 
 	return &floatOpExpression

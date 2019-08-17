@@ -22,4 +22,5 @@ const (
 	MySQLPassword = "jet"
 )
 
+// MySQLConnectionString is MySQL driver connection string to test database
 var MySQLConnectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/", MySQLUser, MySQLPassword, MySqLHost, MySQLPort)

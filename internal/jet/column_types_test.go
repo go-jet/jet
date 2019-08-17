@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-var subQuery = &SelectTableImpl{
+var subQuery = &selectTableImpl{
 	alias: "sub_query",
 }
 

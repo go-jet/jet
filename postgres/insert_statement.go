@@ -21,7 +21,7 @@ type InsertStatement interface {
 
 func newInsertStatement(table WritableTable, columns []jet.Column) InsertStatement {
 	newInsert := &insertStatementImpl{}
-	newInsert.StatementImpl = jet.NewStatementImpl(Dialect, jet.InsertStatementType, newInsert,
+	newInsert.SerializerStatement = jet.NewStatementImpl(Dialect, jet.InsertStatementType, newInsert,
 		&newInsert.Insert, &newInsert.ValuesQuery, &newInsert.Returning)
 
 	newInsert.Insert.Table = table
@@ -31,7 +31,7 @@ func newInsertStatement(table WritableTable, columns []jet.Column) InsertStateme
 }
 
 type insertStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 
 	Insert      jet.ClauseInsert
 	ValuesQuery jet.ClauseValuesQuery

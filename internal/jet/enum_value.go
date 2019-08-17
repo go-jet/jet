@@ -1,7 +1,7 @@
 package jet
 
 type enumValue struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	stringInterfaceImpl
 
 	name string
@@ -11,12 +11,12 @@ type enumValue struct {
 func NewEnumValue(name string) StringExpression {
 	enumValue := &enumValue{name: name}
 
-	enumValue.ExpressionInterfaceImpl.Parent = enumValue
+	enumValue.expressionInterfaceImpl.Parent = enumValue
 	enumValue.stringInterfaceImpl.parent = enumValue
 
 	return enumValue
 }
 
-func (e enumValue) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (e enumValue) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.insertConstantArgument(e.name)
 }

@@ -13,7 +13,8 @@ type selectLockImpl struct {
 	noWait, skipLocked bool
 }
 
-func NewSelectLock(name string) func() RowLock {
+// NewRowLock creates new RowLock
+func NewRowLock(name string) func() RowLock {
 	return func() RowLock {
 		return newSelectLock(name)
 	}
@@ -33,7 +34,7 @@ func (s *selectLockImpl) SKIP_LOCKED() RowLock {
 	return s
 }
 
-func (s *selectLockImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (s *selectLockImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(s.lockStrength)
 
 	if s.noWait {

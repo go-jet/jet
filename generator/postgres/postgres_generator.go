@@ -35,7 +35,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 	}
 
 	fmt.Println("Retrieving schema information...")
-	schemaInfo, err := metadata.GetSchemaInfo(db, dbConn.SchemaName, &metadata.PostgresQuerySet{})
+	schemaInfo, err := metadata.GetSchemaInfo(db, dbConn.SchemaName, &postgresQuerySet{})
 
 	if err != nil {
 		return err

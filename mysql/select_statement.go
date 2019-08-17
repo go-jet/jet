@@ -7,8 +7,8 @@ type RowLock = jet.RowLock
 
 // Row lock types
 var (
-	UPDATE = jet.NewSelectLock("UPDATE")
-	SHARE  = jet.NewSelectLock("SHARE")
+	UPDATE = jet.NewRowLock("UPDATE")
+	SHARE  = jet.NewRowLock("SHARE")
 )
 
 // SelectStatement is interface for MySQL SELECT statement
@@ -41,11 +41,9 @@ func SELECT(projection Projection, projections ...Projection) SelectStatement {
 
 func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 	newSelect := &selectStatementImpl{}
-	newSelect.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
+	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
 		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.OrderBy,
 		&newSelect.Limit, &newSelect.Offset, &newSelect.For, &newSelect.ShareLock)
-
-	newSelect.ExpressionStatementImpl.ExpressionInterfaceImpl.Parent = newSelect
 
 	newSelect.Select.Projections = toJetProjectionList(projections)
 	newSelect.From.Table = table
@@ -60,7 +58,7 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 }
 
 type selectStatementImpl struct {
-	jet.ExpressionStatementImpl
+	jet.ExpressionStatement
 	setOperatorsImpl
 
 	Select    jet.ClauseSelect

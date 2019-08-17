@@ -7,10 +7,10 @@ type RowLock = jet.RowLock
 
 // Row lock types
 var (
-	UPDATE        = jet.NewSelectLock("UPDATE")
-	NO_KEY_UPDATE = jet.NewSelectLock("NO KEY UPDATE")
-	SHARE         = jet.NewSelectLock("SHARE")
-	KEY_SHARE     = jet.NewSelectLock("KEY SHARE")
+	UPDATE        = jet.NewRowLock("UPDATE")
+	NO_KEY_UPDATE = jet.NewRowLock("NO KEY UPDATE")
+	SHARE         = jet.NewRowLock("SHARE")
+	KEY_SHARE     = jet.NewRowLock("KEY SHARE")
 )
 
 // SelectStatement is interface for PostgreSQL SELECT statement
@@ -46,11 +46,15 @@ func SELECT(projection Projection, projections ...Projection) SelectStatement {
 
 func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 	newSelect := &selectStatementImpl{}
-	newSelect.ExpressionStatementImpl.StatementImpl = jet.NewStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
+	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
 		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.OrderBy,
 		&newSelect.Limit, &newSelect.Offset, &newSelect.For)
 
-	newSelect.ExpressionStatementImpl.ExpressionInterfaceImpl.Parent = newSelect
+	//	statementImpl = jet.NewStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
+	//	&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.OrderBy,
+	//	&newSelect.Limit, &newSelect.Offset, &newSelect.For)
+	//
+	//newSelect.expressionStatementImpl.expressionInterfaceImpl.Parent = newSelect
 
 	newSelect.Select.Projections = toJetProjectionList(projections)
 	newSelect.From.Table = table
@@ -63,7 +67,7 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 }
 
 type selectStatementImpl struct {
-	jet.ExpressionStatementImpl
+	jet.ExpressionStatement
 	setOperatorsImpl
 
 	Select  jet.ClauseSelect

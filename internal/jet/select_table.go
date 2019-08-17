@@ -2,35 +2,37 @@ package jet
 
 // SelectTable is interface for SELECT sub-queries
 type SelectTable interface {
+	Serializer
 	Alias() string
 	AllColumns() ProjectionList
 }
 
-type SelectTableImpl struct {
+type selectTableImpl struct {
 	selectStmt StatementWithProjections
 	alias      string
 
 	projections ProjectionList
 }
 
-func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTableImpl {
-	selectTable := SelectTableImpl{selectStmt: selectStmt, alias: alias}
+// NewSelectTable func
+func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTable {
+	selectTable := selectTableImpl{selectStmt: selectStmt, alias: alias}
 
 	projectionList := selectStmt.projections().fromImpl(&selectTable)
 	selectTable.projections = projectionList.(ProjectionList)
 
-	return selectTable
+	return &selectTable
 }
 
-func (s *SelectTableImpl) Alias() string {
+func (s *selectTableImpl) Alias() string {
 	return s.alias
 }
 
-func (s *SelectTableImpl) AllColumns() ProjectionList {
+func (s *selectTableImpl) AllColumns() ProjectionList {
 	return s.projections
 }
 
-func (s *SelectTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (s *selectTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if s == nil {
 		panic("jet: expression table is nil. ")
 	}

@@ -12,5 +12,5 @@ func TestClauseSelect_Serialize(t *testing.T) {
 	}()
 
 	selectClause := &ClauseSelect{}
-	selectClause.Serialize(SelectStatementType, &SqlBuilder{})
+	selectClause.Serialize(SelectStatementType, &SQLBuilder{})
 }

@@ -4,18 +4,18 @@ import "github.com/go-jet/jet/internal/jet"
 
 // SelectTable is interface for MySQL sub-queries
 type SelectTable interface {
-	ReadableTable
+	readableTable
 	jet.SelectTable
 }
 
 type selectTableImpl struct {
-	jet.SelectTableImpl
+	jet.SelectTable
 	readableTableInterfaceImpl
 }
 
 func newSelectTable(selectStmt jet.StatementWithProjections, alias string) SelectTable {
 	subQuery := &selectTableImpl{
-		SelectTableImpl: jet.NewSelectTable(selectStmt, alias),
+		SelectTable: jet.NewSelectTable(selectStmt, alias),
 	}
 
 	subQuery.readableTableInterfaceImpl.parent = subQuery

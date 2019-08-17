@@ -482,7 +482,7 @@ func LEAST(value Expression, values ...Expression) Expression {
 //--------------------------------------------------------------------//
 
 type funcExpressionImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	name        string
 	expressions []Expression
@@ -496,15 +496,15 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	}
 
 	if parent != nil {
-		funcExp.ExpressionInterfaceImpl.Parent = parent
+		funcExp.expressionInterfaceImpl.Parent = parent
 	} else {
-		funcExp.ExpressionInterfaceImpl.Parent = funcExp
+		funcExp.expressionInterfaceImpl.Parent = funcExp
 	}
 
 	return funcExp
 }
 
-func (f *funcExpressionImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(f.expressions...)
 		serializeOverrideFunc(statement, out, options...)
@@ -545,6 +545,7 @@ type floatFunc struct {
 	floatInterfaceImpl
 }
 
+// NewFloatFunc creates new float function with name and expressions
 func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 	floatFunc := &floatFunc{}
 
@@ -629,6 +630,7 @@ type timestampFunc struct {
 	timestampInterfaceImpl
 }
 
+// NewTimestampFunc creates new timestamp function with name and expressions
 func NewTimestampFunc(name string, expressions ...Expression) *timestampFunc {
 	timestampFunc := &timestampFunc{}
 

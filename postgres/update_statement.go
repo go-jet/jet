@@ -16,7 +16,7 @@ type UpdateStatement interface {
 }
 
 type updateStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 
 	Update    jet.ClauseUpdate
 	Set       clauseSet
@@ -26,7 +26,7 @@ type updateStatementImpl struct {
 
 func newUpdateStatement(table WritableTable, columns []jet.Column) UpdateStatement {
 	update := &updateStatementImpl{}
-	update.StatementImpl = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
+	update.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
 		&update.Set, &update.Where, &update.Returning)
 
 	update.Update.Table = table
@@ -61,7 +61,7 @@ type clauseSet struct {
 	Values  []jet.Serializer
 }
 
-func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
+func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SQLBuilder) {
 	out.NewLine()
 	out.WriteString("SET")
 

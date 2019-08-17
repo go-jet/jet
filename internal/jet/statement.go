@@ -27,30 +27,34 @@ type Statement interface {
 	ExecContext(context context.Context, db execution.DB) (sql.Result, error)
 }
 
+// SerializerStatement interface
 type SerializerStatement interface {
 	Serializer
 	Statement
 }
 
+// StatementWithProjections interface
 type StatementWithProjections interface {
 	Statement
 	HasProjections
 	Serializer
 }
 
+// HasProjections interface
 type HasProjections interface {
 	projections() ProjectionList
 }
 
-type SerializerStatementInterfaceImpl struct {
+// serializerStatementInterfaceImpl struct
+type serializerStatementInterfaceImpl struct {
 	dialect       Dialect
 	statementType StatementType
 	parent        SerializerStatement
 }
 
-func (s *SerializerStatementInterfaceImpl) Sql() (query string, args []interface{}) {
+func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface{}) {
 
-	queryData := &SqlBuilder{Dialect: s.dialect}
+	queryData := &SQLBuilder{Dialect: s.dialect}
 
 	s.parent.serialize(s.statementType, queryData, noWrap)
 
@@ -58,8 +62,8 @@ func (s *SerializerStatementInterfaceImpl) Sql() (query string, args []interface
 	return
 }
 
-func (s *SerializerStatementInterfaceImpl) DebugSql() (query string) {
-	sqlBuilder := &SqlBuilder{Dialect: s.dialect, debug: true}
+func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
+	sqlBuilder := &SQLBuilder{Dialect: s.dialect, debug: true}
 
 	s.parent.serialize(s.statementType, sqlBuilder, noWrap)
 
@@ -67,41 +71,64 @@ func (s *SerializerStatementInterfaceImpl) DebugSql() (query string) {
 	return
 }
 
-func (s *SerializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
 	query, args := s.Sql()
 
 	return execution.Query(context.Background(), db, query, args, destination)
 }
 
-func (s *SerializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
 	query, args := s.Sql()
 
 	return execution.Query(context, db, query, args, destination)
 }
 
-func (s *SerializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
 	query, args := s.Sql()
 	return db.Exec(query, args...)
 }
 
-func (s *SerializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
 	query, args := s.Sql()
 
 	return db.ExecContext(context, query, args...)
 }
 
-type ExpressionStatementImpl struct {
-	ExpressionInterfaceImpl
-	StatementImpl
+// ExpressionStatement interfacess
+type ExpressionStatement interface {
+	Expression
+	Statement
+	HasProjections
 }
 
-func (s *ExpressionStatementImpl) serializeForProjection(statement StatementType, out *SqlBuilder) {
+// NewExpressionStatementImpl creates new expression statement
+func NewExpressionStatementImpl(Dialect Dialect, statementType StatementType, parent ExpressionStatement, clauses ...Clause) ExpressionStatement {
+	return &expressionStatementImpl{
+		expressionInterfaceImpl{Parent: parent},
+		statementImpl{
+			serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
+				parent:        parent,
+				dialect:       Dialect,
+				statementType: statementType,
+			},
+			Clauses: clauses,
+		},
+	}
+}
+
+type expressionStatementImpl struct {
+	expressionInterfaceImpl
+	statementImpl
+}
+
+func (s *expressionStatementImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	s.serialize(statement, out)
 }
 
-func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) StatementImpl {
-	return StatementImpl{
-		SerializerStatementInterfaceImpl: SerializerStatementInterfaceImpl{
+// NewStatementImpl creates new statementImpl
+func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) SerializerStatement {
+	return &statementImpl{
+		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
 			parent:        parent,
 			dialect:       Dialect,
 			statementType: statementType,
@@ -110,13 +137,13 @@ func NewStatementImpl(Dialect Dialect, statementType StatementType, parent Seria
 	}
 }
 
-type StatementImpl struct {
-	SerializerStatementInterfaceImpl
+type statementImpl struct {
+	serializerStatementInterfaceImpl
 
 	Clauses []Clause
 }
 
-func (s *StatementImpl) projections() ProjectionList {
+func (s *statementImpl) projections() ProjectionList {
 	for _, clause := range s.Clauses {
 		if selectClause, ok := clause.(ClauseWithProjections); ok {
 			return selectClause.projections()
@@ -126,7 +153,7 @@ func (s *StatementImpl) projections() ProjectionList {
 	return nil
 }
 
-func (s *StatementImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (s *statementImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 
 	if !contains(options, noWrap) {
 		out.WriteString("(")

@@ -5,33 +5,8 @@ import (
 	"reflect"
 )
 
-func serializeOrderByClauseList(statement StatementType, orderByClauses []OrderByClause, out *SqlBuilder) {
-
-	for i, value := range orderByClauses {
-		if i > 0 {
-			out.WriteString(", ")
-		}
-
-		value.serializeForOrderBy(statement, out)
-	}
-}
-
-func serializeGroupByClauseList(statement StatementType, clauses []GroupByClause, out *SqlBuilder) {
-
-	for i, c := range clauses {
-		if i > 0 {
-			out.WriteString(", ")
-		}
-
-		if c == nil {
-			panic("jet: nil clause")
-		}
-
-		c.serializeForGroupBy(statement, out)
-	}
-}
-
-func SerializeClauseList(statement StatementType, clauses []Serializer, out *SqlBuilder) {
+// SerializeClauseList func
+func SerializeClauseList(statement StatementType, clauses []Serializer, out *SQLBuilder) {
 
 	for i, c := range clauses {
 		if i > 0 {
@@ -46,7 +21,7 @@ func SerializeClauseList(statement StatementType, clauses []Serializer, out *Sql
 	}
 }
 
-func serializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SqlBuilder) {
+func serializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SQLBuilder) {
 
 	for i, value := range expressions {
 		if i > 0 {
@@ -57,7 +32,8 @@ func serializeExpressionList(statement StatementType, expressions []Expression, 
 	}
 }
 
-func SerializeProjectionList(statement StatementType, projections []Projection, out *SqlBuilder) {
+// SerializeProjectionList func
+func SerializeProjectionList(statement StatementType, projections []Projection, out *SQLBuilder) {
 	for i, col := range projections {
 		if i > 0 {
 			out.WriteString(",")
@@ -72,7 +48,8 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 	}
 }
 
-func SerializeColumnNames(columns []Column, out *SqlBuilder) {
+// SerializeColumnNames func
+func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	for i, col := range columns {
 		if i > 0 {
 			out.WriteString(", ")
@@ -86,6 +63,7 @@ func SerializeColumnNames(columns []Column, out *SqlBuilder) {
 	}
 }
 
+// ColumnListToProjectionList func
 func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
 	var ret []Projection
 
@@ -104,6 +82,7 @@ func valueToClause(value interface{}) Serializer {
 	return literal(value)
 }
 
+// UnwindRowFromModel func
 func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 	structValue := reflect.Indirect(reflect.ValueOf(data))
 
@@ -135,6 +114,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 	return row
 }
 
+// UnwindRowsFromModels func
 func UnwindRowsFromModels(columns []Column, data interface{}) [][]Serializer {
 	sliceValue := reflect.Indirect(reflect.ValueOf(data))
 	utils.ValueMustBe(sliceValue, reflect.Slice, "jet: data has to be a slice.")
@@ -150,6 +130,7 @@ func UnwindRowsFromModels(columns []Column, data interface{}) [][]Serializer {
 	return rows
 }
 
+// UnwindRowFromValues func
 func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
 	row := []Serializer{}
 
@@ -160,4 +141,38 @@ func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
 	}
 
 	return row
+}
+
+// UnwindColumns func
+func UnwindColumns(column1 Column, columns ...Column) []Column {
+	columnList := []Column{}
+
+	if val, ok := column1.(IColumnList); ok {
+		for _, col := range val.columns() {
+			columnList = append(columnList, col)
+		}
+		columnList = append(columnList, columns...)
+	} else {
+		columnList = append(columnList, column1)
+		columnList = append(columnList, columns...)
+	}
+
+	return columnList
+}
+
+// UnwidColumnList func
+func UnwidColumnList(columns []Column) []Column {
+	ret := []Column{}
+
+	for _, col := range columns {
+		if columnList, ok := col.(IColumnList); ok {
+			for _, c := range columnList.columns() {
+				ret = append(ret, c)
+			}
+		} else {
+			ret = append(ret, col)
+		}
+	}
+
+	return ret
 }

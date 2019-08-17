@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// GenerateFiles generates Go files from tables and enums metadata
 func GenerateFiles(destDir string, tables, enums []metadata.MetaData, dialect jet.Dialect) error {
 	if len(tables) == 0 && len(enums) == 0 {
 		return nil

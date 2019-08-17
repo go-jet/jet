@@ -1,5 +1,6 @@
 package jet
 
+// Operators
 const (
 	StringConcatOperator        = "||"
 	StringRegexpLikeOperator    = "REGEXP"
@@ -78,7 +79,7 @@ type CaseOperator interface {
 }
 
 type caseOperatorImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	expression Expression
 	when       []Expression
@@ -94,7 +95,7 @@ func CASE(expression ...Expression) CaseOperator {
 		caseExp.expression = expression[0]
 	}
 
-	caseExp.ExpressionInterfaceImpl.Parent = caseExp
+	caseExp.expressionInterfaceImpl.Parent = caseExp
 
 	return caseExp
 }
@@ -115,7 +116,7 @@ func (c *caseOperatorImpl) ELSE(els Expression) CaseOperator {
 	return c
 }
 
-func (c *caseOperatorImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (c *caseOperatorImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(CASE")
 
 	if c.expression != nil {

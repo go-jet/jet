@@ -13,7 +13,7 @@ type UpdateStatement interface {
 }
 
 type updateStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 
 	Update jet.ClauseUpdate
 	Set    jet.ClauseSet
@@ -22,7 +22,7 @@ type updateStatementImpl struct {
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 	update := &updateStatementImpl{}
-	update.StatementImpl = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
+	update.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
 		&update.Set, &update.Where)
 
 	update.Update.Table = table

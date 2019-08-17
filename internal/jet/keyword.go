@@ -14,6 +14,6 @@ var (
 
 type keywordClause string
 
-func (k keywordClause) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (k keywordClause) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(string(k))
 }

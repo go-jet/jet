@@ -20,6 +20,7 @@ type ColumnMetaData struct {
 	GoModelType          string
 }
 
+// NewColumnMetaData create new column meta data that describes one column in SQL database
 func NewColumnMetaData(name string, isNullable bool, dataType string, enumName string, isUnsigned bool) ColumnMetaData {
 	columnMetaData := ColumnMetaData{
 		Name:       name,

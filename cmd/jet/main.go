@@ -82,7 +82,8 @@ Usage:
 	var err error
 
 	switch strings.ToLower(strings.TrimSpace(source)) {
-	case strings.ToLower(postgres.Dialect.Name()):
+	case strings.ToLower(postgres.Dialect.Name()),
+		strings.ToLower(postgres.Dialect.PackageName()):
 		genData := postgresgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -104,7 +105,6 @@ Usage:
 			Port:     port,
 			User:     user,
 			Password: password,
-			SslMode:  sslmode,
 			Params:   params,
 			DBName:   dbName,
 		}

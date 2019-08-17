@@ -14,6 +14,7 @@ import (
 	"testing"
 )
 
+// AssertExec assert statement execution for successful execution and number of rows affected
 func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected ...int64) {
 	res, err := stmt.Exec(db)
 
@@ -26,6 +27,7 @@ func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected 
 	}
 }
 
+// AssertExecErr assert statement execution for failed execution with error string errorStr
 func AssertExecErr(t *testing.T, stmt jet.Statement, db execution.DB, errorStr string) {
 	_, err := stmt.Exec(db)
 
@@ -37,11 +39,13 @@ func getFullPath(relativePath string) string {
 	return filepath.Join(goPath, "src/github.com/go-jet/jet/tests", relativePath)
 }
 
+// PrintJson print v as json
 func PrintJson(v interface{}) {
 	jsonText, _ := json.MarshalIndent(v, "", "\t")
 	fmt.Println(string(jsonText))
 }
 
+// AssertJSON check if data json output is the same as expectedJSON
 func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
 	assert.NilError(t, err)
@@ -49,7 +53,8 @@ func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
 
-func SaveJsonFile(v interface{}, testRelativePath string) {
+// SaveJSONFile saves v as json at testRelativePath
+func SaveJSONFile(v interface{}, testRelativePath string) {
 	jsonText, _ := json.MarshalIndent(v, "", "\t")
 
 	filePath := getFullPath(testRelativePath)
@@ -60,6 +65,7 @@ func SaveJsonFile(v interface{}, testRelativePath string) {
 	}
 }
 
+// AssertJSONFile check if data json representation is the same as json at testRelativePath
 func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 
 	filePath := getFullPath(testRelativePath)
@@ -77,6 +83,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 	//assert.DeepEqual(t, string(fileJSONData), string(jsonData))
 }
 
+// AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args := query.Sql()
 	assert.Equal(t, queryStr, expectedQuery)
@@ -87,6 +94,7 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 	assert.DeepEqual(t, args, expectedArgs)
 }
 
+// AssertStatementSqlErr checks if statement Sql() panics with errorStr
 func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
 	defer func() {
 		r := recover()
@@ -96,6 +104,7 @@ func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
 	stmt.Sql()
 }
 
+// AssertDebugStatementSql check if statement Sql() is the same as expectedQuery
 func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	_, args := query.Sql()
 
@@ -107,8 +116,9 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	assert.Equal(t, debuqSql, expectedQuery)
 }
 
+// AssertClauseSerialize checks if clause serialize produces expected query and args
 func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
-	out := jet.SqlBuilder{Dialect: dialect}
+	out := jet.SQLBuilder{Dialect: dialect}
 	jet.Serialize(clause, jet.SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
@@ -120,24 +130,27 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Seriali
 	}
 }
 
+// AssertClauseSerializeErr check if clause serialize panics with errString
 func AssertClauseSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer, errString string) {
 	defer func() {
 		r := recover()
 		assert.Equal(t, r, errString)
 	}()
 
-	out := jet.SqlBuilder{Dialect: dialect}
+	out := jet.SQLBuilder{Dialect: dialect}
 	jet.Serialize(clause, jet.SelectStatementType, &out)
 }
 
+// AssertProjectionSerialize check if projection serialize produces expected query and args
 func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet.Projection, query string, args ...interface{}) {
-	out := jet.SqlBuilder{Dialect: dialect}
+	out := jet.SQLBuilder{Dialect: dialect}
 	jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
 
 	assert.DeepEqual(t, out.Buff.String(), query)
 	assert.DeepEqual(t, out.Args, args)
 }
 
+// AssertQueryPanicErr check if statement Query execution panics with error errString
 func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db execution.DB, dest interface{}, errString string) {
 	defer func() {
 		r := recover()

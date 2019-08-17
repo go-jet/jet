@@ -1,8 +1,8 @@
 package jet
 
-// OrderByClause
+// OrderByClause interface
 type OrderByClause interface {
-	serializeForOrderBy(statement StatementType, out *SqlBuilder)
+	serializeForOrderBy(statement StatementType, out *SQLBuilder)
 }
 
 type orderByClauseImpl struct {
@@ -10,7 +10,7 @@ type orderByClauseImpl struct {
 	ascent     bool
 }
 
-func (o *orderByClauseImpl) serializeForOrderBy(statement StatementType, out *SqlBuilder) {
+func (o *orderByClauseImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	if o.expression == nil {
 		panic("jet: nil expression in ORDER BY clause")
 	}

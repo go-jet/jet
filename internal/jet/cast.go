@@ -1,40 +1,42 @@
 package jet
 
+// Cast interface
 type Cast interface {
 	AS(castType string) Expression
 }
 
-type CastImpl struct {
+type castImpl struct {
 	expression Expression
 }
 
+// NewCastImpl creates new generic cast
 func NewCastImpl(expression Expression) Cast {
-	castImpl := CastImpl{
+	castImpl := castImpl{
 		expression: expression,
 	}
 
 	return &castImpl
 }
 
-func (b *CastImpl) AS(castType string) Expression {
+func (b *castImpl) AS(castType string) Expression {
 	castExp := &castExpression{
 		expression: b.expression,
 		cast:       string(castType),
 	}
 
-	castExp.ExpressionInterfaceImpl.Parent = castExp
+	castExp.expressionInterfaceImpl.Parent = castExp
 
 	return castExp
 }
 
 type castExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	expression Expression
 	cast       string
 }
 
-func (b *castExpression) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (b *castExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 
 	expression := b.expression
 	castType := b.cast

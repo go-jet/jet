@@ -79,7 +79,7 @@ func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectU
 // NewTable creates new table with schema Name, table Name and list of columns
 func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 	t := &tableImpl{
-		TableImpl: jet.NewTable(schemaName, name, columns...),
+		SerializerTable: jet.NewTable(schemaName, name, columns...),
 	}
 
 	t.readableTableInterfaceImpl.parent = t
@@ -89,7 +89,7 @@ func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 }
 
 type tableImpl struct {
-	jet.TableImpl
+	jet.SerializerTable
 	readableTableInterfaceImpl
 	parent Table
 }
@@ -110,14 +110,14 @@ func (t *tableImpl) LOCK() LockStatement {
 	return LOCK(t.parent)
 }
 
-type joinTable2 struct {
+type joinTable struct {
 	tableImpl
-	jet.JoinTableImpl
+	jet.JoinTable
 }
 
 func newJoinTable(lhs jet.Serializer, rhs jet.Serializer, joinType jet.JoinType, onCondition BoolExpression) Table {
-	newJoinTable := &joinTable2{
-		JoinTableImpl: jet.NewJoinTableImpl(lhs, rhs, joinType, onCondition),
+	newJoinTable := &joinTable{
+		JoinTable: jet.NewJoinTable(lhs, rhs, joinType, onCondition),
 	}
 
 	newJoinTable.readableTableInterfaceImpl.parent = newJoinTable

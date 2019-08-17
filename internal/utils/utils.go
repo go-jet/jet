@@ -142,7 +142,7 @@ func FormatTimestamp(t time.Time) []byte {
 	return b
 }
 
-// IsNill check if v is nil
+// IsNil check if v is nil
 func IsNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }

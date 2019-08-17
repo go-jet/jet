@@ -82,7 +82,7 @@ func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSens
 //---------------------------------------------------//
 
 type binaryStringExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	stringInterfaceImpl
 
 	binaryOpExpression
@@ -92,7 +92,7 @@ func newBinaryStringExpression(lhs, rhs Expression, operator string) StringExpre
 	boolExpression := binaryStringExpression{}
 
 	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
-	boolExpression.ExpressionInterfaceImpl.Parent = &boolExpression
+	boolExpression.expressionInterfaceImpl.Parent = &boolExpression
 	boolExpression.stringInterfaceImpl.parent = &boolExpression
 
 	return &boolExpression

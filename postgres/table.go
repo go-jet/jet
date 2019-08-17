@@ -101,18 +101,18 @@ func (w *writableTableInterfaceImpl) LOCK() LockStatement {
 	return LOCK(w.parent)
 }
 
-type table2Impl struct {
+type tableImpl struct {
 	readableTableInterfaceImpl
 	writableTableInterfaceImpl
 
-	jet.TableImpl
+	jet.SerializerTable
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
 func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 
-	t := &table2Impl{
-		TableImpl: jet.NewTable(schemaName, name, columns...),
+	t := &tableImpl{
+		SerializerTable: jet.NewTable(schemaName, name, columns...),
 	}
 
 	t.readableTableInterfaceImpl.parent = t
@@ -121,14 +121,14 @@ func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 	return t
 }
 
-type joinTable2 struct {
+type joinTable struct {
 	readableTableInterfaceImpl
-	jet.JoinTableImpl
+	jet.JoinTable
 }
 
 func newJoinTable(lhs jet.Serializer, rhs jet.Serializer, joinType jet.JoinType, onCondition BoolExpression) ReadableTable {
-	newJoinTable := &joinTable2{
-		JoinTableImpl: jet.NewJoinTableImpl(lhs, rhs, joinType, onCondition),
+	newJoinTable := &joinTable{
+		JoinTable: jet.NewJoinTable(lhs, rhs, joinType, onCondition),
 	}
 
 	newJoinTable.readableTableInterfaceImpl.parent = newJoinTable

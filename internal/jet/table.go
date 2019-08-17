@@ -4,11 +4,13 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 )
 
+// SerializerTable interface
 type SerializerTable interface {
 	Serializer
 	Table
 }
 
+// Table interface
 type Table interface {
 	columns() []Column
 	SchemaName() string
@@ -17,9 +19,9 @@ type Table interface {
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, columns ...ColumnExpression) TableImpl {
+func NewTable(schemaName, name string, columns ...ColumnExpression) SerializerTable {
 
-	t := TableImpl{
+	t := tableImpl{
 		schemaName: schemaName,
 		name:       name,
 		columnList: columns,
@@ -29,17 +31,17 @@ func NewTable(schemaName, name string, columns ...ColumnExpression) TableImpl {
 		c.setTableName(name)
 	}
 
-	return t
+	return &t
 }
 
-type TableImpl struct {
+type tableImpl struct {
 	schemaName string
 	name       string
 	alias      string
 	columnList []ColumnExpression
 }
 
-func (t *TableImpl) AS(alias string) {
+func (t *tableImpl) AS(alias string) {
 	t.alias = alias
 
 	for _, c := range t.columnList {
@@ -47,15 +49,15 @@ func (t *TableImpl) AS(alias string) {
 	}
 }
 
-func (t *TableImpl) SchemaName() string {
+func (t *tableImpl) SchemaName() string {
 	return t.schemaName
 }
 
-func (t *TableImpl) TableName() string {
+func (t *tableImpl) TableName() string {
 	return t.name
 }
 
-func (t *TableImpl) columns() []Column {
+func (t *tableImpl) columns() []Column {
 	ret := []Column{}
 
 	for _, col := range t.columnList {
@@ -65,7 +67,7 @@ func (t *TableImpl) columns() []Column {
 	return ret
 }
 
-func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (t *tableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
 		panic("jet: tableImpl is nil")
 	}
@@ -80,8 +82,10 @@ func (t *TableImpl) serialize(statement StatementType, out *SqlBuilder, options 
 	}
 }
 
+// JoinType is type of table join
 type JoinType int
 
+// Table join types
 const (
 	InnerJoin JoinType = iota
 	LeftJoin
@@ -91,37 +95,44 @@ const (
 )
 
 // Join expressions are pseudo readable tables.
-type JoinTableImpl struct {
+type joinTableImpl struct {
 	lhs         Serializer
 	rhs         Serializer
 	joinType    JoinType
 	onCondition BoolExpression
 }
 
-func NewJoinTableImpl(lhs Serializer, rhs Serializer, joinType JoinType, onCondition BoolExpression) JoinTableImpl {
+// JoinTable interface
+type JoinTable SerializerTable
 
-	joinTable := JoinTableImpl{
+// NewJoinTable creates new join table
+func NewJoinTable(lhs Serializer, rhs Serializer, joinType JoinType, onCondition BoolExpression) JoinTable {
+
+	joinTable := joinTableImpl{
 		lhs:         lhs,
 		rhs:         rhs,
 		joinType:    joinType,
 		onCondition: onCondition,
 	}
 
-	return joinTable
+	return &joinTable
 }
 
-func (t *JoinTableImpl) SchemaName() string {
+func (t *joinTableImpl) SchemaName() string {
 	if table, ok := t.lhs.(Table); ok {
 		return table.SchemaName()
 	}
 	return ""
 }
 
-func (t *JoinTableImpl) TableName() string {
+func (t *joinTableImpl) TableName() string {
 	return ""
 }
 
-func (t *JoinTableImpl) Columns() []Column {
+func (t *joinTableImpl) AS(alias string) {
+}
+
+func (t *joinTableImpl) columns() []Column {
 	var ret []Column
 
 	if lhsTable, ok := t.lhs.(Table); ok {
@@ -134,7 +145,7 @@ func (t *JoinTableImpl) Columns() []Column {
 	return ret
 }
 
-func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, options ...SerializeOption) {
+func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
 		panic("jet: Join table is nil. ")
 	}
@@ -174,36 +185,4 @@ func (t *JoinTableImpl) serialize(statement StatementType, out *SqlBuilder, opti
 		out.WriteString("ON")
 		t.onCondition.serialize(statement, out)
 	}
-}
-
-func UnwindColumns(column1 Column, columns ...Column) []Column {
-	columnList := []Column{}
-
-	if val, ok := column1.(IColumnList); ok {
-		for _, col := range val.columns() {
-			columnList = append(columnList, col)
-		}
-		columnList = append(columnList, columns...)
-	} else {
-		columnList = append(columnList, column1)
-		columnList = append(columnList, columns...)
-	}
-
-	return columnList
-}
-
-func UnwidColumnList(columns []Column) []Column {
-	ret := []Column{}
-
-	for _, col := range columns {
-		if columnList, ok := col.(IColumnList); ok {
-			for _, c := range columnList.columns() {
-				ret = append(ret, c)
-			}
-		} else {
-			ret = append(ret, col)
-		}
-	}
-
-	return ret
 }

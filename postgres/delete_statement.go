@@ -12,7 +12,7 @@ type DeleteStatement interface {
 }
 
 type deleteStatementImpl struct {
-	jet.StatementImpl
+	jet.SerializerStatement
 
 	Delete    jet.ClauseStatementBegin
 	Where     jet.ClauseWhere
@@ -21,7 +21,7 @@ type deleteStatementImpl struct {
 
 func newDeleteStatement(table WritableTable) DeleteStatement {
 	newDelete := &deleteStatementImpl{}
-	newDelete.StatementImpl = jet.NewStatementImpl(Dialect, jet.DeleteStatementType, newDelete, &newDelete.Delete,
+	newDelete.SerializerStatement = jet.NewStatementImpl(Dialect, jet.DeleteStatementType, newDelete, &newDelete.Delete,
 		&newDelete.Where, &newDelete.Returning)
 
 	newDelete.Delete.Name = "DELETE FROM"
