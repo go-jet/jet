@@ -2,6 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/internal/jet"
 
+// DeleteStatement is interface for PostgreSQL DELETE statement
 type DeleteStatement interface {
 	Statement
 
@@ -15,7 +16,7 @@ type deleteStatementImpl struct {
 
 	Delete    jet.ClauseStatementBegin
 	Where     jet.ClauseWhere
-	Returning ClauseReturning
+	Returning clauseReturning
 }
 
 func newDeleteStatement(table WritableTable) DeleteStatement {

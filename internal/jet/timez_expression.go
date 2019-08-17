@@ -1,6 +1,6 @@
 package jet
 
-// TimezExpression interface 'time with time zone'
+// TimezExpression interface for 'time with time zone' types
 type TimezExpression interface {
 	Expression
 

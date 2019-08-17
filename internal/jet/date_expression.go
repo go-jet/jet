@@ -1,6 +1,6 @@
 package jet
 
-// DateExpression is interface for all SQL date expressions.
+// DateExpression is interface for date types
 type DateExpression interface {
 	Expression
 

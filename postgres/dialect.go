@@ -5,9 +5,10 @@ import (
 	"strconv"
 )
 
-var Dialect = NewDialect()
+// Dialect is implementation of postgres dialect for SQL Builder serialisation.
+var Dialect = newDialect()
 
-func NewDialect() jet.Dialect {
+func newDialect() jet.Dialect {
 
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
 	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgres_REGEXP_LIKE_operator

@@ -60,7 +60,7 @@ type integerLiteralExpression struct {
 	integerInterfaceImpl
 }
 
-// Int is constructor for integer expressions literals.
+// Int creates new integer literal
 func Int(value int64) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
@@ -94,7 +94,7 @@ type floatLiteral struct {
 	literalExpressionImpl
 }
 
-// Float creates new float literal expression
+// Float creates new float literal
 func Float(value float64) FloatExpression {
 	floatLiteral := floatLiteral{}
 	floatLiteral.literalExpressionImpl = *literal(value)
@@ -139,6 +139,7 @@ func Time(hour, minute, second int, nanoseconds ...time.Duration) TimeExpression
 	return timeLiteral
 }
 
+// TimeT creates new time literal expression from time.Time object
 func TimeT(t time.Time) TimeExpression {
 	timeLiteral := &timeLiteral{}
 	timeLiteral.literalExpressionImpl = *literal(t)
@@ -165,6 +166,7 @@ func Timez(hour, minute, second int, nanoseconds time.Duration, timezone string)
 	return TimezExp(literal(timeStr))
 }
 
+// TimezT creates new time with time zone literal expression from time.Time object
 func TimezT(t time.Time) TimezExpression {
 	timeLiteral := &timezLiteral{}
 	timeLiteral.literalExpressionImpl = *literal(t)
@@ -190,6 +192,7 @@ func Timestamp(year int, month time.Month, day, hour, minute, second int, nanose
 	return timestamp
 }
 
+// TimestampT creates new timestamp literal expression from time.Time object
 func TimestampT(t time.Time) TimestampExpression {
 	timestamp := &timestampLiteral{}
 	timestamp.literalExpressionImpl = *literal(t)
@@ -204,7 +207,7 @@ type timestampzLiteral struct {
 	literalExpressionImpl
 }
 
-// Timestamp creates new timestamp literal expression
+// Timestampz creates new timestamp with time zone literal expression
 func Timestampz(year int, month time.Month, day, hour, minute, second int, nanoseconds time.Duration, timezone string) TimestampzExpression {
 	timestamp := &timestampzLiteral{}
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
@@ -216,6 +219,7 @@ func Timestampz(year int, month time.Month, day, hour, minute, second int, nanos
 	return timestamp
 }
 
+// TimestampzT creates new timestamp literal expression from time.Time object
 func TimestampzT(t time.Time) TimestampzExpression {
 	timestamp := &timestampzLiteral{}
 	timestamp.literalExpressionImpl = *literal(t)
@@ -230,7 +234,7 @@ type dateLiteral struct {
 	literalExpressionImpl
 }
 
-//Date creates new date expression
+// Date creates new date literal expression
 func Date(year int, month time.Month, day int) DateExpression {
 	dateLiteral := &dateLiteral{}
 
@@ -241,6 +245,7 @@ func Date(year int, month time.Month, day int) DateExpression {
 	return dateLiteral
 }
 
+// DateT creates new date literal expression from time.Time object
 func DateT(t time.Time) DateExpression {
 	dateLiteral := &dateLiteral{}
 	dateLiteral.literalExpressionImpl = *literal(t)

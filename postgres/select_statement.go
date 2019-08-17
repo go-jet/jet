@@ -2,8 +2,10 @@ package postgres
 
 import "github.com/go-jet/jet/internal/jet"
 
+// RowLock is interface for SELECT statement row lock types
 type RowLock = jet.RowLock
 
+// Row lock types
 var (
 	UPDATE        = jet.NewSelectLock("UPDATE")
 	NO_KEY_UPDATE = jet.NewSelectLock("NO KEY UPDATE")
@@ -11,6 +13,7 @@ var (
 	KEY_SHARE     = jet.NewSelectLock("KEY SHARE")
 )
 
+// SelectStatement is interface for PostgreSQL SELECT statement
 type SelectStatement interface {
 	Statement
 	jet.HasProjections

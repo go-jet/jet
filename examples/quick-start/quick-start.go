@@ -16,16 +16,16 @@ import (
 )
 
 const (
-	Host     = "localhost"
-	Port     = 5432
-	User     = "jet"
-	Password = "jet"
-	DBName   = "jetdb"
+	host     = "localhost"
+	port     = 5432
+	user     = "jet"
+	password = "jet"
+	dbName   = "jetdb"
 )
 
 func main() {
 	// Connect to database
-	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", Host, Port, User, Password, DBName)
+	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", connectString)
 	panicOnError(err)

@@ -2,6 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/internal/jet"
 
+// TableLockMode is a type of possible SQL table lock
 type TableLockMode string
 
 // Lock types for LockStatement.
@@ -16,6 +17,7 @@ const (
 	LOCK_ACCESS_EXCLUSIVE       TableLockMode = "ACCESS EXCLUSIVE"
 )
 
+// LockStatement is interface for MySQL LOCK tables
 type LockStatement interface {
 	Statement
 
@@ -23,6 +25,7 @@ type LockStatement interface {
 	NOWAIT() LockStatement
 }
 
+// LOCK creates LockStatement from list of tables
 func LOCK(tables ...jet.SerializerTable) LockStatement {
 	newLock := &lockStatementImpl{}
 	newLock.StatementImpl = jet.NewStatementImpl(Dialect, jet.LockStatementType, newLock,

@@ -46,6 +46,7 @@ type castImpl struct {
 	jet.Cast
 }
 
+// CAST function converts a expr (of any type) into latter specified datatype.
 func CAST(expr Expression) cast {
 	castImpl := &castImpl{}
 
@@ -54,14 +55,17 @@ func CAST(expr Expression) cast {
 	return castImpl
 }
 
+// Cast expression as castType
 func (b *castImpl) AS(castType string) Expression {
 	return b.Cast.AS(castType)
 }
 
+// Cast expression as bool type
 func (b *castImpl) AS_BOOL() BoolExpression {
 	return BoolExp(b.AS("boolean"))
 }
 
+// Cast expression as smallint type
 func (b *castImpl) AS_SMALLINT() IntegerExpression {
 	return IntExp(b.AS("smallint"))
 }

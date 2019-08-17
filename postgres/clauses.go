@@ -4,11 +4,11 @@ import (
 	"github.com/go-jet/jet/internal/jet"
 )
 
-type ClauseReturning struct {
+type clauseReturning struct {
 	Projections []jet.Projection
 }
 
-func (r *ClauseReturning) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
+func (r *clauseReturning) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
 	if len(r.Projections) == 0 {
 		return
 	}

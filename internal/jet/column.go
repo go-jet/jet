@@ -98,6 +98,8 @@ func (c columnImpl) serialize(statement StatementType, out *SqlBuilder, options 
 
 //------------------------------------------------------//
 
+// IColumnList is used to store list of columns for later reuse as single projection or
+// column list for UPDATE and INSERT statement.
 type IColumnList interface {
 	Projection
 	Column
@@ -105,6 +107,7 @@ type IColumnList interface {
 	columns() []ColumnExpression
 }
 
+// ColumnList function returns list of columns that be used as projection or column list for UPDATE and INSERT statement.
 func ColumnList(columns ...ColumnExpression) IColumnList {
 	return columnListImpl(columns)
 }

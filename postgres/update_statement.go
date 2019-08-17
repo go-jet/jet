@@ -19,9 +19,9 @@ type updateStatementImpl struct {
 	jet.StatementImpl
 
 	Update    jet.ClauseUpdate
-	Set       ClauseSet
+	Set       clauseSet
 	Where     jet.ClauseWhere
-	Returning ClauseReturning
+	Returning clauseReturning
 }
 
 func newUpdateStatement(table WritableTable, columns []jet.Column) UpdateStatement {
@@ -56,12 +56,12 @@ func (u *updateStatementImpl) RETURNING(projections ...jet.Projection) UpdateSta
 	return u
 }
 
-type ClauseSet struct {
+type clauseSet struct {
 	Columns []jet.Column
 	Values  []jet.Serializer
 }
 
-func (s *ClauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
+func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SqlBuilder) {
 	out.NewLine()
 	out.WriteString("SET")
 

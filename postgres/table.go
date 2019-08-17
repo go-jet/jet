@@ -2,6 +2,13 @@ package postgres
 
 import "github.com/go-jet/jet/internal/jet"
 
+// Table is interface for MySQL tables
+type Table interface {
+	readableTable
+	writableTable
+	jet.SerializerTable
+}
+
 type readableTable interface {
 	// Generates a select query on the current tableName.
 	SELECT(projection Projection, projections ...Projection) SelectStatement
@@ -35,16 +42,11 @@ type ReadableTable interface {
 	jet.Serializer
 }
 
+// WritableTable interface
 type WritableTable interface {
 	jet.Table
 	writableTable
 	jet.Serializer
-}
-
-type Table interface {
-	readableTable
-	writableTable
-	jet.SerializerTable
 }
 
 type readableTableInterfaceImpl struct {
@@ -106,6 +108,7 @@ type table2Impl struct {
 	jet.TableImpl
 }
 
+// NewTable creates new table with schema Name, table Name and list of columns
 func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 
 	t := &table2Impl{

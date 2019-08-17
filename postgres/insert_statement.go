@@ -35,7 +35,7 @@ type insertStatementImpl struct {
 
 	Insert      jet.ClauseInsert
 	ValuesQuery jet.ClauseValuesQuery
-	Returning   ClauseReturning
+	Returning   clauseReturning
 }
 
 func (i *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
