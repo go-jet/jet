@@ -98,7 +98,7 @@ Usage:
 
 		err = postgresgen.Generate(destDir, genData)
 
-	case strings.ToLower(mysql.Dialect.Name()):
+	case strings.ToLower(mysql.Dialect.Name()), "mariadb":
 
 		dbConn := mysqlgen.DBConnection{
 			Host:     host,
