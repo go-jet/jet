@@ -161,7 +161,7 @@ stmt := SELECT(
     Film.FilmID.ASC(),
 )
 ```
-Package(dot) import is used so that statement resemble as much as possible as native SQL. Note that every column has a type. String column `Language.Name` and `Category.Name` can be compared only with 
+Package(dot) import is used so that statement would resemble as much as possible as native SQL. Note that every column has a type. String column `Language.Name` and `Category.Name` can be compared only with 
 string columns and expressions. `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns 
 and can be compared only with integer columns and expressions.
 
@@ -219,7 +219,7 @@ __How to get debug SQL from statement?__
  ```go
 debugSql := stmt.DebugSql()
 ```
-debugSql - query string that can be copy pasted to sql editor and executed. It's not intended to be used in production.
+debugSql - query string that can be copy pasted to sql editor and executed. __It's not intended to be used in production!!!__
 
 <details>
   <summary>Click to see debug sql</summary>

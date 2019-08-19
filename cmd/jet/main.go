@@ -29,7 +29,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&source, "source", "", "Database system name (PostgreSQL or MySQL)")
+	flag.StringVar(&source, "source", "", "Database system name (PostgreSQL, MySQL or MariaDB)")
 
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
@@ -37,8 +37,8 @@ func init() {
 	flag.StringVar(&password, "password", "", "The user’s password")
 	flag.StringVar(&params, "params", "", "Additional connection string parameters(optional)")
 	flag.StringVar(&dbName, "dbname", "", "Database name")
-	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public") (ignored for MySQL)`)
-	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL(optional)(default "disable") (ignored for MySQL)`)
+	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public") (ignored for MySQL and MariaDB)`)
+	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL(optional)(default "disable") (ignored for MySQL and MariaDB)`)
 
 	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
 }
@@ -51,7 +51,7 @@ Jet generator 2.0.0
 
 Usage:
   -source string
-    	Database system name (PostgreSQL or MySQL)
+    	Database system name (PostgreSQL, MySQL or MariaDB)
   -host string
         Database host path (Example: localhost)
   -port int
@@ -65,9 +65,9 @@ Usage:
   -params string
         Additional connection string parameters(optional)
   -schema string
-        Database schema name. (default "public") (ignored for MySQL)
+        Database schema name. (default "public") (ignored for MySQL and MariaDB)
   -sslmode string
-        Whether or not to use SSL(optional) (default "disable") (ignored for MySQL)
+        Whether or not to use SSL(optional) (default "disable") (ignored for MySQL and MariaDB)
   -path string
         Destination dir for files generated.
 `)

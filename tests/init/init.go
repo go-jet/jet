@@ -67,9 +67,7 @@ func initMySQLDB() {
 			Port:     dbconfig.MySQLPort,
 			User:     dbconfig.MySQLUser,
 			Password: dbconfig.MySQLPassword,
-			//SslMode:
-			//Params
-			DBName: dbName,
+			DBName:   dbName,
 		})
 
 		panicOnError(err)
