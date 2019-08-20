@@ -2,7 +2,7 @@ package dbconfig
 
 import "fmt"
 
-// test database connection parameters
+// Postgres test database connection parameters
 const (
 	Host     = "localhost"
 	Port     = 5432
@@ -11,5 +11,16 @@ const (
 	DBName   = "jetdb"
 )
 
-// ConnectString is PostgreSQL connection string
-var ConnectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", Host, Port, User, Password, DBName)
+// PostgresConnectString is PostgreSQL test database connection string
+var PostgresConnectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", Host, Port, User, Password, DBName)
+
+// MySQL test database connection parameters
+const (
+	MySqLHost     = "localhost"
+	MySQLPort     = 3306
+	MySQLUser     = "jet"
+	MySQLPassword = "jet"
+)
+
+// MySQLConnectionString is MySQL driver connection string to test database
+var MySQLConnectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/", MySQLUser, MySQLPassword, MySqLHost, MySQLPort)

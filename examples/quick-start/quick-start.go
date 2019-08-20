@@ -9,24 +9,23 @@ import (
 
 	// dot import so go code would resemble as much as native SQL
 	// dot import is not mandatory
-	. "github.com/go-jet/jet"
 	. "github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/table"
+	. "github.com/go-jet/jet/postgres"
 
 	"github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/model"
 )
 
 const (
-	Host     = "localhost"
-	Port     = 5432
-	User     = "jet"
-	Password = "jet"
-	DBName   = "jetdb"
+	host     = "localhost"
+	port     = 5432
+	user     = "jet"
+	password = "jet"
+	dbName   = "jetdb"
 )
 
 func main() {
-
 	// Connect to database
-	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", Host, Port, User, Password, DBName)
+	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", connectString)
 	panicOnError(err)
@@ -97,17 +96,15 @@ func jsonSave(path string, v interface{}) {
 	}
 }
 
-func printStatementInfo(stmt Statement) {
-	query, args, err := stmt.Sql()
-	panicOnError(err)
+func printStatementInfo(stmt SelectStatement) {
+	query, args := stmt.Sql()
 
 	fmt.Println("Parameterized query: ")
 	fmt.Println(query)
 	fmt.Println("Arguments: ")
 	fmt.Println(args)
 
-	debugSQL, err := stmt.DebugSql()
-	panicOnError(err)
+	debugSQL := stmt.DebugSql()
 
 	fmt.Println("\n\n==============================")
 
