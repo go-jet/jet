@@ -8,8 +8,8 @@
 
 
 Jet is a framework for writing type-safe SQL queries in Go, with ability to easily 
-convert database query result to desired arbitrary structure.  
-Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Support for additional databases will be added in future jet releases.
+convert database query result into desired arbitrary object structure.  
+Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will add support for additional databases.
 
 ![jet](https://github.com/go-jet/jet/wiki/image/jet.png)   
 Jet is the easiest and fastest way to write complex SQL queries and map database query result 
@@ -286,7 +286,7 @@ var dest []struct {
 ```
 Because one actor can act in multiple films, `Films` field is a slice, and because each film belongs to one language
 `Langauge` field is just a single model struct.  
-_*There is no limitation of how big or nested destination structure can be._
+_*There is no limitation of how big or nested destination can be._
 
 Now lets execute a above statement on open database connection (or transaction) db and store result into `dest`.
 
@@ -540,8 +540,8 @@ Without Jet these bugs will have to be either caught by some test or by manual t
 
 ## Dependencies
 At the moment Jet dependence only of:
-- `github.com/lib/pq` _(Used by jet generator to read information about database schema from PostgreSQL)_
-- `github.com/go-sql-driver/mysql` _(Used by jet generator to read information about database from MySQL and MariaDB)_
+- `github.com/lib/pq` _(Used by jet generator to read information about database schema from `PostgreSQL`)_
+- `github.com/go-sql-driver/mysql` _(Used by jet generator to read information about database from `MySQL` and `MariaDB`)_
 - `github.com/google/uuid` _(Used in data model files and for debug purposes)_
   
 To run the tests, additional dependencies are required:
