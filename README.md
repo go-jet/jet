@@ -15,6 +15,9 @@ Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will
 Jet is the easiest and fastest way to write complex SQL queries and map database query result 
 into complex object composition. __It is not an ORM.__ 
 
+## Motivation
+https://medium.com/@go.jet/jet-5f3667efa0cc
+
 ## Contents
    - [Features](#features)
    - [Getting Started](#getting-started)
@@ -491,8 +494,8 @@ handleError(err)
 Complete code example can be found at [./examples/quick-start/quick-start.go](./examples/quick-start/quick-start.go)
 
 
-This example represent probably the most common use case.  Detail info about additional features and use cases can be 
-found at project [wiki](https://github.com/go-jet/jet/wiki) page.
+This example represent probably the most common use case.  Detail info about additional statements, features and use cases can be 
+found at project [Wiki](https://github.com/go-jet/jet/wiki) page.
 
 ## Benefits
 
@@ -535,6 +538,8 @@ the bug will be caught at compile time.
 
 Lets say someone changes the type of `length` column to some non integer type. Build will also fail at the same line
 because integer columns and expressions can be only compered to other integer columns and expressions.
+
+Build will also fail if someone removes `length` column from `film` table, because `Film` field will be omitted from SQL Builder and Model types, next time `jet` generator is run.
 
 Without Jet these bugs will have to be either caught by some test or by manual testing. 
 
