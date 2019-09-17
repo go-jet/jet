@@ -530,6 +530,11 @@ LOCK IN SHARE MODE;
 }
 
 func TestWindowFunction(t *testing.T) {
+
+	if sourceIsMariaDB() {
+		return
+	}
+
 	var expectedSQL = `
 SELECT AVG(payment.amount) OVER (),
      AVG(payment.amount) OVER (PARTITION BY payment.customer_id),
