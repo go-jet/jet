@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/enum"
@@ -525,5 +526,112 @@ LOCK IN SHARE MODE;
 	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestWindowFunction(t *testing.T) {
+	var expectedSQL = `
+SELECT AVG(payment.amount) OVER (),
+     AVG(payment.amount) OVER (PARTITION BY payment.customer_id),
+     MAX(payment.amount) OVER (ORDER BY payment.payment_date DESC),
+     MIN(payment.amount) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC),
+     SUM(payment.amount) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC ROWS BETWEEN 1 PRECEDING AND 6 FOLLOWING),
+     SUM(payment.amount) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
+     MAX(payment.customer_id) OVER (ORDER BY payment.payment_date DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING),
+     MIN(payment.customer_id) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC),
+     SUM(payment.customer_id) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC),
+     ROW_NUMBER() OVER (ORDER BY payment.payment_date),
+     RANK() OVER (ORDER BY payment.payment_date),
+     DENSE_RANK() OVER (ORDER BY payment.payment_date),
+     CUME_DIST() OVER (ORDER BY payment.payment_date),
+     NTILE(11) OVER (ORDER BY payment.payment_date),
+     LAG(payment.amount) OVER (ORDER BY payment.payment_date),
+     LAG(payment.amount) OVER (ORDER BY payment.payment_date),
+     LAG(payment.amount, 2, payment.amount) OVER (ORDER BY payment.payment_date),
+     LAG(payment.amount, 2, ?) OVER (ORDER BY payment.payment_date),
+     LEAD(payment.amount) OVER (ORDER BY payment.payment_date),
+     LEAD(payment.amount) OVER (ORDER BY payment.payment_date),
+     LEAD(payment.amount, 2, payment.amount) OVER (ORDER BY payment.payment_date),
+     LEAD(payment.amount, 2, ?) OVER (ORDER BY payment.payment_date),
+     FIRST_VALUE(payment.amount) OVER (ORDER BY payment.payment_date),
+     LAST_VALUE(payment.amount) OVER (ORDER BY payment.payment_date),
+     NTH_VALUE(payment.amount, 3) OVER (ORDER BY payment.payment_date)
+FROM dvds.payment
+WHERE payment.payment_id < ?
+GROUP BY payment.amount, payment.customer_id, payment.payment_date;
+`
+	query := Payment.
+		SELECT(
+			AVG(Payment.Amount).OVER(),
+			AVG(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID)),
+			MAXf(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate.DESC())),
+			MINf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
+			SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).
+				ORDER_BY(Payment.PaymentDate.DESC()).ROWS(PRECEDING(1), FOLLOWING(6))),
+			SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).
+				ORDER_BY(Payment.PaymentDate.DESC()).RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
+			MAXi(Payment.CustomerID).OVER(ORDER_BY(Payment.PaymentDate.DESC()).ROWS(CURRENT_ROW, FOLLOWING(UNBOUNDED))),
+			MINi(Payment.CustomerID).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
+			SUMi(Payment.CustomerID).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
+			ROW_NUMBER().OVER(ORDER_BY(Payment.PaymentDate)),
+			RANK().OVER(ORDER_BY(Payment.PaymentDate)),
+			DENSE_RANK().OVER(ORDER_BY(Payment.PaymentDate)),
+			CUME_DIST().OVER(ORDER_BY(Payment.PaymentDate)),
+			NTILE(11).OVER(ORDER_BY(Payment.PaymentDate)),
+			LAG(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+			LAG(Payment.Amount, 2).OVER(ORDER_BY(Payment.PaymentDate)),
+			LAG(Payment.Amount, 2, Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+			LAG(Payment.Amount, 2, 100).OVER(ORDER_BY(Payment.PaymentDate)),
+			LEAD(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+			LEAD(Payment.Amount, 2).OVER(ORDER_BY(Payment.PaymentDate)),
+			LEAD(Payment.Amount, 2, Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+			LEAD(Payment.Amount, 2, 100).OVER(ORDER_BY(Payment.PaymentDate)),
+			FIRST_VALUE(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+			LAST_VALUE(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+			NTH_VALUE(Payment.Amount, 3).OVER(ORDER_BY(Payment.PaymentDate)),
+		).GROUP_BY(Payment.Amount, Payment.CustomerID, Payment.PaymentDate).
+		WHERE(Payment.PaymentID.LT(Int(10)))
+
+	fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
+
+	err := query.Query(db, &struct{}{})
+	assert.NilError(t, err)
+}
+
+func TestWindowClause(t *testing.T) {
+	var expectedSQL = `
+SELECT AVG(payment.amount) OVER (),
+     AVG(payment.amount) OVER (w1),
+     AVG(payment.amount) OVER (w2 ORDER BY payment.customer_id RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
+     AVG(payment.amount) OVER (w3 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+FROM dvds.payment
+WHERE payment.payment_id < ?
+WINDOW w1 AS (PARTITION BY payment.payment_date), w2 AS (w1), w3 AS (w2 ORDER BY payment.customer_id)
+ORDER BY payment.customer_id;
+`
+	query := Payment.SELECT(
+		AVG(Payment.Amount).OVER(),
+		AVG(Payment.Amount).OVER(Window("w1")),
+		AVG(Payment.Amount).OVER(
+			Window("w2").
+				ORDER_BY(Payment.CustomerID).
+				RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED)),
+		),
+		AVG(Payment.Amount).OVER(Window("w3").RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
+	).
+		WHERE(Payment.PaymentID.LT(Int(10))).
+		WINDOW("w1").AS(PARTITION_BY(Payment.PaymentDate)).
+		WINDOW("w2").AS(Window("w1")).
+		WINDOW("w3").AS(Window("w2").ORDER_BY(Payment.CustomerID)).
+		ORDER_BY(Payment.CustomerID)
+
+	fmt.Println(query.Sql())
+
+	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
+
+	err := query.Query(db, &struct{}{})
+
 	assert.NilError(t, err)
 }

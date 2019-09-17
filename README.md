@@ -12,7 +12,7 @@ convert database query result into desired arbitrary object structure.
 Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will add support for additional databases.
 
 ![jet](https://github.com/go-jet/jet/wiki/image/jet.png)   
-Jet is the easiest and fastest way to write complex SQL queries and map database query result 
+Jet is the easiest and the fastest way to write complex SQL queries and map database query result 
 into complex object composition. __It is not an ORM.__ 
 
 ## Contents
@@ -265,7 +265,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 #### Execute query and store result
 
-Well formed SQL is just a first half the job. Lets see how can we make some sense of result set returned executing 
+Well formed SQL is just a first half of the job. Lets see how can we make some sense of result set returned executing 
 above statement. Usually this is the most complex and tedious work, but with Jet it is the easiest.
 
 First we have to create desired structure to store query result set. 

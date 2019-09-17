@@ -1,6 +1,8 @@
 package mysql
 
-import "github.com/go-jet/jet/internal/jet"
+import (
+	"github.com/go-jet/jet/internal/jet"
+)
 
 // RowLock is interface for SELECT statement row lock types
 type RowLock = jet.RowLock
@@ -10,6 +12,27 @@ var (
 	UPDATE = jet.NewRowLock("UPDATE")
 	SHARE  = jet.NewRowLock("SHARE")
 )
+
+// Window function clauses
+var (
+	PARTITION_BY = jet.PARTITION_BY
+	ORDER_BY     = jet.ORDER_BY
+	UNBOUNDED    = jet.UNBOUNDED
+	CURRENT_ROW  = jet.CURRENT_ROW
+)
+
+// PRECEDING window frame clause
+func PRECEDING(offset interface{}) jet.FrameExtent {
+	return jet.PRECEDING(toJetFrameOffset(offset))
+}
+
+// FOLLOWING window frame clause
+func FOLLOWING(offset interface{}) jet.FrameExtent {
+	return jet.FOLLOWING(toJetFrameOffset(offset))
+}
+
+// Window is used to specify window reference from WINDOW clause
+var Window = jet.WindowName
 
 // SelectStatement is interface for MySQL SELECT statement
 type SelectStatement interface {
@@ -22,6 +45,7 @@ type SelectStatement interface {
 	WHERE(expression BoolExpression) SelectStatement
 	GROUP_BY(groupByClauses ...jet.GroupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
+	WINDOW(name string) windowExpand
 	ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
@@ -42,7 +66,7 @@ func SELECT(projection Projection, projections ...Projection) SelectStatement {
 func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 	newSelect := &selectStatementImpl{}
 	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
-		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.OrderBy,
+		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.Window, &newSelect.OrderBy,
 		&newSelect.Limit, &newSelect.Offset, &newSelect.For, &newSelect.ShareLock)
 
 	newSelect.Select.Projections = toJetProjectionList(projections)
@@ -66,6 +90,7 @@ type selectStatementImpl struct {
 	Where     jet.ClauseWhere
 	GroupBy   jet.ClauseGroupBy
 	Having    jet.ClauseHaving
+	Window    jet.ClauseWindow
 	OrderBy   jet.ClauseOrderBy
 	Limit     jet.ClauseLimit
 	Offset    jet.ClauseOffset
@@ -98,6 +123,11 @@ func (s *selectStatementImpl) HAVING(boolExpression BoolExpression) SelectStatem
 	return s
 }
 
+func (s *selectStatementImpl) WINDOW(name string) windowExpand {
+	s.Window.Definitions = append(s.Window.Definitions, jet.WindowDefinition{Name: name})
+	return windowExpand{selectStatement: s}
+}
+
 func (s *selectStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement {
 	s.OrderBy.List = orderByClauses
 	return s
@@ -125,4 +155,32 @@ func (s *selectStatementImpl) LOCK_IN_SHARE_MODE() SelectStatement {
 
 func (s *selectStatementImpl) AsTable(alias string) SelectTable {
 	return newSelectTable(s, alias)
+}
+
+//-----------------------------------------------------
+
+type windowExpand struct {
+	selectStatement *selectStatementImpl
+}
+
+func (w windowExpand) AS(window ...jet.Window) SelectStatement {
+	if len(window) == 0 {
+		return w.selectStatement
+	}
+	windowsDefinition := w.selectStatement.Window.Definitions
+	windowsDefinition[len(windowsDefinition)-1].Window = window[0]
+	return w.selectStatement
+}
+
+func toJetFrameOffset(offset interface{}) jet.Serializer {
+	if offset == UNBOUNDED {
+		return jet.UNBOUNDED
+	}
+
+	// check for interval expression
+	//if exp, ok := offset.(Expression); ok {
+	//	return exp
+	//}
+
+	return jet.FixedLiteral(offset)
 }
