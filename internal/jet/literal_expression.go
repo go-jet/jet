@@ -32,8 +32,8 @@ func literal(value interface{}, optionalConstant ...bool) *literalExpressionImpl
 	return &exp
 }
 
-// ConstLiteral is injected directly to SQL query, and does not appear in argument list.
-func ConstLiteral(value interface{}) *literalExpressionImpl {
+// FixedLiteral is injected directly to SQL query, and does not appear in parametrized argument list.
+func FixedLiteral(value interface{}) *literalExpressionImpl {
 	exp := literal(value)
 	exp.constant = true
 
