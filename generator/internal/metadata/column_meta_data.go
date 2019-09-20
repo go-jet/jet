@@ -142,13 +142,10 @@ func (c ColumnMetaData) GoModelTag(isPrimaryKey bool) string {
 	return ""
 }
 
-func getColumnsMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) ([]ColumnMetaData, error) {
+func getColumnsMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) []ColumnMetaData {
 
 	rows, err := db.Query(querySet.ListOfColumnsQuery(), schemaName, tableName)
-
-	if err != nil {
-		return nil, err
-	}
+	utils.PanicOnError(err)
 	defer rows.Close()
 
 	ret := []ColumnMetaData{}
@@ -157,19 +154,13 @@ func getColumnsMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableN
 		var name, isNullable, dataType, enumName string
 		var isUnsigned bool
 		err := rows.Scan(&name, &isNullable, &dataType, &enumName, &isUnsigned)
-
-		if err != nil {
-			return nil, err
-		}
+		utils.PanicOnError(err)
 
 		ret = append(ret, NewColumnMetaData(name, isNullable == "YES", dataType, enumName, isUnsigned))
 	}
 
 	err = rows.Err()
+	utils.PanicOnError(err)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return ret, nil
+	return ret
 }

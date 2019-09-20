@@ -12,106 +12,61 @@ import (
 )
 
 // GenerateFiles generates Go files from tables and enums metadata
-func GenerateFiles(destDir string, schemaInfo metadata.SchemaMetaData, dialect jet.Dialect) error {
+func GenerateFiles(destDir string, schemaInfo metadata.SchemaMetaData, dialect jet.Dialect) {
 	if schemaInfo.IsEmpty() {
-		return nil
+		return
 	}
 
 	fmt.Println("Destination directory:", destDir)
 	fmt.Println("Cleaning up destination directory...")
 	err := utils.CleanUpGeneratedFiles(destDir)
+	utils.PanicOnError(err)
 
-	if err != nil {
-		return err
-	}
+	generateSQLBuilderFiles(destDir, "table", tableSQLBuilderTemplate, schemaInfo.TablesMetaData, dialect)
+	generateSQLBuilderFiles(destDir, "view", tableSQLBuilderTemplate, schemaInfo.ViewsMetaData, dialect)
+	generateSQLBuilderFiles(destDir, "enum", enumSQLBuilderTemplate, schemaInfo.EnumsMetaData, dialect)
 
-	err = generateSQLBuilderFiles(destDir, "table", tableSQLBuilderTemplate, schemaInfo.TablesMetaData, dialect)
-
-	if err != nil {
-		return err
-	}
-
-	err = generateSQLBuilderFiles(destDir, "view", tableSQLBuilderTemplate, schemaInfo.ViewsMetaData, dialect)
-
-	if err != nil {
-		return err
-	}
-
-	err = generateSQLBuilderFiles(destDir, "enum", enumSQLBuilderTemplate, schemaInfo.EnumsMetaData, dialect)
-
-	if err != nil {
-		return err
-	}
-
-	err = generateModelFiles(destDir, "table", tableModelTemplate, schemaInfo.TablesMetaData, dialect)
-
-	if err != nil {
-		return err
-	}
-
-	err = generateModelFiles(destDir, "view", tableModelTemplate, schemaInfo.ViewsMetaData, dialect)
-
-	if err != nil {
-		return err
-	}
-
-	err = generateModelFiles(destDir, "enum", enumModelTemplate, schemaInfo.EnumsMetaData, dialect)
-
-	if err != nil {
-		return err
-	}
+	generateModelFiles(destDir, "table", tableModelTemplate, schemaInfo.TablesMetaData, dialect)
+	generateModelFiles(destDir, "view", tableModelTemplate, schemaInfo.ViewsMetaData, dialect)
+	generateModelFiles(destDir, "enum", enumModelTemplate, schemaInfo.EnumsMetaData, dialect)
 
 	fmt.Println("Done")
-
-	return nil
 }
 
-func generateSQLBuilderFiles(destDir, fileTypes, sqlBuilderTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) error {
+func generateSQLBuilderFiles(destDir, fileTypes, sqlBuilderTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) {
 	if len(metaData) == 0 {
-		return nil
+		return
 	}
 	fmt.Printf("Generating %s sql builder files...\n", fileTypes)
-	return generateGoFiles(destDir, fileTypes, sqlBuilderTemplate, metaData, dialect)
+	generateGoFiles(destDir, fileTypes, sqlBuilderTemplate, metaData, dialect)
 }
 
-func generateModelFiles(destDir, fileTypes, modelTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) error {
+func generateModelFiles(destDir, fileTypes, modelTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) {
 	if len(metaData) == 0 {
-		return nil
+		return
 	}
 	fmt.Printf("Generating %s model files...\n", fileTypes)
-	return generateGoFiles(destDir, "model", modelTemplate, metaData, dialect)
+	generateGoFiles(destDir, "model", modelTemplate, metaData, dialect)
 }
 
-func generateGoFiles(dirPath, packageName string, template string, metaDataList []metadata.MetaData, dialect jet.Dialect) error {
+func generateGoFiles(dirPath, packageName string, template string, metaDataList []metadata.MetaData, dialect jet.Dialect) {
 	modelDirPath := filepath.Join(dirPath, packageName)
 
 	err := utils.EnsureDirPath(modelDirPath)
-
-	if err != nil {
-		return err
-	}
+	utils.PanicOnError(err)
 
 	autoGenWarning, err := GenerateTemplate(autoGenWarningTemplate, nil, dialect)
-
-	if err != nil {
-		return err
-	}
+	utils.PanicOnError(err)
 
 	for _, metaData := range metaDataList {
 		text, err := GenerateTemplate(template, metaData, dialect, map[string]interface{}{"package": packageName})
-
-		if err != nil {
-			return err
-		}
+		utils.PanicOnError(err)
 
 		err = utils.SaveGoFile(modelDirPath, utils.ToGoFileName(metaData.Name()), append(autoGenWarning, text...))
-
-		if err != nil {
-			return err
-		}
+		utils.PanicOnError(err)
 	}
 
-	return nil
+	return
 }
 
 // GenerateTemplate generates template with template text and template data.

@@ -11,5 +11,5 @@ type DialectQuerySet interface {
 	ListOfColumnsQuery() string
 	ListOfEnumsQuery() string
 
-	GetEnumsMetaData(db *sql.DB, schemaName string) ([]MetaData, error)
+	GetEnumsMetaData(db *sql.DB, schemaName string) []MetaData
 }

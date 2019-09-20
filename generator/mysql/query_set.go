@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"github.com/go-jet/jet/generator/internal/metadata"
+	"github.com/go-jet/jet/internal/utils"
 	"strings"
 )
 
@@ -50,13 +51,10 @@ WHERE c.table_schema = ? AND DATA_TYPE = 'enum';
 `
 }
 
-func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.MetaData, error) {
+func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.MetaData {
 
 	rows, err := db.Query(m.ListOfEnumsQuery(), schemaName)
-
-	if err != nil {
-		return nil, err
-	}
+	utils.PanicOnError(err)
 	defer rows.Close()
 
 	ret := []metadata.MetaData{}
@@ -65,9 +63,7 @@ func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metad
 		var enumName string
 		var enumValues string
 		err = rows.Scan(&enumName, &enumValues)
-		if err != nil {
-			return nil, err
-		}
+		utils.PanicOnError(err)
 
 		enumValues = strings.Replace(enumValues[1:len(enumValues)-1], "'", "", -1)
 
@@ -78,11 +74,8 @@ func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metad
 	}
 
 	err = rows.Err()
+	utils.PanicOnError(err)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return ret, nil
+	return ret
 
 }

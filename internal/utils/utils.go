@@ -2,6 +2,7 @@ package utils
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/go-jet/jet/internal/3rdparty/snaker"
 	"go/format"
 	"os"
@@ -144,5 +145,22 @@ func MustBeInitializedPtr(val interface{}, errorStr string) {
 func PanicOnError(err error) {
 	if err != nil {
 		panic(err)
+	}
+}
+
+// ErrorCatch is used in defer to recover from panics and to set err
+func ErrorCatch(err *error) {
+	recovered := recover()
+
+	if recovered == nil {
+		return
+	}
+
+	recoveredErr, isError := recovered.(error)
+
+	if isError {
+		*err = recoveredErr
+	} else {
+		*err = fmt.Errorf("%v", recovered)
 	}
 }
