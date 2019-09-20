@@ -67,8 +67,8 @@ func (t TableMetaData) GoStructName() string {
 	return utils.ToGoIdentifier(t.name) + "Table"
 }
 
-// GetTableInfo returns table info metadata
-func GetTableInfo(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (tableInfo TableMetaData, err error) {
+// GetTableMetaData returns table info metadata
+func GetTableMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (tableInfo TableMetaData, err error) {
 
 	tableInfo.SchemaName = schemaName
 	tableInfo.name = tableName

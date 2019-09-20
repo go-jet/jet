@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/enum"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
+	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/view"
 	"gotest.tools/assert"
 	"testing"
 	"time"
@@ -19,15 +20,15 @@ SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update"
 FROM dvds.actor
-WHERE actor.actor_id = 1;
+WHERE actor.actor_id = 2;
 `
 
 	query := Actor.
 		SELECT(Actor.AllColumns).
 		DISTINCT().
-		WHERE(Actor.ActorID.EQ(Int(1)))
+		WHERE(Actor.ActorID.EQ(Int(2)))
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(2))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -35,9 +36,9 @@ WHERE actor.actor_id = 1;
 	assert.NilError(t, err)
 
 	expectedActor := model.Actor{
-		ActorID:    1,
-		FirstName:  "Penelope",
-		LastName:   "Guiness",
+		ActorID:    2,
+		FirstName:  "Nick",
+		LastName:   "Wahlberg",
 		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 	}
 
@@ -1721,4 +1722,63 @@ ORDER BY payment.customer_id;
 	err := query.Query(db, &struct{}{})
 
 	assert.NilError(t, err)
+}
+
+func TestSimpleView(t *testing.T) {
+	query := SELECT(
+		view.ActorInfo.AllColumns,
+	).
+		FROM(view.ActorInfo).
+		ORDER_BY(view.ActorInfo.ActorID).
+		LIMIT(10)
+
+	type ActorInfo struct {
+		ActorID   int
+		FirstName string
+		LastName  string
+		FilmInfo  string
+	}
+
+	var dest []ActorInfo
+
+	err := query.Query(db, &dest)
+	assert.NilError(t, err)
+
+	testutils.AssertJSON(t, dest[1:2], `
+[
+	{
+		"ActorID": 2,
+		"FirstName": "Nick",
+		"LastName": "Wahlberg",
+		"FilmInfo": "Action: Bull Shawshank, Animation: Fight Jawbreaker, Children: Jersey Sassy, Classics: Dracula Crystal, Gilbert Pelican, Comedy: Mallrats United, Rushmore Mermaid, Documentary: Adaptation Holes, Drama: Wardrobe Phantom, Family: Apache Divine, Chisum Behavior, Indian Love, Maguire Apache, Foreign: Baby Hall, Happiness United, Games: Roof Champion, Music: Lucky Flying, New: Destiny Saturday, Flash Wars, Jekyll Frogmen, Mask Peach, Sci-Fi: Chainsaw Uptown, Goodfellas Salute, Travel: Liaisons Sweet, Smile Earring"
+	}
+]
+`)
+
+}
+
+func TestJoinViewWithTable(t *testing.T) {
+	query := SELECT(
+		view.CustomerList.AllColumns,
+		Rental.AllColumns,
+	).
+		FROM(view.CustomerList.
+			INNER_JOIN(Rental, view.CustomerList.ID.EQ(Rental.CustomerID)),
+		).
+		ORDER_BY(view.CustomerList.ID).
+		WHERE(view.CustomerList.ID.LT_EQ(Int(2)))
+
+	var dest []struct {
+		model.CustomerList `sql:"primary_key=ID"`
+		Rentals            []model.Rental
+	}
+
+	fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &dest)
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 2)
+	assert.Equal(t, len(dest[0].Rentals), 32)
+	assert.Equal(t, len(dest[1].Rentals), 27)
 }

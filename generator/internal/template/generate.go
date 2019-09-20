@@ -12,8 +12,8 @@ import (
 )
 
 // GenerateFiles generates Go files from tables and enums metadata
-func GenerateFiles(destDir string, tables, enums []metadata.MetaData, dialect jet.Dialect) error {
-	if len(tables) == 0 && len(enums) == 0 {
+func GenerateFiles(destDir string, schemaInfo metadata.SchemaMetaData, dialect jet.Dialect) error {
+	if schemaInfo.IsEmpty() {
 		return nil
 	}
 
@@ -25,43 +25,64 @@ func GenerateFiles(destDir string, tables, enums []metadata.MetaData, dialect je
 		return err
 	}
 
-	fmt.Println("Generating table sql builder files...")
-	err = generate(destDir, "table", tableSQLBuilderTemplate, tables, dialect)
+	err = generateSQLBuilderFiles(destDir, "table", tableSQLBuilderTemplate, schemaInfo.TablesMetaData, dialect)
 
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Generating table model files...")
-	err = generate(destDir, "model", tableModelTemplate, tables, dialect)
+	err = generateSQLBuilderFiles(destDir, "view", tableSQLBuilderTemplate, schemaInfo.ViewsMetaData, dialect)
 
 	if err != nil {
 		return err
 	}
 
-	if len(enums) > 0 {
-		fmt.Println("Generating enum sql builder files...")
-		err = generate(destDir, "enum", enumSQLBuilderTemplate, enums, dialect)
+	err = generateSQLBuilderFiles(destDir, "enum", enumSQLBuilderTemplate, schemaInfo.EnumsMetaData, dialect)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
 
-		fmt.Println("Generating enum model files...")
-		err = generate(destDir, "model", enumModelTemplate, enums, dialect)
+	err = generateModelFiles(destDir, "table", tableModelTemplate, schemaInfo.TablesMetaData, dialect)
 
-		if err != nil {
-			return err
-		}
+	if err != nil {
+		return err
+	}
+
+	err = generateModelFiles(destDir, "view", tableModelTemplate, schemaInfo.ViewsMetaData, dialect)
+
+	if err != nil {
+		return err
+	}
+
+	err = generateModelFiles(destDir, "enum", enumModelTemplate, schemaInfo.EnumsMetaData, dialect)
+
+	if err != nil {
+		return err
 	}
 
 	fmt.Println("Done")
 
 	return nil
-
 }
 
-func generate(dirPath, packageName string, template string, metaDataList []metadata.MetaData, dialect jet.Dialect) error {
+func generateSQLBuilderFiles(destDir, fileTypes, sqlBuilderTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) error {
+	if len(metaData) == 0 {
+		return nil
+	}
+	fmt.Printf("Generating %s sql builder files...\n", fileTypes)
+	return generateGoFiles(destDir, fileTypes, sqlBuilderTemplate, metaData, dialect)
+}
+
+func generateModelFiles(destDir, fileTypes, modelTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) error {
+	if len(metaData) == 0 {
+		return nil
+	}
+	fmt.Printf("Generating %s model files...\n", fileTypes)
+	return generateGoFiles(destDir, "model", modelTemplate, metaData, dialect)
+}
+
+func generateGoFiles(dirPath, packageName string, template string, metaDataList []metadata.MetaData, dialect jet.Dialect) error {
 	modelDirPath := filepath.Join(dirPath, packageName)
 
 	err := utils.EnsureDirPath(modelDirPath)
@@ -77,7 +98,7 @@ func generate(dirPath, packageName string, template string, metaDataList []metad
 	}
 
 	for _, metaData := range metaDataList {
-		text, err := GenerateTemplate(template, metaData, dialect)
+		text, err := GenerateTemplate(template, metaData, dialect, map[string]interface{}{"package": packageName})
 
 		if err != nil {
 			return err
@@ -94,7 +115,7 @@ func generate(dirPath, packageName string, template string, metaDataList []metad
 }
 
 // GenerateTemplate generates template with template text and template data.
-func GenerateTemplate(templateText string, templateData interface{}, dialect1 jet.Dialect) ([]byte, error) {
+func GenerateTemplate(templateText string, templateData interface{}, dialect jet.Dialect, params ...map[string]interface{}) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"ToGoIdentifier": utils.ToGoIdentifier,
@@ -102,7 +123,13 @@ func GenerateTemplate(templateText string, templateData interface{}, dialect1 je
 			return time.Now().Format(time.RFC850)
 		},
 		"dialect": func() jet.Dialect {
-			return dialect1
+			return dialect
+		},
+		"param": func(name string) interface{} {
+			if len(params) > 0 {
+				return params[0][name]
+			}
+			return ""
 		},
 	}).Parse(templateText)
 

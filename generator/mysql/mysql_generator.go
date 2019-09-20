@@ -31,7 +31,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	fmt.Println("Retrieving database information...")
 	// No schemas in MySQL
-	dbInfo, err := metadata.GetSchemaInfo(db, dbConn.DBName, &mySqlQuerySet{})
+	dbInfo, err := metadata.GetSchemaMetaData(db, dbConn.DBName, &mySqlQuerySet{})
 
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	genPath := path.Join(destDir, dbConn.DBName)
 
-	err = template.GenerateFiles(genPath, dbInfo.TableInfos, dbInfo.EnumInfos, mysql.Dialect)
+	err = template.GenerateFiles(genPath, dbInfo, mysql.Dialect)
 
 	if err != nil {
 		return err

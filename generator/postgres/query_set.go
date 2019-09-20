@@ -12,7 +12,7 @@ func (p *postgresQuerySet) ListOfTablesQuery() string {
 	return `
 SELECT table_name 
 FROM information_schema.tables
-where table_schema = $1 and table_type = 'BASE TABLE';
+where table_schema = $1 and table_type = $2;
 `
 }
 

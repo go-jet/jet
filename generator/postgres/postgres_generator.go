@@ -35,7 +35,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 	}
 
 	fmt.Println("Retrieving schema information...")
-	schemaInfo, err := metadata.GetSchemaInfo(db, dbConn.SchemaName, &postgresQuerySet{})
+	schemaInfo, err := metadata.GetSchemaMetaData(db, dbConn.SchemaName, &postgresQuerySet{})
 
 	if err != nil {
 		return err
@@ -43,7 +43,7 @@ func Generate(destDir string, dbConn DBConnection) error {
 
 	genPath := path.Join(destDir, dbConn.DBName, dbConn.SchemaName)
 
-	err = template.GenerateFiles(genPath, schemaInfo.TableInfos, schemaInfo.EnumInfos, postgres.Dialect)
+	err = template.GenerateFiles(genPath, schemaInfo, postgres.Dialect)
 
 	if err != nil {
 		return err

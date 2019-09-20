@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"bytes"
 	"github.com/go-jet/jet/generator/postgres"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/dbconfig"
 	"gotest.tools/assert"
 	"io/ioutil"
@@ -99,53 +99,39 @@ func assertGeneratedFiles(t *testing.T) {
 	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go")
 
-	assertFileContent(t, "./.gentestdata2/jetdb/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
+
+	// View SQL Builder files
+	viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
+	assert.NilError(t, err)
+
+	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
+
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/view/actor_info.go", "\npackage view", actorInfoSQLBuilderFile)
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, enumFiles, "mpaa_rating.go")
-	assertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", "\npackage enum", mpaaRatingEnumFile)
+	testutils.AssertFileNamesEqual(t, enumFiles, "mpaa_rating.go")
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", "\npackage enum", mpaaRatingEnumFile)
 
 	// Model files
 	modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
-		"payment.go", "rental.go", "staff.go", "store.go", "mpaa_rating.go")
+		"payment.go", "rental.go", "staff.go", "store.go", "mpaa_rating.go",
+		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
+		"customer_list.go", "sales_by_store.go", "staff_list.go")
 
-	assertFileContent(t, "./.gentestdata2/jetdb/dvds/model/actor.go", "\npackage model", actorModelFile)
-}
-
-func assertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {
-	enumFileData, err := ioutil.ReadFile(filePath)
-
-	assert.NilError(t, err)
-
-	beginIndex := bytes.Index(enumFileData, []byte(contentBegin))
-
-	//fmt.Println("-"+string(enumFileData[beginIndex:])+"-")
-
-	assert.DeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
-}
-
-func assertFileNameEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...string) {
-
-	fileNamesMap := map[string]bool{}
-
-	for _, fileInfo := range fileInfos {
-		fileNamesMap[fileInfo.Name()] = true
-	}
-
-	for _, fileName := range fileNames {
-		assert.Assert(t, fileNamesMap[fileName], fileName+" does not exist.")
-	}
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/model/actor.go", "\npackage model", actorModelFile)
 }
 
 var mpaaRatingEnumFile = `
@@ -234,5 +220,59 @@ type Actor struct {
 	FirstName  string
 	LastName   string
 	LastUpdate time.Time
+}
+`
+
+var actorInfoSQLBuilderFile = `
+package view
+
+import (
+	"github.com/go-jet/jet/postgres"
+)
+
+var ActorInfo = newActorInfoTable()
+
+type ActorInfoTable struct {
+	postgres.Table
+
+	//Columns
+	ActorID   postgres.ColumnInteger
+	FirstName postgres.ColumnString
+	LastName  postgres.ColumnString
+	FilmInfo  postgres.ColumnString
+
+	AllColumns     postgres.IColumnList
+	MutableColumns postgres.IColumnList
+}
+
+// creates new ActorInfoTable with assigned alias
+func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
+	aliasTable := newActorInfoTable()
+
+	aliasTable.Table.AS(alias)
+
+	return aliasTable
+}
+
+func newActorInfoTable() *ActorInfoTable {
+	var (
+		ActorIDColumn   = postgres.IntegerColumn("actor_id")
+		FirstNameColumn = postgres.StringColumn("first_name")
+		LastNameColumn  = postgres.StringColumn("last_name")
+		FilmInfoColumn  = postgres.StringColumn("film_info")
+	)
+
+	return &ActorInfoTable{
+		Table: postgres.NewTable("dvds", "actor_info", ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+
+		//Columns
+		ActorID:   ActorIDColumn,
+		FirstName: FirstNameColumn,
+		LastName:  LastNameColumn,
+		FilmInfo:  FilmInfoColumn,
+
+		AllColumns:     postgres.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+		MutableColumns: postgres.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+	}
 }
 `

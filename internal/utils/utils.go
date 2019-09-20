@@ -104,6 +104,7 @@ func DirExists(path string) (bool, error) {
 func replaceInvalidChars(str string) string {
 	str = strings.Replace(str, " ", "_", -1)
 	str = strings.Replace(str, "-", "_", -1)
+	str = strings.Replace(str, ".", "_", -1)
 
 	return str
 }

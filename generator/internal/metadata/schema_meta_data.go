@@ -7,33 +7,50 @@ import (
 
 // SchemaMetaData struct
 type SchemaMetaData struct {
-	TableInfos []MetaData
-	EnumInfos  []MetaData
+	TablesMetaData []MetaData
+	ViewsMetaData  []MetaData
+	EnumsMetaData  []MetaData
 }
 
-// GetSchemaInfo returns schema information from db connection.
-func GetSchemaInfo(db *sql.DB, schemaName string, querySet DialectQuerySet) (schemaInfo SchemaMetaData, err error) {
+func (s SchemaMetaData) IsEmpty() bool {
+	return len(s.TablesMetaData) == 0 && len(s.ViewsMetaData) == 0 && len(s.EnumsMetaData) == 0
+}
 
-	schemaInfo.TableInfos, err = getTableInfos(db, querySet, schemaName)
+const (
+	baseTable = "BASE TABLE"
+	view      = "VIEW"
+)
+
+// GetSchemaMetaData returns schema information from db connection.
+func GetSchemaMetaData(db *sql.DB, schemaName string, querySet DialectQuerySet) (schemaInfo SchemaMetaData, err error) {
+
+	schemaInfo.TablesMetaData, err = getTablesMetaData(db, querySet, schemaName, baseTable)
 
 	if err != nil {
 		return
 	}
 
-	schemaInfo.EnumInfos, err = querySet.GetEnumsMetaData(db, schemaName)
+	schemaInfo.ViewsMetaData, err = getTablesMetaData(db, querySet, schemaName, view)
 
 	if err != nil {
 		return
 	}
 
-	fmt.Println("	FOUND", len(schemaInfo.TableInfos), "table(s), ", len(schemaInfo.EnumInfos), "enum(s)")
+	schemaInfo.EnumsMetaData, err = querySet.GetEnumsMetaData(db, schemaName)
+
+	if err != nil {
+		return
+	}
+
+	fmt.Println("	FOUND", len(schemaInfo.TablesMetaData), "table(s),", len(schemaInfo.ViewsMetaData), "view(s),",
+		len(schemaInfo.EnumsMetaData), "enum(s)")
 
 	return
 }
 
-func getTableInfos(db *sql.DB, querySet DialectQuerySet, schemaName string) ([]MetaData, error) {
+func getTablesMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableType string) ([]MetaData, error) {
 
-	rows, err := db.Query(querySet.ListOfTablesQuery(), schemaName)
+	rows, err := db.Query(querySet.ListOfTablesQuery(), schemaName, tableType)
 
 	if err != nil {
 		return nil, err
@@ -49,7 +66,7 @@ func getTableInfos(db *sql.DB, querySet DialectQuerySet, schemaName string) ([]M
 			return nil, err
 		}
 
-		tableInfo, err := GetTableInfo(db, querySet, schemaName, tableName)
+		tableInfo, err := GetTableMetaData(db, querySet, schemaName, tableName)
 
 		if err != nil {
 			return nil, err

@@ -6,6 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
+	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
 	"github.com/google/uuid"
 	"gotest.tools/assert"
@@ -23,6 +24,19 @@ func TestAllTypesSelect(t *testing.T) {
 	assert.DeepEqual(t, dest[1], allTypesRow1)
 }
 
+func TestAllTypesViewSelect(t *testing.T) {
+
+	type AllTypesView model.AllTypes
+
+	dest := []AllTypesView{}
+
+	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
+	assert.NilError(t, err)
+
+	assert.DeepEqual(t, dest[0], AllTypesView(allTypesRow0))
+	assert.DeepEqual(t, dest[1], AllTypesView(allTypesRow1))
+}
+
 func TestAllTypesInsertModel(t *testing.T) {
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(allTypesRow0).
@@ -31,8 +45,8 @@ func TestAllTypesInsertModel(t *testing.T) {
 
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
-
 	assert.NilError(t, err)
+
 	assert.Equal(t, len(dest), 2)
 	assert.DeepEqual(t, dest[0], allTypesRow0)
 	assert.DeepEqual(t, dest[1], allTypesRow1)

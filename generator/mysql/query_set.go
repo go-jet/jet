@@ -13,7 +13,7 @@ func (m *mySqlQuerySet) ListOfTablesQuery() string {
 	return `
 SELECT table_name
 FROM INFORMATION_SCHEMA.tables
-WHERE table_schema = ? and table_type = 'BASE TABLE';
+WHERE table_schema = ? and table_type = ?;
 `
 }
 
@@ -46,7 +46,7 @@ func (m *mySqlQuerySet) ListOfEnumsQuery() string {
 SELECT (CASE c.DATA_TYPE WHEN 'enum' then CONCAT(c.TABLE_NAME, '_', c.COLUMN_NAME) ELSE '' END ), SUBSTRING(c.COLUMN_TYPE,5)
 FROM information_schema.columns as c
 	INNER JOIN information_schema.tables  as t on (t.table_schema = c.table_schema AND t.table_name = c.table_name)
-WHERE c.table_schema = ? AND DATA_TYPE = 'enum' AND t.TABLE_TYPE = 'BASE TABLE';
+WHERE c.table_schema = ? AND DATA_TYPE = 'enum';
 `
 }
 

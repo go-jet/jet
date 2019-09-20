@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/enum"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/table"
+	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/view"
 	"gotest.tools/assert"
 
 	"testing"
@@ -16,7 +17,7 @@ func TestSelect_ScanToStruct(t *testing.T) {
 	query := Actor.
 		SELECT(Actor.AllColumns).
 		DISTINCT().
-		WHERE(Actor.ActorID.EQ(Int(1)))
+		WHERE(Actor.ActorID.EQ(Int(2)))
 
 	testutils.AssertStatementSql(t, query, `
 SELECT DISTINCT actor.actor_id AS "actor.actor_id",
@@ -25,20 +26,20 @@ SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.last_update AS "actor.last_update"
 FROM dvds.actor
 WHERE actor.actor_id = ?;
-`, int64(1))
+`, int64(2))
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
 
 	assert.NilError(t, err)
 
-	assert.DeepEqual(t, actor, actor1)
+	assert.DeepEqual(t, actor, actor2)
 }
 
-var actor1 = model.Actor{
-	ActorID:    1,
-	FirstName:  "PENELOPE",
-	LastName:   "GUINESS",
+var actor2 = model.Actor{
+	ActorID:    2,
+	FirstName:  "NICK",
+	LastName:   "WAHLBERG",
 	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 04:34:33", 2),
 }
 
@@ -62,7 +63,7 @@ ORDER BY actor.actor_id;
 	assert.NilError(t, err)
 
 	assert.Equal(t, len(dest), 200)
-	assert.DeepEqual(t, dest[0], actor1)
+	assert.DeepEqual(t, dest[1], actor2)
 
 	//testutils.PrintJson(dest)
 	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
@@ -639,4 +640,61 @@ ORDER BY payment.customer_id;
 	err := query.Query(db, &struct{}{})
 
 	assert.NilError(t, err)
+}
+
+func TestSimpleView(t *testing.T) {
+	query := SELECT(
+		view.ActorInfo.AllColumns,
+	).
+		FROM(view.ActorInfo).
+		ORDER_BY(view.ActorInfo.ActorID).
+		LIMIT(10)
+
+	type ActorInfo struct {
+		ActorID   int
+		FirstName string
+		LastName  string
+		FilmInfo  string
+	}
+
+	var dest []ActorInfo
+
+	err := query.Query(db, &dest)
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 10)
+	testutils.AssertJSON(t, dest[1:2], `
+[
+	{
+		"ActorID": 2,
+		"FirstName": "NICK",
+		"LastName": "WAHLBERG",
+		"FilmInfo": "Action: BULL SHAWSHANK; Animation: FIGHT JAWBREAKER; Children: JERSEY SASSY; Classics: DRACULA CRYSTAL, GILBERT PELICAN; Comedy: MALLRATS UNITED, RUSHMORE MERMAID; Documentary: ADAPTATION HOLES; Drama: WARDROBE PHANTOM; Family: APACHE DIVINE, CHISUM BEHAVIOR, INDIAN LOVE, MAGUIRE APACHE; Foreign: BABY HALL, HAPPINESS UNITED; Games: ROOF CHAMPION; Music: LUCKY FLYING; New: DESTINY SATURDAY, FLASH WARS, JEKYLL FROGMEN, MASK PEACH; Sci-Fi: CHAINSAW UPTOWN, GOODFELLAS SALUTE; Travel: LIAISONS SWEET, SMILE EARRING"
+	}
+]
+`)
+}
+
+func TestJoinViewWithTable(t *testing.T) {
+	query := SELECT(
+		view.CustomerList.AllColumns,
+		Rental.AllColumns,
+	).
+		FROM(view.CustomerList.
+			INNER_JOIN(Rental, view.CustomerList.ID.EQ(Rental.CustomerID)),
+		).
+		ORDER_BY(view.CustomerList.ID).
+		WHERE(view.CustomerList.ID.LT_EQ(Int(2)))
+
+	var dest []struct {
+		model.CustomerList `sql:"primary_key=ID"`
+		Rentals            []model.Rental
+	}
+
+	err := query.Query(db, &dest)
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 2)
+	assert.Equal(t, len(dest[0].Rentals), 32)
+	assert.Equal(t, len(dest[1].Rentals), 27)
 }

@@ -159,3 +159,29 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db execution.DB, dest
 
 	stmt.Query(db, dest)
 }
+
+func AssertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {
+	enumFileData, err := ioutil.ReadFile(filePath)
+
+	assert.NilError(t, err)
+
+	beginIndex := bytes.Index(enumFileData, []byte(contentBegin))
+
+	//fmt.Println("-"+string(enumFileData[beginIndex:])+"-")
+
+	assert.DeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
+}
+
+func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...string) {
+	assert.Equal(t, len(fileInfos), len(fileNames))
+
+	fileNamesMap := map[string]bool{}
+
+	for _, fileInfo := range fileInfos {
+		fileNamesMap[fileInfo.Name()] = true
+	}
+
+	for _, fileName := range fileNames {
+		assert.Assert(t, fileNamesMap[fileName], fileName+" does not exist.")
+	}
+}

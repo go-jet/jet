@@ -1,8 +1,8 @@
 package mysql
 
 import (
-	"bytes"
 	"github.com/go-jet/jet/generator/mysql"
+	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/dbconfig"
 	"gotest.tools/assert"
 	"io/ioutil"
@@ -63,53 +63,40 @@ func assertGeneratedFiles(t *testing.T) {
 	tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
-		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
+	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go")
 
-	assertFileContent(t, genTestDir3+"/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
+
+	// View SQL Builder files
+	viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
+	assert.NilError(t, err)
+
+	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
+
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/view/actor_info.go", "\npackage view", actorInfoSQLBuilerFile)
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, enumFiles, "film_rating.go")
-	assertFileContent(t, genTestDir3+"/dvds/enum/film_rating.go", "\npackage enum", mpaaRatingEnumFile)
+	testutils.AssertFileNamesEqual(t, enumFiles, "film_rating.go", "film_list_rating.go", "nicer_but_slower_film_list_rating.go")
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/enum/film_rating.go", "\npackage enum", mpaaRatingEnumFile)
 
 	// Model files
 	modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
 	assert.NilError(t, err)
 
-	assertFileNameEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
-		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
-		"payment.go", "rental.go", "staff.go", "store.go", "film_rating.go")
+	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
+		"payment.go", "rental.go", "staff.go", "store.go",
+		"film_rating.go", "film_list_rating.go", "nicer_but_slower_film_list_rating.go",
+		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
+		"customer_list.go", "sales_by_store.go", "staff_list.go")
 
-	assertFileContent(t, genTestDir3+"/dvds/model/actor.go", "\npackage model", actorModelFile)
-}
-
-func assertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {
-	enumFileData, err := ioutil.ReadFile(filePath)
-
-	assert.NilError(t, err)
-
-	beginIndex := bytes.Index(enumFileData, []byte(contentBegin))
-
-	//fmt.Println("-"+string(enumFileData[beginIndex:])+"-")
-
-	assert.DeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
-}
-
-func assertFileNameEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...string) {
-
-	fileNamesMap := map[string]bool{}
-
-	for _, fileInfo := range fileInfos {
-		fileNamesMap[fileInfo.Name()] = true
-	}
-
-	for _, fileName := range fileNames {
-		assert.Assert(t, fileNamesMap[fileName], fileName+" does not exist.")
-	}
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/model/actor.go", "\npackage model", actorModelFile)
 }
 
 var mpaaRatingEnumFile = `
@@ -198,5 +185,59 @@ type Actor struct {
 	FirstName  string
 	LastName   string
 	LastUpdate time.Time
+}
+`
+
+var actorInfoSQLBuilerFile = `
+package view
+
+import (
+	"github.com/go-jet/jet/mysql"
+)
+
+var ActorInfo = newActorInfoTable()
+
+type ActorInfoTable struct {
+	mysql.Table
+
+	//Columns
+	ActorID   mysql.ColumnInteger
+	FirstName mysql.ColumnString
+	LastName  mysql.ColumnString
+	FilmInfo  mysql.ColumnString
+
+	AllColumns     mysql.IColumnList
+	MutableColumns mysql.IColumnList
+}
+
+// creates new ActorInfoTable with assigned alias
+func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
+	aliasTable := newActorInfoTable()
+
+	aliasTable.Table.AS(alias)
+
+	return aliasTable
+}
+
+func newActorInfoTable() *ActorInfoTable {
+	var (
+		ActorIDColumn   = mysql.IntegerColumn("actor_id")
+		FirstNameColumn = mysql.StringColumn("first_name")
+		LastNameColumn  = mysql.StringColumn("last_name")
+		FilmInfoColumn  = mysql.StringColumn("film_info")
+	)
+
+	return &ActorInfoTable{
+		Table: mysql.NewTable("dvds", "actor_info", ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+
+		//Columns
+		ActorID:   ActorIDColumn,
+		FirstName: FirstNameColumn,
+		LastName:  LastNameColumn,
+		FilmInfo:  FilmInfoColumn,
+
+		AllColumns:     mysql.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+		MutableColumns: mysql.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+	}
 }
 `
