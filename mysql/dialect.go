@@ -10,13 +10,13 @@ var Dialect = newDialect()
 func newDialect() jet.Dialect {
 
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
-	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = mysql_REGEXP_LIKE_operator
-	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = mysql_NOT_REGEXP_LIKE_operator
-	operatorSerializeOverrides["IS DISTINCT FROM"] = mysql_IS_DISTINCT_FROM
-	operatorSerializeOverrides["IS NOT DISTINCT FROM"] = mysql_IS_NOT_DISTINCT_FROM
-	operatorSerializeOverrides["/"] = mysql_DIVISION
-	operatorSerializeOverrides["#"] = mysql_BIT_XOR
-	operatorSerializeOverrides[jet.StringConcatOperator] = mysql_CONCAT_operator
+	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = mysqlREGEXPLIKEoperator
+	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = mysqlNOTREGEXPLIKEoperator
+	operatorSerializeOverrides["IS DISTINCT FROM"] = mysqlISDISTINCTFROM
+	operatorSerializeOverrides["IS NOT DISTINCT FROM"] = mysqlISNOTDISTINCTFROM
+	operatorSerializeOverrides["/"] = mysqlDivision
+	operatorSerializeOverrides["#"] = mysqlBitXor
+	operatorSerializeOverrides[jet.StringConcatOperator] = mysqlCONCAToperator
 
 	mySQLDialectParams := jet.DialectParams{
 		Name:                       "MySQL",
@@ -32,7 +32,7 @@ func newDialect() jet.Dialect {
 	return jet.NewDialect(mySQLDialectParams)
 }
 
-func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlBitXor(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator XOR")
@@ -49,7 +49,7 @@ func mysql_BIT_XOR(expressions ...jet.Expression) jet.SerializeFunc {
 	}
 }
 
-func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlCONCAToperator(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator CONCAT")
@@ -66,7 +66,7 @@ func mysql_CONCAT_operator(expressions ...jet.Expression) jet.SerializeFunc {
 	}
 }
 
-func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlDivision(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator DIV")
@@ -90,7 +90,7 @@ func mysql_DIVISION(expressions ...jet.Expression) jet.SerializeFunc {
 	}
 }
 
-func mysql_IS_NOT_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlISNOTDISTINCTFROM(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
@@ -102,15 +102,15 @@ func mysql_IS_NOT_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc
 	}
 }
 
-func mysql_IS_DISTINCT_FROM(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlISDISTINCTFROM(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		out.WriteString("NOT(")
-		mysql_IS_NOT_DISTINCT_FROM(expressions...)(statement, out, options...)
+		mysqlISNOTDISTINCTFROM(expressions...)(statement, out, options...)
 		out.WriteString(")")
 	}
 }
 
-func mysql_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
@@ -136,7 +136,7 @@ func mysql_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc
 	}
 }
 
-func mysql_NOT_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
+func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")

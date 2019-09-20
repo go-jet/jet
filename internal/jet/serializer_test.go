@@ -31,5 +31,12 @@ func TestArgToString(t *testing.T) {
 	time, err := time.Parse("Mon Jan 2 15:04:05 -0700 MST 2006", "Mon Jan 2 15:04:05 -0700 MST 2006")
 	assert.NilError(t, err)
 	assert.Equal(t, argToString(time), "'2006-01-02 15:04:05-07:00'")
-	assert.Equal(t, argToString(map[string]bool{}), "[Unsupported type]")
+
+	func() {
+		defer func() {
+			assert.Equal(t, recover().(string), "jet: map[string]bool type can not be used as SQL query parameter")
+		}()
+
+		argToString(map[string]bool{})
+	}()
 }

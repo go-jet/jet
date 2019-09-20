@@ -11,8 +11,8 @@ var Dialect = newDialect()
 func newDialect() jet.Dialect {
 
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
-	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgres_REGEXP_LIKE_operator
-	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = postgres_NOT_REGEXP_LIKE_operator
+	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgresREGEXPLIKEoperator
+	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = postgresNOTREGEXPLIKEoperator
 	operatorSerializeOverrides["CAST"] = postgresCAST
 
 	dialectParams := jet.DialectParams{
@@ -54,7 +54,7 @@ func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
 	}
 }
 
-func postgres_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
+func postgresREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
@@ -80,7 +80,7 @@ func postgres_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeF
 	}
 }
 
-func postgres_NOT_REGEXP_LIKE_operator(expressions ...jet.Expression) jet.SerializeFunc {
+func postgresNOTREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")

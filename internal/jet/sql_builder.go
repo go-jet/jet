@@ -2,9 +2,11 @@ package jet
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/go-jet/jet/internal/3rdparty/pq"
 	"github.com/go-jet/jet/internal/utils"
 	"github.com/google/uuid"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -176,7 +178,7 @@ func argToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(pq.FormatTimestamp(bindVal)))
 	default:
-		return "[Unsupported type]"
+		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
 }
 
