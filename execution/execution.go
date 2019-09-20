@@ -813,9 +813,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 
 	value, err := valuer.Value()
 
-	if err != nil {
-		panic(err)
-	}
+	utils.PanicOnError(err)
 
 	return value
 }

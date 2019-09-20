@@ -19,15 +19,17 @@ type Table interface {
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, columns ...ColumnExpression) SerializerTable {
+func NewTable(schemaName, name string, column ColumnExpression, columns ...ColumnExpression) SerializerTable {
+
+	columnList := append([]ColumnExpression{column}, columns...)
 
 	t := tableImpl{
 		schemaName: schemaName,
 		name:       name,
-		columnList: columns,
+		columnList: columnList,
 	}
 
-	for _, c := range columns {
+	for _, c := range columnList {
 		c.setTableName(name)
 	}
 

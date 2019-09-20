@@ -12,6 +12,7 @@ type SchemaMetaData struct {
 	EnumsMetaData  []MetaData
 }
 
+// IsEmpty returns true if schema info does not contain any table, views or enums metadata
 func (s SchemaMetaData) IsEmpty() bool {
 	return len(s.TablesMetaData) == 0 && len(s.ViewsMetaData) == 0 && len(s.EnumsMetaData) == 0
 }

@@ -2,6 +2,7 @@ package jet
 
 import (
 	"bytes"
+	"github.com/go-jet/jet/internal/3rdparty/pq"
 	"github.com/go-jet/jet/internal/utils"
 	"github.com/google/uuid"
 	"strconv"
@@ -173,7 +174,7 @@ func argToString(value interface{}) string {
 	case uuid.UUID:
 		return stringQuote(bindVal.String())
 	case time.Time:
-		return stringQuote(string(utils.FormatTimestamp(bindVal)))
+		return stringQuote(string(pq.FormatTimestamp(bindVal)))
 	default:
 		return "[Unsupported type]"
 	}

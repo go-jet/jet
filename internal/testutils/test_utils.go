@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/execution"
 	"github.com/go-jet/jet/internal/jet"
+	"github.com/go-jet/jet/internal/utils"
 	"gotest.tools/assert"
 	"io/ioutil"
 	"os"
@@ -60,9 +61,7 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 	filePath := getFullPath(testRelativePath)
 	err := ioutil.WriteFile(filePath, jsonText, 0644)
 
-	if err != nil {
-		panic(err)
-	}
+	utils.PanicOnError(err)
 }
 
 // AssertJSONFile check if data json representation is the same as json at testRelativePath
@@ -160,6 +159,7 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db execution.DB, dest
 	stmt.Query(db, dest)
 }
 
+// AssertFileContent check if file content at filePath contains expectedContent text.
 func AssertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {
 	enumFileData, err := ioutil.ReadFile(filePath)
 
@@ -172,6 +172,7 @@ func AssertFileContent(t *testing.T, filePath string, contentBegin string, expec
 	assert.DeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
 }
 
+// AssertFileNamesEqual check if all filesInfos are contained in fileNames
 func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...string) {
 	assert.Equal(t, len(fileInfos), len(fileNames))
 
