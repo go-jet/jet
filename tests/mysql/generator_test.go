@@ -15,22 +15,22 @@ const genTestDirRoot = "./.gentestdata3"
 const genTestDir3 = "./.gentestdata3/mysql"
 
 func TestGenerator(t *testing.T) {
-	err := os.RemoveAll(genTestDir3)
-	assert.NilError(t, err)
 
-	err = mysql.Generate(genTestDir3, mysql.DBConnection{
-		Host:     dbconfig.MySqLHost,
-		Port:     dbconfig.MySQLPort,
-		User:     dbconfig.MySQLUser,
-		Password: dbconfig.MySQLPassword,
-		DBName:   "dvds",
-	})
+	for i := 0; i < 3; i++ {
+		err := mysql.Generate(genTestDir3, mysql.DBConnection{
+			Host:     dbconfig.MySqLHost,
+			Port:     dbconfig.MySQLPort,
+			User:     dbconfig.MySQLUser,
+			Password: dbconfig.MySQLPassword,
+			DBName:   "dvds",
+		})
 
-	assert.NilError(t, err)
+		assert.NilError(t, err)
 
-	assertGeneratedFiles(t)
+		assertGeneratedFiles(t)
+	}
 
-	err = os.RemoveAll(genTestDirRoot)
+	err := os.RemoveAll(genTestDirRoot)
 	assert.NilError(t, err)
 }
 

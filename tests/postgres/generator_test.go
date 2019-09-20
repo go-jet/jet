@@ -71,26 +71,25 @@ func TestCmdGenerator(t *testing.T) {
 
 func TestGenerator(t *testing.T) {
 
+	for i := 0; i < 3; i++ {
+		err := postgres.Generate(genTestDir2, postgres.DBConnection{
+			Host:     dbconfig.Host,
+			Port:     dbconfig.Port,
+			User:     dbconfig.User,
+			Password: dbconfig.Password,
+			SslMode:  "disable",
+			Params:   "",
+
+			DBName:     dbconfig.DBName,
+			SchemaName: "dvds",
+		})
+
+		assert.NilError(t, err)
+
+		assertGeneratedFiles(t)
+	}
+
 	err := os.RemoveAll(genTestDir2)
-	assert.NilError(t, err)
-
-	err = postgres.Generate(genTestDir2, postgres.DBConnection{
-		Host:     dbconfig.Host,
-		Port:     dbconfig.Port,
-		User:     dbconfig.User,
-		Password: dbconfig.Password,
-		SslMode:  "disable",
-		Params:   "",
-
-		DBName:     dbconfig.DBName,
-		SchemaName: "dvds",
-	})
-
-	assert.NilError(t, err)
-
-	assertGeneratedFiles(t)
-
-	err = os.RemoveAll(genTestDir2)
 	assert.NilError(t, err)
 }
 

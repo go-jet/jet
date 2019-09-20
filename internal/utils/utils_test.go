@@ -25,7 +25,7 @@ func TestToGoIdentifier(t *testing.T) {
 	assert.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
 }
 
-func TestErrorCatch(t *testing.T) {
+func TestErrorCatchErr(t *testing.T) {
 	var err error
 
 	func() {
@@ -35,4 +35,16 @@ func TestErrorCatch(t *testing.T) {
 	}()
 
 	assert.Error(t, err, "newError")
+}
+
+func TestErrorCatchNonErr(t *testing.T) {
+	var err error
+
+	func() {
+		defer ErrorCatch(&err)
+
+		panic(11)
+	}()
+
+	assert.Error(t, err, "11")
 }
