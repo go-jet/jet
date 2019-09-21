@@ -134,7 +134,8 @@ func (c *ClauseHaving) Serialize(statementType StatementType, out *SQLBuilder) {
 
 // ClauseOrderBy struct
 type ClauseOrderBy struct {
-	List []OrderByClause
+	List        []OrderByClause
+	SkipNewLine bool
 }
 
 // Serialize serializes clause into SQLBuilder
@@ -143,7 +144,9 @@ func (o *ClauseOrderBy) Serialize(statementType StatementType, out *SQLBuilder) 
 		return
 	}
 
-	out.NewLine()
+	if !o.SkipNewLine {
+		out.NewLine()
+	}
 	out.WriteString("ORDER BY")
 
 	out.IncreaseIdent()
@@ -468,4 +471,38 @@ func (i *ClauseIn) Serialize(statementType StatementType, out *SQLBuilder) {
 	out.WriteString("IN")
 	out.WriteString(string(i.LockMode))
 	out.WriteString("MODE")
+}
+
+// WindowDefinition struct
+type WindowDefinition struct {
+	Name   string
+	Window Window
+}
+
+// ClauseWindow struct
+type ClauseWindow struct {
+	Definitions []WindowDefinition
+}
+
+// Serialize serializes clause into SQLBuilder
+func (i *ClauseWindow) Serialize(statementType StatementType, out *SQLBuilder) {
+	if len(i.Definitions) == 0 {
+		return
+	}
+
+	out.NewLine()
+	out.WriteString("WINDOW")
+
+	for i, def := range i.Definitions {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+		out.WriteString(def.Name)
+		out.WriteString("AS")
+		if def.Window == nil {
+			out.WriteString("()")
+			continue
+		}
+		def.Window.serialize(statementType, out)
+	}
 }

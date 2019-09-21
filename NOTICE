@@ -8,3 +8,7 @@ https://github.com/dropbox/godropbox/tree/master/database/sqlbuilder (BSD-3)
 
 This product contains a modified portion of 'snaker' which can be obtained at:
 https://github.com/serenize/snaker (MIT)
+
+
+This product contains `FormatTimestamp` function from 'pq' which can be obtained at:
+https://github.com/lib/pq (MIT)

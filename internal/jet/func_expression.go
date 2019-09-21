@@ -81,68 +81,154 @@ func LOG(floatExpression FloatExpression) FloatExpression {
 // ----------------- Aggregate functions  -------------------//
 
 // AVG is aggregate function used to calculate avg value from numeric expression
-func AVG(numericExpression NumericExpression) FloatExpression {
-	return NewFloatFunc("AVG", numericExpression)
+func AVG(numericExpression NumericExpression) floatWindowExpression {
+	return NewFloatWindowFunc("AVG", numericExpression)
 }
 
 // BIT_AND is aggregate function used to calculates the bitwise AND of all non-null input values, or null if none.
-func BIT_AND(integerExpression IntegerExpression) IntegerExpression {
-	return newIntegerFunc("BIT_AND", integerExpression)
+func BIT_AND(integerExpression IntegerExpression) integerWindowExpression {
+	return newIntegerWindowFunc("BIT_AND", integerExpression)
 }
 
 // BIT_OR is aggregate function used to calculates the bitwise OR of all non-null input values, or null if none.
-func BIT_OR(integerExpression IntegerExpression) IntegerExpression {
-	return newIntegerFunc("BIT_OR", integerExpression)
+func BIT_OR(integerExpression IntegerExpression) integerWindowExpression {
+	return newIntegerWindowFunc("BIT_OR", integerExpression)
 }
 
 // BOOL_AND is aggregate function. Returns true if all input values are true, otherwise false
-func BOOL_AND(boolExpression BoolExpression) BoolExpression {
-	return newBoolFunc("BOOL_AND", boolExpression)
+func BOOL_AND(boolExpression BoolExpression) boolWindowExpression {
+	return newBoolWindowFunc("BOOL_AND", boolExpression)
 }
 
 // BOOL_OR is aggregate function. Returns true if at least one input value is true, otherwise false
-func BOOL_OR(boolExpression BoolExpression) BoolExpression {
-	return newBoolFunc("BOOL_OR", boolExpression)
+func BOOL_OR(boolExpression BoolExpression) boolWindowExpression {
+	return newBoolWindowFunc("BOOL_OR", boolExpression)
 }
 
 // COUNT is aggregate function. Returns number of input rows for which the value of expression is not null.
-func COUNT(expression Expression) IntegerExpression {
-	return newIntegerFunc("COUNT", expression)
+func COUNT(expression Expression) integerWindowExpression {
+	return newIntegerWindowFunc("COUNT", expression)
 }
 
 // EVERY is aggregate function. Returns true if all input values are true, otherwise false
-func EVERY(boolExpression BoolExpression) BoolExpression {
-	return newBoolFunc("EVERY", boolExpression)
+func EVERY(boolExpression BoolExpression) boolWindowExpression {
+	return newBoolWindowFunc("EVERY", boolExpression)
 }
 
 // MAXf is aggregate function. Returns maximum value of float expression across all input values
-func MAXf(floatExpression FloatExpression) FloatExpression {
-	return NewFloatFunc("MAX", floatExpression)
+func MAXf(floatExpression FloatExpression) floatWindowExpression {
+	return NewFloatWindowFunc("MAX", floatExpression)
 }
 
 // MAXi is aggregate function. Returns maximum value of int expression across all input values
-func MAXi(integerExpression IntegerExpression) IntegerExpression {
-	return newIntegerFunc("MAX", integerExpression)
+func MAXi(integerExpression IntegerExpression) integerWindowExpression {
+	return newIntegerWindowFunc("MAX", integerExpression)
 }
 
 // MINf is aggregate function. Returns minimum value of float expression across all input values
-func MINf(floatExpression FloatExpression) FloatExpression {
-	return NewFloatFunc("MIN", floatExpression)
+func MINf(floatExpression FloatExpression) floatWindowExpression {
+	return NewFloatWindowFunc("MIN", floatExpression)
 }
 
 // MINi is aggregate function. Returns minimum value of int expression across all input values
-func MINi(integerExpression IntegerExpression) IntegerExpression {
-	return newIntegerFunc("MIN", integerExpression)
+func MINi(integerExpression IntegerExpression) integerWindowExpression {
+	return newIntegerWindowFunc("MIN", integerExpression)
 }
 
 // SUMf is aggregate function. Returns sum of expression across all float expressions
-func SUMf(floatExpression FloatExpression) FloatExpression {
-	return NewFloatFunc("SUM", floatExpression)
+func SUMf(floatExpression FloatExpression) floatWindowExpression {
+	return NewFloatWindowFunc("SUM", floatExpression)
 }
 
 // SUMi is aggregate function. Returns sum of expression across all integer expression.
-func SUMi(integerExpression IntegerExpression) IntegerExpression {
-	return newIntegerFunc("SUM", integerExpression)
+func SUMi(integerExpression IntegerExpression) integerWindowExpression {
+	return newIntegerWindowFunc("SUM", integerExpression)
+}
+
+// ----------------- Window functions  -------------------//
+
+// ROW_NUMBER returns number of the current row within its partition, counting from 1
+func ROW_NUMBER() integerWindowExpression {
+	return newIntegerWindowFunc("ROW_NUMBER")
+}
+
+// RANK of the current row with gaps; same as row_number of its first peer
+func RANK() integerWindowExpression {
+	return newIntegerWindowFunc("RANK")
+}
+
+// DENSE_RANK returns rank of the current row without gaps; this function counts peer groups
+func DENSE_RANK() integerWindowExpression {
+	return newIntegerWindowFunc("DENSE_RANK")
+}
+
+// PERCENT_RANK calculates relative rank of the current row: (rank - 1) / (total partition rows - 1)
+func PERCENT_RANK() floatWindowExpression {
+	return NewFloatWindowFunc("PERCENT_RANK")
+}
+
+// CUME_DIST calculates cumulative distribution: (number of partition rows preceding or peer with current row) / total partition rows
+func CUME_DIST() floatWindowExpression {
+	return NewFloatWindowFunc("CUME_DIST")
+}
+
+// NTILE returns integer ranging from 1 to the argument value, dividing the partition as equally as possible
+func NTILE(numOfBuckets int64) integerWindowExpression {
+	return newIntegerWindowFunc("NTILE", FixedLiteral(numOfBuckets))
+}
+
+// LAG returns value evaluated at the row that is offset rows before the current row within the partition;
+// if there is no such row, instead return default (which must be of the same type as value).
+// Both offset and default are evaluated with respect to the current row.
+// If omitted, offset defaults to 1 and default to null
+func LAG(expr Expression, offsetAndDefault ...interface{}) windowExpression {
+	return leadLagImpl("LAG", expr, offsetAndDefault...)
+}
+
+// LEAD returns value evaluated at the row that is offset rows after the current row within the partition;
+// if there is no such row, instead return default (which must be of the same type as value).
+// Both offset and default are evaluated with respect to the current row.
+// If omitted, offset defaults to 1 and default to null
+func LEAD(expr Expression, offsetAndDefault ...interface{}) windowExpression {
+	return leadLagImpl("LEAD", expr, offsetAndDefault...)
+}
+
+// FIRST_VALUE returns value evaluated at the row that is the first row of the window frame
+func FIRST_VALUE(value Expression) windowExpression {
+	return newWindowFunc("FIRST_VALUE", value)
+}
+
+// LAST_VALUE returns value evaluated at the row that is the last row of the window frame
+func LAST_VALUE(value Expression) windowExpression {
+	return newWindowFunc("LAST_VALUE", value)
+}
+
+// NTH_VALUE returns value evaluated at the row that is the nth row of the window frame (counting from 1); null if no such row
+func NTH_VALUE(value Expression, nth int64) windowExpression {
+	return newWindowFunc("NTH_VALUE", value, FixedLiteral(nth))
+}
+
+func leadLagImpl(name string, expr Expression, offsetAndDefault ...interface{}) windowExpression {
+	params := []Expression{expr}
+
+	if len(offsetAndDefault) >= 2 {
+		offset, ok := offsetAndDefault[0].(int)
+		if !ok {
+			panic("jet: LAG offset should be an integer")
+		}
+
+		var defaultValue Expression
+
+		defaultValue, ok = offsetAndDefault[1].(Expression)
+
+		if !ok {
+			defaultValue = literal(offsetAndDefault[1])
+		}
+
+		params = append(params, FixedLiteral(offset), defaultValue)
+	}
+
+	return newWindowFunc(name, params...)
 }
 
 //------------ String functions ------------------//
@@ -349,7 +435,7 @@ func TO_HEX(number IntegerExpression) StringExpression {
 // REGEXP_LIKE Returns 1 if the string expr matches the regular expression specified by the pattern pat, 0 otherwise.
 func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType ...string) BoolExpression {
 	if len(matchType) > 0 {
-		return newBoolFunc("REGEXP_LIKE", stringExp, pattern, ConstLiteral(matchType[0]))
+		return newBoolFunc("REGEXP_LIKE", stringExp, pattern, FixedLiteral(matchType[0]))
 	}
 
 	return newBoolFunc("REGEXP_LIKE", stringExp, pattern)
@@ -391,7 +477,7 @@ func CURRENT_TIME(precision ...int) TimezExpression {
 	var timezFunc *timezFunc
 
 	if len(precision) > 0 {
-		timezFunc = newTimezFunc("CURRENT_TIME", ConstLiteral(precision[0]))
+		timezFunc = newTimezFunc("CURRENT_TIME", FixedLiteral(precision[0]))
 	} else {
 		timezFunc = newTimezFunc("CURRENT_TIME")
 	}
@@ -406,7 +492,7 @@ func CURRENT_TIMESTAMP(precision ...int) TimestampzExpression {
 	var timestampzFunc *timestampzFunc
 
 	if len(precision) > 0 {
-		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", ConstLiteral(precision[0]))
+		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", FixedLiteral(precision[0]))
 	} else {
 		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP")
 	}
@@ -421,7 +507,7 @@ func LOCALTIME(precision ...int) TimeExpression {
 	var timeFunc *timeFunc
 
 	if len(precision) > 0 {
-		timeFunc = newTimeFunc("LOCALTIME", ConstLiteral(precision[0]))
+		timeFunc = newTimeFunc("LOCALTIME", FixedLiteral(precision[0]))
 	} else {
 		timeFunc = newTimeFunc("LOCALTIME")
 	}
@@ -436,7 +522,7 @@ func LOCALTIMESTAMP(precision ...int) TimestampExpression {
 	var timestampFunc *timestampFunc
 
 	if len(precision) > 0 {
-		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP", ConstLiteral(precision[0]))
+		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP", FixedLiteral(precision[0]))
 	} else {
 		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP")
 	}
@@ -504,6 +590,16 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	return funcExp
 }
 
+// NewFloatWindowFunc creates new float function with name and expressions
+func newWindowFunc(name string, expressions ...Expression) windowExpression {
+
+	newFun := newFunc(name, expressions, nil)
+	windowExpr := newWindowExpression(newFun)
+	newFun.expressionInterfaceImpl.Parent = windowExpr
+
+	return windowExpr
+}
+
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(f.expressions...)
@@ -536,8 +632,21 @@ func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 
 	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
 	boolFunc.boolInterfaceImpl.parent = boolFunc
+	boolFunc.expressionInterfaceImpl.Parent = boolFunc
 
 	return boolFunc
+}
+
+// NewFloatWindowFunc creates new float function with name and expressions
+func newBoolWindowFunc(name string, expressions ...Expression) boolWindowExpression {
+	boolFunc := &boolFunc{}
+
+	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
+	intWindowFunc := newBoolWindowExpression(boolFunc)
+	boolFunc.boolInterfaceImpl.parent = intWindowFunc
+	boolFunc.expressionInterfaceImpl.Parent = intWindowFunc
+
+	return intWindowFunc
 }
 
 type floatFunc struct {
@@ -555,6 +664,18 @@ func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 	return floatFunc
 }
 
+// NewFloatWindowFunc creates new float function with name and expressions
+func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpression {
+	floatFunc := &floatFunc{}
+
+	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
+	floatWindowFunc := newFloatWindowExpression(floatFunc)
+	floatFunc.floatInterfaceImpl.parent = floatWindowFunc
+	floatFunc.expressionInterfaceImpl.Parent = floatWindowFunc
+
+	return floatWindowFunc
+}
+
 type integerFunc struct {
 	funcExpressionImpl
 	integerInterfaceImpl
@@ -567,6 +688,18 @@ func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
 	floatFunc.integerInterfaceImpl.parent = floatFunc
 
 	return floatFunc
+}
+
+// NewFloatWindowFunc creates new float function with name and expressions
+func newIntegerWindowFunc(name string, expressions ...Expression) integerWindowExpression {
+	integerFunc := &integerFunc{}
+
+	integerFunc.funcExpressionImpl = *newFunc(name, expressions, integerFunc)
+	intWindowFunc := newIntegerWindowExpression(integerFunc)
+	integerFunc.integerInterfaceImpl.parent = intWindowFunc
+	integerFunc.expressionInterfaceImpl.Parent = intWindowFunc
+
+	return intWindowFunc
 }
 
 type stringFunc struct {

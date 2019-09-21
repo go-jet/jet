@@ -12,7 +12,7 @@ convert database query result into desired arbitrary object structure.
 Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will add support for additional databases.
 
 ![jet](https://github.com/go-jet/jet/wiki/image/jet.png)   
-Jet is the easiest and fastest way to write complex SQL queries and map database query result 
+Jet is the easiest and the fastest way to write complex SQL queries and map database query result 
 into complex object composition. __It is not an ORM.__ 
 
 ## Motivation
@@ -46,7 +46,7 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
     * UPDATE `(SET, WHERE)`, 
     * DELETE `(WHERE, ORDER_BY, LIMIT)`,
     * LOCK `(READ, WRITE)`
- 2) Auto-generated Data Model types - Go types mapped to database type (table or enum), used to store
+ 2) Auto-generated Data Model types - Go types mapped to database type (table, view or enum), used to store
  result of database queries. Can be combined to create desired query result destination. 
  3) Query execution with result mapping to arbitrary destination structure. 
 
@@ -88,12 +88,13 @@ jet -source=PostgreSQL -host=localhost -port=5432 -user=jetuser -password=jetpas
 ```sh
 Connecting to postgres database: host=localhost port=5432 user=jetuser password=jetpass dbname=jetdb sslmode=disable 
 Retrieving schema information...
-    FOUND 15  table(s),  1  enum(s)
-Destination directory: ./gen/jetdb/dvds
-Cleaning up schema destination directory...
+	FOUND 15 table(s), 7 view(s), 1 enum(s)
+Cleaning up destination directory...
 Generating table sql builder files...
-Generating table model files...
+Generating view sql builder files...
 Generating enum sql builder files...
+Generating table model files...
+Generating view model files...
 Generating enum model files...
 Done
 ```
@@ -102,9 +103,9 @@ be omitted (both databases doesn't have schema support).
 _*User has to have a permission to read information schema tables._
 
 As command output suggest, Jet will:
-- connect to postgres database and retrieve information about the _tables_ and _enums_ of `dvds` schema
+- connect to postgres database and retrieve information about the _tables_, _views_ and _enums_ of `dvds` schema
 - delete everything in schema destination folder -  `./gen/jetdb/dvds`,   
-- and finally generate SQL Builder and Model files for each schema table and enum.  
+- and finally generate SQL Builder and Model files for each schema table, view and enum.  
 
 
 Generated files folder structure will look like this:
@@ -112,20 +113,24 @@ Generated files folder structure will look like this:
 |-- gen                               # -path
 |   `-- jetdb                         # database name
 |       `-- dvds                      # schema name
-|           |-- enum                  # sql builder folder for enums
+|           |-- enum                  # sql builder package for enums
 |           |   |-- mpaa_rating.go
-|           |-- table                 # sql builder folder for tables
+|           |-- table                 # sql builder package for tables
 |               |-- actor.go
 |               |-- address.go
 |               |-- category.go
 |               ...
-|           |-- model                 # model files for each table and enum
+|           |-- view                 # sql builder package for views
+|               |-- actor_info.go
+|               |-- film_list.go
+|               ...
+|           |-- model                 # data model types for each table, view and enum
 |           |   |-- actor.go
 |           |   |-- address.go
 |           |   |-- mpaa_rating.go
 |           |   ...
 ```
-Types from `table` and `enum` are used to write type safe SQL in Go, and `model` types can be combined to store 
+Types from `table`, `view` and `enum` are used to write type safe SQL in Go, and `model` types can be combined to store 
 results of the SQL queries.
 
 
@@ -167,7 +172,8 @@ stmt := SELECT(
     Film.FilmID.ASC(),
 )
 ```
-Package(dot) import is used so that statement would resemble as much as possible as native SQL. Note that every column has a type. String column `Language.Name` and `Category.Name` can be compared only with 
+_Package(dot) import is used so that statement would resemble as much as possible as native SQL._  
+Note that every column has a type. String column `Language.Name` and `Category.Name` can be compared only with 
 string columns and expressions. `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns 
 and can be compared only with integer columns and expressions.
 
@@ -268,11 +274,12 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 #### Execute query and store result
 
-Well formed SQL is just a first half the job. Lets see how can we make some sense of result set returned executing 
+Well formed SQL is just a first half of the job. Lets see how can we make some sense of result set returned executing 
 above statement. Usually this is the most complex and tedious work, but with Jet it is the easiest.
 
-First we have to create desired structure to store query result set. 
-This is done be combining autogenerated model types or it can be done manually(see [wiki](https://github.com/go-jet/jet/wiki/Scan-to-arbitrary-destination) for more information). 
+First we have to create desired structure to store query result. 
+This is done be combining autogenerated model types or it can be done 
+manually(see [wiki](https://github.com/go-jet/jet/wiki/Query-Result-Mapping-(QRM)) for more information). 
 
 Let's say this is our desired structure:  
 ```go
@@ -287,8 +294,8 @@ var dest []struct {
     }
 }
 ```
-Because one actor can act in multiple films, `Films` field is a slice, and because each film belongs to one language
-`Langauge` field is just a single model struct.  
+`Films` field is a slice because one actor can act in multiple films, and because each film belongs to one language
+`Langauge` field is just a single model struct. `Film` can belong to multiple categories.  
 _*There is no limitation of how big or nested destination can be._
 
 Now lets execute a above statement on open database connection (or transaction) db and store result into `dest`.
@@ -504,11 +511,13 @@ The biggest benefit is speed.  Speed is improved in 3 major areas:
 
 ##### Speed of development  
 
-Writing SQL queries is much easier, because programmer has the help of SQL code completion and SQL type safety directly in Go.
-Writing code is much faster and code is more robust. Automatic scan to arbitrary structure removes a lot of headache and 
-boilerplate code needed to structure database query result.  
+Writing SQL queries is faster and easier, because the developers have help of SQL code completion and SQL type safety directly from Go.
+Automatic scan to arbitrary structure removes a lot of headache and boilerplate code needed to structure database query result.  
 
 ##### Speed of execution
+
+While ORM libraries can introduce significant performance penalties due to number of round-trips to the database, 
+Jet will always perform much better, because of the single database call.
 
 Common web and database server usually are not on the same physical machine, and there is some latency between them. 
 Latency can vary from 5ms to 50+ms. In majority of cases query executed on database is simple query lasting no more than 1ms.
@@ -521,14 +530,14 @@ With Jet, handler time lost on latency between server and database is constant. 
 return result in one database call. Handler execution will be only proportional to the number of rows returned from database. 
 ORM example replaced with jet will take just 30ms + 'result scan time' = 31ms (rough estimate).  
 
-With Jet you can even join the whole database and store the whole structured result in  in one query call. 
+With Jet you can even join the whole database and store the whole structured result in one database call. 
 This is exactly what is being done in one of the tests: [TestJoinEverything](/tests/postgres/chinook_db_test.go#L40). 
 The whole test database is joined and query result(~10,000 rows) is stored in a structured variable in less than 0.7s. 
 
 ##### How quickly bugs are found
 
 The most expensive bugs are the one on the production and the least expensive are those found during development.
-With automatically generated type safe SQL not only queries are written faster but bugs are found sooner.  
+With automatically generated type safe SQL, not only queries are written faster but bugs are found sooner.  
 Lets return to quick start example, and take closer look at a line:
  ```go
 AND(Film.Length.GT(Int(180))),

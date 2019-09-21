@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"github.com/go-jet/jet/generator/internal/metadata"
+	"github.com/go-jet/jet/internal/utils"
 )
 
 // postgresQuerySet is dialect query set for PostgreSQL
@@ -12,7 +13,7 @@ func (p *postgresQuerySet) ListOfTablesQuery() string {
 	return `
 SELECT table_name 
 FROM information_schema.tables
-where table_schema = $1 and table_type = 'BASE TABLE';
+where table_schema = $1 and table_type = $2;
 `
 }
 
@@ -45,12 +46,9 @@ WHERE n.nspname = $1
 ORDER BY n.nspname, t.typname, e.enumsortorder;`
 }
 
-func (p *postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.MetaData, error) {
+func (p *postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.MetaData {
 	rows, err := db.Query(p.ListOfEnumsQuery(), schemaName)
-
-	if err != nil {
-		return nil, err
-	}
+	utils.PanicOnError(err)
 	defer rows.Close()
 
 	enumsInfosMap := map[string][]string{}
@@ -58,9 +56,7 @@ func (p *postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]me
 		var enumName string
 		var enumValue string
 		err = rows.Scan(&enumName, &enumValue)
-		if err != nil {
-			return nil, err
-		}
+		utils.PanicOnError(err)
 
 		enumValues := enumsInfosMap[enumName]
 
@@ -70,10 +66,7 @@ func (p *postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]me
 	}
 
 	err = rows.Err()
-
-	if err != nil {
-		return nil, err
-	}
+	utils.PanicOnError(err)
 
 	ret := []metadata.MetaData{}
 
@@ -84,5 +77,5 @@ func (p *postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]me
 		})
 	}
 
-	return ret, nil
+	return ret
 }

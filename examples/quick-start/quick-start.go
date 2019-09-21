@@ -91,9 +91,7 @@ func jsonSave(path string, v interface{}) {
 
 	err := ioutil.WriteFile(path, jsonText, 0644)
 
-	if err != nil {
-		panic(err)
-	}
+	panicOnError(err)
 }
 
 func printStatementInfo(stmt SelectStatement) {

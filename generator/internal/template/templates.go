@@ -18,7 +18,7 @@ var tableSQLBuilderTemplate = `
 	{{- end}}
 {{- end}}
 
-package table
+package {{param "package"}}
 
 import (
 	"github.com/go-jet/jet/{{dialect.PackageName}}"

@@ -2,14 +2,13 @@ package utils
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/go-jet/jet/internal/3rdparty/snaker"
 	"go/format"
 	"os"
 	"path/filepath"
 	"reflect"
-	"strconv"
 	"strings"
-	"time"
 )
 
 // ToGoIdentifier converts database to Go identifier.
@@ -104,42 +103,9 @@ func DirExists(path string) (bool, error) {
 func replaceInvalidChars(str string) string {
 	str = strings.Replace(str, " ", "_", -1)
 	str = strings.Replace(str, "-", "_", -1)
+	str = strings.Replace(str, ".", "_", -1)
 
 	return str
-}
-
-// FormatTimestamp formats t into Postgres' text format for timestamps. From: github.com/lib/pq
-func FormatTimestamp(t time.Time) []byte {
-	// Need to send dates before 0001 A.D. with " BC" suffix, instead of the
-	// minus sign preferred by Go.
-	// Beware, "0000" in ISO is "1 BC", "-0001" is "2 BC" and so on
-	bc := false
-	if t.Year() <= 0 {
-		// flip year sign, and add 1, e.g: "0" will be "1", and "-10" will be "11"
-		t = t.AddDate((-t.Year())*2+1, 0, 0)
-		bc = true
-	}
-	b := []byte(t.Format("2006-01-02 15:04:05.999999999Z07:00"))
-
-	_, offset := t.Zone()
-	offset = offset % 60
-	if offset != 0 {
-		// RFC3339Nano already printed the minus sign
-		if offset < 0 {
-			offset = -offset
-		}
-
-		b = append(b, ':')
-		if offset < 10 {
-			b = append(b, '0')
-		}
-		b = strconv.AppendInt(b, int64(offset), 10)
-	}
-
-	if bc {
-		b = append(b, " BC"...)
-	}
-	return b
 }
 
 // IsNil check if v is nil
@@ -172,5 +138,29 @@ func TypeMustBe(v reflect.Type, kind reflect.Kind, errorStr string) {
 func MustBeInitializedPtr(val interface{}, errorStr string) {
 	if IsNil(val) {
 		panic(errorStr)
+	}
+}
+
+// PanicOnError panics if err is not nil
+func PanicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+// ErrorCatch is used in defer to recover from panics and to set err
+func ErrorCatch(err *error) {
+	recovered := recover()
+
+	if recovered == nil {
+		return
+	}
+
+	recoveredErr, isError := recovered.(error)
+
+	if isError {
+		*err = recoveredErr
+	} else {
+		*err = fmt.Errorf("%v", recovered)
 	}
 }

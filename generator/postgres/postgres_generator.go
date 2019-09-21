@@ -25,31 +25,20 @@ type DBConnection struct {
 }
 
 // Generate generates jet files at destination dir from database connection details
-func Generate(destDir string, dbConn DBConnection) error {
+func Generate(destDir string, dbConn DBConnection) (err error) {
+	defer utils.ErrorCatch(&err)
 
 	db, err := openConnection(dbConn)
+	utils.PanicOnError(err)
 	defer utils.DBClose(db)
 
-	if err != nil {
-		return err
-	}
-
 	fmt.Println("Retrieving schema information...")
-	schemaInfo, err := metadata.GetSchemaInfo(db, dbConn.SchemaName, &postgresQuerySet{})
-
-	if err != nil {
-		return err
-	}
+	schemaInfo := metadata.GetSchemaMetaData(db, dbConn.SchemaName, &postgresQuerySet{})
 
 	genPath := path.Join(destDir, dbConn.DBName, dbConn.SchemaName)
+	template.GenerateFiles(genPath, schemaInfo, postgres.Dialect)
 
-	err = template.GenerateFiles(genPath, schemaInfo.TableInfos, schemaInfo.EnumInfos, postgres.Dialect)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return
 }
 
 func openConnection(dbConn DBConnection) (*sql.DB, error) {

@@ -5,6 +5,7 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
+	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
 	"github.com/google/uuid"
 	"time"
@@ -33,6 +34,23 @@ func TestAllTypes(t *testing.T) {
 	}
 
 	//testutils.PrintJson(dest)
+	testutils.AssertJSON(t, dest, allTypesJson)
+}
+
+func TestAllTypesViewSelect(t *testing.T) {
+
+	type AllTypesView model.AllTypes
+
+	dest := []AllTypesView{}
+
+	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
+	assert.NilError(t, err)
+	assert.Equal(t, len(dest), 2)
+
+	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
+		return
+	}
+
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 

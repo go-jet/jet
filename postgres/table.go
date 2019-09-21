@@ -109,10 +109,10 @@ type tableImpl struct {
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
+func NewTable(schemaName, name string, column jet.ColumnExpression, columns ...jet.ColumnExpression) Table {
 
 	t := &tableImpl{
-		SerializerTable: jet.NewTable(schemaName, name, columns...),
+		SerializerTable: jet.NewTable(schemaName, name, column, columns...),
 	}
 
 	t.readableTableInterfaceImpl.parent = t

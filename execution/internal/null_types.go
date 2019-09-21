@@ -62,7 +62,7 @@ func (nt *NullTime) Scan(value interface{}) (err error) {
 		nt.Time, nt.Valid = parseTime(v)
 		return
 	default:
-		return fmt.Errorf("can't scan time from %v", value)
+		return fmt.Errorf("can't scan time.Time from %v", value)
 	}
 }
 

@@ -67,46 +67,32 @@ func (t TableMetaData) GoStructName() string {
 	return utils.ToGoIdentifier(t.name) + "Table"
 }
 
-// GetTableInfo returns table info metadata
-func GetTableInfo(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (tableInfo TableMetaData, err error) {
+// GetTableMetaData returns table info metadata
+func GetTableMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (tableInfo TableMetaData) {
 
 	tableInfo.SchemaName = schemaName
 	tableInfo.name = tableName
 
-	tableInfo.PrimaryKeys, err = getPrimaryKeys(db, querySet, schemaName, tableName)
-	if err != nil {
-		return
-	}
-
-	tableInfo.Columns, err = getColumnsMetaData(db, querySet, schemaName, tableName)
-
-	if err != nil {
-		return
-	}
+	tableInfo.PrimaryKeys = getPrimaryKeys(db, querySet, schemaName, tableName)
+	tableInfo.Columns = getColumnsMetaData(db, querySet, schemaName, tableName)
 
 	return
 }
 
-func getPrimaryKeys(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (map[string]bool, error) {
+func getPrimaryKeys(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) map[string]bool {
 
 	rows, err := db.Query(querySet.PrimaryKeysQuery(), schemaName, tableName)
-
-	if err != nil {
-		return nil, err
-	}
+	utils.PanicOnError(err)
 
 	primaryKeyMap := map[string]bool{}
 
 	for rows.Next() {
 		primaryKey := ""
 		err := rows.Scan(&primaryKey)
-
-		if err != nil {
-			return nil, err
-		}
+		utils.PanicOnError(err)
 
 		primaryKeyMap[primaryKey] = true
 	}
 
-	return primaryKeyMap, nil
+	return primaryKeyMap
 }

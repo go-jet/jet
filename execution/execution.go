@@ -771,7 +771,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 			if len(subType.indexes) != 0 || len(subType.subTypes) != 0 {
 				ret.subTypes = append(ret.subTypes, subType)
 			}
-		} else if isPrimaryKey(field) {
+		} else if isPrimaryKey(field, parentField) {
 			index := s.typeToColumnIndex(newTypeName, fieldName)
 
 			if index < 0 {
@@ -813,9 +813,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 
 	value, err := valuer.Value()
 
-	if err != nil {
-		panic(err)
-	}
+	utils.PanicOnError(err)
 
 	return value
 }
@@ -837,11 +835,43 @@ func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
 	return newElem
 }
 
-func isPrimaryKey(field reflect.StructField) bool {
+func isPrimaryKey(field reflect.StructField, parentField *reflect.StructField) bool {
+
+	if hasOverwrite, isPrimaryKey := primaryKeyOvewrite(field.Name, parentField); hasOverwrite {
+		return isPrimaryKey
+	}
 
 	sqlTag := field.Tag.Get("sql")
 
 	return sqlTag == "primary_key"
+}
+
+func primaryKeyOvewrite(columnName string, parentField *reflect.StructField) (hasOverwrite, primaryKey bool) {
+	if parentField == nil {
+		return
+	}
+
+	sqlTag := parentField.Tag.Get("sql")
+
+	if !strings.HasPrefix(sqlTag, "primary_key") {
+		return
+	}
+
+	parts := strings.Split(sqlTag, "=")
+
+	if len(parts) < 2 {
+		return
+	}
+
+	primaryKeyColumns := strings.Split(parts[1], ",")
+
+	for _, primaryKeyCol := range primaryKeyColumns {
+		if toCommonIdentifier(columnName) == toCommonIdentifier(primaryKeyCol) {
+			return true, true
+		}
+	}
+
+	return true, false
 }
 
 func indirectType(reflectType reflect.Type) reflect.Type {

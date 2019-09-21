@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"github.com/go-jet/jet/generator/internal/metadata"
+	"github.com/go-jet/jet/internal/utils"
 	"strings"
 )
 
@@ -13,7 +14,7 @@ func (m *mySqlQuerySet) ListOfTablesQuery() string {
 	return `
 SELECT table_name
 FROM INFORMATION_SCHEMA.tables
-WHERE table_schema = ? and table_type = 'BASE TABLE';
+WHERE table_schema = ? and table_type = ?;
 `
 }
 
@@ -46,17 +47,14 @@ func (m *mySqlQuerySet) ListOfEnumsQuery() string {
 SELECT (CASE c.DATA_TYPE WHEN 'enum' then CONCAT(c.TABLE_NAME, '_', c.COLUMN_NAME) ELSE '' END ), SUBSTRING(c.COLUMN_TYPE,5)
 FROM information_schema.columns as c
 	INNER JOIN information_schema.tables  as t on (t.table_schema = c.table_schema AND t.table_name = c.table_name)
-WHERE c.table_schema = ? AND DATA_TYPE = 'enum' AND t.TABLE_TYPE = 'BASE TABLE';
+WHERE c.table_schema = ? AND DATA_TYPE = 'enum';
 `
 }
 
-func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.MetaData, error) {
+func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.MetaData {
 
 	rows, err := db.Query(m.ListOfEnumsQuery(), schemaName)
-
-	if err != nil {
-		return nil, err
-	}
+	utils.PanicOnError(err)
 	defer rows.Close()
 
 	ret := []metadata.MetaData{}
@@ -65,9 +63,7 @@ func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metad
 		var enumName string
 		var enumValues string
 		err = rows.Scan(&enumName, &enumValues)
-		if err != nil {
-			return nil, err
-		}
+		utils.PanicOnError(err)
 
 		enumValues = strings.Replace(enumValues[1:len(enumValues)-1], "'", "", -1)
 
@@ -78,11 +74,8 @@ func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metad
 	}
 
 	err = rows.Err()
+	utils.PanicOnError(err)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return ret, nil
+	return ret
 
 }
