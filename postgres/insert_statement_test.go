@@ -26,7 +26,7 @@ INSERT INTO db.table1 (col1) VALUES
 }
 
 func TestInsertWithColumnList(t *testing.T) {
-	columnList := ColumnList(table3ColInt, table3StrCol)
+	columnList := ColumnList{table3ColInt, table3StrCol}
 
 	assertStatementSql(t, table3.INSERT(columnList).VALUES(1, 3), `
 INSERT INTO db.table3 (col_int, col2) VALUES

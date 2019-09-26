@@ -564,7 +564,9 @@ To run the tests, additional dependencies are required:
 
 ## Versioning
 
-[SemVer](http://semver.org/) is used for versioning. For the versions available, see the [releases](https://github.com/go-jet/jet/releases). 
+[SemVer](http://semver.org/) is used for versioning. For the versions available, take a look at the [releases](https://github.com/go-jet/jet/releases).  
+For now there is no guarantee that public API will remain backward compatible. Please read the release draft to get acquaint with possible
+API build breakable change, and how to fix it. 
 
 ## License
 

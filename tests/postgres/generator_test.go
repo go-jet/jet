@@ -171,8 +171,8 @@ type ActorTable struct {
 	LastName   postgres.ColumnString
 	LastUpdate postgres.ColumnTimestamp
 
-	AllColumns     postgres.IColumnList
-	MutableColumns postgres.IColumnList
+	AllColumns     postgres.ColumnList
+	MutableColumns postgres.ColumnList
 }
 
 // creates new ActorTable with assigned alias
@@ -201,8 +201,8 @@ func newActorTable() *ActorTable {
 		LastName:   LastNameColumn,
 		LastUpdate: LastUpdateColumn,
 
-		AllColumns:     postgres.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
-		MutableColumns: postgres.ColumnList(FirstNameColumn, LastNameColumn, LastUpdateColumn),
+		AllColumns:     postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn},
+		MutableColumns: postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn},
 	}
 }
 `
@@ -240,8 +240,8 @@ type ActorInfoTable struct {
 	LastName  postgres.ColumnString
 	FilmInfo  postgres.ColumnString
 
-	AllColumns     postgres.IColumnList
-	MutableColumns postgres.IColumnList
+	AllColumns     postgres.ColumnList
+	MutableColumns postgres.ColumnList
 }
 
 // creates new ActorInfoTable with assigned alias
@@ -270,8 +270,8 @@ func newActorInfoTable() *ActorInfoTable {
 		LastName:  LastNameColumn,
 		FilmInfo:  FilmInfoColumn,
 
-		AllColumns:     postgres.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
-		MutableColumns: postgres.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+		AllColumns:     postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
+		MutableColumns: postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
 	}
 }
 `

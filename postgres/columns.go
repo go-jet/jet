@@ -5,12 +5,8 @@ import "github.com/go-jet/jet/internal/jet"
 // Column is common column interface for all types of columns.
 type Column = jet.ColumnExpression
 
-// IColumnList is used to store list of columns for later reuse as single projection or
-// column list for UPDATE and INSERT statement.
-type IColumnList = jet.IColumnList
-
 // ColumnList function returns list of columns that be used as projection or column list for UPDATE and INSERT statement.
-var ColumnList = jet.ColumnList
+type ColumnList = jet.ColumnList
 
 // ColumnBool is interface for SQL boolean columns.
 type ColumnBool = jet.ColumnBool

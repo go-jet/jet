@@ -147,8 +147,8 @@ func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
 func UnwindColumns(column1 Column, columns ...Column) []Column {
 	columnList := []Column{}
 
-	if val, ok := column1.(IColumnList); ok {
-		for _, col := range val.columns() {
+	if val, ok := column1.(ColumnList); ok {
+		for _, col := range val {
 			columnList = append(columnList, col)
 		}
 		columnList = append(columnList, columns...)
@@ -165,8 +165,8 @@ func UnwidColumnList(columns []Column) []Column {
 	ret := []Column{}
 
 	for _, col := range columns {
-		if columnList, ok := col.(IColumnList); ok {
-			for _, c := range columnList.columns() {
+		if columnList, ok := col.(ColumnList); ok {
+			for _, c := range columnList {
 				ret = append(ret, c)
 			}
 		} else {
