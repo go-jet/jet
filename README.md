@@ -516,7 +516,7 @@ Automatic scan to arbitrary structure removes a lot of headache and boilerplate 
 
 ##### Speed of execution
 
-While ORM libraries can introduce significant performance penalties due too number of round-trips to the database, 
+While ORM libraries can introduce significant performance penalties due to number of round-trips to the database, 
 Jet will always perform much better, because of the single database call.
 
 Common web and database server usually are not on the same physical machine, and there is some latency between them. 
