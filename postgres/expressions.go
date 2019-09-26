@@ -4,34 +4,34 @@ import "github.com/go-jet/jet/internal/jet"
 
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
-type Expression jet.Expression
+type Expression = jet.Expression
 
 // BoolExpression interface
-type BoolExpression jet.BoolExpression
+type BoolExpression = jet.BoolExpression
 
 // StringExpression interface
-type StringExpression jet.StringExpression
+type StringExpression = jet.StringExpression
 
 // IntegerExpression interface
-type IntegerExpression jet.IntegerExpression
+type IntegerExpression = jet.IntegerExpression
 
 //FloatExpression is interface
-type FloatExpression jet.FloatExpression
+type FloatExpression = jet.FloatExpression
 
 // TimeExpression interface
-type TimeExpression jet.TimeExpression
+type TimeExpression = jet.TimeExpression
 
 // TimezExpression interface for 'time with time zone' types
-type TimezExpression jet.TimezExpression
+type TimezExpression = jet.TimezExpression
 
 // DateExpression is interface for date types
-type DateExpression jet.DateExpression
+type DateExpression = jet.DateExpression
 
 // TimestampExpression interface
-type TimestampExpression jet.TimestampExpression
+type TimestampExpression = jet.TimestampExpression
 
 // TimestampzExpression interface
-type TimestampzExpression jet.TimestampzExpression
+type TimestampzExpression = jet.TimestampzExpression
 
 // BoolExp is bool expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as bool expression.

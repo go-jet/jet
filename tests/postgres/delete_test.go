@@ -85,9 +85,11 @@ func TestDeleteQueryContext(t *testing.T) {
 func TestDeleteExecContext(t *testing.T) {
 	initForDeleteTest(t)
 
+	list := []Expression{String("Gmail"), String("Outlook")}
+
 	deleteStmt := Link.
 		DELETE().
-		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
+		WHERE(Link.Name.IN(list...))
 
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
