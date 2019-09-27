@@ -1,12 +1,12 @@
-package execution
+package qrm
 
 import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"github.com/go-jet/jet/execution/internal"
 	"github.com/go-jet/jet/internal/utils"
+	"github.com/go-jet/jet/qrm/internal"
 	"github.com/google/uuid"
 	"reflect"
 	"strconv"
@@ -14,23 +14,24 @@ import (
 	"time"
 )
 
-// Query executes query with list of arguments over database connection using context and stores result into destination.
+// Query executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
+// using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
-func Query(context context.Context, db DB, query string, args []interface{}, destinationPtr interface{}) error {
+func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr interface{}) error {
 
 	utils.MustBeInitializedPtr(db, "jet: db is nil")
-	utils.MustBeInitializedPtr(destinationPtr, "jet: destination is nil")
-	utils.MustBe(destinationPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
+	utils.MustBeInitializedPtr(destPtr, "jet: destination is nil")
+	utils.MustBe(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
 
-	destinationPtrType := reflect.TypeOf(destinationPtr)
+	destinationPtrType := reflect.TypeOf(destPtr)
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		return queryToSlice(context, db, query, args, destinationPtr)
+		return queryToSlice(ctx, db, query, args, destPtr)
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		err := queryToSlice(context, db, query, args, tempSlicePtrValue.Interface())
+		err := queryToSlice(ctx, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return err
@@ -40,7 +41,7 @@ func Query(context context.Context, db DB, query string, args []interface{}, des
 			return nil
 		}
 
-		structValue := reflect.ValueOf(destinationPtr).Elem()
+		structValue := reflect.ValueOf(destPtr).Elem()
 		firstTempStruct := tempSliceValue.Index(0).Elem()
 
 		if structValue.Type().AssignableTo(firstTempStruct.Type()) {
