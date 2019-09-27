@@ -164,3 +164,13 @@ func ErrorCatch(err *error) {
 		*err = fmt.Errorf("%v", recovered)
 	}
 }
+
+func StringSliceContains(strings []string, contains string) bool {
+	for _, str := range strings {
+		if str == contains {
+			return true
+		}
+	}
+
+	return false
+}

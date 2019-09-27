@@ -3,7 +3,7 @@ package jet
 import (
 	"context"
 	"database/sql"
-	"github.com/go-jet/jet/execution"
+	"github.com/go-jet/jet/qrm"
 )
 
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
@@ -16,15 +16,15 @@ type Statement interface {
 
 	// Query executes statement over database connection db and stores row result in destination.
 	// Destination can be arbitrary structure
-	Query(db execution.DB, destination interface{}) error
+	Query(db qrm.DB, destination interface{}) error
 	// QueryContext executes statement with a context over database connection db and stores row result in destination.
 	// Destination can be of arbitrary structure
-	QueryContext(context context.Context, db execution.DB, destination interface{}) error
+	QueryContext(context context.Context, db qrm.DB, destination interface{}) error
 
 	//Exec executes statement over db connection without returning any rows.
-	Exec(db execution.DB) (sql.Result, error)
+	Exec(db qrm.DB) (sql.Result, error)
 	//Exec executes statement with context over db connection without returning any rows.
-	ExecContext(context context.Context, db execution.DB) (sql.Result, error)
+	ExecContext(context context.Context, db qrm.DB) (sql.Result, error)
 }
 
 // SerializerStatement interface
@@ -71,24 +71,24 @@ func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 	return
 }
 
-func (s *serializerStatementInterfaceImpl) Query(db execution.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) Query(db qrm.DB, destination interface{}) error {
 	query, args := s.Sql()
 
-	return execution.Query(context.Background(), db, query, args, destination)
+	return qrm.Query(context.Background(), db, query, args, destination)
 }
 
-func (s *serializerStatementInterfaceImpl) QueryContext(context context.Context, db execution.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) QueryContext(context context.Context, db qrm.DB, destination interface{}) error {
 	query, args := s.Sql()
 
-	return execution.Query(context, db, query, args, destination)
+	return qrm.Query(context, db, query, args, destination)
 }
 
-func (s *serializerStatementInterfaceImpl) Exec(db execution.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) Exec(db qrm.DB) (res sql.Result, err error) {
 	query, args := s.Sql()
 	return db.Exec(query, args...)
 }
 
-func (s *serializerStatementInterfaceImpl) ExecContext(context context.Context, db execution.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) ExecContext(context context.Context, db qrm.DB) (res sql.Result, err error) {
 	query, args := s.Sql()
 
 	return db.ExecContext(context, query, args...)

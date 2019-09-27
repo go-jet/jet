@@ -9,7 +9,7 @@ func TestInvalidSelect(t *testing.T) {
 }
 
 func TestSelectColumnList(t *testing.T) {
-	columnList := ColumnList(table2ColInt, table2ColFloat, table3ColInt)
+	columnList := ColumnList{table2ColInt, table2ColFloat, table3ColInt}
 
 	assertStatementSql(t, SELECT(columnList).FROM(table2), `
 SELECT table2.col_int AS "table2.col_int",

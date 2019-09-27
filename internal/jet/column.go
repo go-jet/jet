@@ -99,28 +99,10 @@ func (c columnImpl) serialize(statement StatementType, out *SQLBuilder, options 
 
 //------------------------------------------------------//
 
-// IColumnList is used to store list of columns for later reuse as single projection or
-// column list for UPDATE and INSERT statement.
-type IColumnList interface {
-	Projection
-	Column
+// ColumnList is a helper type to support list of columns as single projection
+type ColumnList []ColumnExpression
 
-	columns() []ColumnExpression
-}
-
-// ColumnList function returns list of columns that be used as projection or column list for UPDATE and INSERT statement.
-func ColumnList(columns ...ColumnExpression) IColumnList {
-	return columnListImpl(columns)
-}
-
-// ColumnList is redefined type to support list of columns as single Projection
-type columnListImpl []ColumnExpression
-
-func (cl columnListImpl) columns() []ColumnExpression {
-	return cl
-}
-
-func (cl columnListImpl) fromImpl(subQuery SelectTable) Projection {
+func (cl ColumnList) fromImpl(subQuery SelectTable) Projection {
 	newProjectionList := ProjectionList{}
 
 	for _, column := range cl {
@@ -130,7 +112,7 @@ func (cl columnListImpl) fromImpl(subQuery SelectTable) Projection {
 	return newProjectionList
 }
 
-func (cl columnListImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
+func (cl ColumnList) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	projections := ColumnListToProjectionList(cl)
 
 	SerializeProjectionList(statement, projections, out)
@@ -139,10 +121,10 @@ func (cl columnListImpl) serializeForProjection(statement StatementType, out *SQ
 // dummy column interface implementation
 
 // Name is placeholder for ColumnList to implement Column interface
-func (cl columnListImpl) Name() string { return "" }
+func (cl ColumnList) Name() string { return "" }
 
 // TableName is placeholder for ColumnList to implement Column interface
-func (cl columnListImpl) TableName() string                { return "" }
-func (cl columnListImpl) setTableName(name string)         {}
-func (cl columnListImpl) setSubQuery(subQuery SelectTable) {}
-func (cl columnListImpl) defaultAlias() string             { return "" }
+func (cl ColumnList) TableName() string                { return "" }
+func (cl ColumnList) setTableName(name string)         {}
+func (cl ColumnList) setSubQuery(subQuery SelectTable) {}
+func (cl ColumnList) defaultAlias() string             { return "" }

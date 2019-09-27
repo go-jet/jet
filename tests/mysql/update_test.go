@@ -118,7 +118,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 		Name: "DuckDuckGo",
 	}
 
-	updateColumnList := ColumnList(Link.Description, Link.Name, Link.URL)
+	updateColumnList := ColumnList{Link.Description, Link.Name, Link.URL}
 
 	stmt := Link.
 		UPDATE(updateColumnList).

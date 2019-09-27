@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-jet/jet/execution"
 	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/utils"
+	"github.com/go-jet/jet/qrm"
 	"gotest.tools/assert"
 	"io/ioutil"
 	"os"
@@ -16,7 +16,7 @@ import (
 )
 
 // AssertExec assert statement execution for successful execution and number of rows affected
-func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected ...int64) {
+func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int64) {
 	res, err := stmt.Exec(db)
 
 	assert.NilError(t, err)
@@ -29,7 +29,7 @@ func AssertExec(t *testing.T, stmt jet.Statement, db execution.DB, rowsAffected 
 }
 
 // AssertExecErr assert statement execution for failed execution with error string errorStr
-func AssertExecErr(t *testing.T, stmt jet.Statement, db execution.DB, errorStr string) {
+func AssertExecErr(t *testing.T, stmt jet.Statement, db qrm.DB, errorStr string) {
 	_, err := stmt.Exec(db)
 
 	assert.Error(t, err, errorStr)
@@ -150,7 +150,7 @@ func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet
 }
 
 // AssertQueryPanicErr check if statement Query execution panics with error errString
-func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db execution.DB, dest interface{}, errString string) {
+func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest interface{}, errString string) {
 	defer func() {
 		r := recover()
 		assert.Equal(t, r, errString)

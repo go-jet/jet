@@ -137,8 +137,8 @@ type ActorTable struct {
 	LastName   mysql.ColumnString
 	LastUpdate mysql.ColumnTimestamp
 
-	AllColumns     mysql.IColumnList
-	MutableColumns mysql.IColumnList
+	AllColumns     mysql.ColumnList
+	MutableColumns mysql.ColumnList
 }
 
 // creates new ActorTable with assigned alias
@@ -167,8 +167,8 @@ func newActorTable() *ActorTable {
 		LastName:   LastNameColumn,
 		LastUpdate: LastUpdateColumn,
 
-		AllColumns:     mysql.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
-		MutableColumns: mysql.ColumnList(FirstNameColumn, LastNameColumn, LastUpdateColumn),
+		AllColumns:     mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn},
+		MutableColumns: mysql.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn},
 	}
 }
 `
@@ -206,8 +206,8 @@ type ActorInfoTable struct {
 	LastName  mysql.ColumnString
 	FilmInfo  mysql.ColumnString
 
-	AllColumns     mysql.IColumnList
-	MutableColumns mysql.IColumnList
+	AllColumns     mysql.ColumnList
+	MutableColumns mysql.ColumnList
 }
 
 // creates new ActorInfoTable with assigned alias
@@ -236,8 +236,8 @@ func newActorInfoTable() *ActorInfoTable {
 		LastName:  LastNameColumn,
 		FilmInfo:  FilmInfoColumn,
 
-		AllColumns:     mysql.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
-		MutableColumns: mysql.ColumnList(ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+		AllColumns:     mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
+		MutableColumns: mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
 	}
 }
 `
