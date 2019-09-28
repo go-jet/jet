@@ -11,7 +11,7 @@ Jet is a framework for writing type-safe SQL queries in Go, with ability to easi
 convert database query result into desired arbitrary object structure.  
 Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will add support for additional databases.
 
-![jet](https://github.com/go-jet/jet/wiki/image/jet.png)   
+![jet](https://github.com/go-jet/jet/wiki/image/jet.png)  
 Jet is the easiest and the fastest way to write complex SQL queries and map database query result 
 into complex object composition. __It is not an ORM.__ 
 
