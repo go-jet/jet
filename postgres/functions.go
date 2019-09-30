@@ -69,11 +69,17 @@ var COUNT = jet.COUNT
 // EVERY is aggregate function. Returns true if all input values are true, otherwise false
 var EVERY = jet.EVERY
 
+// MAXf is aggregate function. Returns maximum value of expression across all input values
+var MAX = jet.MAX
+
 // MAXf is aggregate function. Returns maximum value of float expression across all input values
 var MAXf = jet.MAXf
 
 // MAXi is aggregate function. Returns maximum value of int expression across all input values
 var MAXi = jet.MAXi
+
+// MIN is aggregate function. Returns minimum value of expression across all input values.
+var MIN = jet.MIN
 
 // MINf is aggregate function. Returns minimum value of float expression across all input values
 var MINf = jet.MINf

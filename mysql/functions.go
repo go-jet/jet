@@ -67,11 +67,17 @@ var BIT_OR = jet.BIT_OR
 // COUNT is aggregate function. Returns number of input rows for which the value of expression is not null.
 var COUNT = jet.COUNT
 
+// MAX is aggregate function. Returns maximum value of expression across all input values
+var MAX = jet.MAX
+
 // MAXi is aggregate function. Returns maximum value of int expression across all input values
 var MAXi = jet.MAXi
 
 // MAXf is aggregate function. Returns maximum value of float expression across all input values
 var MAXf = jet.MAXf
+
+// MIN is aggregate function. Returns minimum value of int expression across all input values
+var MIN = jet.MIN
 
 // MINi is aggregate function. Returns minimum value of int expression across all input values
 var MINi = jet.MINi
