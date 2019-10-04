@@ -115,6 +115,11 @@ func EVERY(boolExpression BoolExpression) boolWindowExpression {
 	return newBoolWindowFunc("EVERY", boolExpression)
 }
 
+// MAX is aggregate function. Returns minimum value of expression across all input values.
+func MAX(expression Expression) Expression {
+	return newWindowFunc("MAX", expression)
+}
+
 // MAXf is aggregate function. Returns maximum value of float expression across all input values
 func MAXf(floatExpression FloatExpression) floatWindowExpression {
 	return NewFloatWindowFunc("MAX", floatExpression)
@@ -123,6 +128,11 @@ func MAXf(floatExpression FloatExpression) floatWindowExpression {
 // MAXi is aggregate function. Returns maximum value of int expression across all input values
 func MAXi(integerExpression IntegerExpression) integerWindowExpression {
 	return newIntegerWindowFunc("MAX", integerExpression)
+}
+
+// MIN is aggregate function. Returns minimum value of expression across all input values.
+func MIN(expression Expression) Expression {
+	return newWindowFunc("MIN", expression)
 }
 
 // MINf is aggregate function. Returns minimum value of float expression across all input values

@@ -1009,7 +1009,9 @@ SELECT customer.customer_id AS "customer.customer_id",
      customer.active AS "customer.active",
      SUM(payment.amount) AS "amount.sum",
      AVG(payment.amount) AS "amount.avg",
+     MAX(payment.payment_date) AS "amount.max_date",
      MAX(payment.amount) AS "amount.max",
+     MIN(payment.payment_date) AS "amount.min_date",
      MIN(payment.amount) AS "amount.min",
      COUNT(payment.amount) AS "amount.count"
 FROM dvds.payment
@@ -1025,7 +1027,9 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 
 			SUMf(Payment.Amount).AS("amount.sum"),
 			AVG(Payment.Amount).AS("amount.avg"),
+			MAX(Payment.PaymentDate).AS("amount.max_date"),
 			MAXf(Payment.Amount).AS("amount.max"),
+			MIN(Payment.PaymentDate).AS("amount.min_date"),
 			MINf(Payment.Amount).AS("amount.min"),
 			COUNT(Payment.Amount).AS("amount.count"),
 		).

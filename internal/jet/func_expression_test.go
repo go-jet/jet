@@ -30,6 +30,14 @@ func TestFuncEVERY(t *testing.T) {
 }
 
 func TestFuncMIN(t *testing.T) {
+	t.Run("expression", func(t *testing.T) {
+		assertClauseSerialize(t, MIN(table1ColDate), "MIN(table1.col_date)")
+		assertClauseSerialize(t, MIN(Date(2001, 1, 1)), "MIN($1)", "2001-01-01")
+		assertClauseSerialize(t, MIN(Time(12, 10, 10)), "MIN($1)", "12:10:10")
+		assertClauseSerialize(t, MIN(Timestamp(2001, 1, 1, 12, 10, 10)), "MIN($1)", "2001-01-01 12:10:10")
+		assertClauseSerialize(t, MIN(Timestampz(2001, 1, 1, 12, 10, 10, 1, "UTC")), "MIN($1)", "2001-01-01 12:10:10.000000001 UTC")
+	})
+
 	t.Run("float", func(t *testing.T) {
 		assertClauseSerialize(t, MINf(table1ColFloat), "MIN(table1.col_float)")
 	})
@@ -40,6 +48,14 @@ func TestFuncMIN(t *testing.T) {
 }
 
 func TestFuncMAX(t *testing.T) {
+	t.Run("expression", func(t *testing.T) {
+		assertClauseSerialize(t, MAX(table1ColDate), "MAX(table1.col_date)")
+		assertClauseSerialize(t, MAX(Date(2001, 1, 1)), "MAX($1)", "2001-01-01")
+		assertClauseSerialize(t, MAX(Time(12, 10, 10)), "MAX($1)", "12:10:10")
+		assertClauseSerialize(t, MAX(Timestamp(2001, 1, 1, 12, 10, 10)), "MAX($1)", "2001-01-01 12:10:10")
+		assertClauseSerialize(t, MAX(Timestampz(2001, 1, 1, 12, 10, 10, 1, "UTC")), "MAX($1)", "2001-01-01 12:10:10.000000001 UTC")
+	})
+
 	t.Run("float", func(t *testing.T) {
 		assertClauseSerialize(t, MAXf(table1ColFloat), "MAX(table1.col_float)")
 		assertClauseSerialize(t, MAXf(Float(11.2222)), "MAX($1)", float64(11.2222))
