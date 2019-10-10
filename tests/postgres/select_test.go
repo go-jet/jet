@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
@@ -162,7 +163,8 @@ LIMIT 12;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -1617,7 +1619,8 @@ SELECT true,
      'date';
 `)
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -1688,7 +1691,8 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -1723,12 +1727,14 @@ ORDER BY payment.customer_id;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
 
 func TestSimpleView(t *testing.T) {
+
 	query := SELECT(
 		view.ActorInfo.AllColumns,
 	).
@@ -1742,6 +1748,12 @@ func TestSimpleView(t *testing.T) {
 		LastName  string
 		FilmInfo  string
 	}
+
+	//sql, args := query.Sql()
+	//
+	//row := db.QueryRow(sql, args...)
+	//
+	//row.Scan()
 
 	var dest []ActorInfo
 
@@ -1785,4 +1797,14 @@ func TestJoinViewWithTable(t *testing.T) {
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, len(dest[0].Rentals), 32)
 	assert.Equal(t, len(dest[1].Rentals), 27)
+}
+
+func TestErrNoRows(t *testing.T) {
+	query := SELECT(Customer.AllColumns).FROM(Customer).WHERE(Customer.CustomerID.EQ(Int(-1)))
+
+	customer := model.Customer{}
+
+	err := query.Query(db, &customer)
+
+	assert.Error(t, err, sql.ErrNoRows.Error())
 }

@@ -170,7 +170,8 @@ func TestExpressionCast(t *testing.T) {
 
 	//fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -249,7 +250,8 @@ func TestStringOperators(t *testing.T) {
 
 	//fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -618,7 +620,8 @@ func TestTimeExpression(t *testing.T) {
 
 	//fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }

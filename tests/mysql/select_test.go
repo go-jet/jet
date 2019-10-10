@@ -228,7 +228,8 @@ LIMIT ?;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -263,7 +264,8 @@ LIMIT ?;
 
 	testutils.AssertStatementSql(t, query2, expectedSQL, int64(1), int64(10), int64(1), int64(2), int64(1))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -305,7 +307,8 @@ OFFSET ?;
 
 	testutils.AssertStatementSql(t, query2, expectedSQL, int64(1), int64(10), int64(1), int64(2), int64(4), int64(3))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -510,7 +513,8 @@ SELECT true,
      'date';
 `)
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -530,7 +534,8 @@ LOCK IN SHARE MODE;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -606,7 +611,8 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -641,7 +647,8 @@ ORDER BY payment.customer_id;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }

@@ -50,14 +50,16 @@ func TestScanToInvalidDestination(t *testing.T) {
 
 func TestScanToValidDestination(t *testing.T) {
 	t.Run("pointer to struct", func(t *testing.T) {
-		err := query.Query(db, &struct{}{})
+		dest := []struct{}{}
+		err := query.Query(db, &dest)
 
 		assert.NilError(t, err)
 	})
 
 	t.Run("global query function scan", func(t *testing.T) {
 		queryStr, args := query.Sql()
-		err := qrm.Query(nil, db, queryStr, args, &struct{}{})
+		dest := []struct{}{}
+		err := qrm.Query(nil, db, queryStr, args, &dest)
 		assert.NilError(t, err)
 	})
 

@@ -38,7 +38,7 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 		}
 
 		if tempSliceValue.Len() == 0 {
-			return nil
+			return sql.ErrNoRows
 		}
 
 		structValue := reflect.ValueOf(destPtr).Elem()
