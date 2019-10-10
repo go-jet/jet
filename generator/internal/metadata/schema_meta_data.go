@@ -19,14 +19,16 @@ func (s SchemaMetaData) IsEmpty() bool {
 }
 
 const (
-	baseTable = "BASE TABLE"
-	view      = "VIEW"
+	baseTable    = "BASE TABLE"
+	foreignTable = "FOREIGN"
+	view         = "VIEW"
 )
 
 // GetSchemaMetaData returns schema information from db connection.
 func GetSchemaMetaData(db *sql.DB, schemaName string, querySet DialectQuerySet) (schemaInfo SchemaMetaData) {
 
-	schemaInfo.TablesMetaData = getTablesMetaData(db, querySet, schemaName, baseTable)
+	schemaInfo.TablesMetaData = append(getTablesMetaData(db, querySet, schemaName, baseTable),
+		getTablesMetaData(db, querySet, schemaName, foreignTable)...)
 	schemaInfo.ViewsMetaData = getTablesMetaData(db, querySet, schemaName, view)
 	schemaInfo.EnumsMetaData = querySet.GetEnumsMetaData(db, schemaName)
 
