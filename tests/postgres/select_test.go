@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
@@ -1797,14 +1796,4 @@ func TestJoinViewWithTable(t *testing.T) {
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, len(dest[0].Rentals), 32)
 	assert.Equal(t, len(dest[1].Rentals), 27)
-}
-
-func TestErrNoRows(t *testing.T) {
-	query := SELECT(Customer.AllColumns).FROM(Customer).WHERE(Customer.CustomerID.EQ(Int(-1)))
-
-	customer := model.Customer{}
-
-	err := query.Query(db, &customer)
-
-	assert.Error(t, err, sql.ErrNoRows.Error())
 }

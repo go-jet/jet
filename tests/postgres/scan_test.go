@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
@@ -692,6 +693,35 @@ func TestScanToSlice(t *testing.T) {
 
 		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'")
 	})
+}
+
+func TestStructScanErrNoRows(t *testing.T) {
+	query := SELECT(Customer.AllColumns).
+		FROM(Customer).
+		WHERE(Customer.CustomerID.EQ(Int(-1)))
+
+	customer := model.Customer{}
+
+	err := query.Query(db, &customer)
+
+	assert.Error(t, err, sql.ErrNoRows.Error())
+}
+
+func TestStructScanAllNull(t *testing.T) {
+	query := SELECT(NULL.AS("null1"), NULL.AS("null2"))
+
+	dest := struct {
+		Null1 *int
+		Null2 *int
+	}{}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.DeepEqual(t, dest, struct {
+		Null1 *int
+		Null2 *int
+	}{})
 }
 
 var address256 = model.Address{

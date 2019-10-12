@@ -10,6 +10,7 @@ import (
 // Query executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
 // using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
+// If destination is pointer to struct and query result set is empty, method returns sql.ErrNoRows.
 func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr interface{}) error {
 
 	utils.MustBeInitializedPtr(db, "jet: db is nil")
@@ -19,19 +20,25 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 	destinationPtrType := reflect.TypeOf(destPtr)
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		return queryToSlice(ctx, db, query, args, destPtr)
+		_, err := queryToSlice(ctx, db, query, args, destPtr)
+		return err
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		err := queryToSlice(ctx, db, query, args, tempSlicePtrValue.Interface())
+		rowsProcessed, err := queryToSlice(ctx, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return err
 		}
 
-		if tempSliceValue.Len() == 0 {
+		if rowsProcessed == 0 {
 			return sql.ErrNoRows
+		}
+
+		// edge case when row result set contains only NULLs.
+		if tempSliceValue.Len() == 0 {
+			return nil
 		}
 
 		structValue := reflect.ValueOf(destPtr).Elem()
@@ -46,7 +53,7 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 	}
 }
 
-func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) error {
+func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -54,27 +61,27 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 	rows, err := db.QueryContext(ctx, query, args...)
 
 	if err != nil {
-		return err
+		return
 	}
 	defer rows.Close()
 
 	scanContext, err := newScanContext(rows)
 
 	if err != nil {
-		return err
+		return
 	}
 
 	if len(scanContext.row) == 0 {
-		return nil
+		return
 	}
 
 	slicePtrValue := reflect.ValueOf(slicePtr)
 
 	for rows.Next() {
-		err := rows.Scan(scanContext.row...)
+		err = rows.Scan(scanContext.row...)
 
 		if err != nil {
-			return err
+			return
 		}
 
 		scanContext.rowNum++
@@ -82,22 +89,24 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 		_, err = mapRowToSlice(scanContext, "", slicePtrValue, nil)
 
 		if err != nil {
-			return err
+			return
 		}
 	}
 
 	err = rows.Close()
 	if err != nil {
-		return err
+		return
 	}
 
 	err = rows.Err()
 
 	if err != nil {
-		return err
+		return
 	}
 
-	return nil
+	rowsProcessed = scanContext.rowNum
+
+	return
 }
 
 func mapRowToSlice(scanContext *scanContext, groupKey string, slicePtrValue reflect.Value, field *reflect.StructField) (updated bool, err error) {
@@ -165,6 +174,7 @@ func mapRowToBaseTypeSlice(scanContext *scanContext, slicePtrValue reflect.Value
 }
 
 func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue reflect.Value, parentField *reflect.StructField, onlySlices ...bool) (updated bool, err error) {
+	mapOnlySlices := len(onlySlices) > 0
 	structType := structPtrValue.Type().Elem()
 
 	typeInf := scanContext.getTypeInfo(structType, parentField)
@@ -193,22 +203,21 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				updated = true
 			}
 
-		} else if len(onlySlices) == 0 {
-
-			if fieldMap.columnIndex == -1 {
+		} else {
+			if mapOnlySlices || fieldMap.columnIndex == -1 {
 				continue
 			}
 
+			cellValue := scanContext.rowElem(fieldMap.columnIndex)
+
+			if cellValue == nil {
+				continue
+			}
+
+			initializeValueIfNilPtr(fieldValue)
+			updated = true
+
 			if fieldMap.implementsScanner {
-
-				cellValue := scanContext.rowElem(fieldMap.columnIndex)
-
-				if cellValue == nil {
-					continue
-				}
-
-				initializeValueIfNilPtr(fieldValue)
-
 				scanner := getScanner(fieldValue)
 
 				err = scanner.Scan(cellValue)
@@ -216,35 +225,13 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				if err != nil {
 					panic("jet: " + err.Error() + ", " + fieldToString(&field) + " of type " + structType.String())
 				}
-				updated = true
 			} else {
-				cellValue := scanContext.rowElem(fieldMap.columnIndex)
-
-				if cellValue != nil {
-					updated = true
-					initializeValueIfNilPtr(fieldValue)
-					setReflectValue(reflect.ValueOf(cellValue), fieldValue)
-				}
+				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
 			}
 		}
 	}
 
 	return
-}
-
-func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
-
-	utils.ValueMustBe(destPtrValue, reflect.Ptr, "jet: internal error. Destination is not pointer.")
-
-	destValueKind := destPtrValue.Elem().Kind()
-
-	if destValueKind == reflect.Struct {
-		return mapRowToStruct(scanContext, groupKey, destPtrValue, structField)
-	} else if destValueKind == reflect.Slice {
-		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
-	} else {
-		panic("jet: unsupported dest type: " + structField.Name + " " + structField.Type.String())
-	}
 }
 
 func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest reflect.Value, structField *reflect.StructField) (updated bool, err error) {
@@ -272,4 +259,19 @@ func mapRowToDestinationValue(scanContext *scanContext, groupKey string, dest re
 	}
 
 	return
+}
+
+func mapRowToDestinationPtr(scanContext *scanContext, groupKey string, destPtrValue reflect.Value, structField *reflect.StructField) (updated bool, err error) {
+
+	utils.ValueMustBe(destPtrValue, reflect.Ptr, "jet: internal error. Destination is not pointer.")
+
+	destValueKind := destPtrValue.Elem().Kind()
+
+	if destValueKind == reflect.Struct {
+		return mapRowToStruct(scanContext, groupKey, destPtrValue, structField)
+	} else if destValueKind == reflect.Slice {
+		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
+	} else {
+		panic("jet: unsupported dest type: " + structField.Name + " " + structField.Type.String())
+	}
 }

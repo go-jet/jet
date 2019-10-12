@@ -3,23 +3,19 @@ package qrm
 import (
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"github.com/go-jet/jet/internal/utils"
 	"reflect"
-	"strconv"
 	"strings"
 )
 
 type scanContext struct {
-	rowNum int
-
-	row                  []interface{}
-	uniqueDestObjectsMap map[string]int
-
-	typeToColumnIndexMap map[string]int
-
-	groupKeyInfoCache map[string]groupKeyInfo
-
-	typeInfoMap map[string]typeInfo
+	rowNum                   int64
+	row                      []interface{}
+	uniqueDestObjectsMap     map[string]int
+	commonIdentToColumnIndex map[string]int
+	groupKeyInfoCache        map[string]groupKeyInfo
+	typeInfoMap              map[string]typeInfo
 }
 
 func newScanContext(rows *sql.Rows) (*scanContext, error) {
@@ -35,26 +31,25 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 		return nil, err
 	}
 
-	typeToIndexMap := map[string]int{}
+	commonIdentToColumnIndex := map[string]int{}
 
 	for i, alias := range aliases {
 		names := strings.SplitN(alias, ".", 2)
-
-		goName := toCommonIdentifier(names[0])
+		commonIdentifier := toCommonIdentifier(names[0])
 
 		if len(names) > 1 {
-			goName += "." + toCommonIdentifier(names[1])
+			commonIdentifier += "." + toCommonIdentifier(names[1])
 		}
 
-		typeToIndexMap[strings.ToLower(goName)] = i
+		commonIdentToColumnIndex[commonIdentifier] = i
 	}
 
 	return &scanContext{
 		row:                  createScanValue(columnTypes),
 		uniqueDestObjectsMap: make(map[string]int),
 
-		groupKeyInfoCache:    make(map[string]groupKeyInfo),
-		typeToColumnIndexMap: typeToIndexMap,
+		groupKeyInfoCache:        make(map[string]groupKeyInfo),
+		commonIdentToColumnIndex: commonIdentToColumnIndex,
 
 		typeInfoMap: make(map[string]typeInfo),
 	}, nil
@@ -65,7 +60,7 @@ type typeInfo struct {
 }
 
 type fieldMapping struct {
-	complexType       bool
+	complexType       bool // slice or struct
 	columnIndex       int
 	implementsScanner bool
 }
@@ -137,7 +132,7 @@ func (s *scanContext) getGroupKey(structType reflect.Type, structField *reflect.
 
 func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 	if len(groupKeyInfo.indexes) == 0 && len(groupKeyInfo.subTypes) == 0 {
-		return "|ROW: " + strconv.Itoa(s.rowNum) + "|"
+		return fmt.Sprintf("|ROW:%d|", s.rowNum)
 	}
 
 	groupKeys := []string{}
@@ -204,7 +199,7 @@ func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 		key = strings.ToLower(fieldName)
 	}
 
-	index, ok := s.typeToColumnIndexMap[key]
+	index, ok := s.commonIdentToColumnIndex[key]
 
 	if !ok {
 		return -1

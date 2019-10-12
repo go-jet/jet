@@ -33,14 +33,9 @@ func getScanner(value reflect.Value) sql.Scanner {
 
 func getSliceElemType(slicePtrValue reflect.Value) reflect.Type {
 	sliceTypePtr := slicePtrValue.Type()
+	elemType := indirectType(sliceTypePtr).Elem()
 
-	elemType := sliceTypePtr.Elem().Elem()
-
-	if elemType.Kind() == reflect.Ptr {
-		return elemType.Elem()
-	}
-
-	return elemType
+	return indirectType(elemType)
 }
 
 func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
