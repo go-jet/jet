@@ -162,7 +162,8 @@ LIMIT 12;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -1617,7 +1618,8 @@ SELECT true,
      'date';
 `)
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -1688,7 +1690,8 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 	assert.NilError(t, err)
 }
 
@@ -1723,12 +1726,14 @@ ORDER BY payment.customer_id;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
 
 func TestSimpleView(t *testing.T) {
+
 	query := SELECT(
 		view.ActorInfo.AllColumns,
 	).
@@ -1742,6 +1747,12 @@ func TestSimpleView(t *testing.T) {
 		LastName  string
 		FilmInfo  string
 	}
+
+	//sql, args := query.Sql()
+	//
+	//row := db.QueryRow(sql, args...)
+	//
+	//row.Scan()
 
 	var dest []ActorInfo
 

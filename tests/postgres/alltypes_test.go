@@ -134,7 +134,7 @@ LIMIT $5;
 func TestExpressionCast(t *testing.T) {
 
 	query := AllTypes.SELECT(
-		postgres.CAST(Int(150)).AS_CHAR(12),
+		postgres.CAST(Int(150)).AS_CHAR(12).AS("char12"),
 		postgres.CAST(String("TRUE")).AS_BOOL(),
 		postgres.CAST(String("111")).AS_SMALLINT(),
 		postgres.CAST(String("111")).AS_INTEGER(),
@@ -170,7 +170,8 @@ func TestExpressionCast(t *testing.T) {
 
 	//fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -249,7 +250,8 @@ func TestStringOperators(t *testing.T) {
 
 	//fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -618,7 +620,8 @@ func TestTimeExpression(t *testing.T) {
 
 	//fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
