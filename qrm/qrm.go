@@ -495,7 +495,9 @@ func isSimpleModelType(objType reflect.Type) bool {
 	case reflect.Slice:
 		return objType.Elem().Kind() == reflect.Uint8 //[]byte
 	case reflect.Struct:
-		return objType == timeType || objType == uuidType // time.Time || uuid.UUID
+		return objType == timeType
+	case reflect.Array:
+		return objType == uuidType // uuid.UUID returns reflect.Array kind
 	}
 
 	return false
