@@ -30,6 +30,154 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	assert.DeepEqual(t, result.UUIDPtr, UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 }
 
+func TestUUIDComplex(t *testing.T) {
+	query := Person.INNER_JOIN(PersonPhone, PersonPhone.PersonID.EQ(Person.PersonID)).
+		SELECT(Person.AllColumns, PersonPhone.AllColumns).
+		ORDER_BY(Person.PersonID.ASC(), PersonPhone.PhoneID.ASC())
+
+	t.Run("slice of structs", func(t *testing.T) {
+
+		var dest []struct {
+			model.Person
+			Phones []struct {
+				model.PersonPhone
+			}
+		}
+
+		err := query.Query(db, &dest)
+
+		assert.NilError(t, err)
+		assert.Equal(t, len(dest), 2)
+		testutils.AssertJSON(t, dest, `
+[
+	{
+		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
+		"FirstName": "Sad",
+		"LastName": "John",
+		"Mood": "sad",
+		"Phones": [
+			{
+				"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a51",
+				"PhoneNumber": "212-555-1211",
+				"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6"
+			}
+		]
+	},
+	{
+		"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8",
+		"FirstName": "Ok",
+		"LastName": "John",
+		"Mood": "ok",
+		"Phones": [
+			{
+				"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a52",
+				"PhoneNumber": "212-555-1212",
+				"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8"
+			},
+			{
+				"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a53",
+				"PhoneNumber": "212-555-1213",
+				"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8"
+			}
+		]
+	}
+]
+`)
+
+	})
+
+	t.Run("single struct", func(t *testing.T) {
+		singleQuery := query.WHERE(Person.PersonID.EQ(String("b68dbff6-a87d-11e9-a7f2-98ded00c39c8")))
+
+		var dest struct {
+			model.Person
+			Phones []struct {
+				model.PersonPhone
+			}
+		}
+		err := singleQuery.Query(db, &dest)
+		assert.NilError(t, err)
+
+		testutils.AssertJSON(t, dest, `
+{
+	"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8",
+	"FirstName": "Ok",
+	"LastName": "John",
+	"Mood": "ok",
+	"Phones": [
+		{
+			"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a52",
+			"PhoneNumber": "212-555-1212",
+			"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8"
+		},
+		{
+			"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a53",
+			"PhoneNumber": "212-555-1213",
+			"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8"
+		}
+	]
+}
+`)
+	})
+
+	t.Run("slice of structs left join", func(t *testing.T) {
+		leftQuery := Person.LEFT_JOIN(PersonPhone, PersonPhone.PersonID.EQ(Person.PersonID)).
+			SELECT(Person.AllColumns, PersonPhone.AllColumns).
+			ORDER_BY(Person.PersonID.ASC(), PersonPhone.PhoneID.ASC())
+		var dest []struct {
+			model.Person
+			Phones []struct {
+				model.PersonPhone
+			}
+		}
+		err := leftQuery.Query(db, &dest)
+
+		assert.NilError(t, err)
+		testutils.AssertJSON(t, dest, `
+[
+	{
+		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
+		"FirstName": "Sad",
+		"LastName": "John",
+		"Mood": "sad",
+		"Phones": [
+			{
+				"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a51",
+				"PhoneNumber": "212-555-1211",
+				"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6"
+			}
+		]
+	},
+	{
+		"PersonID": "b68dbff5-a87d-11e9-a7f2-98ded00c39c7",
+		"FirstName": "Ok",
+		"LastName": "John",
+		"Mood": "ok",
+		"Phones": null
+	},
+	{
+		"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8",
+		"FirstName": "Ok",
+		"LastName": "John",
+		"Mood": "ok",
+		"Phones": [
+			{
+				"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a52",
+				"PhoneNumber": "212-555-1212",
+				"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8"
+			},
+			{
+				"PhoneID": "02b61cc4-d500-4847-bd36-111eccbc7a53",
+				"PhoneNumber": "212-555-1213",
+				"PersonID": "b68dbff6-a87d-11e9-a7f2-98ded00c39c8"
+			}
+		]
+	}
+]
+`)
+	})
+
+}
 func TestEnumType(t *testing.T) {
 	query := Person.
 		SELECT(Person.AllColumns)
