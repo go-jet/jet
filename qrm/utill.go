@@ -156,6 +156,7 @@ func valueToString(value reflect.Value) string {
 
 var timeType = reflect.TypeOf(time.Now())
 var uuidType = reflect.TypeOf(uuid.New())
+var byteArrayType = reflect.TypeOf([]byte(""))
 
 func isSimpleModelType(objType reflect.Type) bool {
 	objType = indirectType(objType)
@@ -167,15 +168,9 @@ func isSimpleModelType(objType reflect.Type) bool {
 		reflect.String,
 		reflect.Bool:
 		return true
-	case reflect.Slice:
-		return objType.Elem().Kind() == reflect.Uint8 //[]byte
-	case reflect.Struct:
-		return objType == timeType
-	case reflect.Array:
-		return objType == uuidType // uuid.UUID returns reflect.Array kind
 	}
 
-	return false
+	return objType == timeType || objType == uuidType || objType == byteArrayType
 }
 
 func isIntegerType(value reflect.Type) bool {
