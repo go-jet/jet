@@ -2,15 +2,18 @@ package qrm
 
 import (
 	"context"
-	"database/sql"
+	"errors"
 	"github.com/go-jet/jet/internal/utils"
 	"reflect"
 )
 
+// ErrNoRows is returned by Query when query result set is empty
+var ErrNoRows = errors.New("qrm: no rows in result set")
+
 // Query executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
 // using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
-// If destination is pointer to struct and query result set is empty, method returns sql.ErrNoRows.
+// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr interface{}) error {
 
 	utils.MustBeInitializedPtr(db, "jet: db is nil")
@@ -33,7 +36,7 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 		}
 
 		if rowsProcessed == 0 {
-			return sql.ErrNoRows
+			return ErrNoRows
 		}
 
 		// edge case when row result set contains only NULLs.

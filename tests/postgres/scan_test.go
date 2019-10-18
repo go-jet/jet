@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
@@ -704,7 +703,7 @@ func TestStructScanErrNoRows(t *testing.T) {
 
 	err := query.Query(db, &customer)
 
-	assert.Error(t, err, sql.ErrNoRows.Error())
+	assert.Error(t, err, qrm.ErrNoRows.Error())
 }
 
 func TestStructScanAllNull(t *testing.T) {
