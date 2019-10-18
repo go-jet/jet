@@ -15,10 +15,12 @@ type Statement interface {
 	DebugSql() (query string)
 
 	// Query executes statement over database connection db and stores row result in destination.
-	// Destination can be arbitrary structure
+	// Destination can be either pointer to struct or pointer to a slice.
+	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 	Query(db qrm.DB, destination interface{}) error
 	// QueryContext executes statement with a context over database connection db and stores row result in destination.
-	// Destination can be of arbitrary structure
+	// Destination can be either pointer to struct or pointer to a slice.
+	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 	QueryContext(context context.Context, db qrm.DB, destination interface{}) error
 
 	//Exec executes statement over db connection without returning any rows.

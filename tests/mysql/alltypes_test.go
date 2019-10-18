@@ -516,7 +516,8 @@ func TestStringOperators(t *testing.T) {
 
 	fmt.Println(query.DebugSql())
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -586,7 +587,8 @@ FROM test_sample.all_types;
 `, "20:34:58", "23:06:06", "22:06:06.011", "21:06:06.011111", "20:16:06",
 		"19:26:06", "18:36:06", "17:46:06", "16:56:56", "15:16:46", "14:26:36")
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -646,7 +648,8 @@ SELECT CAST(? AS DATE),
 FROM test_sample.all_types;
 `)
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -708,7 +711,8 @@ SELECT all_types.date_time = all_types.date_time,
 FROM test_sample.all_types;
 `)
 
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }
@@ -769,7 +773,8 @@ SELECT all_types.timestamp = all_types.timestamp,
      CURRENT_TIMESTAMP(2)
 FROM test_sample.all_types;
 `)
-	err := query.Query(db, &struct{}{})
+	dest := []struct{}{}
+	err := query.Query(db, &dest)
 
 	assert.NilError(t, err)
 }

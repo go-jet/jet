@@ -50,14 +50,16 @@ func TestScanToInvalidDestination(t *testing.T) {
 
 func TestScanToValidDestination(t *testing.T) {
 	t.Run("pointer to struct", func(t *testing.T) {
-		err := query.Query(db, &struct{}{})
+		dest := []struct{}{}
+		err := query.Query(db, &dest)
 
 		assert.NilError(t, err)
 	})
 
 	t.Run("global query function scan", func(t *testing.T) {
 		queryStr, args := query.Sql()
-		err := qrm.Query(nil, db, queryStr, args, &struct{}{})
+		dest := []struct{}{}
+		err := qrm.Query(nil, db, queryStr, args, &dest)
 		assert.NilError(t, err)
 	})
 
@@ -690,6 +692,35 @@ func TestScanToSlice(t *testing.T) {
 
 		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'")
 	})
+}
+
+func TestStructScanErrNoRows(t *testing.T) {
+	query := SELECT(Customer.AllColumns).
+		FROM(Customer).
+		WHERE(Customer.CustomerID.EQ(Int(-1)))
+
+	customer := model.Customer{}
+
+	err := query.Query(db, &customer)
+
+	assert.Error(t, err, qrm.ErrNoRows.Error())
+}
+
+func TestStructScanAllNull(t *testing.T) {
+	query := SELECT(NULL.AS("null1"), NULL.AS("null2"))
+
+	dest := struct {
+		Null1 *int
+		Null2 *int
+	}{}
+
+	err := query.Query(db, &dest)
+
+	assert.NilError(t, err)
+	assert.DeepEqual(t, dest, struct {
+		Null1 *int
+		Null2 *int
+	}{})
 }
 
 var address256 = model.Address{
