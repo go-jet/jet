@@ -212,9 +212,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 
 	valuer, ok := s.row[index].(driver.Valuer)
 
-	if !ok {
-		panic("jet: internal error, scan value doesn't implement driver.Valuer")
-	}
+	utils.MustBeTrue(ok, "jet: internal error, scan value doesn't implement driver.Valuer")
 
 	value, err := valuer.Value()
 

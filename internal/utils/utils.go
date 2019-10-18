@@ -113,6 +113,13 @@ func IsNil(v interface{}) bool {
 	return v == nil || (reflect.ValueOf(v).Kind() == reflect.Ptr && reflect.ValueOf(v).IsNil())
 }
 
+// MustBeTrue panics when condition is false
+func MustBeTrue(condition bool, errorStr string) {
+	if !condition {
+		panic(errorStr)
+	}
+}
+
 // MustBe panics with errorStr error, if v interface is not of reflect kind
 func MustBe(v interface{}, kind reflect.Kind, errorStr string) {
 	if reflect.TypeOf(v).Kind() != kind {
@@ -165,6 +172,7 @@ func ErrorCatch(err *error) {
 	}
 }
 
+// StringSliceContains checks if slice of strings contains a string
 func StringSliceContains(strings []string, contains string) bool {
 	for _, str := range strings {
 		if str == contains {

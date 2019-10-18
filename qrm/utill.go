@@ -50,9 +50,8 @@ func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
 }
 
 func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) error {
-	if slicePtrValue.IsNil() {
-		panic("jet: internal, slice is nil")
-	}
+	utils.MustBeTrue(!slicePtrValue.IsNil(), "jet: internal, slice is nil")
+
 	sliceValue := slicePtrValue.Elem()
 	sliceElemType := sliceValue.Type().Elem()
 
