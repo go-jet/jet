@@ -1,6 +1,12 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"gotest.tools/assert"
+
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/postgres"
 	. "github.com/go-jet/jet/postgres"
@@ -8,10 +14,6 @@ import (
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
-	"github.com/google/uuid"
-	"gotest.tools/assert"
-	"testing"
-	"time"
 )
 
 func TestAllTypesSelect(t *testing.T) {
@@ -606,6 +608,17 @@ func TestTimeExpression(t *testing.T) {
 		AllTypes.Time.GT_EQ(AllTypes.Time),
 		AllTypes.Time.GT_EQ(Time(23, 6, 6, 1)),
 
+		AllTypes.Date.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Date.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Time.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Time.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timez.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timez.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timestamp.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timestamp.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timestampz.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timestampz.SUB(INTERVAL(1, MINUTE)),
+
 		CURRENT_DATE(),
 		CURRENT_TIME(),
 		CURRENT_TIME(2),
@@ -623,6 +636,44 @@ func TestTimeExpression(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
+	assert.NilError(t, err)
+}
+
+func TestInterval(t *testing.T) {
+	stmt := SELECT(
+		INTERVAL(1, YEAR),
+		INTERVAL(1, MONTH),
+		INTERVAL(1, WEEK),
+		INTERVAL(1, DAY),
+		INTERVAL(1, HOUR),
+		INTERVAL(1, MINUTE),
+		INTERVAL(1, SECOND),
+		INTERVAL(1, MILLISECOND),
+		INTERVAL(1, MICROSECOND),
+		INTERVAL(1, DECADE),
+		INTERVAL(1, CENTURY),
+		INTERVAL(1, MILLENNIUM),
+
+		INTERVAL(1, YEAR, 10, MONTH),
+		INTERVAL(1, YEAR, 10, MONTH, 20, DAY),
+		INTERVAL(1, YEAR, 10, MONTH, 20, DAY, 3, HOUR),
+
+		INTERVAL(1, YEAR).IS_NOT_NULL(),
+		INTERVAL(1, YEAR).AS("one year"),
+
+		INTERVALd(0),
+		INTERVALd(1*time.Microsecond),
+		INTERVALd(1*time.Millisecond),
+		INTERVALd(1*time.Second),
+		INTERVALd(1*time.Minute),
+		INTERVALd(1*time.Hour),
+		INTERVALd(24*time.Hour),
+		INTERVALd(24*time.Hour+2*time.Hour+3*time.Minute+4*time.Second+5*time.Microsecond),
+	)
+
+	//fmt.Println(stmt.DebugSql())
+
+	err := stmt.Query(db, &struct{}{})
 	assert.NilError(t, err)
 }
 

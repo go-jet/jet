@@ -158,7 +158,7 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 
@@ -1686,7 +1686,7 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 		).GROUP_BY(Payment.Amount, Payment.CustomerID, Payment.PaymentDate).
 		WHERE(Payment.PaymentID.LT(Int(10)))
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
@@ -1722,7 +1722,7 @@ ORDER BY payment.customer_id;
 		WINDOW("w3").AS(Window("w2").ORDER_BY(Payment.CustomerID)).
 		ORDER_BY(Payment.CustomerID)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 
@@ -1747,12 +1747,6 @@ func TestSimpleView(t *testing.T) {
 		LastName  string
 		FilmInfo  string
 	}
-
-	//sql, args := query.Sql()
-	//
-	//row := db.QueryRow(sql, args...)
-	//
-	//row.Scan()
 
 	var dest []ActorInfo
 

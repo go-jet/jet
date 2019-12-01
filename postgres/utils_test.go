@@ -1,9 +1,10 @@
 package postgres
 
 import (
+	"testing"
+
 	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
-	"testing"
 )
 
 var table1Col1 = IntegerColumn("col1")
@@ -70,7 +71,7 @@ var table3 = NewTable(
 	table3ColInt,
 	table3StrCol)
 
-func assertClauseSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
+func assertSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
 	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
 }
 
@@ -84,3 +85,4 @@ func assertProjectionSerialize(t *testing.T, projection jet.Projection, query st
 
 var assertStatementSql = testutils.AssertStatementSql
 var assertStatementSqlErr = testutils.AssertStatementSqlErr
+var assertPanicErr = testutils.AssertPanicErr
