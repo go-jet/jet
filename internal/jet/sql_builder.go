@@ -22,7 +22,7 @@ type SQLBuilder struct {
 	lastChar byte
 	ident    int
 
-	debug bool
+	Debug bool
 }
 
 const defaultIdent = 5
@@ -120,7 +120,7 @@ func (s *SQLBuilder) insertConstantArgument(arg interface{}) {
 }
 
 func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
-	if s.debug {
+	if s.Debug {
 		s.insertConstantArgument(arg)
 		return
 	}

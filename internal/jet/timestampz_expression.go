@@ -13,6 +13,9 @@ type TimestampzExpression interface {
 	LT_EQ(rhs TimestampzExpression) BoolExpression
 	GT(rhs TimestampzExpression) BoolExpression
 	GT_EQ(rhs TimestampzExpression) BoolExpression
+
+	ADD(rhs Interval) TimestampzExpression
+	SUB(rhs Interval) TimestampzExpression
 }
 
 type timestampzInterfaceImpl struct {
@@ -51,13 +54,12 @@ func (t *timestampzInterfaceImpl) GT_EQ(rhs TimestampzExpression) BoolExpression
 	return gtEq(t.parent, rhs)
 }
 
-//---------------------------------------------------//
+func (t *timestampzInterfaceImpl) ADD(rhs Interval) TimestampzExpression {
+	return TimestampzExp(newBinaryOperatorExpression(t.parent, rhs, "+"))
+}
 
-type prefixTimestampzOperator struct {
-	expressionInterfaceImpl
-	timestampzInterfaceImpl
-
-	prefixOpExpression
+func (t *timestampzInterfaceImpl) SUB(rhs Interval) TimestampzExpression {
+	return TimestampzExp(newBinaryOperatorExpression(t.parent, rhs, "-"))
 }
 
 //-------------------------------------------------

@@ -52,3 +52,11 @@ func TestTimeExp(t *testing.T) {
 	assertClauseSerialize(t, TimeExp(table1ColFloat).LT(Time(1, 1, 1, 1*time.Millisecond)),
 		"(table1.col_float < $1)", string("01:01:01.001"))
 }
+
+func TestTimeArithmetic(t *testing.T) {
+	time := Time(10, 20, 3)
+	assertClauseDebugSerialize(t, table1ColTime.ADD(NewInterval(String("1 HOUR"))).EQ(time),
+		"((table1.col_time + INTERVAL '1 HOUR') = '10:20:03')")
+	assertClauseDebugSerialize(t, table1ColTime.SUB(NewInterval(String("1 HOUR"))).EQ(time),
+		"((table1.col_time - INTERVAL '1 HOUR') = '10:20:03')")
+}

@@ -79,7 +79,7 @@ type CaseOperator interface {
 }
 
 type caseOperatorImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	expression Expression
 	when       []Expression
@@ -95,7 +95,7 @@ func CASE(expression ...Expression) CaseOperator {
 		caseExp.expression = expression[0]
 	}
 
-	caseExp.expressionInterfaceImpl.Parent = caseExp
+	caseExp.ExpressionInterfaceImpl.Parent = caseExp
 
 	return caseExp
 }

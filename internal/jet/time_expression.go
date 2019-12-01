@@ -13,6 +13,9 @@ type TimeExpression interface {
 	LT_EQ(rhs TimeExpression) BoolExpression
 	GT(rhs TimeExpression) BoolExpression
 	GT_EQ(rhs TimeExpression) BoolExpression
+
+	ADD(rhs Interval) TimeExpression
+	SUB(rhs Interval) TimeExpression
 }
 
 type timeInterfaceImpl struct {
@@ -51,23 +54,13 @@ func (t *timeInterfaceImpl) GT_EQ(rhs TimeExpression) BoolExpression {
 	return gtEq(t.parent, rhs)
 }
 
-//---------------------------------------------------//
-type prefixTimeExpression struct {
-	expressionInterfaceImpl
-	timeInterfaceImpl
-
-	prefixOpExpression
+func (t *timeInterfaceImpl) ADD(rhs Interval) TimeExpression {
+	return TimeExp(newBinaryOperatorExpression(t.parent, rhs, "+"))
 }
 
-//func newPrefixTimeExpression(operator string, expression Expression) TimeExpression {
-//	timeExpr := prefixTimeExpression{}
-//	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
-//
-//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-//	timeExpr.timeInterfaceImpl.parent = &timeExpr
-//
-//	return &timeExpr
-//}
+func (t *timeInterfaceImpl) SUB(rhs Interval) TimeExpression {
+	return TimeExp(newBinaryOperatorExpression(t.parent, rhs, "-"))
+}
 
 //---------------------------------------------------//
 

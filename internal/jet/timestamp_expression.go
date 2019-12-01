@@ -13,6 +13,9 @@ type TimestampExpression interface {
 	LT_EQ(rhs TimestampExpression) BoolExpression
 	GT(rhs TimestampExpression) BoolExpression
 	GT_EQ(rhs TimestampExpression) BoolExpression
+
+	ADD(rhs Interval) TimestampExpression
+	SUB(rhs Interval) TimestampExpression
 }
 
 type timestampInterfaceImpl struct {
@@ -49,6 +52,14 @@ func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) BoolExpression {
 
 func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) BoolExpression {
 	return gtEq(t.parent, rhs)
+}
+
+func (t *timestampInterfaceImpl) ADD(rhs Interval) TimestampExpression {
+	return TimestampExp(newBinaryOperatorExpression(t.parent, rhs, "+"))
+}
+
+func (t *timestampInterfaceImpl) SUB(rhs Interval) TimestampExpression {
+	return TimestampExp(newBinaryOperatorExpression(t.parent, rhs, "-"))
 }
 
 //-------------------------------------------------

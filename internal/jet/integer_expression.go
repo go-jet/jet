@@ -130,27 +130,13 @@ func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) 
 }
 
 //---------------------------------------------------//
-type binaryIntegerExpression struct {
-	expressionInterfaceImpl
-	integerInterfaceImpl
-
-	binaryOpExpression
-}
-
 func newBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
-	integerExpression := binaryIntegerExpression{}
-
-	integerExpression.expressionInterfaceImpl.Parent = &integerExpression
-	integerExpression.integerInterfaceImpl.parent = &integerExpression
-
-	integerExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
-
-	return &integerExpression
+	return IntExp(newBinaryOperatorExpression(lhs, rhs, operator))
 }
 
 //---------------------------------------------------//
 type prefixIntegerOpExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	integerInterfaceImpl
 
 	prefixOpExpression
@@ -160,28 +146,10 @@ func newPrefixIntegerOperator(expression IntegerExpression, operator string) Int
 	integerExpression := prefixIntegerOpExpression{}
 	integerExpression.prefixOpExpression = newPrefixExpression(expression, operator)
 
-	integerExpression.expressionInterfaceImpl.Parent = &integerExpression
+	integerExpression.ExpressionInterfaceImpl.Parent = &integerExpression
 	integerExpression.integerInterfaceImpl.parent = &integerExpression
 
 	return &integerExpression
-}
-
-//---------------------------------------------------//
-type prefixFloatOpExpression struct {
-	expressionInterfaceImpl
-	floatInterfaceImpl
-
-	prefixOpExpression
-}
-
-func newPrefixFloatOperator(expression FloatExpression, operator string) FloatExpression {
-	floatOpExpression := prefixFloatOpExpression{}
-	floatOpExpression.prefixOpExpression = newPrefixExpression(expression, operator)
-
-	floatOpExpression.expressionInterfaceImpl.Parent = &floatOpExpression
-	floatOpExpression.floatInterfaceImpl.parent = &floatOpExpression
-
-	return &floatOpExpression
 }
 
 //---------------------------------------------------//

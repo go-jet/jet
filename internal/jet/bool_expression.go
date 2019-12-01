@@ -85,26 +85,13 @@ func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
 }
 
 //---------------------------------------------------//
-type binaryBoolExpression struct {
-	expressionInterfaceImpl
-	boolInterfaceImpl
-
-	binaryOpExpression
-}
-
 func newBinaryBoolOperator(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
-	binaryBoolExpression := binaryBoolExpression{}
-
-	binaryBoolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator, additionalParams...)
-	binaryBoolExpression.expressionInterfaceImpl.Parent = &binaryBoolExpression
-	binaryBoolExpression.boolInterfaceImpl.parent = &binaryBoolExpression
-
-	return &binaryBoolExpression
+	return BoolExp(newBinaryOperatorExpression(lhs, rhs, operator, additionalParams...))
 }
 
 //---------------------------------------------------//
 type prefixBoolExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	boolInterfaceImpl
 
 	prefixOpExpression
@@ -114,7 +101,7 @@ func newPrefixBoolOperator(expression Expression, operator string) BoolExpressio
 	exp := prefixBoolExpression{}
 	exp.prefixOpExpression = newPrefixExpression(expression, operator)
 
-	exp.expressionInterfaceImpl.Parent = &exp
+	exp.ExpressionInterfaceImpl.Parent = &exp
 	exp.boolInterfaceImpl.parent = &exp
 
 	return &exp
@@ -122,7 +109,7 @@ func newPrefixBoolOperator(expression Expression, operator string) BoolExpressio
 
 //---------------------------------------------------//
 type postfixBoolOpExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	boolInterfaceImpl
 
 	postfixOpExpression
@@ -132,7 +119,7 @@ func newPostifxBoolExpression(expression Expression, operator string) BoolExpres
 	exp := postfixBoolOpExpression{}
 	exp.postfixOpExpression = newPostfixOpExpression(expression, operator)
 
-	exp.expressionInterfaceImpl.Parent = &exp
+	exp.ExpressionInterfaceImpl.Parent = &exp
 	exp.boolInterfaceImpl.parent = &exp
 
 	return &exp

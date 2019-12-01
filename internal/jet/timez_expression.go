@@ -4,23 +4,18 @@ package jet
 type TimezExpression interface {
 	Expression
 
-	//EQ
 	EQ(rhs TimezExpression) BoolExpression
-	//NOT_EQ
 	NOT_EQ(rhs TimezExpression) BoolExpression
-	//IS_DISTINCT_FROM
 	IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression
-	//IS_NOT_DISTINCT_FROM
 	IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression
 
-	//LT
 	LT(rhs TimezExpression) BoolExpression
-	//LT_EQ
 	LT_EQ(rhs TimezExpression) BoolExpression
-	//GT
 	GT(rhs TimezExpression) BoolExpression
-	//GT_EQ
 	GT_EQ(rhs TimezExpression) BoolExpression
+
+	ADD(rhs Interval) TimezExpression
+	SUB(rhs Interval) TimezExpression
 }
 
 type timezInterfaceImpl struct {
@@ -59,23 +54,13 @@ func (t *timezInterfaceImpl) GT_EQ(rhs TimezExpression) BoolExpression {
 	return gtEq(t.parent, rhs)
 }
 
-//---------------------------------------------------//
-type prefixTimezExpression struct {
-	expressionInterfaceImpl
-	timezInterfaceImpl
-
-	prefixOpExpression
+func (t *timezInterfaceImpl) ADD(rhs Interval) TimezExpression {
+	return TimezExp(newBinaryOperatorExpression(t.parent, rhs, "+"))
 }
 
-//func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
-//	timeExpr := prefixTimezExpression{}
-//	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
-//
-//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-//	timeExpr.timezInterfaceImpl.parent = &timeExpr
-//
-//	return &timeExpr
-//}
+func (t *timezInterfaceImpl) SUB(rhs Interval) TimezExpression {
+	return TimezExp(newBinaryOperatorExpression(t.parent, rhs, "-"))
+}
 
 //---------------------------------------------------//
 
