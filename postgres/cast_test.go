@@ -62,3 +62,10 @@ func TestExpressionCAST_AS_TIMESTAMP(t *testing.T) {
 func TestExpressionCAST_AS_TIMESTAMPZ(t *testing.T) {
 	assertSerialize(t, CAST(table2Col3).AS_TIMESTAMPZ(), "table2.col3::timestamp with time zone")
 }
+
+func TestExpressionCAST_AS_INTERVAL(t *testing.T) {
+	assertSerialize(t, CAST(table2ColTimez).AS_INTERVAL(), "table2.col_timez::interval")
+	assertSerialize(t, CAST(Time(20, 11, 10)).AS_INTERVAL(), "$1::time without time zone::interval", "20:11:10")
+	assertSerialize(t, table2ColDate.SUB(CAST(Time(20, 11, 10)).AS_INTERVAL()),
+		"(table2.col_date - $1::time without time zone::interval)", "20:11:10")
+}

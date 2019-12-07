@@ -2,8 +2,9 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/internal/jet"
 	"strconv"
+
+	"github.com/go-jet/jet/internal/jet"
 )
 
 type cast interface {
@@ -32,7 +33,7 @@ type cast interface {
 	AS_TIME() TimeExpression
 	// Cast expression AS text type
 	AS_TEXT() StringExpression
-
+	// Cast expression AS bytea type
 	AS_BYTEA() StringExpression
 	// Cast expression AS time with time timezone type
 	AS_TIMEZ() TimezExpression
@@ -40,6 +41,8 @@ type cast interface {
 	AS_TIMESTAMP() TimestampExpression
 	// Cast expression AS timestamp with timezone type
 	AS_TIMESTAMPZ() TimestampzExpression
+	// Cast expression AS interval type
+	AS_INTERVAL() IntervalExpression
 }
 
 type castImpl struct {
@@ -150,4 +153,9 @@ func (b *castImpl) AS_TIMESTAMP() TimestampExpression {
 // Cast expression AS timestamp with timezone type
 func (b *castImpl) AS_TIMESTAMPZ() TimestampzExpression {
 	return TimestampzExp(b.AS("timestamp with time zone"))
+}
+
+// Cast expression AS interval type
+func (b *castImpl) AS_INTERVAL() IntervalExpression {
+	return IntervalExp(b.AS("interval"))
 }

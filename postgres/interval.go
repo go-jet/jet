@@ -129,3 +129,22 @@ func unitToString(unit quantityAndUnit) string {
 		panic("jet: invalid INTERVAL unit type")
 	}
 }
+
+//---------------------------------------------------//
+
+type intervalWrapper struct {
+	jet.IsInterval
+	Expression
+}
+
+func newIntervalExpressionWrap(expression Expression) IntervalExpression {
+	intervalWrap := intervalWrapper{Expression: expression}
+	return &intervalWrap
+}
+
+// IntervalExp is interval expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as interval expression.
+// Does not add sql cast to generated sql builder output.
+func IntervalExp(expression Expression) IntervalExpression {
+	return newIntervalExpressionWrap(expression)
+}
