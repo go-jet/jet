@@ -86,23 +86,23 @@ func (i *integerInterfaceImpl) LT_EQ(expression IntegerExpression) BoolExpressio
 }
 
 func (i *integerInterfaceImpl) ADD(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "+")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "+")
 }
 
 func (i *integerInterfaceImpl) SUB(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "-")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "-")
 }
 
 func (i *integerInterfaceImpl) MUL(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "*")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "*")
 }
 
 func (i *integerInterfaceImpl) DIV(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "/")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "/")
 }
 
 func (i *integerInterfaceImpl) MOD(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "%")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "%")
 }
 
 func (i *integerInterfaceImpl) POW(expression IntegerExpression) IntegerExpression {
@@ -110,46 +110,33 @@ func (i *integerInterfaceImpl) POW(expression IntegerExpression) IntegerExpressi
 }
 
 func (i *integerInterfaceImpl) BIT_AND(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "&")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "&")
 }
 
 func (i *integerInterfaceImpl) BIT_OR(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "|")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "|")
 }
 
 func (i *integerInterfaceImpl) BIT_XOR(expression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, expression, "#")
+	return newBinaryIntegerOperatorExpression(i.parent, expression, "#")
 }
 
 func (i *integerInterfaceImpl) BIT_SHIFT_LEFT(intExpression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, intExpression, "<<")
+	return newBinaryIntegerOperatorExpression(i.parent, intExpression, "<<")
 }
 
 func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerExpression(i.parent, intExpression, ">>")
+	return newBinaryIntegerOperatorExpression(i.parent, intExpression, ">>")
 }
 
 //---------------------------------------------------//
-func newBinaryIntegerExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
+func newBinaryIntegerOperatorExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
 	return IntExp(newBinaryOperatorExpression(lhs, rhs, operator))
 }
 
 //---------------------------------------------------//
-type prefixIntegerOpExpression struct {
-	ExpressionInterfaceImpl
-	integerInterfaceImpl
-
-	prefixOpExpression
-}
-
-func newPrefixIntegerOperator(expression IntegerExpression, operator string) IntegerExpression {
-	integerExpression := prefixIntegerOpExpression{}
-	integerExpression.prefixOpExpression = newPrefixExpression(expression, operator)
-
-	integerExpression.ExpressionInterfaceImpl.Parent = &integerExpression
-	integerExpression.integerInterfaceImpl.parent = &integerExpression
-
-	return &integerExpression
+func newPrefixIntegerOperatorExpression(expression IntegerExpression, operator string) IntegerExpression {
+	return IntExp(newPrefixOperatorExpression(expression, operator))
 }
 
 //---------------------------------------------------//

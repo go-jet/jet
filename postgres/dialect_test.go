@@ -27,6 +27,20 @@ func TestExists(t *testing.T) {
      FROM db.table2
      WHERE table1.col1 = table2.col3
 ))`, int64(1))
+
+	assertSerialize(t, EXISTS(
+		SELECT(Int(1)),
+	).EQ(Bool(true)),
+		`((EXISTS (
+     SELECT $1
+)) = $2)`, int64(1), true)
+
+	assertProjectionSerialize(t, EXISTS(
+		SELECT(Int(1)),
+	).AS("exists"),
+		`(EXISTS (
+     SELECT $1
+)) AS "exists"`, int64(1))
 }
 
 func TestIN(t *testing.T) {

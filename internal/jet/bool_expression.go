@@ -53,80 +53,53 @@ func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpress
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
-	return newBinaryBoolOperator(b.parent, expression, "AND")
+	return newBinaryBoolOperatorExpression(b.parent, expression, "AND")
 }
 
 func (b *boolInterfaceImpl) OR(expression BoolExpression) BoolExpression {
-	return newBinaryBoolOperator(b.parent, expression, "OR")
+	return newBinaryBoolOperatorExpression(b.parent, expression, "OR")
 }
 
 func (b *boolInterfaceImpl) IS_TRUE() BoolExpression {
-	return newPostifxBoolExpression(b.parent, "IS TRUE")
+	return newPostfixBoolOperatorExpression(b.parent, "IS TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_TRUE() BoolExpression {
-	return newPostifxBoolExpression(b.parent, "IS NOT TRUE")
+	return newPostfixBoolOperatorExpression(b.parent, "IS NOT TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_FALSE() BoolExpression {
-	return newPostifxBoolExpression(b.parent, "IS FALSE")
+	return newPostfixBoolOperatorExpression(b.parent, "IS FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_FALSE() BoolExpression {
-	return newPostifxBoolExpression(b.parent, "IS NOT FALSE")
+	return newPostfixBoolOperatorExpression(b.parent, "IS NOT FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_UNKNOWN() BoolExpression {
-	return newPostifxBoolExpression(b.parent, "IS UNKNOWN")
+	return newPostfixBoolOperatorExpression(b.parent, "IS UNKNOWN")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
-	return newPostifxBoolExpression(b.parent, "IS NOT UNKNOWN")
+	return newPostfixBoolOperatorExpression(b.parent, "IS NOT UNKNOWN")
 }
 
 //---------------------------------------------------//
-func newBinaryBoolOperator(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
+func newBinaryBoolOperatorExpression(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
 	return BoolExp(newBinaryOperatorExpression(lhs, rhs, operator, additionalParams...))
 }
 
 //---------------------------------------------------//
-type prefixBoolExpression struct {
-	ExpressionInterfaceImpl
-	boolInterfaceImpl
-
-	prefixOpExpression
-}
-
-func newPrefixBoolOperator(expression Expression, operator string) BoolExpression {
-	exp := prefixBoolExpression{}
-	exp.prefixOpExpression = newPrefixExpression(expression, operator)
-
-	exp.ExpressionInterfaceImpl.Parent = &exp
-	exp.boolInterfaceImpl.parent = &exp
-
-	return &exp
+func newPrefixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
+	return BoolExp(newPrefixOperatorExpression(expression, operator))
 }
 
 //---------------------------------------------------//
-type postfixBoolOpExpression struct {
-	ExpressionInterfaceImpl
-	boolInterfaceImpl
-
-	postfixOpExpression
-}
-
-func newPostifxBoolExpression(expression Expression, operator string) BoolExpression {
-	exp := postfixBoolOpExpression{}
-	exp.postfixOpExpression = newPostfixOpExpression(expression, operator)
-
-	exp.ExpressionInterfaceImpl.Parent = &exp
-	exp.boolInterfaceImpl.parent = &exp
-
-	return &exp
+func newPostfixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
+	return BoolExp(newPostfixOperatorExpression(expression, operator))
 }
 
 //---------------------------------------------------//
-
 type boolExpressionWrapper struct {
 	boolInterfaceImpl
 	Expression

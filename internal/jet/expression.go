@@ -36,19 +36,19 @@ func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 }
 
 func (e *ExpressionInterfaceImpl) IS_NULL() BoolExpression {
-	return newPostifxBoolExpression(e.Parent, "IS NULL")
+	return newPostfixBoolOperatorExpression(e.Parent, "IS NULL")
 }
 
 func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
-	return newPostifxBoolExpression(e.Parent, "IS NOT NULL")
+	return newPostfixBoolOperatorExpression(e.Parent, "IS NOT NULL")
 }
 
 func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperator(e.Parent, WRAP(expressions...), "IN")
+	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "IN")
 }
 
 func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperator(e.Parent, WRAP(expressions...), "NOT IN")
+	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "NOT IN")
 }
 
 func (e *ExpressionInterfaceImpl) AS(alias string) Projection {
@@ -129,21 +129,24 @@ func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBu
 }
 
 // A prefix operator Expression
-type prefixOpExpression struct {
+type prefixExpression struct {
+	ExpressionInterfaceImpl
+
 	expression Expression
 	operator   string
 }
 
-func newPrefixExpression(expression Expression, operator string) prefixOpExpression {
-	prefixExpression := prefixOpExpression{
+func newPrefixOperatorExpression(expression Expression, operator string) *prefixExpression {
+	prefixExpression := &prefixExpression{
 		expression: expression,
 		operator:   operator,
 	}
+	prefixExpression.ExpressionInterfaceImpl.Parent = prefixExpression
 
 	return prefixExpression
 }
 
-func (p *prefixOpExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	out.WriteString(p.operator)
 
@@ -156,17 +159,21 @@ func (p *prefixOpExpression) serialize(statement StatementType, out *SQLBuilder,
 	out.WriteString(")")
 }
 
-// A postifx operator Expression
+// A postfix operator Expression
 type postfixOpExpression struct {
+	ExpressionInterfaceImpl
+
 	expression Expression
 	operator   string
 }
 
-func newPostfixOpExpression(expression Expression, operator string) postfixOpExpression {
-	postfixOpExpression := postfixOpExpression{
+func newPostfixOperatorExpression(expression Expression, operator string) *postfixOpExpression {
+	postfixOpExpression := &postfixOpExpression{
 		expression: expression,
 		operator:   operator,
 	}
+
+	postfixOpExpression.ExpressionInterfaceImpl.Parent = postfixOpExpression
 
 	return postfixOpExpression
 }
