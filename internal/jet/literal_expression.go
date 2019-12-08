@@ -334,20 +334,20 @@ func WRAP(expression ...Expression) Expression {
 
 //---------------------------------------------------//
 
-type RawExpression struct {
+type rawExpression struct {
 	ExpressionInterfaceImpl
 
 	Raw string
 }
 
-func (n *RawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(n.Raw)
 }
 
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
 func Raw(raw string) Expression {
-	rawExp := &RawExpression{Raw: raw}
+	rawExp := &rawExpression{Raw: raw}
 	rawExp.ExpressionInterfaceImpl.Parent = rawExp
 
 	return rawExp

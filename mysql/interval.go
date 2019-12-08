@@ -9,10 +9,11 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 )
 
-type UnitType string
+type unitType string
 
+// List of interval unit types for MySQL
 const (
-	MICROSECOND        UnitType = "MICROSECOND"
+	MICROSECOND        unitType = "MICROSECOND"
 	SECOND                      = "SECOND"
 	MINUTE                      = "MINUTE"
 	HOUR                        = "HOUR"
@@ -34,9 +35,15 @@ const (
 	YEAR_MONTH                  = "YEAR_MONTH"
 )
 
+// Interval is representation of MySQL interval
 type Interval = jet.Interval
 
-func INTERVAL(value interface{}, unitType UnitType) Interval {
+// INTERVAL creates new Interval type.
+// In a case of MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR unit type
+// value parameter should be number. For example: INTERVAL(1, DAY)
+// In a case of other unit types, value should be string with appropriate format.
+// For example: INTERVAL("10:08:50", HOUR_SECOND)
+func INTERVAL(value interface{}, unitType unitType) Interval {
 	switch unitType {
 	case MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR:
 		if !isNumericType(value) {
@@ -87,14 +94,15 @@ func INTERVAL(value interface{}, unitType UnitType) Interval {
 	}
 }
 
-func INTERVALe(expr Expression, unitType UnitType) Interval {
+// INTERVALe creates new Interval type from expresion and unit type.
+func INTERVALe(expr Expression, unitType unitType) Interval {
 	return jet.NewInterval(jet.ListSerializer{
 		Serializers: []jet.Serializer{expr, jet.Raw(string(unitType))},
 		Separator:   " ",
 	})
 }
 
-// INTERVALd returns a representation of duration as MySQL INTERVAL
+// INTERVALd returns a interval representation from duration
 func INTERVALd(duration time.Duration) Interval {
 	var sign int64 = 1
 	if duration < 0 {
@@ -179,7 +187,7 @@ var (
 
 func isNumericType(value interface{}) bool {
 	switch value.(type) {
-	case float64, float32, int16, int32, int64, uint16, uint32, uint64, int, uint:
+	case float64, float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		return true
 	default:
 		return false

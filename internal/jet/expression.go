@@ -8,25 +8,26 @@ type Expression interface {
 	GroupByClause
 	OrderByClause
 
-	// Test expression whether it is a NULL value.
+	// IS_NULL tests expression whether it is a NULL value.
 	IS_NULL() BoolExpression
-	// Test expression whether it is a non-NULL value.
+	// IS_NOT_NULL tests expression whether it is a non-NULL value.
 	IS_NOT_NULL() BoolExpression
 
-	// Check if this expressions matches any in expressions list
+	// IN checks if this expressions matches any in expressions list
 	IN(expressions ...Expression) BoolExpression
-	// Check if this expressions is different of all expressions in expressions list
+	// NOT_IN checks if this expressions is different of all expressions in expressions list
 	NOT_IN(expressions ...Expression) BoolExpression
 
-	// The temporary alias name to assign to the expression
+	// AS the temporary alias name to assign to the expression
 	AS(alias string) Projection
 
-	// Expression will be used to sort query result in ascending order
+	// ASC expression will be used to sort query result in ascending order
 	ASC() OrderByClause
-	// Expression will be used to sort query result in ascending order
+	// DESC expression will be used to sort query result in ascending order
 	DESC() OrderByClause
 }
 
+// ExpressionInterfaceImpl implements Expression interface methods
 type ExpressionInterfaceImpl struct {
 	Parent Expression
 }
@@ -35,30 +36,37 @@ func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 	return e.Parent
 }
 
+// IS_NULL tests expression whether it is a NULL value.
 func (e *ExpressionInterfaceImpl) IS_NULL() BoolExpression {
 	return newPostfixBoolOperatorExpression(e.Parent, "IS NULL")
 }
 
+// IS_NOT_NULL tests expression whether it is a non-NULL value.
 func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
 	return newPostfixBoolOperatorExpression(e.Parent, "IS NOT NULL")
 }
 
+// IN checks if this expressions matches any in expressions list
 func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "IN")
 }
 
+// NOT_IN checks if this expressions is different of all expressions in expressions list
 func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "NOT IN")
 }
 
+// AS the temporary alias name to assign to the expression
 func (e *ExpressionInterfaceImpl) AS(alias string) Projection {
 	return newAlias(e.Parent, alias)
 }
 
+// ASC expression will be used to sort query result in ascending order
 func (e *ExpressionInterfaceImpl) ASC() OrderByClause {
 	return newOrderByClause(e.Parent, true)
 }
 
+// DESC expression will be used to sort query result in ascending order
 func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
 	return newOrderByClause(e.Parent, false)
 }

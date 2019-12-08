@@ -129,7 +129,7 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Seriali
 	}
 }
 
-// AssertClauseSerialize checks if clause serialize produces expected query and args
+// AssertDebugClauseSerialize checks if clause serialize produces expected debug query and args
 func AssertDebugClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
 	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
 	jet.Serialize(clause, jet.SelectStatementType, &out)

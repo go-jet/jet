@@ -1,14 +1,17 @@
 package jet
 
+// Interval is internal common representation of sql interval
 type Interval interface {
 	Serializer
 	IsInterval
 }
 
+// IsInterval interface
 type IsInterval interface {
 	isInterval()
 }
 
+// NewInterval creates new interval from serializer
 func NewInterval(s Serializer) Interval {
 	newInterval := &intervalImpl{
 		interval: s,

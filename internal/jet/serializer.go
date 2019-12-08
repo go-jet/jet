@@ -42,6 +42,7 @@ func contains(options []SerializeOption, option SerializeOption) bool {
 	return false
 }
 
+// ListSerializer serializes list of serializers with separator
 type ListSerializer struct {
 	Serializers []Serializer
 	Separator   string

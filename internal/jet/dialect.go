@@ -14,7 +14,7 @@ type Dialect interface {
 // SerializerFunc func
 type SerializerFunc func(statement StatementType, out *SQLBuilder, options ...SerializeOption)
 
-//// SerializeOverride func
+// SerializeOverride func
 type SerializeOverride func(expressions ...Serializer) SerializerFunc
 
 // QueryPlaceholderFunc func

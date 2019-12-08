@@ -9,12 +9,11 @@ import (
 	"time"
 )
 
-type quantityAndUnit float64
+type quantityAndUnit = float64
 
+// Interval unit types
 const (
-	pow2_32 = -4.294967296e+09
-
-	YEAR quantityAndUnit = pow2_32 + iota
+	YEAR quantityAndUnit = 123456789 + iota
 	MONTH
 	WEEK
 	DAY
@@ -33,11 +32,14 @@ type intervalExpressionImpl struct {
 	jet.ExpressionInterfaceImpl
 }
 
+// IntervalExpression is representation of postgres INTERVAL
 type IntervalExpression interface {
 	jet.IsInterval
 	jet.Expression
 }
 
+// INTERVAL creates new interval expression from the list of quantity-unit pairs.
+// For example: INTERVAL(1, DAY, 3, MINUTE)
 func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 	if len(quantityAndUnit)%2 != 0 {
 		panic("jet: invalid number of quantity and unit fields")
@@ -62,6 +64,7 @@ func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 	return newInterval
 }
 
+// INTERVALd creates interval expression from duration
 func INTERVALd(duration time.Duration) IntervalExpression {
 	days, hours, minutes, seconds, microseconds := utils.ExtractDateTimeComponents(duration)
 

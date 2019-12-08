@@ -32,14 +32,18 @@ func TestINTERVAL(t *testing.T) {
 	assertDebugSerialize(t, INTERVAL("08.000100", SECOND_MICROSECOND), "INTERVAL '08.000100' SECOND_MICROSECOND")
 	assertDebugSerialize(t, INTERVAL("-08.000100", SECOND_MICROSECOND), "INTERVAL '-08.000100' SECOND_MICROSECOND")
 
-	assertDebugSerialize(t, INTERVAL(15, SECOND), "INTERVAL 15 SECOND")
-	assertDebugSerialize(t, INTERVAL(1, MICROSECOND), "INTERVAL 1 MICROSECOND")
-	assertDebugSerialize(t, INTERVAL(2, MINUTE), "INTERVAL 2 MINUTE")
-	assertDebugSerialize(t, INTERVAL(3, HOUR), "INTERVAL 3 HOUR")
-	assertDebugSerialize(t, INTERVAL(4, DAY), "INTERVAL 4 DAY")
-	assertDebugSerialize(t, INTERVAL(5, MONTH), "INTERVAL 5 MONTH")
-	assertDebugSerialize(t, INTERVAL(6, YEAR), "INTERVAL 6 YEAR")
-	assertDebugSerialize(t, INTERVAL(-6, YEAR), "INTERVAL -6 YEAR")
+	assertSerialize(t, INTERVAL(15, SECOND), "INTERVAL 15 SECOND")
+	assertSerialize(t, INTERVAL(1, MICROSECOND), "INTERVAL 1 MICROSECOND")
+	assertSerialize(t, INTERVAL(2, MINUTE), "INTERVAL 2 MINUTE")
+	assertSerialize(t, INTERVAL(3, HOUR), "INTERVAL 3 HOUR")
+	assertSerialize(t, INTERVAL(4, DAY), "INTERVAL 4 DAY")
+	assertSerialize(t, INTERVAL(5, MONTH), "INTERVAL 5 MONTH")
+	assertSerialize(t, INTERVAL(6, YEAR), "INTERVAL 6 YEAR")
+	assertSerialize(t, INTERVAL(-6, YEAR), "INTERVAL -6 YEAR")
+
+	assertSerialize(t, INTERVAL(uint(6), YEAR), "INTERVAL 6 YEAR")
+	assertSerialize(t, INTERVAL(int16(7), YEAR), "INTERVAL 7 YEAR")
+	assertSerialize(t, INTERVAL(3.5, YEAR), "INTERVAL 3.5 YEAR")
 }
 
 func TestINTERVAL_InvalidUnitType(t *testing.T) {

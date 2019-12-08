@@ -25,6 +25,9 @@ func TestINTERVAL(t *testing.T) {
 
 	assertSerialize(t, INTERVAL(1, YEAR).IS_NOT_NULL(), "INTERVAL '1 YEAR' IS NOT NULL")
 	assertProjectionSerialize(t, INTERVAL(1, YEAR).AS("one year"), `INTERVAL '1 YEAR' AS "one year"`)
+
+	f := 5.2
+	assertSerialize(t, INTERVAL(f, YEAR), "INTERVAL '5.2 YEAR'")
 }
 
 func TestINTERVALd(t *testing.T) {

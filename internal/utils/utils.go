@@ -184,6 +184,7 @@ func StringSliceContains(strings []string, contains string) bool {
 	return false
 }
 
+// ExtractDateTimeComponents extracts number of days, hours, minutes, seconds, microseconds from duration
 func ExtractDateTimeComponents(duration time.Duration) (days, hours, minutes, seconds, microseconds int64) {
 	days = int64(duration / (24 * time.Hour))
 	reminder := duration % (24 * time.Hour)
