@@ -165,7 +165,6 @@ func argToString(value interface{}) string {
 
 func integerTypesToString(value interface{}) string {
 	switch bindVal := value.(type) {
-	case bool:
 	case int:
 		return strconv.FormatInt(int64(bindVal), 10)
 	case uint:

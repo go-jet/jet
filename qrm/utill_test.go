@@ -32,4 +32,6 @@ func TestIsSimpleModelType(t *testing.T) {
 
 	assert.Equal(t, isSimpleModelType(reflect.TypeOf(complexModelType)), false)
 	assert.Equal(t, isSimpleModelType(reflect.TypeOf(&complexModelType)), false)
+	assert.Equal(t, isSimpleModelType(reflect.TypeOf([]string{"str"})), false)
+	assert.Equal(t, isSimpleModelType(reflect.TypeOf([]int{1, 2})), false)
 }
