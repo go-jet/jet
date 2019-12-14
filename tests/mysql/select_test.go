@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/enum"
@@ -607,7 +606,7 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 		).GROUP_BY(Payment.Amount, Payment.CustomerID, Payment.PaymentDate).
 		WHERE(Payment.PaymentID.LT(Int(10)))
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
@@ -643,7 +642,7 @@ ORDER BY payment.customer_id;
 		WINDOW("w3").AS(Window("w2").ORDER_BY(Payment.CustomerID)).
 		ORDER_BY(Payment.CustomerID)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 

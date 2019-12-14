@@ -129,6 +129,28 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Seriali
 	}
 }
 
+// AssertDebugClauseSerialize checks if clause serialize produces expected debug query and args
+func AssertDebugClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
+	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
+	jet.Serialize(clause, jet.SelectStatementType, &out)
+
+	assert.DeepEqual(t, out.Buff.String(), query)
+
+	if len(args) > 0 {
+		assert.DeepEqual(t, out.Args, args)
+	}
+}
+
+// AssertPanicErr checks if running a function fun produces a panic with errorStr string
+func AssertPanicErr(t *testing.T, fun func(), errorStr string) {
+	defer func() {
+		r := recover()
+		assert.Equal(t, r, errorStr)
+	}()
+
+	fun()
+}
+
 // AssertClauseSerializeErr check if clause serialize panics with errString
 func AssertClauseSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer, errString string) {
 	defer func() {

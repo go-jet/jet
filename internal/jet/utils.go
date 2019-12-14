@@ -63,6 +63,17 @@ func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	}
 }
 
+// ExpressionListToSerializerList converts list of expressions to list of serializers
+func ExpressionListToSerializerList(expressions []Expression) []Serializer {
+	var ret []Serializer
+
+	for _, expr := range expressions {
+		ret = append(ret, expr)
+	}
+
+	return ret
+}
+
 // ColumnListToProjectionList func
 func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
 	var ret []Projection

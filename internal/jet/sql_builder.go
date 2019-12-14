@@ -22,7 +22,7 @@ type SQLBuilder struct {
 	lastChar byte
 	ident    int
 
-	debug bool
+	Debug bool
 }
 
 const defaultIdent = 5
@@ -120,7 +120,7 @@ func (s *SQLBuilder) insertConstantArgument(arg interface{}) {
 }
 
 func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
-	if s.debug {
+	if s.Debug {
 		s.insertConstantArgument(arg)
 		return
 	}
@@ -142,12 +142,8 @@ func argToString(value interface{}) string {
 			return "TRUE"
 		}
 		return "FALSE"
-	case int:
-		return strconv.FormatInt(int64(bindVal), 10)
-	case int32:
-		return strconv.FormatInt(int64(bindVal), 10)
-	case int64:
-		return strconv.FormatInt(bindVal, 10)
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		return integerTypesToString(bindVal)
 
 	case float32:
 		return strconv.FormatFloat(float64(bindVal), 'f', -1, 64)
@@ -165,6 +161,33 @@ func argToString(value interface{}) string {
 	default:
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
+}
+
+func integerTypesToString(value interface{}) string {
+	switch bindVal := value.(type) {
+	case bool:
+	case int:
+		return strconv.FormatInt(int64(bindVal), 10)
+	case uint:
+		return strconv.FormatUint(uint64(bindVal), 10)
+	case int8:
+		return strconv.FormatInt(int64(bindVal), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(bindVal), 10)
+	case int16:
+		return strconv.FormatInt(int64(bindVal), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(bindVal), 10)
+	case int32:
+		return strconv.FormatInt(int64(bindVal), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(bindVal), 10)
+	case int64:
+		return strconv.FormatInt(bindVal, 10)
+	case uint64:
+		return strconv.FormatUint(bindVal, 10)
+	}
+	panic("jet: Unsupported integer type: " + reflect.TypeOf(value).String())
 }
 
 func shouldQuoteIdentifier(identifier string) bool {

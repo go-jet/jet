@@ -11,11 +11,11 @@ type Dialect interface {
 	ArgumentPlaceholder() QueryPlaceholderFunc
 }
 
-// SerializeFunc func
-type SerializeFunc func(statement StatementType, out *SQLBuilder, options ...SerializeOption)
+// SerializerFunc func
+type SerializerFunc func(statement StatementType, out *SQLBuilder, options ...SerializeOption)
 
 // SerializeOverride func
-type SerializeOverride func(expressions ...Expression) SerializeFunc
+type SerializeOverride func(expressions ...Serializer) SerializerFunc
 
 // QueryPlaceholderFunc func
 type QueryPlaceholderFunc func(ord int) string

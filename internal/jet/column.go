@@ -20,7 +20,7 @@ type ColumnExpression interface {
 
 // The base type for real materialized columns.
 type columnImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	name      string
 	tableName string
@@ -34,7 +34,7 @@ func newColumn(name string, tableName string, parent ColumnExpression) columnImp
 		tableName: tableName,
 	}
 
-	bc.expressionInterfaceImpl.Parent = parent
+	bc.ExpressionInterfaceImpl.Parent = parent
 
 	return bc
 }

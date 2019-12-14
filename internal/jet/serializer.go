@@ -41,3 +41,18 @@ func contains(options []SerializeOption, option SerializeOption) bool {
 
 	return false
 }
+
+// ListSerializer serializes list of serializers with separator
+type ListSerializer struct {
+	Serializers []Serializer
+	Separator   string
+}
+
+func (s ListSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	for i, ser := range s.Serializers {
+		if i > 0 {
+			out.WriteString(s.Separator)
+		}
+		ser.serialize(statement, out)
+	}
+}

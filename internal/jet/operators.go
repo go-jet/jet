@@ -11,7 +11,7 @@ const (
 
 // NOT returns negation of bool expression result
 func NOT(exp BoolExpression) BoolExpression {
-	return newPrefixBoolOperator(exp, "NOT")
+	return newPrefixBoolOperatorExpression(exp, "NOT")
 }
 
 // BIT_NOT inverts every bit in integer expression result
@@ -19,52 +19,52 @@ func BIT_NOT(expr IntegerExpression) IntegerExpression {
 	if literalExp, ok := expr.(LiteralExpression); ok {
 		literalExp.SetConstant(true)
 	}
-	return newPrefixIntegerOperator(expr, "~")
+	return newPrefixIntegerOperatorExpression(expr, "~")
 }
 
 //----------- Comparison operators ---------------//
 
 // EXISTS checks for existence of the rows in subQuery
 func EXISTS(subQuery Expression) BoolExpression {
-	return newPrefixBoolOperator(subQuery, "EXISTS")
+	return newPrefixBoolOperatorExpression(subQuery, "EXISTS")
 }
 
 // Returns a representation of "a=b"
 func eq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, "=")
+	return newBinaryBoolOperatorExpression(lhs, rhs, "=")
 }
 
 // Returns a representation of "a!=b"
 func notEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, "!=")
+	return newBinaryBoolOperatorExpression(lhs, rhs, "!=")
 }
 
 func isDistinctFrom(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, "IS DISTINCT FROM")
+	return newBinaryBoolOperatorExpression(lhs, rhs, "IS DISTINCT FROM")
 }
 
 func isNotDistinctFrom(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, "IS NOT DISTINCT FROM")
+	return newBinaryBoolOperatorExpression(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
 // Returns a representation of "a<b"
 func lt(lhs Expression, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, "<")
+	return newBinaryBoolOperatorExpression(lhs, rhs, "<")
 }
 
 // Returns a representation of "a<=b"
 func ltEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, "<=")
+	return newBinaryBoolOperatorExpression(lhs, rhs, "<=")
 }
 
 // Returns a representation of "a>b"
 func gt(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, ">")
+	return newBinaryBoolOperatorExpression(lhs, rhs, ">")
 }
 
 // Returns a representation of "a>=b"
 func gtEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperator(lhs, rhs, ">=")
+	return newBinaryBoolOperatorExpression(lhs, rhs, ">=")
 }
 
 // --------------- CASE operator -------------------//
@@ -79,7 +79,7 @@ type CaseOperator interface {
 }
 
 type caseOperatorImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	expression Expression
 	when       []Expression
@@ -95,7 +95,7 @@ func CASE(expression ...Expression) CaseOperator {
 		caseExp.expression = expression[0]
 	}
 
-	caseExp.expressionInterfaceImpl.Parent = caseExp
+	caseExp.ExpressionInterfaceImpl.Parent = caseExp
 
 	return caseExp
 }

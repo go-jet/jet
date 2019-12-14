@@ -1,17 +1,18 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"gotest.tools/assert"
+
 	"github.com/go-jet/jet/internal/testutils"
-	"github.com/go-jet/jet/postgres"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
-	"github.com/google/uuid"
-	"gotest.tools/assert"
-	"testing"
-	"time"
 )
 
 func TestAllTypesSelect(t *testing.T) {
@@ -134,22 +135,23 @@ LIMIT $5;
 func TestExpressionCast(t *testing.T) {
 
 	query := AllTypes.SELECT(
-		postgres.CAST(Int(150)).AS_CHAR(12).AS("char12"),
-		postgres.CAST(String("TRUE")).AS_BOOL(),
-		postgres.CAST(String("111")).AS_SMALLINT(),
-		postgres.CAST(String("111")).AS_INTEGER(),
-		postgres.CAST(String("111")).AS_BIGINT(),
-		postgres.CAST(String("11.23")).AS_NUMERIC(30, 10),
-		postgres.CAST(String("11.23")).AS_NUMERIC(30),
-		postgres.CAST(String("11.23")).AS_NUMERIC(),
-		postgres.CAST(String("11.23")).AS_REAL(),
-		postgres.CAST(String("11.23")).AS_DOUBLE(),
-		postgres.CAST(Int(234)).AS_TEXT(),
-		postgres.CAST(String("1/8/1999")).AS_DATE(),
-		postgres.CAST(String("04:05:06.789")).AS_TIME(),
-		postgres.CAST(String("04:05:06 PST")).AS_TIMEZ(),
-		postgres.CAST(String("1999-01-08 04:05:06")).AS_TIMESTAMP(),
-		postgres.CAST(String("January 8 04:05:06 1999 PST")).AS_TIMESTAMPZ(),
+		CAST(Int(150)).AS_CHAR(12).AS("char12"),
+		CAST(String("TRUE")).AS_BOOL(),
+		CAST(String("111")).AS_SMALLINT(),
+		CAST(String("111")).AS_INTEGER(),
+		CAST(String("111")).AS_BIGINT(),
+		CAST(String("11.23")).AS_NUMERIC(30, 10),
+		CAST(String("11.23")).AS_NUMERIC(30),
+		CAST(String("11.23")).AS_NUMERIC(),
+		CAST(String("11.23")).AS_REAL(),
+		CAST(String("11.23")).AS_DOUBLE(),
+		CAST(Int(234)).AS_TEXT(),
+		CAST(String("1/8/1999")).AS_DATE(),
+		CAST(String("04:05:06.789")).AS_TIME(),
+		CAST(String("04:05:06 PST")).AS_TIMEZ(),
+		CAST(String("1999-01-08 04:05:06")).AS_TIMESTAMP(),
+		CAST(String("January 8 04:05:06 1999 PST")).AS_TIMESTAMPZ(),
+		CAST(String("04:05:06")).AS_INTERVAL(),
 
 		TO_CHAR(AllTypes.Timestamp, String("HH12:MI:SS")),
 		TO_CHAR(AllTypes.Integer, String("999")),
@@ -359,7 +361,7 @@ func TestFloatOperators(t *testing.T) {
 		TRUNC(ABSf(AllTypes.Decimal), Int(2)).AS("abs"),
 		TRUNC(POWER(AllTypes.Decimal, Float(2.1)), Int(2)).AS("power"),
 		TRUNC(SQRT(AllTypes.Decimal), Int(2)).AS("sqrt"),
-		TRUNC(postgres.CAST(CBRT(AllTypes.Decimal)).AS_DECIMAL(), Int(2)).AS("cbrt"),
+		TRUNC(CAST(CBRT(AllTypes.Decimal)).AS_DECIMAL(), Int(2)).AS("cbrt"),
 
 		CEIL(AllTypes.Real).AS("ceil"),
 		FLOOR(AllTypes.Real).AS("floor"),
@@ -606,6 +608,19 @@ func TestTimeExpression(t *testing.T) {
 		AllTypes.Time.GT_EQ(AllTypes.Time),
 		AllTypes.Time.GT_EQ(Time(23, 6, 6, 1)),
 
+		AllTypes.Date.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Date.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Time.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Time.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timez.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timez.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timestamp.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timestamp.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timestampz.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timestampz.SUB(INTERVAL(1, MINUTE)),
+
+		AllTypes.Date.SUB(CAST(String("04:05:06")).AS_INTERVAL()),
+
 		CURRENT_DATE(),
 		CURRENT_TIME(),
 		CURRENT_TIME(2),
@@ -623,6 +638,44 @@ func TestTimeExpression(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
+	assert.NilError(t, err)
+}
+
+func TestInterval(t *testing.T) {
+	stmt := SELECT(
+		INTERVAL(1, YEAR),
+		INTERVAL(1, MONTH),
+		INTERVAL(1, WEEK),
+		INTERVAL(1, DAY),
+		INTERVAL(1, HOUR),
+		INTERVAL(1, MINUTE),
+		INTERVAL(1, SECOND),
+		INTERVAL(1, MILLISECOND),
+		INTERVAL(1, MICROSECOND),
+		INTERVAL(1, DECADE),
+		INTERVAL(1, CENTURY),
+		INTERVAL(1, MILLENNIUM),
+
+		INTERVAL(1, YEAR, 10, MONTH),
+		INTERVAL(1, YEAR, 10, MONTH, 20, DAY),
+		INTERVAL(1, YEAR, 10, MONTH, 20, DAY, 3, HOUR),
+
+		INTERVAL(1, YEAR).IS_NOT_NULL(),
+		INTERVAL(1, YEAR).AS("one year"),
+
+		INTERVALd(0),
+		INTERVALd(1*time.Microsecond),
+		INTERVALd(1*time.Millisecond),
+		INTERVALd(1*time.Second),
+		INTERVALd(1*time.Minute),
+		INTERVALd(1*time.Hour),
+		INTERVALd(24*time.Hour),
+		INTERVALd(24*time.Hour+2*time.Hour+3*time.Minute+4*time.Second+5*time.Microsecond),
+	)
+
+	//fmt.Println(stmt.DebugSql())
+
+	err := stmt.Query(db, &struct{}{})
 	assert.NilError(t, err)
 }
 

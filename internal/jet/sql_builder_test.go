@@ -12,8 +12,16 @@ func TestArgToString(t *testing.T) {
 	assert.Equal(t, argToString(false), "FALSE")
 
 	assert.Equal(t, argToString(int(-32)), "-32")
-	assert.Equal(t, argToString(int32(-32)), "-32")
+	assert.Equal(t, argToString(uint(32)), "32")
+	assert.Equal(t, argToString(int8(-43)), "-43")
+	assert.Equal(t, argToString(uint8(43)), "43")
+	assert.Equal(t, argToString(int16(-54)), "-54")
+	assert.Equal(t, argToString(uint16(54)), "54")
+	assert.Equal(t, argToString(int32(-65)), "-65")
+	assert.Equal(t, argToString(uint32(65)), "65")
 	assert.Equal(t, argToString(int64(-64)), "-64")
+	assert.Equal(t, argToString(uint64(64)), "64")
+	assert.Equal(t, argToString(float32(2.0)), "2")
 	assert.Equal(t, argToString(float64(1.11)), "1.11")
 
 	assert.Equal(t, argToString("john"), "'john'")
