@@ -708,3 +708,36 @@ func TestJoinViewWithTable(t *testing.T) {
 	assert.Equal(t, len(dest[0].Rentals), 32)
 	assert.Equal(t, len(dest[1].Rentals), 27)
 }
+
+func TestConditionalProjectionList(t *testing.T) {
+	projectionList := ProjectionList{}
+
+	columnsToSelect := []string{"customer_id", "create_date"}
+
+	for _, columnName := range columnsToSelect {
+		switch columnName {
+		case Customer.CustomerID.Name():
+			projectionList = append(projectionList, Customer.CustomerID)
+		case Customer.Email.Name():
+			projectionList = append(projectionList, Customer.Email)
+		case Customer.CreateDate.Name():
+			projectionList = append(projectionList, Customer.CreateDate)
+		}
+	}
+
+	stmt := SELECT(projectionList).
+		FROM(Customer).
+		LIMIT(3)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT customer.customer_id AS "customer.customer_id",
+     customer.create_date AS "customer.create_date"
+FROM dvds.customer
+LIMIT 3;
+`)
+	var dest []model.Customer
+	err := stmt.Query(db, &dest)
+	assert.NilError(t, err)
+
+	assert.Equal(t, len(dest), 3)
+}
