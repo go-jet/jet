@@ -35,13 +35,13 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
 ## Features
  1) Auto-generated type-safe SQL Builder  
  - PostgreSQL:
-    * SELECT `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, INTERSECT, EXCEPT, sub-queries)`
+    * SELECT `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, INTERSECT, EXCEPT, WINDOW, sub-queries)`
     * INSERT `(VALUES, query, RETURNING)`, 
     * UPDATE `(SET, WHERE, RETURNING)`, 
     * DELETE `(WHERE, RETURNING)`,
     * LOCK `(IN, NOWAIT)`  
  - MySQL and MariaDB:
-    * SELECT `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, LOCK_IN_SHARE_MODE, sub-queries)`
+    * SELECT `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, LOCK_IN_SHARE_MODE, WINDOW, sub-queries)`
     * INSERT `(VALUES, query)`, 
     * UPDATE `(SET, WHERE)`, 
     * DELETE `(WHERE, ORDER_BY, LIMIT)`,
@@ -565,9 +565,6 @@ To run the tests, additional dependencies are required:
 ## Versioning
 
 [SemVer](http://semver.org/) is used for versioning. For the versions available, take a look at the [releases](https://github.com/go-jet/jet/releases).  
-
-
-For now there is no guarantee that public API will remain backward compatible. Please read new release drafts to get acquaint how to handle possible build breakable API changes.
 
 ## License
 
