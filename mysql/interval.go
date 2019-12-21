@@ -38,7 +38,7 @@ const (
 // Interval is representation of MySQL interval
 type Interval = jet.Interval
 
-// INTERVAL creates new Interval type.
+// INTERVAL creates new temporal interval.
 // In a case of MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR unit type
 // value parameter should be number. For example: INTERVAL(1, DAY)
 // In a case of other unit types, value should be string with appropriate format.
@@ -94,7 +94,7 @@ func INTERVAL(value interface{}, unitType unitType) Interval {
 	}
 }
 
-// INTERVALe creates new Interval type from expresion and unit type.
+// INTERVALe creates new temporal interval from expresion and unit type.
 func INTERVALe(expr Expression, unitType unitType) Interval {
 	return jet.NewInterval(jet.ListSerializer{
 		Serializers: []jet.Serializer{expr, jet.Raw(string(unitType))},
@@ -102,7 +102,7 @@ func INTERVALe(expr Expression, unitType unitType) Interval {
 	})
 }
 
-// INTERVALd returns a interval representation from duration
+// INTERVALd temoral interval from time.Duration
 func INTERVALd(duration time.Duration) Interval {
 	var sign int64 = 1
 	if duration < 0 {

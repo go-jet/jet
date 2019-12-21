@@ -64,7 +64,7 @@ func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 	return newInterval
 }
 
-// INTERVALd creates interval expression from duration
+// INTERVALd creates interval expression from time.Duration
 func INTERVALd(duration time.Duration) IntervalExpression {
 	days, hours, minutes, seconds, microseconds := utils.ExtractDateTimeComponents(duration)
 
