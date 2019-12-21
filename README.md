@@ -5,7 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-jet/jet)](https://goreportcard.com/report/github.com/go-jet/jet)
 [![Documentation](https://godoc.org/github.com/go-jet/jet?status.svg)](http://godoc.org/github.com/go-jet/jet)
 [![GitHub release](https://img.shields.io/github/release/go-jet/jet.svg)](https://github.com/go-jet/jet/releases)
-
+[![Gitter](https://badges.gitter.im/go-jet/community.svg)](https://gitter.im/go-jet/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
 Jet is a framework for writing type-safe SQL queries in Go, with ability to easily 
 convert database query result into desired arbitrary object structure.  
