@@ -18,8 +18,8 @@ type ColumnExpression interface {
 	Expression
 }
 
-// The base type for real materialized columns.
-type columnImpl struct {
+// ColumnExpressionImpl is base type for sql columns.
+type ColumnExpressionImpl struct {
 	ExpressionInterfaceImpl
 
 	name      string
@@ -28,34 +28,41 @@ type columnImpl struct {
 	subQuery SelectTable
 }
 
-func newColumn(name string, tableName string, parent ColumnExpression) columnImpl {
-	bc := columnImpl{
+// NewColumnImpl creates new ColumnExpressionImpl
+func NewColumnImpl(name string, tableName string, parent ColumnExpression) ColumnExpressionImpl {
+	bc := ColumnExpressionImpl{
 		name:      name,
 		tableName: tableName,
 	}
 
-	bc.ExpressionInterfaceImpl.Parent = parent
+	if parent != nil {
+		bc.ExpressionInterfaceImpl.Parent = parent
+	} else {
+		bc.ExpressionInterfaceImpl.Parent = &bc
+	}
 
 	return bc
 }
 
-func (c *columnImpl) Name() string {
+// Name returns name of the column
+func (c *ColumnExpressionImpl) Name() string {
 	return c.name
 }
 
-func (c *columnImpl) TableName() string {
+// TableName returns column table name
+func (c *ColumnExpressionImpl) TableName() string {
 	return c.tableName
 }
 
-func (c *columnImpl) setTableName(table string) {
+func (c *ColumnExpressionImpl) setTableName(table string) {
 	c.tableName = table
 }
 
-func (c *columnImpl) setSubQuery(subQuery SelectTable) {
+func (c *ColumnExpressionImpl) setSubQuery(subQuery SelectTable) {
 	c.subQuery = subQuery
 }
 
-func (c *columnImpl) defaultAlias() string {
+func (c *ColumnExpressionImpl) defaultAlias() string {
 	if c.tableName != "" {
 		return c.tableName + "." + c.name
 	}
@@ -63,25 +70,31 @@ func (c *columnImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *columnImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
+func (c *ColumnExpressionImpl) fromImpl(subQuery SelectTable) Projection {
+	newColumn := NewColumnImpl(c.name, c.tableName, nil)
+	newColumn.setSubQuery(subQuery)
+
+	return &newColumn
+}
+
+func (c *ColumnExpressionImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.WriteAlias(c.defaultAlias()) //always quote
-
 		return
 	}
 
 	c.serialize(statement, out)
 }
 
-func (c columnImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
+func (c ColumnExpressionImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	c.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteAlias(c.defaultAlias())
 }
 
-func (c columnImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (c ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
@@ -128,3 +141,13 @@ func (cl ColumnList) TableName() string                { return "" }
 func (cl ColumnList) setTableName(name string)         {}
 func (cl ColumnList) setSubQuery(subQuery SelectTable) {}
 func (cl ColumnList) defaultAlias() string             { return "" }
+
+// SetTableName is utility function to set table name from outside of jet package to avoid making public setTableName
+func SetTableName(columnExpression ColumnExpression, tableName string) {
+	columnExpression.setTableName(tableName)
+}
+
+// SetSubQuery is utility function to set table name from outside of jet package to avoid making public setSubQuery
+func SetSubQuery(columnExpression ColumnExpression, subQuery SelectTable) {
+	columnExpression.setSubQuery(subQuery)
+}

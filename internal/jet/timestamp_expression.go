@@ -23,43 +23,43 @@ type timestampInterfaceImpl struct {
 }
 
 func (t *timestampInterfaceImpl) EQ(rhs TimestampExpression) BoolExpression {
-	return eq(t.parent, rhs)
+	return Eq(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) NOT_EQ(rhs TimestampExpression) BoolExpression {
-	return notEq(t.parent, rhs)
+	return NotEq(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) IS_DISTINCT_FROM(rhs TimestampExpression) BoolExpression {
-	return isDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimestampExpression) BoolExpression {
-	return isNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) LT(rhs TimestampExpression) BoolExpression {
-	return lt(t.parent, rhs)
+	return Lt(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) LT_EQ(rhs TimestampExpression) BoolExpression {
-	return ltEq(t.parent, rhs)
+	return LtEq(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) BoolExpression {
-	return gt(t.parent, rhs)
+	return Gt(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) BoolExpression {
-	return gtEq(t.parent, rhs)
+	return GtEq(t.parent, rhs)
 }
 
 func (t *timestampInterfaceImpl) ADD(rhs Interval) TimestampExpression {
-	return TimestampExp(newBinaryOperatorExpression(t.parent, rhs, "+"))
+	return TimestampExp(Add(t.parent, rhs))
 }
 
 func (t *timestampInterfaceImpl) SUB(rhs Interval) TimestampExpression {
-	return TimestampExp(newBinaryOperatorExpression(t.parent, rhs, "-"))
+	return TimestampExp(Sub(t.parent, rhs))
 }
 
 //-------------------------------------------------

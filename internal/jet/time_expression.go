@@ -23,43 +23,43 @@ type timeInterfaceImpl struct {
 }
 
 func (t *timeInterfaceImpl) EQ(rhs TimeExpression) BoolExpression {
-	return eq(t.parent, rhs)
+	return Eq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) NOT_EQ(rhs TimeExpression) BoolExpression {
-	return notEq(t.parent, rhs)
+	return NotEq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
-	return isDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
-	return isNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) LT(rhs TimeExpression) BoolExpression {
-	return lt(t.parent, rhs)
+	return Lt(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) LT_EQ(rhs TimeExpression) BoolExpression {
-	return ltEq(t.parent, rhs)
+	return LtEq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) GT(rhs TimeExpression) BoolExpression {
-	return gt(t.parent, rhs)
+	return Gt(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) GT_EQ(rhs TimeExpression) BoolExpression {
-	return gtEq(t.parent, rhs)
+	return GtEq(t.parent, rhs)
 }
 
 func (t *timeInterfaceImpl) ADD(rhs Interval) TimeExpression {
-	return TimeExp(newBinaryOperatorExpression(t.parent, rhs, "+"))
+	return TimeExp(Add(t.parent, rhs))
 }
 
 func (t *timeInterfaceImpl) SUB(rhs Interval) TimeExpression {
-	return TimeExp(newBinaryOperatorExpression(t.parent, rhs, "-"))
+	return TimeExp(Sub(t.parent, rhs))
 }
 
 //---------------------------------------------------//

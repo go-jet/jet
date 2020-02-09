@@ -37,19 +37,19 @@ type boolInterfaceImpl struct {
 }
 
 func (b *boolInterfaceImpl) EQ(expression BoolExpression) BoolExpression {
-	return eq(b.parent, expression)
+	return Eq(b.parent, expression)
 }
 
 func (b *boolInterfaceImpl) NOT_EQ(expression BoolExpression) BoolExpression {
-	return notEq(b.parent, expression)
+	return NotEq(b.parent, expression)
 }
 
 func (b *boolInterfaceImpl) IS_DISTINCT_FROM(rhs BoolExpression) BoolExpression {
-	return isDistinctFrom(b.parent, rhs)
+	return IsDistinctFrom(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpression {
-	return isNotDistinctFrom(b.parent, rhs)
+	return IsNotDistinctFrom(b.parent, rhs)
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
@@ -86,7 +86,7 @@ func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
 
 //---------------------------------------------------//
 func newBinaryBoolOperatorExpression(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
-	return BoolExp(newBinaryOperatorExpression(lhs, rhs, operator, additionalParams...))
+	return BoolExp(NewBinaryOperatorExpression(lhs, rhs, operator, additionalParams...))
 }
 
 //---------------------------------------------------//

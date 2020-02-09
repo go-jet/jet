@@ -92,7 +92,8 @@ type binaryOperatorExpression struct {
 	operator        string
 }
 
-func newBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) *binaryOperatorExpression {
+// NewBinaryOperatorExpression creates new binaryOperatorExpression
+func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) *binaryOperatorExpression {
 	binaryExpression := &binaryOperatorExpression{
 		lhs:      lhs,
 		rhs:      rhs,

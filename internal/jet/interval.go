@@ -11,22 +11,27 @@ type IsInterval interface {
 	isInterval()
 }
 
+// IsIntervalImpl is implementation of IsInterval interface
+type IsIntervalImpl struct{}
+
+func (i *IsIntervalImpl) isInterval() {}
+
 // NewInterval creates new interval from serializer
-func NewInterval(s Serializer) Interval {
-	newInterval := &intervalImpl{
+func NewInterval(s Serializer) *IntervalImpl {
+	newInterval := &IntervalImpl{
 		interval: s,
 	}
 
 	return newInterval
 }
 
-type intervalImpl struct {
+// IntervalImpl is implementation of Interval type
+type IntervalImpl struct {
 	interval Serializer
+	IsIntervalImpl
 }
 
-func (i intervalImpl) isInterval() {}
-
-func (i intervalImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (i IntervalImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("INTERVAL")
 	i.interval.serialize(statement, out, options...)
 }

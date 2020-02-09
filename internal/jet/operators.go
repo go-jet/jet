@@ -29,42 +29,69 @@ func EXISTS(subQuery Expression) BoolExpression {
 	return newPrefixBoolOperatorExpression(subQuery, "EXISTS")
 }
 
-// Returns a representation of "a=b"
-func eq(lhs, rhs Expression) BoolExpression {
+// Eq returns a representation of "a=b"
+func Eq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "=")
 }
 
-// Returns a representation of "a!=b"
-func notEq(lhs, rhs Expression) BoolExpression {
+// NotEq returns a representation of "a!=b"
+func NotEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "!=")
 }
 
-func isDistinctFrom(lhs, rhs Expression) BoolExpression {
+// IsDistinctFrom returns a representation of "a IS DISTINCT FROM b"
+func IsDistinctFrom(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "IS DISTINCT FROM")
 }
 
-func isNotDistinctFrom(lhs, rhs Expression) BoolExpression {
+// IsNotDistinctFrom returns a representation of "a IS NOT DISTINCT FROM b"
+func IsNotDistinctFrom(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
-// Returns a representation of "a<b"
-func lt(lhs Expression, rhs Expression) BoolExpression {
+// Lt returns a representation of "a<b"
+func Lt(lhs Expression, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "<")
 }
 
-// Returns a representation of "a<=b"
-func ltEq(lhs, rhs Expression) BoolExpression {
+// LtEq returns a representation of "a<=b"
+func LtEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "<=")
 }
 
-// Returns a representation of "a>b"
-func gt(lhs, rhs Expression) BoolExpression {
+// Gt returns a representation of "a>b"
+func Gt(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, ">")
 }
 
-// Returns a representation of "a>=b"
-func gtEq(lhs, rhs Expression) BoolExpression {
+// GtEq returns a representation of "a>=b"
+func GtEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, ">=")
+}
+
+// Add notEq returns a representation of "a + b"
+func Add(lhs, rhs Serializer) Expression {
+	return NewBinaryOperatorExpression(lhs, rhs, "+")
+}
+
+// Sub notEq returns a representation of "a - b"
+func Sub(lhs, rhs Serializer) Expression {
+	return NewBinaryOperatorExpression(lhs, rhs, "-")
+}
+
+// Mul returns a representation of "a * b"
+func Mul(lhs, rhs Serializer) Expression {
+	return NewBinaryOperatorExpression(lhs, rhs, "*")
+}
+
+// Div returns a representation of "a / b"
+func Div(lhs, rhs Serializer) Expression {
+	return NewBinaryOperatorExpression(lhs, rhs, "/")
+}
+
+// Mod returns a representation of "a % b"
+func Mod(lhs, rhs Serializer) Expression {
+	return NewBinaryOperatorExpression(lhs, rhs, "%")
 }
 
 // --------------- CASE operator -------------------//

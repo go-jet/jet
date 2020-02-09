@@ -10,11 +10,10 @@ type ColumnBool interface {
 
 type boolColumnImpl struct {
 	boolInterfaceImpl
-
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *boolColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
 	newBoolColumn := BoolColumn(i.name)
 	newBoolColumn.setTableName(i.tableName)
 	newBoolColumn.setSubQuery(subQuery)
@@ -22,16 +21,10 @@ func (i *boolColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newBoolColumn
 }
 
-func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
-	newBoolColumn := i.fromImpl(subQuery).(ColumnBool)
-
-	return newBoolColumn
-}
-
 // BoolColumn creates named bool column.
 func BoolColumn(name string) ColumnBool {
 	boolColumn := &boolColumnImpl{}
-	boolColumn.columnImpl = newColumn(name, "", boolColumn)
+	boolColumn.ColumnExpressionImpl = NewColumnImpl(name, "", boolColumn)
 	boolColumn.boolInterfaceImpl.parent = boolColumn
 
 	return boolColumn
@@ -49,19 +42,13 @@ type ColumnFloat interface {
 
 type floatColumnImpl struct {
 	floatInterfaceImpl
-	columnImpl
-}
-
-func (i *floatColumnImpl) fromImpl(subQuery SelectTable) Projection {
-	newFloatColumn := FloatColumn(i.name)
-	newFloatColumn.setTableName(i.tableName)
-	newFloatColumn.setSubQuery(subQuery)
-
-	return newFloatColumn
+	ColumnExpressionImpl
 }
 
 func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
-	newFloatColumn := i.fromImpl(subQuery).(ColumnFloat)
+	newFloatColumn := FloatColumn(i.name)
+	newFloatColumn.setTableName(i.tableName)
+	newFloatColumn.setSubQuery(subQuery)
 
 	return newFloatColumn
 }
@@ -70,7 +57,7 @@ func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
 func FloatColumn(name string) ColumnFloat {
 	floatColumn := &floatColumnImpl{}
 	floatColumn.floatInterfaceImpl.parent = floatColumn
-	floatColumn.columnImpl = newColumn(name, "", floatColumn)
+	floatColumn.ColumnExpressionImpl = NewColumnImpl(name, "", floatColumn)
 
 	return floatColumn
 }
@@ -88,10 +75,10 @@ type ColumnInteger interface {
 type integerColumnImpl struct {
 	integerInterfaceImpl
 
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *integerColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
 	newIntColumn := IntegerColumn(i.name)
 	newIntColumn.setTableName(i.tableName)
 	newIntColumn.setSubQuery(subQuery)
@@ -99,15 +86,11 @@ func (i *integerColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newIntColumn
 }
 
-func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
-	return i.fromImpl(subQuery).(ColumnInteger)
-}
-
 // IntegerColumn creates named integer column.
 func IntegerColumn(name string) ColumnInteger {
 	integerColumn := &integerColumnImpl{}
 	integerColumn.integerInterfaceImpl.parent = integerColumn
-	integerColumn.columnImpl = newColumn(name, "", integerColumn)
+	integerColumn.ColumnExpressionImpl = NewColumnImpl(name, "", integerColumn)
 
 	return integerColumn
 }
@@ -126,10 +109,10 @@ type ColumnString interface {
 type stringColumnImpl struct {
 	stringInterfaceImpl
 
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *stringColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
 	newStrColumn := StringColumn(i.name)
 	newStrColumn.setTableName(i.tableName)
 	newStrColumn.setSubQuery(subQuery)
@@ -137,15 +120,11 @@ func (i *stringColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newStrColumn
 }
 
-func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
-	return i.fromImpl(subQuery).(ColumnString)
-}
-
 // StringColumn creates named string column.
 func StringColumn(name string) ColumnString {
 	stringColumn := &stringColumnImpl{}
 	stringColumn.stringInterfaceImpl.parent = stringColumn
-	stringColumn.columnImpl = newColumn(name, "", stringColumn)
+	stringColumn.ColumnExpressionImpl = NewColumnImpl(name, "", stringColumn)
 
 	return stringColumn
 }
@@ -162,10 +141,10 @@ type ColumnTime interface {
 
 type timeColumnImpl struct {
 	timeInterfaceImpl
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *timeColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
 	newTimeColumn := TimeColumn(i.name)
 	newTimeColumn.setTableName(i.tableName)
 	newTimeColumn.setSubQuery(subQuery)
@@ -173,15 +152,11 @@ func (i *timeColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newTimeColumn
 }
 
-func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
-	return i.fromImpl(subQuery).(ColumnTime)
-}
-
 // TimeColumn creates named time column
 func TimeColumn(name string) ColumnTime {
 	timeColumn := &timeColumnImpl{}
 	timeColumn.timeInterfaceImpl.parent = timeColumn
-	timeColumn.columnImpl = newColumn(name, "", timeColumn)
+	timeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timeColumn)
 	return timeColumn
 }
 
@@ -197,11 +172,10 @@ type ColumnTimez interface {
 
 type timezColumnImpl struct {
 	timezInterfaceImpl
-
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *timezColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
 	newTimezColumn := TimezColumn(i.name)
 	newTimezColumn.setTableName(i.tableName)
 	newTimezColumn.setSubQuery(subQuery)
@@ -209,15 +183,11 @@ func (i *timezColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newTimezColumn
 }
 
-func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
-	return i.fromImpl(subQuery).(ColumnTimez)
-}
-
 // TimezColumn creates named time with time zone column.
 func TimezColumn(name string) ColumnTimez {
 	timezColumn := &timezColumnImpl{}
 	timezColumn.timezInterfaceImpl.parent = timezColumn
-	timezColumn.columnImpl = newColumn(name, "", timezColumn)
+	timezColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timezColumn)
 
 	return timezColumn
 }
@@ -234,11 +204,10 @@ type ColumnTimestamp interface {
 
 type timestampColumnImpl struct {
 	timestampInterfaceImpl
-
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *timestampColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
 	newTimestampColumn := TimestampColumn(i.name)
 	newTimestampColumn.setTableName(i.tableName)
 	newTimestampColumn.setSubQuery(subQuery)
@@ -246,15 +215,11 @@ func (i *timestampColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newTimestampColumn
 }
 
-func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
-	return i.fromImpl(subQuery).(ColumnTimestamp)
-}
-
 // TimestampColumn creates named timestamp column
 func TimestampColumn(name string) ColumnTimestamp {
 	timestampColumn := &timestampColumnImpl{}
 	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
-	timestampColumn.columnImpl = newColumn(name, "", timestampColumn)
+	timestampColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampColumn)
 
 	return timestampColumn
 }
@@ -271,11 +236,10 @@ type ColumnTimestampz interface {
 
 type timestampzColumnImpl struct {
 	timestampzInterfaceImpl
-
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *timestampzColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
 	newTimestampzColumn := TimestampzColumn(i.name)
 	newTimestampzColumn.setTableName(i.tableName)
 	newTimestampzColumn.setSubQuery(subQuery)
@@ -283,15 +247,11 @@ func (i *timestampzColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newTimestampzColumn
 }
 
-func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
-	return i.fromImpl(subQuery).(ColumnTimestampz)
-}
-
 // TimestampzColumn creates named timestamp with time zone column.
 func TimestampzColumn(name string) ColumnTimestampz {
 	timestampzColumn := &timestampzColumnImpl{}
 	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
-	timestampzColumn.columnImpl = newColumn(name, "", timestampzColumn)
+	timestampzColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampzColumn)
 
 	return timestampzColumn
 }
@@ -308,11 +268,10 @@ type ColumnDate interface {
 
 type dateColumnImpl struct {
 	dateInterfaceImpl
-
-	columnImpl
+	ColumnExpressionImpl
 }
 
-func (i *dateColumnImpl) fromImpl(subQuery SelectTable) Projection {
+func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
 	newDateColumn := DateColumn(i.name)
 	newDateColumn.setTableName(i.tableName)
 	newDateColumn.setSubQuery(subQuery)
@@ -320,14 +279,10 @@ func (i *dateColumnImpl) fromImpl(subQuery SelectTable) Projection {
 	return newDateColumn
 }
 
-func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
-	return i.fromImpl(subQuery).(ColumnDate)
-}
-
 // DateColumn creates named date column.
 func DateColumn(name string) ColumnDate {
 	dateColumn := &dateColumnImpl{}
 	dateColumn.dateInterfaceImpl.parent = dateColumn
-	dateColumn.columnImpl = newColumn(name, "", dateColumn)
+	dateColumn.ColumnExpressionImpl = NewColumnImpl(name, "", dateColumn)
 	return dateColumn
 }

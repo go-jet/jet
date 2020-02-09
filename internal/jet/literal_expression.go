@@ -346,9 +346,9 @@ func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, opti
 
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
-func Raw(raw string) Expression {
+func Raw(raw string, parent ...Expression) Expression {
 	rawExp := &rawExpression{Raw: raw}
-	rawExp.ExpressionInterfaceImpl.Parent = rawExp
+	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
 
 	return rawExp
 }

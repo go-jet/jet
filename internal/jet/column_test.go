@@ -3,7 +3,7 @@ package jet
 import "testing"
 
 func TestColumn(t *testing.T) {
-	column := newColumn("col", "", nil)
+	column := NewColumnImpl("col", "", nil)
 	column.ExpressionInterfaceImpl.Parent = &column
 
 	assertClauseSerialize(t, column, "col")

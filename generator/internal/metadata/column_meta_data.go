@@ -57,8 +57,10 @@ func (c ColumnMetaData) getSqlBuilderColumnType() string {
 		return "Time"
 	case "time with time zone":
 		return "Timez"
+	case "interval":
+		return "Interval"
 	case "USER-DEFINED", "enum", "text", "character", "character varying", "bytea", "uuid",
-		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "interval", "line", "ARRAY",
+		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "binary", "varbinary",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
