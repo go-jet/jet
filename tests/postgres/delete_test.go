@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -48,11 +48,11 @@ RETURNING link.id AS "link.id",
 
 	err := deleteStmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
-	assert.DeepEqual(t, dest[0].Name, "Gmail")
-	assert.DeepEqual(t, dest[1].Name, "Outlook")
+	testutils.AssertDeepEqual(t, dest[0].Name, "Gmail")
+	testutils.AssertDeepEqual(t, dest[1].Name, "Outlook")
 }
 
 func initForDeleteTest(t *testing.T) {

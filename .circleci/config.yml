@@ -46,7 +46,7 @@ jobs:
             go get github.com/go-sql-driver/mysql
 
             go get github.com/pkg/profile
-            go get gotest.tools/assert
+            go get github.com/stretchr/testify/assert
             go get github.com/davecgh/go-spew/spew
             go get github.com/jstemmer/go-junit-report
 
@@ -142,7 +142,7 @@ jobs:
             go get github.com/go-sql-driver/mysql
 
             go get github.com/pkg/profile
-            go get gotest.tools/assert
+            go get github.com/stretchr/testify/assert
             go get github.com/davecgh/go-spew/spew
             go get github.com/jstemmer/go-junit-report
 

@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -32,7 +32,7 @@ INSERT INTO test_sample.link (id, url, name, description) VALUES
 		102, "http://www.yahoo.com", "Yahoo", nil)
 
 	_, err := insertQuery.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	insertedLinks := []model.Link{}
 
@@ -41,18 +41,18 @@ INSERT INTO test_sample.link (id, url, name, description) VALUES
 		ORDER_BY(Link.ID).
 		Query(db, &insertedLinks)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(insertedLinks), 3)
 
-	assert.DeepEqual(t, insertedLinks[0], postgreTutorial)
+	testutils.AssertDeepEqual(t, insertedLinks[0], postgreTutorial)
 
-	assert.DeepEqual(t, insertedLinks[1], model.Link{
+	testutils.AssertDeepEqual(t, insertedLinks[1], model.Link{
 		ID:   101,
 		URL:  "http://www.google.com",
 		Name: "Google",
 	})
 
-	assert.DeepEqual(t, insertedLinks[2], model.Link{
+	testutils.AssertDeepEqual(t, insertedLinks[2], model.Link{
 		ID:   102,
 		URL:  "http://www.yahoo.com",
 		Name: "Yahoo",
@@ -80,7 +80,7 @@ INSERT INTO test_sample.link VALUES
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
 	_, err := stmt.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	insertedLinks := []model.Link{}
 
@@ -89,9 +89,9 @@ INSERT INTO test_sample.link VALUES
 		ORDER_BY(Link.ID).
 		Query(db, &insertedLinks)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(insertedLinks), 1)
-	assert.DeepEqual(t, insertedLinks[0], postgreTutorial)
+	testutils.AssertDeepEqual(t, insertedLinks[0], postgreTutorial)
 }
 
 func TestInsertModelObject(t *testing.T) {
@@ -113,7 +113,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
 
 	_, err := query.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestInsertModelObjectEmptyColumnList(t *testing.T) {
@@ -136,7 +136,7 @@ INSERT INTO test_sample.link VALUES
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
 	_, err := query.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestInsertModelsObject(t *testing.T) {
@@ -172,7 +172,7 @@ INSERT INTO test_sample.link (url, name) VALUES
 		"http://www.yahoo.com", "Yahoo")
 
 	_, err := query.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestInsertUsingMutableColumns(t *testing.T) {
@@ -207,14 +207,14 @@ INSERT INTO test_sample.link (url, name, description) VALUES
 		"http://www.yahoo.com", "Yahoo", nil)
 
 	_, err := stmt.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestInsertQuery(t *testing.T) {
 	_, err := Link.DELETE().
 		WHERE(Link.ID.NOT_EQ(Int(1)).AND(Link.Name.EQ(String("Youtube")))).
 		Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var expectedSQL = `
 INSERT INTO test_sample.link (url, name) (
@@ -236,7 +236,7 @@ INSERT INTO test_sample.link (url, name) (
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1))
 
 	_, err = query.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	youtubeLinks := []model.Link{}
 	err = Link.
@@ -244,7 +244,7 @@ INSERT INTO test_sample.link (url, name) (
 		WHERE(Link.Name.EQ(String("Youtube"))).
 		Query(db, &youtubeLinks)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(youtubeLinks), 2)
 }
 
@@ -283,5 +283,5 @@ func TestInsertWithExecContext(t *testing.T) {
 
 func cleanUpLinkTable(t *testing.T) {
 	_, err := Link.DELETE().WHERE(Link.ID.GT(Int(1))).Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }

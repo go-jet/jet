@@ -560,7 +560,7 @@ At the moment Jet dependence only of:
   
 To run the tests, additional dependencies are required:
 - `github.com/pkg/profile`
-- `gotest.tools/assert`
+- `github.com/stretchr/testify`
 
 ## Versioning
 

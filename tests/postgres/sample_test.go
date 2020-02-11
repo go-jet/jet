@@ -6,7 +6,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/uuid"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -25,9 +25,9 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	result := model.AllTypes{}
 
 	err := query.Query(db, &result)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
-	assert.DeepEqual(t, result.UUIDPtr, UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	testutils.AssertDeepEqual(t, result.UUIDPtr, UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 }
 
 func TestUUIDComplex(t *testing.T) {
@@ -46,7 +46,7 @@ func TestUUIDComplex(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 2)
 		testutils.AssertJSON(t, dest, `
 [
@@ -96,7 +96,7 @@ func TestUUIDComplex(t *testing.T) {
 			}
 		}
 		err := singleQuery.Query(db, &dest)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		testutils.AssertJSON(t, dest, `
 {
@@ -132,7 +132,7 @@ func TestUUIDComplex(t *testing.T) {
 		}
 		err := leftQuery.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		testutils.AssertJSON(t, dest, `
 [
 	{
@@ -194,7 +194,7 @@ FROM test_sample.person;
 
 	err := query.Query(db, &result)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	testutils.AssertJSON(t, result, `
 [
 	{
@@ -258,9 +258,9 @@ ORDER BY employee.employee_id;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 8)
-	assert.DeepEqual(t, dest[0].Employee, model.Employee{
+	testutils.AssertDeepEqual(t, dest[0].Employee, model.Employee{
 		EmployeeID:     1,
 		FirstName:      "Windy",
 		LastName:       "Hays",
@@ -268,9 +268,9 @@ ORDER BY employee.employee_id;
 		ManagerID:      nil,
 	})
 
-	assert.Assert(t, dest[0].Manager == nil)
+	assert.True(t, dest[0].Manager == nil)
 
-	assert.DeepEqual(t, dest[7].Employee, model.Employee{
+	testutils.AssertDeepEqual(t, dest[7].Employee, model.Employee{
 		EmployeeID:     8,
 		FirstName:      "Salley",
 		LastName:       "Lester",
@@ -306,10 +306,10 @@ FROM test_sample."WEIRD NAMES TABLE";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 1)
-	assert.DeepEqual(t, dest[0], model.WeirdNamesTable{
+	testutils.AssertDeepEqual(t, dest[0], model.WeirdNamesTable{
 		WeirdColumnName1: "Doe",
 		WeirdColumnName2: "Doe",
 		WeirdColumnName3: "Doe",

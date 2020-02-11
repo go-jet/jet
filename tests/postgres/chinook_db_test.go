@@ -7,7 +7,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -30,11 +30,11 @@ ORDER BY "Album"."AlbumId" ASC;
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 347)
-	assert.DeepEqual(t, dest[0], album1)
-	assert.DeepEqual(t, dest[1], album2)
-	assert.DeepEqual(t, dest[len(dest)-1], album347)
+	testutils.AssertDeepEqual(t, dest[0], album1)
+	testutils.AssertDeepEqual(t, dest[1], album2)
+	testutils.AssertDeepEqual(t, dest[len(dest)-1], album347)
 }
 
 func TestJoinEverything(t *testing.T) {
@@ -103,7 +103,7 @@ func TestJoinEverything(t *testing.T) {
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 275)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
 }
@@ -143,7 +143,7 @@ ORDER BY "Employee"."EmployeeId";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 8)
 	testutils.AssertJSON(t, dest[0:2], `
 [
@@ -236,11 +236,11 @@ ORDER BY "Album.AlbumId";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
-	assert.DeepEqual(t, dest[0], album1)
-	assert.DeepEqual(t, dest[1], album2)
+	testutils.AssertDeepEqual(t, dest[0], album1)
+	testutils.AssertDeepEqual(t, dest[1], album2)
 }
 
 func TestQueryWithContext(t *testing.T) {
@@ -327,7 +327,7 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//spew.Dump(dest)
 }

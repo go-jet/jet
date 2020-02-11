@@ -7,21 +7,23 @@ import (
 	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/utils"
 	"github.com/go-jet/jet/qrm"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 )
 
 // AssertExec assert statement execution for successful execution and number of rows affected
 func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int64) {
 	res, err := stmt.Exec(db)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	rows, err := res.RowsAffected()
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	if len(rowsAffected) > 0 {
 		assert.Equal(t, rows, rowsAffected[0])
@@ -49,7 +51,7 @@ func PrintJson(v interface{}) {
 // AssertJSON check if data json output is the same as expectedJSON
 func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
@@ -69,17 +71,17 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 
 	filePath := getFullPath(testRelativePath)
 	fileJSONData, err := ioutil.ReadFile(filePath)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	if runtime.GOOS == "windows" {
 		fileJSONData = bytes.Replace(fileJSONData, []byte("\r\n"), []byte("\n"), -1)
 	}
 
 	jsonData, err := json.MarshalIndent(data, "", "\t")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.Assert(t, string(fileJSONData) == string(jsonData))
-	//assert.DeepEqual(t, string(fileJSONData), string(jsonData))
+	assert.True(t, string(fileJSONData) == string(jsonData))
+	//AssertDeepEqual(t, string(fileJSONData), string(jsonData))
 }
 
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
@@ -90,7 +92,7 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 	if len(expectedArgs) == 0 {
 		return
 	}
-	assert.DeepEqual(t, args, expectedArgs)
+	AssertDeepEqual(t, args, expectedArgs)
 }
 
 // AssertStatementSqlErr checks if statement Sql() panics with errorStr
@@ -108,7 +110,7 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	_, args := query.Sql()
 
 	if len(expectedArgs) > 0 {
-		assert.DeepEqual(t, args, expectedArgs)
+		AssertDeepEqual(t, args, expectedArgs)
 	}
 
 	debuqSql := query.DebugSql()
@@ -122,10 +124,10 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Seriali
 
 	//fmt.Println(out.Buff.String())
 
-	assert.DeepEqual(t, out.Buff.String(), query)
+	AssertDeepEqual(t, out.Buff.String(), query)
 
 	if len(args) > 0 {
-		assert.DeepEqual(t, out.Args, args)
+		AssertDeepEqual(t, out.Args, args)
 	}
 }
 
@@ -134,10 +136,10 @@ func AssertDebugClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Se
 	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
 	jet.Serialize(clause, jet.SelectStatementType, &out)
 
-	assert.DeepEqual(t, out.Buff.String(), query)
+	AssertDeepEqual(t, out.Buff.String(), query)
 
 	if len(args) > 0 {
-		assert.DeepEqual(t, out.Args, args)
+		AssertDeepEqual(t, out.Args, args)
 	}
 }
 
@@ -167,8 +169,8 @@ func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet
 	out := jet.SQLBuilder{Dialect: dialect}
 	jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
 
-	assert.DeepEqual(t, out.Buff.String(), query)
-	assert.DeepEqual(t, out.Args, args)
+	AssertDeepEqual(t, out.Buff.String(), query)
+	AssertDeepEqual(t, out.Args, args)
 }
 
 // AssertQueryPanicErr check if statement Query execution panics with error errString
@@ -185,13 +187,13 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 func AssertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {
 	enumFileData, err := ioutil.ReadFile(filePath)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	beginIndex := bytes.Index(enumFileData, []byte(contentBegin))
 
 	//fmt.Println("-"+string(enumFileData[beginIndex:])+"-")
 
-	assert.DeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
+	AssertDeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
 }
 
 // AssertFileNamesEqual check if all filesInfos are contained in fileNames
@@ -205,6 +207,10 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 	}
 
 	for _, fileName := range fileNames {
-		assert.Assert(t, fileNamesMap[fileName], fileName+" does not exist.")
+		assert.True(t, fileNamesMap[fileName], fileName+" does not exist.")
 	}
+}
+
+func AssertDeepEqual(t *testing.T, actual, expected interface{}) {
+	assert.True(t, cmp.Equal(actual, expected))
 }

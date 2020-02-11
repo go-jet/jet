@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -35,9 +35,9 @@ WHERE link.name = 'Bing';
 		WHERE(Link.Name.EQ(String("Bong"))).
 		Query(db, &links)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(links), 1)
-	assert.DeepEqual(t, links[0], model.Link{
+	testutils.AssertDeepEqual(t, links[0], model.Link{
 		ID:   204,
 		URL:  "http://bong.com",
 		Name: "Bong",
@@ -99,7 +99,7 @@ RETURNING link.id AS "link.id",
 
 	err := stmt.Query(db, &links)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(links), 2)
 	assert.Equal(t, links[0].Name, "DuckDuckGo")
 	assert.Equal(t, links[1].Name, "DuckDuckGo")
@@ -293,10 +293,10 @@ func setupLinkTableForUpdateTest(t *testing.T) {
 		VALUES(204, "http://www.bing.com", "Bing", DEFAULT).
 		Exec(db)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func cleanUpLinkTable(t *testing.T) {
 	_, err := Link.DELETE().WHERE(Link.ID.GT(Int(0))).Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }

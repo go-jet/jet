@@ -5,16 +5,16 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	"github.com/google/uuid"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func AssertExec(t *testing.T, stmt jet.Statement, rowsAffected int64) {
 	res, err := stmt.Exec(db)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	rows, err := res.RowsAffected()
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, rows, rowsAffected)
 }
 

@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 

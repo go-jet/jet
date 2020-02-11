@@ -8,7 +8,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/view"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -33,7 +33,7 @@ WHERE actor.actor_id = 2;
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	expectedActor := model.Actor{
 		ActorID:    2,
@@ -42,7 +42,7 @@ WHERE actor.actor_id = 2;
 		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 	}
 
-	assert.DeepEqual(t, actor, expectedActor)
+	testutils.AssertDeepEqual(t, actor, expectedActor)
 }
 
 func TestClassicSelect(t *testing.T) {
@@ -84,7 +84,7 @@ LIMIT 30;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 30)
 }
 
@@ -110,13 +110,13 @@ ORDER BY customer.customer_id ASC;
 	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
 	err := query.Query(db, &customers)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(customers), 599)
 
-	assert.DeepEqual(t, customer0, customers[0])
-	assert.DeepEqual(t, customer1, customers[1])
-	assert.DeepEqual(t, lastCustomer, customers[598])
+	testutils.AssertDeepEqual(t, customer0, customers[0])
+	testutils.AssertDeepEqual(t, customer1, customers[1])
+	testutils.AssertDeepEqual(t, lastCustomer, customers[598])
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
@@ -164,7 +164,7 @@ LIMIT 12;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -253,7 +253,7 @@ LIMIT 1000;
 
 		err := query.Query(db, &languageActorFilm)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(languageActorFilm), 1)
 		assert.Equal(t, len(languageActorFilm[0].Films), 10)
 		assert.Equal(t, len(languageActorFilm[0].Films[0].Actors), 10)
@@ -302,7 +302,7 @@ LIMIT 15;
 
 	err := query.Query(db, &filmsPerLanguage)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(filmsPerLanguage), 1)
 	assert.Equal(t, len(filmsPerLanguage[0].Film), limit)
 
@@ -313,7 +313,7 @@ LIMIT 15;
 	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
 	err = query.Query(db, &filmsPerLanguageWithPtrs)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(filmsPerLanguage), 1)
 	assert.Equal(t, len(filmsPerLanguage[0].Film), limit)
 }
@@ -359,7 +359,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, dest[0].City.City, "London")
@@ -423,7 +423,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, dest[0].Name, "London")
@@ -481,7 +481,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, dest[0].CityName, "London")
@@ -538,7 +538,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 	err := stmt.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 2)
 	testutils.AssertJSON(t, dest, `
 [
@@ -597,7 +597,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
 	err := query.Query(db, &filmsPerLanguageWithPtrs)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(filmsPerLanguageWithPtrs), 1)
 	assert.Equal(t, len(*filmsPerLanguageWithPtrs[0].Film), int(limit))
 }
@@ -609,7 +609,7 @@ func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
 
 	err := query.Query(db, &customers)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//spew.Dump(customers)
 
@@ -623,7 +623,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 		ORDER_BY(Customer.FirstName.ASC()).
 		Query(db, &customersAsc)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	firstCustomerAsc := customersAsc[0]
 	lastCustomerAsc := customersAsc[len(customersAsc)-1]
@@ -633,20 +633,20 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 		ORDER_BY(Customer.FirstName.DESC()).
 		Query(db, &customersDesc)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	firstCustomerDesc := customersDesc[0]
 	lastCustomerDesc := customersDesc[len(customersAsc)-1]
 
-	assert.DeepEqual(t, firstCustomerAsc, lastCustomerDesc)
-	assert.DeepEqual(t, lastCustomerAsc, firstCustomerDesc)
+	testutils.AssertDeepEqual(t, firstCustomerAsc, lastCustomerDesc)
+	testutils.AssertDeepEqual(t, lastCustomerAsc, firstCustomerDesc)
 
 	customersAscDesc := []model.Customer{}
 	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
 		ORDER_BY(Customer.FirstName.ASC(), Customer.LastName.DESC()).
 		Query(db, &customersAscDesc)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	customerAscDesc326 := model.Customer{
 		CustomerID: 67,
@@ -660,8 +660,8 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 		LastName:   "Knott",
 	}
 
-	assert.DeepEqual(t, customerAscDesc326, customersAscDesc[326])
-	assert.DeepEqual(t, customerAscDesc327, customersAscDesc[327])
+	testutils.AssertDeepEqual(t, customerAscDesc326, customersAscDesc[326])
+	testutils.AssertDeepEqual(t, customerAscDesc327, customersAscDesc[327])
 }
 
 func TestSelectFullJoin(t *testing.T) {
@@ -702,16 +702,16 @@ ORDER BY customer.customer_id ASC;
 
 	err := query.Query(db, &allCustomersAndAddress)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(allCustomersAndAddress), 603)
 
-	assert.DeepEqual(t, allCustomersAndAddress[0].Customer, &customer0)
-	assert.Assert(t, allCustomersAndAddress[0].Address != nil)
+	testutils.AssertDeepEqual(t, allCustomersAndAddress[0].Customer, &customer0)
+	assert.True(t, allCustomersAndAddress[0].Address != nil)
 
 	lastCustomerAddress := allCustomersAndAddress[len(allCustomersAndAddress)-1]
 
-	assert.Assert(t, lastCustomerAddress.Customer == nil)
-	assert.Assert(t, lastCustomerAddress.Address != nil)
+	assert.True(t, lastCustomerAddress.Customer == nil)
+	assert.True(t, lastCustomerAddress.Address != nil)
 
 }
 
@@ -757,7 +757,7 @@ LIMIT 1000;
 
 	assert.Equal(t, len(customerAddresCrosJoined), 1000)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSelectSelfJoin(t *testing.T) {
@@ -813,7 +813,7 @@ ORDER BY f1.film_id ASC;
 
 	err := query.Query(db, &theSameLengthFilms)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//spew.Dump(theSameLengthFilms)
 
@@ -854,12 +854,12 @@ LIMIT 1000;
 
 	err := query.Query(db, &films)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//spew.Dump(films)
 
 	assert.Equal(t, len(films), 1000)
-	assert.DeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
+	testutils.AssertDeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
 }
 
 func TestSubQuery(t *testing.T) {
@@ -911,7 +911,7 @@ FROM dvds.actor
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSelectFunctions(t *testing.T) {
@@ -931,7 +931,7 @@ FROM dvds.film;
 
 	err := query.Query(db, &ret)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, ret.MaxFilmRate, 4.99)
 }
 
@@ -973,13 +973,13 @@ ORDER BY film.film_id ASC;
 	maxRentalRateFilms := []model.Film{}
 	err := query.Query(db, &maxRentalRateFilms)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(maxRentalRateFilms), 336)
 
 	gRating := model.MpaaRating_G
 
-	assert.DeepEqual(t, maxRentalRateFilms[0], model.Film{
+	testutils.AssertDeepEqual(t, maxRentalRateFilms[0], model.Film{
 		FilmID:          2,
 		Title:           "Ace Goldfinger",
 		Description:     StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
@@ -1060,7 +1060,7 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -1121,10 +1121,10 @@ ORDER BY customer_payment_sum."amount_sum" ASC;
 	customersWithAmounts := []CustomerWithAmounts{}
 
 	err := query.Query(db, &customersWithAmounts)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(customersWithAmounts), 599)
 
-	assert.DeepEqual(t, customersWithAmounts[0].Customer, &model.Customer{
+	testutils.AssertDeepEqual(t, customersWithAmounts[0].Customer, &model.Customer{
 		CustomerID: 318,
 		StoreID:    1,
 		FirstName:  "Brian",
@@ -1145,7 +1145,7 @@ func TestSelectStaff(t *testing.T) {
 
 	err := Staff.SELECT(Staff.AllColumns).Query(db, &staffs)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertJSON(t, staffs, `
 [
@@ -1203,12 +1203,12 @@ ORDER BY payment.payment_date ASC;
 
 	err := query.Query(db, &payments)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//spew.Dump(payments)
 
 	assert.Equal(t, len(payments), 9)
-	assert.DeepEqual(t, payments[0], model.Payment{
+	testutils.AssertDeepEqual(t, payments[0], model.Payment{
 		PaymentID:   17793,
 		CustomerID:  416,
 		StaffID:     2,
@@ -1257,17 +1257,17 @@ OFFSET 20;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 10)
-	assert.DeepEqual(t, dest[0], model.Payment{
+	testutils.AssertDeepEqual(t, dest[0], model.Payment{
 		PaymentID: 17523,
 		Amount:    4.99,
 	})
-	assert.DeepEqual(t, dest[1], model.Payment{
+	testutils.AssertDeepEqual(t, dest[1], model.Payment{
 		PaymentID: 17524,
 		Amount:    0.99,
 	})
-	assert.DeepEqual(t, dest[9], model.Payment{
+	testutils.AssertDeepEqual(t, dest[9], model.Payment{
 		PaymentID: 17532,
 		Amount:    8.99,
 	})
@@ -1283,7 +1283,7 @@ func TestAllSetOperators(t *testing.T) {
 		dest := []model.Payment{}
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 20)
 	})
 
@@ -1293,7 +1293,7 @@ func TestAllSetOperators(t *testing.T) {
 		dest := []model.Payment{}
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 20)
 	})
 
@@ -1303,7 +1303,7 @@ func TestAllSetOperators(t *testing.T) {
 		dest := []model.Payment{}
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 0)
 	})
 
@@ -1313,7 +1313,7 @@ func TestAllSetOperators(t *testing.T) {
 		dest := []model.Payment{}
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 0)
 	})
 
@@ -1323,7 +1323,7 @@ func TestAllSetOperators(t *testing.T) {
 		dest := []model.Payment{}
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 10)
 	})
 
@@ -1333,7 +1333,7 @@ func TestAllSetOperators(t *testing.T) {
 		dest := []model.Payment{}
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest), 10)
 	})
 }
@@ -1363,7 +1363,7 @@ LIMIT 20;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 20)
 	assert.Equal(t, dest[0].StaffIDNum, "TWO")
 	assert.Equal(t, dest[1].StaffIDNum, "ONE")
@@ -1396,12 +1396,12 @@ FOR`
 		tx, _ := db.Begin()
 
 		res, err := query.Exec(tx)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		rowsAffected, _ := res.RowsAffected()
 		assert.Equal(t, rowsAffected, int64(3))
 
 		err = tx.Rollback()
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
@@ -1412,12 +1412,12 @@ FOR`
 		tx, _ := db.Begin()
 
 		res, err := query.Exec(tx)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		rowsAffected, _ := res.RowsAffected()
 		assert.Equal(t, rowsAffected, int64(3))
 
 		err = tx.Rollback()
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
@@ -1428,12 +1428,12 @@ FOR`
 		tx, _ := db.Begin()
 
 		res, err := query.Exec(tx)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		rowsAffected, _ := res.RowsAffected()
 		assert.Equal(t, rowsAffected, int64(3))
 
 		err = tx.Rollback()
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 }
 
@@ -1509,7 +1509,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	}
 
 	err := stmt.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
@@ -1522,7 +1522,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	}
 
 	err = stmt.Query(db, &dest2)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
@@ -1574,7 +1574,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	}
 
 	err := stmt.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest.json", dest)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
@@ -1587,7 +1587,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	}
 
 	err = stmt.Query(db, &dest2)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
@@ -1620,7 +1620,7 @@ SELECT true,
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestWindowFunction(t *testing.T) {
@@ -1692,7 +1692,7 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestWindowClause(t *testing.T) {
@@ -1729,7 +1729,7 @@ ORDER BY payment.customer_id;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSimpleView(t *testing.T) {
@@ -1751,7 +1751,7 @@ func TestSimpleView(t *testing.T) {
 	var dest []ActorInfo
 
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertJSON(t, dest[1:2], `
 [
@@ -1785,7 +1785,7 @@ func TestJoinViewWithTable(t *testing.T) {
 	fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, len(dest[0].Rentals), 32)
@@ -1820,7 +1820,7 @@ LIMIT 3;
 `)
 	var dest []model.Customer
 	err := stmt.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 3)
 }

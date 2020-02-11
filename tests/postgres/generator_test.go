@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/generator/postgres"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/dbconfig"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -19,7 +19,7 @@ func TestGeneratedModel(t *testing.T) {
 
 	assert.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
 	actorIDField, ok := reflect.TypeOf(actor).FieldByName("ActorID")
-	assert.Assert(t, ok)
+	assert.True(t, ok)
 	assert.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
 	assert.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
 	assert.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
@@ -29,12 +29,12 @@ func TestGeneratedModel(t *testing.T) {
 
 	assert.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
 	filmIDField, ok := reflect.TypeOf(filmActor).FieldByName("FilmID")
-	assert.Assert(t, ok)
+	assert.True(t, ok)
 	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
 	assert.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
 	actorIDField, ok = reflect.TypeOf(filmActor).FieldByName("ActorID")
-	assert.Assert(t, ok)
+	assert.True(t, ok)
 	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
 	staff := model.Staff{}
@@ -49,10 +49,10 @@ func TestCmdGenerator(t *testing.T) {
 	goInstallJet := exec.Command("sh", "-c", "go install github.com/go-jet/jet/cmd/jet")
 	goInstallJet.Stderr = os.Stderr
 	err := goInstallJet.Run()
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	err = os.RemoveAll(genTestDir2)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost", "-port=5432",
 		"-user=jet", "-password=jet", "-schema=dvds", "-path="+genTestDir2)
@@ -60,12 +60,12 @@ func TestCmdGenerator(t *testing.T) {
 	cmd.Stdout = os.Stdout
 
 	err = cmd.Run()
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assertGeneratedFiles(t)
 
 	err = os.RemoveAll(genTestDir2)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestGenerator(t *testing.T) {
@@ -83,19 +83,19 @@ func TestGenerator(t *testing.T) {
 			SchemaName: "dvds",
 		})
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		assertGeneratedFiles(t)
 	}
 
 	err := os.RemoveAll(genTestDir2)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
 	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
@@ -105,7 +105,7 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// View SQL Builder files
 	viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
 		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
@@ -114,14 +114,14 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mpaa_rating.go")
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", "\npackage enum", mpaaRatingEnumFile)
 
 	// Model files
 	modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
@@ -281,13 +281,13 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	tableDir := testRoot + ".gentestdata/jetdb/test_sample/table/"
 
 	enumFiles, err := ioutil.ReadDir(enumDir)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go")
 	testutils.AssertFileContent(t, enumDir+"mood.go", "\npackage enum", moodEnumContent)
 
 	modelFiles, err := ioutil.ReadDir(modelDir)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go")
@@ -295,7 +295,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileContent(t, modelDir+"all_types.go", "\npackage model", allTypesModelContent)
 
 	tableFiles, err := ioutil.ReadDir(tableDir)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go")

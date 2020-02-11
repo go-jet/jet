@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
@@ -19,23 +19,22 @@ func TestAllTypesSelect(t *testing.T) {
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, dest[0], allTypesRow0)
-	assert.DeepEqual(t, dest[1], allTypesRow1)
+	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
-
 	type AllTypesView model.AllTypes
 
 	dest := []AllTypesView{}
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, dest[0], AllTypesView(allTypesRow0))
-	assert.DeepEqual(t, dest[1], AllTypesView(allTypesRow1))
+	testutils.AssertDeepEqual(t, dest[0], AllTypesView(allTypesRow0))
+	testutils.AssertDeepEqual(t, dest[1], AllTypesView(allTypesRow1))
 }
 
 func TestAllTypesInsertModel(t *testing.T) {
@@ -46,11 +45,11 @@ func TestAllTypesInsertModel(t *testing.T) {
 
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
-	assert.DeepEqual(t, dest[0], allTypesRow0)
-	assert.DeepEqual(t, dest[1], allTypesRow1)
+	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestAllTypesInsertQuery(t *testing.T) {
@@ -65,10 +64,10 @@ func TestAllTypesInsertQuery(t *testing.T) {
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 2)
-	assert.DeepEqual(t, dest[0], allTypesRow0)
-	assert.DeepEqual(t, dest[1], allTypesRow1)
+	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
@@ -213,7 +212,7 @@ LIMIT 2;
 	dest := []model.AllTypes{}
 	err := mainQuery.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 2)
 }
 
@@ -252,7 +251,7 @@ LIMIT $5;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -321,7 +320,7 @@ func TestExpressionCast(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestStringOperators(t *testing.T) {
@@ -401,7 +400,7 @@ func TestStringOperators(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -470,7 +469,7 @@ LIMIT $5;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
@@ -566,7 +565,7 @@ LIMIT $35;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -705,7 +704,7 @@ LIMIT $23;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.SaveJsonFile("./testdata/common/int_operators.json", dest)
 	//testutils.PrintJson(dest)
@@ -784,7 +783,7 @@ func TestTimeExpression(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestInterval(t *testing.T) {
@@ -835,7 +834,7 @@ func TestInterval(t *testing.T) {
 	//fmt.Println(stmt.DebugSql())
 
 	err := stmt.Query(db, &struct{}{})
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
@@ -987,17 +986,17 @@ FROM`
 
 		dest1 := []model.AllTypes{}
 		err := stmt1.Query(db, &dest1)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest1), 2)
 		assert.Equal(t, dest1[0].Boolean, allTypesRow0.Boolean)
 		assert.Equal(t, dest1[0].Integer, allTypesRow0.Integer)
 		assert.Equal(t, dest1[0].Real, allTypesRow0.Real)
 		assert.Equal(t, dest1[0].Text, allTypesRow0.Text)
-		assert.DeepEqual(t, dest1[0].Time, allTypesRow0.Time)
-		assert.DeepEqual(t, dest1[0].Timez, allTypesRow0.Timez)
-		assert.DeepEqual(t, dest1[0].Timestamp, allTypesRow0.Timestamp)
-		assert.DeepEqual(t, dest1[0].Timestampz, allTypesRow0.Timestampz)
-		assert.DeepEqual(t, dest1[0].Date, allTypesRow0.Date)
+		testutils.AssertDeepEqual(t, dest1[0].Time, allTypesRow0.Time)
+		testutils.AssertDeepEqual(t, dest1[0].Timez, allTypesRow0.Timez)
+		testutils.AssertDeepEqual(t, dest1[0].Timestamp, allTypesRow0.Timestamp)
+		testutils.AssertDeepEqual(t, dest1[0].Timestampz, allTypesRow0.Timestampz)
+		testutils.AssertDeepEqual(t, dest1[0].Date, allTypesRow0.Date)
 
 		stmt2 := SELECT(
 			subQuery.AllColumns(),
@@ -1009,15 +1008,15 @@ FROM`
 		dest2 := []model.AllTypes{}
 		err = stmt2.Query(db, &dest2)
 
-		assert.NilError(t, err)
-		assert.DeepEqual(t, dest1, dest2)
+		assert.NoError(t, err)
+		testutils.AssertDeepEqual(t, dest1, dest2)
 	}
 }
 
 func TestTimeLiterals(t *testing.T) {
 
 	loc, err := time.LoadLocation("Europe/Berlin")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, loc)
 
@@ -1052,7 +1051,7 @@ LIMIT $6;
 
 	err = query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
