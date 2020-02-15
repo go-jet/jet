@@ -94,11 +94,11 @@ import "github.com/go-jet/jet/{{dialect.PackageName}}"
 
 var {{ToGoIdentifier $.Name}} = &struct {
 {{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}} {{dialect.PackageName}}.StringExpression
+	{{ToGoEnumValueIdentifier $.Name $element}} {{dialect.PackageName}}.StringExpression
 {{- end}}
 } {
 {{- range $index, $element := .Values}}
-	{{ToGoIdentifier $element}}: {{dialect.PackageName}}.NewEnumValue("{{$element}}"),
+	{{ToGoEnumValueIdentifier $.Name $element}}: {{dialect.PackageName}}.NewEnumValue("{{$element}}"),
 {{- end}}
 }
 `

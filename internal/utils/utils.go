@@ -10,11 +10,21 @@ import (
 	"reflect"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // ToGoIdentifier converts database to Go identifier.
 func ToGoIdentifier(databaseIdentifier string) string {
 	return snaker.SnakeToCamel(replaceInvalidChars(databaseIdentifier))
+}
+
+func ToGoEnumValueIdentifier(enumName, enumValue string) string {
+	enumValueIdentifier := ToGoIdentifier(enumValue)
+	if !unicode.IsLetter([]rune(enumValueIdentifier)[0]) {
+		return ToGoIdentifier(enumName) + enumValueIdentifier
+	}
+
+	return enumValueIdentifier
 }
 
 // ToGoFileName converts database identifier to Go file name.

@@ -73,7 +73,8 @@ func generateGoFiles(dirPath, packageName string, template string, metaDataList 
 func GenerateTemplate(templateText string, templateData interface{}, dialect jet.Dialect, params ...map[string]interface{}) ([]byte, error) {
 
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
-		"ToGoIdentifier": utils.ToGoIdentifier,
+		"ToGoIdentifier":          utils.ToGoIdentifier,
+		"ToGoEnumValueIdentifier": utils.ToGoEnumValueIdentifier,
 		"now": func() string {
 			return time.Now().Format(time.RFC850)
 		},

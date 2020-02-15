@@ -25,6 +25,11 @@ func TestToGoIdentifier(t *testing.T) {
 	assert.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
 }
 
+func TestToGoEnumValueIdentifier(t *testing.T) {
+	assert.Equal(t, ToGoEnumValueIdentifier("enum_name", "enum_value"), "EnumValue")
+	assert.Equal(t, ToGoEnumValueIdentifier("NumEnum", "100"), "NumEnum100")
+}
+
 func TestErrorCatchErr(t *testing.T) {
 	var err error
 

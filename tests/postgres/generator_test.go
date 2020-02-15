@@ -283,14 +283,15 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	enumFiles, err := ioutil.ReadDir(enumDir)
 	assert.NoError(t, err)
 
-	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go")
+	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go", "level.go")
 	testutils.AssertFileContent(t, enumDir+"mood.go", "\npackage enum", moodEnumContent)
+	testutils.AssertFileContent(t, enumDir+"level.go", "\npackage enum", levelEnumContent)
 
 	modelFiles, err := ioutil.ReadDir(modelDir)
 	assert.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
-		"mood.go", "person.go", "person_phone.go", "weird_names_table.go")
+		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go")
 
 	testutils.AssertFileContent(t, modelDir+"all_types.go", "\npackage model", allTypesModelContent)
 
@@ -316,6 +317,26 @@ var Mood = &struct {
 	Sad:   postgres.NewEnumValue("sad"),
 	Ok:    postgres.NewEnumValue("ok"),
 	Happy: postgres.NewEnumValue("happy"),
+}
+`
+
+var levelEnumContent = `
+package enum
+
+import "github.com/go-jet/jet/postgres"
+
+var Level = &struct {
+	Level1 postgres.StringExpression
+	Level2 postgres.StringExpression
+	Level3 postgres.StringExpression
+	Level4 postgres.StringExpression
+	Level5 postgres.StringExpression
+}{
+	Level1: postgres.NewEnumValue("1"),
+	Level2: postgres.NewEnumValue("2"),
+	Level3: postgres.NewEnumValue("3"),
+	Level4: postgres.NewEnumValue("4"),
+	Level5: postgres.NewEnumValue("5"),
 }
 `
 
