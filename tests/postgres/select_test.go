@@ -1792,12 +1792,21 @@ func TestJoinViewWithTable(t *testing.T) {
 	assert.Equal(t, len(dest[1].Rentals), 27)
 }
 
-func TestConditionalProjectionList(t *testing.T) {
+func TestDynamicProjectionList(t *testing.T) {
+
+	var request struct {
+		ColumnsToSelect []string
+		ShowFullName    bool
+	}
+
+	request.ColumnsToSelect = []string{"customer_id", "create_date"}
+	request.ShowFullName = true
+
+	// ...
+
 	projectionList := ProjectionList{}
 
-	columnsToSelect := []string{"customer_id", "create_date"}
-
-	for _, columnName := range columnsToSelect {
+	for _, columnName := range request.ColumnsToSelect {
 		switch columnName {
 		case Customer.CustomerID.Name():
 			projectionList = append(projectionList, Customer.CustomerID)
@@ -1806,6 +1815,11 @@ func TestConditionalProjectionList(t *testing.T) {
 		case Customer.CreateDate.Name():
 			projectionList = append(projectionList, Customer.CreateDate)
 		}
+	}
+
+	var showFullName bool
+	if showFullName {
+		projectionList = append(projectionList, Customer.FirstName.CONCAT(Customer.LastName))
 	}
 
 	stmt := SELECT(projectionList).
@@ -1823,4 +1837,54 @@ LIMIT 3;
 	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 3)
+}
+
+func TestDynamicCondition(t *testing.T) {
+	var request struct {
+		CustomerID *int64
+		Email      *string
+		Active     *bool
+	}
+
+	request.CustomerID = Int64Ptr(1)
+	request.Active = BoolPtr(true)
+
+	// ...
+
+	condition := Bool(true)
+
+	if request.CustomerID != nil {
+		condition = condition.AND(Customer.CustomerID.EQ(Int(*request.CustomerID)))
+	}
+	if request.Email != nil {
+		condition = condition.AND(Customer.Email.EQ(String(*request.Email)))
+	}
+	if request.Active != nil {
+		condition = condition.AND(Customer.Activebool.EQ(Bool(*request.Active)))
+	}
+
+	stmt := SELECT(Customer.AllColumns).
+		FROM(Customer).
+		WHERE(condition)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT customer.customer_id AS "customer.customer_id",
+     customer.store_id AS "customer.store_id",
+     customer.first_name AS "customer.first_name",
+     customer.last_name AS "customer.last_name",
+     customer.email AS "customer.email",
+     customer.address_id AS "customer.address_id",
+     customer.activebool AS "customer.activebool",
+     customer.create_date AS "customer.create_date",
+     customer.last_update AS "customer.last_update",
+     customer.active AS "customer.active"
+FROM dvds.customer
+WHERE ($1 AND (customer.customer_id = $2)) AND (customer.activebool = $3);
+`, true, int64(1), true)
+
+	dest := []model.Customer{}
+	err := stmt.Query(db, &dest)
+	assert.NoError(t, err)
+	assert.Len(t, dest, 1)
+	testutils.AssertDeepEqual(t, dest[0], customer0)
 }
