@@ -1,5 +1,7 @@
 package jet
 
+import "strings"
+
 // Dialect interface
 type Dialect interface {
 	Name() string
@@ -9,6 +11,7 @@ type Dialect interface {
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
+	IsReservedWord(name string) bool
 }
 
 // SerializerFunc func
@@ -29,6 +32,7 @@ type DialectParams struct {
 	AliasQuoteChar             byte
 	IdentifierQuoteChar        byte
 	ArgumentPlaceholder        QueryPlaceholderFunc
+	ReservedWords              []string
 }
 
 // NewDialect creates new dialect with params
@@ -41,6 +45,7 @@ func NewDialect(params DialectParams) Dialect {
 		aliasQuoteChar:             params.AliasQuoteChar,
 		identifierQuoteChar:        params.IdentifierQuoteChar,
 		argumentPlaceholder:        params.ArgumentPlaceholder,
+		reservedWords:              arrayOfStringsToMapOfStrings(params.ReservedWords),
 	}
 }
 
@@ -52,6 +57,7 @@ type dialectImpl struct {
 	aliasQuoteChar             byte
 	identifierQuoteChar        byte
 	argumentPlaceholder        QueryPlaceholderFunc
+	reservedWords              map[string]bool
 
 	supportsReturning bool
 }
@@ -88,4 +94,18 @@ func (d *dialectImpl) IdentifierQuoteChar() byte {
 
 func (d *dialectImpl) ArgumentPlaceholder() QueryPlaceholderFunc {
 	return d.argumentPlaceholder
+}
+
+func (d *dialectImpl) IsReservedWord(name string) bool {
+	_, isReservedWord := d.reservedWords[strings.ToLower(name)]
+	return isReservedWord
+}
+
+func arrayOfStringsToMapOfStrings(arr []string) map[string]bool {
+	ret := map[string]bool{}
+	for _, elem := range arr {
+		ret[strings.ToLower(elem)] = true
+	}
+
+	return ret
 }

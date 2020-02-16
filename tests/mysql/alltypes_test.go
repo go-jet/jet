@@ -1095,3 +1095,53 @@ var allTypesJson = `
 	}
 ]
 `
+
+func TestReservedWord(t *testing.T) {
+	stmt := SELECT(User.AllColumns).
+		FROM(User)
+
+	// NOTE: A word that follows a period in a qualified name must be an identifier, so it
+	//       need not be quoted even if it is reserved
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT user.column AS "user.column",
+     user.use AS "user.use",
+     user.ceil AS "user.ceil",
+     user.commit AS "user.commit",
+     user.create AS "user.create",
+     user.default AS "user.default",
+     user.desc AS "user.desc",
+     user.empty AS "user.empty",
+     user.float AS "user.float",
+     user.join AS "user.join",
+     user.like AS "user.like",
+     user.max AS "user.max",
+     user.rank AS "user.rank"
+FROM test_sample.user;
+`)
+
+	var dest []model.User
+	err := stmt.Query(db, &dest)
+	assert.NoError(t, err)
+
+	testutils.PrintJson(dest)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"Column": "Column",
+		"Use": "CHECK",
+		"Ceil": "CEIL",
+		"Commit": "COMMIT",
+		"Create": "CREATE",
+		"Default": "DEFAULT",
+		"Desc": "DESC",
+		"Empty": "EMPTY",
+		"Float": "FLOAT",
+		"Join": "JOIN",
+		"Like": "LIKE",
+		"Max": "MAX",
+		"Rank": "RANK"
+	}
+]
+`)
+}

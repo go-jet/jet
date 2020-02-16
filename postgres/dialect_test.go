@@ -74,3 +74,21 @@ func TestNOT_IN(t *testing.T) {
      FROM db.table2
 )))`, int64(12))
 }
+
+func TestReservedWordEscaped(t *testing.T) {
+	var table1ColUser = IntervalColumn("user")
+	var table1ColVariadic = IntervalColumn("VARIADIC")
+	var table1ColProcedure = IntervalColumn("procedure")
+
+	_ = NewTable(
+		"db",
+		"table1",
+		table1ColUser,
+		table1ColVariadic,
+		table1ColProcedure,
+	)
+
+	assertSerialize(t, table1ColUser, `table1."user"`)
+	assertSerialize(t, table1ColVariadic, `table1."VARIADIC"`)
+	assertSerialize(t, table1ColProcedure, `table1.procedure`)
+}

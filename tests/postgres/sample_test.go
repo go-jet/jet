@@ -328,3 +328,54 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColuName16:  "Doe",
 	})
 }
+
+func TestReserwedWordEscape(t *testing.T) {
+	stmt := SELECT(User.AllColumns).
+		FROM(User)
+
+	//fmt.Println(stmt.DebugSql())
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "User"."column" AS "User.column",
+     "User"."check" AS "User.check",
+     "User".ceil AS "User.ceil",
+     "User".commit AS "User.commit",
+     "User"."create" AS "User.create",
+     "User"."default" AS "User.default",
+     "User"."desc" AS "User.desc",
+     "User".empty AS "User.empty",
+     "User".float AS "User.float",
+     "User".join AS "User.join",
+     "User".like AS "User.like",
+     "User".max AS "User.max",
+     "User".rank AS "User.rank"
+FROM test_sample."User";
+`)
+
+	var dest []model.User
+
+	err := stmt.Query(db, &dest)
+	assert.NoError(t, err)
+
+	testutils.PrintJson(dest)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"Column": "Column",
+		"Check": "CHECK",
+		"Ceil": "CEIL",
+		"Commit": "COMMIT",
+		"Create": "CREATE",
+		"Default": "DEFAULT",
+		"Desc": "DESC",
+		"Empty": "EMPTY",
+		"Float": "FLOAT",
+		"Join": "JOIN",
+		"Like": "LIKE",
+		"Max": "MAX",
+		"Rank": "RANK"
+	}
+]
+`)
+}

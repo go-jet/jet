@@ -211,6 +211,7 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 	}
 }
 
+// AssertDeepEqual checks if actual and expected objects are deeply equal.
 func AssertDeepEqual(t *testing.T, actual, expected interface{}) {
 	assert.True(t, cmp.Equal(actual, expected))
 }

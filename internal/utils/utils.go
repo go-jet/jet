@@ -18,6 +18,7 @@ func ToGoIdentifier(databaseIdentifier string) string {
 	return snaker.SnakeToCamel(replaceInvalidChars(databaseIdentifier))
 }
 
+// ToGoEnumValueIdentifier converts enum value name to Go identifier name.
 func ToGoEnumValueIdentifier(enumName, enumValue string) string {
 	enumValueIdentifier := ToGoIdentifier(enumValue)
 	if !unicode.IsLetter([]rune(enumValueIdentifier)[0]) {
