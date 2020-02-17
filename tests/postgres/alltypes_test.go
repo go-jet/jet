@@ -1,40 +1,40 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/go-jet/jet/internal/testutils"
-	"github.com/go-jet/jet/postgres"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
-	"github.com/google/uuid"
-	"gotest.tools/assert"
-	"testing"
-	"time"
 )
 
 func TestAllTypesSelect(t *testing.T) {
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, dest[0], allTypesRow0)
-	assert.DeepEqual(t, dest[1], allTypesRow1)
+	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
-
 	type AllTypesView model.AllTypes
 
 	dest := []AllTypesView{}
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, dest[0], AllTypesView(allTypesRow0))
-	assert.DeepEqual(t, dest[1], AllTypesView(allTypesRow1))
+	testutils.AssertDeepEqual(t, dest[0], AllTypesView(allTypesRow0))
+	testutils.AssertDeepEqual(t, dest[1], AllTypesView(allTypesRow1))
 }
 
 func TestAllTypesInsertModel(t *testing.T) {
@@ -45,11 +45,11 @@ func TestAllTypesInsertModel(t *testing.T) {
 
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
-	assert.DeepEqual(t, dest[0], allTypesRow0)
-	assert.DeepEqual(t, dest[1], allTypesRow1)
+	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestAllTypesInsertQuery(t *testing.T) {
@@ -64,10 +64,156 @@ func TestAllTypesInsertQuery(t *testing.T) {
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 2)
-	assert.DeepEqual(t, dest[0], allTypesRow0)
-	assert.DeepEqual(t, dest[1], allTypesRow1)
+	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
+}
+
+func TestAllTypesFromSubQuery(t *testing.T) {
+
+	subQuery := SELECT(AllTypes.AllColumns).
+		FROM(AllTypes).
+		AsTable("allTypesSubQuery")
+
+	mainQuery := SELECT(subQuery.AllColumns()).
+		FROM(subQuery).
+		LIMIT(2)
+
+	assert.Equal(t, mainQuery.DebugSql(), `
+SELECT "allTypesSubQuery"."all_types.small_int_ptr" AS "all_types.small_int_ptr",
+     "allTypesSubQuery"."all_types.small_int" AS "all_types.small_int",
+     "allTypesSubQuery"."all_types.integer_ptr" AS "all_types.integer_ptr",
+     "allTypesSubQuery"."all_types.integer" AS "all_types.integer",
+     "allTypesSubQuery"."all_types.big_int_ptr" AS "all_types.big_int_ptr",
+     "allTypesSubQuery"."all_types.big_int" AS "all_types.big_int",
+     "allTypesSubQuery"."all_types.decimal_ptr" AS "all_types.decimal_ptr",
+     "allTypesSubQuery"."all_types.decimal" AS "all_types.decimal",
+     "allTypesSubQuery"."all_types.numeric_ptr" AS "all_types.numeric_ptr",
+     "allTypesSubQuery"."all_types.numeric" AS "all_types.numeric",
+     "allTypesSubQuery"."all_types.real_ptr" AS "all_types.real_ptr",
+     "allTypesSubQuery"."all_types.real" AS "all_types.real",
+     "allTypesSubQuery"."all_types.double_precision_ptr" AS "all_types.double_precision_ptr",
+     "allTypesSubQuery"."all_types.double_precision" AS "all_types.double_precision",
+     "allTypesSubQuery"."all_types.smallserial" AS "all_types.smallserial",
+     "allTypesSubQuery"."all_types.serial" AS "all_types.serial",
+     "allTypesSubQuery"."all_types.bigserial" AS "all_types.bigserial",
+     "allTypesSubQuery"."all_types.var_char_ptr" AS "all_types.var_char_ptr",
+     "allTypesSubQuery"."all_types.var_char" AS "all_types.var_char",
+     "allTypesSubQuery"."all_types.char_ptr" AS "all_types.char_ptr",
+     "allTypesSubQuery"."all_types.char" AS "all_types.char",
+     "allTypesSubQuery"."all_types.text_ptr" AS "all_types.text_ptr",
+     "allTypesSubQuery"."all_types.text" AS "all_types.text",
+     "allTypesSubQuery"."all_types.bytea_ptr" AS "all_types.bytea_ptr",
+     "allTypesSubQuery"."all_types.bytea" AS "all_types.bytea",
+     "allTypesSubQuery"."all_types.timestampz_ptr" AS "all_types.timestampz_ptr",
+     "allTypesSubQuery"."all_types.timestampz" AS "all_types.timestampz",
+     "allTypesSubQuery"."all_types.timestamp_ptr" AS "all_types.timestamp_ptr",
+     "allTypesSubQuery"."all_types.timestamp" AS "all_types.timestamp",
+     "allTypesSubQuery"."all_types.date_ptr" AS "all_types.date_ptr",
+     "allTypesSubQuery"."all_types.date" AS "all_types.date",
+     "allTypesSubQuery"."all_types.timez_ptr" AS "all_types.timez_ptr",
+     "allTypesSubQuery"."all_types.timez" AS "all_types.timez",
+     "allTypesSubQuery"."all_types.time_ptr" AS "all_types.time_ptr",
+     "allTypesSubQuery"."all_types.time" AS "all_types.time",
+     "allTypesSubQuery"."all_types.interval_ptr" AS "all_types.interval_ptr",
+     "allTypesSubQuery"."all_types.interval" AS "all_types.interval",
+     "allTypesSubQuery"."all_types.boolean_ptr" AS "all_types.boolean_ptr",
+     "allTypesSubQuery"."all_types.boolean" AS "all_types.boolean",
+     "allTypesSubQuery"."all_types.point_ptr" AS "all_types.point_ptr",
+     "allTypesSubQuery"."all_types.bit_ptr" AS "all_types.bit_ptr",
+     "allTypesSubQuery"."all_types.bit" AS "all_types.bit",
+     "allTypesSubQuery"."all_types.bit_varying_ptr" AS "all_types.bit_varying_ptr",
+     "allTypesSubQuery"."all_types.bit_varying" AS "all_types.bit_varying",
+     "allTypesSubQuery"."all_types.tsvector_ptr" AS "all_types.tsvector_ptr",
+     "allTypesSubQuery"."all_types.tsvector" AS "all_types.tsvector",
+     "allTypesSubQuery"."all_types.uuid_ptr" AS "all_types.uuid_ptr",
+     "allTypesSubQuery"."all_types.uuid" AS "all_types.uuid",
+     "allTypesSubQuery"."all_types.xml_ptr" AS "all_types.xml_ptr",
+     "allTypesSubQuery"."all_types.xml" AS "all_types.xml",
+     "allTypesSubQuery"."all_types.json_ptr" AS "all_types.json_ptr",
+     "allTypesSubQuery"."all_types.json" AS "all_types.json",
+     "allTypesSubQuery"."all_types.jsonb_ptr" AS "all_types.jsonb_ptr",
+     "allTypesSubQuery"."all_types.jsonb" AS "all_types.jsonb",
+     "allTypesSubQuery"."all_types.integer_array_ptr" AS "all_types.integer_array_ptr",
+     "allTypesSubQuery"."all_types.integer_array" AS "all_types.integer_array",
+     "allTypesSubQuery"."all_types.text_array_ptr" AS "all_types.text_array_ptr",
+     "allTypesSubQuery"."all_types.text_array" AS "all_types.text_array",
+     "allTypesSubQuery"."all_types.jsonb_array" AS "all_types.jsonb_array",
+     "allTypesSubQuery"."all_types.text_multi_dim_array_ptr" AS "all_types.text_multi_dim_array_ptr",
+     "allTypesSubQuery"."all_types.text_multi_dim_array" AS "all_types.text_multi_dim_array"
+FROM (
+          SELECT all_types.small_int_ptr AS "all_types.small_int_ptr",
+               all_types.small_int AS "all_types.small_int",
+               all_types.integer_ptr AS "all_types.integer_ptr",
+               all_types.integer AS "all_types.integer",
+               all_types.big_int_ptr AS "all_types.big_int_ptr",
+               all_types.big_int AS "all_types.big_int",
+               all_types.decimal_ptr AS "all_types.decimal_ptr",
+               all_types.decimal AS "all_types.decimal",
+               all_types.numeric_ptr AS "all_types.numeric_ptr",
+               all_types.numeric AS "all_types.numeric",
+               all_types.real_ptr AS "all_types.real_ptr",
+               all_types.real AS "all_types.real",
+               all_types.double_precision_ptr AS "all_types.double_precision_ptr",
+               all_types.double_precision AS "all_types.double_precision",
+               all_types.smallserial AS "all_types.smallserial",
+               all_types.serial AS "all_types.serial",
+               all_types.bigserial AS "all_types.bigserial",
+               all_types.var_char_ptr AS "all_types.var_char_ptr",
+               all_types.var_char AS "all_types.var_char",
+               all_types.char_ptr AS "all_types.char_ptr",
+               all_types.char AS "all_types.char",
+               all_types.text_ptr AS "all_types.text_ptr",
+               all_types.text AS "all_types.text",
+               all_types.bytea_ptr AS "all_types.bytea_ptr",
+               all_types.bytea AS "all_types.bytea",
+               all_types.timestampz_ptr AS "all_types.timestampz_ptr",
+               all_types.timestampz AS "all_types.timestampz",
+               all_types.timestamp_ptr AS "all_types.timestamp_ptr",
+               all_types.timestamp AS "all_types.timestamp",
+               all_types.date_ptr AS "all_types.date_ptr",
+               all_types.date AS "all_types.date",
+               all_types.timez_ptr AS "all_types.timez_ptr",
+               all_types.timez AS "all_types.timez",
+               all_types.time_ptr AS "all_types.time_ptr",
+               all_types.time AS "all_types.time",
+               all_types.interval_ptr AS "all_types.interval_ptr",
+               all_types.interval AS "all_types.interval",
+               all_types.boolean_ptr AS "all_types.boolean_ptr",
+               all_types.boolean AS "all_types.boolean",
+               all_types.point_ptr AS "all_types.point_ptr",
+               all_types.bit_ptr AS "all_types.bit_ptr",
+               all_types.bit AS "all_types.bit",
+               all_types.bit_varying_ptr AS "all_types.bit_varying_ptr",
+               all_types.bit_varying AS "all_types.bit_varying",
+               all_types.tsvector_ptr AS "all_types.tsvector_ptr",
+               all_types.tsvector AS "all_types.tsvector",
+               all_types.uuid_ptr AS "all_types.uuid_ptr",
+               all_types.uuid AS "all_types.uuid",
+               all_types.xml_ptr AS "all_types.xml_ptr",
+               all_types.xml AS "all_types.xml",
+               all_types.json_ptr AS "all_types.json_ptr",
+               all_types.json AS "all_types.json",
+               all_types.jsonb_ptr AS "all_types.jsonb_ptr",
+               all_types.jsonb AS "all_types.jsonb",
+               all_types.integer_array_ptr AS "all_types.integer_array_ptr",
+               all_types.integer_array AS "all_types.integer_array",
+               all_types.text_array_ptr AS "all_types.text_array_ptr",
+               all_types.text_array AS "all_types.text_array",
+               all_types.jsonb_array AS "all_types.jsonb_array",
+               all_types.text_multi_dim_array_ptr AS "all_types.text_multi_dim_array_ptr",
+               all_types.text_multi_dim_array AS "all_types.text_multi_dim_array"
+          FROM test_sample.all_types
+     ) AS "allTypesSubQuery"
+LIMIT 2;
+`)
+
+	dest := []model.AllTypes{}
+	err := mainQuery.Query(db, &dest)
+
+	assert.NoError(t, err)
+	assert.Equal(t, len(dest), 2)
 }
 
 func TestExpressionOperators(t *testing.T) {
@@ -105,7 +251,7 @@ LIMIT $5;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -134,22 +280,23 @@ LIMIT $5;
 func TestExpressionCast(t *testing.T) {
 
 	query := AllTypes.SELECT(
-		postgres.CAST(Int(150)).AS_CHAR(12).AS("char12"),
-		postgres.CAST(String("TRUE")).AS_BOOL(),
-		postgres.CAST(String("111")).AS_SMALLINT(),
-		postgres.CAST(String("111")).AS_INTEGER(),
-		postgres.CAST(String("111")).AS_BIGINT(),
-		postgres.CAST(String("11.23")).AS_NUMERIC(30, 10),
-		postgres.CAST(String("11.23")).AS_NUMERIC(30),
-		postgres.CAST(String("11.23")).AS_NUMERIC(),
-		postgres.CAST(String("11.23")).AS_REAL(),
-		postgres.CAST(String("11.23")).AS_DOUBLE(),
-		postgres.CAST(Int(234)).AS_TEXT(),
-		postgres.CAST(String("1/8/1999")).AS_DATE(),
-		postgres.CAST(String("04:05:06.789")).AS_TIME(),
-		postgres.CAST(String("04:05:06 PST")).AS_TIMEZ(),
-		postgres.CAST(String("1999-01-08 04:05:06")).AS_TIMESTAMP(),
-		postgres.CAST(String("January 8 04:05:06 1999 PST")).AS_TIMESTAMPZ(),
+		CAST(Int(150)).AS_CHAR(12).AS("char12"),
+		CAST(String("TRUE")).AS_BOOL(),
+		CAST(String("111")).AS_SMALLINT(),
+		CAST(String("111")).AS_INTEGER(),
+		CAST(String("111")).AS_BIGINT(),
+		CAST(String("11.23")).AS_NUMERIC(30, 10),
+		CAST(String("11.23")).AS_NUMERIC(30),
+		CAST(String("11.23")).AS_NUMERIC(),
+		CAST(String("11.23")).AS_REAL(),
+		CAST(String("11.23")).AS_DOUBLE(),
+		CAST(Int(234)).AS_TEXT(),
+		CAST(String("1/8/1999")).AS_DATE(),
+		CAST(String("04:05:06.789")).AS_TIME(),
+		CAST(String("04:05:06 PST")).AS_TIMEZ(),
+		CAST(String("1999-01-08 04:05:06")).AS_TIMESTAMP(),
+		CAST(String("January 8 04:05:06 1999 PST")).AS_TIMESTAMPZ(),
+		CAST(String("04:05:06")).AS_INTERVAL(),
 
 		TO_CHAR(AllTypes.Timestamp, String("HH12:MI:SS")),
 		TO_CHAR(AllTypes.Integer, String("999")),
@@ -173,7 +320,7 @@ func TestExpressionCast(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestStringOperators(t *testing.T) {
@@ -253,7 +400,7 @@ func TestStringOperators(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -322,7 +469,7 @@ LIMIT $5;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
@@ -359,7 +506,7 @@ func TestFloatOperators(t *testing.T) {
 		TRUNC(ABSf(AllTypes.Decimal), Int(2)).AS("abs"),
 		TRUNC(POWER(AllTypes.Decimal, Float(2.1)), Int(2)).AS("power"),
 		TRUNC(SQRT(AllTypes.Decimal), Int(2)).AS("sqrt"),
-		TRUNC(postgres.CAST(CBRT(AllTypes.Decimal)).AS_DECIMAL(), Int(2)).AS("cbrt"),
+		TRUNC(CAST(CBRT(AllTypes.Decimal)).AS_DECIMAL(), Int(2)).AS("cbrt"),
 
 		CEIL(AllTypes.Real).AS("ceil"),
 		FLOOR(AllTypes.Real).AS("floor"),
@@ -418,7 +565,7 @@ LIMIT $35;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -557,7 +704,7 @@ LIMIT $23;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.SaveJsonFile("./testdata/common/int_operators.json", dest)
 	//testutils.PrintJson(dest)
@@ -606,6 +753,19 @@ func TestTimeExpression(t *testing.T) {
 		AllTypes.Time.GT_EQ(AllTypes.Time),
 		AllTypes.Time.GT_EQ(Time(23, 6, 6, 1)),
 
+		AllTypes.Date.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Date.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Time.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Time.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timez.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timez.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timestamp.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timestamp.SUB(INTERVAL(1, MINUTE)),
+		AllTypes.Timestampz.ADD(INTERVAL(1, HOUR)),
+		AllTypes.Timestampz.SUB(INTERVAL(1, MINUTE)),
+
+		AllTypes.Date.SUB(CAST(String("04:05:06")).AS_INTERVAL()),
+
 		CURRENT_DATE(),
 		CURRENT_TIME(),
 		CURRENT_TIME(2),
@@ -623,7 +783,58 @@ func TestTimeExpression(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
+}
+
+func TestInterval(t *testing.T) {
+	stmt := SELECT(
+		INTERVAL(1, YEAR),
+		INTERVAL(1, MONTH),
+		INTERVAL(1, WEEK),
+		INTERVAL(1, DAY),
+		INTERVAL(1, HOUR),
+		INTERVAL(1, MINUTE),
+		INTERVAL(1, SECOND),
+		INTERVAL(1, MILLISECOND),
+		INTERVAL(1, MICROSECOND),
+		INTERVAL(1, DECADE),
+		INTERVAL(1, CENTURY),
+		INTERVAL(1, MILLENNIUM),
+
+		INTERVAL(1, YEAR, 10, MONTH),
+		INTERVAL(1, YEAR, 10, MONTH, 20, DAY),
+		INTERVAL(1, YEAR, 10, MONTH, 20, DAY, 3, HOUR),
+
+		INTERVAL(1, YEAR).IS_NOT_NULL(),
+		INTERVAL(1, YEAR).AS("one year"),
+
+		INTERVALd(0),
+		INTERVALd(1*time.Microsecond),
+		INTERVALd(1*time.Millisecond),
+		INTERVALd(1*time.Second),
+		INTERVALd(1*time.Minute),
+		INTERVALd(1*time.Hour),
+		INTERVALd(24*time.Hour),
+		INTERVALd(24*time.Hour+2*time.Hour+3*time.Minute+4*time.Second+5*time.Microsecond),
+
+		AllTypes.Interval.EQ(INTERVAL(2, HOUR, 20, MINUTE)).EQ(Bool(true)),
+		AllTypes.IntervalPtr.NOT_EQ(INTERVAL(2, HOUR, 20, MINUTE)).EQ(Bool(false)),
+		AllTypes.Interval.IS_DISTINCT_FROM(INTERVAL(2, HOUR, 20, MINUTE)).EQ(AllTypes.Boolean),
+		AllTypes.IntervalPtr.IS_NOT_DISTINCT_FROM(INTERVALd(10*time.Microsecond)).EQ(AllTypes.Boolean),
+		AllTypes.Interval.LT(AllTypes.IntervalPtr).EQ(AllTypes.BooleanPtr),
+		AllTypes.Interval.LT_EQ(AllTypes.IntervalPtr).EQ(AllTypes.BooleanPtr),
+		AllTypes.Interval.GT(AllTypes.IntervalPtr).EQ(AllTypes.BooleanPtr),
+		AllTypes.Interval.GT_EQ(AllTypes.IntervalPtr).EQ(AllTypes.BooleanPtr),
+		AllTypes.Interval.ADD(AllTypes.IntervalPtr).EQ(INTERVALd(17*time.Second)),
+		AllTypes.Interval.SUB(AllTypes.IntervalPtr).EQ(INTERVAL(100, MICROSECOND)),
+		AllTypes.IntervalPtr.MUL(Int(11)).EQ(AllTypes.Interval),
+		AllTypes.IntervalPtr.DIV(Float(22.222)).EQ(AllTypes.IntervalPtr),
+	).FROM(AllTypes)
+
+	//fmt.Println(stmt.DebugSql())
+
+	err := stmt.Query(db, &struct{}{})
+	assert.NoError(t, err)
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
@@ -775,17 +986,17 @@ FROM`
 
 		dest1 := []model.AllTypes{}
 		err := stmt1.Query(db, &dest1)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		assert.Equal(t, len(dest1), 2)
 		assert.Equal(t, dest1[0].Boolean, allTypesRow0.Boolean)
 		assert.Equal(t, dest1[0].Integer, allTypesRow0.Integer)
 		assert.Equal(t, dest1[0].Real, allTypesRow0.Real)
 		assert.Equal(t, dest1[0].Text, allTypesRow0.Text)
-		assert.DeepEqual(t, dest1[0].Time, allTypesRow0.Time)
-		assert.DeepEqual(t, dest1[0].Timez, allTypesRow0.Timez)
-		assert.DeepEqual(t, dest1[0].Timestamp, allTypesRow0.Timestamp)
-		assert.DeepEqual(t, dest1[0].Timestampz, allTypesRow0.Timestampz)
-		assert.DeepEqual(t, dest1[0].Date, allTypesRow0.Date)
+		testutils.AssertDeepEqual(t, dest1[0].Time, allTypesRow0.Time)
+		testutils.AssertDeepEqual(t, dest1[0].Timez, allTypesRow0.Timez)
+		testutils.AssertDeepEqual(t, dest1[0].Timestamp, allTypesRow0.Timestamp)
+		testutils.AssertDeepEqual(t, dest1[0].Timestampz, allTypesRow0.Timestampz)
+		testutils.AssertDeepEqual(t, dest1[0].Date, allTypesRow0.Date)
 
 		stmt2 := SELECT(
 			subQuery.AllColumns(),
@@ -797,15 +1008,15 @@ FROM`
 		dest2 := []model.AllTypes{}
 		err = stmt2.Query(db, &dest2)
 
-		assert.NilError(t, err)
-		assert.DeepEqual(t, dest1, dest2)
+		assert.NoError(t, err)
+		testutils.AssertDeepEqual(t, dest1, dest2)
 	}
 }
 
 func TestTimeLiterals(t *testing.T) {
 
 	loc, err := time.LoadLocation("Europe/Berlin")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, loc)
 
@@ -840,7 +1051,7 @@ LIMIT $6;
 
 	err = query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 

@@ -63,6 +63,17 @@ func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	}
 }
 
+// ExpressionListToSerializerList converts list of expressions to list of serializers
+func ExpressionListToSerializerList(expressions []Expression) []Serializer {
+	var ret []Serializer
+
+	for _, expr := range expressions {
+		ret = append(ret, expr)
+	}
+
+	return ret
+}
+
 // ColumnListToProjectionList func
 func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
 	var ret []Projection
@@ -175,4 +186,24 @@ func UnwidColumnList(columns []Column) []Column {
 	}
 
 	return ret
+}
+
+// OptionalOrDefaultString will return first value from variable argument list str or
+// defaultStr if variable argument list is empty
+func OptionalOrDefaultString(defaultStr string, str ...string) string {
+	if len(str) > 0 {
+		return str[0]
+	}
+
+	return defaultStr
+}
+
+// OptionalOrDefaultExpression will return first value from variable argument list expression or
+// defaultExpression if variable argument list is empty
+func OptionalOrDefaultExpression(defaultExpression Expression, expression ...Expression) Expression {
+	if len(expression) > 0 {
+		return expression[0]
+	}
+
+	return defaultExpression
 }

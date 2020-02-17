@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -24,7 +24,6 @@ RETURNING link.id AS "link.id",
           link.name AS "link.name",
           link.description AS "link.description";
 `
-	Link.ID.Name()
 	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
 		VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 		VALUES(101, "http://www.google.com", "Google", DEFAULT).
@@ -40,23 +39,23 @@ RETURNING link.id AS "link.id",
 
 	err := insertQuery.Query(db, &insertedLinks)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(insertedLinks), 3)
 
-	assert.DeepEqual(t, insertedLinks[0], model.Link{
+	testutils.AssertDeepEqual(t, insertedLinks[0], model.Link{
 		ID:   100,
 		URL:  "http://www.postgresqltutorial.com",
 		Name: "PostgreSQL Tutorial",
 	})
 
-	assert.DeepEqual(t, insertedLinks[1], model.Link{
+	testutils.AssertDeepEqual(t, insertedLinks[1], model.Link{
 		ID:   101,
 		URL:  "http://www.google.com",
 		Name: "Google",
 	})
 
-	assert.DeepEqual(t, insertedLinks[2], model.Link{
+	testutils.AssertDeepEqual(t, insertedLinks[2], model.Link{
 		ID:   102,
 		URL:  "http://www.yahoo.com",
 		Name: "Yahoo",
@@ -69,9 +68,9 @@ RETURNING link.id AS "link.id",
 		ORDER_BY(Link.ID).
 		Query(db, &allLinks)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, insertedLinks, allLinks)
+	testutils.AssertDeepEqual(t, insertedLinks, allLinks)
 }
 
 func TestInsertEmptyColumnList(t *testing.T) {
@@ -207,7 +206,7 @@ func TestInsertQuery(t *testing.T) {
 	_, err := Link.DELETE().
 		WHERE(Link.ID.NOT_EQ(Int(0)).AND(Link.Name.EQ(String("Youtube")))).
 		Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var expectedSQL = `
 INSERT INTO test_sample.link (url, name) (
@@ -237,7 +236,7 @@ RETURNING link.id AS "link.id",
 
 	err = query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	youtubeLinks := []model.Link{}
 	err = Link.
@@ -245,7 +244,7 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.EQ(String("Youtube"))).
 		Query(db, &youtubeLinks)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(youtubeLinks), 2)
 }
 

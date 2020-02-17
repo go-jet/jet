@@ -578,7 +578,7 @@ func LEAST(value Expression, values ...Expression) Expression {
 //--------------------------------------------------------------------//
 
 type funcExpressionImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	name        string
 	expressions []Expression
@@ -592,9 +592,9 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	}
 
 	if parent != nil {
-		funcExp.expressionInterfaceImpl.Parent = parent
+		funcExp.ExpressionInterfaceImpl.Parent = parent
 	} else {
-		funcExp.expressionInterfaceImpl.Parent = funcExp
+		funcExp.ExpressionInterfaceImpl.Parent = funcExp
 	}
 
 	return funcExp
@@ -605,14 +605,14 @@ func newWindowFunc(name string, expressions ...Expression) windowExpression {
 
 	newFun := newFunc(name, expressions, nil)
 	windowExpr := newWindowExpression(newFun)
-	newFun.expressionInterfaceImpl.Parent = windowExpr
+	newFun.ExpressionInterfaceImpl.Parent = windowExpr
 
 	return windowExpr
 }
 
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(f.expressions...)
+		serializeOverrideFunc := serializeOverride(ExpressionListToSerializerList(f.expressions)...)
 		serializeOverrideFunc(statement, out, options...)
 		return
 	}
@@ -642,7 +642,7 @@ func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 
 	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
 	boolFunc.boolInterfaceImpl.parent = boolFunc
-	boolFunc.expressionInterfaceImpl.Parent = boolFunc
+	boolFunc.ExpressionInterfaceImpl.Parent = boolFunc
 
 	return boolFunc
 }
@@ -654,7 +654,7 @@ func newBoolWindowFunc(name string, expressions ...Expression) boolWindowExpress
 	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
 	intWindowFunc := newBoolWindowExpression(boolFunc)
 	boolFunc.boolInterfaceImpl.parent = intWindowFunc
-	boolFunc.expressionInterfaceImpl.Parent = intWindowFunc
+	boolFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
 
 	return intWindowFunc
 }
@@ -681,7 +681,7 @@ func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpre
 	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
 	floatWindowFunc := newFloatWindowExpression(floatFunc)
 	floatFunc.floatInterfaceImpl.parent = floatWindowFunc
-	floatFunc.expressionInterfaceImpl.Parent = floatWindowFunc
+	floatFunc.ExpressionInterfaceImpl.Parent = floatWindowFunc
 
 	return floatWindowFunc
 }
@@ -707,7 +707,7 @@ func newIntegerWindowFunc(name string, expressions ...Expression) integerWindowE
 	integerFunc.funcExpressionImpl = *newFunc(name, expressions, integerFunc)
 	intWindowFunc := newIntegerWindowExpression(integerFunc)
 	integerFunc.integerInterfaceImpl.parent = intWindowFunc
-	integerFunc.expressionInterfaceImpl.Parent = intWindowFunc
+	integerFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
 
 	return intWindowFunc
 }

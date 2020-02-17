@@ -7,3 +7,6 @@ type Statement = jet.Statement
 
 // Projection is interface for all projection types. Types that can be part of, for instance SELECT clause.
 type Projection = jet.Projection
+
+// ProjectionList can be used to create conditional constructed projection list.
+type ProjectionList = jet.ProjectionList

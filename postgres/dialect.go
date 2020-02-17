@@ -24,12 +24,13 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},
+		ReservedWords: reservedWords,
 	}
 
 	return jet.NewDialect(dialectParams)
 }
 
-func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
+func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
@@ -54,7 +55,7 @@ func postgresCAST(expressions ...jet.Expression) jet.SerializeFunc {
 	}
 }
 
-func postgresREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc {
+func postgresREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
@@ -80,7 +81,7 @@ func postgresREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc
 	}
 }
 
-func postgresNOTREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeFunc {
+func postgresNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		if len(expressions) < 2 {
 			panic("jet: invalid number of expressions for operator")
@@ -104,4 +105,84 @@ func postgresNOTREGEXPLIKEoperator(expressions ...jet.Expression) jet.SerializeF
 
 		jet.Serialize(expressions[1], statement, out, options...)
 	}
+}
+
+var reservedWords = []string{
+	"ALL",
+	"ANALYSE",
+	"ANALYZE",
+	"AND",
+	"ANY",
+	"ARRAY",
+	"AS",
+	"ASC",
+	"ASYMMETRIC",
+	"BOTH",
+	"CASE",
+	"CAST",
+	"CHECK",
+	"COLLATE",
+	"COLUMN",
+	"CONSTRAINT",
+	"CREATE",
+	"CURRENT_CATALOG",
+	"CURRENT_DATE",
+	"CURRENT_ROLE",
+	"CURRENT_TIME",
+	"CURRENT_TIMESTAMP",
+	"CURRENT_USER",
+	"DEFAULT",
+	"DEFERRABLE",
+	"DESC",
+	"DISTINCT",
+	"DO",
+	"ELSE",
+	"END",
+	"EXCEPT",
+	"FALSE",
+	"FETCH",
+	"FOR",
+	"FOREIGN",
+	"FROM",
+	"GRANT",
+	"GROUP",
+	"HAVING",
+	"IN",
+	"INITIALLY",
+	"INTERSECT",
+	"INTO",
+	"LATERAL",
+	"LEADING",
+	"LIMIT",
+	"LOCALTIME",
+	"LOCALTIMESTAMP",
+	"NOT",
+	"NULL",
+	"OFFSET",
+	"ON",
+	"ONLY",
+	"OR",
+	"ORDER",
+	"PLACING",
+	"PRIMARY",
+	"REFERENCES",
+	"RETURNING",
+	"SELECT",
+	"SESSION_USER",
+	"SOME",
+	"SYMMETRIC",
+	"TABLE",
+	"THEN",
+	"TO",
+	"TRAILING",
+	"TRUE",
+	"UNION",
+	"UNIQUE",
+	"USER",
+	"USING",
+	"VARIADIC",
+	"WHEN",
+	"WHERE",
+	"WINDOW",
+	"WITH",
 }

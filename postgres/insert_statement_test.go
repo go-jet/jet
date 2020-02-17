@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )

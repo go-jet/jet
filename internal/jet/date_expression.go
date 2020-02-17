@@ -13,42 +13,53 @@ type DateExpression interface {
 	LT_EQ(rhs DateExpression) BoolExpression
 	GT(rhs DateExpression) BoolExpression
 	GT_EQ(rhs DateExpression) BoolExpression
+
+	ADD(rhs Interval) TimestampExpression
+	SUB(rhs Interval) TimestampExpression
 }
 
 type dateInterfaceImpl struct {
 	parent DateExpression
 }
 
-func (t *dateInterfaceImpl) EQ(rhs DateExpression) BoolExpression {
-	return eq(t.parent, rhs)
+func (d *dateInterfaceImpl) EQ(rhs DateExpression) BoolExpression {
+	return Eq(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) NOT_EQ(rhs DateExpression) BoolExpression {
-	return notEq(t.parent, rhs)
+func (d *dateInterfaceImpl) NOT_EQ(rhs DateExpression) BoolExpression {
+	return NotEq(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) IS_DISTINCT_FROM(rhs DateExpression) BoolExpression {
-	return isDistinctFrom(t.parent, rhs)
+func (d *dateInterfaceImpl) IS_DISTINCT_FROM(rhs DateExpression) BoolExpression {
+	return IsDistinctFrom(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs DateExpression) BoolExpression {
-	return isNotDistinctFrom(t.parent, rhs)
+func (d *dateInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs DateExpression) BoolExpression {
+	return IsNotDistinctFrom(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) LT(rhs DateExpression) BoolExpression {
-	return lt(t.parent, rhs)
+func (d *dateInterfaceImpl) LT(rhs DateExpression) BoolExpression {
+	return Lt(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) LT_EQ(rhs DateExpression) BoolExpression {
-	return ltEq(t.parent, rhs)
+func (d *dateInterfaceImpl) LT_EQ(rhs DateExpression) BoolExpression {
+	return LtEq(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) GT(rhs DateExpression) BoolExpression {
-	return gt(t.parent, rhs)
+func (d *dateInterfaceImpl) GT(rhs DateExpression) BoolExpression {
+	return Gt(d.parent, rhs)
 }
 
-func (t *dateInterfaceImpl) GT_EQ(rhs DateExpression) BoolExpression {
-	return gtEq(t.parent, rhs)
+func (d *dateInterfaceImpl) GT_EQ(rhs DateExpression) BoolExpression {
+	return GtEq(d.parent, rhs)
+}
+
+func (d *dateInterfaceImpl) ADD(rhs Interval) TimestampExpression {
+	return TimestampExp(Add(d.parent, rhs))
+}
+
+func (d *dateInterfaceImpl) SUB(rhs Interval) TimestampExpression {
+	return TimestampExp(Sub(d.parent, rhs))
 }
 
 //---------------------------------------------------//

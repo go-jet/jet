@@ -12,6 +12,9 @@ type BoolExpression = jet.BoolExpression
 // StringExpression interface
 type StringExpression = jet.StringExpression
 
+// NumericExpression interface
+type NumericExpression = jet.NumericExpression
+
 // IntegerExpression interface
 type IntegerExpression = jet.IntegerExpression
 

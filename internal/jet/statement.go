@@ -65,7 +65,7 @@ func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface
 }
 
 func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
-	sqlBuilder := &SQLBuilder{Dialect: s.dialect, debug: true}
+	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
 
 	s.parent.serialize(s.statementType, sqlBuilder, noWrap)
 
@@ -106,7 +106,7 @@ type ExpressionStatement interface {
 // NewExpressionStatementImpl creates new expression statement
 func NewExpressionStatementImpl(Dialect Dialect, statementType StatementType, parent ExpressionStatement, clauses ...Clause) ExpressionStatement {
 	return &expressionStatementImpl{
-		expressionInterfaceImpl{Parent: parent},
+		ExpressionInterfaceImpl{Parent: parent},
 		statementImpl{
 			serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
 				parent:        parent,
@@ -119,7 +119,7 @@ func NewExpressionStatementImpl(Dialect Dialect, statementType StatementType, pa
 }
 
 type expressionStatementImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	statementImpl
 }
 

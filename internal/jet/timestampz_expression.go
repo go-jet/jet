@@ -13,6 +13,9 @@ type TimestampzExpression interface {
 	LT_EQ(rhs TimestampzExpression) BoolExpression
 	GT(rhs TimestampzExpression) BoolExpression
 	GT_EQ(rhs TimestampzExpression) BoolExpression
+
+	ADD(rhs Interval) TimestampzExpression
+	SUB(rhs Interval) TimestampzExpression
 }
 
 type timestampzInterfaceImpl struct {
@@ -20,44 +23,43 @@ type timestampzInterfaceImpl struct {
 }
 
 func (t *timestampzInterfaceImpl) EQ(rhs TimestampzExpression) BoolExpression {
-	return eq(t.parent, rhs)
+	return Eq(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) NOT_EQ(rhs TimestampzExpression) BoolExpression {
-	return notEq(t.parent, rhs)
+	return NotEq(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) IS_DISTINCT_FROM(rhs TimestampzExpression) BoolExpression {
-	return isDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimestampzExpression) BoolExpression {
-	return isNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) LT(rhs TimestampzExpression) BoolExpression {
-	return lt(t.parent, rhs)
+	return Lt(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) LT_EQ(rhs TimestampzExpression) BoolExpression {
-	return ltEq(t.parent, rhs)
+	return LtEq(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) GT(rhs TimestampzExpression) BoolExpression {
-	return gt(t.parent, rhs)
+	return Gt(t.parent, rhs)
 }
 
 func (t *timestampzInterfaceImpl) GT_EQ(rhs TimestampzExpression) BoolExpression {
-	return gtEq(t.parent, rhs)
+	return GtEq(t.parent, rhs)
 }
 
-//---------------------------------------------------//
+func (t *timestampzInterfaceImpl) ADD(rhs Interval) TimestampzExpression {
+	return TimestampzExp(Add(t.parent, rhs))
+}
 
-type prefixTimestampzOperator struct {
-	expressionInterfaceImpl
-	timestampzInterfaceImpl
-
-	prefixOpExpression
+func (t *timestampzInterfaceImpl) SUB(rhs Interval) TimestampzExpression {
+	return TimestampzExp(Sub(t.parent, rhs))
 }
 
 //-------------------------------------------------

@@ -1,6 +1,8 @@
 package postgres
 
-import "github.com/go-jet/jet/internal/jet"
+import (
+	"github.com/go-jet/jet/internal/jet"
+)
 
 // Column is common column interface for all types of columns.
 type Column = jet.ColumnExpression
@@ -62,3 +64,34 @@ type ColumnTimestampz = jet.ColumnTimestampz
 
 // TimestampzColumn creates named timestamp with time zone column.
 var TimestampzColumn = jet.TimestampzColumn
+
+//------------------------------------------------------//
+
+// ColumnInterval is interface of PostgreSQL interval columns.
+type ColumnInterval interface {
+	IntervalExpression
+	jet.Column
+
+	From(subQuery SelectTable) ColumnInterval
+}
+
+type intervalColumnImpl struct {
+	jet.ColumnExpressionImpl
+	intervalInterfaceImpl
+}
+
+func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
+	newIntervalColumn := IntervalColumn(i.Name())
+	jet.SetTableName(newIntervalColumn, i.TableName())
+	jet.SetSubQuery(newIntervalColumn, subQuery)
+
+	return newIntervalColumn
+}
+
+// IntervalColumn creates named interval column.
+func IntervalColumn(name string) ColumnInterval {
+	intervalColumn := &intervalColumnImpl{}
+	intervalColumn.ColumnExpressionImpl = jet.NewColumnImpl(name, "", intervalColumn)
+	intervalColumn.intervalInterfaceImpl.parent = intervalColumn
+	return intervalColumn
+}

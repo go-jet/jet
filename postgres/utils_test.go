@@ -1,9 +1,10 @@
 package postgres
 
 import (
+	"testing"
+
 	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
-	"testing"
 )
 
 var table1Col1 = IntegerColumn("col1")
@@ -16,6 +17,7 @@ var table1ColTimestamp = TimestampColumn("col_timestamp")
 var table1ColTimestampz = TimestampzColumn("col_timestampz")
 var table1ColBool = BoolColumn("col_bool")
 var table1ColDate = DateColumn("col_date")
+var table1ColInterval = IntervalColumn("col_interval")
 
 var table1 = NewTable(
 	"db",
@@ -30,6 +32,7 @@ var table1 = NewTable(
 	table1ColDate,
 	table1ColTimestamp,
 	table1ColTimestampz,
+	table1ColInterval,
 )
 
 var table2Col3 = IntegerColumn("col3")
@@ -43,6 +46,7 @@ var table2ColTimez = TimezColumn("col_timez")
 var table2ColTimestamp = TimestampColumn("col_timestamp")
 var table2ColTimestampz = TimestampzColumn("col_timestampz")
 var table2ColDate = DateColumn("col_date")
+var table2ColInterval = IntervalColumn("col_interval")
 
 var table2 = NewTable(
 	"db",
@@ -58,6 +62,7 @@ var table2 = NewTable(
 	table2ColDate,
 	table2ColTimestamp,
 	table2ColTimestampz,
+	table2ColInterval,
 )
 
 var table3Col1 = IntegerColumn("col1")
@@ -70,7 +75,7 @@ var table3 = NewTable(
 	table3ColInt,
 	table3StrCol)
 
-func assertClauseSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
+func assertSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
 	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
 }
 
@@ -84,3 +89,4 @@ func assertProjectionSerialize(t *testing.T, projection jet.Projection, query st
 
 var assertStatementSql = testutils.AssertStatementSql
 var assertStatementSqlErr = testutils.AssertStatementSqlErr
+var assertPanicErr = testutils.AssertPanicErr

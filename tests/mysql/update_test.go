@@ -8,7 +8,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -40,9 +40,9 @@ WHERE link.name = 'Bing';
 		WHERE(Link.Name.EQ(String("Bong"))).
 		Query(db, &links)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(links), 1)
-	assert.DeepEqual(t, links[0], model.Link{
+	testutils.AssertDeepEqual(t, links[0], model.Link{
 		ID:   204,
 		URL:  "http://bong.com",
 		Name: "Bong",
@@ -244,7 +244,7 @@ func TestUpdateWithJoin(t *testing.T) {
 	//fmt.Println(query.DebugSql())
 
 	_, err := query.Exec(db)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func setupLinkTableForUpdateTest(t *testing.T) {
@@ -259,5 +259,5 @@ func setupLinkTableForUpdateTest(t *testing.T) {
 		VALUES(204, "http://www.bing.com", "Bing", DEFAULT).
 		Exec(db)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }

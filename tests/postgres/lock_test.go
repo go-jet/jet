@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 	"github.com/go-jet/jet/internal/testutils"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -35,11 +35,11 @@ LOCK TABLE dvds.address IN`
 
 		_, err := query.Exec(tx)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		err = tx.Rollback()
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 
 	for _, lockMode := range testData {
@@ -51,11 +51,11 @@ LOCK TABLE dvds.address IN`
 
 		_, err := query.Exec(tx)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		err = tx.Rollback()
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 )
@@ -55,9 +55,9 @@ FROM test_sample.all_types;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, dest, Result{
+	testutils.AssertDeepEqual(t, dest, Result{
 		As1:      "test",
 		Date1:    *testutils.Date("2011-02-02"),
 		Time:     *testutils.TimeWithoutTimeZone("14:06:10"),

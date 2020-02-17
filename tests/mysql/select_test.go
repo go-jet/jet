@@ -1,14 +1,13 @@
 package mysql
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/enum"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/view"
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/assert"
 
 	"testing"
 )
@@ -31,9 +30,9 @@ WHERE actor.actor_id = ?;
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
-	assert.DeepEqual(t, actor, actor2)
+	testutils.AssertDeepEqual(t, actor, actor2)
 }
 
 var actor2 = model.Actor{
@@ -60,10 +59,10 @@ ORDER BY actor.actor_id;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 200)
-	assert.DeepEqual(t, dest[1], actor2)
+	testutils.AssertDeepEqual(t, dest[1], actor2)
 
 	//testutils.PrintJson(dest)
 	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
@@ -137,7 +136,7 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -177,7 +176,7 @@ func TestSubQuery(t *testing.T) {
 	}
 
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/r_rating_films.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/r_rating_films.json")
@@ -230,7 +229,7 @@ LIMIT ?;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSelectUNION(t *testing.T) {
@@ -266,7 +265,7 @@ LIMIT ?;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSelectUNION_ALL(t *testing.T) {
@@ -309,7 +308,7 @@ OFFSET ?;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -407,7 +406,7 @@ LIMIT ?;
 
 		err := query.Query(db, &dest)
 
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 		//assert.Equal(t, len(dest), 1)
 		//assert.Equal(t, len(dest[0].Films), 10)
 		//assert.Equal(t, len(dest[0].Films[0].Actors), 10)
@@ -451,10 +450,10 @@ FOR`
 		tx, _ := db.Begin()
 
 		_, err := query.Exec(tx)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		err = tx.Rollback()
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
@@ -465,10 +464,10 @@ FOR`
 		tx, _ := db.Begin()
 
 		_, err := query.Exec(tx)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		err = tx.Rollback()
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 
 	if sourceIsMariaDB() {
@@ -483,10 +482,10 @@ FOR`
 		tx, _ := db.Begin()
 
 		_, err := query.Exec(tx)
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 
 		err = tx.Rollback()
-		assert.NilError(t, err)
+		assert.NoError(t, err)
 	}
 }
 
@@ -515,7 +514,7 @@ SELECT true,
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestLockInShareMode(t *testing.T) {
@@ -536,7 +535,7 @@ LOCK IN SHARE MODE;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestWindowFunction(t *testing.T) {
@@ -607,13 +606,13 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 		).GROUP_BY(Payment.Amount, Payment.CustomerID, Payment.PaymentDate).
 		WHERE(Payment.PaymentID.LT(Int(10)))
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestWindowClause(t *testing.T) {
@@ -643,14 +642,14 @@ ORDER BY payment.customer_id;
 		WINDOW("w3").AS(Window("w2").ORDER_BY(Payment.CustomerID)).
 		ORDER_BY(Payment.CustomerID)
 
-	fmt.Println(query.Sql())
+	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestSimpleView(t *testing.T) {
@@ -671,7 +670,7 @@ func TestSimpleView(t *testing.T) {
 	var dest []ActorInfo
 
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 10)
 	testutils.AssertJSON(t, dest[1:2], `
@@ -703,9 +702,42 @@ func TestJoinViewWithTable(t *testing.T) {
 	}
 
 	err := query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
 	assert.Equal(t, len(dest[0].Rentals), 32)
 	assert.Equal(t, len(dest[1].Rentals), 27)
+}
+
+func TestConditionalProjectionList(t *testing.T) {
+	projectionList := ProjectionList{}
+
+	columnsToSelect := []string{"customer_id", "create_date"}
+
+	for _, columnName := range columnsToSelect {
+		switch columnName {
+		case Customer.CustomerID.Name():
+			projectionList = append(projectionList, Customer.CustomerID)
+		case Customer.Email.Name():
+			projectionList = append(projectionList, Customer.Email)
+		case Customer.CreateDate.Name():
+			projectionList = append(projectionList, Customer.CreateDate)
+		}
+	}
+
+	stmt := SELECT(projectionList).
+		FROM(Customer).
+		LIMIT(3)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT customer.customer_id AS "customer.customer_id",
+     customer.create_date AS "customer.create_date"
+FROM dvds.customer
+LIMIT 3;
+`)
+	var dest []model.Customer
+	err := stmt.Query(db, &dest)
+	assert.NoError(t, err)
+
+	assert.Equal(t, len(dest), 3)
 }

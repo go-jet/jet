@@ -4,23 +4,18 @@ package jet
 type TimezExpression interface {
 	Expression
 
-	//EQ
 	EQ(rhs TimezExpression) BoolExpression
-	//NOT_EQ
 	NOT_EQ(rhs TimezExpression) BoolExpression
-	//IS_DISTINCT_FROM
 	IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression
-	//IS_NOT_DISTINCT_FROM
 	IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression
 
-	//LT
 	LT(rhs TimezExpression) BoolExpression
-	//LT_EQ
 	LT_EQ(rhs TimezExpression) BoolExpression
-	//GT
 	GT(rhs TimezExpression) BoolExpression
-	//GT_EQ
 	GT_EQ(rhs TimezExpression) BoolExpression
+
+	ADD(rhs Interval) TimezExpression
+	SUB(rhs Interval) TimezExpression
 }
 
 type timezInterfaceImpl struct {
@@ -28,54 +23,44 @@ type timezInterfaceImpl struct {
 }
 
 func (t *timezInterfaceImpl) EQ(rhs TimezExpression) BoolExpression {
-	return eq(t.parent, rhs)
+	return Eq(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) NOT_EQ(rhs TimezExpression) BoolExpression {
-	return notEq(t.parent, rhs)
+	return NotEq(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
-	return isDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
-	return isNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) LT(rhs TimezExpression) BoolExpression {
-	return lt(t.parent, rhs)
+	return Lt(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) LT_EQ(rhs TimezExpression) BoolExpression {
-	return ltEq(t.parent, rhs)
+	return LtEq(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) GT(rhs TimezExpression) BoolExpression {
-	return gt(t.parent, rhs)
+	return Gt(t.parent, rhs)
 }
 
 func (t *timezInterfaceImpl) GT_EQ(rhs TimezExpression) BoolExpression {
-	return gtEq(t.parent, rhs)
+	return GtEq(t.parent, rhs)
 }
 
-//---------------------------------------------------//
-type prefixTimezExpression struct {
-	expressionInterfaceImpl
-	timezInterfaceImpl
-
-	prefixOpExpression
+func (t *timezInterfaceImpl) ADD(rhs Interval) TimezExpression {
+	return TimezExp(Add(t.parent, rhs))
 }
 
-//func newPrefixTimezExpression(operator string, expression Expression) TimezExpression {
-//	timeExpr := prefixTimezExpression{}
-//	timeExpr.prefixOpExpression = newPrefixExpression(expression, operator)
-//
-//	timeExpr.expressionInterfaceImpl.parent = &timeExpr
-//	timeExpr.timezInterfaceImpl.parent = &timeExpr
-//
-//	return &timeExpr
-//}
+func (t *timezInterfaceImpl) SUB(rhs Interval) TimezExpression {
+	return TimezExp(Sub(t.parent, rhs))
+}
 
 //---------------------------------------------------//
 

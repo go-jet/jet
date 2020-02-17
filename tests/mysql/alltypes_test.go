@@ -1,19 +1,20 @@
 package mysql
 
 import (
-	"fmt"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
-	"github.com/google/uuid"
-	"time"
 
 	. "github.com/go-jet/jet/mysql"
 
-	"gotest.tools/assert"
-	"testing"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAllTypes(t *testing.T) {
@@ -25,7 +26,7 @@ func TestAllTypes(t *testing.T) {
 		LIMIT(2).
 		Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	assert.Equal(t, len(dest), 2)
 
@@ -44,7 +45,7 @@ func TestAllTypesViewSelect(t *testing.T) {
 	dest := []AllTypesView{}
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 2)
 
 	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
@@ -73,10 +74,10 @@ func TestUUID(t *testing.T) {
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
-	assert.Assert(t, dest.StrUUID != nil)
-	assert.Assert(t, dest.UUID.String() != uuid.UUID{}.String())
-	assert.Assert(t, dest.StrUUID.String() != uuid.UUID{}.String())
+	assert.NoError(t, err)
+	assert.True(t, dest.StrUUID != nil)
+	assert.True(t, dest.UUID.String() != uuid.UUID{}.String())
+	assert.True(t, dest.StrUUID.String() != uuid.UUID{}.String())
 	assert.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
 }
 
@@ -118,7 +119,7 @@ LIMIT ?;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -209,7 +210,7 @@ FROM test_sample.all_types;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
@@ -306,7 +307,7 @@ LIMIT ?;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/float_operators.json")
 }
@@ -443,7 +444,7 @@ LIMIT ?;
 
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -506,20 +507,16 @@ func TestStringOperators(t *testing.T) {
 			REGEXP_LIKE(AllTypes.Text, String("aba"), "i"),
 		}...)
 	}
-	//_, args, _ := query.Sql()
-
-	//fmt.Println(query.Sql())
-	//fmt.Println(args[15])
 
 	query := SELECT(projectionList[0], projectionList[1:]...).
 		FROM(AllTypes)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
@@ -555,32 +552,49 @@ func TestTimeExpressions(t *testing.T) {
 		AllTypes.Time.GT_EQ(AllTypes.Time),
 		AllTypes.Time.GT_EQ(Time(14, 26, 36)),
 
+		AllTypes.Time.ADD(INTERVAL(10, MINUTE)),
+		AllTypes.Time.ADD(INTERVALe(AllTypes.Integer, MINUTE)),
+		AllTypes.Time.ADD(INTERVALd(3*time.Hour)),
+
+		AllTypes.Time.SUB(INTERVAL(20, MINUTE)),
+		AllTypes.Time.SUB(INTERVALe(AllTypes.SmallInt, MINUTE)),
+		AllTypes.Time.SUB(INTERVALd(3*time.Minute)),
+
+		AllTypes.Time.ADD(INTERVAL(20, MINUTE)).SUB(INTERVAL(11, HOUR)),
+
 		CURRENT_TIME(),
 		CURRENT_TIME(3),
 	)
 
-	//fmt.Println(query.Sql())
+	//fmt.Println(query.DebugSql())
 
-	testutils.AssertStatementSql(t, query, `
-SELECT CAST(? AS TIME),
+	testutils.AssertDebugStatementSql(t, query, `
+SELECT CAST('20:34:58' AS TIME),
      all_types.time = all_types.time,
-     all_types.time = CAST(? AS TIME),
-     all_types.time = CAST(? AS TIME),
-     all_types.time = CAST(? AS TIME),
+     all_types.time = CAST('23:06:06' AS TIME),
+     all_types.time = CAST('22:06:06.011' AS TIME),
+     all_types.time = CAST('21:06:06.011111' AS TIME),
      all_types.time_ptr != all_types.time,
-     all_types.time_ptr != CAST(? AS TIME),
+     all_types.time_ptr != CAST('20:16:06' AS TIME),
      NOT(all_types.time <=> all_types.time),
-     NOT(all_types.time <=> CAST(? AS TIME)),
+     NOT(all_types.time <=> CAST('19:26:06' AS TIME)),
      all_types.time <=> all_types.time,
-     all_types.time <=> CAST(? AS TIME),
+     all_types.time <=> CAST('18:36:06' AS TIME),
      all_types.time < all_types.time,
-     all_types.time < CAST(? AS TIME),
+     all_types.time < CAST('17:46:06' AS TIME),
      all_types.time <= all_types.time,
-     all_types.time <= CAST(? AS TIME),
+     all_types.time <= CAST('16:56:56' AS TIME),
      all_types.time > all_types.time,
-     all_types.time > CAST(? AS TIME),
+     all_types.time > CAST('15:16:46' AS TIME),
      all_types.time >= all_types.time,
-     all_types.time >= CAST(? AS TIME),
+     all_types.time >= CAST('14:26:36' AS TIME),
+     all_types.time + INTERVAL 10 MINUTE,
+     all_types.time + INTERVAL all_types.integer MINUTE,
+     all_types.time + INTERVAL 3 HOUR,
+     all_types.time - INTERVAL 20 MINUTE,
+     all_types.time - INTERVAL all_types.small_int MINUTE,
+     all_types.time - INTERVAL 3 MINUTE,
+     (all_types.time + INTERVAL 20 MINUTE) - INTERVAL 11 HOUR,
      CURRENT_TIME,
      CURRENT_TIME(3)
 FROM test_sample.all_types;
@@ -590,7 +604,7 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestDateExpressions(t *testing.T) {
@@ -621,10 +635,18 @@ func TestDateExpressions(t *testing.T) {
 		AllTypes.Date.GT_EQ(AllTypes.Date),
 		AllTypes.Date.GT_EQ(Date(2019, 2, 3)),
 
+		AllTypes.Date.ADD(INTERVAL("10:20.000100", MINUTE_MICROSECOND)),
+		AllTypes.Date.ADD(INTERVALe(AllTypes.BigInt, MINUTE)),
+		AllTypes.Date.ADD(INTERVALd(15*time.Hour)),
+
+		AllTypes.Date.SUB(INTERVAL(20, MINUTE)),
+		AllTypes.Date.SUB(INTERVALe(AllTypes.SmallInt, MINUTE)),
+		AllTypes.Date.SUB(INTERVALd(3*time.Minute)),
+
 		CURRENT_DATE(),
 	)
 
-	//fmt.Println(query.Sql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT CAST(? AS DATE),
@@ -644,6 +666,12 @@ SELECT CAST(? AS DATE),
      all_types.date > CAST(? AS DATE),
      all_types.date >= all_types.date,
      all_types.date >= CAST(? AS DATE),
+     all_types.date + INTERVAL ? MINUTE_MICROSECOND,
+     all_types.date + INTERVAL all_types.big_int MINUTE,
+     all_types.date + INTERVAL 15 HOUR,
+     all_types.date - INTERVAL 20 MINUTE,
+     all_types.date - INTERVAL all_types.small_int MINUTE,
+     all_types.date - INTERVAL 3 MINUTE,
      CURRENT_DATE
 FROM test_sample.all_types;
 `)
@@ -651,7 +679,7 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestDateTimeExpressions(t *testing.T) {
@@ -683,11 +711,19 @@ func TestDateTimeExpressions(t *testing.T) {
 		AllTypes.DateTime.GT_EQ(AllTypes.DateTime),
 		AllTypes.DateTime.GT_EQ(dateTime),
 
+		AllTypes.DateTime.ADD(INTERVAL("05:10:20.000100", HOUR_MICROSECOND)),
+		AllTypes.DateTime.ADD(INTERVALe(AllTypes.BigInt, HOUR)),
+		AllTypes.DateTime.ADD(INTERVALd(2*time.Hour)),
+
+		AllTypes.DateTime.SUB(INTERVAL("05:10:20.000100", HOUR_MICROSECOND)),
+		AllTypes.DateTime.SUB(INTERVALe(AllTypes.IntegerPtr, HOUR)),
+		AllTypes.DateTime.SUB(INTERVALd(3*time.Hour)),
+
 		NOW(),
 		NOW(1),
 	)
 
-	//fmt.Println(query.DebugSql())
+	//Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.date_time = all_types.date_time,
@@ -706,6 +742,12 @@ SELECT all_types.date_time = all_types.date_time,
      all_types.date_time > CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time >= all_types.date_time,
      all_types.date_time >= CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.date_time + INTERVAL '05:10:20.000100' HOUR_MICROSECOND,
+     all_types.date_time + INTERVAL all_types.big_int HOUR,
+     all_types.date_time + INTERVAL 2 HOUR,
+     all_types.date_time - INTERVAL '05:10:20.000100' HOUR_MICROSECOND,
+     all_types.date_time - INTERVAL all_types.integer_ptr HOUR,
+     all_types.date_time - INTERVAL 3 HOUR,
      NOW(),
      NOW(1)
 FROM test_sample.all_types;
@@ -714,7 +756,7 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestTimestampExpressions(t *testing.T) {
@@ -746,6 +788,14 @@ func TestTimestampExpressions(t *testing.T) {
 		AllTypes.Timestamp.GT_EQ(AllTypes.Timestamp),
 		AllTypes.Timestamp.GT_EQ(timestamp),
 
+		AllTypes.Timestamp.ADD(INTERVAL("05:10:20.000100", HOUR_MICROSECOND)),
+		AllTypes.Timestamp.ADD(INTERVALe(AllTypes.BigInt, HOUR)),
+		AllTypes.Timestamp.ADD(INTERVALd(2*time.Hour)),
+
+		AllTypes.Timestamp.SUB(INTERVAL("05:10:20.000100", HOUR_MICROSECOND)),
+		AllTypes.Timestamp.SUB(INTERVALe(AllTypes.IntegerPtr, HOUR)),
+		AllTypes.Timestamp.SUB(INTERVALd(3*time.Hour)),
+
 		CURRENT_TIMESTAMP(),
 		CURRENT_TIMESTAMP(2),
 	)
@@ -769,6 +819,12 @@ SELECT all_types.timestamp = all_types.timestamp,
      all_types.timestamp > TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp >= all_types.timestamp,
      all_types.timestamp >= TIMESTAMP('2019-06-06 10:02:46'),
+     all_types.timestamp + INTERVAL '05:10:20.000100' HOUR_MICROSECOND,
+     all_types.timestamp + INTERVAL all_types.big_int HOUR,
+     all_types.timestamp + INTERVAL 2 HOUR,
+     all_types.timestamp - INTERVAL '05:10:20.000100' HOUR_MICROSECOND,
+     all_types.timestamp - INTERVAL all_types.integer_ptr HOUR,
+     all_types.timestamp - INTERVAL 3 HOUR,
      CURRENT_TIMESTAMP,
      CURRENT_TIMESTAMP(2)
 FROM test_sample.all_types;
@@ -776,13 +832,13 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 }
 
 func TestTimeLiterals(t *testing.T) {
 
 	loc, err := time.LoadLocation("Europe/Berlin")
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 351387237, loc)
 
@@ -821,7 +877,7 @@ LIMIT ?;
 	}
 
 	err = query.Query(db, &dest)
-	assert.NilError(t, err)
+	assert.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -851,6 +907,60 @@ LIMIT ?;
 `)
 	}
 
+}
+
+func TestINTERVAL(t *testing.T) {
+	query := SELECT(
+		Date(2000, 2, 10).ADD(INTERVAL(1, MICROSECOND)).
+			EQ(Timestamp(2000, 2, 10, 0, 0, 0, 1*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVAL(2, SECOND)),
+		Date(2000, 2, 10).ADD(INTERVAL(3, MINUTE)),
+		Date(2000, 2, 10).SUB(INTERVAL(4, HOUR)),
+		Date(2000, 2, 10).ADD(INTERVAL(5, DAY)),
+		Date(2000, 2, 10).SUB(INTERVAL(6, MONTH)),
+		Date(2000, 2, 10).ADD(INTERVAL(7, YEAR)),
+		Date(2000, 2, 10).ADD(INTERVAL(-7, YEAR)),
+		Date(2000, 2, 10).ADD(INTERVAL("20.0000100", SECOND_MICROSECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("02:20.0000100", MINUTE_MICROSECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("11:02:20.0000100", HOUR_MICROSECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("100 11:02:20.0000100", DAY_MICROSECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("11:02", MINUTE_SECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("11:02:20", HOUR_SECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("11:02", HOUR_MINUTE)),
+		Date(2000, 2, 10).SUB(INTERVAL("11 02:03:04", DAY_SECOND)),
+		Date(2000, 2, 10).SUB(INTERVAL("11 02:03", DAY_MINUTE)),
+		Date(2000, 2, 10).SUB(INTERVAL("11 2", DAY_HOUR)),
+		Date(2000, 2, 10).SUB(INTERVAL("2000-2", YEAR_MONTH)),
+
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, MICROSECOND)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, SECOND)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, MINUTE)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, HOUR)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, DAY)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, WEEK)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, MONTH)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, QUARTER)),
+		Date(2000, 2, 10).SUB(INTERVALe(AllTypes.IntegerPtr, YEAR)),
+
+		Date(2000, 2, 10).SUB(INTERVALd(3*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVALd(-3*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVALd(3*time.Second)),
+		Date(2000, 2, 10).SUB(INTERVALd(3*time.Second+4*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVALd(3*time.Minute+4*time.Second+5*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVALd(3*time.Hour+4*time.Minute+5*time.Second+6*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVALd(2*24*time.Hour+3*time.Hour+4*time.Minute+5*time.Second+6*time.Microsecond)),
+		Date(2000, 2, 10).SUB(INTERVALd(2*24*time.Hour+3*time.Hour+4*time.Minute+5*time.Second)),
+		Date(2000, 2, 10).SUB(INTERVALd(2*24*time.Hour+3*time.Hour+4*time.Minute)),
+		Date(2000, 2, 10).SUB(INTERVALd(2*24*time.Hour+3*time.Hour)),
+		Date(2000, 2, 10).SUB(INTERVALd(2*24*time.Hour)),
+		Date(2000, 2, 10).SUB(INTERVALd(3*time.Hour)),
+		Date(2000, 2, 10).SUB(INTERVALd(1*time.Hour+2*time.Minute+3*time.Second+345*time.Microsecond)),
+	).FROM(AllTypes)
+
+	//fmt.Println(query.DebugSql())
+
+	err := query.Query(db, &struct{}{})
+	assert.NoError(t, err)
 }
 
 var allTypesJson = `
@@ -985,3 +1095,53 @@ var allTypesJson = `
 	}
 ]
 `
+
+func TestReservedWord(t *testing.T) {
+	stmt := SELECT(User.AllColumns).
+		FROM(User)
+
+	// NOTE: A word that follows a period in a qualified name must be an identifier, so it
+	//       need not be quoted even if it is reserved
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT user.column AS "user.column",
+     user.use AS "user.use",
+     user.ceil AS "user.ceil",
+     user.commit AS "user.commit",
+     user.create AS "user.create",
+     user.default AS "user.default",
+     user.desc AS "user.desc",
+     user.empty AS "user.empty",
+     user.float AS "user.float",
+     user.join AS "user.join",
+     user.like AS "user.like",
+     user.max AS "user.max",
+     user.rank AS "user.rank"
+FROM test_sample.user;
+`)
+
+	var dest []model.User
+	err := stmt.Query(db, &dest)
+	assert.NoError(t, err)
+
+	testutils.PrintJson(dest)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"Column": "Column",
+		"Use": "CHECK",
+		"Ceil": "CEIL",
+		"Commit": "COMMIT",
+		"Create": "CREATE",
+		"Default": "DEFAULT",
+		"Desc": "DESC",
+		"Empty": "EMPTY",
+		"Float": "FLOAT",
+		"Join": "JOIN",
+		"Like": "LIKE",
+		"Max": "MAX",
+		"Rank": "RANK"
+	}
+]
+`)
+}

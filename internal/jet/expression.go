@@ -8,82 +8,93 @@ type Expression interface {
 	GroupByClause
 	OrderByClause
 
-	// Test expression whether it is a NULL value.
+	// IS_NULL tests expression whether it is a NULL value.
 	IS_NULL() BoolExpression
-	// Test expression whether it is a non-NULL value.
+	// IS_NOT_NULL tests expression whether it is a non-NULL value.
 	IS_NOT_NULL() BoolExpression
 
-	// Check if this expressions matches any in expressions list
+	// IN checks if this expressions matches any in expressions list
 	IN(expressions ...Expression) BoolExpression
-	// Check if this expressions is different of all expressions in expressions list
+	// NOT_IN checks if this expressions is different of all expressions in expressions list
 	NOT_IN(expressions ...Expression) BoolExpression
 
-	// The temporary alias name to assign to the expression
+	// AS the temporary alias name to assign to the expression
 	AS(alias string) Projection
 
-	// Expression will be used to sort query result in ascending order
+	// ASC expression will be used to sort query result in ascending order
 	ASC() OrderByClause
-	// Expression will be used to sort query result in ascending order
+	// DESC expression will be used to sort query result in ascending order
 	DESC() OrderByClause
 }
 
-type expressionInterfaceImpl struct {
+// ExpressionInterfaceImpl implements Expression interface methods
+type ExpressionInterfaceImpl struct {
 	Parent Expression
 }
 
-func (e *expressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
+func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 	return e.Parent
 }
 
-func (e *expressionInterfaceImpl) IS_NULL() BoolExpression {
-	return newPostifxBoolExpression(e.Parent, "IS NULL")
+// IS_NULL tests expression whether it is a NULL value.
+func (e *ExpressionInterfaceImpl) IS_NULL() BoolExpression {
+	return newPostfixBoolOperatorExpression(e.Parent, "IS NULL")
 }
 
-func (e *expressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
-	return newPostifxBoolExpression(e.Parent, "IS NOT NULL")
+// IS_NOT_NULL tests expression whether it is a non-NULL value.
+func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
+	return newPostfixBoolOperatorExpression(e.Parent, "IS NOT NULL")
 }
 
-func (e *expressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperator(e.Parent, WRAP(expressions...), "IN")
+// IN checks if this expressions matches any in expressions list
+func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
+	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "IN")
 }
 
-func (e *expressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperator(e.Parent, WRAP(expressions...), "NOT IN")
+// NOT_IN checks if this expressions is different of all expressions in expressions list
+func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
+	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "NOT IN")
 }
 
-func (e *expressionInterfaceImpl) AS(alias string) Projection {
+// AS the temporary alias name to assign to the expression
+func (e *ExpressionInterfaceImpl) AS(alias string) Projection {
 	return newAlias(e.Parent, alias)
 }
 
-func (e *expressionInterfaceImpl) ASC() OrderByClause {
+// ASC expression will be used to sort query result in ascending order
+func (e *ExpressionInterfaceImpl) ASC() OrderByClause {
 	return newOrderByClause(e.Parent, true)
 }
 
-func (e *expressionInterfaceImpl) DESC() OrderByClause {
+// DESC expression will be used to sort query result in ascending order
+func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
 	return newOrderByClause(e.Parent, false)
 }
 
-func (e *expressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SQLBuilder) {
+func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SQLBuilder) {
 	e.Parent.serialize(statement, out, noWrap)
 }
 
-func (e *expressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
+func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	e.Parent.serialize(statement, out, noWrap)
 }
 
-func (e *expressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
+func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	e.Parent.serialize(statement, out, noWrap)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
-type binaryOpExpression struct {
-	lhs, rhs        Expression
-	additionalParam Expression
+type binaryOperatorExpression struct {
+	ExpressionInterfaceImpl
+
+	lhs, rhs        Serializer
+	additionalParam Serializer
 	operator        string
 }
 
-func newBinaryExpression(lhs, rhs Expression, operator string, additionalParam ...Expression) binaryOpExpression {
-	binaryExpression := binaryOpExpression{
+// NewBinaryOperatorExpression creates new binaryOperatorExpression
+func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) *binaryOperatorExpression {
+	binaryExpression := &binaryOperatorExpression{
 		lhs:      lhs,
 		rhs:      rhs,
 		operator: operator,
@@ -93,10 +104,12 @@ func newBinaryExpression(lhs, rhs Expression, operator string, additionalParam .
 		binaryExpression.additionalParam = additionalParam[0]
 	}
 
+	binaryExpression.ExpressionInterfaceImpl.Parent = binaryExpression
+
 	return binaryExpression
 }
 
-func (c *binaryOpExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if c.lhs == nil {
 		panic("jet: lhs is nil for '" + c.operator + "' operator")
 	}
@@ -125,21 +138,24 @@ func (c *binaryOpExpression) serialize(statement StatementType, out *SQLBuilder,
 }
 
 // A prefix operator Expression
-type prefixOpExpression struct {
+type prefixExpression struct {
+	ExpressionInterfaceImpl
+
 	expression Expression
 	operator   string
 }
 
-func newPrefixExpression(expression Expression, operator string) prefixOpExpression {
-	prefixExpression := prefixOpExpression{
+func newPrefixOperatorExpression(expression Expression, operator string) *prefixExpression {
+	prefixExpression := &prefixExpression{
 		expression: expression,
 		operator:   operator,
 	}
+	prefixExpression.ExpressionInterfaceImpl.Parent = prefixExpression
 
 	return prefixExpression
 }
 
-func (p *prefixOpExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	out.WriteString(p.operator)
 
@@ -152,17 +168,21 @@ func (p *prefixOpExpression) serialize(statement StatementType, out *SQLBuilder,
 	out.WriteString(")")
 }
 
-// A postifx operator Expression
+// A postfix operator Expression
 type postfixOpExpression struct {
+	ExpressionInterfaceImpl
+
 	expression Expression
 	operator   string
 }
 
-func newPostfixOpExpression(expression Expression, operator string) postfixOpExpression {
-	postfixOpExpression := postfixOpExpression{
+func newPostfixOperatorExpression(expression Expression, operator string) *postfixOpExpression {
+	postfixOpExpression := &postfixOpExpression{
 		expression: expression,
 		operator:   operator,
 	}
+
+	postfixOpExpression.ExpressionInterfaceImpl.Parent = postfixOpExpression
 
 	return postfixOpExpression
 }

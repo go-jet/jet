@@ -28,74 +28,60 @@ type stringInterfaceImpl struct {
 }
 
 func (s *stringInterfaceImpl) EQ(rhs StringExpression) BoolExpression {
-	return eq(s.parent, rhs)
+	return Eq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) NOT_EQ(rhs StringExpression) BoolExpression {
-	return notEq(s.parent, rhs)
+	return NotEq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) IS_DISTINCT_FROM(rhs StringExpression) BoolExpression {
-	return isDistinctFrom(s.parent, rhs)
+	return IsDistinctFrom(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs StringExpression) BoolExpression {
-	return isNotDistinctFrom(s.parent, rhs)
+	return IsNotDistinctFrom(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) GT(rhs StringExpression) BoolExpression {
-	return gt(s.parent, rhs)
+	return Gt(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) GT_EQ(rhs StringExpression) BoolExpression {
-	return gtEq(s.parent, rhs)
+	return GtEq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) LT(rhs StringExpression) BoolExpression {
-	return lt(s.parent, rhs)
+	return Lt(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
-	return ltEq(s.parent, rhs)
+	return LtEq(s.parent, rhs)
 }
 
 func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {
-	return newBinaryStringExpression(s.parent, rhs, StringConcatOperator)
+	return newBinaryStringOperatorExpression(s.parent, rhs, StringConcatOperator)
 }
 
 func (s *stringInterfaceImpl) LIKE(pattern StringExpression) BoolExpression {
-	return newBinaryBoolOperator(s.parent, pattern, "LIKE")
+	return newBinaryBoolOperatorExpression(s.parent, pattern, "LIKE")
 }
 
 func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression {
-	return newBinaryBoolOperator(s.parent, pattern, "NOT LIKE")
+	return newBinaryBoolOperatorExpression(s.parent, pattern, "NOT LIKE")
 }
 
 func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return newBinaryBoolOperator(s.parent, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return newBinaryBoolOperatorExpression(s.parent, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
 }
 
 func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return newBinaryBoolOperator(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return newBinaryBoolOperatorExpression(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
 }
 
 //---------------------------------------------------//
-
-type binaryStringExpression struct {
-	expressionInterfaceImpl
-	stringInterfaceImpl
-
-	binaryOpExpression
-}
-
-func newBinaryStringExpression(lhs, rhs Expression, operator string) StringExpression {
-	boolExpression := binaryStringExpression{}
-
-	boolExpression.binaryOpExpression = newBinaryExpression(lhs, rhs, operator)
-	boolExpression.expressionInterfaceImpl.Parent = &boolExpression
-	boolExpression.stringInterfaceImpl.parent = &boolExpression
-
-	return &boolExpression
+func newBinaryStringOperatorExpression(lhs, rhs Expression, operator string) StringExpression {
+	return StringExp(NewBinaryOperatorExpression(lhs, rhs, operator))
 }
 
 //---------------------------------------------------//

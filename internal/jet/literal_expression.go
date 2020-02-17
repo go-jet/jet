@@ -14,7 +14,7 @@ type LiteralExpression interface {
 }
 
 type literalExpressionImpl struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
 	value    interface{}
 	constant bool
@@ -27,9 +27,15 @@ func literal(value interface{}, optionalConstant ...bool) *literalExpressionImpl
 		exp.constant = optionalConstant[0]
 	}
 
-	exp.expressionInterfaceImpl.Parent = &exp
+	exp.ExpressionInterfaceImpl.Parent = &exp
 
 	return &exp
+}
+
+// Literal is injected directly to SQL query, and does not appear in parametrized argument list.
+func Literal(value interface{}) *literalExpressionImpl {
+	exp := literal(value)
+	return exp
 }
 
 // FixedLiteral is injected directly to SQL query, and does not appear in parametrized argument list.
@@ -273,13 +279,13 @@ func formatNanoseconds(nanoseconds ...time.Duration) string {
 
 //--------------------------------------------------//
 type nullLiteral struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 }
 
 func newNullLiteral() Expression {
 	nullExpression := &nullLiteral{}
 
-	nullExpression.expressionInterfaceImpl.Parent = nullExpression
+	nullExpression.ExpressionInterfaceImpl.Parent = nullExpression
 
 	return nullExpression
 }
@@ -290,13 +296,13 @@ func (n *nullLiteral) serialize(statement StatementType, out *SQLBuilder, option
 
 //--------------------------------------------------//
 type starLiteral struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 }
 
 func newStarLiteral() Expression {
 	starExpression := &starLiteral{}
 
-	starExpression.expressionInterfaceImpl.Parent = starExpression
+	starExpression.ExpressionInterfaceImpl.Parent = starExpression
 
 	return starExpression
 }
@@ -308,7 +314,7 @@ func (n *starLiteral) serialize(statement StatementType, out *SQLBuilder, option
 //---------------------------------------------------//
 
 type wrap struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 	expressions []Expression
 }
 
@@ -321,7 +327,7 @@ func (n *wrap) serialize(statement StatementType, out *SQLBuilder, options ...Se
 // WRAP wraps list of expressions with brackets '(' and ')'
 func WRAP(expression ...Expression) Expression {
 	wrap := &wrap{expressions: expression}
-	wrap.expressionInterfaceImpl.Parent = wrap
+	wrap.ExpressionInterfaceImpl.Parent = wrap
 
 	return wrap
 }
@@ -329,20 +335,20 @@ func WRAP(expression ...Expression) Expression {
 //---------------------------------------------------//
 
 type rawExpression struct {
-	expressionInterfaceImpl
+	ExpressionInterfaceImpl
 
-	raw string
+	Raw string
 }
 
 func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.WriteString(n.raw)
+	out.WriteString(n.Raw)
 }
 
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
-func Raw(raw string) Expression {
-	rawExp := &rawExpression{raw: raw}
-	rawExp.expressionInterfaceImpl.Parent = rawExp
+func Raw(raw string, parent ...Expression) Expression {
+	rawExp := &rawExpression{Raw: raw}
+	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
 
 	return rawExp
 }
