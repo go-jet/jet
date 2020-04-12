@@ -61,7 +61,7 @@ type clauseSet struct {
 	Values  []jet.Serializer
 }
 
-func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SQLBuilder) {
+func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 	out.NewLine()
 	out.WriteString("SET")
 

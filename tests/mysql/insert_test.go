@@ -15,10 +15,10 @@ func TestInsertValues(t *testing.T) {
 	cleanUpLinkTable(t)
 
 	var expectedSQL = `
-INSERT INTO test_sample.link (id, url, name, description) VALUES
-     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
-     (101, 'http://www.google.com', 'Google', DEFAULT),
-     (102, 'http://www.yahoo.com', 'Yahoo', NULL);
+INSERT INTO test_sample.link (id, url, name, description)
+VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+       (101, 'http://www.google.com', 'Google', DEFAULT),
+       (102, 'http://www.yahoo.com', 'Yahoo', NULL);
 `
 
 	insertQuery := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
@@ -69,8 +69,8 @@ func TestInsertEmptyColumnList(t *testing.T) {
 	cleanUpLinkTable(t)
 
 	expectedSQL := `
-INSERT INTO test_sample.link VALUES
-     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
+INSERT INTO test_sample.link
+VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
 `
 
 	stmt := Link.INSERT().
@@ -97,8 +97,8 @@ INSERT INTO test_sample.link VALUES
 func TestInsertModelObject(t *testing.T) {
 	cleanUpLinkTable(t)
 	var expectedSQL = `
-INSERT INTO test_sample.link (url, name) VALUES
-     ('http://www.duckduckgo.com', 'Duck Duck go');
+INSERT INTO test_sample.link (url, name)
+VALUES ('http://www.duckduckgo.com', 'Duck Duck go');
 `
 
 	linkData := model.Link{
@@ -119,8 +119,8 @@ INSERT INTO test_sample.link (url, name) VALUES
 func TestInsertModelObjectEmptyColumnList(t *testing.T) {
 	cleanUpLinkTable(t)
 	var expectedSQL = `
-INSERT INTO test_sample.link VALUES
-     (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
+INSERT INTO test_sample.link
+VALUES (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
 `
 
 	linkData := model.Link{
@@ -141,10 +141,10 @@ INSERT INTO test_sample.link VALUES
 
 func TestInsertModelsObject(t *testing.T) {
 	expectedSQL := `
-INSERT INTO test_sample.link (url, name) VALUES
-     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
-     ('http://www.google.com', 'Google'),
-     ('http://www.yahoo.com', 'Yahoo');
+INSERT INTO test_sample.link (url, name)
+VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
+       ('http://www.google.com', 'Google'),
+       ('http://www.yahoo.com', 'Yahoo');
 `
 
 	tutorial := model.Link{
@@ -177,11 +177,11 @@ INSERT INTO test_sample.link (url, name) VALUES
 
 func TestInsertUsingMutableColumns(t *testing.T) {
 	var expectedSQL = `
-INSERT INTO test_sample.link (url, name, description) VALUES
-     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
-     ('http://www.google.com', 'Google', NULL),
-     ('http://www.google.com', 'Google', NULL),
-     ('http://www.yahoo.com', 'Yahoo', NULL);
+INSERT INTO test_sample.link (url, name, description)
+VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+       ('http://www.google.com', 'Google', NULL),
+       ('http://www.google.com', 'Google', NULL),
+       ('http://www.yahoo.com', 'Yahoo', NULL);
 `
 
 	google := model.Link{

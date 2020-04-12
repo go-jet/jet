@@ -5,16 +5,19 @@ import (
 	"github.com/go-jet/jet/tests/dbconfig"
 	_ "github.com/lib/pq"
 	"github.com/pkg/profile"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 )
 
 var db *sql.DB
 var testRoot string
 
 func TestMain(m *testing.M) {
+	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
 	setTestRoot()

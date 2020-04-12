@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/stretchr/testify/assert"
+	"math/rand"
 	"testing"
 	"time"
 )
@@ -15,10 +17,10 @@ func TestInsertValues(t *testing.T) {
 	cleanUpLinkTable(t)
 
 	var expectedSQL = `
-INSERT INTO test_sample.link (id, url, name, description) VALUES
-     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
-     (101, 'http://www.google.com', 'Google', DEFAULT),
-     (102, 'http://www.yahoo.com', 'Yahoo', NULL)
+INSERT INTO test_sample.link (id, url, name, description)
+VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+       (101, 'http://www.google.com', 'Google', DEFAULT),
+       (102, 'http://www.yahoo.com', 'Yahoo', NULL)
 RETURNING link.id AS "link.id",
           link.url AS "link.url",
           link.name AS "link.name",
@@ -77,8 +79,8 @@ func TestInsertEmptyColumnList(t *testing.T) {
 	cleanUpLinkTable(t)
 
 	expectedSQL := `
-INSERT INTO test_sample.link VALUES
-     (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
+INSERT INTO test_sample.link
+VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT);
 `
 
 	stmt := Link.INSERT().
@@ -90,11 +92,128 @@ INSERT INTO test_sample.link VALUES
 	AssertExec(t, stmt, 1)
 }
 
+func TestInsertOnConflict(t *testing.T) {
+
+	t.Run("do nothing", func(t *testing.T) {
+		employee := model.Employee{EmployeeID: rand.Int31()}
+
+		stmt := Employee.INSERT(Employee.AllColumns).
+			MODEL(employee).
+			MODEL(employee).
+			ON_CONFLICT(Employee.EmployeeID).DO_NOTHING()
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
+VALUES ($1, $2, $3, $4, $5),
+       ($6, $7, $8, $9, $10)
+ON CONFLICT (employee_id) DO NOTHING;
+`)
+		AssertExec(t, stmt, 1)
+	})
+
+	t.Run("on constraint do nothing", func(t *testing.T) {
+		employee := model.Employee{EmployeeID: rand.Int31()}
+
+		stmt := Employee.INSERT(Employee.AllColumns).
+			MODEL(employee).
+			MODEL(employee).
+			ON_CONFLICT().ON_CONSTRAINT("employee_pkey").DO_NOTHING()
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
+VALUES ($1, $2, $3, $4, $5),
+       ($6, $7, $8, $9, $10)
+ON CONFLICT ON CONSTRAINT employee_pkey DO NOTHING;
+`)
+		AssertExec(t, stmt, 1)
+	})
+
+	t.Run("do update", func(t *testing.T) {
+		cleanUpLinkTable(t)
+		stmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+			VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+			VALUES(200, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+			ON_CONFLICT(Link.ID).DO_UPDATE(
+			SET(Link.ID, Link.EXCLUDED.ID).
+				SET(Link.URL, "http://www.postgresqltutorial2.com"),
+		).
+			RETURNING(Link.AllColumns)
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.link (id, url, name, description)
+VALUES ($1, $2, $3, DEFAULT),
+       ($4, $5, $6, DEFAULT)
+ON CONFLICT (id) DO UPDATE
+       SET id = excluded.id,
+           url = $7
+RETURNING link.id AS "link.id",
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
+`)
+
+		AssertExec(t, stmt, 2)
+	})
+
+	t.Run("on constraint do update", func(t *testing.T) {
+		cleanUpLinkTable(t)
+		stmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+			VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+			VALUES(200, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+			ON_CONFLICT().ON_CONSTRAINT("link_pkey").DO_UPDATE(
+			SET(Link.ID, Link.EXCLUDED.ID).
+				SET(Link.URL, "http://www.postgresqltutorial2.com"),
+		).
+			RETURNING(Link.AllColumns)
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.link (id, url, name, description)
+VALUES ($1, $2, $3, DEFAULT),
+       ($4, $5, $6, DEFAULT)
+ON CONFLICT ON CONSTRAINT link_pkey DO UPDATE
+       SET id = excluded.id,
+           url = $7
+RETURNING link.id AS "link.id",
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
+`)
+
+		AssertExec(t, stmt, 2)
+	})
+
+	t.Run("do update complex", func(t *testing.T) {
+		cleanUpLinkTable(t)
+
+		stmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
+			VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+			ON_CONFLICT(Link.ID).WHERE(Link.ID.MUL(Int(2)).GT(Int(10))).DO_UPDATE(
+			SET(Link.ID, SELECT(MAXi(Link.ID).ADD(Int(1))).FROM(Link)).
+				SET(ColumnList{Link.Name, Link.Description}, jet.ROW(Link.EXCLUDED.Name, String("new description"))).
+				WHERE(Link.Description.IS_NOT_NULL()),
+		)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+INSERT INTO test_sample.link (id, url, name, description)
+VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT)
+ON CONFLICT (id) WHERE (id * 2) > 10 DO UPDATE
+       SET id = (
+                SELECT MAX(link.id) + 1
+                FROM test_sample.link
+           ),
+           (name, description) = ROW(excluded.name, 'new description')
+       WHERE link.description IS NOT NULL;
+`)
+
+		AssertExec(t, stmt, 1)
+	})
+}
+
 func TestInsertModelObject(t *testing.T) {
 	cleanUpLinkTable(t)
 	var expectedSQL = `
-INSERT INTO test_sample.link (url, name) VALUES
-     ('http://www.duckduckgo.com', 'Duck Duck go');
+INSERT INTO test_sample.link (url, name)
+VALUES ('http://www.duckduckgo.com', 'Duck Duck go');
 `
 
 	linkData := model.Link{
@@ -114,8 +233,8 @@ INSERT INTO test_sample.link (url, name) VALUES
 func TestInsertModelObjectEmptyColumnList(t *testing.T) {
 	cleanUpLinkTable(t)
 	var expectedSQL = `
-INSERT INTO test_sample.link VALUES
-     (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
+INSERT INTO test_sample.link
+VALUES (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
 `
 
 	linkData := model.Link{
@@ -135,10 +254,10 @@ INSERT INTO test_sample.link VALUES
 
 func TestInsertModelsObject(t *testing.T) {
 	expectedSQL := `
-INSERT INTO test_sample.link (url, name) VALUES
-     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
-     ('http://www.google.com', 'Google'),
-     ('http://www.yahoo.com', 'Yahoo');
+INSERT INTO test_sample.link (url, name)
+VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
+       ('http://www.google.com', 'Google'),
+       ('http://www.yahoo.com', 'Yahoo');
 `
 
 	tutorial := model.Link{
@@ -170,11 +289,11 @@ INSERT INTO test_sample.link (url, name) VALUES
 
 func TestInsertUsingMutableColumns(t *testing.T) {
 	var expectedSQL = `
-INSERT INTO test_sample.link (url, name, description) VALUES
-     ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
-     ('http://www.google.com', 'Google', NULL),
-     ('http://www.google.com', 'Google', NULL),
-     ('http://www.yahoo.com', 'Yahoo', NULL);
+INSERT INTO test_sample.link (url, name, description)
+VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+       ('http://www.google.com', 'Google', NULL),
+       ('http://www.google.com', 'Google', NULL),
+       ('http://www.yahoo.com', 'Yahoo', NULL);
 `
 
 	google := model.Link{

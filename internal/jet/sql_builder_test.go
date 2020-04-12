@@ -41,3 +41,9 @@ func TestArgToString(t *testing.T) {
 		argToString(map[string]bool{})
 	}()
 }
+
+func TestFallTrough(t *testing.T) {
+	assert.Equal(t, FallTrough([]SerializeOption{ShortName}), []SerializeOption{ShortName})
+	assert.Equal(t, FallTrough([]SerializeOption{SkipNewLine}), []SerializeOption(nil))
+	assert.Equal(t, FallTrough([]SerializeOption{ShortName, SkipNewLine}), []SerializeOption{ShortName})
+}

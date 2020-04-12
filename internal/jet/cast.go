@@ -42,12 +42,12 @@ func (b *castExpression) serialize(statement StatementType, out *SQLBuilder, opt
 	castType := b.cast
 
 	if castOverride := out.Dialect.OperatorSerializeOverride("CAST"); castOverride != nil {
-		castOverride(expression, String(castType))(statement, out, options...)
+		castOverride(expression, String(castType))(statement, out, FallTrough(options)...)
 		return
 	}
 
 	out.WriteString("CAST(")
-	expression.serialize(statement, out, options...)
+	expression.serialize(statement, out, FallTrough(options)...)
 	out.WriteString("AS")
 	out.WriteString(castType + ")")
 }

@@ -13,15 +13,15 @@ func TestInvalidInsert(t *testing.T) {
 
 func TestInsertNilValue(t *testing.T) {
 	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(nil), `
-INSERT INTO db.table1 (col1) VALUES
-     (?);
+INSERT INTO db.table1 (col1)
+VALUES (?);
 `, nil)
 }
 
 func TestInsertSingleValue(t *testing.T) {
 	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(1), `
-INSERT INTO db.table1 (col1) VALUES
-     (?);
+INSERT INTO db.table1 (col1)
+VALUES (?);
 `, int(1))
 }
 
@@ -31,8 +31,8 @@ func TestInsertWithColumnList(t *testing.T) {
 	columnList = append(columnList, table3StrCol)
 
 	assertStatementSql(t, table3.INSERT(columnList).VALUES(1, 3), `
-INSERT INTO db.table3 (col_int, col2) VALUES
-     (?, ?);
+INSERT INTO db.table3 (col_int, col2)
+VALUES (?, ?);
 `, 1, 3)
 }
 
@@ -40,15 +40,15 @@ func TestInsertDate(t *testing.T) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
 	assertStatementSql(t, table1.INSERT(table1ColTimestamp).VALUES(date), `
-INSERT INTO db.table1 (col_timestamp) VALUES
-     (?);
+INSERT INTO db.table1 (col_timestamp)
+VALUES (?);
 `, date)
 }
 
 func TestInsertMultipleValues(t *testing.T) {
 	assertStatementSql(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
-INSERT INTO db.table1 (col1, col_float, col3) VALUES
-     (?, ?, ?);
+INSERT INTO db.table1 (col1, col_float, col3)
+VALUES (?, ?, ?);
 `, 1, 2, 3)
 }
 
@@ -59,10 +59,10 @@ func TestInsertMultipleRows(t *testing.T) {
 		VALUES(111, 222)
 
 	assertStatementSql(t, stmt, `
-INSERT INTO db.table1 (col1, col_float) VALUES
-     (?, ?),
-     (?, ?),
-     (?, ?);
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?),
+       (?, ?);
 `, 1, 2, 11, 22, 111, 222)
 }
 
@@ -84,9 +84,9 @@ func TestInsertValuesFromModel(t *testing.T) {
 		MODEL(&toInsert)
 
 	expectedSQL := `
-INSERT INTO db.table1 (col1, col_float) VALUES
-     (?, ?),
-     (?, ?);
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?);
 `
 
 	assertStatementSql(t, stmt, expectedSQL, int(1), float64(1.11), int(1), float64(1.11))
@@ -127,8 +127,8 @@ func TestInsertDefaultValue(t *testing.T) {
 		VALUES(DEFAULT, "two")
 
 	var expectedSQL = `
-INSERT INTO db.table1 (col1, col_float) VALUES
-     (DEFAULT, ?);
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?);
 `
 
 	assertStatementSql(t, stmt, expectedSQL, "two")

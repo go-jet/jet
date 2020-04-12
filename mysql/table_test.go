@@ -5,9 +5,9 @@ import (
 )
 
 func TestJoinNilInputs(t *testing.T) {
-	assertClauseSerializeErr(t, table2.INNER_JOIN(nil, table1ColBool.EQ(table2ColBool)),
+	assertSerializeErr(t, table2.INNER_JOIN(nil, table1ColBool.EQ(table2ColBool)),
 		"jet: right hand side of join operation is nil table")
-	assertClauseSerializeErr(t, table2.INNER_JOIN(table1, nil),
+	assertSerializeErr(t, table2.INNER_JOIN(table1, nil),
 		"jet: join condition is nil")
 }
 

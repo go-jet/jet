@@ -76,7 +76,7 @@ func assertGeneratedFiles(t *testing.T) {
 	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
 		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
 
-	testutils.AssertFileContent(t, genTestDir3+"/dvds/view/actor_info.go", "\npackage view", actorInfoSQLBuilerFile)
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/view/actor_info.go", "\npackage view", actorInfoSQLBuilderFile)
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
@@ -128,7 +128,7 @@ import (
 
 var Actor = newActorTable()
 
-type ActorTable struct {
+type actorTable struct {
 	mysql.Table
 
 	//Columns
@@ -141,25 +141,38 @@ type ActorTable struct {
 	MutableColumns mysql.ColumnList
 }
 
+type ActorTable struct {
+	actorTable
+
+	EXCLUDED actorTable
+}
+
 // creates new ActorTable with assigned alias
 func (a *ActorTable) AS(alias string) *ActorTable {
 	aliasTable := newActorTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newActorTable() *ActorTable {
+	return &ActorTable{
+		actorTable: newActorTableImpl("dvds", "actor"),
+		EXCLUDED:   newActorTableImpl("", "excluded"),
+	}
+}
+
+func newActorTableImpl(schemaName, tableName string) actorTable {
 	var (
 		ActorIDColumn    = mysql.IntegerColumn("actor_id")
 		FirstNameColumn  = mysql.StringColumn("first_name")
 		LastNameColumn   = mysql.StringColumn("last_name")
 		LastUpdateColumn = mysql.TimestampColumn("last_update")
+		allColumns       = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
+		mutableColumns   = mysql.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
 	)
 
-	return &ActorTable{
-		Table: mysql.NewTable("dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
+	return actorTable{
+		Table: mysql.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		ActorID:    ActorIDColumn,
@@ -167,8 +180,8 @@ func newActorTable() *ActorTable {
 		LastName:   LastNameColumn,
 		LastUpdate: LastUpdateColumn,
 
-		AllColumns:     mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn},
-		MutableColumns: mysql.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `
@@ -188,7 +201,7 @@ type Actor struct {
 }
 `
 
-var actorInfoSQLBuilerFile = `
+var actorInfoSQLBuilderFile = `
 package view
 
 import (
@@ -197,7 +210,7 @@ import (
 
 var ActorInfo = newActorInfoTable()
 
-type ActorInfoTable struct {
+type actorInfoTable struct {
 	mysql.Table
 
 	//Columns
@@ -210,25 +223,38 @@ type ActorInfoTable struct {
 	MutableColumns mysql.ColumnList
 }
 
+type ActorInfoTable struct {
+	actorInfoTable
+
+	EXCLUDED actorInfoTable
+}
+
 // creates new ActorInfoTable with assigned alias
 func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
 	aliasTable := newActorInfoTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newActorInfoTable() *ActorInfoTable {
+	return &ActorInfoTable{
+		actorInfoTable: newActorInfoTableImpl("dvds", "actor_info"),
+		EXCLUDED:       newActorInfoTableImpl("", "excluded"),
+	}
+}
+
+func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
 	var (
 		ActorIDColumn   = mysql.IntegerColumn("actor_id")
 		FirstNameColumn = mysql.StringColumn("first_name")
 		LastNameColumn  = mysql.StringColumn("last_name")
 		FilmInfoColumn  = mysql.StringColumn("film_info")
+		allColumns      = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
+		mutableColumns  = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 	)
 
-	return &ActorInfoTable{
-		Table: mysql.NewTable("dvds", "actor_info", ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+	return actorInfoTable{
+		Table: mysql.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		ActorID:   ActorIDColumn,
@@ -236,8 +262,8 @@ func newActorInfoTable() *ActorInfoTable {
 		LastName:  LastNameColumn,
 		FilmInfo:  FilmInfoColumn,
 
-		AllColumns:     mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
-		MutableColumns: mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `

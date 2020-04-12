@@ -12,6 +12,12 @@ type Column interface {
 	defaultAlias() string
 }
 
+// ColumnSerializer is interface for all serializable columns
+type ColumnSerializer interface {
+	Serializer
+	Column
+}
+
 // ColumnExpression interface
 type ColumnExpression interface {
 	Column
@@ -101,7 +107,7 @@ func (c ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder
 		out.WriteByte('.')
 		out.WriteIdentifier(c.defaultAlias(), true)
 	} else {
-		if c.tableName != "" {
+		if c.tableName != "" && !contains(options, ShortName) {
 			out.WriteIdentifier(c.tableName)
 			out.WriteByte('.')
 		}
@@ -123,6 +129,17 @@ func (cl ColumnList) fromImpl(subQuery SelectTable) Projection {
 	}
 
 	return newProjectionList
+}
+
+func (cl ColumnList) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	out.WriteString("(")
+	for i, column := range cl {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+		column.serialize(statement, out, FallTrough(options)...)
+	}
+	out.WriteString(")")
 }
 
 func (cl ColumnList) serializeForProjection(statement StatementType, out *SQLBuilder) {

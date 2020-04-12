@@ -613,7 +613,7 @@ func newWindowFunc(name string, expressions ...Expression) windowExpression {
 func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(ExpressionListToSerializerList(f.expressions)...)
-		serializeOverrideFunc(statement, out, options...)
+		serializeOverrideFunc(statement, out, FallTrough(options)...)
 		return
 	}
 

@@ -3,6 +3,7 @@ package metadata
 import (
 	"database/sql"
 	"github.com/go-jet/jet/internal/utils"
+	"strings"
 )
 
 // TableMetaData metadata struct
@@ -67,15 +68,19 @@ func (t TableMetaData) GoStructName() string {
 	return utils.ToGoIdentifier(t.name) + "Table"
 }
 
+// GoStructImplName returns go struct impl name for sql builder
+func (t TableMetaData) GoStructImplName() string {
+	name := utils.ToGoIdentifier(t.name) + "Table"
+	return string(strings.ToLower(name)[0]) + name[1:]
+}
+
 // GetTableMetaData returns table info metadata
 func GetTableMetaData(db *sql.DB, querySet DialectQuerySet, schemaName, tableName string) (tableInfo TableMetaData) {
-
 	tableInfo.SchemaName = schemaName
 	tableInfo.name = tableName
 
 	tableInfo.PrimaryKeys = getPrimaryKeys(db, querySet, schemaName, tableName)
 	tableInfo.Columns = getColumnsMetaData(db, querySet, schemaName, tableName)
-
 	return
 }
 

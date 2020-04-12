@@ -26,7 +26,7 @@ import (
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
 
-type {{.GoStructName}} struct {
+type {{.GoStructImplName}} struct {
 	{{dialect.PackageName}}.Table
 	
 	//Columns
@@ -38,32 +38,45 @@ type {{.GoStructName}} struct {
 	MutableColumns {{dialect.PackageName}}.ColumnList
 }
 
+type {{.GoStructName}} struct {
+	{{.GoStructImplName}}
+
+	EXCLUDED {{.GoStructImplName}}
+}
+
 // creates new {{.GoStructName}} with assigned alias
 func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func new{{.GoStructName}}() *{{.GoStructName}} {
+	return &{{.GoStructName}}{
+		{{.GoStructImplName}}: new{{.GoStructName}}Impl("{{.SchemaName}}", "{{.Name}}"),
+		EXCLUDED:  new{{.GoStructName}}Impl("", "excluded"),
+	}
+}
+
+func new{{.GoStructName}}Impl(schemaName, tableName string) {{.GoStructImplName}} {
 	var (
 	{{- range .Columns}}
 		{{ToGoIdentifier .Name}}Column = {{dialect.PackageName}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
 	{{- end}}
+		allColumns     = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} }
+		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} }
 	)
 
-	return &{{.GoStructName}}{
-		Table: {{dialect.PackageName}}.NewTable("{{.SchemaName}}", "{{.Name}}", {{template "column-list" .Columns}}),
+	return {{.GoStructImplName}}{
+		Table: {{dialect.PackageName}}.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 {{- range .Columns}}
 		{{ToGoIdentifier .Name}}: {{ToGoIdentifier .Name}}Column,
 {{- end}}
 
-		AllColumns:     {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} },
-		MutableColumns: {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} },
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 

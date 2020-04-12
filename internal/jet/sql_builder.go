@@ -98,12 +98,16 @@ func (s *SQLBuilder) WriteString(str string) {
 
 // WriteIdentifier adds identifier to output SQL
 func (s *SQLBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
-	if s.Dialect.IsReservedWord(name) || shouldQuoteIdentifier(name) || len(alwaysQuote) > 0 {
+	if s.shouldQuote(name, alwaysQuote...) {
 		identQuoteChar := string(s.Dialect.IdentifierQuoteChar())
 		s.WriteString(identQuoteChar + name + identQuoteChar)
 	} else {
 		s.WriteString(name)
 	}
+}
+
+func (s *SQLBuilder) shouldQuote(name string, alwaysQuote ...bool) bool {
+	return s.Dialect.IsReservedWord(name) || shouldQuoteIdentifier(name) || len(alwaysQuote) > 0
 }
 
 // WriteByte writes byte to output SQL

@@ -161,7 +161,7 @@ import (
 
 var Actor = newActorTable()
 
-type ActorTable struct {
+type actorTable struct {
 	postgres.Table
 
 	//Columns
@@ -174,25 +174,38 @@ type ActorTable struct {
 	MutableColumns postgres.ColumnList
 }
 
+type ActorTable struct {
+	actorTable
+
+	EXCLUDED actorTable
+}
+
 // creates new ActorTable with assigned alias
 func (a *ActorTable) AS(alias string) *ActorTable {
 	aliasTable := newActorTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newActorTable() *ActorTable {
+	return &ActorTable{
+		actorTable: newActorTableImpl("dvds", "actor"),
+		EXCLUDED:   newActorTableImpl("", "excluded"),
+	}
+}
+
+func newActorTableImpl(schemaName, tableName string) actorTable {
 	var (
 		ActorIDColumn    = postgres.IntegerColumn("actor_id")
 		FirstNameColumn  = postgres.StringColumn("first_name")
 		LastNameColumn   = postgres.StringColumn("last_name")
 		LastUpdateColumn = postgres.TimestampColumn("last_update")
+		allColumns       = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
+		mutableColumns   = postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
 	)
 
-	return &ActorTable{
-		Table: postgres.NewTable("dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
+	return actorTable{
+		Table: postgres.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		ActorID:    ActorIDColumn,
@@ -200,8 +213,8 @@ func newActorTable() *ActorTable {
 		LastName:   LastNameColumn,
 		LastUpdate: LastUpdateColumn,
 
-		AllColumns:     postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn},
-		MutableColumns: postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `
@@ -230,7 +243,7 @@ import (
 
 var ActorInfo = newActorInfoTable()
 
-type ActorInfoTable struct {
+type actorInfoTable struct {
 	postgres.Table
 
 	//Columns
@@ -243,25 +256,38 @@ type ActorInfoTable struct {
 	MutableColumns postgres.ColumnList
 }
 
+type ActorInfoTable struct {
+	actorInfoTable
+
+	EXCLUDED actorInfoTable
+}
+
 // creates new ActorInfoTable with assigned alias
 func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
 	aliasTable := newActorInfoTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newActorInfoTable() *ActorInfoTable {
+	return &ActorInfoTable{
+		actorInfoTable: newActorInfoTableImpl("dvds", "actor_info"),
+		EXCLUDED:       newActorInfoTableImpl("", "excluded"),
+	}
+}
+
+func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
 	var (
 		ActorIDColumn   = postgres.IntegerColumn("actor_id")
 		FirstNameColumn = postgres.StringColumn("first_name")
 		LastNameColumn  = postgres.StringColumn("last_name")
 		FilmInfoColumn  = postgres.StringColumn("film_info")
+		allColumns      = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
+		mutableColumns  = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 	)
 
-	return &ActorInfoTable{
-		Table: postgres.NewTable("dvds", "actor_info", ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+	return actorInfoTable{
+		Table: postgres.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		ActorID:   ActorIDColumn,
@@ -269,8 +295,8 @@ func newActorInfoTable() *ActorInfoTable {
 		LastName:  LastNameColumn,
 		FilmInfo:  FilmInfoColumn,
 
-		AllColumns:     postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
-		MutableColumns: postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `
@@ -422,7 +448,7 @@ import (
 
 var AllTypes = newAllTypesTable()
 
-type AllTypesTable struct {
+type allTypesTable struct {
 	postgres.Table
 
 	//Columns
@@ -492,16 +518,27 @@ type AllTypesTable struct {
 	MutableColumns postgres.ColumnList
 }
 
+type AllTypesTable struct {
+	allTypesTable
+
+	EXCLUDED allTypesTable
+}
+
 // creates new AllTypesTable with assigned alias
 func (a *AllTypesTable) AS(alias string) *AllTypesTable {
 	aliasTable := newAllTypesTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newAllTypesTable() *AllTypesTable {
+	return &AllTypesTable{
+		allTypesTable: newAllTypesTableImpl("test_sample", "all_types"),
+		EXCLUDED:      newAllTypesTableImpl("", "excluded"),
+	}
+}
+
+func newAllTypesTableImpl(schemaName, tableName string) allTypesTable {
 	var (
 		SmallIntPtrColumn          = postgres.IntegerColumn("small_int_ptr")
 		SmallIntColumn             = postgres.IntegerColumn("small_int")
@@ -564,10 +601,12 @@ func newAllTypesTable() *AllTypesTable {
 		JsonbArrayColumn           = postgres.StringColumn("jsonb_array")
 		TextMultiDimArrayPtrColumn = postgres.StringColumn("text_multi_dim_array_ptr")
 		TextMultiDimArrayColumn    = postgres.StringColumn("text_multi_dim_array")
+		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
+		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
 	)
 
-	return &AllTypesTable{
-		Table: postgres.NewTable("test_sample", "all_types", SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn),
+	return allTypesTable{
+		Table: postgres.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		SmallIntPtr:          SmallIntPtrColumn,
@@ -632,8 +671,8 @@ func newAllTypesTable() *AllTypesTable {
 		TextMultiDimArrayPtr: TextMultiDimArrayPtrColumn,
 		TextMultiDimArray:    TextMultiDimArrayColumn,
 
-		AllColumns:     postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn},
-		MutableColumns: postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `

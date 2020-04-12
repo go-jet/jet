@@ -7,6 +7,7 @@ import (
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -221,6 +222,10 @@ FROM test_sample.person;
 
 func TestSelecSelfJoin1(t *testing.T) {
 
+	// clean up
+	_, err := Employee.DELETE().WHERE(Employee.EmployeeID.GT(Int(100))).Exec(db)
+	require.NoError(t, err)
+
 	var expectedSQL = `
 SELECT employee.employee_id AS "employee.employee_id",
      employee.first_name AS "employee.first_name",
@@ -256,7 +261,7 @@ ORDER BY employee.employee_id;
 		Manager *Manager
 	}
 
-	err := query.Query(db, &dest)
+	err = query.Query(db, &dest)
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(dest), 8)

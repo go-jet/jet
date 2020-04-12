@@ -58,7 +58,7 @@ func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface
 
 	queryData := &SQLBuilder{Dialect: s.dialect}
 
-	s.parent.serialize(s.statementType, queryData, noWrap)
+	s.parent.serialize(s.statementType, queryData, NoWrap)
 
 	query, args = queryData.finalize()
 	return
@@ -67,7 +67,7 @@ func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface
 func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
 
-	s.parent.serialize(s.statementType, sqlBuilder, noWrap)
+	s.parent.serialize(s.statementType, sqlBuilder, NoWrap)
 
 	query, _ = sqlBuilder.finalize()
 	return
@@ -157,16 +157,16 @@ func (s *statementImpl) projections() ProjectionList {
 
 func (s *statementImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 
-	if !contains(options, noWrap) {
+	if !contains(options, NoWrap) {
 		out.WriteString("(")
 		out.IncreaseIdent()
 	}
 
 	for _, clause := range s.Clauses {
-		clause.Serialize(statement, out)
+		clause.Serialize(statement, out, FallTrough(options)...)
 	}
 
-	if !contains(options, noWrap) {
+	if !contains(options, NoWrap) {
 		out.DecreaseIdent()
 		out.NewLine()
 		out.WriteString(")")

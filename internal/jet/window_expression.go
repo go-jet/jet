@@ -17,7 +17,7 @@ func (w *commonWindowImpl) serialize(statement StatementType, out *SQLBuilder, o
 	w.expression.serialize(statement, out)
 	if w.window != nil {
 		out.WriteString("OVER")
-		w.window.serialize(statement, out)
+		w.window.serialize(statement, out, FallTrough(options)...)
 	}
 }
 
@@ -49,7 +49,7 @@ func (f *windowExpressionImpl) OVER(window ...Window) Expression {
 }
 
 func (f *windowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out)
+	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
 }
 
 // -----------------------------------------------------
@@ -80,7 +80,7 @@ func (f *floatWindowExpressionImpl) OVER(window ...Window) FloatExpression {
 }
 
 func (f *floatWindowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out)
+	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
 }
 
 // ------------------------------------------------
@@ -111,7 +111,7 @@ func (f *integerWindowExpressionImpl) OVER(window ...Window) IntegerExpression {
 }
 
 func (f *integerWindowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out)
+	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
 }
 
 // ------------------------------------------------
@@ -142,5 +142,5 @@ func (f *boolWindowExpressionImpl) OVER(window ...Window) BoolExpression {
 }
 
 func (f *boolWindowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out)
+	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
 }

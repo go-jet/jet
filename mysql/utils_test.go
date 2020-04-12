@@ -59,15 +59,15 @@ var table3 = NewTable(
 	table3StrCol)
 
 func assertSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
-	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
+	testutils.AssertSerialize(t, Dialect, clause, query, args...)
 }
 
 func assertDebugSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
-	testutils.AssertDebugClauseSerialize(t, Dialect, clause, query, args...)
+	testutils.AssertDebugSerialize(t, Dialect, clause, query, args...)
 }
 
-func assertClauseSerializeErr(t *testing.T, clause jet.Serializer, errString string) {
-	testutils.AssertClauseSerializeErr(t, Dialect, clause, errString)
+func assertSerializeErr(t *testing.T, clause jet.Serializer, errString string) {
+	testutils.AssertSerializeErr(t, Dialect, clause, errString)
 }
 
 func assertProjectionSerialize(t *testing.T, projection jet.Projection, query string, args ...interface{}) {

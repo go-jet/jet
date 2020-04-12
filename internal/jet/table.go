@@ -19,17 +19,15 @@ type Table interface {
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, column ColumnExpression, columns ...ColumnExpression) SerializerTable {
-
-	columnList := append([]ColumnExpression{column}, columns...)
+func NewTable(schemaName, name string, columns ...ColumnExpression) SerializerTable {
 
 	t := tableImpl{
 		schemaName: schemaName,
 		name:       name,
-		columnList: columnList,
+		columnList: columns,
 	}
 
-	for _, c := range columnList {
+	for _, c := range columns {
 		c.setTableName(name)
 	}
 
@@ -156,7 +154,7 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		panic("jet: left hand side of join operation is nil table")
 	}
 
-	t.lhs.serialize(statement, out)
+	t.lhs.serialize(statement, out, FallTrough(options)...)
 
 	out.NewLine()
 
