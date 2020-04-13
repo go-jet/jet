@@ -197,15 +197,12 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 }
 
 // AssertFileContent check if file content at filePath contains expectedContent text.
-func AssertFileContent(t *testing.T, filePath string, contentBegin string, expectedContent string) {
+func AssertFileContent(t *testing.T, filePath string, expectedContent string) {
 	enumFileData, err := ioutil.ReadFile(filePath)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	beginIndex := bytes.Index(enumFileData, []byte(contentBegin))
-
-	//AssertDeepEqual(t, string(enumFileData[beginIndex:]), expectedContent)
-	require.Equal(t, string(enumFileData[beginIndex:]), expectedContent)
+	require.Equal(t, "\n"+string(enumFileData), expectedContent)
 }
 
 // AssertFileNamesEqual check if all filesInfos are contained in fileNames
