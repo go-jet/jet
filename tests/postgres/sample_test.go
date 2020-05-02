@@ -28,7 +28,7 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	err := query.Query(db, &result)
 	assert.NoError(t, err)
 	assert.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
-	testutils.AssertDeepEqual(t, result.UUIDPtr, UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 }
 
 func TestUUIDComplex(t *testing.T) {
@@ -280,7 +280,7 @@ ORDER BY employee.employee_id;
 		FirstName:      "Salley",
 		LastName:       "Lester",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      Int32Ptr(3),
+		ManagerID:      testutils.Int32Ptr(3),
 	})
 }
 
@@ -322,7 +322,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColumnName5: "Doe",
 		WeirdColumnName6: "Doe",
 		WeirdColumnName7: "Doe",
-		Weirdcolumnname8: StringPtr("Doe"),
+		Weirdcolumnname8: testutils.StringPtr("Doe"),
 		WeirdColName9:    "Doe",
 		WeirdColuName10:  "Doe",
 		WeirdColuName11:  "Doe",

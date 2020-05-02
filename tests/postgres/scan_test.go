@@ -505,10 +505,10 @@ func TestScanToSlice(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, len(dest), 2)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
-			testutils.AssertDeepEqual(t, dest[0].IDs, []*int32{Int32Ptr(1), Int32Ptr(2), Int32Ptr(3), Int32Ptr(4),
-				Int32Ptr(5), Int32Ptr(6), Int32Ptr(7), Int32Ptr(8)})
+			testutils.AssertDeepEqual(t, dest[0].IDs, []*int32{testutils.Int32Ptr(1), testutils.Int32Ptr(2), testutils.Int32Ptr(3), testutils.Int32Ptr(4),
+				testutils.Int32Ptr(5), testutils.Int32Ptr(6), testutils.Int32Ptr(7), testutils.Int32Ptr(8)})
 			testutils.AssertDeepEqual(t, dest[1].Film, film2)
-			testutils.AssertDeepEqual(t, dest[1].IDs, []*int32{Int32Ptr(9), Int32Ptr(10)})
+			testutils.AssertDeepEqual(t, dest[1].IDs, []*int32{testutils.Int32Ptr(9), testutils.Int32Ptr(10)})
 		})
 
 		t.Run("complex struct 1", func(t *testing.T) {
@@ -726,10 +726,10 @@ func TestStructScanAllNull(t *testing.T) {
 var address256 = model.Address{
 	AddressID:  256,
 	Address:    "1497 Yuzhou Drive",
-	Address2:   StringPtr(""),
+	Address2:   testutils.StringPtr(""),
 	District:   "England",
 	CityID:     312,
-	PostalCode: StringPtr("3433"),
+	PostalCode: testutils.StringPtr("3433"),
 	Phone:      "246810237916",
 	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 09:45:30", 0),
 }
@@ -737,10 +737,10 @@ var address256 = model.Address{
 var addres517 = model.Address{
 	AddressID:  517,
 	Address:    "548 Uruapan Street",
-	Address2:   StringPtr(""),
+	Address2:   testutils.StringPtr(""),
 	District:   "Ontario",
 	CityID:     312,
-	PostalCode: StringPtr("35653"),
+	PostalCode: testutils.StringPtr("35653"),
 	Phone:      "879347453467",
 	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 09:45:30", 0),
 }
@@ -750,12 +750,12 @@ var customer256 = model.Customer{
 	StoreID:    2,
 	FirstName:  "Mattie",
 	LastName:   "Hoffman",
-	Email:      StringPtr("mattie.hoffman@sakilacustomer.org"),
+	Email:      testutils.StringPtr("mattie.hoffman@sakilacustomer.org"),
 	AddressID:  256,
 	Activebool: true,
 	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
-	Active:     Int32Ptr(1),
+	Active:     testutils.Int32Ptr(1),
 }
 
 var customer512 = model.Customer{
@@ -763,12 +763,12 @@ var customer512 = model.Customer{
 	StoreID:    1,
 	FirstName:  "Cecil",
 	LastName:   "Vines",
-	Email:      StringPtr("cecil.vines@sakilacustomer.org"),
+	Email:      testutils.StringPtr("cecil.vines@sakilacustomer.org"),
 	AddressID:  517,
 	Activebool: true,
 	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 0),
-	Active:     Int32Ptr(1),
+	Active:     testutils.Int32Ptr(1),
 }
 
 var countryUk = model.Country{
@@ -801,32 +801,32 @@ var inventory2 = model.Inventory{
 var film1 = model.Film{
 	FilmID:          1,
 	Title:           "Academy Dinosaur",
-	Description:     StringPtr("A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies"),
-	ReleaseYear:     Int32Ptr(2006),
+	Description:     testutils.StringPtr("A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies"),
+	ReleaseYear:     testutils.Int32Ptr(2006),
 	LanguageID:      1,
 	RentalDuration:  6,
 	RentalRate:      0.99,
-	Length:          Int16Ptr(86),
+	Length:          testutils.Int16Ptr(86),
 	ReplacementCost: 20.99,
 	Rating:          &pgRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-	SpecialFeatures: StringPtr("{\"Deleted Scenes\",\"Behind the Scenes\"}"),
+	SpecialFeatures: testutils.StringPtr("{\"Deleted Scenes\",\"Behind the Scenes\"}"),
 	Fulltext:        "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 }
 
 var film2 = model.Film{
 	FilmID:          2,
 	Title:           "Ace Goldfinger",
-	Description:     StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
-	ReleaseYear:     Int32Ptr(2006),
+	Description:     testutils.StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
+	ReleaseYear:     testutils.Int32Ptr(2006),
 	LanguageID:      1,
 	RentalDuration:  3,
 	RentalRate:      4.99,
-	Length:          Int16Ptr(48),
+	Length:          testutils.Int16Ptr(48),
 	ReplacementCost: 12.99,
 	Rating:          &gRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-	SpecialFeatures: StringPtr(`{Trailers,"Deleted Scenes"}`),
+	SpecialFeatures: testutils.StringPtr(`{Trailers,"Deleted Scenes"}`),
 	Fulltext:        `'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14`,
 }
 

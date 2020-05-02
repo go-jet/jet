@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/utils"
 	"github.com/go-jet/jet/qrm"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
@@ -14,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -223,4 +225,81 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
 func AssertDeepEqual(t *testing.T, actual, expected interface{}, msg ...string) {
 	assert.True(t, cmp.Equal(actual, expected), msg)
+}
+
+// BoolPtr returns address of bool parameter
+func BoolPtr(b bool) *bool {
+	return &b
+}
+
+// Int8Ptr returns address of int8 parameter
+func Int8Ptr(i int8) *int8 {
+	return &i
+}
+
+// UInt8Ptr returns address of uint8 parameter
+func UInt8Ptr(i uint8) *uint8 {
+	return &i
+}
+
+// Int16Ptr returns address of int16 parameter
+func Int16Ptr(i int16) *int16 {
+	return &i
+}
+
+// UInt16Ptr returns address of uint16 parameter
+func UInt16Ptr(i uint16) *uint16 {
+	return &i
+}
+
+// Int32Ptr returns address of int32 parameter
+func Int32Ptr(i int32) *int32 {
+	return &i
+}
+
+// UInt32Ptr returns address of uint32 parameter
+func UInt32Ptr(i uint32) *uint32 {
+	return &i
+}
+
+// Int64Ptr returns address of int64 parameter
+func Int64Ptr(i int64) *int64 {
+	return &i
+}
+
+// UInt64Ptr returns address of uint64 parameter
+func UInt64Ptr(i uint64) *uint64 {
+	return &i
+}
+
+// StringPtr returns address of string parameter
+func StringPtr(s string) *string {
+	return &s
+}
+
+// TimePtr returns address of time.Time parameter
+func TimePtr(t time.Time) *time.Time {
+	return &t
+}
+
+// ByteArrayPtr returns address of []byte parameter
+func ByteArrayPtr(arr []byte) *[]byte {
+	return &arr
+}
+
+// Float32Ptr returns address of float32 parameter
+func Float32Ptr(f float32) *float32 {
+	return &f
+}
+
+// Float64Ptr returns address of float64 parameter
+func Float64Ptr(f float64) *float64 {
+	return &f
+}
+
+// UUIDPtr returns address of uuid.UUID
+func UUIDPtr(u string) *uuid.UUID {
+	newUUID := uuid.MustParse(u)
+
+	return &newUUID
 }

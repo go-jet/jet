@@ -154,7 +154,7 @@ WHERE link.id = 0;
 `
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
-	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
+	testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
 }
 
 func TestUpdateWithModelData(t *testing.T) {
@@ -241,7 +241,7 @@ WHERE link.id = 201;
 `
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
 
-	assertExecErr(t, stmt, "pq: number of columns does not match number of values")
+	testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
 }
 
 func TestUpdateQueryContext(t *testing.T) {

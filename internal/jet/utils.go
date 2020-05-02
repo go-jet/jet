@@ -59,7 +59,7 @@ func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 			panic("jet: nil column in columns list")
 		}
 
-		out.WriteString(col.Name())
+		out.WriteIdentifier(col.Name())
 	}
 }
 

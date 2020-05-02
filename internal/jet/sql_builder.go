@@ -163,8 +163,15 @@ func argToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(pq.FormatTimestamp(bindVal)))
 	default:
+		if strBindValue, ok := bindVal.(toStringInterface); ok {
+			return stringQuote(strBindValue.String())
+		}
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
+}
+
+type toStringInterface interface {
+	String() string
 }
 
 func integerTypesToString(value interface{}) string {
