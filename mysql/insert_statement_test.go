@@ -133,3 +133,50 @@ VALUES (DEFAULT, ?);
 
 	assertStatementSql(t, stmt, expectedSQL, "two")
 }
+
+func TestInsertOnDuplicateKeyUpdate(t *testing.T) {
+	stmt := func() InsertStatement {
+		return table1.INSERT(table1Col1, table1ColFloat).
+			VALUES(DEFAULT, "two")
+	}
+
+	t.Run("empty list", func(t *testing.T) {
+		stmt := stmt().ON_DUPLICATE_KEY_UPDATE()
+		assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?);
+`, "two")
+	})
+
+	t.Run("one set", func(t *testing.T) {
+		stmt := stmt().ON_DUPLICATE_KEY_UPDATE(table1ColFloat.SET(Float(11.1)))
+		assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?)
+ON DUPLICATE KEY UPDATE col_float = ?;
+`, "two", 11.1)
+	})
+
+	t.Run("all types set", func(t *testing.T) {
+		stmt := stmt().ON_DUPLICATE_KEY_UPDATE(
+			table1ColBool.SET(Bool(true)),
+			table1ColInt.SET(Int(11)),
+			table1ColFloat.SET(Float(11.1)),
+			table1ColString.SET(String("str")),
+			table1ColTime.SET(Time(11, 23, 11)),
+			table1ColTimestamp.SET(Timestamp(2020, 1, 22, 3, 4, 5)),
+			table1ColDate.SET(Date(2020, 12, 1)),
+		)
+		assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?)
+ON DUPLICATE KEY UPDATE col_bool = ?,
+                        col_int = ?,
+                        col_float = ?,
+                        col_string = ?,
+                        col_time = CAST(? AS TIME),
+                        col_timestamp = TIMESTAMP(?),
+                        col_date = CAST(? AS DATE);
+`, "two", true, int64(11), 11.1, "str", "11:23:11", "2020-01-22 03:04:05", "2020-12-01")
+	})
+}

@@ -24,12 +24,12 @@ import (
 func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int64) {
 	res, err := stmt.Exec(db)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	rows, err := res.RowsAffected()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	if len(rowsAffected) > 0 {
-		assert.Equal(t, rows, rowsAffected[0])
+		require.Equal(t, rows, rowsAffected[0])
 	}
 }
 
@@ -224,7 +224,7 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
 func AssertDeepEqual(t *testing.T, actual, expected interface{}, msg ...string) {
-	assert.True(t, cmp.Equal(actual, expected), msg)
+	require.True(t, cmp.Equal(actual, expected), msg)
 }
 
 // BoolPtr returns address of bool parameter

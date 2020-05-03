@@ -7,6 +7,8 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"math/rand"
 	"testing"
 	"time"
 )
@@ -246,6 +248,46 @@ INSERT INTO test_sample.link (url, name) (
 
 	assert.NoError(t, err)
 	assert.Equal(t, len(youtubeLinks), 2)
+}
+
+func TestInsertOnDuplicateKey(t *testing.T) {
+	randId := rand.Int31()
+
+	stmt := Link.INSERT().
+		VALUES(randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		VALUES(randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+		ON_DUPLICATE_KEY_UPDATE(
+			Link.ID.SET(Link.ID.ADD(Int(11))),
+			Link.Name.SET(String("PostgreSQL Tutorial 2")),
+		)
+
+	testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.link
+VALUES (?, ?, ?, DEFAULT),
+       (?, ?, ?, DEFAULT)
+ON DUPLICATE KEY UPDATE id = (id + ?),
+                        name = ?;
+`, randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		int64(11), "PostgreSQL Tutorial 2")
+
+	testutils.AssertExec(t, stmt, db, 3)
+
+	newLinks := []model.Link{}
+
+	err := SELECT(Link.AllColumns).
+		FROM(Link).
+		WHERE(Link.ID.EQ(Int(int64(randId)).ADD(Int(11)))).
+		Query(db, &newLinks)
+
+	require.NoError(t, err)
+	require.Len(t, newLinks, 1)
+	require.Equal(t, newLinks[0], model.Link{
+		ID:          randId + 11,
+		URL:         "http://www.postgresqltutorial.com",
+		Name:        "PostgreSQL Tutorial 2",
+		Description: nil,
+	})
 }
 
 func TestInsertWithQueryContext(t *testing.T) {

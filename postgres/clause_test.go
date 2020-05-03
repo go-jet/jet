@@ -21,11 +21,12 @@ ON CONFLICT (col_bool) DO NOTHING`)
 ON CONFLICT (col_bool) ON CONSTRAINT table_pkey DO NOTHING`)
 
 	onConflict = &onConflictClause{indexExpressions: ColumnList{table1ColBool, table2ColFloat}}
-	onConflict.WHERE(table2ColFloat.ADD(table1ColInt).GT(table1ColFloat)).DO_UPDATE(
-		SET(table1ColBool, Bool(true)).
-			SET(table1ColInt, Int(1)).
-			WHERE(table2ColFloat.GT(Float(11.1))),
-	)
+	onConflict.WHERE(table2ColFloat.ADD(table1ColInt).GT(table1ColFloat)).
+		DO_UPDATE(
+			SET(table1ColBool.SET(Bool(true)),
+				table1ColInt.SET(Int(11))).
+				WHERE(table2ColFloat.GT(Float(11.1))),
+		)
 	assertClauseSerialize(t, onConflict, `
 ON CONFLICT (col_bool, col_float) WHERE (col_float + col_int) > col_float DO UPDATE
        SET col_bool = $1,

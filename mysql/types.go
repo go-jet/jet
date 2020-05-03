@@ -10,3 +10,6 @@ type Projection = jet.Projection
 
 // ProjectionList can be used to create conditional constructed projection list.
 type ProjectionList = jet.ProjectionList
+
+// ColumnAssigment is interface wrapper around column assigment
+type ColumnAssigment = jet.ColumnAssigment

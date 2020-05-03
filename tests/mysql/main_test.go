@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"flag"
 	"github.com/go-jet/jet/tests/dbconfig"
+	"math/rand"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -28,6 +30,7 @@ func sourceIsMariaDB() bool {
 }
 
 func TestMain(m *testing.M) {
+	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
 	var err error

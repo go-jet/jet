@@ -991,6 +991,53 @@ func TestAllTypesInsert(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestAllTypesInsertOnDuplicateKeyUpdate(t *testing.T) {
+	tx, err := db.Begin()
+	require.NoError(t, err)
+
+	toInsert := model.AllTypes{
+		Boolean:   true,
+		Integer:   124,
+		Float:     45.67,
+		Blob:      []byte("blob"),
+		Text:      "text",
+		JSON:      "{}",
+		Time:      time.Now(),
+		Timestamp: time.Now(),
+		Date:      time.Now(),
+	}
+
+	stmt := AllTypes.INSERT(
+		AllTypes.Boolean,
+		AllTypes.Integer,
+		AllTypes.Float,
+		AllTypes.Blob,
+		AllTypes.Text,
+		AllTypes.JSON,
+		AllTypes.Time,
+		AllTypes.Timestamp,
+		AllTypes.Date,
+	).
+		MODEL(toInsert).
+		ON_DUPLICATE_KEY_UPDATE(
+			AllTypes.Boolean.SET(Bool(false)),
+			AllTypes.Integer.SET(Int(4)),
+			AllTypes.Float.SET(Float(0.67)),
+			AllTypes.Text.SET(String("new text")),
+			AllTypes.Time.SET(TimeT(time.Now())),
+			AllTypes.Timestamp.SET(TimestampT(time.Now())),
+			AllTypes.Date.SET(DateT(time.Now())),
+		)
+
+	fmt.Println(stmt.DebugSql())
+
+	_, err = stmt.Exec(tx)
+	assert.NoError(t, err)
+
+	err = tx.Rollback()
+	require.NoError(t, err)
+}
+
 var toInsert = model.AllTypes{
 	Boolean:       false,
 	BooleanPtr:    testutils.BoolPtr(true),

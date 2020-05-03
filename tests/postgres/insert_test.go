@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
@@ -134,8 +133,10 @@ ON CONFLICT ON CONSTRAINT employee_pkey DO NOTHING;
 			VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 			VALUES(200, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 			ON_CONFLICT(Link.ID).DO_UPDATE(
-			SET(Link.ID, Link.EXCLUDED.ID).
-				SET(Link.URL, "http://www.postgresqltutorial2.com"),
+			SET(
+				Link.ID.SET(Link.EXCLUDED.ID),
+				Link.URL.SET(String("http://www.postgresqltutorial2.com")),
+			),
 		).
 			RETURNING(Link.AllColumns)
 
@@ -161,8 +162,10 @@ RETURNING link.id AS "link.id",
 			VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 			VALUES(200, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 			ON_CONFLICT().ON_CONSTRAINT("link_pkey").DO_UPDATE(
-			SET(Link.ID, Link.EXCLUDED.ID).
-				SET(Link.URL, "http://www.postgresqltutorial2.com"),
+			SET(
+				Link.ID.SET(Link.EXCLUDED.ID),
+				Link.URL.SET(String("http://www.postgresqltutorial2.com")),
+			),
 		).
 			RETURNING(Link.AllColumns)
 
@@ -188,9 +191,13 @@ RETURNING link.id AS "link.id",
 		stmt := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).
 			VALUES(100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
 			ON_CONFLICT(Link.ID).WHERE(Link.ID.MUL(Int(2)).GT(Int(10))).DO_UPDATE(
-			SET(Link.ID, SELECT(MAXi(Link.ID).ADD(Int(1))).FROM(Link)).
-				SET(ColumnList{Link.Name, Link.Description}, jet.ROW(Link.EXCLUDED.Name, String("new description"))).
-				WHERE(Link.Description.IS_NOT_NULL()),
+			SET(
+				Link.ID.SET(
+					IntExp(SELECT(MAXi(Link.ID).ADD(Int(1))).
+						FROM(Link)),
+				),
+				ColumnList{Link.Name, Link.Description}.SET(ROW(Link.EXCLUDED.Name, String("new description"))),
+			).WHERE(Link.Description.IS_NOT_NULL()),
 		)
 
 		testutils.AssertDebugStatementSql(t, stmt, `

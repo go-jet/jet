@@ -153,10 +153,10 @@ func TestInsert_ON_CONFLICT(t *testing.T) {
 		VALUES("1", "2").
 		VALUES("theta", "beta").
 		ON_CONFLICT(table1ColBool).WHERE(table1ColBool.IS_NOT_FALSE()).DO_UPDATE(
-		SET(table1ColBool, "12").
-			SET(table2ColInt, 1).
-			SET(ColumnList{table1Col1, table1ColBool}, jet.ROW(Int(2), String("two"))).
-			WHERE(table1Col1.GT(Int(2))),
+		SET(table1ColBool.SET(Bool(true)),
+			table2ColInt.SET(Int(1)),
+			ColumnList{table1Col1, table1ColBool}.SET(jet.ROW(Int(2), String("two"))),
+		).WHERE(table1Col1.GT(Int(2))),
 	).
 		RETURNING(table1Col1, table1ColBool)
 
@@ -166,7 +166,7 @@ VALUES ('one', 'two'),
        ('1', '2'),
        ('theta', 'beta')
 ON CONFLICT (col_bool) WHERE col_bool IS NOT FALSE DO UPDATE
-       SET col_bool = '12',
+       SET col_bool = TRUE,
            col_int = 1,
            (col1, col_bool) = ROW(2, 'two')
        WHERE table1.col1 > 2
@@ -180,10 +180,10 @@ func TestInsert_ON_CONFLICT_ON_CONSTRAINT(t *testing.T) {
 		VALUES("one", "two").
 		VALUES("1", "2").
 		ON_CONFLICT().ON_CONSTRAINT("idk_primary_key").DO_UPDATE(
-		SET(table1ColBool, "12").
-			SET(table2ColInt, 1).
-			SET(ColumnList{table1Col1, table1ColBool}, jet.ROW(Int(2), String("two"))).
-			WHERE(table1Col1.GT(Int(2))),
+		SET(table1ColBool.SET(Bool(false)),
+			table2ColInt.SET(Int(1)),
+			ColumnList{table1Col1, table1ColBool}.SET(jet.ROW(Int(2), String("two"))),
+		).WHERE(table1Col1.GT(Int(2))),
 	).
 		RETURNING(table1Col1, table1ColBool)
 
@@ -192,7 +192,7 @@ INSERT INTO db.table1 (col1, col_bool)
 VALUES ('one', 'two'),
        ('1', '2')
 ON CONFLICT ON CONSTRAINT idk_primary_key DO UPDATE
-       SET col_bool = '12',
+       SET col_bool = FALSE,
            col_int = 1,
            (col1, col_bool) = ROW(2, 'two')
        WHERE table1.col1 > 2
