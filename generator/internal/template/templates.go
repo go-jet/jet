@@ -25,6 +25,63 @@ import (
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
 
+type {{.GoStructName}} struct {
+	{{dialect.PackageName}}.Table
+	
+	//Columns
+{{- range .Columns}}
+	{{ToGoIdentifier .Name}} {{dialect.PackageName}}.Column{{.SqlBuilderColumnType}}
+{{- end}}
+
+	AllColumns     {{dialect.PackageName}}.ColumnList
+	MutableColumns {{dialect.PackageName}}.ColumnList
+}
+
+// AS creates new {{.GoStructName}} with assigned alias
+func (a *{{.GoStructName}}) AS(alias string) {{.GoStructName}} {
+	aliasTable := new{{.GoStructName}}()
+	aliasTable.Table.AS(alias)
+	return aliasTable
+}
+
+func new{{.GoStructName}}() {{.GoStructName}} {
+	var (
+	{{- range .Columns}}
+		{{ToGoIdentifier .Name}}Column = {{dialect.PackageName}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
+	{{- end}}
+		allColumns     = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} }
+		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} }
+	)
+
+	return {{.GoStructName}}{
+		Table: {{dialect.PackageName}}.NewTable("{{.SchemaName}}", "{{.Name}}", allColumns...),
+
+		//Columns
+{{- range .Columns}}
+		{{ToGoIdentifier .Name}}: {{ToGoIdentifier .Name}}Column,
+{{- end}}
+
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
+	}
+}
+`
+
+var tablePostgreSQLBuilderTemplate = ` 
+{{define "column-list" -}}
+	{{- range $i, $c := . }}
+		{{- if gt $i 0 }}, {{end}}{{ToGoIdentifier $c.Name}}Column
+	{{- end}}
+{{- end}}
+
+package {{param "package"}}
+
+import (
+	"github.com/go-jet/jet/{{dialect.PackageName}}"
+)
+
+var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
+
 type {{.GoStructImplName}} struct {
 	{{dialect.PackageName}}.Table
 	
@@ -43,7 +100,7 @@ type {{.GoStructName}} struct {
 	EXCLUDED {{.GoStructImplName}}
 }
 
-// creates new {{.GoStructName}} with assigned alias
+// AS creates new {{.GoStructName}} with assigned alias
 func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
 	aliasTable.Table.AS(alias)
@@ -78,7 +135,6 @@ func new{{.GoStructName}}Impl(schemaName, tableName string) {{.GoStructImplName}
 		MutableColumns: mutableColumns,
 	}
 }
-
 `
 
 var tableModelTemplate = `package model

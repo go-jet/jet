@@ -194,7 +194,7 @@ type ActorTable struct {
 	EXCLUDED actorTable
 }
 
-// creates new ActorTable with assigned alias
+// AS creates new ActorTable with assigned alias
 func (a *ActorTable) AS(alias string) *ActorTable {
 	aliasTable := newActorTable()
 	aliasTable.Table.AS(alias)
@@ -290,7 +290,7 @@ type ActorInfoTable struct {
 	EXCLUDED actorInfoTable
 }
 
-// creates new ActorInfoTable with assigned alias
+// AS creates new ActorInfoTable with assigned alias
 func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
 	aliasTable := newActorInfoTable()
 	aliasTable.Table.AS(alias)
@@ -580,7 +580,7 @@ type AllTypesTable struct {
 	EXCLUDED allTypesTable
 }
 
-// creates new AllTypesTable with assigned alias
+// AS creates new AllTypesTable with assigned alias
 func (a *AllTypesTable) AS(alias string) *AllTypesTable {
 	aliasTable := newAllTypesTable()
 	aliasTable.Table.AS(alias)

@@ -142,7 +142,7 @@ import (
 
 var Actor = newActorTable()
 
-type actorTable struct {
+type ActorTable struct {
 	mysql.Table
 
 	//Columns
@@ -155,27 +155,14 @@ type actorTable struct {
 	MutableColumns mysql.ColumnList
 }
 
-type ActorTable struct {
-	actorTable
-
-	EXCLUDED actorTable
-}
-
-// creates new ActorTable with assigned alias
-func (a *ActorTable) AS(alias string) *ActorTable {
+// AS creates new ActorTable with assigned alias
+func (a *ActorTable) AS(alias string) ActorTable {
 	aliasTable := newActorTable()
 	aliasTable.Table.AS(alias)
 	return aliasTable
 }
 
-func newActorTable() *ActorTable {
-	return &ActorTable{
-		actorTable: newActorTableImpl("dvds", "actor"),
-		EXCLUDED:   newActorTableImpl("", "excluded"),
-	}
-}
-
-func newActorTableImpl(schemaName, tableName string) actorTable {
+func newActorTable() ActorTable {
 	var (
 		ActorIDColumn    = mysql.IntegerColumn("actor_id")
 		FirstNameColumn  = mysql.StringColumn("first_name")
@@ -185,8 +172,8 @@ func newActorTableImpl(schemaName, tableName string) actorTable {
 		mutableColumns   = mysql.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
 	)
 
-	return actorTable{
-		Table: mysql.NewTable(schemaName, tableName, allColumns...),
+	return ActorTable{
+		Table: mysql.NewTable("dvds", "actor", allColumns...),
 
 		//Columns
 		ActorID:    ActorIDColumn,
@@ -238,7 +225,7 @@ import (
 
 var ActorInfo = newActorInfoTable()
 
-type actorInfoTable struct {
+type ActorInfoTable struct {
 	mysql.Table
 
 	//Columns
@@ -251,27 +238,14 @@ type actorInfoTable struct {
 	MutableColumns mysql.ColumnList
 }
 
-type ActorInfoTable struct {
-	actorInfoTable
-
-	EXCLUDED actorInfoTable
-}
-
-// creates new ActorInfoTable with assigned alias
-func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
+// AS creates new ActorInfoTable with assigned alias
+func (a *ActorInfoTable) AS(alias string) ActorInfoTable {
 	aliasTable := newActorInfoTable()
 	aliasTable.Table.AS(alias)
 	return aliasTable
 }
 
-func newActorInfoTable() *ActorInfoTable {
-	return &ActorInfoTable{
-		actorInfoTable: newActorInfoTableImpl("dvds", "actor_info"),
-		EXCLUDED:       newActorInfoTableImpl("", "excluded"),
-	}
-}
-
-func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
+func newActorInfoTable() ActorInfoTable {
 	var (
 		ActorIDColumn   = mysql.IntegerColumn("actor_id")
 		FirstNameColumn = mysql.StringColumn("first_name")
@@ -281,8 +255,8 @@ func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
 		mutableColumns  = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 	)
 
-	return actorInfoTable{
-		Table: mysql.NewTable(schemaName, tableName, allColumns...),
+	return ActorInfoTable{
+		Table: mysql.NewTable("dvds", "actor_info", allColumns...),
 
 		//Columns
 		ActorID:   ActorIDColumn,
