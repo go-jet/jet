@@ -16,14 +16,18 @@ type updateStatementImpl struct {
 	jet.SerializerStatement
 
 	Update jet.ClauseUpdate
-	Set    jet.ClauseSet
+	Set    jet.SetClause
+	SetNew jet.SetClauseNew
 	Where  jet.ClauseWhere
 }
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 	update := &updateStatementImpl{}
-	update.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
-		&update.Set, &update.Where)
+	update.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update,
+		&update.Update,
+		&update.Set,
+		&update.SetNew,
+		&update.Where)
 
 	update.Update.Table = table
 	update.Set.Columns = columns
@@ -33,7 +37,17 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 }
 
 func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {
-	u.Set.Values = jet.UnwindRowFromValues(value, values)
+	columnAssigment, isColumnAssigment := value.(ColumnAssigment)
+
+	if isColumnAssigment {
+		u.SetNew = []ColumnAssigment{columnAssigment}
+		for _, value := range values {
+			u.SetNew = append(u.SetNew, value.(ColumnAssigment))
+		}
+	} else {
+		u.Set.Values = jet.UnwindRowFromValues(value, values)
+	}
+
 	return u
 }
 

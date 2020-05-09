@@ -31,7 +31,7 @@ type readableTable interface {
 
 type writableTable interface {
 	INSERT(columns ...jet.Column) InsertStatement
-	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
+	UPDATE(columns ...jet.Column) UpdateStatement
 	DELETE() DeleteStatement
 	LOCK() LockStatement
 }
@@ -89,8 +89,8 @@ func (w *writableTableInterfaceImpl) INSERT(columns ...jet.Column) InsertStateme
 	return newInsertStatement(w.parent, jet.UnwidColumnList(columns))
 }
 
-func (w *writableTableInterfaceImpl) UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement {
-	return newUpdateStatement(w.parent, jet.UnwindColumns(column, columns...))
+func (w *writableTableInterfaceImpl) UPDATE(columns ...jet.Column) UpdateStatement {
+	return newUpdateStatement(w.parent, jet.UnwidColumnList(columns))
 }
 
 func (w *writableTableInterfaceImpl) DELETE() DeleteStatement {

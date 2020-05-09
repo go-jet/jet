@@ -8,7 +8,7 @@ type Table interface {
 	readableTable
 
 	INSERT(columns ...jet.Column) InsertStatement
-	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
+	UPDATE(columns ...jet.Column) UpdateStatement
 	DELETE() DeleteStatement
 	LOCK() LockStatement
 }
@@ -35,7 +35,7 @@ type readableTable interface {
 
 type joinSelectUpdateTable interface {
 	ReadableTable
-	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
+	UPDATE(columns ...jet.Column) UpdateStatement
 }
 
 // ReadableTable interface
@@ -98,8 +98,8 @@ func (t *tableImpl) INSERT(columns ...jet.Column) InsertStatement {
 	return newInsertStatement(t.parent, jet.UnwidColumnList(columns))
 }
 
-func (t *tableImpl) UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement {
-	return newUpdateStatement(t.parent, jet.UnwindColumns(column, columns...))
+func (t *tableImpl) UPDATE(columns ...jet.Column) UpdateStatement {
+	return newUpdateStatement(t.parent, jet.UnwidColumnList(columns))
 }
 
 func (t *tableImpl) DELETE() DeleteStatement {

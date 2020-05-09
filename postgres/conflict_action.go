@@ -20,7 +20,7 @@ type updateConflictActionImpl struct {
 	jet.Serializer
 
 	doUpdate jet.KeywordClause
-	set      jet.SetClause
+	set      jet.SetClauseNew
 	where    jet.ClauseWhere
 }
 

@@ -271,14 +271,17 @@ func (u *ClauseUpdate) Serialize(statementType StatementType, out *SQLBuilder, o
 	u.Table.serialize(statementType, out, FallTrough(options)...)
 }
 
-// ClauseSet struct
-type ClauseSet struct {
+// SetClause struct
+type SetClause struct {
 	Columns []Column
 	Values  []Serializer
 }
 
 // Serialize serializes clause into SQLBuilder
-func (s *ClauseSet) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (s *SetClause) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(s.Values) == 0 {
+		return
+	}
 	out.NewLine()
 	out.WriteString("SET")
 
@@ -289,7 +292,7 @@ func (s *ClauseSet) Serialize(statementType StatementType, out *SQLBuilder, opti
 	out.IncreaseIdent(4)
 	for i, column := range s.Columns {
 		if i > 0 {
-			out.WriteString(", ")
+			out.WriteString(",")
 			out.NewLine()
 		}
 
@@ -517,11 +520,14 @@ type SetPair struct {
 	Value  Serializer
 }
 
-// SetClause clause
-type SetClause []ColumnAssigment
+// SetClauseNew clause
+type SetClauseNew []ColumnAssigment
 
-// Serialize for SetClause
-func (s SetClause) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+// Serialize for SetClauseNew
+func (s SetClauseNew) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(s) == 0 {
+		return
+	}
 	out.NewLine()
 	out.WriteString("SET")
 	out.IncreaseIdent(4)

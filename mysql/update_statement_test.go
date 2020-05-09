@@ -23,7 +23,7 @@ WHERE table1.col_int >= ?;
 func TestUpdateWithValues(t *testing.T) {
 	expectedSQL := `
 UPDATE db.table1
-SET col_int = ?, 
+SET col_int = ?,
     col_float = ?
 WHERE table1.col_int >= ?;
 `

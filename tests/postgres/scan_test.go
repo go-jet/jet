@@ -12,7 +12,7 @@ import (
 	"testing"
 )
 
-var query = Inventory.
+var oneInventoryQuery = Inventory.
 	SELECT(Inventory.AllColumns).
 	LIMIT(1).
 	ORDER_BY(Inventory.InventoryID)
@@ -20,69 +20,69 @@ var query = Inventory.
 func TestScanToInvalidDestination(t *testing.T) {
 
 	t.Run("nil dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, nil, "jet: destination is nil")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, nil, "jet: destination is nil")
 	})
 
 	t.Run("struct dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("slice dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, []struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, []struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("slice of pointers to pointer dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, []**struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, []**struct{}{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("map dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, &map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, &map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("map dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, []map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, []map[string]string{}, "jet: destination has to be a pointer to slice or pointer to struct")
 	})
 
 	t.Run("map dest", func(t *testing.T) {
-		testutils.AssertQueryPanicErr(t, query, db, &[]map[string]string{}, "jet: unsupported slice element type")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, &[]map[string]string{}, "jet: unsupported slice element type")
 	})
 }
 
 func TestScanToValidDestination(t *testing.T) {
 	t.Run("pointer to struct", func(t *testing.T) {
 		dest := []struct{}{}
-		err := query.Query(db, &dest)
+		err := oneInventoryQuery.Query(db, &dest)
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("global query function scan", func(t *testing.T) {
-		queryStr, args := query.Sql()
+		queryStr, args := oneInventoryQuery.Sql()
 		dest := []struct{}{}
 		err := qrm.Query(nil, db, queryStr, args, &dest)
 		assert.NoError(t, err)
 	})
 
 	t.Run("pointer to slice", func(t *testing.T) {
-		err := query.Query(db, &[]struct{}{})
+		err := oneInventoryQuery.Query(db, &[]struct{}{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of pointer to structs", func(t *testing.T) {
-		err := query.Query(db, &[]*struct{}{})
+		err := oneInventoryQuery.Query(db, &[]*struct{}{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of strings", func(t *testing.T) {
-		err := query.Query(db, &[]int32{})
+		err := oneInventoryQuery.Query(db, &[]int32{})
 
 		assert.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of strings", func(t *testing.T) {
-		err := query.Query(db, &[]*int32{})
+		err := oneInventoryQuery.Query(db, &[]*int32{})
 
 		assert.NoError(t, err)
 	})
@@ -690,7 +690,7 @@ func TestScanToSlice(t *testing.T) {
 			}
 		}
 
-		testutils.AssertQueryPanicErr(t, query, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'")
+		testutils.AssertQueryPanicErr(t, oneInventoryQuery, db, &dest, "jet: unsupported slice element type at 'Cities []**struct { *model.City }'")
 	})
 }
 

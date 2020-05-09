@@ -117,7 +117,7 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	}
 
 	debuqSql := query.DebugSql()
-	assert.Equal(t, debuqSql, expectedQuery)
+	require.Equal(t, debuqSql, expectedQuery)
 }
 
 // AssertSerialize checks if clause serialize produces expected query and args

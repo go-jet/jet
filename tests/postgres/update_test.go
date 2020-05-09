@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -14,50 +15,69 @@ import (
 func TestUpdateValues(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
-	query := Link.
-		UPDATE(Link.Name, Link.URL).
-		SET("Bong", "http://bong.com").
-		WHERE(Link.Name.EQ(String("Bing")))
+	t.Run("deprecated version", func(t *testing.T) {
+		query := Link.
+			UPDATE(Link.Name, Link.URL).
+			SET("Bong", "http://bong.com").
+			WHERE(Link.Name.EQ(String("Bing")))
 
-	var expectedSQL = `
+		testutils.AssertDebugStatementSql(t, query, `
 UPDATE test_sample.link
 SET (name, url) = ('Bong', 'http://bong.com')
 WHERE link.name = 'Bing';
-`
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
+`, "Bong", "http://bong.com", "Bing")
 
-	AssertExec(t, query, 1)
+		testutils.AssertExec(t, query, db, 1)
 
-	links := []model.Link{}
+		links := []model.Link{}
 
-	err := Link.
-		SELECT(Link.AllColumns).
-		WHERE(Link.Name.EQ(String("Bong"))).
-		Query(db, &links)
+		err := Link.
+			SELECT(Link.AllColumns).
+			WHERE(Link.Name.IN(String("Bong"))).
+			Query(db, &links)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(links), 1)
-	testutils.AssertDeepEqual(t, links[0], model.Link{
-		ID:   204,
-		URL:  "http://bong.com",
-		Name: "Bong",
+		require.NoError(t, err)
+		require.Equal(t, len(links), 1)
+		testutils.AssertDeepEqual(t, links[0], model.Link{
+			ID:   204,
+			URL:  "http://bong.com",
+			Name: "Bong",
+		})
+	})
+
+	t.Run("new version", func(t *testing.T) {
+		stmt := Link.UPDATE().
+			SET(
+				Link.Name.SET(String("DuckDuckGo")),
+				Link.URL.SET(String("www.duckduckgo.com")),
+			).
+			WHERE(Link.Name.EQ(String("Yahoo")))
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+UPDATE test_sample.link
+SET name = 'DuckDuckGo',
+    url = 'www.duckduckgo.com'
+WHERE link.name = 'Yahoo';
+`)
+		testutils.AssertExec(t, stmt, db, 1)
 	})
 }
 
 func TestUpdateWithSubQueries(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
-	query := Link.
-		UPDATE(Link.Name, Link.URL).
-		SET(
-			SELECT(String("Bong")),
-			SELECT(Link.URL).
-				FROM(Link).
-				WHERE(Link.Name.EQ(String("Bing"))),
-		).
-		WHERE(Link.Name.EQ(String("Bing")))
+	t.Run("deprecated version", func(t *testing.T) {
+		query := Link.
+			UPDATE(Link.Name, Link.URL).
+			SET(
+				SELECT(String("Bong")),
+				SELECT(Link.URL).
+					FROM(Link).
+					WHERE(Link.Name.EQ(String("Bing"))),
+			).
+			WHERE(Link.Name.EQ(String("Bing")))
 
-	expectedSQL := `
+		expectedSQL := `
 UPDATE test_sample.link
 SET (name, url) = ((
      SELECT 'Bong'
@@ -68,10 +88,34 @@ SET (name, url) = ((
 ))
 WHERE link.name = 'Bing';
 `
+		testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
+		AssertExec(t, query, 1)
+	})
 
-	AssertExec(t, query, 1)
+	t.Run("new version", func(t *testing.T) {
+		query := Link.UPDATE().
+			SET(
+				Link.Name.SET(String("Bong")),
+				Link.URL.SET(StringExp(
+					SELECT(Link.URL).
+						FROM(Link).
+						WHERE(Link.Name.EQ(String("Bing")))),
+				),
+			).
+			WHERE(Link.Name.EQ(String("Bing")))
+
+		testutils.AssertStatementSql(t, query, `
+UPDATE test_sample.link
+SET name = $1,
+    url = (
+         SELECT link.url AS "link.url"
+         FROM test_sample.link
+         WHERE link.name = $2
+    )
+WHERE link.name = $3;
+`, "Bong", "Bing", "Bing")
+	})
 }
 
 func TestUpdateAndReturning(t *testing.T) {
@@ -107,15 +151,16 @@ RETURNING link.id AS "link.id",
 
 func TestUpdateWithSelect(t *testing.T) {
 
-	stmt := Link.UPDATE(Link.AllColumns).
-		SET(
-			Link.
-				SELECT(Link.AllColumns).
-				WHERE(Link.ID.EQ(Int(0))),
-		).
-		WHERE(Link.ID.EQ(Int(0)))
+	t.Run("deprecated version", func(t *testing.T) {
+		stmt := Link.UPDATE(Link.AllColumns).
+			SET(
+				Link.
+					SELECT(Link.AllColumns).
+					WHERE(Link.ID.EQ(Int(0))),
+			).
+			WHERE(Link.ID.EQ(Int(0)))
 
-	expectedSQL := `
+		expectedSQL := `
 UPDATE test_sample.link
 SET (id, url, name, description) = (
      SELECT link.id AS "link.id",
@@ -127,22 +172,50 @@ SET (id, url, name, description) = (
 )
 WHERE link.id = 0;
 `
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
+		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
-	AssertExec(t, stmt, 1)
+		AssertExec(t, stmt, 1)
+	})
+
+	t.Run("new version", func(t *testing.T) {
+		stmt := Link.UPDATE().
+			SET(
+				Link.MutableColumns.SET(
+					SELECT(Link.MutableColumns).
+						FROM(Link).
+						WHERE(Link.ID.EQ(Int(0))),
+				),
+			).
+			WHERE(Link.ID.EQ(Int(0)))
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+UPDATE test_sample.link
+SET (url, name, description) = (
+         SELECT link.url AS "link.url",
+              link.name AS "link.name",
+              link.description AS "link.description"
+         FROM test_sample.link
+         WHERE link.id = 0
+    )
+WHERE link.id = 0;
+`, int64(0), int64(0))
+
+		AssertExec(t, stmt, 1)
+	})
 }
 
 func TestUpdateWithInvalidSelect(t *testing.T) {
 
-	stmt := Link.UPDATE(Link.AllColumns).
-		SET(
-			Link.
-				SELECT(Link.ID, Link.Name).
-				WHERE(Link.ID.EQ(Int(0))),
-		).
-		WHERE(Link.ID.EQ(Int(0)))
+	t.Run("deprecated version", func(t *testing.T) {
+		stmt := Link.UPDATE(Link.AllColumns).
+			SET(
+				Link.
+					SELECT(Link.ID, Link.Name).
+					WHERE(Link.ID.EQ(Int(0))),
+			).
+			WHERE(Link.ID.EQ(Int(0)))
 
-	var expectedSQL = `
+		var expectedSQL = `
 UPDATE test_sample.link
 SET (id, url, name, description) = (
      SELECT link.id AS "link.id",
@@ -152,9 +225,18 @@ SET (id, url, name, description) = (
 )
 WHERE link.id = 0;
 `
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
+		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
 
-	testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
+		testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
+	})
+
+	t.Run("new version", func(t *testing.T) {
+		stmt := Link.UPDATE().
+			SET(Link.AllColumns.SET(Link.SELECT(Link.MutableColumns))).
+			WHERE(Link.ID.EQ(Int(0)))
+
+		testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
+	})
 }
 
 func TestUpdateWithModelData(t *testing.T) {

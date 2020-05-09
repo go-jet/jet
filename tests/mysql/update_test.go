@@ -16,22 +16,33 @@ import (
 func TestUpdateValues(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
-	query := Link.
-		UPDATE(Link.Name, Link.URL).
-		SET("Bong", "http://bong.com").
-		WHERE(Link.Name.EQ(String("Bing")))
-
 	var expectedSQL = `
 UPDATE test_sample.link
-SET name = 'Bong', 
+SET name = 'Bong',
     url = 'http://bong.com'
 WHERE link.name = 'Bing';
 `
+	t.Run("old version", func(t *testing.T) {
+		query := Link.
+			UPDATE(Link.Name, Link.URL).
+			SET("Bong", "http://bong.com").
+			WHERE(Link.Name.EQ(String("Bing")))
 
-	fmt.Println(query.DebugSql())
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
+		testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
+		testutils.AssertExec(t, query, db)
+	})
 
-	testutils.AssertExec(t, query, db)
+	t.Run("new version", func(t *testing.T) {
+		stmt := Link.UPDATE().
+			SET(
+				Link.Name.SET(String("Bong")),
+				Link.URL.SET(String("http://bong.com")),
+			).
+			WHERE(Link.Name.EQ(String("Bing")))
+
+		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "Bong", "http://bong.com", "Bing")
+		testutils.AssertExec(t, stmt, db)
+	})
 
 	links := []model.Link{}
 
@@ -52,21 +63,11 @@ WHERE link.name = 'Bing';
 func TestUpdateWithSubQueries(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
-	query := Link.
-		UPDATE(Link.Name, Link.URL).
-		SET(
-			SELECT(String("Bong")),
-			SELECT(Link2.URL).
-				FROM(Link2).
-				WHERE(Link2.Name.EQ(String("Youtube"))),
-		).
-		WHERE(Link.Name.EQ(String("Bing")))
-
 	expectedSQL := `
 UPDATE test_sample.link
 SET name = (
          SELECT ?
-    ), 
+    ),
     url = (
          SELECT link2.url AS "link2.url"
          FROM test_sample.link2
@@ -74,10 +75,37 @@ SET name = (
     )
 WHERE link.name = ?;
 `
-	fmt.Println(query.Sql())
-	testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
+	t.Run("old version", func(t *testing.T) {
+		query := Link.
+			UPDATE(Link.Name, Link.URL).
+			SET(
+				SELECT(String("Bong")),
+				SELECT(Link2.URL).
+					FROM(Link2).
+					WHERE(Link2.Name.EQ(String("Youtube"))),
+			).
+			WHERE(Link.Name.EQ(String("Bing")))
 
-	testutils.AssertExec(t, query, db)
+		testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
+		testutils.AssertExec(t, query, db)
+	})
+
+	t.Run("new version", func(t *testing.T) {
+		query := Link.
+			UPDATE().
+			SET(
+				Link.Name.SET(StringExp(SELECT(String("Bong")))),
+				Link.URL.SET(StringExp(
+					SELECT(Link2.URL).
+						FROM(Link2).
+						WHERE(Link2.Name.EQ(String("Youtube"))),
+				)),
+			).
+			WHERE(Link.Name.EQ(String("Bing")))
+
+		testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
+		testutils.AssertExec(t, query, db)
+	})
 }
 
 func TestUpdateWithModelData(t *testing.T) {
@@ -96,9 +124,9 @@ func TestUpdateWithModelData(t *testing.T) {
 
 	expectedSQL := `
 UPDATE test_sample.link
-SET id = ?, 
-    url = ?, 
-    name = ?, 
+SET id = ?,
+    url = ?,
+    name = ?,
     description = ?
 WHERE link.id = ?;
 `
@@ -127,8 +155,8 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 
 	var expectedSQL = `
 UPDATE test_sample.link
-SET description = NULL, 
-    name = 'DuckDuckGo', 
+SET description = NULL,
+    name = 'DuckDuckGo',
     url = 'http://www.duckduckgo.com'
 WHERE link.id = 201;
 `
@@ -156,22 +184,20 @@ func TestUpdateWithModelDataAndMutableColumns(t *testing.T) {
 
 	var expectedSQL = `
 UPDATE test_sample.link
-SET url = 'http://www.duckduckgo.com', 
-    name = 'DuckDuckGo', 
+SET url = 'http://www.duckduckgo.com',
+    name = 'DuckDuckGo',
     description = NULL
 WHERE link.id = 201;
 `
 	fmt.Println(stmt.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
-
 	testutils.AssertExec(t, stmt, db)
 }
 
 func TestUpdateWithInvalidModelData(t *testing.T) {
 	defer func() {
 		r := recover()
-
 		assert.Equal(t, r, "missing struct field for column : id")
 	}()
 
