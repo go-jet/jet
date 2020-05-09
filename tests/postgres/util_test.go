@@ -4,7 +4,6 @@ import (
 	"github.com/go-jet/jet/internal/jet"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -14,8 +13,8 @@ func AssertExec(t *testing.T, stmt jet.Statement, rowsAffected int64) {
 
 	require.NoError(t, err)
 	rows, err := res.RowsAffected()
-	assert.NoError(t, err)
-	assert.Equal(t, rows, rowsAffected)
+	require.NoError(t, err)
+	require.Equal(t, rows, rowsAffected)
 }
 
 var customer0 = model.Customer{

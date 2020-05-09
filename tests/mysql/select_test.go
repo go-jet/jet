@@ -7,7 +7,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/view"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"testing"
 )
@@ -30,7 +30,7 @@ WHERE actor.actor_id = ?;
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertDeepEqual(t, actor, actor2)
 }
@@ -59,9 +59,9 @@ ORDER BY actor.actor_id;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 200)
+	require.Equal(t, len(dest), 200)
 	testutils.AssertDeepEqual(t, dest[1], actor2)
 
 	//testutils.PrintJson(dest)
@@ -136,11 +136,11 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
-	assert.Equal(t, len(dest), 174)
+	require.Equal(t, len(dest), 174)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/customer_payment_sum.json")
@@ -176,7 +176,7 @@ func TestSubQuery(t *testing.T) {
 	}
 
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/r_rating_films.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/r_rating_films.json")
@@ -229,7 +229,7 @@ LIMIT ?;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestSelectUNION(t *testing.T) {
@@ -265,7 +265,7 @@ LIMIT ?;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestSelectUNION_ALL(t *testing.T) {
@@ -308,7 +308,7 @@ OFFSET ?;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestJoinQueryStruct(t *testing.T) {
@@ -406,10 +406,10 @@ LIMIT ?;
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
-		//assert.Equal(t, len(dest), 1)
-		//assert.Equal(t, len(dest[0].Films), 10)
-		//assert.Equal(t, len(dest[0].Films[0].Actors), 10)
+		require.NoError(t, err)
+		//require.Equal(t, len(dest), 1)
+		//require.Equal(t, len(dest[0].Films), 10)
+		//require.Equal(t, len(dest[0].Films[0].Actors), 10)
 
 		//testutils.SaveJsonFile(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
 
@@ -450,10 +450,10 @@ FOR`
 		tx, _ := db.Begin()
 
 		_, err := query.Exec(tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = tx.Rollback()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
@@ -464,10 +464,10 @@ FOR`
 		tx, _ := db.Begin()
 
 		_, err := query.Exec(tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = tx.Rollback()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 
 	if sourceIsMariaDB() {
@@ -482,10 +482,10 @@ FOR`
 		tx, _ := db.Begin()
 
 		_, err := query.Exec(tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = tx.Rollback()
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	}
 }
 
@@ -514,7 +514,7 @@ SELECT true,
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestLockInShareMode(t *testing.T) {
@@ -535,7 +535,7 @@ LOCK IN SHARE MODE;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestWindowFunction(t *testing.T) {
@@ -612,7 +612,7 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestWindowClause(t *testing.T) {
@@ -649,7 +649,7 @@ ORDER BY payment.customer_id;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestSimpleView(t *testing.T) {
@@ -670,9 +670,9 @@ func TestSimpleView(t *testing.T) {
 	var dest []ActorInfo
 
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 10)
+	require.Equal(t, len(dest), 10)
 	testutils.AssertJSON(t, dest[1:2], `
 [
 	{
@@ -702,11 +702,11 @@ func TestJoinViewWithTable(t *testing.T) {
 	}
 
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 2)
-	assert.Equal(t, len(dest[0].Rentals), 32)
-	assert.Equal(t, len(dest[1].Rentals), 27)
+	require.Equal(t, len(dest), 2)
+	require.Equal(t, len(dest[0].Rentals), 32)
+	require.Equal(t, len(dest[1].Rentals), 27)
 }
 
 func TestConditionalProjectionList(t *testing.T) {
@@ -737,7 +737,7 @@ LIMIT 3;
 `)
 	var dest []model.Customer
 	err := stmt.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 3)
+	require.Equal(t, len(dest), 3)
 }

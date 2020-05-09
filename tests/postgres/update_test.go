@@ -6,7 +6,6 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -143,10 +142,10 @@ RETURNING link.id AS "link.id",
 
 	err := stmt.Query(db, &links)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(links), 2)
-	assert.Equal(t, links[0].Name, "DuckDuckGo")
-	assert.Equal(t, links[1].Name, "DuckDuckGo")
+	require.NoError(t, err)
+	require.Equal(t, len(links), 2)
+	require.Equal(t, links[0].Name, "DuckDuckGo")
+	require.Equal(t, links[1].Name, "DuckDuckGo")
 }
 
 func TestUpdateWithSelect(t *testing.T) {
@@ -294,7 +293,7 @@ func TestUpdateWithInvalidModelData(t *testing.T) {
 	defer func() {
 		r := recover()
 
-		assert.Equal(t, r, "missing struct field for column : id")
+		require.Equal(t, r, "missing struct field for column : id")
 	}()
 
 	setupLinkTableForUpdateTest(t)
@@ -342,7 +341,7 @@ func TestUpdateQueryContext(t *testing.T) {
 	dest := []model.Link{}
 	err := updateStmt.QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func TestUpdateExecContext(t *testing.T) {
@@ -360,7 +359,7 @@ func TestUpdateExecContext(t *testing.T) {
 
 	_, err := updateStmt.ExecContext(ctx, db)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func setupLinkTableForUpdateTest(t *testing.T) {
@@ -375,10 +374,10 @@ func setupLinkTableForUpdateTest(t *testing.T) {
 		VALUES(204, "http://www.bing.com", "Bing", DEFAULT).
 		Exec(db)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func cleanUpLinkTable(t *testing.T) {
 	_, err := Link.DELETE().WHERE(Link.ID.GT(Int(0))).Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

@@ -16,8 +16,6 @@ import (
 	"github.com/go-jet/jet/tests/testdata/results/common"
 
 	. "github.com/go-jet/jet/mysql"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAllTypes(t *testing.T) {
@@ -29,9 +27,9 @@ func TestAllTypes(t *testing.T) {
 		LIMIT(2).
 		Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 2)
+	require.Equal(t, len(dest), 2)
 
 	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
 		return
@@ -48,8 +46,8 @@ func TestAllTypesViewSelect(t *testing.T) {
 	dest := []AllTypesView{}
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 2)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 2)
 
 	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
 		return
@@ -77,11 +75,11 @@ func TestUUID(t *testing.T) {
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.True(t, dest.StrUUID != nil)
-	assert.True(t, dest.UUID.String() != uuid.UUID{}.String())
-	assert.True(t, dest.StrUUID.String() != uuid.UUID{}.String())
-	assert.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
+	require.NoError(t, err)
+	require.True(t, dest.StrUUID != nil)
+	require.True(t, dest.UUID.String() != uuid.UUID{}.String())
+	require.True(t, dest.StrUUID.String() != uuid.UUID{}.String())
+	require.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
 }
 
 func TestExpressionOperators(t *testing.T) {
@@ -122,7 +120,7 @@ LIMIT ?;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -213,7 +211,7 @@ FROM test_sample.all_types;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
@@ -266,7 +264,7 @@ func TestFloatOperators(t *testing.T) {
 
 	//fmt.Println(queryStr)
 
-	assert.Equal(t, queryStr, strings.Replace(`
+	require.Equal(t, queryStr, strings.Replace(`
 SELECT (all_types.'numeric' = all_types.'numeric') AS "eq1",
      (all_types.'decimal' = ?) AS "eq2",
      (all_types.'real' = ?) AS "eq3",
@@ -312,7 +310,7 @@ LIMIT ?;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/float_operators.json")
 }
@@ -449,7 +447,7 @@ LIMIT ?;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -521,7 +519,7 @@ func TestStringOperators(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
@@ -609,7 +607,7 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDateExpressions(t *testing.T) {
@@ -684,7 +682,7 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestDateTimeExpressions(t *testing.T) {
@@ -761,7 +759,7 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestTimestampExpressions(t *testing.T) {
@@ -837,13 +835,13 @@ FROM test_sample.all_types;
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestTimeLiterals(t *testing.T) {
 
 	loc, err := time.LoadLocation("Europe/Berlin")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 351387237, loc)
 
@@ -882,7 +880,7 @@ LIMIT ?;
 	}
 
 	err = query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -965,7 +963,7 @@ func TestINTERVAL(t *testing.T) {
 	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestAllTypesInsert(t *testing.T) {
@@ -1032,7 +1030,7 @@ func TestAllTypesInsertOnDuplicateKeyUpdate(t *testing.T) {
 	fmt.Println(stmt.DebugSql())
 
 	_, err = stmt.Exec(tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = tx.Rollback()
 	require.NoError(t, err)
@@ -1256,7 +1254,7 @@ FROM test_sample.user;
 
 	var dest []model.User
 	err := stmt.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.PrintJson(dest)
 

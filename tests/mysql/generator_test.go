@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/generator/mysql"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/dbconfig"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -25,23 +25,23 @@ func TestGenerator(t *testing.T) {
 			DBName:   "dvds",
 		})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assertGeneratedFiles(t)
 	}
 
 	err := os.RemoveAll(genTestDirRoot)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestCmdGenerator(t *testing.T) {
 	goInstallJet := exec.Command("sh", "-c", "go install github.com/go-jet/jet/cmd/jet")
 	goInstallJet.Stderr = os.Stderr
 	err := goInstallJet.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = os.RemoveAll(genTestDir3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=MySQL", "-dbname=dvds", "-host=localhost", "-port=3306",
 		"-user=jet", "-password=jet", "-path="+genTestDir3)
@@ -50,18 +50,18 @@ func TestCmdGenerator(t *testing.T) {
 	cmd.Stdout = os.Stdout
 
 	err = cmd.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assertGeneratedFiles(t)
 
 	err = os.RemoveAll(genTestDirRoot)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
 	tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
@@ -71,7 +71,7 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// View SQL Builder files
 	viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
 		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
@@ -80,14 +80,14 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "film_rating.go", "film_list_rating.go", "nicer_but_slower_film_list_rating.go")
 	testutils.AssertFileContent(t, genTestDir3+"/dvds/enum/film_rating.go", mpaaRatingEnumFile)
 
 	// Model files
 	modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",

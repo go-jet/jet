@@ -8,7 +8,6 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 	"github.com/go-jet/jet/qrm"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -37,7 +36,7 @@ func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int
 func AssertExecErr(t *testing.T, stmt jet.Statement, db qrm.DB, errorStr string) {
 	_, err := stmt.Exec(db)
 
-	assert.Error(t, err, errorStr)
+	require.Error(t, err, errorStr)
 }
 
 func getFullPath(relativePath string) string {
@@ -54,9 +53,9 @@ func PrintJson(v interface{}) {
 // AssertJSON check if data json output is the same as expectedJSON
 func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
+	require.Equal(t, "\n"+string(jsonData)+"\n", expectedJSON)
 }
 
 // SaveJSONFile saves v as json at testRelativePath
@@ -74,23 +73,23 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 
 	filePath := getFullPath(testRelativePath)
 	fileJSONData, err := ioutil.ReadFile(filePath)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	if runtime.GOOS == "windows" {
 		fileJSONData = bytes.Replace(fileJSONData, []byte("\r\n"), []byte("\n"), -1)
 	}
 
 	jsonData, err := json.MarshalIndent(data, "", "\t")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.True(t, string(fileJSONData) == string(jsonData))
+	require.True(t, string(fileJSONData) == string(jsonData))
 	//AssertDeepEqual(t, string(fileJSONData), string(jsonData))
 }
 
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args := query.Sql()
-	assert.Equal(t, queryStr, expectedQuery)
+	require.Equal(t, queryStr, expectedQuery)
 
 	if len(expectedArgs) == 0 {
 		return
@@ -102,7 +101,7 @@ func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string,
 func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, errorStr)
+		require.Equal(t, r, errorStr)
 	}()
 
 	stmt.Sql()
@@ -162,7 +161,7 @@ func AssertDebugSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializ
 func AssertPanicErr(t *testing.T, fun func(), errorStr string) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, errorStr)
+		require.Equal(t, r, errorStr)
 	}()
 
 	fun()
@@ -172,7 +171,7 @@ func AssertPanicErr(t *testing.T, fun func(), errorStr string) {
 func AssertSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer, errString string) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, errString)
+		require.Equal(t, r, errString)
 	}()
 
 	out := jet.SQLBuilder{Dialect: dialect}
@@ -192,7 +191,7 @@ func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet
 func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest interface{}, errString string) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, errString)
+		require.Equal(t, r, errString)
 	}()
 
 	stmt.Query(db, dest)
@@ -209,7 +208,7 @@ func AssertFileContent(t *testing.T, filePath string, expectedContent string) {
 
 // AssertFileNamesEqual check if all filesInfos are contained in fileNames
 func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...string) {
-	assert.Equal(t, len(fileInfos), len(fileNames))
+	require.Equal(t, len(fileInfos), len(fileNames))
 
 	fileNamesMap := map[string]bool{}
 
@@ -218,7 +217,7 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 	}
 
 	for _, fileName := range fileNames {
-		assert.True(t, fileNamesMap[fileName], fileName+" does not exist.")
+		require.True(t, fileNamesMap[fileName], fileName+" does not exist.")
 	}
 }
 

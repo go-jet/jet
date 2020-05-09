@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/generator/postgres"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/dbconfig"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,30 +17,30 @@ import (
 func TestGeneratedModel(t *testing.T) {
 	actor := model.Actor{}
 
-	assert.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
+	require.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
 	actorIDField, ok := reflect.TypeOf(actor).FieldByName("ActorID")
-	assert.True(t, ok)
-	assert.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
-	assert.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
-	assert.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
-	assert.Equal(t, reflect.TypeOf(actor.LastUpdate).String(), "time.Time")
+	require.True(t, ok)
+	require.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
+	require.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
+	require.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
+	require.Equal(t, reflect.TypeOf(actor.LastUpdate).String(), "time.Time")
 
 	filmActor := model.FilmActor{}
 
-	assert.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
+	require.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
 	filmIDField, ok := reflect.TypeOf(filmActor).FieldByName("FilmID")
-	assert.True(t, ok)
-	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
+	require.True(t, ok)
+	require.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
-	assert.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
+	require.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
 	actorIDField, ok = reflect.TypeOf(filmActor).FieldByName("ActorID")
-	assert.True(t, ok)
-	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
+	require.True(t, ok)
+	require.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
 	staff := model.Staff{}
 
-	assert.Equal(t, reflect.TypeOf(staff.Email).String(), "*string")
-	assert.Equal(t, reflect.TypeOf(staff.Picture).String(), "*[]uint8")
+	require.Equal(t, reflect.TypeOf(staff.Email).String(), "*string")
+	require.Equal(t, reflect.TypeOf(staff.Picture).String(), "*[]uint8")
 }
 
 const genTestDir2 = "./.gentestdata2"
@@ -49,10 +49,10 @@ func TestCmdGenerator(t *testing.T) {
 	goInstallJet := exec.Command("sh", "-c", "go install github.com/go-jet/jet/cmd/jet")
 	goInstallJet.Stderr = os.Stderr
 	err := goInstallJet.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = os.RemoveAll(genTestDir2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost", "-port=5432",
 		"-user=jet", "-password=jet", "-schema=dvds", "-path="+genTestDir2)
@@ -60,12 +60,12 @@ func TestCmdGenerator(t *testing.T) {
 	cmd.Stdout = os.Stdout
 
 	err = cmd.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assertGeneratedFiles(t)
 
 	err = os.RemoveAll(genTestDir2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestGenerator(t *testing.T) {
@@ -83,19 +83,19 @@ func TestGenerator(t *testing.T) {
 			SchemaName: "dvds",
 		})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assertGeneratedFiles(t)
 	}
 
 	err := os.RemoveAll(genTestDir2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
 	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
@@ -105,7 +105,7 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// View SQL Builder files
 	viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
 		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
@@ -114,14 +114,14 @@ func assertGeneratedFiles(t *testing.T) {
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mpaa_rating.go")
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", mpaaRatingEnumFile)
 
 	// Model files
 	modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
@@ -335,14 +335,14 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	tableDir := testRoot + ".gentestdata/jetdb/test_sample/table/"
 
 	enumFiles, err := ioutil.ReadDir(enumDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go", "level.go")
 	testutils.AssertFileContent(t, enumDir+"mood.go", moodEnumContent)
 	testutils.AssertFileContent(t, enumDir+"level.go", levelEnumContent)
 
 	modelFiles, err := ioutil.ReadDir(modelDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go")
@@ -350,7 +350,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileContent(t, modelDir+"all_types.go", allTypesModelContent)
 
 	tableFiles, err := ioutil.ReadDir(tableDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go")

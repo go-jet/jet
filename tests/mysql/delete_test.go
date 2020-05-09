@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -60,7 +60,7 @@ func TestDeleteQueryContext(t *testing.T) {
 	dest := []model.Link{}
 	err := deleteStmt.QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func TestDeleteExecContext(t *testing.T) {
@@ -77,7 +77,7 @@ func TestDeleteExecContext(t *testing.T) {
 
 	_, err := deleteStmt.ExecContext(ctx, db)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func initForDeleteTest(t *testing.T) {

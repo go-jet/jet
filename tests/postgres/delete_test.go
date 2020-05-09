@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -48,9 +48,9 @@ RETURNING link.id AS "link.id",
 
 	err := deleteStmt.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 2)
+	require.Equal(t, len(dest), 2)
 	testutils.AssertDeepEqual(t, dest[0].Name, "Gmail")
 	testutils.AssertDeepEqual(t, dest[1].Name, "Outlook")
 }
@@ -79,7 +79,7 @@ func TestDeleteQueryContext(t *testing.T) {
 	dest := []model.Link{}
 	err := deleteStmt.QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func TestDeleteExecContext(t *testing.T) {
@@ -98,5 +98,5 @@ func TestDeleteExecContext(t *testing.T) {
 
 	_, err := deleteStmt.ExecContext(ctx, db)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }

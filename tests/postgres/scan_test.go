@@ -8,7 +8,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -53,38 +53,38 @@ func TestScanToValidDestination(t *testing.T) {
 		dest := []struct{}{}
 		err := oneInventoryQuery.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("global query function scan", func(t *testing.T) {
 		queryStr, args := oneInventoryQuery.Sql()
 		dest := []struct{}{}
 		err := qrm.Query(nil, db, queryStr, args, &dest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("pointer to slice", func(t *testing.T) {
 		err := oneInventoryQuery.Query(db, &[]struct{}{})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of pointer to structs", func(t *testing.T) {
 		err := oneInventoryQuery.Query(db, &[]*struct{}{})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of strings", func(t *testing.T) {
 		err := oneInventoryQuery.Query(db, &[]int32{})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of strings", func(t *testing.T) {
 		err := oneInventoryQuery.Query(db, &[]*int32{})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 }
 
@@ -99,7 +99,7 @@ func TestScanToStruct(t *testing.T) {
 		dest := model.Inventory{}
 		err := query.LIMIT(1).Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, inventory1, dest)
 	})
 
@@ -107,7 +107,7 @@ func TestScanToStruct(t *testing.T) {
 		dest := model.Inventory{}
 		err := query.LIMIT(10).Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, inventory1, dest)
 	})
 
@@ -117,7 +117,7 @@ func TestScanToStruct(t *testing.T) {
 		}{}
 		err := query.LIMIT(1).Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, inventory1, dest.Inventory)
 	})
 
@@ -127,7 +127,7 @@ func TestScanToStruct(t *testing.T) {
 		}{}
 		err := query.LIMIT(1).Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, inventory1, *dest.Inventory)
 	})
 
@@ -158,11 +158,11 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
-		assert.Equal(t, *dest.InventoryID, int32(1))
-		assert.Equal(t, dest.FilmID, int16(1))
-		assert.Equal(t, *dest.StoreID, int16(1))
+		require.Equal(t, *dest.InventoryID, int32(1))
+		require.Equal(t, dest.FilmID, int16(1))
+		require.Equal(t, *dest.StoreID, int16(1))
 	})
 
 	t.Run("type convert int32 to int", func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 	})
 
 	t.Run("type mismatch scanner type", func(t *testing.T) {
@@ -217,7 +217,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Film, film1)
 		testutils.AssertDeepEqual(t, dest.Store, store1)
@@ -232,7 +232,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, *dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, *dest.Film, film1)
 		testutils.AssertDeepEqual(t, *dest.Store, store1)
@@ -246,7 +246,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Actor, model.Actor{})
 	})
@@ -259,7 +259,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Actor, (*model.Actor)(nil))
 	})
@@ -272,7 +272,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Actor, (*model.Actor)(nil))
 	})
@@ -291,9 +291,9 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
-		assert.True(t, dest.Actor != nil)
+		require.True(t, dest.Actor != nil)
 	})
 
 	t.Run("struct embedded unused pointer", func(t *testing.T) {
@@ -306,7 +306,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Actor, (*struct{ model.Actor })(nil))
 	})
@@ -322,7 +322,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Actor, (*struct {
 			model.Actor
@@ -341,9 +341,9 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
-		assert.True(t, dest.Actor != nil)
+		require.True(t, dest.Actor != nil)
 		testutils.AssertDeepEqual(t, dest.Actor.Actor, model.Actor{})
 		testutils.AssertDeepEqual(t, dest.Actor.Film, film1)
 	})
@@ -361,10 +361,10 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
-		assert.True(t, dest.Actor != nil)
-		assert.True(t, dest.Actor.Film != nil)
+		require.True(t, dest.Actor != nil)
+		require.True(t, dest.Actor.Film != nil)
 		testutils.AssertDeepEqual(t, dest.Actor.Film.Film, &film1)
 	})
 
@@ -398,7 +398,7 @@ func TestScanToNestedStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest.Inventory, inventory1)
 		testutils.AssertDeepEqual(t, dest.Film.Film, film1)
 		testutils.AssertDeepEqual(t, dest.Store, store1)
@@ -423,8 +423,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 10)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 10)
 			testutils.AssertDeepEqual(t, dest[0], inventory1)
 			testutils.AssertDeepEqual(t, dest[1], inventory2)
 		})
@@ -433,7 +433,7 @@ func TestScanToSlice(t *testing.T) {
 			var dest []int32
 
 			err := query.Query(db, &dest)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			testutils.AssertDeepEqual(t, dest, []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
 
 		})
@@ -442,14 +442,14 @@ func TestScanToSlice(t *testing.T) {
 			var dest []int
 
 			err := query.Query(db, &dest)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 		})
 
 		t.Run("slice type mismatch", func(t *testing.T) {
 			var dest []bool
 
 			testutils.AssertQueryPanicErr(t, query, db, &dest, `jet: can't append int32 to []bool slice`)
-			//assert.Error(t, err, `jet: can't append int32 to []bool slice `)
+			//require.Error(t, err, `jet: can't append int32 to []bool slice `)
 		})
 	})
 
@@ -473,7 +473,7 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			testutils.AssertDeepEqual(t, dest.Film, film1)
 			testutils.AssertDeepEqual(t, dest.IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
 		})
@@ -486,8 +486,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 2)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 2)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
 			testutils.AssertDeepEqual(t, dest[0].IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
 			testutils.AssertDeepEqual(t, dest[1].Film, film2)
@@ -502,8 +502,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 2)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 2)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
 			testutils.AssertDeepEqual(t, dest[0].IDs, []*int32{testutils.Int32Ptr(1), testutils.Int32Ptr(2), testutils.Int32Ptr(3), testutils.Int32Ptr(4),
 				testutils.Int32Ptr(5), testutils.Int32Ptr(6), testutils.Int32Ptr(7), testutils.Int32Ptr(8)})
@@ -520,8 +520,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 10)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 10)
 			testutils.AssertDeepEqual(t, dest[0].Inventory, inventory1)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
 			testutils.AssertDeepEqual(t, dest[0].Store, store1)
@@ -538,8 +538,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 10)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 10)
 			testutils.AssertDeepEqual(t, dest[0].Inventory, &inventory1)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
 			testutils.AssertDeepEqual(t, dest[0].Store, &store1)
@@ -558,8 +558,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 10)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 10)
 			testutils.AssertDeepEqual(t, dest[0].Inventory, inventory1)
 			testutils.AssertDeepEqual(t, dest[0].Film, &film1)
 			testutils.AssertDeepEqual(t, dest[0].Store.Store, &store1)
@@ -579,8 +579,8 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 2)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 2)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
 			testutils.AssertDeepEqual(t, len(dest[0].Inventories), 8)
 			testutils.AssertDeepEqual(t, dest[0].Inventories[0].Inventory, inventory1)
@@ -601,14 +601,14 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
-			assert.Equal(t, len(dest), 2)
+			require.Equal(t, len(dest), 2)
 			testutils.AssertDeepEqual(t, dest[0].Film, film1)
-			assert.Equal(t, len(dest[0].Inventories), 8)
+			require.Equal(t, len(dest[0].Inventories), 8)
 			testutils.AssertDeepEqual(t, dest[0].Inventories[0].Inventory, inventory1)
-			assert.True(t, dest[0].Inventories[0].Rentals == nil)
-			assert.True(t, dest[0].Inventories[0].Rentals2 == nil)
+			require.True(t, dest[0].Inventories[0].Rentals == nil)
+			require.True(t, dest[0].Inventories[0].Rentals2 == nil)
 		})
 	})
 
@@ -638,12 +638,12 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 108)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 108)
 			testutils.AssertDeepEqual(t, dest[100].Country, countryUk)
-			assert.Equal(t, len(dest[100].Cities), 8)
+			require.Equal(t, len(dest[100].Cities), 8)
 			testutils.AssertDeepEqual(t, dest[100].Cities[2].City, cityLondon)
-			assert.Equal(t, len(dest[100].Cities[2].Adresses), 2)
+			require.Equal(t, len(dest[100].Cities[2].Adresses), 2)
 			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[0].Address, address256)
 			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[0].Customer, customer256)
 			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[1].Address, addres517)
@@ -667,12 +667,12 @@ func TestScanToSlice(t *testing.T) {
 
 			err := query.Query(db, &dest)
 
-			assert.NoError(t, err)
-			assert.Equal(t, len(dest), 108)
+			require.NoError(t, err)
+			require.Equal(t, len(dest), 108)
 			testutils.AssertDeepEqual(t, dest[100].Country, &countryUk)
-			assert.Equal(t, len(dest[100].Cities), 8)
+			require.Equal(t, len(dest[100].Cities), 8)
 			testutils.AssertDeepEqual(t, dest[100].Cities[2].City, &cityLondon)
-			assert.Equal(t, len(*dest[100].Cities[2].Adresses), 2)
+			require.Equal(t, len(*dest[100].Cities[2].Adresses), 2)
 			testutils.AssertDeepEqual(t, (*dest[100].Cities[2].Adresses)[0].Address, &address256)
 			testutils.AssertDeepEqual(t, (*dest[100].Cities[2].Adresses)[0].Customer, &customer256)
 			testutils.AssertDeepEqual(t, (*dest[100].Cities[2].Adresses)[1].Address, &addres517)
@@ -703,7 +703,7 @@ func TestStructScanErrNoRows(t *testing.T) {
 
 	err := query.Query(db, &customer)
 
-	assert.Error(t, err, qrm.ErrNoRows.Error())
+	require.Error(t, err, qrm.ErrNoRows.Error())
 }
 
 func TestStructScanAllNull(t *testing.T) {
@@ -716,7 +716,7 @@ func TestStructScanAllNull(t *testing.T) {
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	testutils.AssertDeepEqual(t, dest, struct {
 		Null1 *int
 		Null2 *int

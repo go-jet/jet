@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"math/rand"
 	"testing"
 	"time"
@@ -40,9 +40,9 @@ RETURNING link.id AS "link.id",
 
 	err := insertQuery.Query(db, &insertedLinks)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(insertedLinks), 3)
+	require.Equal(t, len(insertedLinks), 3)
 
 	testutils.AssertDeepEqual(t, insertedLinks[0], model.Link{
 		ID:   100,
@@ -69,7 +69,7 @@ RETURNING link.id AS "link.id",
 		ORDER_BY(Link.ID).
 		Query(db, &allLinks)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertDeepEqual(t, insertedLinks, allLinks)
 }
@@ -332,7 +332,7 @@ func TestInsertQuery(t *testing.T) {
 	_, err := Link.DELETE().
 		WHERE(Link.ID.NOT_EQ(Int(0)).AND(Link.Name.EQ(String("Youtube")))).
 		Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var expectedSQL = `
 INSERT INTO test_sample.link (url, name) (
@@ -362,7 +362,7 @@ RETURNING link.id AS "link.id",
 
 	err = query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	youtubeLinks := []model.Link{}
 	err = Link.
@@ -370,8 +370,8 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.EQ(String("Youtube"))).
 		Query(db, &youtubeLinks)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(youtubeLinks), 2)
+	require.NoError(t, err)
+	require.Equal(t, len(youtubeLinks), 2)
 }
 
 func TestInsertWithQueryContext(t *testing.T) {
@@ -389,7 +389,7 @@ func TestInsertWithQueryContext(t *testing.T) {
 	dest := []model.Link{}
 	err := stmt.QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func TestInsertWithExecContext(t *testing.T) {
@@ -405,5 +405,5 @@ func TestInsertWithExecContext(t *testing.T) {
 
 	_, err := stmt.ExecContext(ctx, db)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }

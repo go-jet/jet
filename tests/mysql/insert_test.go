@@ -6,7 +6,6 @@ import (
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"testing"
@@ -34,7 +33,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 		102, "http://www.yahoo.com", "Yahoo", nil)
 
 	_, err := insertQuery.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	insertedLinks := []model.Link{}
 
@@ -43,8 +42,8 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 		ORDER_BY(Link.ID).
 		Query(db, &insertedLinks)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(insertedLinks), 3)
+	require.NoError(t, err)
+	require.Equal(t, len(insertedLinks), 3)
 
 	testutils.AssertDeepEqual(t, insertedLinks[0], postgreTutorial)
 
@@ -82,7 +81,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
 	_, err := stmt.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	insertedLinks := []model.Link{}
 
@@ -91,8 +90,8 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 		ORDER_BY(Link.ID).
 		Query(db, &insertedLinks)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(insertedLinks), 1)
+	require.NoError(t, err)
+	require.Equal(t, len(insertedLinks), 1)
 	testutils.AssertDeepEqual(t, insertedLinks[0], postgreTutorial)
 }
 
@@ -115,7 +114,7 @@ VALUES ('http://www.duckduckgo.com', 'Duck Duck go');
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, "http://www.duckduckgo.com", "Duck Duck go")
 
 	_, err := query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestInsertModelObjectEmptyColumnList(t *testing.T) {
@@ -138,7 +137,7 @@ VALUES (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
 	_, err := query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestInsertModelsObject(t *testing.T) {
@@ -174,7 +173,7 @@ VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
 		"http://www.yahoo.com", "Yahoo")
 
 	_, err := query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestInsertUsingMutableColumns(t *testing.T) {
@@ -209,14 +208,14 @@ VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
 		"http://www.yahoo.com", "Yahoo", nil)
 
 	_, err := stmt.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestInsertQuery(t *testing.T) {
 	_, err := Link.DELETE().
 		WHERE(Link.ID.NOT_EQ(Int(1)).AND(Link.Name.EQ(String("Youtube")))).
 		Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var expectedSQL = `
 INSERT INTO test_sample.link (url, name) (
@@ -238,7 +237,7 @@ INSERT INTO test_sample.link (url, name) (
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1))
 
 	_, err = query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	youtubeLinks := []model.Link{}
 	err = Link.
@@ -246,8 +245,8 @@ INSERT INTO test_sample.link (url, name) (
 		WHERE(Link.Name.EQ(String("Youtube"))).
 		Query(db, &youtubeLinks)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(youtubeLinks), 2)
+	require.NoError(t, err)
+	require.Equal(t, len(youtubeLinks), 2)
 }
 
 func TestInsertOnDuplicateKey(t *testing.T) {
@@ -304,7 +303,7 @@ func TestInsertWithQueryContext(t *testing.T) {
 	dest := []model.Link{}
 	err := stmt.QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func TestInsertWithExecContext(t *testing.T) {
@@ -320,10 +319,10 @@ func TestInsertWithExecContext(t *testing.T) {
 
 	_, err := stmt.ExecContext(ctx, db)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func cleanUpLinkTable(t *testing.T) {
 	_, err := Link.DELETE().WHERE(Link.ID.GT(Int(1))).Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }

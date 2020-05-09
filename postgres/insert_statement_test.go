@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"github.com/go-jet/jet/internal/jet"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -94,7 +94,7 @@ VALUES ($1, $2),
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, "missing struct field for column : col1")
+		require.Equal(t, r, "missing struct field for column : col1")
 	}()
 	type Table1Model struct {
 		Col1Prim int
@@ -115,7 +115,7 @@ func TestInsertFromNonStructModel(t *testing.T) {
 
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, "jet: data has to be a struct")
+		require.Equal(t, r, "jet: data has to be a struct")
 	}()
 
 	table2.INSERT(table2ColInt).MODEL([]int{})
