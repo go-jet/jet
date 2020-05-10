@@ -35,6 +35,7 @@ ORDER BY "Album"."AlbumId" ASC;
 	testutils.AssertDeepEqual(t, dest[0], album1)
 	testutils.AssertDeepEqual(t, dest[1], album2)
 	testutils.AssertDeepEqual(t, dest[len(dest)-1], album347)
+	requireLogged(t, stmt)
 }
 
 func TestJoinEverything(t *testing.T) {
@@ -106,6 +107,7 @@ func TestJoinEverything(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 275)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
+	requireLogged(t, stmt)
 }
 
 func TestSelfJoin(t *testing.T) {

@@ -24,6 +24,7 @@ WHERE link.name IN ('Gmail', 'Outlook');
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 	testutils.AssertExec(t, deleteStmt, db, 2)
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteWithWhereOrderByLimit(t *testing.T) {
@@ -43,6 +44,7 @@ LIMIT 1;
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook", int64(1))
 	testutils.AssertExec(t, deleteStmt, db, 1)
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteQueryContext(t *testing.T) {
@@ -61,6 +63,7 @@ func TestDeleteQueryContext(t *testing.T) {
 	err := deleteStmt.QueryContext(ctx, db, &dest)
 
 	require.Error(t, err, "context deadline exceeded")
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteExecContext(t *testing.T) {

@@ -89,6 +89,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
 	AssertExec(t, stmt, 1)
+	requireLogged(t, stmt)
 }
 
 func TestInsertOnConflict(t *testing.T) {
@@ -108,6 +109,7 @@ VALUES ($1, $2, $3, $4, $5),
 ON CONFLICT (employee_id) DO NOTHING;
 `)
 		AssertExec(t, stmt, 1)
+		requireLogged(t, stmt)
 	})
 
 	t.Run("on constraint do nothing", func(t *testing.T) {
@@ -125,6 +127,7 @@ VALUES ($1, $2, $3, $4, $5),
 ON CONFLICT ON CONSTRAINT employee_pkey DO NOTHING;
 `)
 		AssertExec(t, stmt, 1)
+		requireLogged(t, stmt)
 	})
 
 	t.Run("do update", func(t *testing.T) {

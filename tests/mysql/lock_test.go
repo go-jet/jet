@@ -17,6 +17,7 @@ LOCK TABLES dvds.customer READ;
 
 	_, err := query.Exec(db)
 	require.NoError(t, err)
+	requireLogged(t, query)
 }
 
 func TestLockWrite(t *testing.T) {
@@ -28,6 +29,7 @@ LOCK TABLES dvds.customer WRITE;
 
 	_, err := query.Exec(db)
 	require.NoError(t, err)
+	requireLogged(t, query)
 }
 
 func TestUnlockTables(t *testing.T) {
@@ -39,4 +41,5 @@ UNLOCK TABLES;
 
 	_, err := query.Exec(db)
 	require.NoError(t, err)
+	requireLogged(t, query)
 }

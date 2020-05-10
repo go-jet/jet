@@ -40,6 +40,7 @@ LOCK TABLE dvds.address IN`
 		err = tx.Rollback()
 
 		require.NoError(t, err)
+		requireLogged(t, query)
 	}
 
 	for _, lockMode := range testData {
@@ -56,6 +57,7 @@ LOCK TABLE dvds.address IN`
 		err = tx.Rollback()
 
 		require.NoError(t, err)
+		requireLogged(t, query)
 	}
 }
 

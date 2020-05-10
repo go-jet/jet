@@ -27,13 +27,15 @@ WHERE link.name = 'Bing';
 `, "Bong", "http://bong.com", "Bing")
 
 		testutils.AssertExec(t, query, db, 1)
+		requireLogged(t, query)
 
 		links := []model.Link{}
 
-		err := Link.
+		selQuery := Link.
 			SELECT(Link.AllColumns).
-			WHERE(Link.Name.IN(String("Bong"))).
-			Query(db, &links)
+			WHERE(Link.Name.IN(String("Bong")))
+
+		err := selQuery.Query(db, &links)
 
 		require.NoError(t, err)
 		require.Equal(t, len(links), 1)
@@ -42,6 +44,7 @@ WHERE link.name = 'Bing';
 			URL:  "http://bong.com",
 			Name: "Bong",
 		})
+		requireLogged(t, selQuery)
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -59,6 +62,7 @@ SET name = 'DuckDuckGo',
 WHERE link.name = 'Yahoo';
 `)
 		testutils.AssertExec(t, stmt, db, 1)
+		requireLogged(t, stmt)
 	})
 }
 
@@ -90,6 +94,7 @@ WHERE link.name = 'Bing';
 		testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
 
 		AssertExec(t, query, 1)
+		requireLogged(t, query)
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -114,6 +119,9 @@ SET name = $1,
     )
 WHERE link.name = $3;
 `, "Bong", "Bing", "Bing")
+		_, err := query.Exec(db)
+		require.NoError(t, err)
+		requireLogged(t, query)
 	})
 }
 
@@ -146,6 +154,7 @@ RETURNING link.id AS "link.id",
 	require.Equal(t, len(links), 2)
 	require.Equal(t, links[0].Name, "DuckDuckGo")
 	require.Equal(t, links[1].Name, "DuckDuckGo")
+	requireLogged(t, stmt)
 }
 
 func TestUpdateWithSelect(t *testing.T) {

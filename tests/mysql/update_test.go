@@ -30,6 +30,7 @@ WHERE link.name = 'Bing';
 
 		testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
 		testutils.AssertExec(t, query, db)
+		requireLogged(t, query)
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -42,6 +43,7 @@ WHERE link.name = 'Bing';
 
 		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "Bong", "http://bong.com", "Bing")
 		testutils.AssertExec(t, stmt, db)
+		requireLogged(t, stmt)
 	})
 
 	links := []model.Link{}
@@ -88,6 +90,7 @@ WHERE link.name = ?;
 
 		testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
 		testutils.AssertExec(t, query, db)
+		requireLogged(t, query)
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -105,6 +108,7 @@ WHERE link.name = ?;
 
 		testutils.AssertStatementSql(t, query, expectedSQL, "Bong", "Youtube", "Bing")
 		testutils.AssertExec(t, query, db)
+		requireLogged(t, query)
 	})
 }
 
@@ -130,10 +134,10 @@ SET id = ?,
     description = ?
 WHERE link.id = ?;
 `
-	fmt.Println(stmt.Sql())
 	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 
 	testutils.AssertExec(t, stmt, db)
+	requireLogged(t, stmt)
 }
 
 func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
@@ -165,10 +169,10 @@ WHERE link.id = 201;
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
 
 	testutils.AssertExec(t, stmt, db)
+	requireLogged(t, stmt)
 }
 
 func TestUpdateWithModelDataAndMutableColumns(t *testing.T) {
-
 	setupLinkTableForUpdateTest(t)
 
 	link := model.Link{

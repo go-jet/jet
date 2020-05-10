@@ -28,6 +28,7 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	require.NoError(t, err)
 	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	requireLogged(t, query)
 }
 
 func TestUUIDComplex(t *testing.T) {
@@ -118,6 +119,7 @@ func TestUUIDComplex(t *testing.T) {
 	]
 }
 `)
+		requireLogged(t, query)
 	})
 
 	t.Run("slice of structs left join", func(t *testing.T) {
@@ -175,6 +177,7 @@ func TestUUIDComplex(t *testing.T) {
 	}
 ]
 `)
+		requireLogged(t, leftQuery)
 	})
 
 }

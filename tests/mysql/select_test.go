@@ -33,6 +33,7 @@ WHERE actor.actor_id = ?;
 	require.NoError(t, err)
 
 	testutils.AssertDeepEqual(t, actor, actor2)
+	requireLogged(t, query)
 }
 
 var actor2 = model.Actor{
@@ -67,6 +68,7 @@ ORDER BY actor.actor_id;
 	//testutils.PrintJson(dest)
 	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/all_actors.json")
+	requireLogged(t, query)
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
@@ -144,6 +146,7 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 
 	//testutils.SaveJsonFile(dest, "mysql/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/customer_payment_sum.json")
+	requireLogged(t, query)
 }
 
 func TestSubQuery(t *testing.T) {

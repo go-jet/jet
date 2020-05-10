@@ -13,7 +13,6 @@ type Statement interface {
 	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
 	// Do not use it in production. Use it only for debug purposes.
 	DebugSql() (query string)
-
 	// Query executes statement over database connection db and stores row result in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
@@ -21,12 +20,12 @@ type Statement interface {
 	// QueryContext executes statement with a context over database connection db and stores row result in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
-	QueryContext(context context.Context, db qrm.DB, destination interface{}) error
+	QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error
 
 	//Exec executes statement over db connection without returning any rows.
 	Exec(db qrm.DB) (sql.Result, error)
 	//Exec executes statement with context over db connection without returning any rows.
-	ExecContext(context context.Context, db qrm.DB) (sql.Result, error)
+	ExecContext(ctx context.Context, db qrm.DB) (sql.Result, error)
 }
 
 // SerializerStatement interface
@@ -75,25 +74,41 @@ func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 
 func (s *serializerStatementInterfaceImpl) Query(db qrm.DB, destination interface{}) error {
 	query, args := s.Sql()
+	ctx := context.Background()
 
-	return qrm.Query(context.Background(), db, query, args, destination)
+	callLogger(ctx, s)
+
+	return qrm.Query(ctx, db, query, args, destination)
 }
 
-func (s *serializerStatementInterfaceImpl) QueryContext(context context.Context, db qrm.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error {
 	query, args := s.Sql()
 
-	return qrm.Query(context, db, query, args, destination)
+	callLogger(ctx, s)
+
+	return qrm.Query(ctx, db, query, args, destination)
 }
 
 func (s *serializerStatementInterfaceImpl) Exec(db qrm.DB) (res sql.Result, err error) {
 	query, args := s.Sql()
+
+	callLogger(context.Background(), s)
+
 	return db.Exec(query, args...)
 }
 
-func (s *serializerStatementInterfaceImpl) ExecContext(context context.Context, db qrm.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db qrm.DB) (res sql.Result, err error) {
 	query, args := s.Sql()
 
-	return db.ExecContext(context, query, args...)
+	callLogger(ctx, s)
+
+	return db.ExecContext(ctx, query, args...)
+}
+
+func callLogger(ctx context.Context, statement Statement) {
+	if logger != nil {
+		logger(ctx, statement)
+	}
 }
 
 // ExpressionStatement interfacess

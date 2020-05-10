@@ -834,6 +834,7 @@ func TestInterval(t *testing.T) {
 
 	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
+	requireLogged(t, stmt)
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
@@ -1009,6 +1010,7 @@ FROM`
 
 		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest1, dest2)
+		requireLogged(t, stmt2)
 	}
 }
 
@@ -1062,6 +1064,7 @@ LIMIT $6;
 	"Timestamp": "2009-11-17T20:34:58.651387Z"
 }
 `)
+	requireLogged(t, query)
 }
 
 var allTypesRow0 = model.AllTypes{

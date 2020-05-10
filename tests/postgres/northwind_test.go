@@ -63,4 +63,5 @@ func TestNorthwindJoinEverything(t *testing.T) {
 
 	//jsonSave("./testdata/northwind-all.json", dest)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/northwind-all.json")
+	requireLogged(t, stmt)
 }

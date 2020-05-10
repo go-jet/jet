@@ -68,4 +68,6 @@ FROM test_sample.all_types;
 		Unsigned: 15,
 		Binary:   "Some text",
 	})
+
+	requireLogged(t, query)
 }

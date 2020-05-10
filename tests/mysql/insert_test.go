@@ -34,6 +34,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 
 	_, err := insertQuery.Exec(db)
 	require.NoError(t, err)
+	requireLogged(t, insertQuery)
 
 	insertedLinks := []model.Link{}
 
@@ -82,6 +83,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 
 	_, err := stmt.Exec(db)
 	require.NoError(t, err)
+	requireLogged(t, stmt)
 
 	insertedLinks := []model.Link{}
 

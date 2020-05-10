@@ -43,6 +43,8 @@ WHERE actor.actor_id = 2;
 	}
 
 	testutils.AssertDeepEqual(t, actor, expectedActor)
+
+	requireLogged(t, query)
 }
 
 func TestClassicSelect(t *testing.T) {
@@ -86,6 +88,8 @@ LIMIT 30;
 
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 30)
+
+	requireLogged(t, query)
 }
 
 func TestSelect_ScanToSlice(t *testing.T) {
@@ -117,6 +121,8 @@ ORDER BY customer.customer_id ASC;
 	testutils.AssertDeepEqual(t, customer0, customers[0])
 	testutils.AssertDeepEqual(t, customer1, customers[1])
 	testutils.AssertDeepEqual(t, lastCustomer, customers[598])
+
+	requireLogged(t, query)
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {

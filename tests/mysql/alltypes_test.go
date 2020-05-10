@@ -80,6 +80,7 @@ func TestUUID(t *testing.T) {
 	require.True(t, dest.UUID.String() != uuid.UUID{}.String())
 	require.True(t, dest.StrUUID.String() != uuid.UUID{}.String())
 	require.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
+	requireLogged(t, query)
 }
 
 func TestExpressionOperators(t *testing.T) {

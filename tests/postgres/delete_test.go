@@ -53,6 +53,7 @@ RETURNING link.id AS "link.id",
 	require.Equal(t, len(dest), 2)
 	testutils.AssertDeepEqual(t, dest[0].Name, "Gmail")
 	testutils.AssertDeepEqual(t, dest[1].Name, "Outlook")
+	requireLogged(t, deleteStmt)
 }
 
 func initForDeleteTest(t *testing.T) {
@@ -80,6 +81,7 @@ func TestDeleteQueryContext(t *testing.T) {
 	err := deleteStmt.QueryContext(ctx, db, &dest)
 
 	require.Error(t, err, "context deadline exceeded")
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteExecContext(t *testing.T) {
@@ -99,4 +101,5 @@ func TestDeleteExecContext(t *testing.T) {
 	_, err := deleteStmt.ExecContext(ctx, db)
 
 	require.Error(t, err, "context deadline exceeded")
+	requireLogged(t, deleteStmt)
 }
