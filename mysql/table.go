@@ -49,30 +49,30 @@ type readableTableInterfaceImpl struct {
 }
 
 // Generates a select query on the current tableName.
-func (r *readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
+func (r readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
 	return newSelectStatement(r.parent, append([]Projection{projection1}, projections...))
 }
 
 // Creates a inner join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.InnerJoin, onCondition)
 }
 
 // Creates a left join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.LeftJoin, onCondition)
 }
 
 // Creates a right join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.RightJoin, onCondition)
 }
 
-func (r *readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.FullJoin, onCondition)
 }
 
-func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
 }
 

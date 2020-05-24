@@ -69,7 +69,7 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.Window, &newSelect.OrderBy,
 		&newSelect.Limit, &newSelect.Offset, &newSelect.For, &newSelect.ShareLock)
 
-	newSelect.Select.Projections = projections
+	newSelect.Select.ProjectionList = projections
 	newSelect.From.Table = table
 	newSelect.Limit.Count = -1
 	newSelect.Offset.Count = -1

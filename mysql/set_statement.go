@@ -4,13 +4,13 @@ import "github.com/go-jet/jet/internal/jet"
 
 // UNION effectively appends the result of sub-queries(select statements) into single query.
 // It eliminates duplicate rows from its result.
-func UNION(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+func UNION(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(union, false, toSelectList(lhs, rhs, selects...))
 }
 
 // UNION_ALL effectively appends the result of sub-queries(select statements) into single query.
 // It does not eliminates duplicate rows from its result.
-func UNION_ALL(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+func UNION_ALL(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(union, true, toSelectList(lhs, rhs, selects...))
 }
 
@@ -54,7 +54,7 @@ type setStatementImpl struct {
 	setOperator jet.ClauseSetStmtOperator
 }
 
-func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithProjections) setStatement {
+func newSetStatementImpl(operator string, all bool, selects []jet.SerializerStatement) setStatement {
 	newSetStatement := &setStatementImpl{}
 	newSetStatement.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SetStatementType, newSetStatement,
 		&newSetStatement.setOperator)
@@ -93,6 +93,6 @@ const (
 	union = "UNION"
 )
 
-func toSelectList(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) []jet.StatementWithProjections {
-	return append([]jet.StatementWithProjections{lhs, rhs}, selects...)
+func toSelectList(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) []jet.SerializerStatement {
+	return append([]jet.SerializerStatement{lhs, rhs}, selects...)
 }
