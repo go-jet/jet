@@ -47,3 +47,13 @@ func TestFallTrough(t *testing.T) {
 	require.Equal(t, FallTrough([]SerializeOption{SkipNewLine}), []SerializeOption(nil))
 	require.Equal(t, FallTrough([]SerializeOption{ShortName, SkipNewLine}), []SerializeOption{ShortName})
 }
+
+func TestShouldQuote(t *testing.T) {
+	require.Equal(t, shouldQuoteIdentifier("123"), true)
+	require.Equal(t, shouldQuoteIdentifier("123.235"), true)
+	require.Equal(t, shouldQuoteIdentifier("abc123"), false)
+	require.Equal(t, shouldQuoteIdentifier("abc.123"), true)
+	require.Equal(t, shouldQuoteIdentifier("abc_123"), false)
+	require.Equal(t, shouldQuoteIdentifier("Abc_123"), true)
+	require.Equal(t, shouldQuoteIdentifier("ǄƜĐǶ"), true)
+}

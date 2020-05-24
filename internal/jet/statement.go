@@ -32,13 +32,7 @@ type Statement interface {
 type SerializerStatement interface {
 	Serializer
 	Statement
-}
-
-// StatementWithProjections interface
-type StatementWithProjections interface {
-	Statement
 	HasProjections
-	Serializer
 }
 
 // HasProjections interface
@@ -163,7 +157,7 @@ type statementImpl struct {
 func (s *statementImpl) projections() ProjectionList {
 	for _, clause := range s.Clauses {
 		if selectClause, ok := clause.(ClauseWithProjections); ok {
-			return selectClause.projections()
+			return selectClause.Projections()
 		}
 	}
 
@@ -171,7 +165,6 @@ func (s *statementImpl) projections() ProjectionList {
 }
 
 func (s *statementImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-
 	if !contains(options, NoWrap) {
 		out.WriteString("(")
 		out.IncreaseIdent()

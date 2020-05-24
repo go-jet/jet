@@ -29,6 +29,7 @@ const (
 	SetStatementType    StatementType = "SET"
 	LockStatementType   StatementType = "LOCK"
 	UnLockStatementType StatementType = "UNLOCK"
+	WithStatementType   StatementType = "WITH"
 )
 
 // Serializer interface

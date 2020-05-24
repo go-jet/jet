@@ -13,17 +13,18 @@ type Clause interface {
 type ClauseWithProjections interface {
 	Clause
 
-	projections() ProjectionList
+	Projections() ProjectionList
 }
 
 // ClauseSelect struct
 type ClauseSelect struct {
-	Distinct    bool
-	Projections []Projection
+	Distinct       bool
+	ProjectionList []Projection
 }
 
-func (s *ClauseSelect) projections() ProjectionList {
-	return s.Projections
+// Projections returns list of projections for select clause
+func (s *ClauseSelect) Projections() ProjectionList {
+	return s.ProjectionList
 }
 
 // Serialize serializes clause into SQLBuilder
@@ -35,11 +36,11 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 		out.WriteString("DISTINCT")
 	}
 
-	if len(s.Projections) == 0 {
+	if len(s.ProjectionList) == 0 {
 		panic("jet: SELECT clause has to have at least one projection")
 	}
 
-	out.WriteProjections(statementType, s.Projections)
+	out.WriteProjections(statementType, s.ProjectionList)
 }
 
 // ClauseFrom struct
@@ -212,13 +213,14 @@ func (f *ClauseFor) Serialize(statementType StatementType, out *SQLBuilder, opti
 type ClauseSetStmtOperator struct {
 	Operator string
 	All      bool
-	Selects  []StatementWithProjections
+	Selects  []SerializerStatement
 	OrderBy  ClauseOrderBy
 	Limit    ClauseLimit
 	Offset   ClauseOffset
 }
 
-func (s *ClauseSetStmtOperator) projections() ProjectionList {
+// Projections returns set of projections for ClauseSetStmtOperator
+func (s *ClauseSetStmtOperator) Projections() ProjectionList {
 	if len(s.Selects) > 0 {
 		return s.Selects[0].projections()
 	}

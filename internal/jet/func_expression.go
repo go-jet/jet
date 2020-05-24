@@ -145,6 +145,11 @@ func MINi(integerExpression IntegerExpression) integerWindowExpression {
 	return newIntegerWindowFunc("MIN", integerExpression)
 }
 
+// SUM is aggregate function. Returns sum of all expressions
+func SUM(expression Expression) Expression {
+	return newWindowFunc("SUM", expression)
+}
+
 // SUMf is aggregate function. Returns sum of expression across all float expressions
 func SUMf(floatExpression FloatExpression) floatWindowExpression {
 	return NewFloatWindowFunc("SUM", floatExpression)

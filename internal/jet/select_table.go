@@ -8,35 +8,31 @@ type SelectTable interface {
 }
 
 type selectTableImpl struct {
-	selectStmt StatementWithProjections
+	selectStmt SerializerStatement
 	alias      string
-
-	projections ProjectionList
 }
 
 // NewSelectTable func
-func NewSelectTable(selectStmt StatementWithProjections, alias string) SelectTable {
-	selectTable := selectTableImpl{selectStmt: selectStmt, alias: alias}
-
-	projectionList := selectStmt.projections().fromImpl(&selectTable)
-	selectTable.projections = projectionList.(ProjectionList)
-
-	return &selectTable
+func NewSelectTable(selectStmt SerializerStatement, alias string) SelectTable {
+	selectTable := &selectTableImpl{selectStmt: selectStmt, alias: alias}
+	return selectTable
 }
 
-func (s *selectTableImpl) Alias() string {
+func (s selectTableImpl) Alias() string {
 	return s.alias
 }
 
-func (s *selectTableImpl) AllColumns() ProjectionList {
-	return s.projections
-}
-
-func (s *selectTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if s == nil {
-		panic("jet: expression table is nil. ")
+func (s selectTableImpl) AllColumns() ProjectionList {
+	statementWithProjections, ok := s.selectStmt.(HasProjections)
+	if !ok {
+		return ProjectionList{}
 	}
 
+	projectionList := statementWithProjections.projections().fromImpl(s)
+	return projectionList.(ProjectionList)
+}
+
+func (s selectTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	s.selectStmt.serialize(statement, out)
 
 	out.WriteString("AS")
