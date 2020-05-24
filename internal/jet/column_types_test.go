@@ -22,9 +22,9 @@ func TestNewBoolColumn(t *testing.T) {
 
 func TestNewIntColumn(t *testing.T) {
 	intColumn := IntegerColumn("col_int").From(subQuery)
-	assertClauseSerialize(t, intColumn, `sub_query."col_int"`)
-	assertClauseSerialize(t, intColumn.EQ(Int(12)), `(sub_query."col_int" = $1)`, int64(12))
-	assertProjectionSerialize(t, intColumn, `sub_query."col_int" AS "col_int"`)
+	assertClauseSerialize(t, intColumn, `sub_query.col_int`)
+	assertClauseSerialize(t, intColumn.EQ(Int(12)), `(sub_query.col_int = $1)`, int64(12))
+	assertProjectionSerialize(t, intColumn, `sub_query.col_int AS "col_int"`)
 
 	intColumn2 := table1ColInt.From(subQuery)
 	assertClauseSerialize(t, intColumn2, `sub_query."table1.col_int"`)
@@ -35,9 +35,9 @@ func TestNewIntColumn(t *testing.T) {
 
 func TestNewFloatColumnColumn(t *testing.T) {
 	floatColumn := FloatColumn("col_float").From(subQuery)
-	assertClauseSerialize(t, floatColumn, `sub_query."col_float"`)
-	assertClauseSerialize(t, floatColumn.EQ(Float(1.11)), `(sub_query."col_float" = $1)`, float64(1.11))
-	assertProjectionSerialize(t, floatColumn, `sub_query."col_float" AS "col_float"`)
+	assertClauseSerialize(t, floatColumn, `sub_query.col_float`)
+	assertClauseSerialize(t, floatColumn.EQ(Float(1.11)), `(sub_query.col_float = $1)`, float64(1.11))
+	assertProjectionSerialize(t, floatColumn, `sub_query.col_float AS "col_float"`)
 
 	floatColumn2 := table1ColFloat.From(subQuery)
 	assertClauseSerialize(t, floatColumn2, `sub_query."table1.col_float"`)
@@ -47,10 +47,10 @@ func TestNewFloatColumnColumn(t *testing.T) {
 
 func TestNewDateColumnColumn(t *testing.T) {
 	dateColumn := DateColumn("col_date").From(subQuery)
-	assertClauseSerialize(t, dateColumn, `sub_query."col_date"`)
+	assertClauseSerialize(t, dateColumn, `sub_query.col_date`)
 	assertClauseSerialize(t, dateColumn.EQ(Date(2002, 2, 3)),
-		`(sub_query."col_date" = $1)`, "2002-02-03")
-	assertProjectionSerialize(t, dateColumn, `sub_query."col_date" AS "col_date"`)
+		`(sub_query.col_date = $1)`, "2002-02-03")
+	assertProjectionSerialize(t, dateColumn, `sub_query.col_date AS "col_date"`)
 
 	dateColumn2 := table1ColDate.From(subQuery)
 	assertClauseSerialize(t, dateColumn2, `sub_query."table1.col_date"`)
@@ -61,10 +61,10 @@ func TestNewDateColumnColumn(t *testing.T) {
 
 func TestNewTimeColumnColumn(t *testing.T) {
 	timeColumn := TimeColumn("col_time").From(subQuery)
-	assertClauseSerialize(t, timeColumn, `sub_query."col_time"`)
+	assertClauseSerialize(t, timeColumn, `sub_query.col_time`)
 	assertClauseSerialize(t, timeColumn.EQ(Time(1, 1, 1, 1)),
-		`(sub_query."col_time" = $1)`, "01:01:01.000000001")
-	assertProjectionSerialize(t, timeColumn, `sub_query."col_time" AS "col_time"`)
+		`(sub_query.col_time = $1)`, "01:01:01.000000001")
+	assertProjectionSerialize(t, timeColumn, `sub_query.col_time AS "col_time"`)
 
 	timeColumn2 := table1ColTime.From(subQuery)
 	assertClauseSerialize(t, timeColumn2, `sub_query."table1.col_time"`)
@@ -75,10 +75,10 @@ func TestNewTimeColumnColumn(t *testing.T) {
 
 func TestNewTimezColumnColumn(t *testing.T) {
 	timezColumn := TimezColumn("col_timez").From(subQuery)
-	assertClauseSerialize(t, timezColumn, `sub_query."col_timez"`)
+	assertClauseSerialize(t, timezColumn, `sub_query.col_timez`)
 	assertClauseSerialize(t, timezColumn.EQ(Timez(1, 1, 1, 1, "UTC")),
-		`(sub_query."col_timez" = $1)`, "01:01:01.000000001 UTC")
-	assertProjectionSerialize(t, timezColumn, `sub_query."col_timez" AS "col_timez"`)
+		`(sub_query.col_timez = $1)`, "01:01:01.000000001 UTC")
+	assertProjectionSerialize(t, timezColumn, `sub_query.col_timez AS "col_timez"`)
 
 	timezColumn2 := table1ColTimez.From(subQuery)
 	assertClauseSerialize(t, timezColumn2, `sub_query."table1.col_timez"`)
@@ -89,10 +89,10 @@ func TestNewTimezColumnColumn(t *testing.T) {
 
 func TestNewTimestampColumnColumn(t *testing.T) {
 	timestampColumn := TimestampColumn("col_timestamp").From(subQuery)
-	assertClauseSerialize(t, timestampColumn, `sub_query."col_timestamp"`)
+	assertClauseSerialize(t, timestampColumn, `sub_query.col_timestamp`)
 	assertClauseSerialize(t, timestampColumn.EQ(Timestamp(1, 1, 1, 1, 1, 1)),
-		`(sub_query."col_timestamp" = $1)`, "0001-01-01 01:01:01")
-	assertProjectionSerialize(t, timestampColumn, `sub_query."col_timestamp" AS "col_timestamp"`)
+		`(sub_query.col_timestamp = $1)`, "0001-01-01 01:01:01")
+	assertProjectionSerialize(t, timestampColumn, `sub_query.col_timestamp AS "col_timestamp"`)
 
 	timestampColumn2 := table1ColTimestamp.From(subQuery)
 	assertClauseSerialize(t, timestampColumn2, `sub_query."table1.col_timestamp"`)
@@ -103,10 +103,10 @@ func TestNewTimestampColumnColumn(t *testing.T) {
 
 func TestNewTimestampzColumnColumn(t *testing.T) {
 	timestampzColumn := TimestampzColumn("col_timestampz").From(subQuery)
-	assertClauseSerialize(t, timestampzColumn, `sub_query."col_timestampz"`)
+	assertClauseSerialize(t, timestampzColumn, `sub_query.col_timestampz`)
 	assertClauseSerialize(t, timestampzColumn.EQ(Timestampz(1, 1, 1, 1, 1, 1, 0, "UTC")),
-		`(sub_query."col_timestampz" = $1)`, "0001-01-01 01:01:01 UTC")
-	assertProjectionSerialize(t, timestampzColumn, `sub_query."col_timestampz" AS "col_timestampz"`)
+		`(sub_query.col_timestampz = $1)`, "0001-01-01 01:01:01 UTC")
+	assertProjectionSerialize(t, timestampzColumn, `sub_query.col_timestampz AS "col_timestampz"`)
 
 	timestampzColumn2 := table1ColTimestampz.From(subQuery)
 	assertClauseSerialize(t, timestampzColumn2, `sub_query."table1.col_timestampz"`)
