@@ -4,7 +4,7 @@ import "github.com/go-jet/jet/internal/jet"
 
 // InsertStatement is interface for SQL INSERT statements
 type InsertStatement interface {
-	Statement
+	jet.SerializerStatement
 
 	// Insert row of values
 	VALUES(value interface{}, values ...interface{}) InsertStatement
@@ -55,7 +55,7 @@ func (i *insertStatementImpl) MODELS(data interface{}) InsertStatement {
 }
 
 func (i *insertStatementImpl) RETURNING(projections ...jet.Projection) InsertStatement {
-	i.Returning.Projections = projections
+	i.Returning.ProjectionList = projections
 	return i
 }
 

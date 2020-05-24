@@ -5,18 +5,23 @@ import (
 )
 
 type clauseReturning struct {
-	Projections []jet.Projection
+	ProjectionList []jet.Projection
 }
 
 func (r *clauseReturning) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-	if len(r.Projections) == 0 {
+	if len(r.ProjectionList) == 0 {
 		return
 	}
 
 	out.NewLine()
 	out.WriteString("RETURNING")
 	out.IncreaseIdent()
-	out.WriteProjections(statementType, r.Projections)
+	out.WriteProjections(statementType, r.ProjectionList)
+	out.DecreaseIdent()
+}
+
+func (r clauseReturning) Projections() ProjectionList {
+	return r.ProjectionList
 }
 
 // ========================================== //

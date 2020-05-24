@@ -4,37 +4,37 @@ import "github.com/go-jet/jet/internal/jet"
 
 // UNION effectively appends the result of sub-queries(select statements) into single query.
 // It eliminates duplicate rows from its result.
-func UNION(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+func UNION(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(union, false, toSelectList(lhs, rhs, selects...))
 }
 
 // UNION_ALL effectively appends the result of sub-queries(select statements) into single query.
 // It does not eliminates duplicate rows from its result.
-func UNION_ALL(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+func UNION_ALL(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(union, true, toSelectList(lhs, rhs, selects...))
 }
 
 // INTERSECT returns all rows that are in query results.
 // It eliminates duplicate rows from its result.
-func INTERSECT(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+func INTERSECT(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(intersect, false, toSelectList(lhs, rhs, selects...))
 }
 
 // INTERSECT_ALL returns all rows that are in query results.
 // It does not eliminates duplicate rows from its result.
-func INTERSECT_ALL(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) setStatement {
+func INTERSECT_ALL(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(intersect, true, toSelectList(lhs, rhs, selects...))
 }
 
 // EXCEPT returns all rows that are in the result of query lhs but not in the result of query rhs.
 // It eliminates duplicate rows from its result.
-func EXCEPT(lhs, rhs jet.StatementWithProjections) setStatement {
+func EXCEPT(lhs, rhs jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(except, false, toSelectList(lhs, rhs))
 }
 
 // EXCEPT_ALL returns all rows that are in the result of query lhs but not in the result of query rhs.
 // It does not eliminates duplicate rows from its result.
-func EXCEPT_ALL(lhs, rhs jet.StatementWithProjections) setStatement {
+func EXCEPT_ALL(lhs, rhs jet.SerializerStatement) setStatement {
 	return newSetStatementImpl(except, true, toSelectList(lhs, rhs))
 }
 
@@ -98,7 +98,7 @@ type setStatementImpl struct {
 	setOperator jet.ClauseSetStmtOperator
 }
 
-func newSetStatementImpl(operator string, all bool, selects []jet.StatementWithProjections) setStatement {
+func newSetStatementImpl(operator string, all bool, selects []jet.SerializerStatement) setStatement {
 	newSetStatement := &setStatementImpl{}
 	newSetStatement.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SetStatementType, newSetStatement,
 		&newSetStatement.setOperator)
@@ -139,6 +139,6 @@ const (
 	except    = "EXCEPT"
 )
 
-func toSelectList(lhs, rhs jet.StatementWithProjections, selects ...jet.StatementWithProjections) []jet.StatementWithProjections {
-	return append([]jet.StatementWithProjections{lhs, rhs}, selects...)
+func toSelectList(lhs, rhs jet.SerializerStatement, selects ...jet.SerializerStatement) []jet.SerializerStatement {
+	return append([]jet.SerializerStatement{lhs, rhs}, selects...)
 }

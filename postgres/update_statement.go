@@ -6,7 +6,7 @@ import (
 
 // UpdateStatement is interface of SQL UPDATE statement
 type UpdateStatement interface {
-	Statement
+	jet.SerializerStatement
 
 	SET(value interface{}, values ...interface{}) UpdateStatement
 	MODEL(data interface{}) UpdateStatement
@@ -67,7 +67,7 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 }
 
 func (u *updateStatementImpl) RETURNING(projections ...jet.Projection) UpdateStatement {
-	u.Returning.Projections = projections
+	u.Returning.ProjectionList = projections
 	return u
 }
 
