@@ -563,6 +563,7 @@ At the moment Jet dependence only of:
 To run the tests, additional dependencies are required:
 - `github.com/pkg/profile`
 - `github.com/stretchr/testify`
+- `github.com/google/go-cmp`
 
 ## Versioning
 
