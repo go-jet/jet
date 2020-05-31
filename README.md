@@ -36,15 +36,15 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
  1) Auto-generated type-safe SQL Builder  
  - PostgreSQL:
     * [SELECT](https://github.com/go-jet/jet/wiki/SELECT) `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, INTERSECT, EXCEPT, WINDOW, sub-queries)`
-    * [INSERT](https://github.com/go-jet/jet/wiki/INSERT) `(VALUES, query, RETURNING)`, 
-    * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE) `(SET, WHERE, RETURNING)`, 
+    * [INSERT](https://github.com/go-jet/jet/wiki/INSERT) `(VALUES, MODEL, MODELS, QUERY, ON_CONFLICT, RETURNING)`, 
+    * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE) `(SET, MODEL, WHERE, RETURNING)`, 
     * [DELETE](https://github.com/go-jet/jet/wiki/DELETE) `(WHERE, RETURNING)`,
     * [LOCK](https://github.com/go-jet/jet/wiki/LOCK) `(IN, NOWAIT)`  
     * [WITH](https://github.com/go-jet/jet/wiki/WITH)
  - MySQL and MariaDB:
     * [SELECT](https://github.com/go-jet/jet/wiki/SELECT) `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, LOCK_IN_SHARE_MODE, WINDOW, sub-queries)`
-    * [INSERT](https://github.com/go-jet/jet/wiki/INSERT) `(VALUES, query)`, 
-    * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE) `(SET, WHERE)`, 
+    * [INSERT](https://github.com/go-jet/jet/wiki/INSERT) `(VALUES, MODEL, MODELS, ON_DUPLICATE_KEY_UPDATE, query)`, 
+    * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE) `(SET, MODEL, WHERE)`, 
     * [DELETE](https://github.com/go-jet/jet/wiki/DELETE) `(WHERE, ORDER_BY, LIMIT)`,
     * [LOCK](https://github.com/go-jet/jet/wiki/LOCK) `(READ, WRITE)`
     * [WITH](https://github.com/go-jet/jet/wiki/WITH)
