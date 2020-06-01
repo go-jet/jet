@@ -52,7 +52,7 @@ var loggedSQLArgs []interface{}
 var loggedDebugSQL string
 
 func init() {
-	postgres.SetLogger(func(ctx context.Context, statement postgres.LoggableStatement) {
+	postgres.SetLogger(func(ctx context.Context, statement postgres.PrintableStatement) {
 		loggedSQL, loggedSQLArgs = statement.Sql()
 		loggedDebugSQL = statement.DebugSql()
 	})

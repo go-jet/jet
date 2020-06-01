@@ -54,7 +54,7 @@ var loggedSQLArgs []interface{}
 var loggedDebugSQL string
 
 func init() {
-	jetmysql.SetLogger(func(ctx context.Context, statement jetmysql.LoggableStatement) {
+	jetmysql.SetLogger(func(ctx context.Context, statement jetmysql.PrintableStatement) {
 		loggedSQL, loggedSQLArgs = statement.Sql()
 		loggedDebugSQL = statement.DebugSql()
 	})

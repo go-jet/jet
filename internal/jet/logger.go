@@ -2,14 +2,14 @@ package jet
 
 import "context"
 
-// LoggableStatement is a statement which sql query can be logged
-type LoggableStatement interface {
+// PrintableStatement is a statement which sql query can be logged
+type PrintableStatement interface {
 	Sql() (query string, args []interface{})
 	DebugSql() (query string)
 }
 
 // LoggerFunc is a definition of a function user can implement to support automatic statement logging.
-type LoggerFunc func(ctx context.Context, statement LoggableStatement)
+type LoggerFunc func(ctx context.Context, statement PrintableStatement)
 
 var logger LoggerFunc
 

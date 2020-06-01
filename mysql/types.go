@@ -14,8 +14,8 @@ type ProjectionList = jet.ProjectionList
 // ColumnAssigment is interface wrapper around column assigment
 type ColumnAssigment = jet.ColumnAssigment
 
-// LoggableStatement is a statement which sql query can be logged
-type LoggableStatement = jet.LoggableStatement
+// PrintableStatement is a statement which sql query can be logged
+type PrintableStatement = jet.PrintableStatement
 
 // SetLogger sets automatic statement logging
 var SetLogger = jet.SetLoggerFunc
