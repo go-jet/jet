@@ -95,6 +95,9 @@ FROM customer_sales_rep;
 //}
 
 func TestWITH_And_UPDATE(t *testing.T) {
+	if sourceIsMariaDB() {
+		return
+	}
 	paymentsToUpdate := CTE("payments_to_update")
 	paymentsToDeleteID := Payment.PaymentID.From(paymentsToUpdate)
 
@@ -124,6 +127,10 @@ func TestWITH_And_UPDATE(t *testing.T) {
 }
 
 func TestWITH_And_DELETE(t *testing.T) {
+	if sourceIsMariaDB() {
+		return
+	}
+
 	paymentsToDelete := CTE("payments_to_delete")
 	paymentsToDeleteID := Payment.PaymentID.From(paymentsToDelete)
 
