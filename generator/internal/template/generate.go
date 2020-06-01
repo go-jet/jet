@@ -8,7 +8,6 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 	"path/filepath"
 	"text/template"
-	"time"
 )
 
 // GenerateFiles generates Go files from tables and enums metadata
@@ -84,9 +83,6 @@ func GenerateTemplate(templateText string, templateData interface{}, dialect jet
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"ToGoIdentifier":          utils.ToGoIdentifier,
 		"ToGoEnumValueIdentifier": utils.ToGoEnumValueIdentifier,
-		"now": func() string {
-			return time.Now().Format(time.RFC850)
-		},
 		"dialect": func() jet.Dialect {
 			return dialect
 		},
