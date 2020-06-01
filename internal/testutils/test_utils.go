@@ -28,7 +28,7 @@ func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int
 	require.NoError(t, err)
 
 	if len(rowsAffected) > 0 {
-		require.Equal(t, rows, rowsAffected[0])
+		require.Equal(t, rowsAffected[0], rows)
 	}
 }
 

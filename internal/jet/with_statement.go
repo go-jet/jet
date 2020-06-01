@@ -1,7 +1,7 @@
 package jet
 
 // WITH function creates new with statement from list of common table expressions for specified dialect
-func WITH(dialect Dialect, cte ...CommonTableExpressionDefinition) func(statement SerializerStatement) Statement {
+func WITH(dialect Dialect, cte ...CommonTableExpressionDefinition) func(statement Statement) Statement {
 	newWithImpl := &withImpl{
 		ctes: cte,
 		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
@@ -11,8 +11,12 @@ func WITH(dialect Dialect, cte ...CommonTableExpressionDefinition) func(statemen
 	}
 	newWithImpl.parent = newWithImpl
 
-	return func(primaryStatement SerializerStatement) Statement {
-		newWithImpl.primaryStatement = primaryStatement
+	return func(primaryStatement Statement) Statement {
+		serializerStatement, ok := primaryStatement.(SerializerStatement)
+		if !ok {
+			panic("jet: unsupported main WITH statement.")
+		}
+		newWithImpl.primaryStatement = serializerStatement
 		return newWithImpl
 	}
 }

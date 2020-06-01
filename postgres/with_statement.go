@@ -9,7 +9,7 @@ type CommonTableExpression struct {
 }
 
 // WITH function creates new WITH statement from list of common table expressions
-func WITH(cte ...jet.CommonTableExpressionDefinition) func(statement jet.SerializerStatement) Statement {
+func WITH(cte ...jet.CommonTableExpressionDefinition) func(statement jet.Statement) Statement {
 	return jet.WITH(Dialect, cte...)
 }
 
