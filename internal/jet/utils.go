@@ -59,7 +59,23 @@ func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 			panic("jet: nil column in columns list")
 		}
 
-		out.WriteString(col.Name())
+		out.WriteIdentifier(col.Name())
+	}
+}
+
+// SerializeColumnExpressionNames func
+func SerializeColumnExpressionNames(columns []ColumnExpression, statementType StatementType,
+	out *SQLBuilder, options ...SerializeOption) {
+	for i, col := range columns {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if col == nil {
+			panic("jet: nil column in columns list")
+		}
+
+		col.serialize(statementType, out, options...)
 	}
 }
 
@@ -85,7 +101,8 @@ func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
 	return ret
 }
 
-func valueToClause(value interface{}) Serializer {
+// ToSerializerValue creates Serializer type from the value
+func ToSerializerValue(value interface{}) Serializer {
 	if clause, ok := value.(Serializer); ok {
 		return clause
 	}
@@ -148,7 +165,7 @@ func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
 	allValues := append([]interface{}{value}, values...)
 
 	for _, val := range allValues {
-		row = append(row, valueToClause(val))
+		row = append(row, ToSerializerValue(val))
 	}
 
 	return row

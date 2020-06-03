@@ -35,17 +35,19 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
 ## Features
  1) Auto-generated type-safe SQL Builder  
  - PostgreSQL:
-    * SELECT `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, INTERSECT, EXCEPT, WINDOW, sub-queries)`
-    * INSERT `(VALUES, query, RETURNING)`, 
-    * UPDATE `(SET, WHERE, RETURNING)`, 
-    * DELETE `(WHERE, RETURNING)`,
-    * LOCK `(IN, NOWAIT)`  
+    * [SELECT](https://github.com/go-jet/jet/wiki/SELECT) `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, INTERSECT, EXCEPT, WINDOW, sub-queries)`
+    * [INSERT](https://github.com/go-jet/jet/wiki/INSERT) `(VALUES, MODEL, MODELS, QUERY, ON_CONFLICT, RETURNING)`, 
+    * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE) `(SET, MODEL, WHERE, RETURNING)`, 
+    * [DELETE](https://github.com/go-jet/jet/wiki/DELETE) `(WHERE, RETURNING)`,
+    * [LOCK](https://github.com/go-jet/jet/wiki/LOCK) `(IN, NOWAIT)`  
+    * [WITH](https://github.com/go-jet/jet/wiki/WITH)
  - MySQL and MariaDB:
-    * SELECT `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, LOCK_IN_SHARE_MODE, WINDOW, sub-queries)`
-    * INSERT `(VALUES, query)`, 
-    * UPDATE `(SET, WHERE)`, 
-    * DELETE `(WHERE, ORDER_BY, LIMIT)`,
-    * LOCK `(READ, WRITE)`
+    * [SELECT](https://github.com/go-jet/jet/wiki/SELECT) `(DISTINCT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, LIMIT, OFFSET, FOR, UNION, LOCK_IN_SHARE_MODE, WINDOW, sub-queries)`
+    * [INSERT](https://github.com/go-jet/jet/wiki/INSERT) `(VALUES, MODEL, MODELS, ON_DUPLICATE_KEY_UPDATE, query)`, 
+    * [UPDATE](https://github.com/go-jet/jet/wiki/UPDATE) `(SET, MODEL, WHERE)`, 
+    * [DELETE](https://github.com/go-jet/jet/wiki/DELETE) `(WHERE, ORDER_BY, LIMIT)`,
+    * [LOCK](https://github.com/go-jet/jet/wiki/LOCK) `(READ, WRITE)`
+    * [WITH](https://github.com/go-jet/jet/wiki/WITH)
  2) Auto-generated Data Model types - Go types mapped to database type (table, view or enum), used to store
  result of database queries. Can be combined to create desired query result destination. 
  3) Query execution with result mapping to arbitrary destination structure. 
@@ -561,6 +563,7 @@ At the moment Jet dependence only of:
 To run the tests, additional dependencies are required:
 - `github.com/pkg/profile`
 - `github.com/stretchr/testify`
+- `github.com/google/go-cmp`
 
 ## Versioning
 
@@ -568,5 +571,5 @@ To run the tests, additional dependencies are required:
 
 ## License
 
-Copyright 2019 Goran Bjelanovic  
+Copyright 2019-2020 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.

@@ -1,7 +1,7 @@
 package jet
 
 import (
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"strconv"
 	"testing"
 )
@@ -56,14 +56,14 @@ func assertClauseSerialize(t *testing.T, clause Serializer, query string, args .
 
 	//fmt.Println(out.Buff.String())
 
-	assert.Equal(t, out.Buff.String(), query)
-	assert.Equal(t, out.Args, args)
+	require.Equal(t, out.Buff.String(), query)
+	require.Equal(t, out.Args, args)
 }
 
 func assertClauseSerializeErr(t *testing.T, clause Serializer, errString string) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, errString)
+		require.Equal(t, r, errString)
 	}()
 
 	out := SQLBuilder{Dialect: defaultDialect}
@@ -76,14 +76,14 @@ func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, a
 
 	//fmt.Println(out.Buff.String())
 
-	assert.Equal(t, out.Buff.String(), query)
-	assert.Equal(t, out.Args, args)
+	require.Equal(t, out.Buff.String(), query)
+	require.Equal(t, out.Args, args)
 }
 
 func assertProjectionSerialize(t *testing.T, projection Projection, query string, args ...interface{}) {
 	out := SQLBuilder{Dialect: defaultDialect}
 	projection.serializeForProjection(SelectStatementType, &out)
 
-	assert.Equal(t, out.Buff.String(), query)
-	assert.Equal(t, out.Args, args)
+	require.Equal(t, out.Buff.String(), query)
+	require.Equal(t, out.Args, args)
 }

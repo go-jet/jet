@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/northwind/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/northwind/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -59,8 +59,9 @@ func TestNorthwindJoinEverything(t *testing.T) {
 	}
 
 	err := stmt.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//jsonSave("./testdata/northwind-all.json", dest)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/northwind-all.json")
+	requireLogged(t, stmt)
 }

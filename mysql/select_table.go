@@ -13,7 +13,7 @@ type selectTableImpl struct {
 	readableTableInterfaceImpl
 }
 
-func newSelectTable(selectStmt jet.StatementWithProjections, alias string) SelectTable {
+func newSelectTable(selectStmt jet.SerializerStatement, alias string) SelectTable {
 	subQuery := &selectTableImpl{
 		SelectTable: jet.NewSelectTable(selectStmt, alias),
 	}

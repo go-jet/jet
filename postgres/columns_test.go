@@ -8,10 +8,10 @@ func TestNewIntervalColumn(t *testing.T) {
 	subQuery := SELECT(Int(1)).AsTable("sub_query")
 
 	subQueryIntervalColumn := IntervalColumn("col_interval").From(subQuery)
-	assertSerialize(t, subQueryIntervalColumn, `sub_query."col_interval"`)
+	assertSerialize(t, subQueryIntervalColumn, `sub_query.col_interval`)
 	assertSerialize(t, subQueryIntervalColumn.EQ(INTERVAL(2, HOUR, 10, MINUTE)),
-		`(sub_query."col_interval" = INTERVAL '2 HOUR 10 MINUTE')`)
-	assertProjectionSerialize(t, subQueryIntervalColumn, `sub_query."col_interval" AS "col_interval"`)
+		`(sub_query.col_interval = INTERVAL '2 HOUR 10 MINUTE')`)
+	assertProjectionSerialize(t, subQueryIntervalColumn, `sub_query.col_interval AS "col_interval"`)
 
 	subQueryIntervalColumn2 := table1ColInterval.From(subQuery)
 	assertSerialize(t, subQueryIntervalColumn2, `sub_query."table1.col_interval"`)

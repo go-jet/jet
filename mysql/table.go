@@ -8,7 +8,7 @@ type Table interface {
 	readableTable
 
 	INSERT(columns ...jet.Column) InsertStatement
-	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
+	UPDATE(columns ...jet.Column) UpdateStatement
 	DELETE() DeleteStatement
 	LOCK() LockStatement
 }
@@ -35,7 +35,7 @@ type readableTable interface {
 
 type joinSelectUpdateTable interface {
 	ReadableTable
-	UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement
+	UPDATE(columns ...jet.Column) UpdateStatement
 }
 
 // ReadableTable interface
@@ -49,37 +49,37 @@ type readableTableInterfaceImpl struct {
 }
 
 // Generates a select query on the current tableName.
-func (r *readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
+func (r readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
 	return newSelectStatement(r.parent, append([]Projection{projection1}, projections...))
 }
 
 // Creates a inner join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.InnerJoin, onCondition)
 }
 
 // Creates a left join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.LeftJoin, onCondition)
 }
 
 // Creates a right join tableName Expression using onCondition.
-func (r *readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.RightJoin, onCondition)
 }
 
-func (r *readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.FullJoin, onCondition)
 }
 
-func (r *readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectUpdateTable {
+func (r readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectUpdateTable {
 	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, column jet.ColumnExpression, columns ...jet.ColumnExpression) Table {
+func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
 	t := &tableImpl{
-		SerializerTable: jet.NewTable(schemaName, name, column, columns...),
+		SerializerTable: jet.NewTable(schemaName, name, columns...),
 	}
 
 	t.readableTableInterfaceImpl.parent = t
@@ -98,8 +98,8 @@ func (t *tableImpl) INSERT(columns ...jet.Column) InsertStatement {
 	return newInsertStatement(t.parent, jet.UnwidColumnList(columns))
 }
 
-func (t *tableImpl) UPDATE(column jet.Column, columns ...jet.Column) UpdateStatement {
-	return newUpdateStatement(t.parent, jet.UnwindColumns(column, columns...))
+func (t *tableImpl) UPDATE(columns ...jet.Column) UpdateStatement {
+	return newUpdateStatement(t.parent, jet.UnwidColumnList(columns))
 }
 
 func (t *tableImpl) DELETE() DeleteStatement {

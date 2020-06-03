@@ -4,7 +4,7 @@ import "github.com/go-jet/jet/internal/jet"
 
 // DeleteStatement is interface for PostgreSQL DELETE statement
 type DeleteStatement interface {
-	Statement
+	jet.SerializerStatement
 
 	WHERE(expression BoolExpression) DeleteStatement
 
@@ -37,6 +37,6 @@ func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 }
 
 func (d *deleteStatementImpl) RETURNING(projections ...jet.Projection) DeleteStatement {
-	d.Returning.Projections = projections
+	d.Returning.ProjectionList = projections
 	return d
 }

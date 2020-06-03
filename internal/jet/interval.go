@@ -33,5 +33,5 @@ type IntervalImpl struct {
 
 func (i IntervalImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("INTERVAL")
-	i.interval.serialize(statement, out, options...)
+	i.interval.serialize(statement, out, FallTrough(options)...)
 }

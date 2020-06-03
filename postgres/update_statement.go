@@ -6,7 +6,7 @@ import (
 
 // UpdateStatement is interface of SQL UPDATE statement
 type UpdateStatement interface {
-	Statement
+	jet.SerializerStatement
 
 	SET(value interface{}, values ...interface{}) UpdateStatement
 	MODEL(data interface{}) UpdateStatement
@@ -20,14 +20,19 @@ type updateStatementImpl struct {
 
 	Update    jet.ClauseUpdate
 	Set       clauseSet
+	SetNew    jet.SetClauseNew
 	Where     jet.ClauseWhere
 	Returning clauseReturning
 }
 
 func newUpdateStatement(table WritableTable, columns []jet.Column) UpdateStatement {
 	update := &updateStatementImpl{}
-	update.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update, &update.Update,
-		&update.Set, &update.Where, &update.Returning)
+	update.SerializerStatement = jet.NewStatementImpl(Dialect, jet.UpdateStatementType, update,
+		&update.Update,
+		&update.Set,
+		&update.SetNew,
+		&update.Where,
+		&update.Returning)
 
 	update.Update.Table = table
 	update.Set.Columns = columns
@@ -37,7 +42,17 @@ func newUpdateStatement(table WritableTable, columns []jet.Column) UpdateStateme
 }
 
 func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {
-	u.Set.Values = jet.UnwindRowFromValues(value, values)
+	columnAssigment, isColumnAssigment := value.(ColumnAssigment)
+
+	if isColumnAssigment {
+		u.SetNew = []ColumnAssigment{columnAssigment}
+		for _, value := range values {
+			u.SetNew = append(u.SetNew, value.(ColumnAssigment))
+		}
+	} else {
+		u.Set.Values = jet.UnwindRowFromValues(value, values)
+	}
+
 	return u
 }
 
@@ -52,7 +67,7 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 }
 
 func (u *updateStatementImpl) RETURNING(projections ...jet.Projection) UpdateStatement {
-	u.Returning.Projections = projections
+	u.Returning.ProjectionList = projections
 	return u
 }
 
@@ -61,7 +76,10 @@ type clauseSet struct {
 	Values  []jet.Serializer
 }
 
-func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SQLBuilder) {
+func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
+	if len(s.Values) == 0 {
+		return
+	}
 	out.NewLine()
 	out.WriteString("SET")
 

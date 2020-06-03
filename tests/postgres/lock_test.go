@@ -3,7 +3,7 @@ package postgres
 import (
 	"context"
 	"github.com/go-jet/jet/internal/testutils"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 
@@ -35,11 +35,12 @@ LOCK TABLE dvds.address IN`
 
 		_, err := query.Exec(tx)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = tx.Rollback()
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
+		requireLogged(t, query)
 	}
 
 	for _, lockMode := range testData {
@@ -51,11 +52,12 @@ LOCK TABLE dvds.address IN`
 
 		_, err := query.Exec(tx)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		err = tx.Rollback()
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
+		requireLogged(t, query)
 	}
 }
 
@@ -70,5 +72,5 @@ func TestLockExecContext(t *testing.T) {
 
 	_, err := Address.LOCK().IN(LOCK_ACCESS_SHARE).ExecContext(ctx, tx)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }

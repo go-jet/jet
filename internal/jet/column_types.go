@@ -6,6 +6,7 @@ type ColumnBool interface {
 	Column
 
 	From(subQuery SelectTable) ColumnBool
+	SET(boolExp BoolExpression) ColumnAssigment
 }
 
 type boolColumnImpl struct {
@@ -19,6 +20,13 @@ func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
 	newBoolColumn.setSubQuery(subQuery)
 
 	return newBoolColumn
+}
+
+func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: boolExp,
+	}
 }
 
 // BoolColumn creates named bool column.
@@ -38,6 +46,7 @@ type ColumnFloat interface {
 	Column
 
 	From(subQuery SelectTable) ColumnFloat
+	SET(floatExp FloatExpression) ColumnAssigment
 }
 
 type floatColumnImpl struct {
@@ -51,6 +60,13 @@ func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
 	newFloatColumn.setSubQuery(subQuery)
 
 	return newFloatColumn
+}
+
+func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: floatExp,
+	}
 }
 
 // FloatColumn creates named float column.
@@ -70,6 +86,7 @@ type ColumnInteger interface {
 	Column
 
 	From(subQuery SelectTable) ColumnInteger
+	SET(intExp IntegerExpression) ColumnAssigment
 }
 
 type integerColumnImpl struct {
@@ -84,6 +101,13 @@ func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
 	newIntColumn.setSubQuery(subQuery)
 
 	return newIntColumn
+}
+
+func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: intExp,
+	}
 }
 
 // IntegerColumn creates named integer column.
@@ -104,6 +128,7 @@ type ColumnString interface {
 	Column
 
 	From(subQuery SelectTable) ColumnString
+	SET(stringExp StringExpression) ColumnAssigment
 }
 
 type stringColumnImpl struct {
@@ -118,6 +143,13 @@ func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
 	newStrColumn.setSubQuery(subQuery)
 
 	return newStrColumn
+}
+
+func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: stringExp,
+	}
 }
 
 // StringColumn creates named string column.
@@ -137,6 +169,7 @@ type ColumnTime interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTime
+	SET(timeExp TimeExpression) ColumnAssigment
 }
 
 type timeColumnImpl struct {
@@ -150,6 +183,13 @@ func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
 	newTimeColumn.setSubQuery(subQuery)
 
 	return newTimeColumn
+}
+
+func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: timeExp,
+	}
 }
 
 // TimeColumn creates named time column
@@ -183,6 +223,13 @@ func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
 	return newTimezColumn
 }
 
+func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: timezExp,
+	}
+}
+
 // TimezColumn creates named time with time zone column.
 func TimezColumn(name string) ColumnTimez {
 	timezColumn := &timezColumnImpl{}
@@ -200,6 +247,7 @@ type ColumnTimestamp interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTimestamp
+	SET(timestampExp TimestampExpression) ColumnAssigment
 }
 
 type timestampColumnImpl struct {
@@ -213,6 +261,13 @@ func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
 	newTimestampColumn.setSubQuery(subQuery)
 
 	return newTimestampColumn
+}
+
+func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: timestampExp,
+	}
 }
 
 // TimestampColumn creates named timestamp column
@@ -232,6 +287,7 @@ type ColumnTimestampz interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTimestampz
+	SET(timestampzExp TimestampzExpression) ColumnAssigment
 }
 
 type timestampzColumnImpl struct {
@@ -245,6 +301,13 @@ func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
 	newTimestampzColumn.setSubQuery(subQuery)
 
 	return newTimestampzColumn
+}
+
+func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: timestampzExp,
+	}
 }
 
 // TimestampzColumn creates named timestamp with time zone column.
@@ -264,6 +327,7 @@ type ColumnDate interface {
 	Column
 
 	From(subQuery SelectTable) ColumnDate
+	SET(dateExp DateExpression) ColumnAssigment
 }
 
 type dateColumnImpl struct {
@@ -277,6 +341,13 @@ func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
 	newDateColumn.setSubQuery(subQuery)
 
 	return newDateColumn
+}
+
+func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: dateExp,
+	}
 }
 
 // DateColumn creates named date column.

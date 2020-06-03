@@ -7,7 +7,7 @@ import (
 	_ "github.com/lib/pq"
 	"io/ioutil"
 
-	// dot import so go code would resemble as much as native SQL
+	// dot import so that jet go code would resemble as much as native SQL
 	// dot import is not mandatory
 	. "github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/table"
 	. "github.com/go-jet/jet/postgres"
@@ -98,15 +98,15 @@ func printStatementInfo(stmt SelectStatement) {
 	query, args := stmt.Sql()
 
 	fmt.Println("Parameterized query: ")
+	fmt.Println("==============================")
 	fmt.Println(query)
 	fmt.Println("Arguments: ")
 	fmt.Println(args)
 
 	debugSQL := stmt.DebugSql()
 
-	fmt.Println("\n\n==============================")
-
 	fmt.Println("\n\nDebug sql: ")
+	fmt.Println("==============================")
 	fmt.Println(debugSQL)
 }
 

@@ -1,11 +1,9 @@
 package postgres
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/postgres"
@@ -13,13 +11,14 @@ import (
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/view"
 	"github.com/go-jet/jet/tests/testdata/results/common"
+	"github.com/google/uuid"
 )
 
 func TestAllTypesSelect(t *testing.T) {
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
 	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
@@ -31,7 +30,7 @@ func TestAllTypesViewSelect(t *testing.T) {
 	dest := []AllTypesView{}
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertDeepEqual(t, dest[0], AllTypesView(allTypesRow0))
 	testutils.AssertDeepEqual(t, dest[1], AllTypesView(allTypesRow1))
@@ -45,9 +44,9 @@ func TestAllTypesInsertModel(t *testing.T) {
 
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 2)
+	require.Equal(t, len(dest), 2)
 	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
 	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
@@ -64,8 +63,8 @@ func TestAllTypesInsertQuery(t *testing.T) {
 	dest := []model.AllTypes{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 2)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 2)
 	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
 	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
@@ -80,7 +79,7 @@ func TestAllTypesFromSubQuery(t *testing.T) {
 		FROM(subQuery).
 		LIMIT(2)
 
-	assert.Equal(t, mainQuery.DebugSql(), `
+	require.Equal(t, mainQuery.DebugSql(), `
 SELECT "allTypesSubQuery"."all_types.small_int_ptr" AS "all_types.small_int_ptr",
      "allTypesSubQuery"."all_types.small_int" AS "all_types.small_int",
      "allTypesSubQuery"."all_types.integer_ptr" AS "all_types.integer_ptr",
@@ -212,8 +211,8 @@ LIMIT 2;
 	dest := []model.AllTypes{}
 	err := mainQuery.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 2)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 2)
 }
 
 func TestExpressionOperators(t *testing.T) {
@@ -251,7 +250,7 @@ LIMIT $5;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -320,7 +319,7 @@ func TestExpressionCast(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestStringOperators(t *testing.T) {
@@ -400,7 +399,7 @@ func TestStringOperators(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -469,7 +468,7 @@ LIMIT $5;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/bool_operators.json")
 }
@@ -519,7 +518,7 @@ func TestFloatOperators(t *testing.T) {
 
 	queryStr, _ := query.Sql()
 
-	assert.Equal(t, queryStr, `
+	require.Equal(t, queryStr, `
 SELECT (all_types.numeric = all_types.numeric) AS "eq1",
      (all_types.decimal = $1) AS "eq2",
      (all_types.real = $2) AS "eq3",
@@ -565,7 +564,7 @@ LIMIT $35;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -704,7 +703,7 @@ LIMIT $23;
 
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.SaveJsonFile("./testdata/common/int_operators.json", dest)
 	//testutils.PrintJson(dest)
@@ -783,7 +782,7 @@ func TestTimeExpression(t *testing.T) {
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestInterval(t *testing.T) {
@@ -834,7 +833,8 @@ func TestInterval(t *testing.T) {
 	//fmt.Println(stmt.DebugSql())
 
 	err := stmt.Query(db, &struct{}{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	requireLogged(t, stmt)
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
@@ -986,12 +986,12 @@ FROM`
 
 		dest1 := []model.AllTypes{}
 		err := stmt1.Query(db, &dest1)
-		assert.NoError(t, err)
-		assert.Equal(t, len(dest1), 2)
-		assert.Equal(t, dest1[0].Boolean, allTypesRow0.Boolean)
-		assert.Equal(t, dest1[0].Integer, allTypesRow0.Integer)
-		assert.Equal(t, dest1[0].Real, allTypesRow0.Real)
-		assert.Equal(t, dest1[0].Text, allTypesRow0.Text)
+		require.NoError(t, err)
+		require.Equal(t, len(dest1), 2)
+		require.Equal(t, dest1[0].Boolean, allTypesRow0.Boolean)
+		require.Equal(t, dest1[0].Integer, allTypesRow0.Integer)
+		require.Equal(t, dest1[0].Real, allTypesRow0.Real)
+		require.Equal(t, dest1[0].Text, allTypesRow0.Text)
 		testutils.AssertDeepEqual(t, dest1[0].Time, allTypesRow0.Time)
 		testutils.AssertDeepEqual(t, dest1[0].Timez, allTypesRow0.Timez)
 		testutils.AssertDeepEqual(t, dest1[0].Timestamp, allTypesRow0.Timestamp)
@@ -1008,15 +1008,16 @@ FROM`
 		dest2 := []model.AllTypes{}
 		err = stmt2.Query(db, &dest2)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertDeepEqual(t, dest1, dest2)
+		requireLogged(t, stmt2)
 	}
 }
 
 func TestTimeLiterals(t *testing.T) {
 
 	loc, err := time.LoadLocation("Europe/Berlin")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, loc)
 
@@ -1051,7 +1052,7 @@ LIMIT $6;
 
 	err = query.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//testutils.PrintJson(dest)
 
@@ -1063,35 +1064,36 @@ LIMIT $6;
 	"Timestamp": "2009-11-17T20:34:58.651387Z"
 }
 `)
+	requireLogged(t, query)
 }
 
 var allTypesRow0 = model.AllTypes{
-	SmallIntPtr:        Int16Ptr(14),
+	SmallIntPtr:        testutils.Int16Ptr(14),
 	SmallInt:           14,
-	IntegerPtr:         Int32Ptr(300),
+	IntegerPtr:         testutils.Int32Ptr(300),
 	Integer:            300,
-	BigIntPtr:          Int64Ptr(50000),
+	BigIntPtr:          testutils.Int64Ptr(50000),
 	BigInt:             5000,
-	DecimalPtr:         Float64Ptr(1.11),
+	DecimalPtr:         testutils.Float64Ptr(1.11),
 	Decimal:            1.11,
-	NumericPtr:         Float64Ptr(2.22),
+	NumericPtr:         testutils.Float64Ptr(2.22),
 	Numeric:            2.22,
-	RealPtr:            Float32Ptr(5.55),
+	RealPtr:            testutils.Float32Ptr(5.55),
 	Real:               5.55,
-	DoublePrecisionPtr: Float64Ptr(11111111.22),
+	DoublePrecisionPtr: testutils.Float64Ptr(11111111.22),
 	DoublePrecision:    11111111.22,
 	Smallserial:        1,
 	Serial:             1,
 	Bigserial:          1,
 	//MoneyPtr: nil,
 	//Money:
-	VarCharPtr:           StringPtr("ABBA"),
+	VarCharPtr:           testutils.StringPtr("ABBA"),
 	VarChar:              "ABBA",
-	CharPtr:              StringPtr("JOHN                                                                            "),
+	CharPtr:              testutils.StringPtr("JOHN                                                                            "),
 	Char:                 "JOHN                                                                            ",
-	TextPtr:              StringPtr("Some text"),
+	TextPtr:              testutils.StringPtr("Some text"),
 	Text:                 "Some text",
-	ByteaPtr:             ByteArrayPtr([]byte("bytea")),
+	ByteaPtr:             testutils.ByteArrayPtr([]byte("bytea")),
 	Bytea:                []byte("bytea"),
 	TimestampzPtr:        testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
 	Timestampz:           *testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
@@ -1103,31 +1105,31 @@ var allTypesRow0 = model.AllTypes{
 	Timez:                *testutils.TimeWithTimeZone("04:05:06 -0800"),
 	TimePtr:              testutils.TimeWithoutTimeZone("04:05:06"),
 	Time:                 *testutils.TimeWithoutTimeZone("04:05:06"),
-	IntervalPtr:          StringPtr("3 days 04:05:06"),
+	IntervalPtr:          testutils.StringPtr("3 days 04:05:06"),
 	Interval:             "3 days 04:05:06",
-	BooleanPtr:           BoolPtr(true),
+	BooleanPtr:           testutils.BoolPtr(true),
 	Boolean:              false,
-	PointPtr:             StringPtr("(2,3)"),
-	BitPtr:               StringPtr("101"),
+	PointPtr:             testutils.StringPtr("(2,3)"),
+	BitPtr:               testutils.StringPtr("101"),
 	Bit:                  "101",
-	BitVaryingPtr:        StringPtr("101111"),
+	BitVaryingPtr:        testutils.StringPtr("101111"),
 	BitVarying:           "101111",
-	TsvectorPtr:          StringPtr("'supernova':1"),
+	TsvectorPtr:          testutils.StringPtr("'supernova':1"),
 	Tsvector:             "'supernova':1",
-	UUIDPtr:              UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
+	UUIDPtr:              testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
 	UUID:                 uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
-	XMLPtr:               StringPtr("<Sub>abc</Sub>"),
+	XMLPtr:               testutils.StringPtr("<Sub>abc</Sub>"),
 	XML:                  "<Sub>abc</Sub>",
-	JSONPtr:              StringPtr(`{"a": 1, "b": 3}`),
+	JSONPtr:              testutils.StringPtr(`{"a": 1, "b": 3}`),
 	JSON:                 `{"a": 1, "b": 3}`,
-	JsonbPtr:             StringPtr(`{"a": 1, "b": 3}`),
+	JsonbPtr:             testutils.StringPtr(`{"a": 1, "b": 3}`),
 	Jsonb:                `{"a": 1, "b": 3}`,
-	IntegerArrayPtr:      StringPtr("{1,2,3}"),
+	IntegerArrayPtr:      testutils.StringPtr("{1,2,3}"),
 	IntegerArray:         "{1,2,3}",
-	TextArrayPtr:         StringPtr("{breakfast,consulting}"),
+	TextArrayPtr:         testutils.StringPtr("{breakfast,consulting}"),
 	TextArray:            "{breakfast,consulting}",
 	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
-	TextMultiDimArrayPtr: StringPtr("{{meeting,lunch},{training,presentation}}"),
+	TextMultiDimArrayPtr: testutils.StringPtr("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 }
 

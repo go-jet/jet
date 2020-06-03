@@ -7,7 +7,7 @@ import (
 	. "github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/chinook/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -30,11 +30,12 @@ ORDER BY "Album"."AlbumId" ASC;
 
 	err := stmt.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 347)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 347)
 	testutils.AssertDeepEqual(t, dest[0], album1)
 	testutils.AssertDeepEqual(t, dest[1], album2)
 	testutils.AssertDeepEqual(t, dest[len(dest)-1], album347)
+	requireLogged(t, stmt)
 }
 
 func TestJoinEverything(t *testing.T) {
@@ -103,9 +104,10 @@ func TestJoinEverything(t *testing.T) {
 
 	err := stmt.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 275)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 275)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
+	requireLogged(t, stmt)
 }
 
 func TestSelfJoin(t *testing.T) {
@@ -143,8 +145,8 @@ ORDER BY "Employee"."EmployeeId";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 8)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 8)
 	testutils.AssertJSON(t, dest[0:2], `
 [
 	{
@@ -236,9 +238,9 @@ ORDER BY "Album.AlbumId";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 2)
+	require.Equal(t, len(dest), 2)
 	testutils.AssertDeepEqual(t, dest[0], album1)
 	testutils.AssertDeepEqual(t, dest[1], album2)
 }
@@ -256,7 +258,7 @@ func TestQueryWithContext(t *testing.T) {
 		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
 		QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func TestExecWithContext(t *testing.T) {
@@ -270,7 +272,7 @@ func TestExecWithContext(t *testing.T) {
 		SELECT(Album.AllColumns, Track.AllColumns, InvoiceLine.AllColumns).
 		ExecContext(ctx, db)
 
-	assert.Error(t, err, "pq: canceling statement due to user request")
+	require.Error(t, err, "pq: canceling statement due to user request")
 }
 
 func TestSubQueriesForQuotedNames(t *testing.T) {
@@ -327,7 +329,7 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	//spew.Dump(dest)
 }

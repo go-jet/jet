@@ -2,18 +2,12 @@ package jet
 
 const (
 	// DEFAULT is jet equivalent of SQL DEFAULT
-	DEFAULT keywordClause = "DEFAULT"
+	DEFAULT Keyword = "DEFAULT"
 )
 
-var (
-	// NULL is jet equivalent of SQL NULL
-	NULL = newNullLiteral()
-	// STAR is jet equivalent of SQL *
-	STAR = newStarLiteral()
-)
+// Keyword type
+type Keyword string
 
-type keywordClause string
-
-func (k keywordClause) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (k Keyword) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(string(k))
 }

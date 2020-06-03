@@ -8,7 +8,6 @@ import (
 	"github.com/go-jet/jet/internal/utils"
 	"path/filepath"
 	"text/template"
-	"time"
 )
 
 // GenerateFiles generates Go files from tables and enums metadata
@@ -22,6 +21,7 @@ func GenerateFiles(destDir string, schemaInfo metadata.SchemaMetaData, dialect j
 	err := utils.CleanUpGeneratedFiles(destDir)
 	utils.PanicOnError(err)
 
+	tableSQLBuilderTemplate := getTableSQLBuilderTemplate(dialect)
 	generateSQLBuilderFiles(destDir, "table", tableSQLBuilderTemplate, schemaInfo.TablesMetaData, dialect)
 	generateSQLBuilderFiles(destDir, "view", tableSQLBuilderTemplate, schemaInfo.ViewsMetaData, dialect)
 	generateSQLBuilderFiles(destDir, "enum", enumSQLBuilderTemplate, schemaInfo.EnumsMetaData, dialect)
@@ -31,6 +31,14 @@ func GenerateFiles(destDir string, schemaInfo metadata.SchemaMetaData, dialect j
 	generateModelFiles(destDir, "enum", enumModelTemplate, schemaInfo.EnumsMetaData, dialect)
 
 	fmt.Println("Done")
+}
+
+func getTableSQLBuilderTemplate(dialect jet.Dialect) string {
+	if dialect.Name() == "PostgreSQL" {
+		return tablePostgreSQLBuilderTemplate
+	}
+
+	return tableSQLBuilderTemplate
 }
 
 func generateSQLBuilderFiles(destDir, fileTypes, sqlBuilderTemplate string, metaData []metadata.MetaData, dialect jet.Dialect) {
@@ -75,9 +83,6 @@ func GenerateTemplate(templateText string, templateData interface{}, dialect jet
 	t, err := template.New("sqlBuilderTableTemplate").Funcs(template.FuncMap{
 		"ToGoIdentifier":          utils.ToGoIdentifier,
 		"ToGoEnumValueIdentifier": utils.ToGoEnumValueIdentifier,
-		"now": func() string {
-			return time.Now().Format(time.RFC850)
-		},
 		"dialect": func() jet.Dialect {
 			return dialect
 		},

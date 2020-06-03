@@ -72,15 +72,15 @@ func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
 }
 
 func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, noWrap)
+	e.Parent.serialize(statement, out, NoWrap)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, noWrap)
+	e.Parent.serialize(statement, out, NoWrap)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, noWrap)
+	e.Parent.serialize(statement, out, NoWrap)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -117,7 +117,7 @@ func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBu
 		panic("jet: rhs is nil for '" + c.operator + "' operator")
 	}
 
-	wrap := !contains(options, noWrap)
+	wrap := !contains(options, NoWrap)
 
 	if wrap {
 		out.WriteString("(")
@@ -125,11 +125,11 @@ func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBu
 
 	if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
-		serializeOverrideFunc(statement, out, options...)
+		serializeOverrideFunc(statement, out, FallTrough(options)...)
 	} else {
-		c.lhs.serialize(statement, out)
+		c.lhs.serialize(statement, out, FallTrough(options)...)
 		out.WriteString(c.operator)
-		c.rhs.serialize(statement, out)
+		c.rhs.serialize(statement, out, FallTrough(options)...)
 	}
 
 	if wrap {
@@ -163,7 +163,7 @@ func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, o
 		panic("jet: nil prefix expression in prefix operator " + p.operator)
 	}
 
-	p.expression.serialize(statement, out)
+	p.expression.serialize(statement, out, FallTrough(options)...)
 
 	out.WriteString(")")
 }
@@ -192,7 +192,7 @@ func (p *postfixOpExpression) serialize(statement StatementType, out *SQLBuilder
 		panic("jet: nil prefix expression in postfix operator " + p.operator)
 	}
 
-	p.expression.serialize(statement, out)
+	p.expression.serialize(statement, out, FallTrough(options)...)
 
 	out.WriteString(p.operator)
 }

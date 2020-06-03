@@ -1,9 +1,15 @@
 package mysql
 
 import (
+	"context"
 	"database/sql"
 	"flag"
+	jetmysql "github.com/go-jet/jet/mysql"
+	"github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/dbconfig"
+	"github.com/stretchr/testify/require"
+	"math/rand"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 
@@ -28,6 +34,7 @@ func sourceIsMariaDB() bool {
 }
 
 func TestMain(m *testing.M) {
+	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
 	var err error
@@ -40,4 +47,22 @@ func TestMain(m *testing.M) {
 	ret := m.Run()
 
 	os.Exit(ret)
+}
+
+var loggedSQL string
+var loggedSQLArgs []interface{}
+var loggedDebugSQL string
+
+func init() {
+	jetmysql.SetLogger(func(ctx context.Context, statement jetmysql.PrintableStatement) {
+		loggedSQL, loggedSQLArgs = statement.Sql()
+		loggedDebugSQL = statement.DebugSql()
+	})
+}
+
+func requireLogged(t *testing.T, statement postgres.Statement) {
+	query, args := statement.Sql()
+	require.Equal(t, loggedSQL, query)
+	require.Equal(t, loggedSQLArgs, args)
+	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -25,9 +25,10 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	result := model.AllTypes{}
 
 	err := query.Query(db, &result)
-	assert.NoError(t, err)
-	assert.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
-	testutils.AssertDeepEqual(t, result.UUIDPtr, UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	require.NoError(t, err)
+	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	requireLogged(t, query)
 }
 
 func TestUUIDComplex(t *testing.T) {
@@ -46,8 +47,8 @@ func TestUUIDComplex(t *testing.T) {
 
 		err := query.Query(db, &dest)
 
-		assert.NoError(t, err)
-		assert.Equal(t, len(dest), 2)
+		require.NoError(t, err)
+		require.Equal(t, len(dest), 2)
 		testutils.AssertJSON(t, dest, `
 [
 	{
@@ -96,7 +97,7 @@ func TestUUIDComplex(t *testing.T) {
 			}
 		}
 		err := singleQuery.Query(db, &dest)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		testutils.AssertJSON(t, dest, `
 {
@@ -118,6 +119,7 @@ func TestUUIDComplex(t *testing.T) {
 	]
 }
 `)
+		requireLogged(t, query)
 	})
 
 	t.Run("slice of structs left join", func(t *testing.T) {
@@ -132,7 +134,7 @@ func TestUUIDComplex(t *testing.T) {
 		}
 		err := leftQuery.Query(db, &dest)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		testutils.AssertJSON(t, dest, `
 [
 	{
@@ -175,6 +177,7 @@ func TestUUIDComplex(t *testing.T) {
 	}
 ]
 `)
+		requireLogged(t, leftQuery)
 	})
 
 }
@@ -194,7 +197,7 @@ FROM test_sample.person;
 
 	err := query.Query(db, &result)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	testutils.AssertJSON(t, result, `
 [
 	{
@@ -220,6 +223,10 @@ FROM test_sample.person;
 }
 
 func TestSelecSelfJoin1(t *testing.T) {
+
+	// clean up
+	_, err := Employee.DELETE().WHERE(Employee.EmployeeID.GT(Int(100))).Exec(db)
+	require.NoError(t, err)
 
 	var expectedSQL = `
 SELECT employee.employee_id AS "employee.employee_id",
@@ -256,10 +263,10 @@ ORDER BY employee.employee_id;
 		Manager *Manager
 	}
 
-	err := query.Query(db, &dest)
+	err = query.Query(db, &dest)
 
-	assert.NoError(t, err)
-	assert.Equal(t, len(dest), 8)
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 8)
 	testutils.AssertDeepEqual(t, dest[0].Employee, model.Employee{
 		EmployeeID:     1,
 		FirstName:      "Windy",
@@ -268,14 +275,14 @@ ORDER BY employee.employee_id;
 		ManagerID:      nil,
 	})
 
-	assert.True(t, dest[0].Manager == nil)
+	require.True(t, dest[0].Manager == nil)
 
 	testutils.AssertDeepEqual(t, dest[7].Employee, model.Employee{
 		EmployeeID:     8,
 		FirstName:      "Salley",
 		LastName:       "Lester",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      Int32Ptr(3),
+		ManagerID:      testutils.Int32Ptr(3),
 	})
 }
 
@@ -306,9 +313,9 @@ FROM test_sample."WEIRD NAMES TABLE";
 
 	err := stmt.Query(db, &dest)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
-	assert.Equal(t, len(dest), 1)
+	require.Equal(t, len(dest), 1)
 	testutils.AssertDeepEqual(t, dest[0], model.WeirdNamesTable{
 		WeirdColumnName1: "Doe",
 		WeirdColumnName2: "Doe",
@@ -317,7 +324,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColumnName5: "Doe",
 		WeirdColumnName6: "Doe",
 		WeirdColumnName7: "Doe",
-		Weirdcolumnname8: StringPtr("Doe"),
+		Weirdcolumnname8: testutils.StringPtr("Doe"),
 		WeirdColName9:    "Doe",
 		WeirdColuName10:  "Doe",
 		WeirdColuName11:  "Doe",
@@ -355,7 +362,7 @@ FROM test_sample."User";
 	var dest []model.User
 
 	err := stmt.Query(db, &dest)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.PrintJson(dest)
 

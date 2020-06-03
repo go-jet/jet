@@ -87,6 +87,9 @@ var MINf = jet.MINf
 // MINi is aggregate function. Returns minimum value of int expression across all input values
 var MINi = jet.MINi
 
+// SUM is aggregate function. Returns sum of all expressions
+var SUM = jet.SUM
+
 // SUMf is aggregate function. Returns sum of expression across all float expressions
 var SUMf = jet.SUMf
 

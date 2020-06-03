@@ -12,6 +12,12 @@ type Column interface {
 	defaultAlias() string
 }
 
+// ColumnSerializer is interface for all serializable columns
+type ColumnSerializer interface {
+	Serializer
+	Column
+}
+
 // ColumnExpression interface
 type ColumnExpression interface {
 	Column
@@ -99,55 +105,13 @@ func (c ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
 		out.WriteByte('.')
-		out.WriteIdentifier(c.defaultAlias(), true)
+		out.WriteIdentifier(c.defaultAlias())
 	} else {
-		if c.tableName != "" {
+		if c.tableName != "" && !contains(options, ShortName) {
 			out.WriteIdentifier(c.tableName)
 			out.WriteByte('.')
 		}
 
 		out.WriteIdentifier(c.name)
 	}
-}
-
-//------------------------------------------------------//
-
-// ColumnList is a helper type to support list of columns as single projection
-type ColumnList []ColumnExpression
-
-func (cl ColumnList) fromImpl(subQuery SelectTable) Projection {
-	newProjectionList := ProjectionList{}
-
-	for _, column := range cl {
-		newProjectionList = append(newProjectionList, column.fromImpl(subQuery))
-	}
-
-	return newProjectionList
-}
-
-func (cl ColumnList) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	projections := ColumnListToProjectionList(cl)
-
-	SerializeProjectionList(statement, projections, out)
-}
-
-// dummy column interface implementation
-
-// Name is placeholder for ColumnList to implement Column interface
-func (cl ColumnList) Name() string { return "" }
-
-// TableName is placeholder for ColumnList to implement Column interface
-func (cl ColumnList) TableName() string                { return "" }
-func (cl ColumnList) setTableName(name string)         {}
-func (cl ColumnList) setSubQuery(subQuery SelectTable) {}
-func (cl ColumnList) defaultAlias() string             { return "" }
-
-// SetTableName is utility function to set table name from outside of jet package to avoid making public setTableName
-func SetTableName(columnExpression ColumnExpression, tableName string) {
-	columnExpression.setTableName(tableName)
-}
-
-// SetSubQuery is utility function to set table name from outside of jet package to avoid making public setSubQuery
-func SetSubQuery(columnExpression ColumnExpression, subQuery SelectTable) {
-	columnExpression.setSubQuery(subQuery)
 }

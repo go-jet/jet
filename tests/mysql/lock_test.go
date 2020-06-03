@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/internal/testutils"
 	. "github.com/go-jet/jet/mysql"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/dvds/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -16,7 +16,8 @@ LOCK TABLES dvds.customer READ;
 `)
 
 	_, err := query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	requireLogged(t, query)
 }
 
 func TestLockWrite(t *testing.T) {
@@ -27,7 +28,8 @@ LOCK TABLES dvds.customer WRITE;
 `)
 
 	_, err := query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	requireLogged(t, query)
 }
 
 func TestUnlockTables(t *testing.T) {
@@ -38,5 +40,6 @@ UNLOCK TABLES;
 `)
 
 	_, err := query.Exec(db)
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	requireLogged(t, query)
 }

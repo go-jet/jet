@@ -98,12 +98,16 @@ func (s *SQLBuilder) WriteString(str string) {
 
 // WriteIdentifier adds identifier to output SQL
 func (s *SQLBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
-	if s.Dialect.IsReservedWord(name) || shouldQuoteIdentifier(name) || len(alwaysQuote) > 0 {
+	if s.shouldQuote(name, alwaysQuote...) {
 		identQuoteChar := string(s.Dialect.IdentifierQuoteChar())
 		s.WriteString(identQuoteChar + name + identQuoteChar)
 	} else {
 		s.WriteString(name)
 	}
+}
+
+func (s *SQLBuilder) shouldQuote(name string, alwaysQuote ...bool) bool {
+	return s.Dialect.IsReservedWord(name) || shouldQuoteIdentifier(name) || len(alwaysQuote) > 0
 }
 
 // WriteByte writes byte to output SQL
@@ -159,8 +163,15 @@ func argToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(pq.FormatTimestamp(bindVal)))
 	default:
+		if strBindValue, ok := bindVal.(toStringInterface); ok {
+			return stringQuote(strBindValue.String())
+		}
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
+}
+
+type toStringInterface interface {
+	String() string
 }
 
 func integerTypesToString(value interface{}) string {
@@ -190,6 +201,13 @@ func integerTypesToString(value interface{}) string {
 }
 
 func shouldQuoteIdentifier(identifier string) bool {
+	_, err := strconv.ParseInt(identifier, 10, 64)
+
+	if err == nil { // if it is a number we should quote it
+		return true
+	}
+
+	// check if contains non ascii characters
 	for _, c := range identifier {
 		if unicode.IsNumber(c) || c == '_' {
 			continue

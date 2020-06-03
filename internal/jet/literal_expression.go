@@ -278,6 +278,14 @@ func formatNanoseconds(nanoseconds ...time.Duration) string {
 }
 
 //--------------------------------------------------//
+
+var (
+	// NULL is jet equivalent of SQL NULL
+	NULL = newNullLiteral()
+	// STAR is jet equivalent of SQL *
+	STAR = newStarLiteral()
+)
+
 type nullLiteral struct {
 	ExpressionInterfaceImpl
 }

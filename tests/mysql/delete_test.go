@@ -6,7 +6,7 @@ import (
 	. "github.com/go-jet/jet/mysql"
 	"github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -24,6 +24,7 @@ WHERE link.name IN ('Gmail', 'Outlook');
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
 	testutils.AssertExec(t, deleteStmt, db, 2)
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteWithWhereOrderByLimit(t *testing.T) {
@@ -43,6 +44,7 @@ LIMIT 1;
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook", int64(1))
 	testutils.AssertExec(t, deleteStmt, db, 1)
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteQueryContext(t *testing.T) {
@@ -60,7 +62,8 @@ func TestDeleteQueryContext(t *testing.T) {
 	dest := []model.Link{}
 	err := deleteStmt.QueryContext(ctx, db, &dest)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
+	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteExecContext(t *testing.T) {
@@ -77,7 +80,7 @@ func TestDeleteExecContext(t *testing.T) {
 
 	_, err := deleteStmt.ExecContext(ctx, db)
 
-	assert.Error(t, err, "context deadline exceeded")
+	require.Error(t, err, "context deadline exceeded")
 }
 
 func initForDeleteTest(t *testing.T) {

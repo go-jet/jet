@@ -1,20 +1,26 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
+	"github.com/go-jet/jet/postgres"
 	"github.com/go-jet/jet/tests/dbconfig"
 	_ "github.com/lib/pq"
 	"github.com/pkg/profile"
+	"github.com/stretchr/testify/require"
+	"math/rand"
 	"os"
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 )
 
 var db *sql.DB
 var testRoot string
 
 func TestMain(m *testing.M) {
+	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
 	setTestRoot()
@@ -39,4 +45,22 @@ func setTestRoot() {
 	}
 
 	testRoot = strings.TrimSpace(string(byteArr)) + "/tests/"
+}
+
+var loggedSQL string
+var loggedSQLArgs []interface{}
+var loggedDebugSQL string
+
+func init() {
+	postgres.SetLogger(func(ctx context.Context, statement postgres.PrintableStatement) {
+		loggedSQL, loggedSQLArgs = statement.Sql()
+		loggedDebugSQL = statement.DebugSql()
+	})
+}
+
+func requireLogged(t *testing.T, statement postgres.Statement) {
+	query, args := statement.Sql()
+	require.Equal(t, loggedSQL, query)
+	require.Equal(t, loggedSQLArgs, args)
+	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }

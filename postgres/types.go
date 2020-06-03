@@ -10,3 +10,12 @@ type Projection = jet.Projection
 
 // ProjectionList can be used to create conditional constructed projection list.
 type ProjectionList = jet.ProjectionList
+
+// ColumnAssigment is interface wrapper around column assigment
+type ColumnAssigment = jet.ColumnAssigment
+
+// PrintableStatement is a statement which sql query can be logged
+type PrintableStatement = jet.PrintableStatement
+
+// SetLogger sets automatic statement logging
+var SetLogger = jet.SetLoggerFunc

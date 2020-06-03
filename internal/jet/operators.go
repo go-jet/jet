@@ -147,7 +147,7 @@ func (c *caseOperatorImpl) serialize(statement StatementType, out *SQLBuilder, o
 	out.WriteString("(CASE")
 
 	if c.expression != nil {
-		c.expression.serialize(statement, out)
+		c.expression.serialize(statement, out, FallTrough(options)...)
 	}
 
 	if len(c.when) == 0 || len(c.then) == 0 {
@@ -160,15 +160,15 @@ func (c *caseOperatorImpl) serialize(statement StatementType, out *SQLBuilder, o
 
 	for i, when := range c.when {
 		out.WriteString("WHEN")
-		when.serialize(statement, out, noWrap)
+		when.serialize(statement, out, NoWrap)
 
 		out.WriteString("THEN")
-		c.then[i].serialize(statement, out, noWrap)
+		c.then[i].serialize(statement, out, NoWrap)
 	}
 
 	if c.els != nil {
 		out.WriteString("ELSE")
-		c.els.serialize(statement, out, noWrap)
+		c.els.serialize(statement, out, NoWrap)
 	}
 
 	out.WriteString("END)")

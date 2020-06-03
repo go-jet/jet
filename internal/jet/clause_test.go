@@ -1,14 +1,14 @@
 package jet
 
 import (
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func TestClauseSelect_Serialize(t *testing.T) {
 	defer func() {
 		r := recover()
-		assert.Equal(t, r, "jet: SELECT clause has to have at least one projection")
+		require.Equal(t, r, "jet: SELECT clause has to have at least one projection")
 	}()
 
 	selectClause := &ClauseSelect{}

@@ -4,7 +4,7 @@ import (
 	"github.com/go-jet/jet/generator/postgres"
 	"github.com/go-jet/jet/internal/testutils"
 	"github.com/go-jet/jet/tests/dbconfig"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,30 +17,30 @@ import (
 func TestGeneratedModel(t *testing.T) {
 	actor := model.Actor{}
 
-	assert.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
+	require.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
 	actorIDField, ok := reflect.TypeOf(actor).FieldByName("ActorID")
-	assert.True(t, ok)
-	assert.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
-	assert.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
-	assert.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
-	assert.Equal(t, reflect.TypeOf(actor.LastUpdate).String(), "time.Time")
+	require.True(t, ok)
+	require.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
+	require.Equal(t, reflect.TypeOf(actor.FirstName).String(), "string")
+	require.Equal(t, reflect.TypeOf(actor.LastName).String(), "string")
+	require.Equal(t, reflect.TypeOf(actor.LastUpdate).String(), "time.Time")
 
 	filmActor := model.FilmActor{}
 
-	assert.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
+	require.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int16")
 	filmIDField, ok := reflect.TypeOf(filmActor).FieldByName("FilmID")
-	assert.True(t, ok)
-	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
+	require.True(t, ok)
+	require.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
-	assert.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
+	require.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int16")
 	actorIDField, ok = reflect.TypeOf(filmActor).FieldByName("ActorID")
-	assert.True(t, ok)
-	assert.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
+	require.True(t, ok)
+	require.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
 	staff := model.Staff{}
 
-	assert.Equal(t, reflect.TypeOf(staff.Email).String(), "*string")
-	assert.Equal(t, reflect.TypeOf(staff.Picture).String(), "*[]uint8")
+	require.Equal(t, reflect.TypeOf(staff.Email).String(), "*string")
+	require.Equal(t, reflect.TypeOf(staff.Picture).String(), "*[]uint8")
 }
 
 const genTestDir2 = "./.gentestdata2"
@@ -49,10 +49,10 @@ func TestCmdGenerator(t *testing.T) {
 	goInstallJet := exec.Command("sh", "-c", "go install github.com/go-jet/jet/cmd/jet")
 	goInstallJet.Stderr = os.Stderr
 	err := goInstallJet.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	err = os.RemoveAll(genTestDir2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost", "-port=5432",
 		"-user=jet", "-password=jet", "-schema=dvds", "-path="+genTestDir2)
@@ -60,12 +60,12 @@ func TestCmdGenerator(t *testing.T) {
 	cmd.Stdout = os.Stdout
 
 	err = cmd.Run()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assertGeneratedFiles(t)
 
 	err = os.RemoveAll(genTestDir2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestGenerator(t *testing.T) {
@@ -83,45 +83,45 @@ func TestGenerator(t *testing.T) {
 			SchemaName: "dvds",
 		})
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assertGeneratedFiles(t)
 	}
 
 	err := os.RemoveAll(genTestDir2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
 	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go")
 
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/table/actor.go", "\npackage table", actorSQLBuilderFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/table/actor.go", actorSQLBuilderFile)
 
 	// View SQL Builder files
 	viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
 		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go")
 
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/view/actor_info.go", "\npackage view", actorInfoSQLBuilderFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/view/actor_info.go", actorInfoSQLBuilderFile)
 
 	// Enums SQL Builder files
 	enumFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mpaa_rating.go")
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", "\npackage enum", mpaaRatingEnumFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", mpaaRatingEnumFile)
 
 	// Model files
 	modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
@@ -129,10 +129,17 @@ func assertGeneratedFiles(t *testing.T) {
 		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
 		"customer_list.go", "sales_by_store.go", "staff_list.go")
 
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/model/actor.go", "\npackage model", actorModelFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/model/actor.go", actorModelFile)
 }
 
 var mpaaRatingEnumFile = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package enum
 
 import "github.com/go-jet/jet/postgres"
@@ -153,6 +160,13 @@ var MpaaRating = &struct {
 `
 
 var actorSQLBuilderFile = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package table
 
 import (
@@ -161,7 +175,7 @@ import (
 
 var Actor = newActorTable()
 
-type ActorTable struct {
+type actorTable struct {
 	postgres.Table
 
 	//Columns
@@ -174,25 +188,38 @@ type ActorTable struct {
 	MutableColumns postgres.ColumnList
 }
 
-// creates new ActorTable with assigned alias
+type ActorTable struct {
+	actorTable
+
+	EXCLUDED actorTable
+}
+
+// AS creates new ActorTable with assigned alias
 func (a *ActorTable) AS(alias string) *ActorTable {
 	aliasTable := newActorTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newActorTable() *ActorTable {
+	return &ActorTable{
+		actorTable: newActorTableImpl("dvds", "actor"),
+		EXCLUDED:   newActorTableImpl("", "excluded"),
+	}
+}
+
+func newActorTableImpl(schemaName, tableName string) actorTable {
 	var (
 		ActorIDColumn    = postgres.IntegerColumn("actor_id")
 		FirstNameColumn  = postgres.StringColumn("first_name")
 		LastNameColumn   = postgres.StringColumn("last_name")
 		LastUpdateColumn = postgres.TimestampColumn("last_update")
+		allColumns       = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
+		mutableColumns   = postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
 	)
 
-	return &ActorTable{
-		Table: postgres.NewTable("dvds", "actor", ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn),
+	return actorTable{
+		Table: postgres.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		ActorID:    ActorIDColumn,
@@ -200,13 +227,20 @@ func newActorTable() *ActorTable {
 		LastName:   LastNameColumn,
 		LastUpdate: LastUpdateColumn,
 
-		AllColumns:     postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn},
-		MutableColumns: postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `
 
 var actorModelFile = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package model
 
 import (
@@ -222,6 +256,13 @@ type Actor struct {
 `
 
 var actorInfoSQLBuilderFile = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package view
 
 import (
@@ -230,7 +271,7 @@ import (
 
 var ActorInfo = newActorInfoTable()
 
-type ActorInfoTable struct {
+type actorInfoTable struct {
 	postgres.Table
 
 	//Columns
@@ -243,25 +284,38 @@ type ActorInfoTable struct {
 	MutableColumns postgres.ColumnList
 }
 
-// creates new ActorInfoTable with assigned alias
+type ActorInfoTable struct {
+	actorInfoTable
+
+	EXCLUDED actorInfoTable
+}
+
+// AS creates new ActorInfoTable with assigned alias
 func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
 	aliasTable := newActorInfoTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newActorInfoTable() *ActorInfoTable {
+	return &ActorInfoTable{
+		actorInfoTable: newActorInfoTableImpl("dvds", "actor_info"),
+		EXCLUDED:       newActorInfoTableImpl("", "excluded"),
+	}
+}
+
+func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
 	var (
 		ActorIDColumn   = postgres.IntegerColumn("actor_id")
 		FirstNameColumn = postgres.StringColumn("first_name")
 		LastNameColumn  = postgres.StringColumn("last_name")
 		FilmInfoColumn  = postgres.StringColumn("film_info")
+		allColumns      = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
+		mutableColumns  = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 	)
 
-	return &ActorInfoTable{
-		Table: postgres.NewTable("dvds", "actor_info", ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn),
+	return actorInfoTable{
+		Table: postgres.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		ActorID:   ActorIDColumn,
@@ -269,8 +323,8 @@ func newActorInfoTable() *ActorInfoTable {
 		LastName:  LastNameColumn,
 		FilmInfo:  FilmInfoColumn,
 
-		AllColumns:     postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
-		MutableColumns: postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `
@@ -281,30 +335,37 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	tableDir := testRoot + ".gentestdata/jetdb/test_sample/table/"
 
 	enumFiles, err := ioutil.ReadDir(enumDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go", "level.go")
-	testutils.AssertFileContent(t, enumDir+"mood.go", "\npackage enum", moodEnumContent)
-	testutils.AssertFileContent(t, enumDir+"level.go", "\npackage enum", levelEnumContent)
+	testutils.AssertFileContent(t, enumDir+"mood.go", moodEnumContent)
+	testutils.AssertFileContent(t, enumDir+"level.go", levelEnumContent)
 
 	modelFiles, err := ioutil.ReadDir(modelDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go")
 
-	testutils.AssertFileContent(t, modelDir+"all_types.go", "\npackage model", allTypesModelContent)
+	testutils.AssertFileContent(t, modelDir+"all_types.go", allTypesModelContent)
 
 	tableFiles, err := ioutil.ReadDir(tableDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go")
 
-	testutils.AssertFileContent(t, tableDir+"all_types.go", "\npackage table", allTypesTableContent)
+	testutils.AssertFileContent(t, tableDir+"all_types.go", allTypesTableContent)
 }
 
 var moodEnumContent = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package enum
 
 import "github.com/go-jet/jet/postgres"
@@ -321,6 +382,13 @@ var Mood = &struct {
 `
 
 var levelEnumContent = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package enum
 
 import "github.com/go-jet/jet/postgres"
@@ -341,6 +409,13 @@ var Level = &struct {
 `
 
 var allTypesModelContent = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package model
 
 import (
@@ -414,6 +489,13 @@ type AllTypes struct {
 `
 
 var allTypesTableContent = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
 package table
 
 import (
@@ -422,7 +504,7 @@ import (
 
 var AllTypes = newAllTypesTable()
 
-type AllTypesTable struct {
+type allTypesTable struct {
 	postgres.Table
 
 	//Columns
@@ -492,16 +574,27 @@ type AllTypesTable struct {
 	MutableColumns postgres.ColumnList
 }
 
-// creates new AllTypesTable with assigned alias
+type AllTypesTable struct {
+	allTypesTable
+
+	EXCLUDED allTypesTable
+}
+
+// AS creates new AllTypesTable with assigned alias
 func (a *AllTypesTable) AS(alias string) *AllTypesTable {
 	aliasTable := newAllTypesTable()
-
 	aliasTable.Table.AS(alias)
-
 	return aliasTable
 }
 
 func newAllTypesTable() *AllTypesTable {
+	return &AllTypesTable{
+		allTypesTable: newAllTypesTableImpl("test_sample", "all_types"),
+		EXCLUDED:      newAllTypesTableImpl("", "excluded"),
+	}
+}
+
+func newAllTypesTableImpl(schemaName, tableName string) allTypesTable {
 	var (
 		SmallIntPtrColumn          = postgres.IntegerColumn("small_int_ptr")
 		SmallIntColumn             = postgres.IntegerColumn("small_int")
@@ -564,10 +657,12 @@ func newAllTypesTable() *AllTypesTable {
 		JsonbArrayColumn           = postgres.StringColumn("jsonb_array")
 		TextMultiDimArrayPtrColumn = postgres.StringColumn("text_multi_dim_array_ptr")
 		TextMultiDimArrayColumn    = postgres.StringColumn("text_multi_dim_array")
+		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
+		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
 	)
 
-	return &AllTypesTable{
-		Table: postgres.NewTable("test_sample", "all_types", SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn),
+	return allTypesTable{
+		Table: postgres.NewTable(schemaName, tableName, allColumns...),
 
 		//Columns
 		SmallIntPtr:          SmallIntPtrColumn,
@@ -632,8 +727,8 @@ func newAllTypesTable() *AllTypesTable {
 		TextMultiDimArrayPtr: TextMultiDimArrayPtrColumn,
 		TextMultiDimArray:    TextMultiDimArrayColumn,
 
-		AllColumns:     postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn},
-		MutableColumns: postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn},
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
 	}
 }
 `

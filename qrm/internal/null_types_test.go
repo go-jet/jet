@@ -2,7 +2,7 @@ package internal
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 )
@@ -10,138 +10,138 @@ import (
 func TestNullByteArray(t *testing.T) {
 	var array NullByteArray
 
-	assert.NoError(t, array.Scan(nil))
-	assert.Equal(t, array.Valid, false)
+	require.NoError(t, array.Scan(nil))
+	require.Equal(t, array.Valid, false)
 
-	assert.NoError(t, array.Scan([]byte("bytea")))
-	assert.Equal(t, array.Valid, true)
-	assert.Equal(t, string(array.ByteArray), string([]byte("bytea")))
+	require.NoError(t, array.Scan([]byte("bytea")))
+	require.Equal(t, array.Valid, true)
+	require.Equal(t, string(array.ByteArray), string([]byte("bytea")))
 
-	assert.Error(t, array.Scan(12), "can't scan []byte from 12")
+	require.Error(t, array.Scan(12), "can't scan []byte from 12")
 }
 
 func TestNullTime(t *testing.T) {
 	var array NullTime
 
-	assert.NoError(t, array.Scan(nil))
-	assert.Equal(t, array.Valid, false)
+	require.NoError(t, array.Scan(nil))
+	require.Equal(t, array.Valid, false)
 
 	time := time.Now()
-	assert.NoError(t, array.Scan(time))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(time))
+	require.Equal(t, array.Valid, true)
 	value, _ := array.Value()
-	assert.Equal(t, value, time)
+	require.Equal(t, value, time)
 
-	assert.NoError(t, array.Scan([]byte("13:10:11")))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan([]byte("13:10:11")))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, fmt.Sprintf("%v", value), "0000-01-01 13:10:11 +0000 UTC")
+	require.Equal(t, fmt.Sprintf("%v", value), "0000-01-01 13:10:11 +0000 UTC")
 
-	assert.NoError(t, array.Scan("13:10:11"))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan("13:10:11"))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, fmt.Sprintf("%v", value), "0000-01-01 13:10:11 +0000 UTC")
+	require.Equal(t, fmt.Sprintf("%v", value), "0000-01-01 13:10:11 +0000 UTC")
 
-	assert.Error(t, array.Scan(12), "can't scan time.Time from 12")
+	require.Error(t, array.Scan(12), "can't scan time.Time from 12")
 }
 
 func TestNullInt8(t *testing.T) {
 	var array NullInt8
 
-	assert.NoError(t, array.Scan(nil))
-	assert.Equal(t, array.Valid, false)
+	require.NoError(t, array.Scan(nil))
+	require.Equal(t, array.Valid, false)
 
-	assert.NoError(t, array.Scan(int64(11)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int64(11)))
+	require.Equal(t, array.Valid, true)
 	value, _ := array.Value()
-	assert.Equal(t, value, int8(11))
+	require.Equal(t, value, int8(11))
 
-	assert.Error(t, array.Scan("text"), "can't scan int8 from text")
+	require.Error(t, array.Scan("text"), "can't scan int8 from text")
 }
 
 func TestNullInt16(t *testing.T) {
 	var array NullInt16
 
-	assert.NoError(t, array.Scan(nil))
-	assert.Equal(t, array.Valid, false)
+	require.NoError(t, array.Scan(nil))
+	require.Equal(t, array.Valid, false)
 
-	assert.NoError(t, array.Scan(int64(11)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int64(11)))
+	require.Equal(t, array.Valid, true)
 	value, _ := array.Value()
-	assert.Equal(t, value, int16(11))
+	require.Equal(t, value, int16(11))
 
-	assert.NoError(t, array.Scan(int16(20)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int16(20)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int16(20))
+	require.Equal(t, value, int16(20))
 
-	assert.NoError(t, array.Scan(int8(30)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int8(30)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int16(30))
+	require.Equal(t, value, int16(30))
 
-	assert.NoError(t, array.Scan(uint8(30)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(uint8(30)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int16(30))
+	require.Equal(t, value, int16(30))
 
-	assert.Error(t, array.Scan("text"), "can't scan int16 from text")
+	require.Error(t, array.Scan("text"), "can't scan int16 from text")
 }
 
 func TestNullInt32(t *testing.T) {
 	var array NullInt32
 
-	assert.NoError(t, array.Scan(nil))
-	assert.Equal(t, array.Valid, false)
+	require.NoError(t, array.Scan(nil))
+	require.Equal(t, array.Valid, false)
 
-	assert.NoError(t, array.Scan(int64(11)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int64(11)))
+	require.Equal(t, array.Valid, true)
 	value, _ := array.Value()
-	assert.Equal(t, value, int32(11))
+	require.Equal(t, value, int32(11))
 
-	assert.NoError(t, array.Scan(int32(32)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int32(32)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int32(32))
+	require.Equal(t, value, int32(32))
 
-	assert.NoError(t, array.Scan(int16(20)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int16(20)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int32(20))
+	require.Equal(t, value, int32(20))
 
-	assert.NoError(t, array.Scan(uint16(16)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(uint16(16)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int32(16))
+	require.Equal(t, value, int32(16))
 
-	assert.NoError(t, array.Scan(int8(30)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(int8(30)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int32(30))
+	require.Equal(t, value, int32(30))
 
-	assert.NoError(t, array.Scan(uint8(30)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(uint8(30)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, int32(30))
+	require.Equal(t, value, int32(30))
 
-	assert.Error(t, array.Scan("text"), "can't scan int32 from text")
+	require.Error(t, array.Scan("text"), "can't scan int32 from text")
 }
 
 func TestNullFloat32(t *testing.T) {
 	var array NullFloat32
 
-	assert.NoError(t, array.Scan(nil))
-	assert.Equal(t, array.Valid, false)
+	require.NoError(t, array.Scan(nil))
+	require.Equal(t, array.Valid, false)
 
-	assert.NoError(t, array.Scan(float64(64)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(float64(64)))
+	require.Equal(t, array.Valid, true)
 	value, _ := array.Value()
-	assert.Equal(t, value, float32(64))
+	require.Equal(t, value, float32(64))
 
-	assert.NoError(t, array.Scan(float32(32)))
-	assert.Equal(t, array.Valid, true)
+	require.NoError(t, array.Scan(float32(32)))
+	require.Equal(t, array.Valid, true)
 	value, _ = array.Value()
-	assert.Equal(t, value, float32(32))
+	require.Equal(t, value, float32(32))
 
-	assert.Error(t, array.Scan(12), "can't scan float32 from 12")
+	require.Error(t, array.Scan(12), "can't scan float32 from 12")
 }

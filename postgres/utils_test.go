@@ -10,7 +10,6 @@ import (
 var table1Col1 = IntegerColumn("col1")
 var table1ColInt = IntegerColumn("col_int")
 var table1ColFloat = FloatColumn("col_float")
-var table1Col3 = IntegerColumn("col3")
 var table1ColTime = TimeColumn("col_time")
 var table1ColTimez = TimezColumn("col_timez")
 var table1ColTimestamp = TimestampColumn("col_timestamp")
@@ -25,7 +24,6 @@ var table1 = NewTable(
 	table1Col1,
 	table1ColInt,
 	table1ColFloat,
-	table1Col3,
 	table1ColTime,
 	table1ColTimez,
 	table1ColBool,
@@ -75,12 +73,16 @@ var table3 = NewTable(
 	table3ColInt,
 	table3StrCol)
 
-func assertSerialize(t *testing.T, clause jet.Serializer, query string, args ...interface{}) {
+func assertSerialize(t *testing.T, serializer jet.Serializer, query string, args ...interface{}) {
+	testutils.AssertSerialize(t, Dialect, serializer, query, args...)
+}
+
+func assertClauseSerialize(t *testing.T, clause jet.Clause, query string, args ...interface{}) {
 	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
 }
 
-func assertClauseSerializeErr(t *testing.T, clause jet.Serializer, errString string) {
-	testutils.AssertClauseSerializeErr(t, Dialect, clause, errString)
+func assertSerializeErr(t *testing.T, serializer jet.Serializer, errString string) {
+	testutils.AssertSerializeErr(t, Dialect, serializer, errString)
 }
 
 func assertProjectionSerialize(t *testing.T, projection jet.Projection, query string, args ...interface{}) {
@@ -88,5 +90,6 @@ func assertProjectionSerialize(t *testing.T, projection jet.Projection, query st
 }
 
 var assertStatementSql = testutils.AssertStatementSql
+var assertDebugStatementSql = testutils.AssertDebugStatementSql
 var assertStatementSqlErr = testutils.AssertStatementSqlErr
 var assertPanicErr = testutils.AssertPanicErr

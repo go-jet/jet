@@ -30,7 +30,7 @@ func newWindowImpl(parent Window) *windowImpl {
 }
 
 func (w *windowImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if !contains(options, noWrap) {
+	if !contains(options, NoWrap) {
 		out.WriteByte('(')
 	}
 
@@ -40,7 +40,7 @@ func (w *windowImpl) serialize(statement StatementType, out *SQLBuilder, options
 		serializeExpressionList(statement, w.partitionBy, ", ", out)
 	}
 	w.orderBy.SkipNewLine = true
-	w.orderBy.Serialize(statement, out)
+	w.orderBy.Serialize(statement, out, FallTrough(options)...)
 
 	if w.frameUnits != "" {
 		out.WriteString(w.frameUnits)
@@ -55,7 +55,7 @@ func (w *windowImpl) serialize(statement StatementType, out *SQLBuilder, options
 		}
 	}
 
-	if !contains(options, noWrap) {
+	if !contains(options, NoWrap) {
 		out.WriteByte(')')
 	}
 }
@@ -139,7 +139,7 @@ func (f *frameExtentImpl) serialize(statement StatementType, out *SQLBuilder, op
 	if f == nil {
 		return
 	}
-	f.offset.serialize(statement, out)
+	f.offset.serialize(statement, out, FallTrough(options)...)
 
 	if f.preceding {
 		out.WriteString("PRECEDING")
@@ -152,12 +152,12 @@ func (f *frameExtentImpl) serialize(statement StatementType, out *SQLBuilder, op
 
 // Window function keywords
 var (
-	UNBOUNDED   = keywordClause("UNBOUNDED")
+	UNBOUNDED   = Keyword("UNBOUNDED")
 	CURRENT_ROW = frameExtentKeyword{"CURRENT ROW"}
 )
 
 type frameExtentKeyword struct {
-	keywordClause
+	Keyword
 }
 
 func (f frameExtentKeyword) isFrameExtent() {}
@@ -180,7 +180,7 @@ func (w windowName) serialize(statement StatementType, out *SQLBuilder, options 
 	out.WriteByte('(')
 
 	out.WriteString(w.name)
-	w.windowImpl.serialize(statement, out, noWrap)
+	w.windowImpl.serialize(statement, out, NoWrap.WithFallTrough(options)...)
 
 	out.WriteByte(')')
 }
