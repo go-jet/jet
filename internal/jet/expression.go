@@ -23,7 +23,7 @@ type Expression interface {
 
 	// ASC expression will be used to sort query result in ascending order
 	ASC() OrderByClause
-	// DESC expression will be used to sort query result in ascending order
+	// DESC expression will be used to sort query result in descending order
 	DESC() OrderByClause
 }
 
@@ -66,7 +66,7 @@ func (e *ExpressionInterfaceImpl) ASC() OrderByClause {
 	return newOrderByClause(e.Parent, true)
 }
 
-// DESC expression will be used to sort query result in ascending order
+// DESC expression will be used to sort query result in descending order
 func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
 	return newOrderByClause(e.Parent, false)
 }
