@@ -152,7 +152,7 @@ import (
 ```
 Lets say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
 and _film category_ is not 'Action'.  
-```go
+```java
 stmt := SELECT(
     Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,  // or just Actor.AllColumns
     Film.AllColumns,                                                  
