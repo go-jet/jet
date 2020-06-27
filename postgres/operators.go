@@ -1,6 +1,6 @@
 package postgres
 
-import "github.com/go-jet/jet/internal/jet"
+import "github.com/go-jet/jet/v2/internal/jet"
 
 // NOT returns negation of bool expression result
 var NOT = jet.NOT

@@ -1,9 +1,9 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/internal/testutils"
-	. "github.com/go-jet/jet/mysql"
-	. "github.com/go-jet/jet/tests/.gentestdata/mysql/test_sample/table"
+	"github.com/go-jet/jet/v2/internal/testutils"
+	. "github.com/go-jet/jet/v2/mysql"
+	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"

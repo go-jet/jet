@@ -2,11 +2,11 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/internal/testutils"
-	. "github.com/go-jet/jet/postgres"
-	"github.com/go-jet/jet/qrm"
-	"github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/model"
-	. "github.com/go-jet/jet/tests/.gentestdata/jetdb/dvds/table"
+	"github.com/go-jet/jet/v2/internal/testutils"
+	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
+	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"testing"

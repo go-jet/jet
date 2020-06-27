@@ -3,10 +3,10 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/generator/internal/metadata"
-	"github.com/go-jet/jet/generator/internal/template"
-	"github.com/go-jet/jet/internal/utils"
-	"github.com/go-jet/jet/postgres"
+	"github.com/go-jet/jet/v2/generator/internal/metadata"
+	"github.com/go-jet/jet/v2/generator/internal/template"
+	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/postgres"
 	"path"
 	"strconv"
 )

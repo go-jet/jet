@@ -3,8 +3,8 @@ package jet
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-jet/jet/internal/3rdparty/pq"
-	"github.com/go-jet/jet/internal/utils"
+	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
+	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/google/uuid"
 	"reflect"
 	"strconv"

@@ -9,4 +9,4 @@ Jet generated files of interest are in `./gen` folder.
 with a difference of redirecting json output to files(`dest.json` and `dest2.json`) rather then to a
 standard output.
 
-`./gen`, `dest.json` and `dest2.json` - added to git for presentation purposes.
+`./gen`, `dest.json` and `dest2.json` - added into git for presentation purposes.

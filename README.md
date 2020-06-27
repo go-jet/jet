@@ -4,15 +4,15 @@
 [![codecov](https://codecov.io/gh/go-jet/jet/branch/master/graph/badge.svg)](https://codecov.io/gh/go-jet/jet)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-jet/jet)](https://goreportcard.com/report/github.com/go-jet/jet)
 [![Documentation](https://godoc.org/github.com/go-jet/jet?status.svg)](http://godoc.org/github.com/go-jet/jet)
-[![GitHub release](https://img.shields.io/github/release/go-jet/jet.svg)](https://github.com/go-jet/jet/releases)
+[![GitHub release](https://img.shields.io/github/release/go-jet/jet.svg)](https://github.com/go-jet/jet/v2/releases)
 [![Gitter](https://badges.gitter.im/go-jet/community.svg)](https://gitter.im/go-jet/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-Jet is a framework for writing type-safe SQL queries in Go, with ability to easily 
-convert database query result into desired arbitrary object structure.  
+Jet is a complete solution for interacting with database from Go, which includes type-safe SQL builder with a code generation and automatic query result
+data mapping.  
 Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will add support for additional databases.
 
 ![jet](https://github.com/go-jet/jet/wiki/image/jet.png)  
-Jet is the easiest and the fastest way to write complex SQL queries and map database query result 
+Jet is the easiest and the fastest way to write complex type-safe SQL queries as a Go code and map database query result 
 into complex object composition. __It is not an ORM.__ 
 
 ## Motivation
@@ -58,11 +58,17 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
 
 To install Jet package, you need to install Go and set your Go workspace first.
 
-[Go](https://golang.org/) **version 1.8+ is required**
+[Go](https://golang.org/) **version 1.9+ is required**
 
 ### Installation
 
-Use the bellow command to install jet
+Use the bellow command to add jet as a dependency into `go.mod` project:
+```sh
+$ go get github.com/go-jet/jet/v2
+```
+
+Use the bellow command to add jet as a dependency into `GOPATH` project:
+
 ```sh
 $ go get -u github.com/go-jet/jet
 ```
@@ -70,10 +76,10 @@ $ go get -u github.com/go-jet/jet
 Install jet generator to GOPATH bin folder. This will allow generating jet files from the command line.
 
 ```sh
-go install github.com/go-jet/jet/cmd/jet
+cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
 ```
 
-Make sure GOPATH bin folder is added to the PATH environment variable.
+*Make sure GOPATH bin folder is added to the PATH environment variable.*
 
 ### Quick Start
 For this quick start example we will use PostgreSQL sample _'dvd rental'_ database. Full database dump can be found in [./tests/testdata/init/postgres/dvds.sql](./tests/testdata/init/postgres/dvds.sql).
@@ -85,7 +91,7 @@ connection parameters and root destination folder path for generated files.\
 Assuming we are running local postgres database, with user `jetuser`, user password `jetpass`, database `jetdb` and 
 schema `dvds` we will use this command:
 ```sh
-jet -source=PostgreSQL -host=localhost -port=5432 -user=jetuser -password=jetpass -dbname=jetdb -schema=dvds -path=./gen
+jet -source=PostgreSQL -host=localhost -port=5432 -user=jetuser -password=jetpass -dbname=jetdb -schema=dvds -path=./.gen
 ```
 ```sh
 Connecting to postgres database: host=localhost port=5432 user=jetuser password=jetpass dbname=jetdb sslmode=disable 
@@ -144,10 +150,10 @@ First we need to import jet and generated files from previous step:
 import (
 	// dot import so go code would resemble as much as native SQL
 	// dot import is not mandatory
-	. "github.com/go-jet/jet/examples/quick-start/.gen/jetdb/dvds/table"
-	. "github.com/go-jet/jet/postgres"
+	. "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
+	. "github.com/go-jet/jet/v2/postgres"
 
-	"github.com/go-jet/jet/examples/quick-start/gen/jetdb/dvds/model"
+	"github.com/go-jet/jet/v2/examples/quick-start/gen/jetdb/dvds/model"
 )
 ```
 Lets say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
