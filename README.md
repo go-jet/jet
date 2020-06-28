@@ -7,8 +7,8 @@
 [![GitHub release](https://img.shields.io/github/release/go-jet/jet.svg)](https://github.com/go-jet/jet/v2/releases)
 [![Gitter](https://badges.gitter.im/go-jet/community.svg)](https://gitter.im/go-jet/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-Jet is a complete solution for interacting with database from Go, which includes type-safe SQL builder with a code generation and automatic query result
-data mapping.  
+Jet is a complete solution for efficient and high performance database access, consisting of type-safe SQL builder 
+with code generation and automatic query result data mapping.  
 Jet currently supports `PostgreSQL`, `MySQL` and `MariaDB`. Future releases will add support for additional databases.
 
 ![jet](https://github.com/go-jet/jet/wiki/image/jet.png)  
@@ -64,7 +64,7 @@ To install Jet package, you need to install Go and set your Go workspace first.
 
 Use the bellow command to add jet as a dependency into `go.mod` project:
 ```sh
-$ go get github.com/go-jet/jet/v2
+$ go get -u github.com/go-jet/jet/v2
 ```
 
 Use the bellow command to add jet as a dependency into `GOPATH` project:
