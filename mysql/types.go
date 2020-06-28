@@ -1,6 +1,6 @@
 package mysql
 
-import "github.com/go-jet/jet/internal/jet"
+import "github.com/go-jet/jet/v2/internal/jet"
 
 // Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement = jet.Statement

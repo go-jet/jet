@@ -6,13 +6,16 @@ result into desired arbitrary object structure.
 Installation
 
 
-Use the bellow command to install jet
+Use the bellow command to add jet as a dependency into go.mod project:
+	$ go get github.com/go-jet/jet/v2
+
+Use the bellow command to add jet as a dependency into GOPATH project:
 	$ go get -u github.com/go-jet/jet
 
 Install jet generator to GOPATH bin folder. This will allow generating jet files from the command line.
-	go install github.com/go-jet/jet/cmd/jet
+	cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
 
-*Make sure GOPATH bin folder is added to the PATH environment variable.
+Make sure GOPATH bin folder is added to the PATH environment variable.
 
 Usage
 
@@ -26,10 +29,10 @@ Then next step is to import generated SQL Builder and Model files and write SQL 
 	import "some_path/.gen/jetdb/dvds/model"
 
 To write SQL queries for PostgreSQL import:
-	. "github.com/go-jet/jet/postgres"
+	. "github.com/go-jet/jet/v2/postgres"
 
 To write SQL queries for MySQL and MariaDB import:
-	. "github.com/go-jet/jet/mysql"
+	. "github.com/go-jet/jet/v2/mysql"
 *Dot import is used so that Go code resemble as much as native SQL. Dot import is not mandatory.
 
 Write SQL:

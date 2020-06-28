@@ -1,9 +1,9 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/generator/mysql"
-	"github.com/go-jet/jet/internal/testutils"
-	"github.com/go-jet/jet/tests/dbconfig"
+	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/tests/dbconfig"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -35,7 +35,7 @@ func TestGenerator(t *testing.T) {
 }
 
 func TestCmdGenerator(t *testing.T) {
-	goInstallJet := exec.Command("sh", "-c", "go install github.com/go-jet/jet/cmd/jet")
+	goInstallJet := exec.Command("sh", "-c", "cd $GOPATH/src/ && GO111MODULE=off go get github.com/go-jet/jet/cmd/jet")
 	goInstallJet.Stderr = os.Stderr
 	err := goInstallJet.Run()
 	require.NoError(t, err)
@@ -109,7 +109,7 @@ var mpaaRatingEnumFile = `
 
 package enum
 
-import "github.com/go-jet/jet/mysql"
+import "github.com/go-jet/jet/v2/mysql"
 
 var FilmRating = &struct {
 	G    mysql.StringExpression
@@ -137,7 +137,7 @@ var actorSQLBuilderFile = `
 package table
 
 import (
-	"github.com/go-jet/jet/mysql"
+	"github.com/go-jet/jet/v2/mysql"
 )
 
 var Actor = newActorTable()
@@ -220,7 +220,7 @@ var actorInfoSQLBuilderFile = `
 package view
 
 import (
-	"github.com/go-jet/jet/mysql"
+	"github.com/go-jet/jet/v2/mysql"
 )
 
 var ActorInfo = newActorInfoTable()

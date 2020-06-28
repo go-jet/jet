@@ -2,7 +2,7 @@ package metadata
 
 import (
 	"database/sql"
-	"github.com/go-jet/jet/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils"
 	"strings"
 )
 

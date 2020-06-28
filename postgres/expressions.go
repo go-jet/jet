@@ -1,6 +1,6 @@
 package postgres
 
-import "github.com/go-jet/jet/internal/jet"
+import "github.com/go-jet/jet/v2/internal/jet"
 
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.

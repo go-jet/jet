@@ -20,7 +20,7 @@ var tableSQLBuilderTemplate = `
 package {{param "package"}}
 
 import (
-	"github.com/go-jet/jet/{{dialect.PackageName}}"
+	"github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 )
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
@@ -77,7 +77,7 @@ var tablePostgreSQLBuilderTemplate = `
 package {{param "package"}}
 
 import (
-	"github.com/go-jet/jet/{{dialect.PackageName}}"
+	"github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 )
 
 var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
@@ -158,7 +158,7 @@ type {{ToGoIdentifier .Name}} struct {
 `
 var enumSQLBuilderTemplate = `package enum
 
-import "github.com/go-jet/jet/{{dialect.PackageName}}"
+import "github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 
 var {{ToGoIdentifier $.Name}} = &struct {
 {{- range $index, $element := .Values}}

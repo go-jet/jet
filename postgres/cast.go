@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-jet/jet/internal/jet"
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 type cast interface {

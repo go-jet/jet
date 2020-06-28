@@ -3,7 +3,7 @@ package utils
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/internal/3rdparty/snaker"
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
 	"go/format"
 	"os"
 	"path/filepath"
