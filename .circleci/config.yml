@@ -51,7 +51,7 @@ jobs:
             go get github.com/davecgh/go-spew/spew
             go get github.com/jstemmer/go-junit-report
 
-            go install github.com/go-jet/jet/cmd/jet
+            cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet && cd -
 
       - run:
           name: Waiting for Postgres to be ready
