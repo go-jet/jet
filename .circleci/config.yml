@@ -41,17 +41,18 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go get github.com/google/uuid
-            go get github.com/lib/pq
-            go get github.com/go-sql-driver/mysql
+#            go get github.com/google/uuid
+#            go get github.com/lib/pq
+#            go get github.com/go-sql-driver/mysql
+#
+#            go get github.com/pkg/profile
+#            go get github.com/stretchr/testify/assert
+#            go get github.com/google/go-cmp/cmp
+#            go get github.com/davecgh/go-spew/spew
+#            go get github.com/jstemmer/go-junit-report
 
-            go get github.com/pkg/profile
-            go get github.com/stretchr/testify/assert
-            go get github.com/google/go-cmp/cmp
-            go get github.com/davecgh/go-spew/spew
-            go get github.com/jstemmer/go-junit-report
-
-            cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet && cd -
+#            cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet && cd -
+             go install /go/src/github.com/go-jet/jet/cmd/jet/
 
       - run:
           name: Waiting for Postgres to be ready
@@ -138,17 +139,18 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go get github.com/google/uuid
-            go get github.com/lib/pq
-            go get github.com/go-sql-driver/mysql
-
-            go get github.com/pkg/profile
-            go get github.com/stretchr/testify/assert
-            go get github.com/google/go-cmp/cmp
-            go get github.com/davecgh/go-spew/spew
-            go get github.com/jstemmer/go-junit-report
-
-            go install github.com/go-jet/jet/cmd/jet
+#            go get github.com/google/uuid
+#            go get github.com/lib/pq
+#            go get github.com/go-sql-driver/mysql
+#
+#            go get github.com/pkg/profile
+#            go get github.com/stretchr/testify/assert
+#            go get github.com/google/go-cmp/cmp
+#            go get github.com/davecgh/go-spew/spew
+#            go get github.com/jstemmer/go-junit-report
+#
+#            cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet && cd -
+             go install /go/src/github.com/go-jet/jet/cmd/jet/
 
       - run:
           name: Install MySQL CLI;
