@@ -6,7 +6,7 @@ jobs:
   build-postgres-and-mysql:
     docker:
       # specify the version
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
 
       - image: circleci/postgres:10.8-alpine
         environment: # environment variables for primary container
@@ -41,7 +41,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go get /go/src/github.com/go-jet/jet/cmd/jet/
+            cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
 
       - run:
           name: Waiting for Postgres to be ready
@@ -128,7 +128,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go get /go/src/github.com/go-jet/jet/cmd/jet/
+            cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
 
       - run:
           name: Install MySQL CLI;
