@@ -41,7 +41,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go install /go/src/github.com/go-jet/jet/cmd/jet/
+            go get /go/src/github.com/go-jet/jet/cmd/jet/
 
       - run:
           name: Waiting for Postgres to be ready
@@ -128,7 +128,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go install /go/src/github.com/go-jet/jet/cmd/jet/
+            go get /go/src/github.com/go-jet/jet/cmd/jet/
 
       - run:
           name: Install MySQL CLI;
