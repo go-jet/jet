@@ -16,6 +16,8 @@ type Table interface {
 	SchemaName() string
 	TableName() string
 	AS(alias string)
+	Alias() string
+	Schema(schemaName string)
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
@@ -67,13 +69,25 @@ func (t *tableImpl) columns() []Column {
 	return ret
 }
 
+func (t *tableImpl) Alias() string {
+	return t.alias
+}
+
+func (t *tableImpl) Schema(schemaName string) {
+	t.schemaName = schemaName
+}
+
 func (t *tableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
 		panic("jet: tableImpl is nil")
 	}
 
-	out.WriteIdentifier(t.schemaName)
-	out.WriteString(".")
+	// Use default schema if the schema name is not set
+	if len(t.schemaName) > 0 {
+		out.WriteIdentifier(t.schemaName)
+		out.WriteString(".")
+	}
+
 	out.WriteIdentifier(t.name)
 
 	if len(t.alias) > 0 {
@@ -143,6 +157,13 @@ func (t *joinTableImpl) columns() []Column {
 	}
 
 	return ret
+}
+
+func (t *joinTableImpl) Alias() string {
+	return ""
+}
+
+func (t *joinTableImpl) Schema(schemaName string) {
 }
 
 func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
