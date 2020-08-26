@@ -13,20 +13,38 @@ type readableTable interface {
 	// Generates a select query on the current tableName.
 	SELECT(projection Projection, projections ...Projection) SelectStatement
 
+	// Creates a Lateral query on the current tableName.
+	LATERAL(table SelectTable) ReadableTable
+
 	// Creates a inner join tableName Expression using onCondition.
 	INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
+
+	// Creates a inner join lateral tableName Expression.
+	INNER_JOIN_LATERAL(table SelectTable) ReadableTable
 
 	// Creates a left join tableName Expression using onCondition.
 	LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
+	// Creates a left join lateral tableName Expression.
+	LEFT_JOIN_LATERAL(table SelectTable) ReadableTable
+
 	// Creates a right join tableName Expression using onCondition.
 	RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
+
+	// Creates a right join lateral tableName Expression.
+	RIGHT_JOIN_LATERAL(table SelectTable) ReadableTable
 
 	// Creates a full join tableName Expression using onCondition.
 	FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable
 
+	// Creates a full join lateral tableName Expression.
+	FULL_JOIN_LATERAL(table SelectTable) ReadableTable
+
 	// Creates a cross join tableName Expression using onCondition.
 	CROSS_JOIN(table ReadableTable) ReadableTable
+
+	// Creates a cross join lateral tableName Expression.
+	CROSS_JOIN_LATERAL(table SelectTable) ReadableTable
 }
 
 type writableTable interface {
@@ -59,8 +77,18 @@ func (r readableTableInterfaceImpl) SELECT(projection1 Projection, projections .
 }
 
 // Creates a inner join tableName Expression using onCondition.
+func (r readableTableInterfaceImpl) LATERAL(table SelectTable) ReadableTable {
+	return newLateralTable(r.parent, table)
+}
+
+// Creates a inner join tableName Expression using onCondition.
 func (r readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return newJoinTable(r.parent, table, jet.InnerJoin, onCondition)
+}
+
+// Creates a inner join lateral tableName Expression.
+func (r readableTableInterfaceImpl) INNER_JOIN_LATERAL(table SelectTable) ReadableTable {
+	return newJoinTable(r.parent, table, jet.InnerJoinLateral, nil)
 }
 
 // Creates a left join tableName Expression using onCondition.
@@ -68,17 +96,37 @@ func (r readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition B
 	return newJoinTable(r.parent, table, jet.LeftJoin, onCondition)
 }
 
+// Creates a left join lateral tableName Expression.
+func (r readableTableInterfaceImpl) LEFT_JOIN_LATERAL(table SelectTable) ReadableTable {
+	return newJoinTable(r.parent, table, jet.LeftJoinLateral, nil)
+}
+
 // Creates a right join tableName Expression using onCondition.
 func (r readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return newJoinTable(r.parent, table, jet.RightJoin, onCondition)
+}
+
+// Creates a right join lateral tableName Expression.
+func (r readableTableInterfaceImpl) RIGHT_JOIN_LATERAL(table SelectTable) ReadableTable {
+	return newJoinTable(r.parent, table, jet.RightJoinLateral, nil)
 }
 
 func (r readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
 	return newJoinTable(r.parent, table, jet.FullJoin, onCondition)
 }
 
+// Creates a full join lateral tableName Expression.
+func (r readableTableInterfaceImpl) FULL_JOIN_LATERAL(table SelectTable) ReadableTable {
+	return newJoinTable(r.parent, table, jet.FullJoinLateral, nil)
+}
+
 func (r readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) ReadableTable {
 	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
+}
+
+// Creates a cross join lateral tableName Expression.
+func (r readableTableInterfaceImpl) CROSS_JOIN_LATERAL(table SelectTable) ReadableTable {
+	return newJoinTable(r.parent, table, jet.CrossJoinLateral, nil)
 }
 
 type writableTableInterfaceImpl struct {
@@ -134,4 +182,19 @@ func newJoinTable(lhs jet.Serializer, rhs jet.Serializer, joinType jet.JoinType,
 	newJoinTable.readableTableInterfaceImpl.parent = newJoinTable
 
 	return newJoinTable
+}
+
+type lateralTable struct {
+	readableTableInterfaceImpl
+	jet.LateralTable
+}
+
+func newLateralTable(lhs jet.Serializer, rhs jet.Serializer) ReadableTable {
+	newLateralTable := &lateralTable{
+		LateralTable: jet.NewLateralTable(lhs, rhs),
+	}
+
+	newLateralTable.readableTableInterfaceImpl.parent = newLateralTable
+
+	return newLateralTable
 }

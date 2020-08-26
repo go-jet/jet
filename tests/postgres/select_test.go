@@ -920,6 +920,135 @@ FROM dvds.actor
 	require.NoError(t, err)
 }
 
+func TestInnerJoinLateralQuery(t *testing.T) {
+	expectedQuery := `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update",
+     film_actor.actor_id AS "film_actor.actor_id",
+     film_actor.film_id AS "film_actor.film_id",
+     film_actor.last_update AS "film_actor.last_update",
+     "rFilms"."film.film_id" AS "film.film_id",
+     "rFilms"."film.title" AS "film.title",
+     "rFilms"."film.rating" AS "film.rating"
+FROM dvds.actor
+     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
+     INNER JOIN LATERAL (
+          SELECT film.film_id AS "film.film_id",
+               film.title AS "film.title",
+               film.rating AS "film.rating"
+          FROM dvds.film
+          WHERE (film.rating = 'R') AND (film.film_id = film_actor.film_id)
+     ) AS "rFilms" ON true;
+`
+
+	rRatingFilms := Film.
+		SELECT(
+			Film.FilmID,
+			Film.Title,
+			Film.Rating,
+		).
+		WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID))).
+		AsTable("rFilms")
+
+	query := Actor.
+		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
+		INNER_JOIN_LATERAL(rRatingFilms).
+		SELECT(
+			Actor.AllColumns,
+			FilmActor.AllColumns,
+			rRatingFilms.AllColumns(),
+		)
+	testutils.AssertDebugStatementSql(t, query, expectedQuery)
+}
+
+func TestCrossJoinLateralQuery(t *testing.T) {
+	expectedQuery := `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update",
+     film_actor.actor_id AS "film_actor.actor_id",
+     film_actor.film_id AS "film_actor.film_id",
+     film_actor.last_update AS "film_actor.last_update",
+     "rFilms"."film.film_id" AS "film.film_id",
+     "rFilms"."film.title" AS "film.title",
+     "rFilms"."film.rating" AS "film.rating"
+FROM dvds.actor
+     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
+     CROSS JOIN LATERAL (
+          SELECT film.film_id AS "film.film_id",
+               film.title AS "film.title",
+               film.rating AS "film.rating"
+          FROM dvds.film
+          WHERE (film.rating = 'R') AND (film.film_id = film_actor.film_id)
+     ) AS "rFilms";
+`
+
+	rRatingFilms := Film.
+		SELECT(
+			Film.FilmID,
+			Film.Title,
+			Film.Rating,
+		).
+		WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID))).
+		AsTable("rFilms")
+
+	query := Actor.
+		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
+		CROSS_JOIN_LATERAL(rRatingFilms).
+		SELECT(
+			Actor.AllColumns,
+			FilmActor.AllColumns,
+			rRatingFilms.AllColumns(),
+		)
+	testutils.AssertDebugStatementSql(t, query, expectedQuery)
+}
+
+func TestLateralQuery(t *testing.T) {
+	expectedQuery := `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update",
+     film_actor.actor_id AS "film_actor.actor_id",
+     film_actor.film_id AS "film_actor.film_id",
+     film_actor.last_update AS "film_actor.last_update",
+     "rFilms"."film.film_id" AS "film.film_id",
+     "rFilms"."film.title" AS "film.title",
+     "rFilms"."film.rating" AS "film.rating"
+FROM dvds.actor
+     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
+     LATERAL (
+          SELECT film.film_id AS "film.film_id",
+               film.title AS "film.title",
+               film.rating AS "film.rating"
+          FROM dvds.film
+          WHERE (film.rating = 'R') AND (film.film_id = film_actor.film_id)
+     ) AS "rFilms";
+`
+
+	rRatingFilms := Film.
+		SELECT(
+			Film.FilmID,
+			Film.Title,
+			Film.Rating,
+		).
+		WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID))).
+		AsTable("rFilms")
+
+	query := Actor.
+		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
+		LATERAL(rRatingFilms).
+		SELECT(
+			Actor.AllColumns,
+			FilmActor.AllColumns,
+			rRatingFilms.AllColumns(),
+		)
+	testutils.AssertDebugStatementSql(t, query, expectedQuery)
+}
+
 func TestSelectFunctions(t *testing.T) {
 	expectedQuery := `
 SELECT MAX(film.rental_rate) AS "max_film_rate"
