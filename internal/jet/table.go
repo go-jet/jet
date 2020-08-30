@@ -92,11 +92,6 @@ const (
 	RightJoin
 	FullJoin
 	CrossJoin
-	InnerJoinLateral
-	LeftJoinLateral
-	RightJoinLateral
-	FullJoinLateral
-	CrossJoinLateral
 )
 
 // Join expressions are pseudo readable tables.
@@ -174,16 +169,6 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		out.WriteString("FULL JOIN")
 	case CrossJoin:
 		out.WriteString("CROSS JOIN")
-	case InnerJoinLateral:
-		out.WriteString("INNER JOIN LATERAL")
-	case LeftJoinLateral:
-		out.WriteString("LEFT JOIN LATERAL")
-	case RightJoinLateral:
-		out.WriteString("RIGHT JOIN LATERAL")
-	case FullJoinLateral:
-		out.WriteString("FULL JOIN LATERAL")
-	case CrossJoinLateral:
-		out.WriteString("CROSS JOIN LATERAL")
 	}
 
 	if utils.IsNil(t.rhs) {
@@ -192,12 +177,7 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 
 	t.rhs.serialize(statement, out)
 
-	if t.joinType >= InnerJoinLateral && t.joinType != CrossJoinLateral {
-		out.WriteString("ON true")
-		return
-	}
-
-	if t.onCondition == nil && t.joinType != CrossJoin && t.joinType < InnerJoinLateral {
+	if t.onCondition == nil && t.joinType != CrossJoin {
 		panic("jet: join condition is nil")
 	}
 
@@ -208,18 +188,17 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 }
 
 // Lateral expression are pseudo readable tables.
-type lateralTableImpl struct {
+type lateralImpl struct {
 	lhs Serializer
 	rhs Serializer
 }
 
 // LateralTable interface
-type LateralTable SerializerTable
+type Lateral SerializerTable
 
 // NewLateralTable creates new lateral table
-func NewLateralTable(lhs Serializer, rhs Serializer) LateralTable {
-
-	lateralTable := lateralTableImpl{
+func NewLateral(lhs Serializer, rhs Serializer) Lateral {
+	lateralTable := lateralImpl{
 		lhs: lhs,
 		rhs: rhs,
 	}
@@ -227,21 +206,21 @@ func NewLateralTable(lhs Serializer, rhs Serializer) LateralTable {
 	return &lateralTable
 }
 
-func (t *lateralTableImpl) SchemaName() string {
+func (t *lateralImpl) SchemaName() string {
 	if table, ok := t.lhs.(Table); ok {
 		return table.SchemaName()
 	}
 	return ""
 }
 
-func (t *lateralTableImpl) TableName() string {
+func (t *lateralImpl) TableName() string {
 	return ""
 }
 
-func (t *lateralTableImpl) AS(alias string) {
+func (t *lateralImpl) AS(alias string) {
 }
 
-func (t *lateralTableImpl) columns() []Column {
+func (t *lateralImpl) columns() []Column {
 	var ret []Column
 
 	if lhsTable, ok := t.lhs.(Table); ok {
@@ -253,13 +232,13 @@ func (t *lateralTableImpl) columns() []Column {
 	return ret
 }
 
-func (t *lateralTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (t *lateralImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
-		panic("jet: Join table is nil. ")
+		panic("jet: Lateral table is nil. ")
 	}
 
 	if utils.IsNil(t.lhs) {
-		panic("jet: left hand side of join operation is nil table")
+		panic("jet: left hand side of lateral operation is nil table")
 	}
 	t.lhs.serialize(statement, out, FallTrough(options)...)
 
@@ -267,7 +246,7 @@ func (t *lateralTableImpl) serialize(statement StatementType, out *SQLBuilder, o
 	out.WriteString("LATERAL")
 
 	if utils.IsNil(t.rhs) {
-		panic("jet: right hand side of join operation is nil table")
+		panic("jet: right hand side of lateral operation is nil table")
 	}
 
 	t.rhs.serialize(statement, out)

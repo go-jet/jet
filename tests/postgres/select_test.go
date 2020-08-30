@@ -2,6 +2,9 @@ package postgres
 
 import (
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/enum"
@@ -9,8 +12,6 @@ import (
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/view"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
@@ -940,21 +941,22 @@ FROM dvds.actor
                film.rating AS "film.rating"
           FROM dvds.film
           WHERE (film.rating = 'R') AND (film.film_id = film_actor.film_id)
-     ) AS "rFilms" ON true;
+     ) AS "rFilms" ON TRUE;
 `
 
-	rRatingFilms := Film.
-		SELECT(
-			Film.FilmID,
-			Film.Title,
-			Film.Rating,
-		).
-		WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID))).
-		AsTable("rFilms")
+	rRatingFilms := LATERAL(
+		Film.
+			SELECT(
+				Film.FilmID,
+				Film.Title,
+				Film.Rating,
+			).
+			WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID)))).
+		As("rFilms")
 
 	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN_LATERAL(rRatingFilms).
+		INNER_JOIN(rRatingFilms, Bool(true)).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
@@ -986,18 +988,18 @@ FROM dvds.actor
      ) AS "rFilms";
 `
 
-	rRatingFilms := Film.
+	rRatingFilms := LATERAL(Film.
 		SELECT(
 			Film.FilmID,
 			Film.Title,
 			Film.Rating,
 		).
-		WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID))).
-		AsTable("rFilms")
+		WHERE(Film.Rating.EQ(enum.MpaaRating.R).AND(Film.FilmID.EQ(FilmActor.FilmID)))).
+		As("rFilms")
 
 	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		CROSS_JOIN_LATERAL(rRatingFilms).
+		CROSS_JOIN(rRatingFilms).
 		SELECT(
 			Actor.AllColumns,
 			FilmActor.AllColumns,
