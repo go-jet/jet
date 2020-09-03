@@ -17,5 +17,8 @@ type ColumnAssigment = jet.ColumnAssigment
 // PrintableStatement is a statement which sql query can be logged
 type PrintableStatement = jet.PrintableStatement
 
+// OrderByClause is the combination of an expression and the wanted ordering to use as input for ORDER BY.
+type OrderByClause = jet.OrderByClause
+
 // SetLogger sets automatic statement logging
 var SetLogger = jet.SetLoggerFunc

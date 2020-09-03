@@ -41,7 +41,7 @@ func EXCEPT_ALL(lhs, rhs jet.SerializerStatement) setStatement {
 type setStatement interface {
 	setOperators
 
-	ORDER_BY(orderByClauses ...jet.OrderByClause) setStatement
+	ORDER_BY(orderByClauses ...OrderByClause) setStatement
 
 	LIMIT(limit int64) setStatement
 	OFFSET(offset int64) setStatement
@@ -114,7 +114,7 @@ func newSetStatementImpl(operator string, all bool, selects []jet.SerializerStat
 	return newSetStatement
 }
 
-func (s *setStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) setStatement {
+func (s *setStatementImpl) ORDER_BY(orderByClauses ...OrderByClause) setStatement {
 	s.setOperator.OrderBy.List = orderByClauses
 	return s
 }
