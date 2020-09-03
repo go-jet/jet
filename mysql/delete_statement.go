@@ -7,7 +7,7 @@ type DeleteStatement interface {
 	Statement
 
 	WHERE(expression BoolExpression) DeleteStatement
-	ORDER_BY(orderByClauses ...jet.OrderByClause) DeleteStatement
+	ORDER_BY(orderByClauses ...OrderByClause) DeleteStatement
 	LIMIT(limit int64) DeleteStatement
 }
 
@@ -38,7 +38,7 @@ func (d *deleteStatementImpl) WHERE(expression BoolExpression) DeleteStatement {
 	return d
 }
 
-func (d *deleteStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) DeleteStatement {
+func (d *deleteStatementImpl) ORDER_BY(orderByClauses ...OrderByClause) DeleteStatement {
 	d.OrderBy.List = orderByClauses
 	return d
 }

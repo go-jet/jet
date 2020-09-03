@@ -49,7 +49,7 @@ type SelectStatement interface {
 	GROUP_BY(groupByClauses ...jet.GroupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
 	WINDOW(name string) windowExpand
-	ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement
+	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
 	FOR(lock RowLock) SelectStatement
@@ -131,7 +131,7 @@ func (s *selectStatementImpl) WINDOW(name string) windowExpand {
 	return windowExpand{selectStatement: s}
 }
 
-func (s *selectStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement {
+func (s *selectStatementImpl) ORDER_BY(orderByClauses ...OrderByClause) SelectStatement {
 	s.OrderBy.List = orderByClauses
 	return s
 }
