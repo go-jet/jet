@@ -74,5 +74,8 @@ var TimestampExp = jet.TimestampExp
 // For example: Raw("current_database()")
 var Raw = jet.Raw
 
+// Func can be used to call an custom or as of yet unsupported function in the database.
+var Func = jet.Func
+
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue
