@@ -1893,3 +1893,34 @@ WHERE ($1 AND (customer.customer_id = $2)) AND (customer.activebool = $3);
 	require.Len(t, dest, 1)
 	testutils.AssertDeepEqual(t, dest[0], customer0)
 }
+
+func TestLateral(t *testing.T) {
+
+	languages := LATERAL(
+		SELECT(
+			Language.AllColumns,
+		).FROM(
+			Language,
+		).WHERE(
+			Language.Name.NOT_IN(String("spanish")).
+				AND(Film.LanguageID.EQ(Language.LanguageID)),
+		),
+		"films")
+
+	stmt := SELECT(
+		Film.AllColumns,
+		languages.AllColumns(),
+	).FROM(
+		Film.CROSS_JOIN(languages),
+	).WHERE(
+		Film.FilmID.EQ(Int(1)),
+	)
+
+	var dest []struct {
+		model.Film
+		model.Language
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+}
