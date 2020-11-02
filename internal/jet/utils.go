@@ -48,6 +48,20 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 	}
 }
 
+func SerializeTableList(tables []Table, out *SQLBuilder) {
+	for i, table := range tables {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if table == nil {
+			panic("jet: Projection is nil")
+		}
+
+		out.WriteIdentifier(table.TableName())
+	}
+}
+
 // SerializeColumnNames func
 func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	for i, col := range columns {

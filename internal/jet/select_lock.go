@@ -4,11 +4,13 @@ package jet
 type RowLock interface {
 	Serializer
 
+	OF(tables ...Table) RowLock
 	NOWAIT() RowLock
 	SKIP_LOCKED() RowLock
 }
 
 type selectLockImpl struct {
+	tables             []Table
 	lockStrength       string
 	noWait, skipLocked bool
 }
@@ -24,6 +26,11 @@ func newSelectLock(lockStrength string) RowLock {
 	return &selectLockImpl{lockStrength: lockStrength}
 }
 
+func (s *selectLockImpl) OF(tables ...Table) RowLock {
+	s.tables = tables
+	return s
+}
+
 func (s *selectLockImpl) NOWAIT() RowLock {
 	s.noWait = true
 	return s
@@ -36,6 +43,11 @@ func (s *selectLockImpl) SKIP_LOCKED() RowLock {
 
 func (s *selectLockImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(s.lockStrength)
+
+	if len(s.tables) > 0 {
+		out.WriteString("OF")
+		SerializeTableList(s.tables, out)
+	}
 
 	if s.noWait {
 		out.WriteString("NOWAIT")

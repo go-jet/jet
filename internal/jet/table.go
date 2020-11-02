@@ -15,7 +15,7 @@ type Table interface {
 	columns() []Column
 	SchemaName() string
 	TableName() string
-	AS(alias string)
+	As(alias string)
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
@@ -41,7 +41,7 @@ type tableImpl struct {
 	columnList []ColumnExpression
 }
 
-func (t *tableImpl) AS(alias string) {
+func (t *tableImpl) As(alias string) {
 	t.alias = alias
 
 	for _, c := range t.columnList {
@@ -129,7 +129,7 @@ func (t *joinTableImpl) TableName() string {
 	return ""
 }
 
-func (t *joinTableImpl) AS(alias string) {
+func (t *joinTableImpl) As(alias string) {
 }
 
 func (t *joinTableImpl) columns() []Column {

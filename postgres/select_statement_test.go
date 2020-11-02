@@ -133,4 +133,19 @@ SELECT table1.col_bool AS "table1.col_bool"
 FROM db.table1
 FOR NO KEY UPDATE SKIP LOCKED;
 `)
+
+	assertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(NO_KEY_UPDATE().OF(table1)), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR NO KEY UPDATE OF table1;
+`)
+
+	assertStatementSql(t, SELECT(table1ColBool).
+		FROM(table1).
+		FOR(NO_KEY_UPDATE().OF(table1, table2, table3).SKIP_LOCKED()), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR NO KEY UPDATE OF table1, table2, table3 SKIP LOCKED;
+`)
+
 }

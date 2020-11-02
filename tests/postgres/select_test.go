@@ -1443,6 +1443,61 @@ FOR`
 	}
 }
 
+func TestLockWithTablesList(t *testing.T) {
+
+	expectedSQL := `
+SELECT address.address_id AS "address.address_id",
+     address.address AS "address.address",
+     address.address2 AS "address.address2",
+     address.district AS "address.district",
+     address.city_id AS "address.city_id",
+     address.postal_code AS "address.postal_code",
+     address.phone AS "address.phone",
+     address.last_update AS "address.last_update",
+     customer.customer_id AS "customer.customer_id",
+     customer.store_id AS "customer.store_id",
+     customer.first_name AS "customer.first_name",
+     customer.last_name AS "customer.last_name",
+     customer.email AS "customer.email",
+     customer.address_id AS "customer.address_id",
+     customer.activebool AS "customer.activebool",
+     customer.create_date AS "customer.create_date",
+     customer.last_update AS "customer.last_update",
+     customer.active AS "customer.active"
+FROM dvds.address
+     INNER JOIN dvds.customer ON (address.address_id = customer.address_id)
+WHERE address.address_id = 10
+FOR UPDATE OF address, customer NOWAIT;
+`
+
+	stmt := SELECT(
+		Address.AllColumns,
+		Customer.AllColumns,
+	).FROM(
+		Address.INNER_JOIN(Customer, Address.AddressID.EQ(Customer.AddressID)),
+	).WHERE(
+		Address.AddressID.EQ(Int(10)),
+	).FOR(
+		UPDATE().OF(Address, Customer).NOWAIT(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(10))
+
+	ret := struct {
+		model.Address
+		model.Customer
+	}{}
+
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+
+	err = stmt.Query(tx, &ret)
+	require.NoError(t, err)
+
+	require.Equal(t, ret.Address.AddressID, int32(10))
+}
+
 func TestQuickStart(t *testing.T) {
 
 	var expectedSQL = `

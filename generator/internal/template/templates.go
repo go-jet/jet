@@ -40,7 +40,7 @@ type {{.GoStructName}} struct {
 // AS creates new {{.GoStructName}} with assigned alias
 func (a *{{.GoStructName}}) AS(alias string) {{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
-	aliasTable.Table.AS(alias)
+	aliasTable.Table.As(alias) 
 	return aliasTable
 }
 
@@ -103,7 +103,7 @@ type {{.GoStructName}} struct {
 // AS creates new {{.GoStructName}} with assigned alias
 func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
-	aliasTable.Table.AS(alias)
+	aliasTable.Table.As(alias)
 	return aliasTable
 }
 
