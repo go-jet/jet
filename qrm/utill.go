@@ -255,7 +255,7 @@ func setReflectValue(source, destination reflect.Value) {
 		}
 	}
 
-	panic("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
+	//panic("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
 }
 
 func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
@@ -308,7 +308,7 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullStringType
 	case "FLOAT4":
 		return nullFloat32Type
-	case "FLOAT8", "NUMERIC", "DECIMAL", "FLOAT", "DOUBLE":
+	case "FLOAT8", "FLOAT", "DOUBLE":
 		return nullFloat64Type
 	case "BOOL":
 		return nullBoolType

@@ -1,13 +1,17 @@
 package postgres
 
 import (
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/ericlagergren/decimal/sql/postgres"
 )
 
 func TestUUIDType(t *testing.T) {
@@ -29,6 +33,35 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 	requireLogged(t, query)
+}
+
+func TestExactDecimals(t *testing.T) {
+	query := SELECT(
+		AllTypes.Numeric,
+		AllTypes.NumericPtr,
+		AllTypes.Decimal,
+		AllTypes.DecimalPtr,
+	).FROM(
+		AllTypes,
+	).WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
+
+	type AllTypes struct {
+		model.AllTypes
+		Numeric    postgres.Decimal
+		NumericPtr postgres.Decimal
+		Decimal    postgres.Decimal
+		DecimalPtr postgres.Decimal
+	}
+
+	var result AllTypes
+
+	err := query.Query(db, &result)
+	require.NoError(t, err)
+
+	require.Equal(t, result.Decimal.V.String(), "1.11")
+	require.Equal(t, result.DecimalPtr.V.String(), "1.11")
+	require.Equal(t, result.Numeric.V.String(), "2.220")
+	require.Equal(t, result.NumericPtr.V.String(), "2.220")
 }
 
 func TestUUIDComplex(t *testing.T) {

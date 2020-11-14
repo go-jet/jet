@@ -3,6 +3,7 @@ module github.com/go-jet/jet/v2
 go 1.11
 
 require (
+	github.com/ericlagergren/decimal v0.0.0-20191206042408-88212e6cfca9
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/go-cmp v0.5.0
 	github.com/google/uuid v1.1.1
