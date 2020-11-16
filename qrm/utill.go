@@ -3,12 +3,15 @@ package qrm
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/go-jet/jet/v2/qrm/internal"
-	"github.com/google/uuid"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/qrm/internal"
 )
 
 var scannerInterfaceType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
@@ -197,6 +200,15 @@ func tryAssign(source, destination reflect.Value) bool {
 		}
 	}
 
+	if source.Type() == stringType && destination.Type() == float64Type {
+		strValue := source.String()
+		f, err := strconv.ParseFloat(strValue, 64)
+		if err != nil {
+			return false
+		}
+		source = reflect.ValueOf(f)
+	}
+
 	if source.Type().AssignableTo(destination.Type()) {
 		destination.Set(source)
 		return true
@@ -255,7 +267,7 @@ func setReflectValue(source, destination reflect.Value) {
 		}
 	}
 
-	//panic("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
+	panic("jet: can't set " + source.Type().String() + " to " + destination.Type().String())
 }
 
 func createScanValue(columnTypes []*sql.ColumnType) []interface{} {
@@ -281,6 +293,8 @@ var int32Type = reflect.TypeOf(int32(1))
 var uint32Type = reflect.TypeOf(uint32(1))
 var int64Type = reflect.TypeOf(int64(1))
 var uint64Type = reflect.TypeOf(uint64(1))
+var float64Type = reflect.TypeOf(float64(1))
+var stringType = reflect.TypeOf("")
 
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
 var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
