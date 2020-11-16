@@ -3,15 +3,14 @@ package qrm
 import (
 	"database/sql"
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/qrm/internal"
+	"github.com/google/uuid"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
-
-	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/go-jet/jet/v2/qrm/internal"
+	"strconv"
 )
 
 var scannerInterfaceType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
