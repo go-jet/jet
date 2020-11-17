@@ -41,6 +41,15 @@ type {{.GoStructName}} struct {
 func (a *{{.GoStructName}}) AS(alias string) {{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
 	aliasTable.Table.AS(alias)
+	aliasTable.Table.Schema(a.Table.SchemaName())
+	return aliasTable
+}
+
+// Schema creates new {{.GoStructName}} with assigned schema name
+func (a *{{.GoStructName}}) Schema(schemaName string) {{.GoStructName}} {
+	aliasTable := new{{.GoStructName}}()
+	aliasTable.Table.AS(a.Table.Alias())
+	aliasTable.Table.Schema(schemaName)
 	return aliasTable
 }
 
@@ -104,6 +113,15 @@ type {{.GoStructName}} struct {
 func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
 	aliasTable := new{{.GoStructName}}()
 	aliasTable.Table.AS(alias)
+	aliasTable.Table.Schema(a.Table.SchemaName())
+	return aliasTable
+}
+
+// Schema creates new {{.GoStructName}} with assigned schema name
+func (a *{{.GoStructName}}) Schema(schemaName string) *{{.GoStructName}} {
+	aliasTable := new{{.GoStructName}}()
+	aliasTable.Table.AS(a.Table.Alias())
+	aliasTable.Table.Schema(schemaName)
 	return aliasTable
 }
 
