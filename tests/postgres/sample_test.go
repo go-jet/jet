@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 
-	"github.com/ericlagergren/decimal/sql/postgres"
+	"github.com/shopspring/decimal"
 )
 
 func TestUUIDType(t *testing.T) {
@@ -36,32 +36,71 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 }
 
 func TestExactDecimals(t *testing.T) {
-	query := SELECT(
-		AllTypes.Numeric,
-		AllTypes.NumericPtr,
-		AllTypes.Decimal,
-		AllTypes.DecimalPtr,
-	).FROM(
-		AllTypes,
-	).WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
+	t.Run("should query decimal", func(t *testing.T) {
+		query := SELECT(
+			AllTypes.Numeric,
+			AllTypes.NumericPtr,
+			AllTypes.Decimal,
+			AllTypes.DecimalPtr,
+		).FROM(
+			AllTypes,
+		).WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
 
-	type AllTypes struct {
-		model.AllTypes
-		Numeric    postgres.Decimal
-		NumericPtr postgres.Decimal
-		Decimal    postgres.Decimal
-		DecimalPtr postgres.Decimal
-	}
+		type AllTypes struct {
+			model.AllTypes
+			Numeric    decimal.Decimal
+			NumericPtr decimal.Decimal
+			Decimal    decimal.Decimal
+			DecimalPtr decimal.Decimal
+		}
 
-	var result AllTypes
+		var result AllTypes
 
-	err := query.Query(db, &result)
-	require.NoError(t, err)
+		err := query.Query(db, &result)
+		require.NoError(t, err)
 
-	require.Equal(t, result.Decimal.V.String(), "1.11")
-	require.Equal(t, result.DecimalPtr.V.String(), "1.11")
-	require.Equal(t, result.Numeric.V.String(), "2.220")
-	require.Equal(t, result.NumericPtr.V.String(), "2.220")
+		require.Equal(t, "1.11", result.Decimal.String())
+		require.Equal(t, "1.11", result.DecimalPtr.String())
+		require.Equal(t, "2.22", result.Numeric.String())
+		require.Equal(t, "2.22", result.NumericPtr.String())
+	})
+
+	t.Run("should insert decimal", func(t *testing.T) {
+		type allTypes struct {
+			model.AllTypes
+			Numeric    decimal.Decimal
+			NumericPtr decimal.Decimal
+			Decimal    decimal.Decimal
+			DecimalPtr decimal.Decimal
+		}
+
+		m := allTypes{
+			AllTypes:   allTypesRow0,
+			Numeric:    decimal.RequireFromString("12.345"),
+			NumericPtr: decimal.RequireFromString("56.789"),
+			Decimal:    decimal.RequireFromString("91.23"),
+			DecimalPtr: decimal.RequireFromString("45.67"),
+		}
+
+		insertQuery := AllTypes.INSERT(
+			AllTypes.MutableColumns,
+		).MODEL(m).
+			RETURNING(
+				AllTypes.Numeric,
+				AllTypes.NumericPtr,
+				AllTypes.Decimal,
+				AllTypes.DecimalPtr,
+			)
+
+		var result allTypes
+		err := insertQuery.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "12.345", result.Numeric.String())
+		require.Equal(t, "56.789", result.NumericPtr.String())
+		require.Equal(t, "91.23", result.Decimal.String())
+		require.Equal(t, "45.67", result.DecimalPtr.String())
+	})
 }
 
 func TestUUIDComplex(t *testing.T) {
