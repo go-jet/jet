@@ -74,5 +74,8 @@ var TimestampExp = jet.TimestampExp
 // For example: Raw("current_database()")
 var Raw = jet.Raw
 
+// WRAP wraps list of expressions with brackets '(' and ')'
+var WRAP = jet.WRAP
+
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue
