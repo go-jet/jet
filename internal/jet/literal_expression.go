@@ -2,6 +2,7 @@ package jet
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 )
 
@@ -359,4 +360,75 @@ func Raw(raw string, parent ...Expression) Expression {
 	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
 
 	return rawExp
+}
+
+//---------------------------------------------------//
+
+type rawParameterizedExpression struct {
+	ExpressionInterfaceImpl
+
+	parameters []Expression
+	Raw string
+}
+
+func (n *rawParameterizedExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	paramsLen := len(n.parameters)
+	end := len(n.Raw)
+	for i := 0; i < end; {
+		lasti := i
+		for i < end && n.Raw[i] != '$' {
+			i++
+		}
+		if i > lasti {
+			out.WriteString(n.Raw[lasti:i])
+		}
+		if i >= end {
+			// done processing raw string
+			break
+		}
+
+		// Process one parameter
+		i++
+
+		// Extract the index
+		startIdx := i
+		endIdx := i
+		for ; i < end; i++ {
+			endIdx = i
+			if n.Raw[i] < '0' || n.Raw[i] > '9' {
+				break
+			}
+		}
+
+		if i >= end {
+			endIdx++
+		}
+
+		// Convert the index
+		if startIdx == endIdx {
+			panic("jet: raw expression cannot contain $")
+		}
+
+		idx, err := strconv.Atoi(n.Raw[startIdx:endIdx])
+		if err != nil {
+			panic("jet: unable to convert $ index to integer")
+		}
+
+		// Serialize the parameter
+		if idx > paramsLen {
+			panic("jet: index of $ was not found in list of parameters")
+		}
+
+		n.parameters[idx-1].serialize(statement, out, options...)
+	}
+
+}
+
+// Raw can be used for any unsupported functions, operators or expressions that require parameters.
+// For example: RawP("my_function($1)", String("my_parameter"))
+func RawP(raw string, parameters ...Expression) Expression {
+	rawParamsExp := &rawParameterizedExpression{Raw: raw, parameters: parameters}
+	rawParamsExp.ExpressionInterfaceImpl.Parent = rawParamsExp
+
+	return rawParamsExp
 }

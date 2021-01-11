@@ -74,5 +74,9 @@ var TimestampExp = jet.TimestampExp
 // For example: Raw("current_database()")
 var Raw = jet.Raw
 
+// Raw can be used for any unsupported functions, operators or expressions that require parameters.
+// For example: RawP("my_function($1)", String("my_parameter"))
+var RawP = jet.RawP
+
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue

@@ -1,6 +1,7 @@
 package jet
 
 import (
+	"fmt"
 	"testing"
 	"time"
 )
@@ -11,6 +12,18 @@ func TestRawExpression(t *testing.T) {
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
 
 	assertClauseSerialize(t, DateT(timeT), "$1", timeT)
+}
+
+func TestRawParameterizedExpresion(t *testing.T) {
+	var expressions []Expression
+	for i:=1; i <= 10; i++ {
+		expressions = append(expressions, String(fmt.Sprintf("test%d",i)))
+	}
+	assertClauseSerialize(t, RawP("my_function($1,$2)", String("test1"), String("test2")), "my_function($1,$2)", "test1", "test2")
+	assertClauseSerialize(t, RawP("$1", String("test1")), "$1", "test1")
+	assertClauseSerialize(t, RawP("my_function($10)", expressions...), "my_function($1)", "test10")
+	assertClauseSerializeErr(t, RawP("my_function($)"), "jet: raw expression cannot contain $")
+	assertClauseSerializeErr(t, RawP("my_function($1,$2)", String("test")), "jet: index of $ was not found in list of parameters")
 }
 
 func TestTimeLiteral(t *testing.T) {
