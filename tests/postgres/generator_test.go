@@ -46,12 +46,7 @@ func TestGeneratedModel(t *testing.T) {
 const genTestDir2 = "./.gentestdata2"
 
 func TestCmdGenerator(t *testing.T) {
-	goInstallJet := exec.Command("sh", "-c", "cd $GOPATH/src/ && GO111MODULE=off go get github.com/go-jet/jet/cmd/jet")
-	goInstallJet.Stderr = os.Stderr
-	err := goInstallJet.Run()
-	require.NoError(t, err)
-
-	err = os.RemoveAll(genTestDir2)
+	err := os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost", "-port=5432",

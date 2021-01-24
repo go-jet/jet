@@ -87,7 +87,7 @@ jobs:
 
 
       - run: mkdir -p $TEST_RESULTS
-      - run: go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/jet/mysql/...,github.com/go-jet/jet/qrm/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
+      - run: MY_SQL_SOURCE=MySQL go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/jet/mysql/...,github.com/go-jet/jet/qrm/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
       - run:
           name: Upload code coverage
@@ -156,7 +156,7 @@ jobs:
       - run:
           name: Run MariaDB tests
           command: |
-            go test -v  ./tests/mysql/ -source=MariaDB
+            MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
 
 workflows:
   version: 2
