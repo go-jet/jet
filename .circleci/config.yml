@@ -42,6 +42,7 @@ jobs:
           name: Install dependencies
           command: |
             cd /go/src/github.com/go-jet/jet
+            go get github.com/jstemmer/go-junit-report
             go build -o /home/circleci/.local/bin/jet ./cmd/jet/
 
       - run:
@@ -130,6 +131,7 @@ jobs:
           name: Install dependencies
           command: |
             cd /go/src/github.com/go-jet/jet
+            go get github.com/jstemmer/go-junit-report
             go build -o /home/circleci/.local/bin/jet ./cmd/jet/
 
       - run:
