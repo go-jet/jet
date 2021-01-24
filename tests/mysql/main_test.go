@@ -3,7 +3,6 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"flag"
 	jetmysql "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
@@ -25,8 +24,7 @@ var source string
 const MariaDB = "MariaDB"
 
 func init() {
-	flag.StringVar(&source, "source", "", "MySQL or MariaDB")
-	flag.Parse()
+	source = os.Getenv("MY_SQL_SOURCE")
 }
 
 func sourceIsMariaDB() bool {
