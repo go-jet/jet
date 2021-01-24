@@ -6,7 +6,7 @@ jobs:
   build-postgres-and-mysql:
     docker:
       # specify the version
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
 
       - image: circleci/postgres:10.8-alpine
         environment: # environment variables for primary container
@@ -41,17 +41,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go get github.com/google/uuid
-            go get github.com/lib/pq
-            go get github.com/go-sql-driver/mysql
-
-            go get github.com/pkg/profile
-            go get github.com/stretchr/testify/assert
-            go get github.com/google/go-cmp/cmp
-            go get github.com/davecgh/go-spew/spew
-            go get github.com/jstemmer/go-junit-report
-
-            go install github.com/go-jet/jet/cmd/jet
+            cd /go/src/github.com/go-jet/jet
+            go build -o /home/circleci/.local/bin/jet ./cmd/jet/
 
       - run:
           name: Waiting for Postgres to be ready
@@ -110,7 +101,7 @@ jobs:
   build-mariadb:
     docker:
       # specify the version
-      - image: circleci/golang:1.11
+      - image: circleci/golang:1.13
 
       - image: circleci/mariadb:10.3
         command: [--default-authentication-plugin=mysql_native_password]
@@ -138,17 +129,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            go get github.com/google/uuid
-            go get github.com/lib/pq
-            go get github.com/go-sql-driver/mysql
-
-            go get github.com/pkg/profile
-            go get github.com/stretchr/testify/assert
-            go get github.com/google/go-cmp/cmp
-            go get github.com/davecgh/go-spew/spew
-            go get github.com/jstemmer/go-junit-report
-
-            go install github.com/go-jet/jet/cmd/jet
+            cd /go/src/github.com/go-jet/jet
+            go build -o /home/circleci/.local/bin/jet ./cmd/jet/
 
       - run:
           name: Install MySQL CLI;
