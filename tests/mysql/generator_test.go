@@ -35,12 +35,7 @@ func TestGenerator(t *testing.T) {
 }
 
 func TestCmdGenerator(t *testing.T) {
-	goInstallJet := exec.Command("sh", "-c", "cd $GOPATH/src/ && GO111MODULE=off go get github.com/go-jet/jet/cmd/jet")
-	goInstallJet.Stderr = os.Stderr
-	err := goInstallJet.Run()
-	require.NoError(t, err)
-
-	err = os.RemoveAll(genTestDir3)
+	err := os.RemoveAll(genTestDir3)
 	require.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=MySQL", "-dbname=dvds", "-host=localhost", "-port=3306",
