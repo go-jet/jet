@@ -3,7 +3,7 @@ package mysql
 import "github.com/go-jet/jet/v2/internal/jet"
 
 // Expression is common interface for all expressions.
-// Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
+// Can be Bool, Int, Float, String, Date, Time or Timestamp expressions.
 type Expression = jet.Expression
 
 // BoolExpression interface
