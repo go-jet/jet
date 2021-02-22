@@ -8,8 +8,32 @@ import (
 // Bool creates new bool literal expression
 var Bool = jet.Bool
 
-// Int creates new integer literal expression
+// Int is constructor for 64 bit signed integer expressions literals.
 var Int = jet.Int
+
+// Int8 is constructor for 8 bit signed integer expressions literals.
+var Int8 = jet.Int8
+
+// Int16 is constructor for 16 bit signed integer expressions literals.
+var Int16 = jet.Int16
+
+// Int32 is constructor for 32 bit signed integer expressions literals.
+var Int32 = jet.Int32
+
+// Int64 is constructor for 64 bit signed integer expressions literals.
+var Int64 = jet.Int
+
+// Uint8 is constructor for 8 bit unsigned integer expressions literals.
+var Uint8 = jet.Uint8
+
+// Uint16 is constructor for 16 bit unsigned integer expressions literals.
+var Uint16 = jet.Uint16
+
+// Uint32 is constructor for 32 bit unsigned integer expressions literals.
+var Uint32 = jet.Uint32
+
+// Uint64 is constructor for 64 bit unsigned integer expressions literals.
+var Uint64 = jet.Uint64
 
 // Float creates new float literal expression
 var Float = jet.Float
