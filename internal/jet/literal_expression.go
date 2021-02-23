@@ -67,8 +67,7 @@ type integerLiteralExpression struct {
 	integerInterfaceImpl
 }
 
-// Int creates new integer literal
-func Int(value int64) IntegerExpression {
+func intLiteral(value interface{}) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
 	numLiteral.literalExpressionImpl = *literal(value)
@@ -77,6 +76,46 @@ func Int(value int64) IntegerExpression {
 	numLiteral.integerInterfaceImpl.parent = numLiteral
 
 	return numLiteral
+}
+
+// Int creates a new 64 bit signed integer literal
+func Int(value int64) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Int8 creates a new 8 bit signed integer literal
+func Int8(value int8) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Int16 creates a new 16 bit signed integer literal
+func Int16(value int16) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Int32 creates a new 32 bit signed integer literal
+func Int32(value int32) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint8 creates a new 8 bit unsigned integer literal
+func Uint8(value uint8) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint16 creates a new 16 bit unsigned integer literal
+func Uint16(value uint16) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint32 creates a new 32 bit unsigned integer literal
+func Uint32(value uint32) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint64 creates a new 64 bit unsigned integer literal
+func Uint64(value uint64) IntegerExpression {
+	return intLiteral(value)
 }
 
 //---------------------------------------------------//
