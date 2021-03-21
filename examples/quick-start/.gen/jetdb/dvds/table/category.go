@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var Category = newCategoryTable()
+var Category = newCategoryTable("dvds", "category", "")
 
 type categoryTable struct {
 	postgres.Table
@@ -32,20 +32,23 @@ type CategoryTable struct {
 }
 
 // AS creates new CategoryTable with assigned alias
-func (a *CategoryTable) AS(alias string) *CategoryTable {
-	aliasTable := newCategoryTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a CategoryTable) AS(alias string) *CategoryTable {
+	return newCategoryTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newCategoryTable() *CategoryTable {
+// Schema creates new CategoryTable with assigned schema name
+func (a CategoryTable) FromSchema(schemaName string) *CategoryTable {
+	return newCategoryTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newCategoryTable(schemaName, tableName, alias string) *CategoryTable {
 	return &CategoryTable{
-		categoryTable: newCategoryTableImpl("dvds", "category"),
-		EXCLUDED:      newCategoryTableImpl("", "excluded"),
+		categoryTable: newCategoryTableImpl(schemaName, tableName, alias),
+		EXCLUDED:      newCategoryTableImpl("", "excluded", ""),
 	}
 }
 
-func newCategoryTableImpl(schemaName, tableName string) categoryTable {
+func newCategoryTableImpl(schemaName, tableName, alias string) categoryTable {
 	var (
 		CategoryIDColumn = postgres.IntegerColumn("category_id")
 		NameColumn       = postgres.StringColumn("name")
@@ -55,7 +58,7 @@ func newCategoryTableImpl(schemaName, tableName string) categoryTable {
 	)
 
 	return categoryTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		CategoryID: CategoryIDColumn,
