@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var Actor = newActorTable()
+var Actor = newActorTable("dvds", "actor", "")
 
 type actorTable struct {
 	postgres.Table
@@ -33,20 +33,23 @@ type ActorTable struct {
 }
 
 // AS creates new ActorTable with assigned alias
-func (a *ActorTable) AS(alias string) *ActorTable {
-	aliasTable := newActorTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a ActorTable) AS(alias string) *ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newActorTable() *ActorTable {
+// Schema creates new ActorTable with assigned schema name
+func (a ActorTable) FromSchema(schemaName string) *ActorTable {
+	return newActorTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newActorTable(schemaName, tableName, alias string) *ActorTable {
 	return &ActorTable{
-		actorTable: newActorTableImpl("dvds", "actor"),
-		EXCLUDED:   newActorTableImpl("", "excluded"),
+		actorTable: newActorTableImpl(schemaName, tableName, alias),
+		EXCLUDED:   newActorTableImpl("", "excluded", ""),
 	}
 }
 
-func newActorTableImpl(schemaName, tableName string) actorTable {
+func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 	var (
 		ActorIDColumn    = postgres.IntegerColumn("actor_id")
 		FirstNameColumn  = postgres.StringColumn("first_name")
@@ -57,7 +60,7 @@ func newActorTableImpl(schemaName, tableName string) actorTable {
 	)
 
 	return actorTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		ActorID:    ActorIDColumn,

@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var Language = newLanguageTable()
+var Language = newLanguageTable("dvds", "language", "")
 
 type languageTable struct {
 	postgres.Table
@@ -32,20 +32,23 @@ type LanguageTable struct {
 }
 
 // AS creates new LanguageTable with assigned alias
-func (a *LanguageTable) AS(alias string) *LanguageTable {
-	aliasTable := newLanguageTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a LanguageTable) AS(alias string) *LanguageTable {
+	return newLanguageTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newLanguageTable() *LanguageTable {
+// Schema creates new LanguageTable with assigned schema name
+func (a LanguageTable) FromSchema(schemaName string) *LanguageTable {
+	return newLanguageTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newLanguageTable(schemaName, tableName, alias string) *LanguageTable {
 	return &LanguageTable{
-		languageTable: newLanguageTableImpl("dvds", "language"),
-		EXCLUDED:      newLanguageTableImpl("", "excluded"),
+		languageTable: newLanguageTableImpl(schemaName, tableName, alias),
+		EXCLUDED:      newLanguageTableImpl("", "excluded", ""),
 	}
 }
 
-func newLanguageTableImpl(schemaName, tableName string) languageTable {
+func newLanguageTableImpl(schemaName, tableName, alias string) languageTable {
 	var (
 		LanguageIDColumn = postgres.IntegerColumn("language_id")
 		NameColumn       = postgres.StringColumn("name")
@@ -55,7 +58,7 @@ func newLanguageTableImpl(schemaName, tableName string) languageTable {
 	)
 
 	return languageTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		LanguageID: LanguageIDColumn,
