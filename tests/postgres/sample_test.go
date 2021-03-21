@@ -364,7 +364,7 @@ FROM test_sample."User";
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	testutils.PrintJson(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 [

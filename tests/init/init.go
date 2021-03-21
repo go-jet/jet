@@ -46,6 +46,7 @@ func initMySQLDB() {
 
 	mySQLDBs := []string{
 		"dvds",
+		"dvds2",
 		"test_sample",
 	}
 
@@ -89,6 +90,7 @@ func initPostgresDB() {
 		"dvds",
 		"test_sample",
 		"chinook",
+		"chinook2",
 		"northwind",
 	}
 

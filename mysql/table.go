@@ -77,9 +77,9 @@ func (r readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) joinSelectUp
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, columns ...jet.ColumnExpression) Table {
+func NewTable(schemaName, name, alias string, columns ...jet.ColumnExpression) Table {
 	t := &tableImpl{
-		SerializerTable: jet.NewTable(schemaName, name, columns...),
+		SerializerTable: jet.NewTable(schemaName, name, alias, columns...),
 	}
 
 	t.readableTableInterfaceImpl.parent = t

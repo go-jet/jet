@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
@@ -193,7 +192,7 @@ SET url = 'http://www.duckduckgo.com',
     description = NULL
 WHERE link.id = 201;
 `
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 	testutils.AssertExec(t, stmt, db)

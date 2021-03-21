@@ -23,7 +23,7 @@ import (
 	"github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 )
 
-var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
+var {{ToGoIdentifier .Name}} = new{{.GoStructName}}("{{.SchemaName}}", "{{.Name}}", "")
 
 type {{.GoStructName}} struct {
 	{{dialect.PackageName}}.Table
@@ -38,13 +38,16 @@ type {{.GoStructName}} struct {
 }
 
 // AS creates new {{.GoStructName}} with assigned alias
-func (a *{{.GoStructName}}) AS(alias string) {{.GoStructName}} {
-	aliasTable := new{{.GoStructName}}()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a {{.GoStructName}}) AS(alias string) {{.GoStructName}} {
+	return new{{.GoStructName}}(a.SchemaName(), a.TableName(), alias)
 }
 
-func new{{.GoStructName}}() {{.GoStructName}} {
+// Schema creates new {{.GoStructName}} with assigned schema name
+func (a {{.GoStructName}}) FromSchema(schemaName string) {{.GoStructName}} {
+	return new{{.GoStructName}}(schemaName, a.TableName(), a.Alias())
+}
+
+func new{{.GoStructName}}(schemaName, tableName, alias string) {{.GoStructName}} {
 	var (
 	{{- range .Columns}}
 		{{ToGoIdentifier .Name}}Column = {{dialect.PackageName}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
@@ -54,7 +57,7 @@ func new{{.GoStructName}}() {{.GoStructName}} {
 	)
 
 	return {{.GoStructName}}{
-		Table: {{dialect.PackageName}}.NewTable("{{.SchemaName}}", "{{.Name}}", allColumns...),
+		Table: {{dialect.PackageName}}.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 {{- range .Columns}}
@@ -80,7 +83,7 @@ import (
 	"github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 )
 
-var {{ToGoIdentifier .Name}} = new{{.GoStructName}}()
+var {{ToGoIdentifier .Name}} = new{{.GoStructName}}("{{.SchemaName}}", "{{.Name}}", "")
 
 type {{.GoStructImplName}} struct {
 	{{dialect.PackageName}}.Table
@@ -101,20 +104,23 @@ type {{.GoStructName}} struct {
 }
 
 // AS creates new {{.GoStructName}} with assigned alias
-func (a *{{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
-	aliasTable := new{{.GoStructName}}()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a {{.GoStructName}}) AS(alias string) *{{.GoStructName}} {
+	return new{{.GoStructName}}(a.SchemaName(), a.TableName(), alias)
 }
 
-func new{{.GoStructName}}() *{{.GoStructName}} {
+// Schema creates new {{.GoStructName}} with assigned schema name
+func (a {{.GoStructName}}) FromSchema(schemaName string) *{{.GoStructName}} {
+	return new{{.GoStructName}}(schemaName, a.TableName(), a.Alias())
+}
+
+func new{{.GoStructName}}(schemaName, tableName, alias string) *{{.GoStructName}} {
 	return &{{.GoStructName}}{
-		{{.GoStructImplName}}: new{{.GoStructName}}Impl("{{.SchemaName}}", "{{.Name}}"),
-		EXCLUDED:  new{{.GoStructName}}Impl("", "excluded"),
+		{{.GoStructImplName}}: new{{.GoStructName}}Impl(schemaName, tableName, alias),
+		EXCLUDED:  new{{.GoStructName}}Impl("", "excluded", ""),
 	}
 }
 
-func new{{.GoStructName}}Impl(schemaName, tableName string) {{.GoStructImplName}} {
+func new{{.GoStructName}}Impl(schemaName, tableName, alias string) {{.GoStructImplName}} {
 	var (
 	{{- range .Columns}}
 		{{ToGoIdentifier .Name}}Column = {{dialect.PackageName}}.{{.SqlBuilderColumnType}}Column("{{.Name}}")
@@ -124,7 +130,7 @@ func new{{.GoStructName}}Impl(schemaName, tableName string) {{.GoStructImplName}
 	)
 
 	return {{.GoStructImplName}}{
-		Table: {{dialect.PackageName}}.NewTable(schemaName, tableName, allColumns...),
+		Table: {{dialect.PackageName}}.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 {{- range .Columns}}

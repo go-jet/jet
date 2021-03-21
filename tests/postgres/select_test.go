@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/enum"
@@ -1255,7 +1254,7 @@ OFFSET 20;
 		LIMIT(10).
 		OFFSET(20)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
@@ -1788,7 +1787,7 @@ func TestJoinViewWithTable(t *testing.T) {
 		Rentals            []model.Rental
 	}
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &dest)
 	require.NoError(t, err)

@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var Film = newFilmTable()
+var Film = newFilmTable("dvds", "film", "")
 
 type filmTable struct {
 	postgres.Table
@@ -42,20 +42,23 @@ type FilmTable struct {
 }
 
 // AS creates new FilmTable with assigned alias
-func (a *FilmTable) AS(alias string) *FilmTable {
-	aliasTable := newFilmTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a FilmTable) AS(alias string) *FilmTable {
+	return newFilmTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newFilmTable() *FilmTable {
+// Schema creates new FilmTable with assigned schema name
+func (a FilmTable) FromSchema(schemaName string) *FilmTable {
+	return newFilmTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newFilmTable(schemaName, tableName, alias string) *FilmTable {
 	return &FilmTable{
-		filmTable: newFilmTableImpl("dvds", "film"),
-		EXCLUDED:  newFilmTableImpl("", "excluded"),
+		filmTable: newFilmTableImpl(schemaName, tableName, alias),
+		EXCLUDED:  newFilmTableImpl("", "excluded", ""),
 	}
 }
 
-func newFilmTableImpl(schemaName, tableName string) filmTable {
+func newFilmTableImpl(schemaName, tableName, alias string) filmTable {
 	var (
 		FilmIDColumn          = postgres.IntegerColumn("film_id")
 		TitleColumn           = postgres.StringColumn("title")
@@ -75,7 +78,7 @@ func newFilmTableImpl(schemaName, tableName string) filmTable {
 	)
 
 	return filmTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		FilmID:          FilmIDColumn,

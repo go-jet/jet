@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var CustomerList = newCustomerListTable()
+var CustomerList = newCustomerListTable("dvds", "customer_list", "")
 
 type customerListTable struct {
 	postgres.Table
@@ -38,20 +38,23 @@ type CustomerListTable struct {
 }
 
 // AS creates new CustomerListTable with assigned alias
-func (a *CustomerListTable) AS(alias string) *CustomerListTable {
-	aliasTable := newCustomerListTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a CustomerListTable) AS(alias string) *CustomerListTable {
+	return newCustomerListTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newCustomerListTable() *CustomerListTable {
+// Schema creates new CustomerListTable with assigned schema name
+func (a CustomerListTable) FromSchema(schemaName string) *CustomerListTable {
+	return newCustomerListTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newCustomerListTable(schemaName, tableName, alias string) *CustomerListTable {
 	return &CustomerListTable{
-		customerListTable: newCustomerListTableImpl("dvds", "customer_list"),
-		EXCLUDED:          newCustomerListTableImpl("", "excluded"),
+		customerListTable: newCustomerListTableImpl(schemaName, tableName, alias),
+		EXCLUDED:          newCustomerListTableImpl("", "excluded", ""),
 	}
 }
 
-func newCustomerListTableImpl(schemaName, tableName string) customerListTable {
+func newCustomerListTableImpl(schemaName, tableName, alias string) customerListTable {
 	var (
 		IDColumn       = postgres.IntegerColumn("id")
 		NameColumn     = postgres.StringColumn("name")
@@ -67,7 +70,7 @@ func newCustomerListTableImpl(schemaName, tableName string) customerListTable {
 	)
 
 	return customerListTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		ID:      IDColumn,
