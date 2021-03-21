@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
@@ -93,7 +92,7 @@ func TestScanToStruct(t *testing.T) {
 		SELECT(Inventory.AllColumns).
 		ORDER_BY(Inventory.InventoryID)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	t.Run("one struct", func(t *testing.T) {
 		dest := model.Inventory{}
