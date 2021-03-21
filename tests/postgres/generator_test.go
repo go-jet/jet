@@ -168,7 +168,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var Actor = newActorTable()
+var Actor = newActorTable("dvds", "actor", "")
 
 type actorTable struct {
 	postgres.Table
@@ -190,20 +190,23 @@ type ActorTable struct {
 }
 
 // AS creates new ActorTable with assigned alias
-func (a *ActorTable) AS(alias string) *ActorTable {
-	aliasTable := newActorTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a ActorTable) AS(alias string) *ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newActorTable() *ActorTable {
+// Schema creates new ActorTable with assigned schema name
+func (a ActorTable) FromSchema(schemaName string) *ActorTable {
+	return newActorTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newActorTable(schemaName, tableName, alias string) *ActorTable {
 	return &ActorTable{
-		actorTable: newActorTableImpl("dvds", "actor"),
-		EXCLUDED:   newActorTableImpl("", "excluded"),
+		actorTable: newActorTableImpl(schemaName, tableName, alias),
+		EXCLUDED:   newActorTableImpl("", "excluded", ""),
 	}
 }
 
-func newActorTableImpl(schemaName, tableName string) actorTable {
+func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 	var (
 		ActorIDColumn    = postgres.IntegerColumn("actor_id")
 		FirstNameColumn  = postgres.StringColumn("first_name")
@@ -214,7 +217,7 @@ func newActorTableImpl(schemaName, tableName string) actorTable {
 	)
 
 	return actorTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		ActorID:    ActorIDColumn,
@@ -264,7 +267,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var ActorInfo = newActorInfoTable()
+var ActorInfo = newActorInfoTable("dvds", "actor_info", "")
 
 type actorInfoTable struct {
 	postgres.Table
@@ -286,20 +289,23 @@ type ActorInfoTable struct {
 }
 
 // AS creates new ActorInfoTable with assigned alias
-func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
-	aliasTable := newActorInfoTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a ActorInfoTable) AS(alias string) *ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newActorInfoTable() *ActorInfoTable {
+// Schema creates new ActorInfoTable with assigned schema name
+func (a ActorInfoTable) FromSchema(schemaName string) *ActorInfoTable {
+	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newActorInfoTable(schemaName, tableName, alias string) *ActorInfoTable {
 	return &ActorInfoTable{
-		actorInfoTable: newActorInfoTableImpl("dvds", "actor_info"),
-		EXCLUDED:       newActorInfoTableImpl("", "excluded"),
+		actorInfoTable: newActorInfoTableImpl(schemaName, tableName, alias),
+		EXCLUDED:       newActorInfoTableImpl("", "excluded", ""),
 	}
 }
 
-func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
+func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 	var (
 		ActorIDColumn   = postgres.IntegerColumn("actor_id")
 		FirstNameColumn = postgres.StringColumn("first_name")
@@ -310,7 +316,7 @@ func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
 	)
 
 	return actorInfoTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		ActorID:   ActorIDColumn,
@@ -497,7 +503,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var AllTypes = newAllTypesTable()
+var AllTypes = newAllTypesTable("test_sample", "all_types", "")
 
 type allTypesTable struct {
 	postgres.Table
@@ -576,20 +582,23 @@ type AllTypesTable struct {
 }
 
 // AS creates new AllTypesTable with assigned alias
-func (a *AllTypesTable) AS(alias string) *AllTypesTable {
-	aliasTable := newAllTypesTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a AllTypesTable) AS(alias string) *AllTypesTable {
+	return newAllTypesTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newAllTypesTable() *AllTypesTable {
+// Schema creates new AllTypesTable with assigned schema name
+func (a AllTypesTable) FromSchema(schemaName string) *AllTypesTable {
+	return newAllTypesTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newAllTypesTable(schemaName, tableName, alias string) *AllTypesTable {
 	return &AllTypesTable{
-		allTypesTable: newAllTypesTableImpl("test_sample", "all_types"),
-		EXCLUDED:      newAllTypesTableImpl("", "excluded"),
+		allTypesTable: newAllTypesTableImpl(schemaName, tableName, alias),
+		EXCLUDED:      newAllTypesTableImpl("", "excluded", ""),
 	}
 }
 
-func newAllTypesTableImpl(schemaName, tableName string) allTypesTable {
+func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 	var (
 		SmallIntPtrColumn          = postgres.IntegerColumn("small_int_ptr")
 		SmallIntColumn             = postgres.IntegerColumn("small_int")
@@ -657,7 +666,7 @@ func newAllTypesTableImpl(schemaName, tableName string) allTypesTable {
 	)
 
 	return allTypesTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		SmallIntPtr:          SmallIntPtrColumn,

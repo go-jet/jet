@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -974,7 +973,7 @@ func TestAllTypesInsert(t *testing.T) {
 	stmt := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(toInsert)
 
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 
 	testutils.AssertExec(t, stmt, tx, 1)
 
@@ -1028,7 +1027,7 @@ func TestAllTypesInsertOnDuplicateKeyUpdate(t *testing.T) {
 			AllTypes.Date.SET(DateT(time.Now())),
 		)
 
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 
 	_, err = stmt.Exec(tx)
 	require.NoError(t, err)
@@ -1257,7 +1256,7 @@ FROM test_sample.user;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	testutils.PrintJson(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 [
