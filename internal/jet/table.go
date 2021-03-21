@@ -15,22 +15,27 @@ type Table interface {
 	columns() []Column
 	SchemaName() string
 	TableName() string
-	AS(alias string)
 	Alias() string
-	Schema(schemaName string)
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, columns ...ColumnExpression) SerializerTable {
+func NewTable(schemaName, name, alias string, columns ...ColumnExpression) SerializerTable {
 
 	t := tableImpl{
 		schemaName: schemaName,
 		name:       name,
+		alias:      alias,
 		columnList: columns,
 	}
 
+	columnTableName := name
+
+	if alias != "" {
+		columnTableName = alias
+	}
+
 	for _, c := range columns {
-		c.setTableName(name)
+		c.setTableName(columnTableName)
 	}
 
 	return &t
@@ -41,14 +46,6 @@ type tableImpl struct {
 	name       string
 	alias      string
 	columnList []ColumnExpression
-}
-
-func (t *tableImpl) AS(alias string) {
-	t.alias = alias
-
-	for _, c := range t.columnList {
-		c.setTableName(alias)
-	}
 }
 
 func (t *tableImpl) SchemaName() string {
@@ -71,10 +68,6 @@ func (t *tableImpl) columns() []Column {
 
 func (t *tableImpl) Alias() string {
 	return t.alias
-}
-
-func (t *tableImpl) Schema(schemaName string) {
-	t.schemaName = schemaName
 }
 
 func (t *tableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
@@ -161,9 +154,6 @@ func (t *joinTableImpl) columns() []Column {
 
 func (t *joinTableImpl) Alias() string {
 	return ""
-}
-
-func (t *joinTableImpl) Schema(schemaName string) {
 }
 
 func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
