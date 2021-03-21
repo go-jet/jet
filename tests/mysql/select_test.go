@@ -744,3 +744,46 @@ LIMIT 3;
 
 	require.Equal(t, len(dest), 3)
 }
+
+func Test_SchemaRename(t *testing.T) {
+	Film := Film.FromSchema("dvds2")
+	Language := Language.FromSchema("dvds2")
+
+	stmt := SELECT(
+		Film.FilmID,
+		Film.Title,
+		Language.LanguageID,
+		Language.Name,
+	).FROM(
+		Language.
+			INNER_JOIN(Film, Film.LanguageID.EQ(Language.LanguageID)),
+	).WHERE(
+		Language.LanguageID.EQ(Int(1)),
+	).ORDER_BY(
+		Language.LanguageID, Film.FilmID,
+	).LIMIT(5)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     language.language_id AS "language.language_id",
+     language.name AS "language.name"
+FROM dvds2.language
+     INNER JOIN dvds2.film ON (film.language_id = language.language_id)
+WHERE language.language_id = 1
+ORDER BY language.language_id, film.film_id
+LIMIT 5;
+`)
+
+	dest := struct {
+		model.Language
+		Films []model.Film
+	}{}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Len(t, dest.Films, 5)
+	require.Equal(t, dest.Films[0].Title, "ACADEMY DINOSAUR")
+	require.Equal(t, dest.Films[1].Title, "ACE GOLDFINGER")
+	require.Equal(t, dest.Films[4].Title, "AFRICAN EGG")
+}

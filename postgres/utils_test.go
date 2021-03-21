@@ -21,6 +21,7 @@ var table1ColInterval = IntervalColumn("col_interval")
 var table1 = NewTable(
 	"db",
 	"table1",
+	"",
 	table1Col1,
 	table1ColInt,
 	table1ColFloat,
@@ -46,32 +47,12 @@ var table2ColTimestampz = TimestampzColumn("col_timestampz")
 var table2ColDate = DateColumn("col_date")
 var table2ColInterval = IntervalColumn("col_interval")
 
-var table2 = NewTable(
-	"db",
-	"table2",
-	table2Col3,
-	table2Col4,
-	table2ColInt,
-	table2ColFloat,
-	table2ColStr,
-	table2ColBool,
-	table2ColTime,
-	table2ColTimez,
-	table2ColDate,
-	table2ColTimestamp,
-	table2ColTimestampz,
-	table2ColInterval,
-)
+var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz, table2ColInterval)
 
 var table3Col1 = IntegerColumn("col1")
 var table3ColInt = IntegerColumn("col_int")
 var table3StrCol = StringColumn("col2")
-var table3 = NewTable(
-	"db",
-	"table3",
-	table3Col1,
-	table3ColInt,
-	table3StrCol)
+var table3 = NewTable("db", "table3", "", table3Col1, table3ColInt, table3StrCol)
 
 func assertSerialize(t *testing.T, serializer jet.Serializer, query string, args ...interface{}) {
 	testutils.AssertSerialize(t, Dialect, serializer, query, args...)
