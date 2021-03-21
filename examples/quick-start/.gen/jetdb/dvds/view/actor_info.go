@@ -11,7 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 )
 
-var ActorInfo = newActorInfoTable()
+var ActorInfo = newActorInfoTable("dvds", "actor_info", "")
 
 type actorInfoTable struct {
 	postgres.Table
@@ -33,20 +33,23 @@ type ActorInfoTable struct {
 }
 
 // AS creates new ActorInfoTable with assigned alias
-func (a *ActorInfoTable) AS(alias string) *ActorInfoTable {
-	aliasTable := newActorInfoTable()
-	aliasTable.Table.AS(alias)
-	return aliasTable
+func (a ActorInfoTable) AS(alias string) *ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), a.TableName(), alias)
 }
 
-func newActorInfoTable() *ActorInfoTable {
+// Schema creates new ActorInfoTable with assigned schema name
+func (a ActorInfoTable) FromSchema(schemaName string) *ActorInfoTable {
+	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
+}
+
+func newActorInfoTable(schemaName, tableName, alias string) *ActorInfoTable {
 	return &ActorInfoTable{
-		actorInfoTable: newActorInfoTableImpl("dvds", "actor_info"),
-		EXCLUDED:       newActorInfoTableImpl("", "excluded"),
+		actorInfoTable: newActorInfoTableImpl(schemaName, tableName, alias),
+		EXCLUDED:       newActorInfoTableImpl("", "excluded", ""),
 	}
 }
 
-func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
+func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 	var (
 		ActorIDColumn   = postgres.IntegerColumn("actor_id")
 		FirstNameColumn = postgres.StringColumn("first_name")
@@ -57,7 +60,7 @@ func newActorInfoTableImpl(schemaName, tableName string) actorInfoTable {
 	)
 
 	return actorInfoTable{
-		Table: postgres.NewTable(schemaName, tableName, allColumns...),
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
 		ActorID:   ActorIDColumn,
