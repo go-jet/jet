@@ -136,9 +136,6 @@ func (t *joinTableImpl) TableName() string {
 	return ""
 }
 
-func (t *joinTableImpl) AS(alias string) {
-}
-
 func (t *joinTableImpl) columns() []Column {
 	var ret []Column
 

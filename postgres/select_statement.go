@@ -44,7 +44,7 @@ type SelectStatement interface {
 	Expression
 
 	DISTINCT() SelectStatement
-	FROM(table ReadableTable) SelectStatement
+	FROM(tables ...ReadableTable) SelectStatement
 	WHERE(expression BoolExpression) SelectStatement
 	GROUP_BY(groupByClauses ...jet.GroupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
@@ -76,7 +76,9 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 		&newSelect.Limit, &newSelect.Offset, &newSelect.For)
 
 	newSelect.Select.ProjectionList = projections
-	newSelect.From.Table = table
+	if table != nil {
+		newSelect.From.Tables = []jet.Serializer{table}
+	}
 	newSelect.Limit.Count = -1
 	newSelect.Offset.Count = -1
 
@@ -106,8 +108,10 @@ func (s *selectStatementImpl) DISTINCT() SelectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) FROM(table ReadableTable) SelectStatement {
-	s.From.Table = table
+func (s *selectStatementImpl) FROM(tables ...ReadableTable) SelectStatement {
+	for _, table := range tables {
+		s.From.Tables = append(s.From.Tables, table)
+	}
 	return s
 }
 

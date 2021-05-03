@@ -99,3 +99,26 @@ CROSS JOIN db.table2`)
 CROSS JOIN db.table2
 CROSS JOIN db.table3`)
 }
+
+func TestImplicitCROSS_JOIN(t *testing.T) {
+	assertDebugStatementSql(t,
+		SELECT(table1Col1, table2Col3).
+			FROM(table1, table2),
+		`
+SELECT table1.col1 AS "table1.col1",
+     table2.col3 AS "table2.col3"
+FROM db.table1,
+     db.table2;
+`)
+	assertDebugStatementSql(t,
+		SELECT(
+			table1Col1, table2Col3,
+		).FROM(table1, table2, table3),
+		`
+SELECT table1.col1 AS "table1.col1",
+     table2.col3 AS "table2.col3"
+FROM db.table1,
+     db.table2,
+     db.table3;
+`)
+}
