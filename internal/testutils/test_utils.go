@@ -8,6 +8,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -116,7 +117,12 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	}
 
 	debuqSql := query.DebugSql()
-	require.Equal(t, debuqSql, expectedQuery)
+	if !assert.Equal(t, debuqSql, expectedQuery) {
+		fmt.Println("Expected: ")
+		fmt.Println(expectedQuery)
+		fmt.Println("Got: ")
+		fmt.Println(debuqSql)
+	}
 }
 
 // AssertSerialize checks if clause serialize produces expected query and args

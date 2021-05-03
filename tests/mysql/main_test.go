@@ -64,3 +64,9 @@ func requireLogged(t *testing.T, statement postgres.Statement) {
 	require.Equal(t, loggedSQLArgs, args)
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
+
+func skipForMariaDB(t *testing.T) {
+	if sourceIsMariaDB() {
+		t.SkipNow()
+	}
+}

@@ -45,19 +45,25 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 
 // ClauseFrom struct
 type ClauseFrom struct {
-	Table Serializer
+	Tables []Serializer
 }
 
 // Serialize serializes clause into SQLBuilder
 func (f *ClauseFrom) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if f.Table == nil {
+	if len(f.Tables) == 0 { // SELECT statement does not have to have FROM clause
 		return
 	}
 	out.NewLine()
 	out.WriteString("FROM")
 
 	out.IncreaseIdent()
-	f.Table.serialize(statementType, out, FallTrough(options)...)
+	for i, table := range f.Tables {
+		if i > 0 {
+			out.WriteString(",")
+			out.NewLine()
+		}
+		table.serialize(statementType, out, FallTrough(options)...)
+	}
 	out.DecreaseIdent()
 }
 
