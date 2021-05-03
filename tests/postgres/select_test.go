@@ -1,15 +1,17 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/enum"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/view"
-	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
@@ -1905,22 +1907,88 @@ func TestLateral(t *testing.T) {
 			Language.Name.NOT_IN(String("spanish")).
 				AND(Film.LanguageID.EQ(Language.LanguageID)),
 		),
-		"films")
+	).AS("films")
 
 	stmt := SELECT(
-		Film.AllColumns,
+		Film.FilmID,
+		Film.Title,
 		languages.AllColumns(),
 	).FROM(
 		Film.CROSS_JOIN(languages),
 	).WHERE(
 		Film.FilmID.EQ(Int(1)),
-	)
+	).ORDER_BY(
+		Film.FilmID,
+	).LIMIT(1)
 
-	var dest []struct {
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     films."language.language_id" AS "language.language_id",
+     films."language.name" AS "language.name",
+     films."language.last_update" AS "language.last_update"
+FROM dvds.film
+     CROSS JOIN LATERAL (
+          SELECT language.language_id AS "language.language_id",
+               language.name AS "language.name",
+               language.last_update AS "language.last_update"
+          FROM dvds.language
+          WHERE (language.name NOT IN ('spanish')) AND (film.language_id = language.language_id)
+     ) AS films
+WHERE film.film_id = 1
+ORDER BY film.film_id
+LIMIT 1;
+`)
+
+	type FilmLanguage struct {
 		model.Film
 		model.Language
 	}
 
+	var dest []FilmLanguage
+
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
+	require.Equal(t, dest[0].Film.Title, "Academy Dinosaur")
+	require.Equal(t, dest[0].Language.Name, "English             ")
+
+	t.Run("implicit cross join", func(t *testing.T) {
+		stmt2 := SELECT(
+			Film.FilmID,
+			Film.Title,
+			languages.AllColumns(),
+		).FROM(
+			Film,
+			languages,
+		).WHERE(
+			Film.FilmID.EQ(Int(1)),
+		).ORDER_BY(
+			Film.FilmID,
+		).LIMIT(1)
+
+		testutils.AssertDebugStatementSql(t, stmt2, `
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     films."language.language_id" AS "language.language_id",
+     films."language.name" AS "language.name",
+     films."language.last_update" AS "language.last_update"
+FROM dvds.film,
+     LATERAL (
+          SELECT language.language_id AS "language.language_id",
+               language.name AS "language.name",
+               language.last_update AS "language.last_update"
+          FROM dvds.language
+          WHERE (language.name NOT IN ('spanish')) AND (film.language_id = language.language_id)
+     ) AS films
+WHERE film.film_id = 1
+ORDER BY film.film_id
+LIMIT 1;
+`)
+
+		var dest2 []FilmLanguage
+
+		err2 := stmt2.Query(db, &dest2)
+		require.NoError(t, err2)
+		require.Equal(t, dest, dest2)
+	})
 }

@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
