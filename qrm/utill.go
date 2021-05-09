@@ -7,9 +7,9 @@ import (
 	"github.com/go-jet/jet/v2/qrm/internal"
 	"github.com/google/uuid"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
-	"strconv"
 )
 
 var scannerInterfaceType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
@@ -184,11 +184,11 @@ func isIntegerType(value reflect.Type) bool {
 }
 
 func tryAssign(source, destination reflect.Value) bool {
-	if source.Type().ConvertibleTo(destination.Type()) {
-		source = source.Convert(destination.Type())
-	}
 
-	if isIntegerType(source.Type()) && destination.Type() == boolType {
+	switch {
+	case source.Type().ConvertibleTo(destination.Type()):
+		source = source.Convert(destination.Type())
+	case isIntegerType(source.Type()) && destination.Type() == boolType:
 		intValue := source.Int()
 
 		if intValue == 1 {
@@ -196,9 +196,7 @@ func tryAssign(source, destination reflect.Value) bool {
 		} else if intValue == 0 {
 			source = reflect.ValueOf(false)
 		}
-	}
-
-	if source.Type() == stringType && destination.Type() == float64Type {
+	case source.Type() == stringType && destination.Type() == float64Type:
 		strValue := source.String()
 		f, err := strconv.ParseFloat(strValue, 64)
 		if err != nil {

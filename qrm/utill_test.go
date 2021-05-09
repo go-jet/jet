@@ -35,3 +35,48 @@ func TestIsSimpleModelType(t *testing.T) {
 	require.Equal(t, isSimpleModelType(reflect.TypeOf([]string{"str"})), false)
 	require.Equal(t, isSimpleModelType(reflect.TypeOf([]int{1, 2})), false)
 }
+
+func TestTryAssign(t *testing.T) {
+	convertible := int16(16)
+	intBool1 := int32(1)
+	intBool0 := int32(0)
+	intBool2 := int32(2)
+	floatStr := "1.11"
+	floatErr := "1.abcd2"
+	str := "some string"
+
+	destination := struct {
+		Convertible int64
+		IntBool1    bool
+		IntBool0    bool
+		IntBool2    bool
+		FloatStr    float64
+		FloatErr    float64
+		Str         string
+	}{}
+
+	testValue := reflect.ValueOf(&destination).Elem()
+
+	// convertible
+	require.True(t, tryAssign(reflect.ValueOf(convertible), testValue.FieldByName("Convertible")))
+	require.Equal(t, int64(16), destination.Convertible)
+
+	// 1/0  to bool
+	require.True(t, tryAssign(reflect.ValueOf(intBool1), testValue.FieldByName("IntBool1")))
+	require.Equal(t, true, destination.IntBool1)
+	require.True(t, tryAssign(reflect.ValueOf(intBool0), testValue.FieldByName("IntBool0")))
+	require.Equal(t, false, destination.IntBool0)
+
+	require.False(t, tryAssign(reflect.ValueOf(intBool2), testValue.FieldByName("IntBool2")))
+	require.Equal(t, false, destination.IntBool2)
+
+	// string to float
+	require.True(t, tryAssign(reflect.ValueOf(floatStr), testValue.FieldByName("FloatStr")))
+	require.Equal(t, 1.11, destination.FloatStr)
+	require.False(t, tryAssign(reflect.ValueOf(floatErr), testValue.FieldByName("FloatErr")))
+	require.Equal(t, 0.00, destination.FloatErr)
+
+	// string to string
+	require.True(t, tryAssign(reflect.ValueOf(str), testValue.FieldByName("Str")))
+	require.Equal(t, str, destination.Str)
+}

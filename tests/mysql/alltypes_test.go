@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -1277,4 +1278,100 @@ FROM test_sample.user;
 	}
 ]
 `)
+}
+
+func TestExactDecimals(t *testing.T) {
+
+	type floats struct {
+		model.Floats
+		Numeric    decimal.Decimal
+		NumericPtr decimal.Decimal
+		Decimal    decimal.Decimal
+		DecimalPtr decimal.Decimal
+	}
+
+	t.Run("should query decimal", func(t *testing.T) {
+		query := SELECT(
+			Floats.AllColumns,
+		).FROM(
+			Floats,
+		).WHERE(Floats.Decimal.EQ(Decimal("1.11111111111111111111")))
+
+		var result floats
+
+		err := query.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "1.11111111111111111111", result.Decimal.String())
+		require.Equal(t, "0", result.DecimalPtr.String()) // NULL
+		require.Equal(t, "2.22222222222222222222", result.Numeric.String())
+		require.Equal(t, "0", result.NumericPtr.String()) // NULL
+
+		require.Equal(t, 1.1111111111111112, result.Floats.Decimal) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.DecimalPtr)
+		require.Equal(t, 2.2222222222222223, result.Floats.Numeric) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.NumericPtr)
+
+		// floating point
+		require.Equal(t, 3.3333333, result.Floats.Float) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.FloatPtr)
+		require.Equal(t, 4.444444444444445, result.Floats.Double) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.DoublePtr)
+		require.Equal(t, 5.555555555555555, result.Floats.Real) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.RealPtr)
+	})
+
+	t.Run("should insert decimal", func(t *testing.T) {
+
+		insertQuery := Floats.INSERT(
+			Floats.AllColumns,
+		).MODEL(
+			floats{
+				Floats: model.Floats{
+					// overwritten by wrapped(floats) scope
+					Numeric:    0.1,
+					NumericPtr: testutils.Float64Ptr(0.1),
+					Decimal:    0.1,
+					DecimalPtr: testutils.Float64Ptr(0.1),
+
+					// not overwritten
+					Float:     0.2,
+					FloatPtr:  testutils.Float64Ptr(0.22),
+					Double:    0.3,
+					DoublePtr: testutils.Float64Ptr(0.33),
+					Real:      0.4,
+					RealPtr:   testutils.Float64Ptr(0.44),
+				},
+				Numeric:    decimal.RequireFromString("12.35"),
+				NumericPtr: decimal.RequireFromString("56.79"),
+				Decimal:    decimal.RequireFromString("91.23"),
+				DecimalPtr: decimal.RequireFromString("45.67"),
+			},
+		)
+
+		testutils.AssertDebugStatementSql(t, insertQuery, strings.Replace(`
+INSERT INTO test_sample.floats (''decimal'', decimal_ptr, ''numeric'', numeric_ptr, ''float'', float_ptr, ''double'', double_ptr, ''real'', real_ptr)
+VALUES ('91.23', '45.67', '12.35', '56.79', 0.2, 0.22, 0.3, 0.33, 0.4, 0.44);
+`, "''", "`", -1))
+		_, err := insertQuery.Exec(db)
+		require.NoError(t, err)
+
+		var result floats
+
+		err = SELECT(Floats.AllColumns).
+			FROM(Floats).
+			WHERE(Floats.Numeric.EQ(Float(12.35))).
+			Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "12.35", result.Numeric.String())
+		require.Equal(t, "56.79", result.NumericPtr.String())
+		require.Equal(t, "91.23", result.Decimal.String())
+		require.Equal(t, "45.67", result.DecimalPtr.String())
+
+		require.Equal(t, 12.35, result.Floats.Numeric)
+		require.Equal(t, 56.79, *result.Floats.NumericPtr)
+		require.Equal(t, 91.23, result.Floats.Decimal)
+		require.Equal(t, 45.67, *result.Floats.DecimalPtr)
+	})
 }
