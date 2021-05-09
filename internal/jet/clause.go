@@ -308,7 +308,7 @@ func (s *SetClause) Serialize(statementType StatementType, out *SQLBuilder, opti
 			panic("jet: nil column in columns list for SET clause")
 		}
 
-		out.WriteString(column.Name())
+		out.WriteIdentifier(column.Name())
 
 		out.WriteString(" = ")
 

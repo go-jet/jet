@@ -90,7 +90,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args := query.Sql()
-	require.Equal(t, queryStr, expectedQuery)
+	assertQueryString(t, queryStr, expectedQuery)
 
 	if len(expectedArgs) == 0 {
 		return
@@ -117,12 +117,7 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	}
 
 	debuqSql := query.DebugSql()
-	if !assert.Equal(t, debuqSql, expectedQuery) {
-		fmt.Println("Expected: ")
-		fmt.Println(expectedQuery)
-		fmt.Println("Got: ")
-		fmt.Println(debuqSql)
-	}
+	assertQueryString(t, debuqSql, expectedQuery)
 }
 
 // AssertSerialize checks if clause serialize produces expected query and args
@@ -200,7 +195,7 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 		require.Equal(t, r, errString)
 	}()
 
-	stmt.Query(db, dest)
+	_ = stmt.Query(db, dest)
 }
 
 // AssertFileContent check if file content at filePath contains expectedContent text.
@@ -229,7 +224,22 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
 func AssertDeepEqual(t *testing.T, actual, expected interface{}, msg ...string) {
-	require.True(t, cmp.Equal(actual, expected), msg)
+	if !assert.True(t, cmp.Equal(actual, expected), msg) {
+		printDiff(actual, expected)
+	}
+}
+
+func assertQueryString(t *testing.T, actual, expected string) {
+	if !assert.Equal(t, actual, expected) {
+		printDiff(actual, expected)
+	}
+}
+
+func printDiff(actual, expected interface{}) {
+	fmt.Println("Actual: ")
+	fmt.Println(actual)
+	fmt.Println("Expected: ")
+	fmt.Println(expected)
 }
 
 // BoolPtr returns address of bool parameter

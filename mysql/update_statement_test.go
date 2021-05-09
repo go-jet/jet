@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 )
 
@@ -52,9 +53,27 @@ WHERE table1.col1 = ?;
 		).
 		WHERE(table1Col1.EQ(Int(2)))
 
-	//fmt.Println(stmt.Sql())
-
 	assertStatementSql(t, stmt, expectedSQL, int64(2))
+}
+
+func TestUpdateReservedWorldColumn(t *testing.T) {
+	type table struct {
+		Load string
+	}
+
+	loadColumn := StringColumn("Load")
+	assertStatementSql(t,
+		table1.UPDATE(loadColumn).
+			MODEL(
+				table{
+					Load: "foo",
+				},
+			).
+			WHERE(loadColumn.EQ(String("bar"))), strings.Replace(`
+UPDATE db.table1
+SET ''Load'' = ?
+WHERE ''Load'' = ?;
+`, "''", "`", -1), "foo", "bar")
 }
 
 func TestInvalidInputs(t *testing.T) {
