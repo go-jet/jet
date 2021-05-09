@@ -38,6 +38,9 @@ var Uint64 = jet.Uint64
 // Float creates new float literal expression
 var Float = jet.Float
 
+// Decimal creates new float literal expression
+var Decimal = jet.Decimal
+
 // String creates new string literal expression
 var String = jet.String
 

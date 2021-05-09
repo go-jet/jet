@@ -42,8 +42,11 @@ var Uint32 = jet.Uint32
 // Uint64 is constructor for 64 bit unsigned integer expressions literals.
 var Uint64 = jet.Uint64
 
-// Float creates new float literal expression
+// Float creates new float literal expression from float64 value
 var Float = jet.Float
+
+// Decimal creates new float literal expression from string value
+var Decimal = jet.Decimal
 
 // String creates new string literal expression
 var String = jet.String

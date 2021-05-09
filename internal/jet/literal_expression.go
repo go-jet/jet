@@ -140,8 +140,18 @@ type floatLiteral struct {
 	literalExpressionImpl
 }
 
-// Float creates new float literal
+// Float creates new float literal from float64 value
 func Float(value float64) FloatExpression {
+	floatLiteral := floatLiteral{}
+	floatLiteral.literalExpressionImpl = *literal(value)
+
+	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
+
+	return &floatLiteral
+}
+
+// Decimal creates new float literal from string value
+func Decimal(value string) FloatExpression {
 	floatLiteral := floatLiteral{}
 	floatLiteral.literalExpressionImpl = *literal(value)
 
