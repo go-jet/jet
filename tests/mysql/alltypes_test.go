@@ -78,7 +78,7 @@ func TestUUID(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, dest.StrUUID != nil)
 	require.True(t, dest.UUID.String() != uuid.UUID{}.String())
-	require.True(t, dest.StrUUID.String() != uuid.UUID{}.String())
+	require.Equal(t, dest.StrUUID.String(), "dc8daae3-b83b-11e9-8eb4-98ded00c39c6")
 	require.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
 	requireLogged(t, query)
 }

@@ -44,6 +44,10 @@ var Decimal = jet.Decimal
 // String creates new string literal expression
 var String = jet.String
 
+// UUID is a helper function to create string literal expression from uuid object
+// value can be any uuid type with a String method
+var UUID = jet.UUID
+
 // Bytea craates new bytea literal expression
 var Bytea = func(value string) StringExpression {
 	return CAST(jet.String(value)).AS_BYTEA()

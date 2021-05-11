@@ -15,9 +15,12 @@ import (
 )
 
 func TestUUIDType(t *testing.T) {
+
+	id := uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+
 	query := AllTypes.
 		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
-		WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
+		WHERE(AllTypes.UUID.EQ(UUID(id)))
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.uuid AS "all_types.uuid",

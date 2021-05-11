@@ -409,3 +409,9 @@ func Raw(raw string, parent ...Expression) Expression {
 
 	return rawExp
 }
+
+// UUID is a helper function to create string literal expression from uuid object
+// value can be any uuid type with a String method
+func UUID(value fmt.Stringer) StringExpression {
+	return String(value.String())
+}
