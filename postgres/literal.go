@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // Bool creates new bool literal expression
@@ -48,9 +49,14 @@ var String = jet.String
 // value can be any uuid type with a String method
 var UUID = jet.UUID
 
-// Bytea craates new bytea literal expression
-var Bytea = func(value string) StringExpression {
-	return CAST(jet.String(value)).AS_BYTEA()
+// Bytea creates new bytea literal expression
+var Bytea = func(value interface{}) StringExpression {
+	switch value.(type) {
+	case string, []byte:
+	default:
+		panic("Bytea parameter value has to be of the type string or []byte")
+	}
+	return CAST(jet.Literal(value)).AS_BYTEA()
 }
 
 // Date creates new date literal expression

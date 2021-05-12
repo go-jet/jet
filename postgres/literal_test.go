@@ -62,6 +62,11 @@ func TestString(t *testing.T) {
 	assertSerialize(t, String("Some text"), `$1`, "Some text")
 }
 
+func TestBytea(t *testing.T) {
+	assertSerialize(t, Bytea("Some text"), `$1::bytea`, "Some text")
+	assertSerialize(t, Bytea([]byte("Some byte array")), `$1::bytea`, []byte("Some byte array"))
+}
+
 func TestDate(t *testing.T) {
 	assertSerialize(t, Date(2014, time.January, 2), `$1::date`, "2014-01-02")
 	assertSerialize(t, DateT(time.Now()), `$1::date`)

@@ -497,3 +497,54 @@ FROM test_sample."User";
 ]
 `)
 }
+
+func TestBytea(t *testing.T) {
+	byteArrHex := "\\x48656c6c6f20476f7068657221"
+	byteArrBin := []byte("\x48\x65\x6c\x6c\x6f\x20\x47\x6f\x70\x68\x65\x72\x21")
+
+	insertStmt := AllTypes.INSERT(AllTypes.Bytea, AllTypes.ByteaPtr).
+		VALUES(byteArrHex, byteArrBin).
+		RETURNING(AllTypes.Bytea, AllTypes.ByteaPtr)
+
+	testutils.AssertStatementSql(t, insertStmt, `
+INSERT INTO test_sample.all_types (bytea, bytea_ptr)
+VALUES ($1, $2)
+RETURNING all_types.bytea AS "all_types.bytea",
+          all_types.bytea_ptr AS "all_types.bytea_ptr";
+`, byteArrHex, byteArrBin)
+
+	var inserted model.AllTypes
+	err := insertStmt.Query(db, &inserted)
+	require.NoError(t, err)
+
+	require.Equal(t, string(*inserted.ByteaPtr), "Hello Gopher!")
+	// It is not possible to initiate bytea column using hex format '\xDEADBEEF' with pq driver.
+	// pq driver always encodes parameter string if destination column is of type bytea.
+	// Probably pq driver error.
+	// require.Equal(t, string(inserted.Bytea), "Hello Gopher!")
+
+	stmt := SELECT(
+		AllTypes.Bytea,
+		AllTypes.ByteaPtr,
+	).FROM(
+		AllTypes,
+	).WHERE(
+		AllTypes.ByteaPtr.EQ(Bytea(byteArrBin)),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT all_types.bytea AS "all_types.bytea",
+     all_types.bytea_ptr AS "all_types.bytea_ptr"
+FROM test_sample.all_types
+WHERE all_types.bytea_ptr = $1::bytea;
+`, byteArrBin)
+
+	var dest model.AllTypes
+
+	err = stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	require.Equal(t, string(*dest.ByteaPtr), "Hello Gopher!")
+	// Probably pq driver error.
+	// require.Equal(t, string(dest.Bytea), "Hello Gopher!")
+}
