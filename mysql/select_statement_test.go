@@ -136,15 +136,15 @@ LOCK IN SHARE MODE;
 func TestSelect_NOT_EXISTS(t *testing.T) {
 	testutils.AssertStatementSql(t,
 		SELECT(table1ColInt).
-		FROM(table1).
-		WHERE(
-			NOT(EXISTS(
-				SELECT(table2ColInt).
-				FROM(table2).
-				WHERE(
-					table1ColInt.EQ(table2ColInt),
-				),
-		))), `
+			FROM(table1).
+			WHERE(
+				NOT(EXISTS(
+					SELECT(table2ColInt).
+						FROM(table2).
+						WHERE(
+							table1ColInt.EQ(table2ColInt),
+						),
+				))), `
 SELECT table1.col_int AS "table1.col_int"
 FROM db.table1
 WHERE (NOT (EXISTS (

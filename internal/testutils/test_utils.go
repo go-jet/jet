@@ -226,12 +226,14 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 func AssertDeepEqual(t *testing.T, actual, expected interface{}, msg ...string) {
 	if !assert.True(t, cmp.Equal(actual, expected), msg) {
 		printDiff(actual, expected)
+		t.FailNow()
 	}
 }
 
 func assertQueryString(t *testing.T, actual, expected string) {
 	if !assert.Equal(t, actual, expected) {
 		printDiff(actual, expected)
+		t.FailNow()
 	}
 }
 

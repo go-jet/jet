@@ -2,6 +2,8 @@ package jet
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 )
 
@@ -394,20 +396,146 @@ func WRAP(expression ...Expression) Expression {
 type rawExpression struct {
 	ExpressionInterfaceImpl
 
-	Raw string
+	Raw           string
+	NamedArgument map[string]interface{}
+	noWrap        bool
 }
 
 func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.WriteString(n.Raw)
+	raw := n.Raw
+
+	type namedArgumentPosition struct {
+		Name     string
+		Value    interface{}
+		Position int
+	}
+
+	var namedArgumentPositions []namedArgumentPosition
+
+	for namedArg, value := range n.NamedArgument {
+		rawCopy := n.Raw
+		rawIndex := 0
+		exists := false
+
+		// one named argument can occur multiple times inside raw string
+		for {
+			index := strings.Index(rawCopy, namedArg)
+			if index == -1 {
+				break
+			}
+
+			exists = true
+			namedArgumentPositions = append(namedArgumentPositions, namedArgumentPosition{
+				Name:     namedArg,
+				Value:    value,
+				Position: rawIndex + index,
+			})
+
+			rawCopy = rawCopy[index+len(namedArg):]
+			rawIndex += index + len(namedArg)
+		}
+
+		if !exists {
+			panic("jet: named argument '" + namedArg + "' does not appear in raw query")
+		}
+	}
+
+	sort.Slice(namedArgumentPositions, func(i, j int) bool {
+		return namedArgumentPositions[i].Position < namedArgumentPositions[j].Position
+	})
+
+	for _, namedArgumentPos := range namedArgumentPositions {
+		// if named argument does not exists in raw string do not add argument to the list of arguments
+		// It can happen if the same argument occurs multiple times in postgres query.
+		if !strings.Contains(raw, namedArgumentPos.Name) {
+			continue
+		}
+		out.Args = append(out.Args, namedArgumentPos.Value)
+		currentArgNum := len(out.Args)
+
+		dialectPlaceholder := out.Dialect.ArgumentPlaceholder()(currentArgNum)
+		// if placeholder is not unique identifier ($1, $2, etc..), we will replace just one occurence of the argument
+		toReplace := -1 // all occurrences
+		if dialectPlaceholder == "?" {
+			toReplace = 1 // just one occurrence
+		}
+		raw = strings.Replace(raw, namedArgumentPos.Name, dialectPlaceholder, toReplace)
+	}
+
+	if !n.noWrap && !contains(options, NoWrap) {
+		raw = "(" + raw + ")"
+	}
+
+	out.WriteString(raw)
 }
 
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
-func Raw(raw string, parent ...Expression) Expression {
-	rawExp := &rawExpression{Raw: raw}
+func Raw(raw string, namedArgs ...map[string]interface{}) Expression {
+	var namedArguments map[string]interface{}
+
+	if len(namedArgs) > 0 {
+		namedArguments = namedArgs[0]
+	}
+
+	rawExp := &rawExpression{
+		Raw:           raw,
+		NamedArgument: namedArguments,
+	}
+	rawExp.ExpressionInterfaceImpl.Parent = rawExp
+
+	return rawExp
+}
+
+// RawWithParent is a Raw constructor used for construction dialect specific expression
+func RawWithParent(raw string, parent ...Expression) Expression {
+	rawExp := &rawExpression{
+		Raw:    raw,
+		noWrap: true,
+	}
 	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
 
 	return rawExp
+}
+
+// Raw helper that for integer expressions
+func RawInt(raw string, namedArgs ...map[string]interface{}) IntegerExpression {
+	return IntExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for float expressions
+func RawFloat(raw string, namedArgs ...map[string]interface{}) FloatExpression {
+	return FloatExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for string expressions
+func RawString(raw string, namedArgs ...map[string]interface{}) StringExpression {
+	return StringExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for time expressions
+func RawTime(raw string, namedArgs ...map[string]interface{}) TimeExpression {
+	return TimeExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for time with time zone expressions
+func RawTimez(raw string, namedArgs ...map[string]interface{}) TimezExpression {
+	return TimezExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for timestamp expressions
+func RawTimestamp(raw string, namedArgs ...map[string]interface{}) TimestampExpression {
+	return TimestampExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for timestamp with time zone expressions
+func RawTimestampz(raw string, namedArgs ...map[string]interface{}) TimestampzExpression {
+	return TimestampzExp(Raw(raw, namedArgs...))
+}
+
+// Raw helper that for date expressions
+func RawDate(raw string, namedArgs ...map[string]interface{}) DateExpression {
+	return DateExp(Raw(raw, namedArgs...))
 }
 
 // UUID is a helper function to create string literal expression from uuid object

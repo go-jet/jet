@@ -128,7 +128,7 @@ func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 
 	newInterval := &intervalExpression{}
 
-	newInterval.Expression = jet.Raw(intervalStr, newInterval)
+	newInterval.Expression = jet.RawWithParent(intervalStr, newInterval)
 	newInterval.intervalInterfaceImpl.parent = newInterval
 
 	return newInterval

@@ -97,7 +97,7 @@ func INTERVAL(value interface{}, unitType unitType) Interval {
 // INTERVALe creates new temporal interval from expresion and unit type.
 func INTERVALe(expr Expression, unitType unitType) Interval {
 	return jet.NewInterval(jet.ListSerializer{
-		Serializers: []jet.Serializer{expr, jet.Raw(string(unitType))},
+		Serializers: []jet.Serializer{expr, jet.RawWithParent(string(unitType))},
 		Separator:   " ",
 	})
 }

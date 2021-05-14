@@ -89,13 +89,16 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.DatePtr.IS_NOT_NULL().AS("result.is_not_null"),
 		AllTypes.SmallIntPtr.IN(Int(11), Int(22)).AS("result.in"),
 		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.in_select"),
+
+		Raw("CURRENT_USER()").AS("result.raw"),
+		Raw(":first + COALESCE(all_types.small_int_ptr, 0) + :second", RawArgs{":first": 78, ":second": 56}).
+			AS("result.raw_arg"),
+		Raw("#1 + all_types.integer + #2 + #1 + #3 + #4", RawArgs{"#1": 11, "#2": 22, "#3": 33, "#4": 44}).
+			AS("result.raw_arg2"),
+
 		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL).AS("result.not_in"),
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
-
-		Raw("DATABASE()"),
 	).LIMIT(2)
-
-	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, strings.Replace(`
 SELECT all_types.'integer' IS NULL AS "result.is_null",
@@ -105,15 +108,17 @@ SELECT all_types.'integer' IS NULL AS "result.is_null",
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
      ))) AS "result.in_select",
+     (CURRENT_USER()) AS "result.raw",
+     (? + COALESCE(all_types.small_int_ptr, 0) + ?) AS "result.raw_arg",
+     (? + all_types.integer + ? + ? + ? + ?) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN (?, ?, NULL)) AS "result.not_in",
      (all_types.small_int_ptr NOT IN ((
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.not_in_select",
-     DATABASE()
+     ))) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT ?;
-`, "'", "`", -1), int64(11), int64(22), int64(11), int64(22), int64(2))
+`, "'", "`", -1), int64(11), int64(22), 78, 56, 11, 22, 11, 33, 44, int64(11), int64(22), int64(2))
 
 	var dest []struct {
 		common.ExpressionTestResult `alias:"result.*"`
@@ -132,6 +137,9 @@ LIMIT ?;
 		"IsNotNull": true,
 		"In": false,
 		"InSelect": false,
+		"Raw": "jet@localhost",
+		"RawArg": 148,
+		"RawArg2": -1479,
 		"NotIn": null,
 		"NotInSelect": true
 	},
@@ -140,6 +148,9 @@ LIMIT ?;
 		"IsNotNull": false,
 		"In": null,
 		"InSelect": null,
+		"Raw": "jet@localhost",
+		"RawArg": 134,
+		"RawArg2": -1479,
 		"NotIn": null,
 		"NotInSelect": null
 	}
