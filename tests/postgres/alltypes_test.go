@@ -17,6 +17,8 @@ import (
 )
 
 func TestAllTypesSelect(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string
+
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
@@ -27,6 +29,8 @@ func TestAllTypesSelect(t *testing.T) {
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string
+
 	type AllTypesView model.AllTypes
 
 	dest := []AllTypesView{}
@@ -39,6 +43,8 @@ func TestAllTypesViewSelect(t *testing.T) {
 }
 
 func TestAllTypesInsertModel(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver does not handle well time with time zone
+
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(allTypesRow0).
 		MODEL(&allTypesRow1).
@@ -54,6 +60,8 @@ func TestAllTypesInsertModel(t *testing.T) {
 }
 
 func TestAllTypesInsertQuery(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver does not handle well time with time zone
+
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		QUERY(
 			AllTypes.
@@ -293,6 +301,8 @@ LIMIT $11;
 
 func TestExpressionCast(t *testing.T) {
 
+	skipForPgxDriver(t) // for some reason, pgx driver, 150:char(12) returns as int value
+
 	query := AllTypes.SELECT(
 		CAST(Int(150)).AS_CHAR(12).AS("char12"),
 		CAST(String("TRUE")).AS_BOOL(),
@@ -338,6 +348,8 @@ func TestExpressionCast(t *testing.T) {
 }
 
 func TestStringOperators(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns text column as int value
+
 	query := AllTypes.SELECT(
 		AllTypes.Text.EQ(AllTypes.Char),
 		AllTypes.Text.EQ(String("Text")),
@@ -853,6 +865,7 @@ func TestInterval(t *testing.T) {
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string value
 
 	type expected struct {
 		sql  string
@@ -1030,6 +1043,7 @@ FROM`
 }
 
 func TestTimeLiterals(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string
 
 	loc, err := time.LoadLocation("Europe/Berlin")
 	require.NoError(t, err)
