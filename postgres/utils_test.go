@@ -58,6 +58,10 @@ func assertSerialize(t *testing.T, serializer jet.Serializer, query string, args
 	testutils.AssertSerialize(t, Dialect, serializer, query, args...)
 }
 
+func assertDebugSerialize(t *testing.T, serializer jet.Serializer, query string, args ...interface{}) {
+	testutils.AssertDebugSerialize(t, Dialect, serializer, query, args...)
+}
+
 func assertClauseSerialize(t *testing.T, clause jet.Clause, query string, args ...interface{}) {
 	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
 }

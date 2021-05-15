@@ -9,14 +9,20 @@ import (
 
 func TestRaw(t *testing.T) {
 	assertSerialize(t, Raw("current_database()"), "(current_database())")
+	assertDebugSerialize(t, Raw("current_database()"), "(current_database())")
 
 	assertSerialize(t, Raw(":first_arg + table.colInt + :second_arg", RawArgs{":first_arg": 11, ":second_arg": 22}),
 		"(? + table.colInt + ?)", 11, 22)
+	assertDebugSerialize(t, Raw(":first_arg + table.colInt + :second_arg", RawArgs{":first_arg": 11, ":second_arg": 22}),
+		"(11 + table.colInt + 22)")
 
 	assertSerialize(t,
 		Int(700).ADD(RawInt("#1 + table.colInt + #2", RawArgs{"#1": 11, "#2": 22})),
 		"(? + (? + table.colInt + ?))",
 		int64(700), 11, 22)
+	assertDebugSerialize(t,
+		Int(700).ADD(RawInt("#1 + table.colInt + #2", RawArgs{"#1": 11, "#2": 22})),
+		"(700 + (11 + table.colInt + 22))")
 }
 
 func TestRawDuplicateArguments(t *testing.T) {

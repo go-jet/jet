@@ -116,8 +116,8 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 		AssertDeepEqual(t, args, expectedArgs, "arguments are not equal")
 	}
 
-	debuqSql := query.DebugSql()
-	assertQueryString(t, debuqSql, expectedQuery)
+	debugSql := query.DebugSql()
+	assertQueryString(t, debugSql, expectedQuery)
 }
 
 // AssertSerialize checks if clause serialize produces expected query and args
@@ -134,24 +134,24 @@ func AssertSerialize(t *testing.T, dialect jet.Dialect, serializer jet.Serialize
 	}
 }
 
-// AssertClauseSerialize checks if clause serialize produces expected query and args
-func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Clause, query string, args ...interface{}) {
-	out := jet.SQLBuilder{Dialect: dialect}
-	clause.Serialize(jet.SelectStatementType, &out)
-
-	require.Equal(t, out.Buff.String(), query)
-
-	if len(args) > 0 {
-		AssertDeepEqual(t, out.Args, args)
-	}
-}
-
 // AssertDebugSerialize checks if clause serialize produces expected debug query and args
 func AssertDebugSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
 	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
 	jet.Serialize(clause, jet.SelectStatementType, &out)
 
 	AssertDeepEqual(t, out.Buff.String(), query)
+
+	if len(args) > 0 {
+		AssertDeepEqual(t, out.Args, args)
+	}
+}
+
+// AssertClauseSerialize checks if clause serialize produces expected query and args
+func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Clause, query string, args ...interface{}) {
+	out := jet.SQLBuilder{Dialect: dialect}
+	clause.Serialize(jet.SelectStatementType, &out)
+
+	require.Equal(t, out.Buff.String(), query)
 
 	if len(args) > 0 {
 		AssertDeepEqual(t, out.Args, args)

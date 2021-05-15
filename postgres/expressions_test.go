@@ -9,27 +9,39 @@ import (
 
 func TestRaw(t *testing.T) {
 	assertSerialize(t, Raw("current_database()"), "(current_database())")
+	assertDebugSerialize(t, Raw("current_database()"), "(current_database())")
 
 	assertSerialize(t, Raw(":first_arg + table.colInt + :second_arg", RawArgs{":first_arg": 11, ":second_arg": 22}),
 		"($1 + table.colInt + $2)", 11, 22)
+	assertDebugSerialize(t, Raw(":first_arg + table.colInt + :second_arg", RawArgs{":first_arg": 11, ":second_arg": 22}),
+		"(11 + table.colInt + 22)")
 
 	assertSerialize(t,
 		Int(700).ADD(RawInt(":first_arg + table.colInt + :second_arg", RawArgs{":first_arg": 11, ":second_arg": 22})),
 		"($1 + ($2 + table.colInt + $3))",
 		int64(700), 11, 22)
+	assertDebugSerialize(t,
+		Int(700).ADD(RawInt(":first_arg + table.colInt + :second_arg", RawArgs{":first_arg": 11, ":second_arg": 22})),
+		"(700 + (11 + table.colInt + 22))")
 }
 
 func TestDuplicateArguments(t *testing.T) {
-
 	assertSerialize(t, Raw(":arg + table.colInt + :arg", RawArgs{":arg": 11}),
 		"($1 + table.colInt + $1)", 11)
+	assertDebugSerialize(t, Raw(":arg + table.colInt + :arg", RawArgs{":arg": 11}),
+		"(11 + table.colInt + 11)")
 
 	assertSerialize(t, Raw("#age + table.colInt + #year + #age + #year + 11", RawArgs{"#age": 11, "#year": 2000}),
 		"($1 + table.colInt + $2 + $1 + $2 + 11)", 11, 2000)
+	assertDebugSerialize(t, Raw("#age + table.colInt + #year + #age + #year + 11", RawArgs{"#age": 11, "#year": 2000}),
+		"(11 + table.colInt + 2000 + 11 + 2000 + 11)")
 
 	assertSerialize(t, Raw("#1 + all_types.integer + #2 + #1 + #2 + #3 + #4",
 		RawArgs{"#1": 11, "#2": 22, "#3": 33, "#4": 44}),
-		`($1 + all_types.integer + $2 + $1 + $2 + $3 + $4)`, 11, 22, 11, 22, 33, 44)
+		`($1 + all_types.integer + $2 + $1 + $2 + $3 + $4)`, 11, 22, 33, 44)
+	assertDebugSerialize(t, Raw("#1 + all_types.integer + #2 + #1 + #2 + #3 + #4",
+		RawArgs{"#1": 11, "#2": 22, "#3": 33, "#4": 44}),
+		`(11 + all_types.integer + 22 + 11 + 22 + 33 + 44)`)
 }
 
 func TestRawInvalidArguments(t *testing.T) {

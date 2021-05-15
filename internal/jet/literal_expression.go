@@ -2,8 +2,6 @@ package jet
 
 import (
 	"fmt"
-	"sort"
-	"strings"
 	"time"
 )
 
@@ -402,71 +400,15 @@ type rawExpression struct {
 }
 
 func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	raw := n.Raw
-
-	type namedArgumentPosition struct {
-		Name     string
-		Value    interface{}
-		Position int
+	if !n.noWrap && !contains(options, NoWrap) {
+		out.WriteByte('(')
 	}
 
-	var namedArgumentPositions []namedArgumentPosition
-
-	for namedArg, value := range n.NamedArgument {
-		rawCopy := n.Raw
-		rawIndex := 0
-		exists := false
-
-		// one named argument can occur multiple times inside raw string
-		for {
-			index := strings.Index(rawCopy, namedArg)
-			if index == -1 {
-				break
-			}
-
-			exists = true
-			namedArgumentPositions = append(namedArgumentPositions, namedArgumentPosition{
-				Name:     namedArg,
-				Value:    value,
-				Position: rawIndex + index,
-			})
-
-			rawCopy = rawCopy[index+len(namedArg):]
-			rawIndex += index + len(namedArg)
-		}
-
-		if !exists {
-			panic("jet: named argument '" + namedArg + "' does not appear in raw query")
-		}
-	}
-
-	sort.Slice(namedArgumentPositions, func(i, j int) bool {
-		return namedArgumentPositions[i].Position < namedArgumentPositions[j].Position
-	})
-
-	for _, namedArgumentPos := range namedArgumentPositions {
-		// if named argument does not exists in raw string do not add argument to the list of arguments
-		// It can happen if the same argument occurs multiple times in postgres query.
-		if !strings.Contains(raw, namedArgumentPos.Name) {
-			continue
-		}
-		out.Args = append(out.Args, namedArgumentPos.Value)
-		currentArgNum := len(out.Args)
-
-		dialectPlaceholder := out.Dialect.ArgumentPlaceholder()(currentArgNum)
-		// if placeholder is not unique identifier ($1, $2, etc..), we will replace just one occurence of the argument
-		toReplace := -1 // all occurrences
-		if dialectPlaceholder == "?" {
-			toReplace = 1 // just one occurrence
-		}
-		raw = strings.Replace(raw, namedArgumentPos.Name, dialectPlaceholder, toReplace)
-	}
+	out.insertRawQuery(n.Raw, n.NamedArgument)
 
 	if !n.noWrap && !contains(options, NoWrap) {
-		raw = "(" + raw + ")"
+		out.WriteByte(')')
 	}
-
-	out.WriteString(raw)
 }
 
 // Raw can be used for any unsupported functions, operators or expressions.
