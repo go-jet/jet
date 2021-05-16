@@ -1,14 +1,18 @@
 package postgres
 
 import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var oneInventoryQuery = Inventory.
@@ -720,6 +724,44 @@ func TestStructScanAllNull(t *testing.T) {
 		Null1 *int
 		Null2 *int
 	}{})
+}
+
+func TestRowsScan(t *testing.T) {
+
+	stmt := SELECT(
+		Inventory.AllColumns,
+	).FROM(
+		Inventory,
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
+
+	rows, err := stmt.Rows(context.Background(), db)
+	require.NoError(t, err)
+
+	for rows.Next() {
+		var inventory model.Inventory
+		err = rows.Scan(&inventory)
+		require.NoError(t, err)
+
+		require.NotEqual(t, inventory.InventoryID, int32(0))
+		require.NotEqual(t, inventory.FilmID, int16(0))
+		require.NotEqual(t, inventory.StoreID, int16(0))
+		require.NotEqual(t, inventory.LastUpdate, time.Time{})
+
+		if inventory.InventoryID == 2103 {
+			require.Equal(t, inventory.FilmID, int16(456))
+			require.Equal(t, inventory.StoreID, int16(2))
+			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2006-02-15T10:09:17Z")
+		}
+	}
+
+	err = rows.Close()
+	require.NoError(t, err)
+	err = rows.Err()
+	require.NoError(t, err)
+
+	requireLogged(t, stmt)
 }
 
 var address256 = model.Address{

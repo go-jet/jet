@@ -1,8 +1,10 @@
 package mysql
 
 import (
+	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
@@ -886,4 +888,42 @@ LIMIT 1;
 		require.NoError(t, err2)
 		require.Equal(t, dest, dest2)
 	})
+}
+
+func TestRowsScan(t *testing.T) {
+
+	stmt := SELECT(
+		Inventory.AllColumns,
+	).FROM(
+		Inventory,
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
+
+	rows, err := stmt.Rows(context.Background(), db)
+	require.NoError(t, err)
+
+	for rows.Next() {
+		var inventory model.Inventory
+		err = rows.Scan(&inventory)
+		require.NoError(t, err)
+
+		require.NotEqual(t, inventory.InventoryID, uint32(0))
+		require.NotEqual(t, inventory.FilmID, uint16(0))
+		require.NotEqual(t, inventory.StoreID, uint16(0))
+		require.NotEqual(t, inventory.LastUpdate, time.Time{})
+
+		if inventory.InventoryID == 2103 {
+			require.Equal(t, inventory.FilmID, uint16(456))
+			require.Equal(t, inventory.StoreID, uint8(2))
+			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2006-02-15T05:09:17Z")
+		}
+	}
+
+	err = rows.Close()
+	require.NoError(t, err)
+	err = rows.Err()
+	require.NoError(t, err)
+
+	requireLogged(t, stmt)
 }
