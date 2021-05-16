@@ -45,6 +45,7 @@ type lateralImpl struct {
 	selectTableImpl
 }
 
+// NewLateral creates new lateral expression from select statement with alias
 func NewLateral(selectStmt SerializerStatement, alias string) SelectTable {
 	return lateralImpl{selectTableImpl: NewSelectTable(selectStmt, alias)}
 }

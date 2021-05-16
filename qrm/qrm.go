@@ -59,6 +59,7 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 	}
 }
 
+// ScanOneRowToDest will scan one row into struct destination
 func ScanOneRowToDest(rows *sql.Rows, destPtr interface{}) error {
 	utils.MustBeInitializedPtr(destPtr, "jet: destination is nil")
 	utils.MustBe(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")

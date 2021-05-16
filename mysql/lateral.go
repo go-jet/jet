@@ -2,6 +2,7 @@ package mysql
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
+// LATERAL derived tables constructor from select statement
 func LATERAL(selectStmt SelectStatement) lateralImpl {
 	return lateralImpl{
 		selectStmt: selectStmt,

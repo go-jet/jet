@@ -440,42 +440,42 @@ func RawWithParent(raw string, parent ...Expression) Expression {
 	return rawExp
 }
 
-// Raw helper that for integer expressions
+// RawInt helper that for integer expressions
 func RawInt(raw string, namedArgs ...map[string]interface{}) IntegerExpression {
 	return IntExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for float expressions
+// RawFloat helper that for float expressions
 func RawFloat(raw string, namedArgs ...map[string]interface{}) FloatExpression {
 	return FloatExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for string expressions
+// RawString helper that for string expressions
 func RawString(raw string, namedArgs ...map[string]interface{}) StringExpression {
 	return StringExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for time expressions
+// RawTime helper that for time expressions
 func RawTime(raw string, namedArgs ...map[string]interface{}) TimeExpression {
 	return TimeExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for time with time zone expressions
+// RawTimez helper that for time with time zone expressions
 func RawTimez(raw string, namedArgs ...map[string]interface{}) TimezExpression {
 	return TimezExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for timestamp expressions
+// RawTimestamp helper that for timestamp expressions
 func RawTimestamp(raw string, namedArgs ...map[string]interface{}) TimestampExpression {
 	return TimestampExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for timestamp with time zone expressions
+// RawTimestampz helper that for timestamp with time zone expressions
 func RawTimestampz(raw string, namedArgs ...map[string]interface{}) TimestampzExpression {
 	return TimestampzExp(Raw(raw, namedArgs...))
 }
 
-// Raw helper that for date expressions
+// RawDate helper that for date expressions
 func RawDate(raw string, namedArgs ...map[string]interface{}) DateExpression {
 	return DateExp(Raw(raw, namedArgs...))
 }

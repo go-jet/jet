@@ -73,12 +73,12 @@ var TimestampExp = jet.TimestampExp
 // RawArgs is type used to pass optional arguments to Raw method
 type RawArgs = map[string]interface{}
 
+// Raw can be used for any unsupported functions, operators or expressions.
+// For example: Raw("current_database()")
+// Raw helper methods for each of the mysql types
 var (
-	// Raw can be used for any unsupported functions, operators or expressions.
-	// For example: Raw("current_database()")
 	Raw = jet.Raw
 
-	// Raw helper methods for each of the mysql type
 	RawInt       = jet.RawInt
 	RawFloat     = jet.RawFloat
 	RawString    = jet.RawString
