@@ -62,24 +62,33 @@ To install Jet package, you need to install Go and set your Go workspace first.
 
 ### Installation
 
-Use the bellow command to add jet as a dependency into `go.mod` project:
+Use the command bellow to add jet as a dependency into `go.mod` project:
 ```sh
 $ go get -u github.com/go-jet/jet/v2
 ```
 
-Use the bellow command to add jet as a dependency into `GOPATH` project:
+Jet generator can be install in the following ways:
 
-```sh
-$ go get -u github.com/go-jet/jet
-```
-
-Install jet generator to GOPATH bin folder. This will allow generating jet files from the command line.
-
+1) Install jet generator to GOPATH/bin folder:
 ```sh
 cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
 ```
+*Make sure GOPATH/bin folder is added to the PATH environment variable.*
 
-*Make sure GOPATH bin folder is added to the PATH environment variable.*
+2) Install jet generator to specific folder:
+
+```sh
+git clone https://github.com/go-jet/jet.git
+cd jet && go build -o dir_path ./cmd/jet
+```
+*Make sure `dir_path` folder is added to the PATH environment variable.*
+
+3) (Go1.16+) Install jet generator using go install:
+```sh
+go install github.com/go-jet/jet/v2/cmd/jet@latest
+```
+*Jet generator is installed to the directory named by the GOBIN environment variable, 
+which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH environment variable is not set.*
 
 ### Quick Start
 For this quick start example we will use PostgreSQL sample _'dvd rental'_ database. Full database dump can be found in [./tests/testdata/init/postgres/dvds.sql](./tests/testdata/init/postgres/dvds.sql).
@@ -519,26 +528,17 @@ The biggest benefit is speed.  Speed is improved in 3 major areas:
 
 ##### Speed of development  
 
-Writing SQL queries is faster and easier, because the developers have help of SQL code completion and SQL type safety directly from Go.
+Writing SQL queries is faster and easier as the developers have help of SQL code completion and SQL type safety directly from Go.
 Automatic scan to arbitrary structure removes a lot of headache and boilerplate code needed to structure database query result.  
 
 ##### Speed of execution
 
 While ORM libraries can introduce significant performance penalties due to number of round-trips to the database, 
-Jet will always perform much better, because of the single database call.
+Jet will always perform better as developers can write complex query and retrieve result with a single database call. 
+Thus handler time lost on latency between server and database can be constant. Handler execution will be proportional 
+only to the query complexity and the number of rows returned from database. 
 
-Common web and database server usually are not on the same physical machine, and there is some latency between them. 
-Latency can vary from 5ms to 50+ms. In majority of cases query executed on database is simple query lasting no more than 1ms.
-In those cases web server handler execution time is directly proportional to latency between server and database.
-This is not such a big problem if handler calls database couple of times, but what if web server is using ORM to retrieve data from database.
-ORM sometimes can access the database once for every object needed. Now lets say latency is 30ms and there are 100 
-different objects required from the database. This handler will last 3 seconds !!!.  
-
-With Jet, handler time lost on latency between server and database is constant. Because we can write complex query and 
-return result in one database call. Handler execution will be only proportional to the number of rows returned from database. 
-ORM example replaced with jet will take just 30ms + 'result scan time' = 31ms (rough estimate).  
-
-With Jet you can even join the whole database and store the whole structured result in one database call. 
+With Jet it is even possible to join the whole database and store the whole structured result in one database call. 
 This is exactly what is being done in one of the tests: [TestJoinEverything](/tests/postgres/chinook_db_test.go#L40). 
 The whole test database is joined and query result(~10,000 rows) is stored in a structured variable in less than 0.7s. 
 
@@ -570,6 +570,7 @@ To run the tests, additional dependencies are required:
 - `github.com/pkg/profile`
 - `github.com/stretchr/testify`
 - `github.com/google/go-cmp`
+- `github.com/jackc/pgx/v4`
 
 ## Versioning
 
@@ -577,5 +578,5 @@ To run the tests, additional dependencies are required:
 
 ## License
 
-Copyright 2019-2020 Goran Bjelanovic  
+Copyright 2019-2021 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.
