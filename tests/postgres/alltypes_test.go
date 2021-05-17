@@ -80,6 +80,7 @@ func TestAllTypesInsertQuery(t *testing.T) {
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
+	skipForPgxDriver(t)
 
 	subQuery := SELECT(AllTypes.AllColumns).
 		FROM(AllTypes).

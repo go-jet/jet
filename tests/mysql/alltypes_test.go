@@ -125,37 +125,17 @@ LIMIT ?;
 	}
 
 	err := query.Query(db, &dest)
-
 	require.NoError(t, err)
 
-	//testutils.PrintJson(dest)
-
-	testutils.AssertJSON(t, dest, `
-[
-	{
-		"IsNull": false,
-		"IsNotNull": true,
-		"In": false,
-		"InSelect": false,
-		"Raw": "jet@localhost",
-		"RawArg": 148,
-		"RawArg2": -1479,
-		"NotIn": null,
-		"NotInSelect": true
-	},
-	{
-		"IsNull": false,
-		"IsNotNull": false,
-		"In": null,
-		"InSelect": null,
-		"Raw": "jet@localhost",
-		"RawArg": 134,
-		"RawArg2": -1479,
-		"NotIn": null,
-		"NotInSelect": null
-	}
-]
-`)
+	require.Equal(t, *dest[0].IsNull, false)
+	require.Equal(t, *dest[0].IsNotNull, true)
+	require.Equal(t, *dest[0].In, false)
+	require.Equal(t, *dest[0].InSelect, false)
+	require.True(t, strings.Contains(*dest[0].Raw, "jet"))
+	require.Equal(t, *dest[0].RawArg, int32(148))
+	require.Equal(t, *dest[0].RawArg2, int32(-1479))
+	require.Nil(t, dest[0].NotIn)
+	require.Equal(t, *dest[0].NotInSelect, true)
 }
 
 func TestBoolOperators(t *testing.T) {
