@@ -81,9 +81,27 @@ var TimestampExp = jet.TimestampExp
 // Does not add sql cast to generated sql builder output.
 var TimestampzExp = jet.TimestampzExp
 
+// RawArgs is type used to pass optional arguments to Raw method
+type RawArgs = map[string]interface{}
+
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
-var Raw = jet.Raw
+// Raw helper methods for each of the postgres types
+var (
+	Raw = jet.Raw
+
+	RawInt        = jet.RawInt
+	RawFloat      = jet.RawFloat
+	RawString     = jet.RawString
+	RawTime       = jet.RawTime
+	RawTimez      = jet.RawTimez
+	RawTimestamp  = jet.RawTimestamp
+	RawTimestampz = jet.RawTimestampz
+	RawDate       = jet.RawDate
+)
+
+// Func can be used to call an custom or as of yet unsupported function in the database.
+var Func = jet.Func
 
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue

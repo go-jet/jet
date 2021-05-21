@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/google/uuid"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -133,6 +134,73 @@ func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
 	argPlaceholder := s.Dialect.ArgumentPlaceholder()(len(s.Args))
 
 	s.WriteString(argPlaceholder)
+}
+
+func (s *SQLBuilder) insertRawQuery(raw string, namedArg map[string]interface{}) {
+	type namedArgumentPosition struct {
+		Name     string
+		Value    interface{}
+		Position int
+	}
+
+	var namedArgumentPositions []namedArgumentPosition
+
+	for namedArg, value := range namedArg {
+		rawCopy := raw
+		rawIndex := 0
+		exists := false
+
+		// one named argument can occur multiple times inside raw string
+		for {
+			index := strings.Index(rawCopy, namedArg)
+			if index == -1 {
+				break
+			}
+
+			exists = true
+			namedArgumentPositions = append(namedArgumentPositions, namedArgumentPosition{
+				Name:     namedArg,
+				Value:    value,
+				Position: rawIndex + index,
+			})
+
+			rawCopy = rawCopy[index+len(namedArg):]
+			rawIndex += index + len(namedArg)
+		}
+
+		if !exists {
+			panic("jet: named argument '" + namedArg + "' does not appear in raw query")
+		}
+	}
+
+	sort.Slice(namedArgumentPositions, func(i, j int) bool {
+		return namedArgumentPositions[i].Position < namedArgumentPositions[j].Position
+	})
+
+	for _, namedArgumentPos := range namedArgumentPositions {
+		// if named argument does not exists in raw string do not add argument to the list of arguments
+		// It can happen if the same argument occurs multiple times in postgres query.
+		if !strings.Contains(raw, namedArgumentPos.Name) {
+			continue
+		}
+		s.Args = append(s.Args, namedArgumentPos.Value)
+		currentArgNum := len(s.Args)
+
+		placeholder := s.Dialect.ArgumentPlaceholder()(currentArgNum)
+		// if placeholder is not unique identifier ($1, $2, etc..), we will replace just one occurrence of the argument
+		toReplace := -1 // all occurrences
+		if placeholder == "?" {
+			toReplace = 1 // just one occurrence
+		}
+
+		if s.Debug {
+			placeholder = argToString(namedArgumentPos.Value)
+		}
+
+		raw = strings.Replace(raw, namedArgumentPos.Name, placeholder, toReplace)
+	}
+
+	s.WriteString(raw)
 }
 
 func argToString(value interface{}) string {

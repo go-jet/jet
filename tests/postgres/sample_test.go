@@ -1,19 +1,26 @@
 package postgres
 
 import (
+	"testing"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"testing"
+
+	"github.com/shopspring/decimal"
 )
 
 func TestUUIDType(t *testing.T) {
+
+	id := uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+
 	query := AllTypes.
 		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
-		WHERE(AllTypes.UUID.EQ(String("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")))
+		WHERE(AllTypes.UUID.EQ(UUID(id)))
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.uuid AS "all_types.uuid",
@@ -29,6 +36,110 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 	requireLogged(t, query)
+}
+
+func TestExactDecimals(t *testing.T) {
+
+	type floats struct {
+		model.Floats
+		Numeric    decimal.Decimal
+		NumericPtr decimal.Decimal
+		Decimal    decimal.Decimal
+		DecimalPtr decimal.Decimal
+	}
+
+	t.Run("should query decimal", func(t *testing.T) {
+		query := SELECT(
+			Floats.AllColumns,
+		).FROM(
+			Floats,
+		).WHERE(Floats.Decimal.EQ(Decimal("1.11111111111111111111")))
+
+		var result floats
+
+		err := query.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "1.11111111111111111111", result.Decimal.String())
+		require.Equal(t, "0", result.DecimalPtr.String()) // NULL
+		require.Equal(t, "2.22222222222222222222", result.Numeric.String())
+		require.Equal(t, "0", result.NumericPtr.String()) // NULL
+
+		require.Equal(t, 1.1111111111111112, result.Floats.Decimal) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.DecimalPtr)
+		require.Equal(t, 2.2222222222222223, result.Floats.Numeric) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.NumericPtr)
+
+		// floating point
+		require.Equal(t, float32(3.3333333), result.Floats.Real) // precision loss
+		require.Equal(t, (*float32)(nil), result.Floats.RealPtr)
+		require.Equal(t, 4.444444444444445, result.Floats.Double) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.DoublePtr)
+	})
+
+	t.Run("should insert decimal", func(t *testing.T) {
+
+		insertQuery := Floats.INSERT(
+			Floats.AllColumns,
+		).MODEL(
+			floats{
+				Floats: model.Floats{
+					// overwritten by wrapped(floats) scope
+					Numeric:    0.1,
+					NumericPtr: testutils.Float64Ptr(0.1),
+					Decimal:    0.1,
+					DecimalPtr: testutils.Float64Ptr(0.1),
+
+					// not overwritten
+					Real:      0.4,
+					RealPtr:   testutils.Float32Ptr(0.44),
+					Double:    0.3,
+					DoublePtr: testutils.Float64Ptr(0.33),
+				},
+				Numeric:    decimal.RequireFromString("0.1234567890123456789"),
+				NumericPtr: decimal.RequireFromString("1.1111111111111111111"),
+				Decimal:    decimal.RequireFromString("2.2222222222222222222"),
+				DecimalPtr: decimal.RequireFromString("3.3333333333333333333"),
+			},
+		).RETURNING(
+			Floats.AllColumns,
+		)
+
+		testutils.AssertDebugStatementSql(t, insertQuery, `
+INSERT INTO test_sample.floats (decimal_ptr, decimal, numeric_ptr, numeric, real_ptr, real, double_ptr, double)
+VALUES ('3.3333333333333333333', '2.2222222222222222222', '1.1111111111111111111', '0.1234567890123456789', 0.4399999976158142, 0.4000000059604645, 0.33, 0.3)
+RETURNING floats.decimal_ptr AS "floats.decimal_ptr",
+          floats.decimal AS "floats.decimal",
+          floats.numeric_ptr AS "floats.numeric_ptr",
+          floats.numeric AS "floats.numeric",
+          floats.real_ptr AS "floats.real_ptr",
+          floats.real AS "floats.real",
+          floats.double_ptr AS "floats.double_ptr",
+          floats.double AS "floats.double";
+`)
+
+		var result floats
+		err := insertQuery.Query(db, &result)
+		require.NoError(t, err)
+
+		// exact decimal
+		require.Equal(t, "0.1234567890123456789", result.Numeric.String())
+		require.Equal(t, "1.1111111111111111111", result.NumericPtr.String())
+		require.Equal(t, "2.2222222222222222222", result.Decimal.String())
+		require.Equal(t, "3.3333333333333333333", result.DecimalPtr.String())
+
+		// precision loss
+		require.Equal(t, 0.12345678901234568, result.Floats.Numeric)
+		require.Equal(t, 1.1111111111111112, *result.Floats.NumericPtr)
+		require.Equal(t, 2.2222222222222223, result.Floats.Decimal)
+		require.Equal(t, 3.3333333333333335, *result.Floats.DecimalPtr)
+
+		// floating points numbers
+		require.Equal(t, float32(0.4), result.Floats.Real)
+		require.Equal(t, float32(0.44), *result.Floats.RealPtr)
+		require.Equal(t, 0.3, result.Floats.Double)
+		require.Equal(t, 0.33, *result.Floats.DoublePtr)
+	})
 }
 
 func TestUUIDComplex(t *testing.T) {
@@ -364,7 +475,7 @@ FROM test_sample."User";
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	testutils.PrintJson(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 [
@@ -385,4 +496,55 @@ FROM test_sample."User";
 	}
 ]
 `)
+}
+
+func TestBytea(t *testing.T) {
+	byteArrHex := "\\x48656c6c6f20476f7068657221"
+	byteArrBin := []byte("\x48\x65\x6c\x6c\x6f\x20\x47\x6f\x70\x68\x65\x72\x21")
+
+	insertStmt := AllTypes.INSERT(AllTypes.Bytea, AllTypes.ByteaPtr).
+		VALUES(byteArrHex, byteArrBin).
+		RETURNING(AllTypes.Bytea, AllTypes.ByteaPtr)
+
+	testutils.AssertStatementSql(t, insertStmt, `
+INSERT INTO test_sample.all_types (bytea, bytea_ptr)
+VALUES ($1, $2)
+RETURNING all_types.bytea AS "all_types.bytea",
+          all_types.bytea_ptr AS "all_types.bytea_ptr";
+`, byteArrHex, byteArrBin)
+
+	var inserted model.AllTypes
+	err := insertStmt.Query(db, &inserted)
+	require.NoError(t, err)
+
+	require.Equal(t, string(*inserted.ByteaPtr), "Hello Gopher!")
+	// It is not possible to initiate bytea column using hex format '\xDEADBEEF' with pq driver.
+	// pq driver always encodes parameter string if destination column is of type bytea.
+	// Probably pq driver error.
+	// require.Equal(t, string(inserted.Bytea), "Hello Gopher!")
+
+	stmt := SELECT(
+		AllTypes.Bytea,
+		AllTypes.ByteaPtr,
+	).FROM(
+		AllTypes,
+	).WHERE(
+		AllTypes.ByteaPtr.EQ(Bytea(byteArrBin)),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT all_types.bytea AS "all_types.bytea",
+     all_types.bytea_ptr AS "all_types.bytea_ptr"
+FROM test_sample.all_types
+WHERE all_types.bytea_ptr = $1::bytea;
+`, byteArrBin)
+
+	var dest model.AllTypes
+
+	err = stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	require.Equal(t, string(*dest.ByteaPtr), "Hello Gopher!")
+	// Probably pq driver error.
+	// require.Equal(t, string(dest.Bytea), "Hello Gopher!")
 }

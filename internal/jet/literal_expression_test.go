@@ -6,7 +6,7 @@ import (
 )
 
 func TestRawExpression(t *testing.T) {
-	assertClauseSerialize(t, Raw("current_database()"), "current_database()")
+	assertClauseSerialize(t, Raw("current_database()"), "(current_database())")
 
 	var timeT = time.Date(2009, 11, 17, 20, 34, 58, 651387237, time.UTC)
 

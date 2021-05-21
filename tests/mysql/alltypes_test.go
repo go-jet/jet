@@ -1,7 +1,7 @@
 package mysql
 
 import (
-	"fmt"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -78,7 +78,7 @@ func TestUUID(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, dest.StrUUID != nil)
 	require.True(t, dest.UUID.String() != uuid.UUID{}.String())
-	require.True(t, dest.StrUUID.String() != uuid.UUID{}.String())
+	require.Equal(t, dest.StrUUID.String(), "dc8daae3-b83b-11e9-8eb4-98ded00c39c6")
 	require.Equal(t, dest.StrUUID.String(), dest.BinUUID.String())
 	requireLogged(t, query)
 }
@@ -89,13 +89,16 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.DatePtr.IS_NOT_NULL().AS("result.is_not_null"),
 		AllTypes.SmallIntPtr.IN(Int(11), Int(22)).AS("result.in"),
 		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.in_select"),
+
+		Raw("CURRENT_USER()").AS("result.raw"),
+		Raw(":first + COALESCE(all_types.small_int_ptr, 0) + :second", RawArgs{":first": 78, ":second": 56}).
+			AS("result.raw_arg"),
+		Raw("#1 + all_types.integer + #2 + #1 + #3 + #4", RawArgs{"#1": 11, "#2": 22, "#3": 33, "#4": 44}).
+			AS("result.raw_arg2"),
+
 		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL).AS("result.not_in"),
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
-
-		Raw("DATABASE()"),
 	).LIMIT(2)
-
-	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, strings.Replace(`
 SELECT all_types.'integer' IS NULL AS "result.is_null",
@@ -105,46 +108,34 @@ SELECT all_types.'integer' IS NULL AS "result.is_null",
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
      ))) AS "result.in_select",
+     (CURRENT_USER()) AS "result.raw",
+     (? + COALESCE(all_types.small_int_ptr, 0) + ?) AS "result.raw_arg",
+     (? + all_types.integer + ? + ? + ? + ?) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN (?, ?, NULL)) AS "result.not_in",
      (all_types.small_int_ptr NOT IN ((
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.not_in_select",
-     DATABASE()
+     ))) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT ?;
-`, "'", "`", -1), int64(11), int64(22), int64(11), int64(22), int64(2))
+`, "'", "`", -1), int64(11), int64(22), 78, 56, 11, 22, 11, 33, 44, int64(11), int64(22), int64(2))
 
 	var dest []struct {
 		common.ExpressionTestResult `alias:"result.*"`
 	}
 
 	err := query.Query(db, &dest)
-
 	require.NoError(t, err)
 
-	//testutils.PrintJson(dest)
-
-	testutils.AssertJSON(t, dest, `
-[
-	{
-		"IsNull": false,
-		"IsNotNull": true,
-		"In": false,
-		"InSelect": false,
-		"NotIn": null,
-		"NotInSelect": true
-	},
-	{
-		"IsNull": false,
-		"IsNotNull": false,
-		"In": null,
-		"InSelect": null,
-		"NotIn": null,
-		"NotInSelect": null
-	}
-]
-`)
+	require.Equal(t, *dest[0].IsNull, false)
+	require.Equal(t, *dest[0].IsNotNull, true)
+	require.Equal(t, *dest[0].In, false)
+	require.Equal(t, *dest[0].InSelect, false)
+	require.True(t, strings.Contains(*dest[0].Raw, "jet"))
+	require.Equal(t, *dest[0].RawArg, int32(148))
+	require.Equal(t, *dest[0].RawArg2, int32(-1479))
+	require.Nil(t, dest[0].NotIn)
+	require.Equal(t, *dest[0].NotInSelect, true)
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -974,7 +965,7 @@ func TestAllTypesInsert(t *testing.T) {
 	stmt := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(toInsert)
 
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 
 	testutils.AssertExec(t, stmt, tx, 1)
 
@@ -1028,7 +1019,7 @@ func TestAllTypesInsertOnDuplicateKeyUpdate(t *testing.T) {
 			AllTypes.Date.SET(DateT(time.Now())),
 		)
 
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 
 	_, err = stmt.Exec(tx)
 	require.NoError(t, err)
@@ -1257,7 +1248,7 @@ FROM test_sample.user;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	testutils.PrintJson(dest)
+	//testutils.PrintJson(dest)
 
 	testutils.AssertJSON(t, dest, `
 [
@@ -1278,4 +1269,100 @@ FROM test_sample.user;
 	}
 ]
 `)
+}
+
+func TestExactDecimals(t *testing.T) {
+
+	type floats struct {
+		model.Floats
+		Numeric    decimal.Decimal
+		NumericPtr decimal.Decimal
+		Decimal    decimal.Decimal
+		DecimalPtr decimal.Decimal
+	}
+
+	t.Run("should query decimal", func(t *testing.T) {
+		query := SELECT(
+			Floats.AllColumns,
+		).FROM(
+			Floats,
+		).WHERE(Floats.Decimal.EQ(Decimal("1.11111111111111111111")))
+
+		var result floats
+
+		err := query.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "1.11111111111111111111", result.Decimal.String())
+		require.Equal(t, "0", result.DecimalPtr.String()) // NULL
+		require.Equal(t, "2.22222222222222222222", result.Numeric.String())
+		require.Equal(t, "0", result.NumericPtr.String()) // NULL
+
+		require.Equal(t, 1.1111111111111112, result.Floats.Decimal) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.DecimalPtr)
+		require.Equal(t, 2.2222222222222223, result.Floats.Numeric) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.NumericPtr)
+
+		// floating point
+		require.Equal(t, 3.3333333, result.Floats.Float) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.FloatPtr)
+		require.Equal(t, 4.444444444444445, result.Floats.Double) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.DoublePtr)
+		require.Equal(t, 5.555555555555555, result.Floats.Real) // precision loss
+		require.Equal(t, (*float64)(nil), result.Floats.RealPtr)
+	})
+
+	t.Run("should insert decimal", func(t *testing.T) {
+
+		insertQuery := Floats.INSERT(
+			Floats.AllColumns,
+		).MODEL(
+			floats{
+				Floats: model.Floats{
+					// overwritten by wrapped(floats) scope
+					Numeric:    0.1,
+					NumericPtr: testutils.Float64Ptr(0.1),
+					Decimal:    0.1,
+					DecimalPtr: testutils.Float64Ptr(0.1),
+
+					// not overwritten
+					Float:     0.2,
+					FloatPtr:  testutils.Float64Ptr(0.22),
+					Double:    0.3,
+					DoublePtr: testutils.Float64Ptr(0.33),
+					Real:      0.4,
+					RealPtr:   testutils.Float64Ptr(0.44),
+				},
+				Numeric:    decimal.RequireFromString("12.35"),
+				NumericPtr: decimal.RequireFromString("56.79"),
+				Decimal:    decimal.RequireFromString("91.23"),
+				DecimalPtr: decimal.RequireFromString("45.67"),
+			},
+		)
+
+		testutils.AssertDebugStatementSql(t, insertQuery, strings.Replace(`
+INSERT INTO test_sample.floats (''decimal'', decimal_ptr, ''numeric'', numeric_ptr, ''float'', float_ptr, ''double'', double_ptr, ''real'', real_ptr)
+VALUES ('91.23', '45.67', '12.35', '56.79', 0.2, 0.22, 0.3, 0.33, 0.4, 0.44);
+`, "''", "`", -1))
+		_, err := insertQuery.Exec(db)
+		require.NoError(t, err)
+
+		var result floats
+
+		err = SELECT(Floats.AllColumns).
+			FROM(Floats).
+			WHERE(Floats.Numeric.EQ(Float(12.35))).
+			Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "12.35", result.Numeric.String())
+		require.Equal(t, "56.79", result.NumericPtr.String())
+		require.Equal(t, "91.23", result.Decimal.String())
+		require.Equal(t, "45.67", result.DecimalPtr.String())
+
+		require.Equal(t, 12.35, result.Floats.Numeric)
+		require.Equal(t, 56.79, *result.Floats.NumericPtr)
+		require.Equal(t, 91.23, result.Floats.Decimal)
+		require.Equal(t, 45.67, *result.Floats.DecimalPtr)
+	})
 }

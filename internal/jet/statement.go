@@ -13,19 +13,30 @@ type Statement interface {
 	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
 	// Do not use it in production. Use it only for debug purposes.
 	DebugSql() (query string)
-	// Query executes statement over database connection db and stores row result in destination.
+	// Query executes statement over database connection/transaction db and stores row result in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 	Query(db qrm.DB, destination interface{}) error
-	// QueryContext executes statement with a context over database connection db and stores row result in destination.
+	// QueryContext executes statement with a context over database connection/transaction db and stores row result in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 	QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error
-
-	//Exec executes statement over db connection without returning any rows.
+	//Exec executes statement over db connection/transaction without returning any rows.
 	Exec(db qrm.DB) (sql.Result, error)
-	//Exec executes statement with context over db connection without returning any rows.
+	//Exec executes statement with context over db connection/transaction without returning any rows.
 	ExecContext(ctx context.Context, db qrm.DB) (sql.Result, error)
+	// Rows executes statements over db connection/transaction and returns rows
+	Rows(ctx context.Context, db qrm.DB) (*Rows, error)
+}
+
+// Rows wraps sql.Rows type to add query result mapping for Scan method
+type Rows struct {
+	*sql.Rows
+}
+
+// Scan will map the Row values into struct destination
+func (r *Rows) Scan(destination interface{}) error {
+	return qrm.ScanOneRowToDest(r.Rows, destination)
 }
 
 // SerializerStatement interface
@@ -97,6 +108,20 @@ func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db q
 	callLogger(ctx, s)
 
 	return db.ExecContext(ctx, query, args...)
+}
+
+func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.DB) (*Rows, error) {
+	query, args := s.Sql()
+
+	callLogger(ctx, s)
+
+	rows, err := db.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Rows{rows}, nil
 }
 
 func callLogger(ctx context.Context, statement Statement) {

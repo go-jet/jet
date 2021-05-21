@@ -4,8 +4,9 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/lib/pq"
 	"io/ioutil"
+
+	_ "github.com/lib/pq"
 
 	// dot import so that jet go code would resemble as much as native SQL
 	// dot import is not mandatory

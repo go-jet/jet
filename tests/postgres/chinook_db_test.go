@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/model"
@@ -17,7 +16,7 @@ func TestSelect(t *testing.T) {
 		SELECT(Album.AllColumns).
 		ORDER_BY(Album.AlbumId.ASC())
 
-	fmt.Println(stmt.DebugSql())
+	//fmt.Println(stmt.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "Album"."AlbumId" AS "Album.AlbumId",
@@ -330,8 +329,71 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	err := stmt.Query(db, &dest)
 
 	require.NoError(t, err)
+}
 
-	//spew.Dump(dest)
+func Test_SchemaRename(t *testing.T) {
+
+	Artist2 := Artist.FromSchema("chinook2")
+	Album2 := Album.FromSchema("chinook2")
+
+	first10Artist := Artist2.
+		SELECT(Artist2.AllColumns).
+		ORDER_BY(Artist2.ArtistId).
+		LIMIT(10).
+		AsTable("first10Artist")
+
+	artistID := Artist2.ArtistId.From(first10Artist)
+
+	first10Albums := Album2.
+		SELECT(Album2.AllColumns).
+		ORDER_BY(Album2.AlbumId).
+		LIMIT(10).
+		AsTable("first10Albums")
+
+	albumArtistID := Album2.ArtistId.From(first10Albums)
+
+	stmt := SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
+		FROM(first10Artist.
+			INNER_JOIN(first10Albums, artistID.EQ(albumArtistID))).
+		ORDER_BY(artistID)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
+     "first10Artist"."Artist.Name" AS "Artist.Name",
+     "first10Albums"."Album.AlbumId" AS "Album.AlbumId",
+     "first10Albums"."Album.Title" AS "Album.Title",
+     "first10Albums"."Album.ArtistId" AS "Album.ArtistId"
+FROM (
+          SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+               "Artist"."Name" AS "Artist.Name"
+          FROM chinook2."Artist"
+          ORDER BY "Artist"."ArtistId"
+          LIMIT 10
+     ) AS "first10Artist"
+     INNER JOIN (
+          SELECT "Album"."AlbumId" AS "Album.AlbumId",
+               "Album"."Title" AS "Album.Title",
+               "Album"."ArtistId" AS "Album.ArtistId"
+          FROM chinook2."Album"
+          ORDER BY "Album"."AlbumId"
+          LIMIT 10
+     ) AS "first10Albums" ON ("first10Artist"."Artist.ArtistId" = "first10Albums"."Album.ArtistId")
+ORDER BY "first10Artist"."Artist.ArtistId";
+`)
+
+	var dest []struct {
+		model.Artist
+
+		Album []model.Album
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	require.Len(t, dest, 2)
+	require.Equal(t, *dest[0].Artist.Name, "Apocalyptica")
+	require.Len(t, dest[0].Album, 1)
+	require.Equal(t, dest[0].Album[0].Title, "Plays Metallica By Four Cellos")
 }
 
 var album1 = model.Album{

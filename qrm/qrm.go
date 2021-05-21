@@ -2,9 +2,12 @@ package qrm
 
 import (
 	"context"
+	"database/sql"
 	"errors"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"fmt"
 	"reflect"
+
+	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 // ErrNoRows is returned by Query when query result set is empty
@@ -54,6 +57,52 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 	} else {
 		panic("jet: destination has to be a pointer to slice or pointer to struct")
 	}
+}
+
+// ScanOneRowToDest will scan one row into struct destination
+func ScanOneRowToDest(rows *sql.Rows, destPtr interface{}) error {
+	utils.MustBeInitializedPtr(destPtr, "jet: destination is nil")
+	utils.MustBe(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
+
+	scanContext, err := newScanContext(rows)
+
+	if err != nil {
+		return fmt.Errorf("failed to create scan context, %w", err)
+	}
+
+	if len(scanContext.row) == 0 {
+		return errors.New("empty row slice")
+	}
+
+	err = rows.Scan(scanContext.row...)
+
+	if err != nil {
+		return fmt.Errorf("rows scan error, %w", err)
+	}
+
+	destinationPtrType := reflect.TypeOf(destPtr)
+	tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
+	tempSliceValue := tempSlicePtrValue.Elem()
+
+	_, err = mapRowToSlice(scanContext, "", tempSlicePtrValue, nil)
+
+	if err != nil {
+		return fmt.Errorf("failed to map a row, %w", err)
+	}
+
+	// edge case when row result set contains only NULLs.
+	if tempSliceValue.Len() == 0 {
+		return nil
+	}
+
+	destValue := reflect.ValueOf(destPtr).Elem()
+	firstTempSliceValue := tempSliceValue.Index(0).Elem()
+
+	if destValue.Type().AssignableTo(firstTempSliceValue.Type()) {
+		destValue.Set(tempSliceValue.Index(0).Elem())
+	}
+
+	return nil
 }
 
 func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {

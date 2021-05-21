@@ -1,15 +1,19 @@
 package mysql
 
 import (
+	"context"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/enum"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/view"
-	"github.com/stretchr/testify/require"
 
-	"testing"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
@@ -743,4 +747,228 @@ LIMIT 3;
 	require.NoError(t, err)
 
 	require.Equal(t, len(dest), 3)
+}
+
+func Test_SchemaRename(t *testing.T) {
+	Film := Film.FromSchema("dvds2")
+	Language := Language.FromSchema("dvds2")
+
+	stmt := SELECT(
+		Film.FilmID,
+		Film.Title,
+		Language.LanguageID,
+		Language.Name,
+	).FROM(
+		Language.
+			INNER_JOIN(Film, Film.LanguageID.EQ(Language.LanguageID)),
+	).WHERE(
+		Language.LanguageID.EQ(Int(1)),
+	).ORDER_BY(
+		Language.LanguageID, Film.FilmID,
+	).LIMIT(5)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     language.language_id AS "language.language_id",
+     language.name AS "language.name"
+FROM dvds2.language
+     INNER JOIN dvds2.film ON (film.language_id = language.language_id)
+WHERE language.language_id = 1
+ORDER BY language.language_id, film.film_id
+LIMIT 5;
+`)
+
+	dest := struct {
+		model.Language
+		Films []model.Film
+	}{}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Len(t, dest.Films, 5)
+	require.Equal(t, dest.Films[0].Title, "ACADEMY DINOSAUR")
+	require.Equal(t, dest.Films[1].Title, "ACE GOLDFINGER")
+	require.Equal(t, dest.Films[4].Title, "AFRICAN EGG")
+}
+
+func TestLateral(t *testing.T) {
+	skipForMariaDB(t) // MariaDB does not implement LATERAL
+
+	languages := LATERAL(
+		SELECT(
+			Language.AllColumns,
+		).FROM(
+			Language,
+		).WHERE(
+			Language.Name.NOT_IN(String("spanish")).
+				AND(Film.LanguageID.EQ(Language.LanguageID)),
+		),
+	).AS("films")
+
+	stmt := SELECT(
+		Film.FilmID,
+		Film.Title,
+		languages.AllColumns(),
+	).FROM(
+		Film.CROSS_JOIN(languages),
+	).WHERE(
+		Film.FilmID.EQ(Int(1)),
+	).ORDER_BY(
+		Film.FilmID,
+	).LIMIT(1)
+
+	testutils.AssertDebugStatementSql(t, stmt, strings.Replace(`
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     films.''language.language_id'' AS "language.language_id",
+     films.''language.name'' AS "language.name",
+     films.''language.last_update'' AS "language.last_update"
+FROM dvds.film
+     CROSS JOIN LATERAL (
+          SELECT language.language_id AS "language.language_id",
+               language.name AS "language.name",
+               language.last_update AS "language.last_update"
+          FROM dvds.language
+          WHERE (language.name NOT IN ('spanish')) AND (film.language_id = language.language_id)
+     ) AS films
+WHERE film.film_id = 1
+ORDER BY film.film_id
+LIMIT 1;
+`, "''", "`", -1))
+
+	type FilmLanguage struct {
+		model.Film
+		model.Language
+	}
+
+	var dest []FilmLanguage
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest[0].Film.Title, "ACADEMY DINOSAUR")
+	require.Equal(t, dest[0].Language.Name, "English")
+
+	t.Run("implicit cross join", func(t *testing.T) {
+		stmt2 := SELECT(
+			Film.FilmID,
+			Film.Title,
+			languages.AllColumns(),
+		).FROM(
+			Film,
+			languages,
+		).WHERE(
+			Film.FilmID.EQ(Int(1)),
+		).ORDER_BY(
+			Film.FilmID,
+		).LIMIT(1)
+
+		testutils.AssertDebugStatementSql(t, stmt2, strings.Replace(`
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     films.''language.language_id'' AS "language.language_id",
+     films.''language.name'' AS "language.name",
+     films.''language.last_update'' AS "language.last_update"
+FROM dvds.film,
+     LATERAL (
+          SELECT language.language_id AS "language.language_id",
+               language.name AS "language.name",
+               language.last_update AS "language.last_update"
+          FROM dvds.language
+          WHERE (language.name NOT IN ('spanish')) AND (film.language_id = language.language_id)
+     ) AS films
+WHERE film.film_id = 1
+ORDER BY film.film_id
+LIMIT 1;
+`, "''", "`", -1))
+
+		var dest2 []FilmLanguage
+
+		err2 := stmt2.Query(db, &dest2)
+		require.NoError(t, err2)
+		require.Equal(t, dest, dest2)
+	})
+}
+
+func TestRowsScan(t *testing.T) {
+
+	stmt := SELECT(
+		Inventory.AllColumns,
+	).FROM(
+		Inventory,
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
+
+	rows, err := stmt.Rows(context.Background(), db)
+	require.NoError(t, err)
+
+	for rows.Next() {
+		var inventory model.Inventory
+		err = rows.Scan(&inventory)
+		require.NoError(t, err)
+
+		require.NotEqual(t, inventory.InventoryID, uint32(0))
+		require.NotEqual(t, inventory.FilmID, uint16(0))
+		require.NotEqual(t, inventory.StoreID, uint16(0))
+		require.NotEqual(t, inventory.LastUpdate, time.Time{})
+
+		if inventory.InventoryID == 2103 {
+			require.Equal(t, inventory.FilmID, uint16(456))
+			require.Equal(t, inventory.StoreID, uint8(2))
+			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2006-02-15T05:09:17Z")
+		}
+	}
+
+	err = rows.Close()
+	require.NoError(t, err)
+	err = rows.Err()
+	require.NoError(t, err)
+
+	requireLogged(t, stmt)
+}
+
+func TestScanNumericToNumber(t *testing.T) {
+	type Number struct {
+		Int8    int8
+		UInt8   uint8
+		Int16   int16
+		UInt16  uint16
+		Int32   int32
+		UInt32  uint32
+		Int64   int64
+		UInt64  uint64
+		Float32 float32
+		Float64 float64
+	}
+
+	numeric := CAST(Decimal("1234567890.111")).AS_DECIMAL()
+
+	stmt := SELECT(
+		numeric.AS("number.int8"),
+		numeric.AS("number.uint8"),
+		numeric.AS("number.int16"),
+		numeric.AS("number.uint16"),
+		numeric.AS("number.int32"),
+		numeric.AS("number.uint32"),
+		numeric.AS("number.int64"),
+		numeric.AS("number.uint64"),
+		numeric.AS("number.float32"),
+		numeric.AS("number.float64"),
+	)
+
+	var number Number
+	err := stmt.Query(db, &number)
+	require.NoError(t, err)
+
+	require.Equal(t, number.Int8, int8(-46))     // overflow
+	require.Equal(t, number.UInt8, uint8(210))   // overflow
+	require.Equal(t, number.Int16, int16(722))   // overflow
+	require.Equal(t, number.UInt16, uint16(722)) // overflow
+	require.Equal(t, number.Int32, int32(1234567890))
+	require.Equal(t, number.UInt32, uint32(1234567890))
+	require.Equal(t, number.Int64, int64(1234567890))
+	require.Equal(t, number.UInt64, uint64(1234567890))
+	require.Equal(t, number.Float32, float32(1.234568e+09))
+	require.Equal(t, number.Float64, float64(1.23456789e+09))
 }

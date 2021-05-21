@@ -15,20 +15,27 @@ type Table interface {
 	columns() []Column
 	SchemaName() string
 	TableName() string
-	AS(alias string)
+	Alias() string
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
-func NewTable(schemaName, name string, columns ...ColumnExpression) SerializerTable {
+func NewTable(schemaName, name, alias string, columns ...ColumnExpression) SerializerTable {
 
 	t := tableImpl{
 		schemaName: schemaName,
 		name:       name,
+		alias:      alias,
 		columnList: columns,
 	}
 
+	columnTableName := name
+
+	if alias != "" {
+		columnTableName = alias
+	}
+
 	for _, c := range columns {
-		c.setTableName(name)
+		c.setTableName(columnTableName)
 	}
 
 	return &t
@@ -39,14 +46,6 @@ type tableImpl struct {
 	name       string
 	alias      string
 	columnList []ColumnExpression
-}
-
-func (t *tableImpl) AS(alias string) {
-	t.alias = alias
-
-	for _, c := range t.columnList {
-		c.setTableName(alias)
-	}
 }
 
 func (t *tableImpl) SchemaName() string {
@@ -67,13 +66,21 @@ func (t *tableImpl) columns() []Column {
 	return ret
 }
 
+func (t *tableImpl) Alias() string {
+	return t.alias
+}
+
 func (t *tableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
 		panic("jet: tableImpl is nil")
 	}
 
-	out.WriteIdentifier(t.schemaName)
-	out.WriteString(".")
+	// Use default schema if the schema name is not set
+	if len(t.schemaName) > 0 {
+		out.WriteIdentifier(t.schemaName)
+		out.WriteString(".")
+	}
+
 	out.WriteIdentifier(t.name)
 
 	if len(t.alias) > 0 {
@@ -129,9 +136,6 @@ func (t *joinTableImpl) TableName() string {
 	return ""
 }
 
-func (t *joinTableImpl) AS(alias string) {
-}
-
 func (t *joinTableImpl) columns() []Column {
 	var ret []Column
 
@@ -143,6 +147,10 @@ func (t *joinTableImpl) columns() []Column {
 	}
 
 	return ret
+}
+
+func (t *joinTableImpl) Alias() string {
+	return ""
 }
 
 func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {

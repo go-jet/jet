@@ -1,15 +1,18 @@
 package postgres
 
 import (
-	"fmt"
+	"context"
+	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var oneInventoryQuery = Inventory.
@@ -93,7 +96,7 @@ func TestScanToStruct(t *testing.T) {
 		SELECT(Inventory.AllColumns).
 		ORDER_BY(Inventory.InventoryID)
 
-	fmt.Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	t.Run("one struct", func(t *testing.T) {
 		dest := model.Inventory{}
@@ -721,6 +724,89 @@ func TestStructScanAllNull(t *testing.T) {
 		Null1 *int
 		Null2 *int
 	}{})
+}
+
+func TestRowsScan(t *testing.T) {
+
+	stmt := SELECT(
+		Inventory.AllColumns,
+	).FROM(
+		Inventory,
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
+
+	rows, err := stmt.Rows(context.Background(), db)
+	require.NoError(t, err)
+
+	for rows.Next() {
+		var inventory model.Inventory
+		err = rows.Scan(&inventory)
+		require.NoError(t, err)
+
+		require.NotEqual(t, inventory.InventoryID, int32(0))
+		require.NotEqual(t, inventory.FilmID, int16(0))
+		require.NotEqual(t, inventory.StoreID, int16(0))
+		require.NotEqual(t, inventory.LastUpdate, time.Time{})
+
+		if inventory.InventoryID == 2103 {
+			require.Equal(t, inventory.FilmID, int16(456))
+			require.Equal(t, inventory.StoreID, int16(2))
+			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2006-02-15T10:09:17Z")
+		}
+	}
+
+	err = rows.Close()
+	require.NoError(t, err)
+	err = rows.Err()
+	require.NoError(t, err)
+
+	requireLogged(t, stmt)
+}
+
+func TestScanNumericToNumber(t *testing.T) {
+	type Number struct {
+		Int8    int8
+		UInt8   uint8
+		Int16   int16
+		UInt16  uint16
+		Int32   int32
+		UInt32  uint32
+		Int64   int64
+		UInt64  uint64
+		Float32 float32
+		Float64 float64
+	}
+
+	numeric := CAST(Decimal("1234567890.111")).AS_NUMERIC()
+
+	stmt := SELECT(
+		numeric.AS("number.int8"),
+		numeric.AS("number.uint8"),
+		numeric.AS("number.int16"),
+		numeric.AS("number.uint16"),
+		numeric.AS("number.int32"),
+		numeric.AS("number.uint32"),
+		numeric.AS("number.int64"),
+		numeric.AS("number.uint64"),
+		numeric.AS("number.float32"),
+		numeric.AS("number.float64"),
+	)
+
+	var number Number
+	err := stmt.Query(db, &number)
+	require.NoError(t, err)
+
+	require.Equal(t, number.Int8, int8(-46))     // overflow
+	require.Equal(t, number.UInt8, uint8(210))   // overflow
+	require.Equal(t, number.Int16, int16(722))   // overflow
+	require.Equal(t, number.UInt16, uint16(722)) // overflow
+	require.Equal(t, number.Int32, int32(1234567890))
+	require.Equal(t, number.UInt32, uint32(1234567890))
+	require.Equal(t, number.Int64, int64(1234567890))
+	require.Equal(t, number.UInt64, uint64(1234567890))
+	require.Equal(t, number.Float32, float32(1.234568e+09))
+	require.Equal(t, number.Float64, float64(1.234567890111e+09))
 }
 
 var address256 = model.Address{

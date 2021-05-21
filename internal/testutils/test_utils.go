@@ -8,6 +8,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
@@ -89,7 +90,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args := query.Sql()
-	require.Equal(t, queryStr, expectedQuery)
+	assertQueryString(t, queryStr, expectedQuery)
 
 	if len(expectedArgs) == 0 {
 		return
@@ -115,8 +116,8 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 		AssertDeepEqual(t, args, expectedArgs, "arguments are not equal")
 	}
 
-	debuqSql := query.DebugSql()
-	require.Equal(t, debuqSql, expectedQuery)
+	debugSql := query.DebugSql()
+	assertQueryString(t, debugSql, expectedQuery)
 }
 
 // AssertSerialize checks if clause serialize produces expected query and args
@@ -133,24 +134,24 @@ func AssertSerialize(t *testing.T, dialect jet.Dialect, serializer jet.Serialize
 	}
 }
 
-// AssertClauseSerialize checks if clause serialize produces expected query and args
-func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Clause, query string, args ...interface{}) {
-	out := jet.SQLBuilder{Dialect: dialect}
-	clause.Serialize(jet.SelectStatementType, &out)
-
-	require.Equal(t, out.Buff.String(), query)
-
-	if len(args) > 0 {
-		AssertDeepEqual(t, out.Args, args)
-	}
-}
-
 // AssertDebugSerialize checks if clause serialize produces expected debug query and args
 func AssertDebugSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
 	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
 	jet.Serialize(clause, jet.SelectStatementType, &out)
 
 	AssertDeepEqual(t, out.Buff.String(), query)
+
+	if len(args) > 0 {
+		AssertDeepEqual(t, out.Args, args)
+	}
+}
+
+// AssertClauseSerialize checks if clause serialize produces expected query and args
+func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Clause, query string, args ...interface{}) {
+	out := jet.SQLBuilder{Dialect: dialect}
+	clause.Serialize(jet.SelectStatementType, &out)
+
+	require.Equal(t, out.Buff.String(), query)
 
 	if len(args) > 0 {
 		AssertDeepEqual(t, out.Args, args)
@@ -194,7 +195,7 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 		require.Equal(t, r, errString)
 	}()
 
-	stmt.Query(db, dest)
+	_ = stmt.Query(db, dest)
 }
 
 // AssertFileContent check if file content at filePath contains expectedContent text.
@@ -223,7 +224,24 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
 func AssertDeepEqual(t *testing.T, actual, expected interface{}, msg ...string) {
-	require.True(t, cmp.Equal(actual, expected), msg)
+	if !assert.True(t, cmp.Equal(actual, expected), msg) {
+		printDiff(actual, expected)
+		t.FailNow()
+	}
+}
+
+func assertQueryString(t *testing.T, actual, expected string) {
+	if !assert.Equal(t, actual, expected) {
+		printDiff(actual, expected)
+		t.FailNow()
+	}
+}
+
+func printDiff(actual, expected interface{}) {
+	fmt.Println("Actual: ")
+	fmt.Println(actual)
+	fmt.Println("Expected: ")
+	fmt.Println(expected)
 }
 
 // BoolPtr returns address of bool parameter

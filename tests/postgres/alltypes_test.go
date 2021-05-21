@@ -1,9 +1,12 @@
 package postgres
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/google/uuid"
 
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
@@ -11,10 +14,11 @@ import (
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/view"
 	"github.com/go-jet/jet/v2/tests/testdata/results/common"
-	"github.com/google/uuid"
 )
 
 func TestAllTypesSelect(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string
+
 	dest := []model.AllTypes{}
 
 	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
@@ -25,6 +29,8 @@ func TestAllTypesSelect(t *testing.T) {
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string
+
 	type AllTypesView model.AllTypes
 
 	dest := []AllTypesView{}
@@ -37,6 +43,8 @@ func TestAllTypesViewSelect(t *testing.T) {
 }
 
 func TestAllTypesInsertModel(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver does not handle well time with time zone
+
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(allTypesRow0).
 		MODEL(&allTypesRow1).
@@ -52,6 +60,8 @@ func TestAllTypesInsertModel(t *testing.T) {
 }
 
 func TestAllTypesInsertQuery(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver does not handle well time with time zone
+
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		QUERY(
 			AllTypes.
@@ -70,6 +80,7 @@ func TestAllTypesInsertQuery(t *testing.T) {
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
+	skipForPgxDriver(t)
 
 	subQuery := SELECT(AllTypes.AllColumns).
 		FROM(AllTypes).
@@ -221,11 +232,15 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.DatePtr.IS_NOT_NULL().AS("result.is_not_null"),
 		AllTypes.SmallIntPtr.IN(Int(11), Int(22)).AS("result.in"),
 		AllTypes.SmallIntPtr.IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.in_select"),
+
+		Raw("CURRENT_USER").AS("result.raw"),
+		Raw("#1 + COALESCE(all_types.small_int_ptr, 0) + #2", RawArgs{"#1": 78, "#2": 56}).AS("result.raw_arg"),
+		Raw("#1 + all_types.integer + #2 + #1 + #3 + #4",
+			RawArgs{"#1": 11, "#2": 22, "#3": 33, "#4": 44}).AS("result.raw_arg2"),
+
 		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int(22), NULL).AS("result.not_in"),
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
 	).LIMIT(2)
-
-	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT all_types.integer IS NULL AS "result.is_null",
@@ -235,14 +250,17 @@ SELECT all_types.integer IS NULL AS "result.is_null",
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
      ))) AS "result.in_select",
-     (all_types.small_int_ptr NOT IN ($3, $4, NULL)) AS "result.not_in",
+     (CURRENT_USER) AS "result.raw",
+     ($3 + COALESCE(all_types.small_int_ptr, 0) + $4) AS "result.raw_arg",
+     ($5 + all_types.integer + $6 + $5 + $7 + $8) AS "result.raw_arg2",
+     (all_types.small_int_ptr NOT IN ($9, $10, NULL)) AS "result.not_in",
      (all_types.small_int_ptr NOT IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
      ))) AS "result.not_in_select"
 FROM test_sample.all_types
-LIMIT $5;
-`, int64(11), int64(22), int64(11), int64(22), int64(2))
+LIMIT $11;
+`, int64(11), int64(22), 78, 56, 11, 22, 33, 44, int64(11), int64(22), int64(2))
 
 	var dest []struct {
 		common.ExpressionTestResult `alias:"result.*"`
@@ -261,6 +279,9 @@ LIMIT $5;
 		"IsNotNull": true,
 		"In": false,
 		"InSelect": false,
+		"Raw": "jet",
+		"RawArg": 148,
+		"RawArg2": 421,
 		"NotIn": null,
 		"NotInSelect": true
 	},
@@ -269,6 +290,9 @@ LIMIT $5;
 		"IsNotNull": false,
 		"In": null,
 		"InSelect": null,
+		"Raw": "jet",
+		"RawArg": 134,
+		"RawArg2": 421,
 		"NotIn": null,
 		"NotInSelect": null
 	}
@@ -277,6 +301,8 @@ LIMIT $5;
 }
 
 func TestExpressionCast(t *testing.T) {
+
+	skipForPgxDriver(t) // for some reason, pgx driver, 150:char(12) returns as int value
 
 	query := AllTypes.SELECT(
 		CAST(Int(150)).AS_CHAR(12).AS("char12"),
@@ -323,6 +349,8 @@ func TestExpressionCast(t *testing.T) {
 }
 
 func TestStringOperators(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns text column as int value
+
 	query := AllTypes.SELECT(
 		AllTypes.Text.EQ(AllTypes.Char),
 		AllTypes.Text.EQ(String("Text")),
@@ -838,6 +866,7 @@ func TestInterval(t *testing.T) {
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string value
 
 	type expected struct {
 		sql  string
@@ -1015,6 +1044,7 @@ FROM`
 }
 
 func TestTimeLiterals(t *testing.T) {
+	skipForPgxDriver(t) // pgx driver returns time with time zone as string
 
 	loc, err := time.LoadLocation("Europe/Berlin")
 	require.NoError(t, err)

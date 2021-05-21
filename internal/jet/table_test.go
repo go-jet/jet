@@ -6,7 +6,7 @@ import (
 )
 
 func TestNewTable(t *testing.T) {
-	newTable := NewTable("schema", "table", IntegerColumn("intCol"))
+	newTable := NewTable("schema", "table", "", IntegerColumn("intCol"))
 
 	require.Equal(t, newTable.SchemaName(), "schema")
 	require.Equal(t, newTable.TableName(), "table")
@@ -16,8 +16,8 @@ func TestNewTable(t *testing.T) {
 }
 
 func TestNewJoinTable(t *testing.T) {
-	newTable1 := NewTable("schema", "table", IntegerColumn("intCol1"))
-	newTable2 := NewTable("schema", "table2", IntegerColumn("intCol2"))
+	newTable1 := NewTable("schema", "table", "", IntegerColumn("intCol1"))
+	newTable2 := NewTable("schema", "table2", "", IntegerColumn("intCol2"))
 
 	joinTable := NewJoinTable(newTable1, newTable2, InnerJoin, IntegerColumn("intCol1").EQ(IntegerColumn("intCol2")))
 

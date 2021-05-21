@@ -67,8 +67,7 @@ type integerLiteralExpression struct {
 	integerInterfaceImpl
 }
 
-// Int creates new integer literal
-func Int(value int64) IntegerExpression {
+func intLiteral(value interface{}) IntegerExpression {
 	numLiteral := &integerLiteralExpression{}
 
 	numLiteral.literalExpressionImpl = *literal(value)
@@ -77,6 +76,46 @@ func Int(value int64) IntegerExpression {
 	numLiteral.integerInterfaceImpl.parent = numLiteral
 
 	return numLiteral
+}
+
+// Int creates a new 64 bit signed integer literal
+func Int(value int64) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Int8 creates a new 8 bit signed integer literal
+func Int8(value int8) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Int16 creates a new 16 bit signed integer literal
+func Int16(value int16) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Int32 creates a new 32 bit signed integer literal
+func Int32(value int32) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint8 creates a new 8 bit unsigned integer literal
+func Uint8(value uint8) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint16 creates a new 16 bit unsigned integer literal
+func Uint16(value uint16) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint32 creates a new 32 bit unsigned integer literal
+func Uint32(value uint32) IntegerExpression {
+	return intLiteral(value)
+}
+
+// Uint64 creates a new 64 bit unsigned integer literal
+func Uint64(value uint64) IntegerExpression {
+	return intLiteral(value)
 }
 
 //---------------------------------------------------//
@@ -101,8 +140,18 @@ type floatLiteral struct {
 	literalExpressionImpl
 }
 
-// Float creates new float literal
+// Float creates new float literal from float64 value
 func Float(value float64) FloatExpression {
+	floatLiteral := floatLiteral{}
+	floatLiteral.literalExpressionImpl = *literal(value)
+
+	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
+
+	return &floatLiteral
+}
+
+// Decimal creates new float literal from string value
+func Decimal(value string) FloatExpression {
 	floatLiteral := floatLiteral{}
 	floatLiteral.literalExpressionImpl = *literal(value)
 
@@ -345,18 +394,94 @@ func WRAP(expression ...Expression) Expression {
 type rawExpression struct {
 	ExpressionInterfaceImpl
 
-	Raw string
+	Raw           string
+	NamedArgument map[string]interface{}
+	noWrap        bool
 }
 
 func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.WriteString(n.Raw)
+	if !n.noWrap && !contains(options, NoWrap) {
+		out.WriteByte('(')
+	}
+
+	out.insertRawQuery(n.Raw, n.NamedArgument)
+
+	if !n.noWrap && !contains(options, NoWrap) {
+		out.WriteByte(')')
+	}
 }
 
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
-func Raw(raw string, parent ...Expression) Expression {
-	rawExp := &rawExpression{Raw: raw}
+func Raw(raw string, namedArgs ...map[string]interface{}) Expression {
+	var namedArguments map[string]interface{}
+
+	if len(namedArgs) > 0 {
+		namedArguments = namedArgs[0]
+	}
+
+	rawExp := &rawExpression{
+		Raw:           raw,
+		NamedArgument: namedArguments,
+	}
+	rawExp.ExpressionInterfaceImpl.Parent = rawExp
+
+	return rawExp
+}
+
+// RawWithParent is a Raw constructor used for construction dialect specific expression
+func RawWithParent(raw string, parent ...Expression) Expression {
+	rawExp := &rawExpression{
+		Raw:    raw,
+		noWrap: true,
+	}
 	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
 
 	return rawExp
+}
+
+// RawInt helper that for integer expressions
+func RawInt(raw string, namedArgs ...map[string]interface{}) IntegerExpression {
+	return IntExp(Raw(raw, namedArgs...))
+}
+
+// RawFloat helper that for float expressions
+func RawFloat(raw string, namedArgs ...map[string]interface{}) FloatExpression {
+	return FloatExp(Raw(raw, namedArgs...))
+}
+
+// RawString helper that for string expressions
+func RawString(raw string, namedArgs ...map[string]interface{}) StringExpression {
+	return StringExp(Raw(raw, namedArgs...))
+}
+
+// RawTime helper that for time expressions
+func RawTime(raw string, namedArgs ...map[string]interface{}) TimeExpression {
+	return TimeExp(Raw(raw, namedArgs...))
+}
+
+// RawTimez helper that for time with time zone expressions
+func RawTimez(raw string, namedArgs ...map[string]interface{}) TimezExpression {
+	return TimezExp(Raw(raw, namedArgs...))
+}
+
+// RawTimestamp helper that for timestamp expressions
+func RawTimestamp(raw string, namedArgs ...map[string]interface{}) TimestampExpression {
+	return TimestampExp(Raw(raw, namedArgs...))
+}
+
+// RawTimestampz helper that for timestamp with time zone expressions
+func RawTimestampz(raw string, namedArgs ...map[string]interface{}) TimestampzExpression {
+	return TimestampzExp(Raw(raw, namedArgs...))
+}
+
+// RawDate helper that for date expressions
+func RawDate(raw string, namedArgs ...map[string]interface{}) DateExpression {
+	return DateExp(Raw(raw, namedArgs...))
+}
+
+// UUID is a helper function to create string literal expression from uuid object
+// value can be any uuid type with a String method
+func UUID(value fmt.Stringer) StringExpression {
+	return String(value.String())
 }

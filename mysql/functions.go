@@ -253,8 +253,3 @@ var EXISTS = jet.EXISTS
 
 // CASE create CASE operator with optional list of expressions
 var CASE = jet.CASE
-
-//----------------- Bit operators ---------------//
-
-// BIT_NOT inverts every bit in integer expression
-var BIT_NOT = jet.BIT_NOT

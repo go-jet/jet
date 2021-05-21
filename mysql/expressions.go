@@ -3,7 +3,7 @@ package mysql
 import "github.com/go-jet/jet/v2/internal/jet"
 
 // Expression is common interface for all expressions.
-// Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
+// Can be Bool, Int, Float, String, Date, Time or Timestamp expressions.
 type Expression = jet.Expression
 
 // BoolExpression interface
@@ -70,9 +70,25 @@ var DateTimeExp = jet.TimestampExp
 // Does not add sql cast to generated sql builder output.
 var TimestampExp = jet.TimestampExp
 
+// RawArgs is type used to pass optional arguments to Raw method
+type RawArgs = map[string]interface{}
+
 // Raw can be used for any unsupported functions, operators or expressions.
 // For example: Raw("current_database()")
-var Raw = jet.Raw
+// Raw helper methods for each of the mysql types
+var (
+	Raw = jet.Raw
+
+	RawInt       = jet.RawInt
+	RawFloat     = jet.RawFloat
+	RawString    = jet.RawString
+	RawTime      = jet.RawTime
+	RawTimestamp = jet.RawTimestamp
+	RawDate      = jet.RawDate
+)
+
+// Func can be used to call an custom or as of yet unsupported function in the database.
+var Func = jet.Func
 
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue

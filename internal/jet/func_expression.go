@@ -801,3 +801,8 @@ func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 
 	return timestampzFunc
 }
+
+// Func can be used to call an custom or as of yet unsupported function in the database.
+func Func(name string, expressions ...Expression) Expression {
+	return newFunc(name, expressions, nil)
+}

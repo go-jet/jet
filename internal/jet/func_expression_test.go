@@ -176,3 +176,7 @@ func TestTO_ASCII(t *testing.T) {
 	assertClauseSerialize(t, TO_ASCII(String("Karel")), `TO_ASCII($1)`, "Karel")
 	assertClauseSerialize(t, TO_ASCII(String("Karel")), `TO_ASCII($1)`, "Karel")
 }
+
+func TestFunc(t *testing.T) {
+	assertClauseSerialize(t, Func("FOO", String("test"), NULL, MAX(Int(1))), "FOO($1, NULL, MAX($2))", "test", int64(1))
+}

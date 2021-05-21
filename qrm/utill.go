@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/v2/qrm/internal"
 	"github.com/google/uuid"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -182,18 +183,34 @@ func isIntegerType(value reflect.Type) bool {
 	return false
 }
 
-func tryAssign(source, destination reflect.Value) bool {
-	if source.Type().ConvertibleTo(destination.Type()) {
-		source = source.Convert(destination.Type())
-	}
+func isNumber(valueType reflect.Type) bool {
+	return isIntegerType(valueType) || valueType == float64Type || valueType == float32Type
+}
 
-	if isIntegerType(source.Type()) && destination.Type() == boolType {
+func tryAssign(source, destination reflect.Value) bool {
+
+	switch {
+	case source.Type().ConvertibleTo(destination.Type()):
+		source = source.Convert(destination.Type())
+	case isIntegerType(source.Type()) && destination.Type() == boolType:
 		intValue := source.Int()
 
 		if intValue == 1 {
 			source = reflect.ValueOf(true)
 		} else if intValue == 0 {
 			source = reflect.ValueOf(false)
+		}
+	case source.Type() == stringType && isNumber(destination.Type()):
+		// if source is string and destination is a number(int8, int32, float32, ...), we first parse string to float64 number
+		// and then parsed number is converted into destination type
+		f, err := strconv.ParseFloat(source.String(), 64)
+		if err != nil {
+			return false
+		}
+		source = reflect.ValueOf(f)
+
+		if source.Type().ConvertibleTo(destination.Type()) {
+			source = source.Convert(destination.Type())
 		}
 	}
 
@@ -281,6 +298,9 @@ var int32Type = reflect.TypeOf(int32(1))
 var uint32Type = reflect.TypeOf(uint32(1))
 var int64Type = reflect.TypeOf(int64(1))
 var uint64Type = reflect.TypeOf(uint64(1))
+var float32Type = reflect.TypeOf(float32(1))
+var float64Type = reflect.TypeOf(float64(1))
+var stringType = reflect.TypeOf("")
 
 var nullBoolType = reflect.TypeOf(sql.NullBool{})
 var nullInt8Type = reflect.TypeOf(internal.NullInt8{})
@@ -308,7 +328,7 @@ func newScanType(columnType *sql.ColumnType) reflect.Type {
 		return nullStringType
 	case "FLOAT4":
 		return nullFloat32Type
-	case "FLOAT8", "NUMERIC", "DECIMAL", "FLOAT", "DOUBLE":
+	case "FLOAT8", "FLOAT", "DOUBLE":
 		return nullFloat64Type
 	case "BOOL":
 		return nullBoolType

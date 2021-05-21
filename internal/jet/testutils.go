@@ -26,7 +26,7 @@ var (
 	table1ColBool       = BoolColumn("col_bool")
 	table1ColDate       = DateColumn("col_date")
 )
-var table1 = NewTable("db", "table1", table1Col1, table1ColInt, table1ColFloat, table1Col3, table1ColTime, table1ColTimez, table1ColBool, table1ColDate, table1ColTimestamp, table1ColTimestampz)
+var table1 = NewTable("db", "table1", "", table1Col1, table1ColInt, table1ColFloat, table1Col3, table1ColTime, table1ColTimez, table1ColBool, table1ColDate, table1ColTimestamp, table1ColTimestampz)
 
 var (
 	table2Col3          = IntegerColumn("col3")
@@ -41,14 +41,14 @@ var (
 	table2ColTimestampz = TimestampzColumn("col_timestampz")
 	table2ColDate       = DateColumn("col_date")
 )
-var table2 = NewTable("db", "table2", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz)
+var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz)
 
 var (
 	table3Col1   = IntegerColumn("col1")
 	table3ColInt = IntegerColumn("col_int")
 	table3StrCol = StringColumn("col2")
 )
-var table3 = NewTable("db", "table3", table3Col1, table3ColInt, table3StrCol)
+var table3 = NewTable("db", "table3", "", table3Col1, table3ColInt, table3StrCol)
 
 func assertClauseSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
 	out := SQLBuilder{Dialect: defaultDialect}
