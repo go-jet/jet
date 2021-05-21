@@ -183,6 +183,10 @@ func isIntegerType(value reflect.Type) bool {
 	return false
 }
 
+func isNumber(valueType reflect.Type) bool {
+	return isIntegerType(valueType) || valueType == float64Type || valueType == float32Type
+}
+
 func tryAssign(source, destination reflect.Value) bool {
 
 	switch {
@@ -196,13 +200,18 @@ func tryAssign(source, destination reflect.Value) bool {
 		} else if intValue == 0 {
 			source = reflect.ValueOf(false)
 		}
-	case source.Type() == stringType && destination.Type() == float64Type:
-		strValue := source.String()
-		f, err := strconv.ParseFloat(strValue, 64)
+	case source.Type() == stringType && isNumber(destination.Type()):
+		// if source is string and destination is a number(int8, int32, float32, ...), we first parse string to float64 number
+		// and then parsed number is converted into destination type
+		f, err := strconv.ParseFloat(source.String(), 64)
 		if err != nil {
 			return false
 		}
 		source = reflect.ValueOf(f)
+
+		if source.Type().ConvertibleTo(destination.Type()) {
+			source = source.Convert(destination.Type())
+		}
 	}
 
 	if source.Type().AssignableTo(destination.Type()) {
@@ -289,6 +298,7 @@ var int32Type = reflect.TypeOf(int32(1))
 var uint32Type = reflect.TypeOf(uint32(1))
 var int64Type = reflect.TypeOf(int64(1))
 var uint64Type = reflect.TypeOf(uint64(1))
+var float32Type = reflect.TypeOf(float32(1))
 var float64Type = reflect.TypeOf(float64(1))
 var stringType = reflect.TypeOf("")
 

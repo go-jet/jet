@@ -927,3 +927,48 @@ func TestRowsScan(t *testing.T) {
 
 	requireLogged(t, stmt)
 }
+
+func TestScanNumericToNumber(t *testing.T) {
+	type Number struct {
+		Int8    int8
+		UInt8   uint8
+		Int16   int16
+		UInt16  uint16
+		Int32   int32
+		UInt32  uint32
+		Int64   int64
+		UInt64  uint64
+		Float32 float32
+		Float64 float64
+	}
+
+	numeric := CAST(Decimal("1234567890.111")).AS_DECIMAL()
+
+	stmt := SELECT(
+		numeric.AS("number.int8"),
+		numeric.AS("number.uint8"),
+		numeric.AS("number.int16"),
+		numeric.AS("number.uint16"),
+		numeric.AS("number.int32"),
+		numeric.AS("number.uint32"),
+		numeric.AS("number.int64"),
+		numeric.AS("number.uint64"),
+		numeric.AS("number.float32"),
+		numeric.AS("number.float64"),
+	)
+
+	var number Number
+	err := stmt.Query(db, &number)
+	require.NoError(t, err)
+
+	require.Equal(t, number.Int8, int8(-46))     // overflow
+	require.Equal(t, number.UInt8, uint8(210))   // overflow
+	require.Equal(t, number.Int16, int16(722))   // overflow
+	require.Equal(t, number.UInt16, uint16(722)) // overflow
+	require.Equal(t, number.Int32, int32(1234567890))
+	require.Equal(t, number.UInt32, uint32(1234567890))
+	require.Equal(t, number.Int64, int64(1234567890))
+	require.Equal(t, number.UInt64, uint64(1234567890))
+	require.Equal(t, number.Float32, float32(1.234568e+09))
+	require.Equal(t, number.Float64, float64(1.23456789e+09))
+}
