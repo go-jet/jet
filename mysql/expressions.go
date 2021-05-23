@@ -90,5 +90,8 @@ var (
 // Func can be used to call an custom or as of yet unsupported function in the database.
 var Func = jet.Func
 
+// WRAP wraps list of expressions with brackets '(' and ')'
+var WRAP = jet.WRAP
+
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue
