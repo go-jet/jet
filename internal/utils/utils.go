@@ -10,22 +10,11 @@ import (
 	"reflect"
 	"strings"
 	"time"
-	"unicode"
 )
 
 // ToGoIdentifier converts database to Go identifier.
 func ToGoIdentifier(databaseIdentifier string) string {
 	return snaker.SnakeToCamel(replaceInvalidChars(databaseIdentifier))
-}
-
-// ToGoEnumValueIdentifier converts enum value name to Go identifier name.
-func ToGoEnumValueIdentifier(enumName, enumValue string) string {
-	enumValueIdentifier := ToGoIdentifier(enumValue)
-	if !unicode.IsLetter([]rune(enumValueIdentifier)[0]) {
-		return ToGoIdentifier(enumName) + enumValueIdentifier
-	}
-
-	return enumValueIdentifier
 }
 
 // ToGoFileName converts database identifier to Go file name.
@@ -35,7 +24,11 @@ func ToGoFileName(databaseIdentifier string) string {
 
 // SaveGoFile saves go file at folder dir, with name fileName and contents text.
 func SaveGoFile(dirPath, fileName string, text []byte) error {
-	newGoFilePath := filepath.Join(dirPath, fileName) + ".go"
+	newGoFilePath := filepath.Join(dirPath, fileName)
+
+	if !strings.HasSuffix(newGoFilePath, ".go") {
+		newGoFilePath += ".go"
+	}
 
 	file, err := os.Create(newGoFilePath)
 
@@ -157,13 +150,6 @@ func TypeMustBe(v reflect.Type, kind reflect.Kind, errorStr string) {
 func MustBeInitializedPtr(val interface{}, errorStr string) {
 	if IsNil(val) {
 		panic(errorStr)
-	}
-}
-
-// PanicOnError panics if err is not nil
-func PanicOnError(err error) {
-	if err != nil {
-		panic(err)
 	}
 }
 

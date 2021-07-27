@@ -1,7 +1,7 @@
 package testutils
 
 import (
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"strings"
 	"time"
 )
@@ -10,7 +10,7 @@ import (
 func Date(t string) *time.Time {
 	newTime, err := time.Parse("2006-01-02", t)
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return &newTime
 }
@@ -26,7 +26,7 @@ func TimestampWithoutTimeZone(t string, precision int) *time.Time {
 
 	newTime, err := time.Parse("2006-01-02 15:04:05"+precisionStr+" +0000", t+" +0000")
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return &newTime
 }
@@ -35,7 +35,7 @@ func TimestampWithoutTimeZone(t string, precision int) *time.Time {
 func TimeWithoutTimeZone(t string) *time.Time {
 	newTime, err := time.Parse("15:04:05", t)
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return &newTime
 }
@@ -44,7 +44,7 @@ func TimeWithoutTimeZone(t string) *time.Time {
 func TimeWithTimeZone(t string) *time.Time {
 	newTimez, err := time.Parse("15:04:05 -0700", t)
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return &newTimez
 }
@@ -60,7 +60,7 @@ func TimestampWithTimeZone(t string, precision int) *time.Time {
 
 	newTime, err := time.Parse("2006-01-02 15:04:05"+precisionStr+" -0700 MST", t)
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return &newTime
 }

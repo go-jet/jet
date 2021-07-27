@@ -67,14 +67,14 @@ func TestGenerator(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		err := postgres.Generate(genTestDir2, postgres.DBConnection{
-			Host:     dbconfig.Host,
-			Port:     dbconfig.Port,
-			User:     dbconfig.User,
-			Password: dbconfig.Password,
+			Host:     dbconfig.PgHost,
+			Port:     dbconfig.PgPort,
+			User:     dbconfig.PgUser,
+			Password: dbconfig.PgPassword,
 			SslMode:  "disable",
 			Params:   "",
 
-			DBName:     dbconfig.DBName,
+			DBName:     dbconfig.PgDBName,
 			SchemaName: "dvds",
 		})
 

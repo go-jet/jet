@@ -5,6 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"reflect"
 	"strings"
 )
@@ -216,7 +217,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 
 	value, err := valuer.Value()
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return value
 }

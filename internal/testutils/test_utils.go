@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -66,7 +66,7 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 	filePath := getFullPath(testRelativePath)
 	err := ioutil.WriteFile(filePath, jsonText, 0644)
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 }
 
 // AssertJSONFile check if data json representation is the same as json at testRelativePath
