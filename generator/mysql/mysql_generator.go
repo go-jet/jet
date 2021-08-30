@@ -3,11 +3,13 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/mysql"
+	mysqldr "github.com/go-sql-driver/mysql"
 )
 
 // DBConnection contains MySQL connection details
@@ -25,28 +27,38 @@ type DBConnection struct {
 func Generate(destDir string, dbConn DBConnection, generatorTemplate ...template.Template) (err error) {
 	defer utils.ErrorCatch(&err)
 
-	db := openConnection(dbConn)
-	defer utils.DBClose(db)
-
-	fmt.Println("Retrieving database information...")
-	// No schemas in MySQL
-	schemaMetaData := metadata.GetSchema(db, &mySqlQuerySet{}, dbConn.DBName)
-
-	genTemplate := template.Default(mysql.Dialect)
-	if len(generatorTemplate) > 0 {
-		genTemplate = generatorTemplate[0]
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
+	if dbConn.Params != "" {
+		connectionString += "?" + dbConn.Params
 	}
 
-	template.ProcessSchema(destDir, schemaMetaData, genTemplate)
+	db := openConnection(connectionString)
+	defer utils.DBClose(db)
+
+	generate(db, dbConn.DBName, destDir, generatorTemplate...)
 
 	return nil
 }
 
-func openConnection(dbConn DBConnection) *sql.DB {
-	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
-	if dbConn.Params != "" {
-		connectionString += "?" + dbConn.Params
+// GenerateDSN opens connection via DSN string and does everything what Generate does.
+func GenerateDSN(dsn, destDir string, templates ...template.Template) (err error) {
+	defer utils.ErrorCatch(&err)
+
+	cfg, err := mysqldr.ParseDSN(dsn)
+	throw.OnError(err)
+	if cfg.DBName == "" {
+		panic("database name is required")
 	}
+
+	db := openConnection(dsn)
+	defer utils.DBClose(db)
+
+	generate(db, cfg.DBName, destDir, templates...)
+
+	return nil
+}
+
+func openConnection(connectionString string) *sql.DB {
 	fmt.Println("Connecting to MySQL database: " + connectionString)
 	db, err := sql.Open("mysql", connectionString)
 	throw.OnError(err)
@@ -55,4 +67,17 @@ func openConnection(dbConn DBConnection) *sql.DB {
 	throw.OnError(err)
 
 	return db
+}
+
+func generate(db *sql.DB, dbName, destDir string, templates ...template.Template) {
+	fmt.Println("Retrieving database information...")
+	// No schemas in MySQL
+	schemaMetaData := metadata.GetSchema(db, &mySqlQuerySet{}, dbName)
+
+	genTemplate := template.Default(mysql.Dialect)
+	if len(templates) > 0 {
+		genTemplate = templates[0]
+	}
+
+	template.ProcessSchema(destDir, schemaMetaData, genTemplate)
 }
