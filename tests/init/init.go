@@ -100,7 +100,7 @@ func initPostgresDB() {
 
 		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
 			Host:       dbconfig.PgHost,
-			Port:       5432,
+			Port:       dbconfig.PgPort,
 			User:       dbconfig.PgUser,
 			Password:   dbconfig.PgPassword,
 			DBName:     dbconfig.PgDBName,
