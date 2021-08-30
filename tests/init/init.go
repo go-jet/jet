@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 var testSuite string

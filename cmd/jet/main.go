@@ -3,19 +3,22 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
+
 	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"os"
-	"strings"
 )
 
 var (
 	source string
 
+	dsn        string
 	host       string
 	port       int
 	user       string
@@ -31,6 +34,7 @@ var (
 func init() {
 	flag.StringVar(&source, "source", "", "Database system name (PostgreSQL, MySQL or MariaDB)")
 
+	flag.StringVar(&dsn, "dsn", "", "Data source name connection string (Example: postgresql://user@localhost:5432/otherdb?sslmode=trust)")
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
 	flag.StringVar(&user, "user", "", "Database user")
@@ -50,6 +54,12 @@ func main() {
 Jet generator 2.5.0
 
 Usage:
+  -dsn string
+    	Data source name. Unified format for connecting to database.
+    	PostgreSQL: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+    	Example: postgresql://user:pass@localhost:5432/dbname
+    	MySQL: https://dev.mysql.com/doc/refman/8.0/en/connecting-using-uri-or-key-value-pairs.html
+    	Example: mysql://jet:jet@tcp(localhost:3306)/dvds
   -source string
     	Database system name (PostgreSQL, MySQL or MariaDB)
   -host string
@@ -75,8 +85,21 @@ Usage:
 
 	flag.Parse()
 
-	if source == "" || host == "" || port == 0 || user == "" || dbName == "" {
-		printErrorAndExit("\nERROR: required flag(s) missing")
+	if dsn == "" {
+		// validations for separated connection flags.
+		if source == "" || host == "" || port == 0 || user == "" || dbName == "" {
+			printErrorAndExit("\nERROR: required flag(s) missing")
+		}
+	} else {
+		if source == "" {
+			// try to get source from schema
+			source = detectSchema(dsn)
+		}
+
+		// validations when dsn != ""
+		if source == "" {
+			printErrorAndExit("\nERROR: required -source flag missing.")
+		}
 	}
 
 	var err error
@@ -84,6 +107,10 @@ Usage:
 	switch strings.ToLower(strings.TrimSpace(source)) {
 	case strings.ToLower(postgres.Dialect.Name()),
 		strings.ToLower(postgres.Dialect.PackageName()):
+		if dsn != "" {
+			err = postgresgen.GenerateDSN(dsn, schemaName, destDir)
+			break
+		}
 		genData := postgresgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -98,8 +125,19 @@ Usage:
 
 		err = postgresgen.Generate(destDir, genData)
 
-	case strings.ToLower(mysql.Dialect.Name()), "mariadb":
+	case strings.ToLower(mysql.Dialect.Name()), "mysqlx", "mariadb":
+		if dsn != "" {
+			// Special case for go mysql driver. It does not understand schema,
+			// so we need to trim it before passing to generator
+			// https://github.com/go-sql-driver/mysql#dsn-data-source-name
+			idx := strings.Index(dsn, "://")
+			if idx != -1 {
+				dsn = dsn[idx+len("://"):]
+			}
 
+			err = mysqlgen.GenerateDSN(dsn, destDir)
+			break
+		}
 		dbConn := mysqlgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -125,4 +163,13 @@ func printErrorAndExit(error string) {
 	fmt.Println(error)
 	flag.Usage()
 	os.Exit(-2)
+}
+
+func detectSchema(dsn string) (source string) {
+	schemeRe := regexp.MustCompile(`^(.+)://.*`)
+	match := schemeRe.FindStringSubmatch(dsn)
+	if len(match) < 2 { // not found
+		return ""
+	}
+	return match[1]
 }
