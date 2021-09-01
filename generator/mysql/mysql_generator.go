@@ -3,6 +3,7 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
@@ -43,6 +44,14 @@ func Generate(destDir string, dbConn DBConnection, generatorTemplate ...template
 // GenerateDSN opens connection via DSN string and does everything what Generate does.
 func GenerateDSN(dsn, destDir string, templates ...template.Template) (err error) {
 	defer utils.ErrorCatch(&err)
+
+	// Special case for go mysql driver. It does not understand schema,
+	// so we need to trim it before passing to generator
+	// https://github.com/go-sql-driver/mysql#dsn-data-source-name
+	idx := strings.Index(dsn, "://")
+	if idx != -1 {
+		dsn = dsn[idx+len("://"):]
+	}
 
 	cfg, err := mysqldr.ParseDSN(dsn)
 	throw.OnError(err)
