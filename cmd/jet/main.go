@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"regexp"
 	"strings"
 
 	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
@@ -57,9 +56,11 @@ Usage:
   -dsn string
     	Data source name. Unified format for connecting to database.
     	PostgreSQL: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
-    	Example: postgresql://user:pass@localhost:5432/dbname
+		Example:
+			postgresql://user:pass@localhost:5432/dbname
     	MySQL: https://dev.mysql.com/doc/refman/8.0/en/connecting-using-uri-or-key-value-pairs.html
-    	Example: mysql://jet:jet@tcp(localhost:3306)/dvds
+		Example:
+			mysql://jet:jet@tcp(localhost:3306)/dvds
   -source string
     	Database system name (PostgreSQL, MySQL or MariaDB)
   -host string
@@ -80,6 +81,12 @@ Usage:
         Whether or not to use SSL(optional) (default "disable") (ignored for MySQL and MariaDB)
   -path string
         Destination dir for files generated.
+
+Example commands:
+
+	$ jet -source=PostgreSQL -dbname=jetdb -host=localhost -port=5432 -user=jet -password=jet -schema=dvds
+	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=dvds
+	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds
 `)
 	}
 
@@ -127,14 +134,6 @@ Usage:
 
 	case strings.ToLower(mysql.Dialect.Name()), "mysqlx", "mariadb":
 		if dsn != "" {
-			// Special case for go mysql driver. It does not understand schema,
-			// so we need to trim it before passing to generator
-			// https://github.com/go-sql-driver/mysql#dsn-data-source-name
-			idx := strings.Index(dsn, "://")
-			if idx != -1 {
-				dsn = dsn[idx+len("://"):]
-			}
-
 			err = mysqlgen.GenerateDSN(dsn, destDir)
 			break
 		}
@@ -166,10 +165,9 @@ func printErrorAndExit(error string) {
 }
 
 func detectSchema(dsn string) (source string) {
-	schemeRe := regexp.MustCompile(`^(.+)://.*`)
-	match := schemeRe.FindStringSubmatch(dsn)
+	match := strings.SplitN(dsn, "://", 2)
 	if len(match) < 2 { // not found
 		return ""
 	}
-	return match[1]
+	return match[0]
 }
