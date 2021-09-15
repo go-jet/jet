@@ -222,23 +222,23 @@ func (s *scanContext) rowElem(index int) interface{} {
 	return value
 }
 
-func (s *scanContext) rowElemValuePtr(index int) *reflect.Value {
+func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
 	rowElem := s.rowElem(index)
 	rowElemValue := reflect.ValueOf(rowElem)
 
+	if !rowElemValue.IsValid() {
+		return reflect.Value{}
+	}
+
 	if rowElemValue.Kind() == reflect.Ptr {
-		return &rowElemValue
+		return rowElemValue
 	}
 
 	if rowElemValue.CanAddr() {
-		addr := rowElemValue.Addr()
-		return &addr
+		return rowElemValue.Addr()
 	}
 
-	if rowElemValue.IsValid() {
-		newElem := reflect.New(rowElemValue.Type())
-		newElem.Elem().Set(rowElemValue)
-		return &newElem
-	}
-	return nil
+	newElem := reflect.New(rowElemValue.Type())
+	newElem.Elem().Set(rowElemValue)
+	return newElem
 }
