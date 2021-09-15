@@ -214,9 +214,9 @@ func mapRowToBaseTypeSlice(scanContext *scanContext, slicePtrValue reflect.Value
 	}
 	rowElemPtr := scanContext.rowElemValuePtr(index)
 
-	if rowElemPtr != nil && !rowElemPtr.IsNil() {
+	if rowElemPtr.IsValid() && !rowElemPtr.IsNil() {
 		updated = true
-		err = appendElemToSlice(slicePtrValue, *rowElemPtr)
+		err = appendElemToSlice(slicePtrValue, rowElemPtr)
 		if err != nil {
 			return
 		}
