@@ -3,12 +3,14 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
+	"path"
+	"strconv"
+
 	"github.com/go-jet/jet/v2/generator/internal/metadata"
 	"github.com/go-jet/jet/v2/generator/internal/template"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/postgres"
-	"path"
-	"strconv"
 )
 
 // DBConnection contains postgres connection details
@@ -42,8 +44,11 @@ func Generate(destDir string, dbConn DBConnection) (err error) {
 }
 
 func openConnection(dbConn DBConnection) (*sql.DB, error) {
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s %s",
-		dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.User, dbConn.Password, dbConn.DBName, dbConn.SslMode, dbConn.Params)
+	if dbConfig.SchemaName == "" {
+		dbConfig.SchemaName = "public"
+	}
+	connectionString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s&search_path=%s",
+		dbConn.User, url.QueryEscape(dbConn.Password), dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.DBName, dbConn.SslMode, dbConn.SchemaName)
 
 	fmt.Println("Connecting to postgres database: " + connectionString)
 
