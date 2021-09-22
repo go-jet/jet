@@ -1,15 +1,17 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/generator/postgres"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"reflect"
 	"testing"
+
+	"github.com/go-jet/jet/v2/generator/postgres"
+	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/tests/dbconfig"
+	"github.com/stretchr/testify/require"
 
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 )
@@ -61,22 +63,57 @@ func TestCmdGenerator(t *testing.T) {
 
 	err = os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
+
+	// Check that connection via DSN works
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
+		dbconfig.PgUser,
+		dbconfig.PgPassword,
+		dbconfig.PgHost,
+		dbconfig.PgPort,
+		"jetdb",
+	)
+	cmd = exec.Command("jet", "-dsn="+dsn, "-schema=dvds", "-path="+genTestDir2)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFiles(t)
+
+	err = os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
 }
 
 func TestGenerator(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		err := postgres.Generate(genTestDir2, postgres.DBConnection{
-			Host:     dbconfig.Host,
-			Port:     dbconfig.Port,
-			User:     dbconfig.User,
-			Password: dbconfig.Password,
+			Host:     dbconfig.PgHost,
+			Port:     dbconfig.PgPort,
+			User:     dbconfig.PgUser,
+			Password: dbconfig.PgPassword,
 			SslMode:  "disable",
 			Params:   "",
 
-			DBName:     dbconfig.DBName,
+			DBName:     dbconfig.PgDBName,
 			SchemaName: "dvds",
 		})
+
+		require.NoError(t, err)
+
+		assertGeneratedFiles(t)
+	}
+
+	for i := 0; i < 3; i++ {
+		dsn := fmt.Sprintf("postgresql://%[1]s:%[2]s@%[3]s:%[4]d/%[5]s?sslmode=disable",
+			dbconfig.PgUser,
+			dbconfig.PgPassword,
+			dbconfig.PgHost,
+			dbconfig.PgPort,
+			dbconfig.PgDBName,
+		)
+		err := postgres.GenerateDSN(dsn, "dvds", genTestDir2)
 
 		require.NoError(t, err)
 

@@ -32,6 +32,8 @@ func TestMain(m *testing.M) {
 	setTestRoot()
 
 	for _, driverName := range []string{"postgres", "pgx"} {
+		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
+
 		func() {
 			var err error
 			db, err = sql.Open(driverName, dbconfig.PostgresConnectString)

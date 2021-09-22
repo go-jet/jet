@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet/v2/generator/mysql"
-	"github.com/go-jet/jet/v2/generator/postgres"
-	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/go-jet/jet/v2/generator/postgres"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
+	"github.com/go-jet/jet/v2/tests/dbconfig"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 )
 
 var testSuite string
@@ -62,7 +63,7 @@ func initMySQLDB() {
 		cmd.Stdout = os.Stdout
 
 		err := cmd.Run()
-		utils.PanicOnError(err)
+		throw.OnError(err)
 
 		err = mysql.Generate("./.gentestdata/mysql", mysql.DBConnection{
 			Host:     dbconfig.MySqLHost,
@@ -72,7 +73,7 @@ func initMySQLDB() {
 			DBName:   dbName,
 		})
 
-		utils.PanicOnError(err)
+		throw.OnError(err)
 	}
 }
 
@@ -99,24 +100,24 @@ func initPostgresDB() {
 		execFile(db, "./testdata/init/postgres/"+schemaName+".sql")
 
 		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
-			Host:       dbconfig.Host,
-			Port:       5432,
-			User:       dbconfig.User,
-			Password:   dbconfig.Password,
-			DBName:     dbconfig.DBName,
+			Host:       dbconfig.PgHost,
+			Port:       dbconfig.PgPort,
+			User:       dbconfig.PgUser,
+			Password:   dbconfig.PgPassword,
+			DBName:     dbconfig.PgDBName,
 			SchemaName: schemaName,
 			SslMode:    "disable",
 		})
-		utils.PanicOnError(err)
+		throw.OnError(err)
 	}
 }
 
 func execFile(db *sql.DB, sqlFilePath string) {
 	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	_, err = db.Exec(string(testSampleSql))
-	utils.PanicOnError(err)
+	throw.OnError(err)
 }
 
 func printOnError(err error) {

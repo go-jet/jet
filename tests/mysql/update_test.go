@@ -66,9 +66,7 @@ func TestUpdateWithSubQueries(t *testing.T) {
 
 	expectedSQL := `
 UPDATE test_sample.link
-SET name = (
-         SELECT ?
-    ),
+SET name = ?,
     url = (
          SELECT link2.url AS "link2.url"
          FROM test_sample.link2
@@ -80,7 +78,7 @@ WHERE link.name = ?;
 		query := Link.
 			UPDATE(Link.Name, Link.URL).
 			SET(
-				SELECT(String("Bong")),
+				String("Bong"),
 				SELECT(Link2.URL).
 					FROM(Link2).
 					WHERE(Link2.Name.EQ(String("Youtube"))),
@@ -96,7 +94,7 @@ WHERE link.name = ?;
 		query := Link.
 			UPDATE().
 			SET(
-				Link.Name.SET(StringExp(SELECT(String("Bong")))),
+				Link.Name.SET(String("Bong")),
 				Link.URL.SET(StringExp(
 					SELECT(Link2.URL).
 						FROM(Link2).

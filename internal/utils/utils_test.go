@@ -25,11 +25,6 @@ func TestToGoIdentifier(t *testing.T) {
 	require.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
 }
 
-func TestToGoEnumValueIdentifier(t *testing.T) {
-	require.Equal(t, ToGoEnumValueIdentifier("enum_name", "enum_value"), "EnumValue")
-	require.Equal(t, ToGoEnumValueIdentifier("NumEnum", "100"), "NumEnum100")
-}
-
 func TestErrorCatchErr(t *testing.T) {
 	var err error
 

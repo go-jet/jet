@@ -43,7 +43,7 @@ type SelectStatement interface {
 	DISTINCT() SelectStatement
 	FROM(tables ...ReadableTable) SelectStatement
 	WHERE(expression BoolExpression) SelectStatement
-	GROUP_BY(groupByClauses ...jet.GroupByClause) SelectStatement
+	GROUP_BY(groupByClauses ...GroupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
 	WINDOW(name string) windowExpand
 	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
@@ -118,7 +118,7 @@ func (s *selectStatementImpl) WHERE(condition BoolExpression) SelectStatement {
 	return s
 }
 
-func (s *selectStatementImpl) GROUP_BY(groupByClauses ...jet.GroupByClause) SelectStatement {
+func (s *selectStatementImpl) GROUP_BY(groupByClauses ...GroupByClause) SelectStatement {
 	s.GroupBy.List = groupByClauses
 	return s
 }

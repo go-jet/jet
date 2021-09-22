@@ -1,14 +1,16 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/generator/mysql"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/tests/dbconfig"
+	"github.com/stretchr/testify/require"
 )
 
 const genTestDirRoot = "./.gentestdata3"
@@ -24,6 +26,21 @@ func TestGenerator(t *testing.T) {
 			Password: dbconfig.MySQLPassword,
 			DBName:   "dvds",
 		})
+
+		require.NoError(t, err)
+
+		assertGeneratedFiles(t)
+	}
+
+	for i := 0; i < 3; i++ {
+		dsn := fmt.Sprintf("%[1]s:%[2]s@tcp(%[3]s:%[4]d)/%[5]s",
+			dbconfig.MySQLUser,
+			dbconfig.MySQLPassword,
+			dbconfig.MySqLHost,
+			dbconfig.MySQLPort,
+			"dvds",
+		)
+		err := mysql.GenerateDSN(dsn, genTestDir3)
 
 		require.NoError(t, err)
 
@@ -48,6 +65,25 @@ func TestCmdGenerator(t *testing.T) {
 	require.NoError(t, err)
 
 	assertGeneratedFiles(t)
+
+	err = os.RemoveAll(genTestDirRoot)
+	require.NoError(t, err)
+
+	// check that generation via DSN works
+	dsn := fmt.Sprintf("mysql://%[1]s:%[2]s@tcp(%[3]s:%[4]d)/%[5]s",
+		dbconfig.MySQLUser,
+		dbconfig.MySQLPassword,
+		dbconfig.MySqLHost,
+		dbconfig.MySQLPort,
+		"dvds",
+	)
+	cmd = exec.Command("jet", "-dsn="+dsn, "-path="+genTestDir3)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
 
 	err = os.RemoveAll(genTestDirRoot)
 	require.NoError(t, err)
