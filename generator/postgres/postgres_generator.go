@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"net/url"
 	"path"
 	"strconv"
 
@@ -31,8 +32,11 @@ type DBConnection struct {
 func Generate(destDir string, dbConn DBConnection, genTemplate ...template.Template) (err error) {
 	defer utils.ErrorCatch(&err)
 
-	connectionString := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s %s",
-		dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.User, dbConn.Password, dbConn.DBName, dbConn.SslMode, dbConn.Params)
+	if dbConfig.SchemaName == "" {
+		dbConfig.SchemaName = "public"
+	}
+	connectionString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s&search_path=%s",
+		dbConn.User, url.QueryEscape(dbConn.Password), dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.DBName, dbConn.SslMode, dbConn.SchemaName)
 
 	db := openConnection(connectionString)
 	defer utils.DBClose(db)
