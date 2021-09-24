@@ -32,9 +32,6 @@ type DBConnection struct {
 func Generate(destDir string, dbConn DBConnection, genTemplate ...template.Template) (err error) {
 	defer utils.ErrorCatch(&err)
 
-	if dbConfig.SchemaName == "" {
-		dbConfig.SchemaName = "public"
-	}
 	connectionString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s&search_path=%s",
 		dbConn.User, url.QueryEscape(dbConn.Password), dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.DBName, dbConn.SslMode, dbConn.SchemaName)
 
