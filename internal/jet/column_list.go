@@ -11,6 +11,28 @@ func (cl ColumnList) SET(expression Expression) ColumnAssigment {
 	}
 }
 
+// Except will create new column list in which columns contained in excluded column names are removed
+func (cl ColumnList) Except(excludedColumns ...Column) ColumnList {
+	excludedColumnList := UnwidColumnList(excludedColumns)
+	excludedColumnNames := map[string]bool{}
+
+	for _, excludedColumn := range excludedColumnList {
+		excludedColumnNames[excludedColumn.Name()] = true
+	}
+
+	var ret ColumnList
+
+	for _, column := range cl {
+		if excludedColumnNames[column.Name()] {
+			continue
+		}
+
+		ret = append(ret, column)
+	}
+
+	return ret
+}
+
 func (cl ColumnList) fromImpl(subQuery SelectTable) Projection {
 	newProjectionList := ProjectionList{}
 

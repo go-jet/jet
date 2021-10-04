@@ -1992,3 +1992,66 @@ LIMIT 1;
 		require.Equal(t, dest, dest2)
 	})
 }
+
+func TestSelectColumnListWithExcludedColumns(t *testing.T) {
+
+	t.Run("one column", func(t *testing.T) {
+		stmt := SELECT(
+			Address.AllColumns.Except(Address.LastUpdate),
+		).FROM(
+			Address,
+		)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT address.address_id AS "address.address_id",
+     address.address AS "address.address",
+     address.address2 AS "address.address2",
+     address.district AS "address.district",
+     address.city_id AS "address.city_id",
+     address.postal_code AS "address.postal_code",
+     address.phone AS "address.phone"
+FROM dvds.address;
+`)
+		var dest []model.Address
+		require.NoError(t, stmt.Query(db, &dest))
+		require.Len(t, dest, 603)
+	})
+
+	t.Run("multiple columns", func(t *testing.T) {
+		expectedSQL := `
+SELECT address.address_id AS "address.address_id",
+     address.address AS "address.address",
+     address.address2 AS "address.address2",
+     address.district AS "address.district",
+     address.city_id AS "address.city_id"
+FROM dvds.address;
+`
+		// list of columns
+		stmt := SELECT(
+			Address.AllColumns.Except(Address.PostalCode, Address.Phone, Address.LastUpdate),
+		).FROM(
+			Address,
+		)
+		testutils.AssertDebugStatementSql(t, stmt, expectedSQL)
+
+		// column list
+		excludedColumns := ColumnList{Address.PostalCode, Address.Phone, Address.LastUpdate, Film.Title} // Film.Title is ignored
+		stmt = SELECT(
+			Address.AllColumns.Except(excludedColumns),
+		).FROM(Address)
+
+		testutils.AssertDebugStatementSql(t, stmt, expectedSQL)
+
+		// column list with just column names
+		excludedColumns = ColumnList{StringColumn("postal_code"), StringColumn("phone"), TimestampColumn("last_update")}
+		stmt = SELECT(
+			Address.AllColumns.Except(excludedColumns),
+		).FROM(Address)
+
+		testutils.AssertDebugStatementSql(t, stmt, expectedSQL)
+
+		var dest []model.Address
+		require.NoError(t, stmt.Query(db, &dest))
+		require.Len(t, dest, 603)
+	})
+}
