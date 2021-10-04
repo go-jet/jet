@@ -30,19 +30,19 @@ type DBConnection struct {
 
 // Generate generates jet files at destination dir from database connection details
 func Generate(destDir string, dbConn DBConnection, genTemplate ...template.Template) (err error) {
-	defer utils.ErrorCatch(&err)
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
+		url.QueryEscape(dbConn.User),
+		url.QueryEscape(dbConn.Password),
+		dbConn.Host,
+		strconv.Itoa(dbConn.Port),
+		url.QueryEscape(dbConn.DBName),
+		dbConn.SslMode,
+	)
 
-	connectionString := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s&search_path=%s",
-		dbConn.User, url.QueryEscape(dbConn.Password), dbConn.Host, strconv.Itoa(dbConn.Port), dbConn.DBName, dbConn.SslMode, dbConn.SchemaName)
-
-	db := openConnection(connectionString)
-	defer utils.DBClose(db)
-
-	generate(db, dbConn.DBName, dbConn.SchemaName, destDir, genTemplate...)
-
-	return
+	return GenerateDSN(dsn, dbConn.SchemaName, destDir, genTemplate...)
 }
 
+// GenerateDSN generates jet files using dsn connection string
 func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) (err error) {
 	defer utils.ErrorCatch(&err)
 
@@ -54,8 +54,17 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) (e
 	db := openConnection(dsn)
 	defer utils.DBClose(db)
 
-	generate(db, cfg.Database, schema, destDir, templates...)
+	fmt.Println("Retrieving schema information...")
+	generatorTemplate := template.Default(postgres.Dialect)
+	if len(templates) > 0 {
+		generatorTemplate = templates[0]
+	}
 
+	schemaMetadata := metadata.GetSchema(db, &postgresQuerySet{}, schema)
+
+	dirPath := path.Join(destDir, cfg.Database)
+
+	template.ProcessSchema(dirPath, schemaMetadata, generatorTemplate)
 	return
 }
 
@@ -69,18 +78,4 @@ func openConnection(dsn string) *sql.DB {
 	throw.OnError(err)
 
 	return db
-}
-
-func generate(db *sql.DB, dbName, schema, destDir string, templates ...template.Template) {
-	fmt.Println("Retrieving schema information...")
-	generatorTemplate := template.Default(postgres.Dialect)
-	if len(templates) > 0 {
-		generatorTemplate = templates[0]
-	}
-
-	schemaMetadata := metadata.GetSchema(db, &postgresQuerySet{}, schema)
-
-	dirPath := path.Join(destDir, dbName)
-
-	template.ProcessSchema(dirPath, schemaMetadata, generatorTemplate)
 }
