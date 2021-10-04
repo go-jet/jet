@@ -155,7 +155,7 @@ func TestInsert_ON_CONFLICT(t *testing.T) {
 		ON_CONFLICT(table1ColBool).WHERE(table1ColBool.IS_NOT_FALSE()).DO_UPDATE(
 		SET(table1ColBool.SET(Bool(true)),
 			table2ColInt.SET(Int(1)),
-			ColumnList{table1Col1, table1ColBool}.SET(jet.ROW(Int(2), String("two"))),
+			ColumnList{table1Col1, table1ColBool}.SET(ROW(Int(2), String("two"))),
 		).WHERE(table1Col1.GT(Int(2))),
 	).
 		RETURNING(table1Col1, table1ColBool)

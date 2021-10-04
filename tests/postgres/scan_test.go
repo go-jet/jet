@@ -809,6 +809,49 @@ func TestScanNumericToNumber(t *testing.T) {
 	require.Equal(t, number.Float64, float64(1.234567890111e+09))
 }
 
+// QueryContext panic when the scanned value is nil and the destination is a slice of primitive
+// https://github.com/go-jet/jet/issues/91
+func TestScanToPrimitiveElementsSlice(t *testing.T) {
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+
+	// add actor without associated film (so that destination Title array is NULL).
+	_, err = Actor.INSERT().
+		MODEL(
+			model.Actor{
+				ActorID:    201,
+				FirstName:  "Brigitte",
+				LastName:   "Bardot",
+				LastUpdate: time.Time{},
+			},
+		).Exec(tx)
+	require.NoError(t, err)
+
+	stmt := SELECT(
+		Actor.ActorID.AS("actor_id"),
+		Film.Title.AS("title"),
+	).FROM(
+		Actor.
+			LEFT_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
+			LEFT_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)),
+	).WHERE(
+		Actor.ActorID.GT(Int(199)),
+	).ORDER_BY(Actor.ActorID.DESC())
+
+	var dest []struct {
+		ActorID int `sql:"primary_key"`
+		Title   []string
+	}
+
+	err = stmt.Query(tx, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest[0].ActorID, 201)
+	require.Equal(t, dest[0].Title, []string(nil))
+	require.Equal(t, dest[1].ActorID, 200)
+	require.Len(t, dest[1].Title, 20)
+}
+
 var address256 = model.Address{
 	AddressID:  256,
 	Address:    "1497 Yuzhou Drive",
