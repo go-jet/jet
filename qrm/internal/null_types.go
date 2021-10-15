@@ -63,7 +63,7 @@ func (nt *NullTime) Scan(value interface{}) error {
 	nt.Time, nt.Valid = tryParseAsTime(value)
 
 	if !nt.Valid {
-		return fmt.Errorf("can't scan time.Time from %v", value)
+		return fmt.Errorf("can't scan time.Time from %q", value)
 	}
 
 	return nil
@@ -84,6 +84,8 @@ func tryParseAsTime(value interface{}) (time.Time, bool) {
 		timeStr = v
 	case []byte:
 		timeStr = string(v)
+	default:
+		return time.Time{}, false
 	}
 
 	for _, format := range formats {

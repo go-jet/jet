@@ -962,7 +962,7 @@ func TestAllTypesInsert(t *testing.T) {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 
-	stmt := AllTypes.INSERT(AllTypes.AllColumns).
+	stmt := AllTypes.INSERT(AllTypes.AllColumns.Except(AllTypes.TimestampPtr)).
 		MODEL(toInsert)
 
 	//fmt.Println(stmt.DebugSql())
@@ -970,7 +970,7 @@ func TestAllTypesInsert(t *testing.T) {
 	testutils.AssertExec(t, stmt, tx, 1)
 
 	var dest model.AllTypes
-	err = AllTypes.SELECT(AllTypes.AllColumns).
+	err = AllTypes.SELECT(AllTypes.AllColumns.Except(AllTypes.TimestampPtr)).
 		WHERE(AllTypes.BigInt.EQ(Int(toInsert.BigInt))).
 		Query(tx, &dest)
 
