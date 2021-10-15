@@ -78,16 +78,31 @@ func TestScanToValidDestination(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("pointer to slice of strings", func(t *testing.T) {
-		err := oneInventoryQuery.Query(db, &[]int32{})
+	t.Run("pointer to slice of integers", func(t *testing.T) {
+		var dest []int32
 
+		err := oneInventoryQuery.Query(db, &dest)
 		require.NoError(t, err)
+		require.Equal(t, dest[0], int32(1))
 	})
 
-	t.Run("pointer to slice of strings", func(t *testing.T) {
-		err := oneInventoryQuery.Query(db, &[]*int32{})
+	t.Run("pointer to slice integer pointers", func(t *testing.T) {
+		var dest []*int32
 
+		err := oneInventoryQuery.Query(db, &dest)
 		require.NoError(t, err)
+		require.Equal(t, dest[0], testutils.Int32Ptr(1))
+	})
+
+	t.Run("NULL to integer", func(t *testing.T) {
+		var dest struct {
+			Int64  int64
+			UInt64 uint64
+		}
+		err := SELECT(NULL.AS("int64"), NULL.AS("uint64")).Query(db, &dest)
+		require.NoError(t, err)
+		require.Equal(t, dest.Int64, int64(0))
+		require.Equal(t, dest.UInt64, uint64(0))
 	})
 }
 
@@ -189,7 +204,9 @@ func TestScanToStruct(t *testing.T) {
 
 		dest := Inventory{}
 
-		testutils.AssertQueryPanicErr(t, query, db, &dest, `jet: Scan: unable to scan type int32 into UUID,  at 'InventoryID uuid.UUID' of type postgres.Inventory`)
+		err := query.Query(db, &dest)
+		require.Error(t, err)
+		require.EqualError(t, err, "jet: can't scan int64('\\x01') to 'InventoryID uuid.UUID': Scan: unable to scan type int64 into UUID")
 	})
 
 	t.Run("type mismatch base type", func(t *testing.T) {
@@ -200,7 +217,9 @@ func TestScanToStruct(t *testing.T) {
 
 		dest := []Inventory{}
 
-		testutils.AssertQueryPanicErr(t, query.OFFSET(10), db, &dest, `jet: can't set int16 to bool`)
+		err := query.OFFSET(10).Query(db, &dest)
+		require.Error(t, err)
+		require.EqualError(t, err, "jet: can't assign int64('\\x02') to 'FilmID bool': can't assign int64(2) to bool")
 	})
 }
 
@@ -451,8 +470,9 @@ func TestScanToSlice(t *testing.T) {
 		t.Run("slice type mismatch", func(t *testing.T) {
 			var dest []bool
 
-			testutils.AssertQueryPanicErr(t, query, db, &dest, `jet: can't append int32 to []bool slice`)
-			//require.Error(t, err, `jet: can't append int32 to []bool slice `)
+			err := query.Query(db, &dest)
+			require.Error(t, err)
+			require.EqualError(t, err, `jet: can't append int64 to []bool slice: can't assign int64(2) to bool`)
 		})
 	})
 
@@ -764,16 +784,8 @@ func TestRowsScan(t *testing.T) {
 	requireLogged(t, stmt)
 }
 
-func TestScanNumericToNumber(t *testing.T) {
+func TestScanNumericToFloat(t *testing.T) {
 	type Number struct {
-		Int8    int8
-		UInt8   uint8
-		Int16   int16
-		UInt16  uint16
-		Int32   int32
-		UInt32  uint32
-		Int64   int64
-		UInt64  uint64
 		Float32 float32
 		Float64 float64
 	}
@@ -781,14 +793,6 @@ func TestScanNumericToNumber(t *testing.T) {
 	numeric := CAST(Decimal("1234567890.111")).AS_NUMERIC()
 
 	stmt := SELECT(
-		numeric.AS("number.int8"),
-		numeric.AS("number.uint8"),
-		numeric.AS("number.int16"),
-		numeric.AS("number.uint16"),
-		numeric.AS("number.int32"),
-		numeric.AS("number.uint32"),
-		numeric.AS("number.int64"),
-		numeric.AS("number.uint64"),
 		numeric.AS("number.float32"),
 		numeric.AS("number.float64"),
 	)
@@ -796,17 +800,28 @@ func TestScanNumericToNumber(t *testing.T) {
 	var number Number
 	err := stmt.Query(db, &number)
 	require.NoError(t, err)
-
-	require.Equal(t, number.Int8, int8(-46))     // overflow
-	require.Equal(t, number.UInt8, uint8(210))   // overflow
-	require.Equal(t, number.Int16, int16(722))   // overflow
-	require.Equal(t, number.UInt16, uint16(722)) // overflow
-	require.Equal(t, number.Int32, int32(1234567890))
-	require.Equal(t, number.UInt32, uint32(1234567890))
-	require.Equal(t, number.Int64, int64(1234567890))
-	require.Equal(t, number.UInt64, uint64(1234567890))
 	require.Equal(t, number.Float32, float32(1.234568e+09))
 	require.Equal(t, number.Float64, float64(1.234567890111e+09))
+}
+
+func TestScanNumericToIntegerError(t *testing.T) {
+
+	var dest struct {
+		Integer int32
+	}
+
+	err := SELECT(
+		CAST(Decimal("1234567890.111")).AS_NUMERIC().AS("integer"),
+	).Query(db, &dest)
+
+	require.Error(t, err)
+
+	if isPgxDriver() {
+		require.Contains(t, err.Error(), `jet: can't assign string("1234567890.111") to 'Integer int32': converting driver.Value type string ("1234567890.111") to a int64: invalid syntax`)
+	} else {
+		require.Contains(t, err.Error(), `jet: can't assign []uint8("1234567890.111") to 'Integer int32': converting driver.Value type []uint8 ("1234567890.111") to a int64: invalid syntax`)
+	}
+
 }
 
 // QueryContext panic when the scanned value is nil and the destination is a slice of primitive

@@ -20,26 +20,32 @@ const (
 )
 
 func (e *MpaaRating) Scan(value interface{}) error {
-	if v, ok := value.(string); !ok {
-		return errors.New("jet: Invalid data for MpaaRating enum")
-	} else {
-		switch string(v) {
-		case "G":
-			*e = MpaaRating_G
-		case "PG":
-			*e = MpaaRating_Pg
-		case "PG-13":
-			*e = MpaaRating_Pg13
-		case "R":
-			*e = MpaaRating_R
-		case "NC-17":
-			*e = MpaaRating_Nc17
-		default:
-			return errors.New("jet: Inavlid data " + string(v) + "for MpaaRating enum")
-		}
-
-		return nil
+	var enumValue string
+	switch val := value.(type) {
+	case string:
+		enumValue = val
+	case []byte:
+		enumValue = string(val)
+	default:
+		return errors.New("jet: Invalid scan value for AllTypesEnum enum. Enum value has to be of type string or []byte")
 	}
+
+	switch enumValue {
+	case "G":
+		*e = MpaaRating_G
+	case "PG":
+		*e = MpaaRating_Pg
+	case "PG-13":
+		*e = MpaaRating_Pg13
+	case "R":
+		*e = MpaaRating_R
+	case "NC-17":
+		*e = MpaaRating_Nc17
+	default:
+		return errors.New("jet: Invalid scan value '" + enumValue + "' for MpaaRating enum")
+	}
+
+	return nil
 }
 
 func (e MpaaRating) String() string {

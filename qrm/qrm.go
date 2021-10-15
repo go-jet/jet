@@ -27,7 +27,10 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
 		_, err := queryToSlice(ctx, db, query, args, destPtr)
-		return err
+		if err != nil {
+			return fmt.Errorf("jet: %w", err)
+		}
+		return nil
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
@@ -35,7 +38,7 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 		rowsProcessed, err := queryToSlice(ctx, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
-			return err
+			return fmt.Errorf("jet: %w", err)
 		}
 
 		if rowsProcessed == 0 {
@@ -275,10 +278,16 @@ func mapRowToStruct(scanContext *scanContext, groupKey string, structPtrValue re
 				err = scanner.Scan(cellValue)
 
 				if err != nil {
-					panic("jet: " + err.Error() + ", " + fieldToString(&field) + " of type " + structType.String())
+					err = fmt.Errorf(`can't scan %T(%q) to '%s %s': %w`, cellValue, cellValue, field.Name, field.Type.String(), err)
+					return
 				}
 			} else {
-				setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+				err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+
+				if err != nil {
+					err = fmt.Errorf(`can't assign %T(%q) to '%s %s': %w`, cellValue, cellValue, field.Name, field.Type.String(), err)
+					return
+				}
 			}
 		}
 	}

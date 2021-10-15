@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 
 	setTestRoot()
 
-	for _, driverName := range []string{"postgres", "pgx"} {
+	for _, driverName := range []string{"pgx", "postgres"} {
 		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
 
 		func() {
@@ -81,8 +81,16 @@ func requireLogged(t *testing.T, statement postgres.Statement) {
 }
 
 func skipForPgxDriver(t *testing.T) {
-	switch db.Driver().(type) {
-	case *stdlib.Driver:
+	if isPgxDriver() {
 		t.SkipNow()
 	}
+}
+
+func isPgxDriver() bool {
+	switch db.Driver().(type) {
+	case *stdlib.Driver:
+		return true
+	}
+
+	return false
 }

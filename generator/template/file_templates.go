@@ -200,20 +200,26 @@ const (
 )
 
 func (e *{{$enumTemplate.TypeName}}) Scan(value interface{}) error {
-	if v, ok := value.(string); !ok {
-		return errors.New("jet: Invalid scan value for {{$enumTemplate.TypeName}} enum. Enum value has to be of type string")
-	} else {
-		switch string(v) {
-{{- range $_, $value := .Values}}
-		case "{{$value}}":
-			*e = {{valueName $value}}
-{{- end}}
-		default:
-			return errors.New("jet: Invalid scan value '" + string(v) + "' for {{$enumTemplate.TypeName}} enum")
-		}
-
-		return nil
+	var enumValue string
+	switch val := value.(type) {
+	case string:
+		enumValue = val
+	case []byte:
+		enumValue = string(val)
+	default:
+		return errors.New("jet: Invalid scan value for AllTypesEnum enum. Enum value has to be of type string or []byte")
 	}
+
+	switch enumValue {
+{{- range $_, $value := .Values}}
+	case "{{$value}}":
+		*e = {{valueName $value}}
+{{- end}}
+	default:
+		return errors.New("jet: Invalid scan value '" + enumValue + "' for {{$enumTemplate.TypeName}} enum")
+	}
+
+	return nil
 }
 
 func (e {{$enumTemplate.TypeName}}) String() string {
