@@ -3,12 +3,13 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"path"
+	"strconv"
+
 	"github.com/go-jet/jet/v2/generator/internal/metadata"
 	"github.com/go-jet/jet/v2/generator/internal/template"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/postgres"
-	"path"
-	"strconv"
 )
 
 // DBConnection contains postgres connection details
@@ -25,7 +26,7 @@ type DBConnection struct {
 }
 
 // Generate generates jet files at destination dir from database connection details
-func Generate(destDir string, dbConn DBConnection) (err error) {
+func Generate(config utils.Config, destDir string, dbConn DBConnection) (err error) {
 	defer utils.ErrorCatch(&err)
 
 	db, err := openConnection(dbConn)
@@ -33,7 +34,7 @@ func Generate(destDir string, dbConn DBConnection) (err error) {
 	defer utils.DBClose(db)
 
 	fmt.Println("Retrieving schema information...")
-	schemaInfo := metadata.GetSchemaMetaData(db, dbConn.SchemaName, &postgresQuerySet{})
+	schemaInfo := metadata.GetSchemaMetaData(db, config, dbConn.SchemaName, &postgresQuerySet{})
 
 	genPath := path.Join(destDir, dbConn.DBName, dbConn.SchemaName)
 	template.GenerateFiles(genPath, schemaInfo, postgres.Dialect)

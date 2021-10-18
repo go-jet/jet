@@ -3,14 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
+	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"os"
-	"strings"
 )
 
 var (
@@ -26,6 +28,7 @@ var (
 	schemaName string
 
 	destDir string
+	exclude string
 )
 
 func init() {
@@ -40,7 +43,8 @@ func init() {
 	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public") (ignored for MySQL and MariaDB)`)
 	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL(optional)(default "disable") (ignored for MySQL and MariaDB)`)
 
-	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
+	flag.StringVar(&destDir, "path", "", "Destination dir for files generated")
+	flag.StringVar(&exclude, "exclude", "", "Comma separated list of tables to ignore")
 }
 
 func main() {
@@ -69,7 +73,9 @@ Usage:
   -sslmode string
         Whether or not to use SSL(optional) (default "disable") (ignored for MySQL and MariaDB)
   -path string
-        Destination dir for files generated.
+        Destination dir for files generated
+  -exclude string
+        Comma separated list of tables to ignore
 `)
 	}
 
@@ -77,6 +83,10 @@ Usage:
 
 	if source == "" || host == "" || port == 0 || user == "" || dbName == "" {
 		printErrorAndExit("\nERROR: required flag(s) missing")
+	}
+
+	config := utils.Config{
+		Exclude: strings.Split(exclude, ","),
 	}
 
 	var err error
@@ -96,7 +106,7 @@ Usage:
 			SchemaName: schemaName,
 		}
 
-		err = postgresgen.Generate(destDir, genData)
+		err = postgresgen.Generate(config, destDir, genData)
 
 	case strings.ToLower(mysql.Dialect.Name()), "mariadb":
 
@@ -109,7 +119,7 @@ Usage:
 			DBName:   dbName,
 		}
 
-		err = mysqlgen.Generate(destDir, dbConn)
+		err = mysqlgen.Generate(config, destDir, dbConn)
 	default:
 		fmt.Println("ERROR: unsupported source " + source + ". " + postgres.Dialect.Name() + " and " + mysql.Dialect.Name() + " are currently supported.")
 		os.Exit(-4)

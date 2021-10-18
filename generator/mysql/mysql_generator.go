@@ -3,11 +3,12 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
+	"path"
+
 	"github.com/go-jet/jet/v2/generator/internal/metadata"
 	"github.com/go-jet/jet/v2/generator/internal/template"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/mysql"
-	"path"
 )
 
 // DBConnection contains MySQL connection details
@@ -22,7 +23,7 @@ type DBConnection struct {
 }
 
 // Generate generates jet files at destination dir from database connection details
-func Generate(destDir string, dbConn DBConnection) (err error) {
+func Generate(config utils.Config, destDir string, dbConn DBConnection) (err error) {
 	defer utils.ErrorCatch(&err)
 
 	db := openConnection(dbConn)
@@ -30,7 +31,7 @@ func Generate(destDir string, dbConn DBConnection) (err error) {
 
 	fmt.Println("Retrieving database information...")
 	// No schemas in MySQL
-	dbInfo := metadata.GetSchemaMetaData(db, dbConn.DBName, &mySqlQuerySet{})
+	dbInfo := metadata.GetSchemaMetaData(db, config, dbConn.DBName, &mySqlQuerySet{})
 
 	genPath := path.Join(destDir, dbConn.DBName)
 

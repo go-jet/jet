@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 var testSuite string
@@ -64,7 +65,7 @@ func initMySQLDB() {
 		err := cmd.Run()
 		utils.PanicOnError(err)
 
-		err = mysql.Generate("./.gentestdata/mysql", mysql.DBConnection{
+		err = mysql.Generate(utils.Config{}, "./.gentestdata/mysql", mysql.DBConnection{
 			Host:     dbconfig.MySqLHost,
 			Port:     dbconfig.MySQLPort,
 			User:     dbconfig.MySQLUser,
@@ -98,7 +99,7 @@ func initPostgresDB() {
 
 		execFile(db, "./testdata/init/postgres/"+schemaName+".sql")
 
-		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
+		err = postgres.Generate(utils.Config{}, "./.gentestdata", postgres.DBConnection{
 			Host:       dbconfig.Host,
 			Port:       5432,
 			User:       dbconfig.User,
