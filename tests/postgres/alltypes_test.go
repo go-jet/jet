@@ -241,18 +241,18 @@ func TestExpressionOperators(t *testing.T) {
 SELECT all_types.integer IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN ($1, $2)) AS "result.in",
-     (all_types.small_int_ptr IN ((
+     (all_types.small_int_ptr IN (
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.in_select",
+     )) AS "result.in_select",
      (CURRENT_USER) AS "result.raw",
      ($3 + COALESCE(all_types.small_int_ptr, 0) + $4) AS "result.raw_arg",
      ($5 + all_types.integer + $6 + $5 + $7 + $8) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN ($9, $10, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN ((
+     (all_types.small_int_ptr NOT IN (
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.not_in_select"
+     )) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT $11;
 `, int64(11), int64(22), 78, 56, 11, 22, 33, 44, int64(11), int64(22), int64(2))

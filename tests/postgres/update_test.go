@@ -259,14 +259,14 @@ func TestUpdateWithModelData(t *testing.T) {
 	stmt := Link.
 		UPDATE(Link.AllColumns).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int(int64(link.ID))))
+		WHERE(Link.ID.EQ(Int32(link.ID)))
 
 	expectedSQL := `
 UPDATE test_sample.link
 SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
 WHERE link.id = 201;
 `
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(201))
 
 	AssertExec(t, stmt, 1)
 }
@@ -286,14 +286,14 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 	stmt := Link.
 		UPDATE(updateColumnList).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int(int64(link.ID))))
+		WHERE(Link.ID.EQ(Int32(link.ID)))
 
 	var expectedSQL = `
 UPDATE test_sample.link
 SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
 WHERE link.id = 201;
 `
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int32(201))
 
 	AssertExec(t, stmt, 1)
 }

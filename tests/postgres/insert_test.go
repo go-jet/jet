@@ -140,8 +140,7 @@ ON CONFLICT ON CONSTRAINT employee_pkey DO NOTHING;
 				Link.ID.SET(Link.EXCLUDED.ID),
 				Link.URL.SET(String("http://www.postgresqltutorial2.com")),
 			),
-		).
-			RETURNING(Link.AllColumns)
+		).RETURNING(Link.AllColumns)
 
 		testutils.AssertStatementSql(t, stmt, `
 INSERT INTO test_sample.link (id, url, name, description)

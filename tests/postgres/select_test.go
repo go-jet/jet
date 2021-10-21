@@ -75,11 +75,12 @@ LIMIT 30;
 	query := SELECT(
 		Payment.AllColumns,
 		Customer.AllColumns,
-	).
-		FROM(Payment.
-			INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID))).
-		ORDER_BY(Payment.PaymentID.ASC()).
-		LIMIT(30)
+	).FROM(
+		Payment.
+			INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID)),
+	).ORDER_BY(
+		Payment.PaymentID.ASC(),
+	).LIMIT(30)
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(30))
 

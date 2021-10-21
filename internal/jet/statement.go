@@ -195,8 +195,17 @@ func (s *statementImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		out.IncreaseIdent()
 	}
 
+	if contains(options, Ident) {
+		out.IncreaseIdent()
+	}
+
 	for _, clause := range s.Clauses {
 		clause.Serialize(statement, out, FallTrough(options)...)
+	}
+
+	if contains(options, Ident) {
+		out.DecreaseIdent()
+		out.NewLine()
 	}
 
 	if !contains(options, NoWrap) {

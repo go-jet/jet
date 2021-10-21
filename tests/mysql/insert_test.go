@@ -278,7 +278,7 @@ ON DUPLICATE KEY UPDATE id = (id + ?),
 
 	err := SELECT(Link.AllColumns).
 		FROM(Link).
-		WHERE(Link.ID.EQ(Int(int64(randId)).ADD(Int(11)))).
+		WHERE(Link.ID.EQ(Int32(randId).ADD(Int(11)))).
 		Query(db, &newLinks)
 
 	require.NoError(t, err)

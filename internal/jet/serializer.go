@@ -7,8 +7,10 @@ type SerializeOption int
 const (
 	NoWrap SerializeOption = iota
 	SkipNewLine
+	Ident
 
 	fallTroughOptions // fall trough options
+
 	ShortName
 )
 

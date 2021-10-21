@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"testing"
 
@@ -368,16 +369,16 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 `
 
 func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
-	enumDir := testRoot + ".gentestdata/jetdb/test_sample/enum/"
-	modelDir := testRoot + ".gentestdata/jetdb/test_sample/model/"
-	tableDir := testRoot + ".gentestdata/jetdb/test_sample/table/"
+	enumDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/enum/")
+	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
+	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")
 
 	enumFiles, err := ioutil.ReadDir(enumDir)
 	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go", "level.go")
-	testutils.AssertFileContent(t, enumDir+"mood.go", moodEnumContent)
-	testutils.AssertFileContent(t, enumDir+"level.go", levelEnumContent)
+	testutils.AssertFileContent(t, enumDir+"/mood.go", moodEnumContent)
+	testutils.AssertFileContent(t, enumDir+"/level.go", levelEnumContent)
 
 	modelFiles, err := ioutil.ReadDir(modelDir)
 	require.NoError(t, err)
@@ -385,7 +386,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go")
 
-	testutils.AssertFileContent(t, modelDir+"all_types.go", allTypesModelContent)
+	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
 	tableFiles, err := ioutil.ReadDir(tableDir)
 	require.NoError(t, err)
@@ -393,7 +394,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go")
 
-	testutils.AssertFileContent(t, tableDir+"all_types.go", allTypesTableContent)
+	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 }
 
 var moodEnumContent = `
