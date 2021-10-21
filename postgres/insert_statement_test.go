@@ -8,7 +8,6 @@ import (
 )
 
 func TestInvalidInsert(t *testing.T) {
-	assertStatementSqlErr(t, table1.INSERT(table1Col1), "jet: VALUES or QUERY has to be specified for INSERT statement")
 	assertStatementSqlErr(t, table1.INSERT(nil).VALUES(1), "jet: nil column in columns list")
 }
 
