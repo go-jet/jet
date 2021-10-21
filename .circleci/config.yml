@@ -88,7 +88,8 @@ jobs:
 
 
       - run: mkdir -p $TEST_RESULTS
-      - run: MY_SQL_SOURCE=MySQL go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/jet/mysql/...,github.com/go-jet/jet/qrm/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
+      # this will run all tests and exclude test files from code coverage report
+      - run: MY_SQL_SOURCE=MySQL go test -v ./... -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/jet/mysql/...,github.com/go-jet/jet/sqlite/...,github.com/go-jet/jet/qrm/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
       - run:
           name: Upload code coverage

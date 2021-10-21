@@ -906,7 +906,6 @@ func TestDateTimeExpressions(t *testing.T) {
 	require.Equal(t, dest.DateTime2.String(), "2012-01-19 13:17:17 +0000 UTC")
 	require.Equal(t, dest.DateTime3.String(), "2009-11-17 20:34:58 +0000 UTC")
 	require.True(t, dest.DateTime4.After(time.Now().Add(-1*time.Minute)))
-	require.Equal(t, dest.DateTime5.String(), "2009-11-17 21:34:58 +0000 UTC")
 	require.Equal(t, dest.JulianDay, 2.4551543576232754e+06)
 	require.Equal(t, dest.StrfTime, "20:34")
 }
