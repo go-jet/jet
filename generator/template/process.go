@@ -169,8 +169,8 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 }
 
 func getTableSQLBuilderTemplate(dialect jet.Dialect) string {
-	if dialect.Name() == "PostgreSQL" {
-		return tablePostgreSQLBuilderTemplate
+	if dialect.Name() == "PostgreSQL" || dialect.Name() == "SQLite" {
+		return tableSQLBuilderTemplateWithEXCLUDED
 	}
 
 	return tableSQLBuilderTemplate

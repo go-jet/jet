@@ -74,7 +74,7 @@ func new{{tableTemplate.TypeName}}(schemaName, tableName, alias string) {{tableT
 }
 `
 
-var tablePostgreSQLBuilderTemplate = ` 
+var tableSQLBuilderTemplateWithEXCLUDED = ` 
 {{define "column-list" -}}
 	{{- range $i, $c := . }}
 {{- $field := columnField $c}}

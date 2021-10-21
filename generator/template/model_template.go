@@ -267,8 +267,8 @@ func getGoType(column metadata.Column) interface{} {
 
 // toGoType returns model type for column info.
 func toGoType(column metadata.Column) interface{} {
-	switch column.DataType.Name {
-	case "USER-DEFINED", "enum":
+	switch strings.ToLower(column.DataType.Name) {
+	case "user-defined", "enum":
 		return ""
 	case "boolean", "bool":
 		return false
@@ -306,10 +306,10 @@ func toGoType(column metadata.Column) interface{} {
 		return []byte("")
 	case "text",
 		"character", "bpchar",
-		"character varying", "varchar",
+		"character varying", "varchar", "nvarchar",
 		"tsvector", "bit", "bit varying", "varbit",
 		"money", "json", "jsonb",
-		"xml", "point", "interval", "line", "ARRAY",
+		"xml", "point", "interval", "line", "array",
 		"char", "tinytext", "mediumtext", "longtext": // MySQL
 		return ""
 	case "real", "float4":

@@ -8,9 +8,10 @@ import (
 // TableType is type of database table(view or base)
 type TableType string
 
+// SQL table types
 const (
-	baseTable TableType = "BASE TABLE"
-	viewTable TableType = "VIEW"
+	BaseTable TableType = "BASE TABLE"
+	ViewTable TableType = "VIEW"
 )
 
 // DialectQuerySet is set of methods necessary to retrieve dialect meta data information
@@ -23,8 +24,8 @@ type DialectQuerySet interface {
 func GetSchema(db *sql.DB, querySet DialectQuerySet, schemaName string) Schema {
 	ret := Schema{
 		Name:           schemaName,
-		TablesMetaData: querySet.GetTablesMetaData(db, schemaName, baseTable),
-		ViewsMetaData:  querySet.GetTablesMetaData(db, schemaName, viewTable),
+		TablesMetaData: querySet.GetTablesMetaData(db, schemaName, BaseTable),
+		ViewsMetaData:  querySet.GetTablesMetaData(db, schemaName, ViewTable),
 		EnumsMetaData:  querySet.GetEnumsMetaData(db, schemaName),
 	}
 

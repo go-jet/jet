@@ -5,6 +5,7 @@ import (
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"path"
+	"strings"
 	"unicode"
 )
 
@@ -137,7 +138,7 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 		return "String"
 	}
 
-	switch columnMetaData.DataType.Name {
+	switch strings.ToLower(columnMetaData.DataType.Name) {
 	case "boolean":
 		return "Bool"
 	case "smallint", "integer", "bigint",
@@ -157,9 +158,9 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 		return "Timez"
 	case "interval":
 		return "Interval"
-	case "USER-DEFINED", "enum", "text", "character", "character varying", "bytea", "uuid",
+	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
-		"char", "varchar", "binary", "varbinary",
+		"char", "varchar", "nvarchar", "binary", "varbinary",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
 	case "real", "numeric", "decimal", "double precision", "float",
