@@ -55,19 +55,27 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) e
 	sliceValue := slicePtrValue.Elem()
 	sliceElemType := sliceValue.Type().Elem()
 
-	newSliceElemValue := reflect.New(sliceElemType).Elem()
+	var newSliceElemValue reflect.Value
 
-	var err error
-
-	if newSliceElemValue.Kind() == reflect.Ptr {
-		newSliceElemValue.Set(reflect.New(newSliceElemValue.Type().Elem()))
-		err = tryAssign(objPtrValue.Elem(), newSliceElemValue.Elem())
+	if objPtrValue.Type().AssignableTo(sliceElemType) {
+		newSliceElemValue = objPtrValue
+	} else if objPtrValue.Elem().Type().AssignableTo(sliceElemType) {
+		newSliceElemValue = objPtrValue.Elem()
 	} else {
-		err = tryAssign(objPtrValue.Elem(), newSliceElemValue)
-	}
+		newSliceElemValue = reflect.New(sliceElemType).Elem()
 
-	if err != nil {
-		return fmt.Errorf("can't append %T to %T slice: %w", objPtrValue.Elem().Interface(), sliceValue.Interface(), err)
+		var err error
+
+		if newSliceElemValue.Kind() == reflect.Ptr {
+			newSliceElemValue.Set(reflect.New(newSliceElemValue.Type().Elem()))
+			err = tryAssign(objPtrValue.Elem(), newSliceElemValue.Elem())
+		} else {
+			err = tryAssign(objPtrValue.Elem(), newSliceElemValue)
+		}
+
+		if err != nil {
+			return fmt.Errorf("can't append %T to %T slice: %w", objPtrValue.Elem().Interface(), sliceValue.Interface(), err)
+		}
 	}
 
 	sliceValue.Set(reflect.Append(sliceValue, newSliceElemValue))
@@ -172,6 +180,18 @@ func isSimpleModelType(objType reflect.Type) bool {
 	return objType == timeType || objType == uuidType || objType == byteArrayType
 }
 
+func isIntegerType(objType reflect.Type) bool {
+	objType = indirectType(objType)
+
+	switch objType.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		return true
+	}
+
+	return false
+}
+
 func isFloatType(value reflect.Type) bool {
 	switch value.Kind() {
 	case reflect.Float32, reflect.Float64:
@@ -185,6 +205,7 @@ func tryAssign(source, destination reflect.Value) error {
 
 	if source.Type() != destination.Type() &&
 		!isFloatType(destination.Type()) && // to preserve precision during conversion
+		!(isIntegerType(source.Type()) && destination.Kind() == reflect.String) && // default conversion will convert int to 1 rune string
 		source.Type().ConvertibleTo(destination.Type()) {
 
 		source = source.Convert(destination.Type())
