@@ -59,7 +59,7 @@ func (nt *NullTime) Scan(value interface{}) error {
 	}
 
 	// Some of the drivers (pgx, mysql) are not parsing all of the time formats(date, time with time zone,...) and are just forwarding string value.
-	// At this point we try to parse time using some of the predefined formats
+	// At this point we try to parse those values using some of the predefined formats
 	nt.Time, nt.Valid = tryParseAsTime(value)
 
 	if !nt.Valid {
@@ -70,6 +70,7 @@ func (nt *NullTime) Scan(value interface{}) error {
 }
 
 var formats = []string{
+	"2006-01-02 15:04:05-07:00",  // sqlite
 	"2006-01-02 15:04:05.999999", // go-sql-driver/mysql
 	"15:04:05-07",                // pgx
 	"15:04:05.999999",            // pgx
@@ -84,6 +85,8 @@ func tryParseAsTime(value interface{}) (time.Time, bool) {
 		timeStr = v
 	case []byte:
 		timeStr = string(v)
+	case int64:
+		return time.Unix(v, 0), true // sqlite
 	default:
 		return time.Time{}, false
 	}

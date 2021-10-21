@@ -19,3 +19,4 @@
 gen
 .gentestdata
 .tests/testdata/
+.gen

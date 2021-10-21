@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -15,6 +17,8 @@ import (
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var testSuite string
@@ -39,8 +43,23 @@ func main() {
 		return
 	}
 
+	if testSuite == "sqlite" {
+		initSQLiteDB()
+		return
+	}
+
 	initMySQLDB()
 	initPostgresDB()
+	initSQLiteDB()
+}
+
+func initSQLiteDB() {
+	err := sqlite.GenerateDSN(dbconfig.SakilaDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/sakila"))
+	throw.OnError(err)
+	err = sqlite.GenerateDSN(dbconfig.ChinookDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/chinook"))
+	throw.OnError(err)
+	err = sqlite.GenerateDSN(dbconfig.TestSampleDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/test_sample"))
+	throw.OnError(err)
 }
 
 func initMySQLDB() {

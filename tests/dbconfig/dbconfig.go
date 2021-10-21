@@ -1,6 +1,9 @@
 package dbconfig
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
+)
 
 // Postgres test database connection parameters
 const (
@@ -24,3 +27,10 @@ const (
 
 // MySQLConnectionString is MySQL driver connection string to test database
 var MySQLConnectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/", MySQLUser, MySQLPassword, MySqLHost, MySQLPort)
+
+// sqllite
+var (
+	SakilaDBPath     = repo.GetTestDataFilePath("/init/sqlite/sakila.db")
+	ChinookDBPath    = repo.GetTestDataFilePath("/init/sqlite/chinook.db")
+	TestSampleDBPath = repo.GetTestDataFilePath("/init/sqlite/test_sample.db")
+)
