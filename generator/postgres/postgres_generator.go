@@ -31,11 +31,11 @@ type DBConnection struct {
 // Generate generates jet files at destination dir from database connection details
 func Generate(destDir string, dbConn DBConnection, genTemplate ...template.Template) (err error) {
 	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=%s",
-		url.QueryEscape(dbConn.User),
-		url.QueryEscape(dbConn.Password),
+		url.PathEscape(dbConn.User),
+		url.PathEscape(dbConn.Password),
 		dbConn.Host,
 		strconv.Itoa(dbConn.Port),
-		url.QueryEscape(dbConn.DBName),
+		url.PathEscape(dbConn.DBName),
 		dbConn.SslMode,
 	)
 

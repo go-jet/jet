@@ -9,8 +9,6 @@ import (
 
 	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
-	"github.com/go-jet/jet/v2/mysql"
-	"github.com/go-jet/jet/v2/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
@@ -89,10 +87,10 @@ Usage:
 
 Example commands:
 
-	$ jet -source=PostgreSQL -dbname=jetdb -host=localhost -port=5432 -user=jet -password=jet -schema=./dvds
-	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=./dvds
-	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=./dvds
-	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -schema=./dvds
+	$ jet -source=PostgreSQL -dbname=jetdb -host=localhost -port=5432 -user=jet -password=jet -schema=dvds -path=./gen
+	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=dvds -path=./gen
+	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
+	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -schema=dvds -path=./gen
 `)
 	}
 
@@ -158,7 +156,7 @@ Example commands:
 		}
 		err = sqlitegen.GenerateDSN(dsn, destDir)
 	default:
-		printErrorAndExit("ERROR: unsupported source " + source + ". " + postgres.Dialect.Name() + " and " + mysql.Dialect.Name() + " are currently supported.")
+		printErrorAndExit("ERROR: unknown data source " + source + ". Only postgres, mysql, mariadb and sqlite are supported.")
 	}
 
 	if err != nil {
@@ -178,5 +176,12 @@ func detectSchema(dsn string) string {
 	if len(match) < 2 { // not found
 		return ""
 	}
+
+	protocol := match[0]
+
+	if protocol == "file" {
+		return "sqlite"
+	}
+
 	return match[0]
 }

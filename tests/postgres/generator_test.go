@@ -125,6 +125,23 @@ func TestGenerator(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestGeneratorSpecialCharacters(t *testing.T) {
+	t.SkipNow()
+	err := postgres.Generate(genTestDir2, postgres.DBConnection{
+		Host:     dbconfig.PgHost,
+		Port:     dbconfig.PgPort,
+		User:     "!@#$%^&* () {}[];+-",
+		Password: "!@#$%^&* () {}[];+-",
+		SslMode:  "disable",
+		Params:   "",
+
+		DBName:     "!@#$%^&* () {}[];+-",
+		SchemaName: "!@#$%^&* () {}[];+-",
+	})
+
+	require.NoError(t, err)
+}
+
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
 	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
