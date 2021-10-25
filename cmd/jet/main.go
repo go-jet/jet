@@ -3,19 +3,21 @@ package main
 import (
 	"flag"
 	"fmt"
-	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
-	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
-	"github.com/go-jet/jet/v2/mysql"
-	"github.com/go-jet/jet/v2/postgres"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
 	"os"
 	"strings"
+
+	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
+	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var (
 	source string
 
+	dsn        string
 	host       string
 	port       int
 	user       string
@@ -29,8 +31,9 @@ var (
 )
 
 func init() {
-	flag.StringVar(&source, "source", "", "Database system name (PostgreSQL, MySQL or MariaDB)")
+	flag.StringVar(&source, "source", "", "Database system name (PostgreSQL, MySQL, MariaDB or SQLite)")
 
+	flag.StringVar(&dsn, "dsn", "", "Data source name connection string (Example: postgresql://user@localhost:5432/otherdb?sslmode=trust)")
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
 	flag.StringVar(&user, "user", "", "Database user")
@@ -47,11 +50,22 @@ func main() {
 
 	flag.Usage = func() {
 		_, _ = fmt.Fprint(os.Stdout, `
-Jet generator 2.5.0
+Jet generator 2.6.0
 
 Usage:
+  -dsn string
+    	Data source name. Unified format for connecting to database.
+    	PostgreSQL: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
+		Example:
+			postgresql://user:pass@localhost:5432/dbname
+    	MySQL: https://dev.mysql.com/doc/refman/8.0/en/connecting-using-uri-or-key-value-pairs.html
+		Example:
+			mysql://jet:jet@tcp(localhost:3306)/dvds
+    	SQLite: https://www.sqlite.org/c3ref/open.html#urifilenameexamples
+		Example:
+			file://path/to/database/file
   -source string
-    	Database system name (PostgreSQL, MySQL or MariaDB)
+    	Database system name (PostgreSQL, MySQL, MariaDB or SQLite)
   -host string
         Database host path (Example: localhost)
   -port int
@@ -65,25 +79,48 @@ Usage:
   -params string
         Additional connection string parameters(optional)
   -schema string
-        Database schema name. (default "public") (ignored for MySQL and MariaDB)
+        Database schema name. (default "public") (ignored for MySQL, MariaDB and SQLite)
   -sslmode string
-        Whether or not to use SSL(optional) (default "disable") (ignored for MySQL and MariaDB)
+        Whether or not to use SSL(optional) (default "disable") (ignored for MySQL, MariaDB and SQLite)
   -path string
         Destination dir for files generated.
+
+Example commands:
+
+	$ jet -source=PostgreSQL -dbname=jetdb -host=localhost -port=5432 -user=jet -password=jet -schema=dvds -path=./gen
+	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=dvds -path=./gen
+	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
+	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -schema=dvds -path=./gen
 `)
 	}
 
 	flag.Parse()
 
-	if source == "" || host == "" || port == 0 || user == "" || dbName == "" {
-		printErrorAndExit("\nERROR: required flag(s) missing")
+	if dsn == "" {
+		// validations for separated connection flags.
+		if source == "" || host == "" || port == 0 || user == "" || dbName == "" {
+			printErrorAndExit("ERROR: required flag(s) missing")
+		}
+	} else {
+		if source == "" {
+			// try to get source from schema
+			source = detectSchema(dsn)
+		}
+
+		// validations when dsn != ""
+		if source == "" {
+			printErrorAndExit("ERROR: required -source flag missing.")
+		}
 	}
 
 	var err error
 
 	switch strings.ToLower(strings.TrimSpace(source)) {
-	case strings.ToLower(postgres.Dialect.Name()),
-		strings.ToLower(postgres.Dialect.PackageName()):
+	case "postgresql", "postgres":
+		if dsn != "" {
+			err = postgresgen.GenerateDSN(dsn, schemaName, destDir)
+			break
+		}
 		genData := postgresgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -98,8 +135,11 @@ Usage:
 
 		err = postgresgen.Generate(destDir, genData)
 
-	case strings.ToLower(mysql.Dialect.Name()), "mariadb":
-
+	case "mysql", "mysqlx", "mariadb":
+		if dsn != "" {
+			err = mysqlgen.GenerateDSN(dsn, destDir)
+			break
+		}
 		dbConn := mysqlgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -110,9 +150,13 @@ Usage:
 		}
 
 		err = mysqlgen.Generate(destDir, dbConn)
+	case "sqlite":
+		if dsn == "" {
+			printErrorAndExit("ERROR: required -dsn flag missing.")
+		}
+		err = sqlitegen.GenerateDSN(dsn, destDir)
 	default:
-		fmt.Println("ERROR: unsupported source " + source + ". " + postgres.Dialect.Name() + " and " + mysql.Dialect.Name() + " are currently supported.")
-		os.Exit(-4)
+		printErrorAndExit("ERROR: unknown data source " + source + ". Only postgres, mysql, mariadb and sqlite are supported.")
 	}
 
 	if err != nil {
@@ -122,7 +166,22 @@ Usage:
 }
 
 func printErrorAndExit(error string) {
-	fmt.Println(error)
+	fmt.Println("\n", error)
 	flag.Usage()
 	os.Exit(-2)
+}
+
+func detectSchema(dsn string) string {
+	match := strings.SplitN(dsn, "://", 2)
+	if len(match) < 2 { // not found
+		return ""
+	}
+
+	protocol := match[0]
+
+	if protocol == "file" {
+		return "sqlite"
+	}
+
+	return match[0]
 }

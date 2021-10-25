@@ -66,9 +66,7 @@ func TestUpdateWithSubQueries(t *testing.T) {
 
 	expectedSQL := `
 UPDATE test_sample.link
-SET name = (
-         SELECT ?
-    ),
+SET name = ?,
     url = (
          SELECT link2.url AS "link2.url"
          FROM test_sample.link2
@@ -80,7 +78,7 @@ WHERE link.name = ?;
 		query := Link.
 			UPDATE(Link.Name, Link.URL).
 			SET(
-				SELECT(String("Bong")),
+				String("Bong"),
 				SELECT(Link2.URL).
 					FROM(Link2).
 					WHERE(Link2.Name.EQ(String("Youtube"))),
@@ -96,7 +94,7 @@ WHERE link.name = ?;
 		query := Link.
 			UPDATE().
 			SET(
-				Link.Name.SET(StringExp(SELECT(String("Bong")))),
+				Link.Name.SET(String("Bong")),
 				Link.URL.SET(StringExp(
 					SELECT(Link2.URL).
 						FROM(Link2).
@@ -123,7 +121,7 @@ func TestUpdateWithModelData(t *testing.T) {
 	stmt := Link.
 		UPDATE(Link.AllColumns).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int(int64(link.ID))))
+		WHERE(Link.ID.EQ(Int32(link.ID)))
 
 	expectedSQL := `
 UPDATE test_sample.link
@@ -133,7 +131,7 @@ SET id = ?,
     description = ?
 WHERE link.id = ?;
 `
-	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(201))
 
 	testutils.AssertExec(t, stmt, db)
 	requireLogged(t, stmt)
@@ -154,7 +152,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 	stmt := Link.
 		UPDATE(updateColumnList).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int(int64(link.ID))))
+		WHERE(Link.ID.EQ(Int32(link.ID)))
 
 	var expectedSQL = `
 UPDATE test_sample.link
@@ -163,9 +161,8 @@ SET description = NULL,
     url = 'http://www.duckduckgo.com'
 WHERE link.id = 201;
 `
-	//fmt.Println(stmt.DebugSql())
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int32(201))
 
 	testutils.AssertExec(t, stmt, db)
 	requireLogged(t, stmt)
@@ -183,7 +180,7 @@ func TestUpdateWithModelDataAndMutableColumns(t *testing.T) {
 	stmt := Link.
 		UPDATE(Link.MutableColumns).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int(int64(link.ID))))
+		WHERE(Link.ID.EQ(Int32(link.ID)))
 
 	var expectedSQL = `
 UPDATE test_sample.link
@@ -194,7 +191,7 @@ WHERE link.id = 201;
 `
 	//fmt.Println(stmt.DebugSql())
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(201))
 	testutils.AssertExec(t, stmt, db)
 }
 

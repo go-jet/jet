@@ -375,9 +375,14 @@ type wrap struct {
 	expressions []Expression
 }
 
-func (n *wrap) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (n *wrap) serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
-	serializeExpressionList(statement, n.expressions, ", ", out)
+
+	if len(n.expressions) == 1 {
+		options = append(options, NoWrap, Ident)
+	}
+	serializeExpressionList(statementType, n.expressions, ", ", out, options...)
+
 	out.WriteString(")")
 }
 

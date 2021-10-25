@@ -46,33 +46,33 @@ func TestExists(t *testing.T) {
 func TestIN(t *testing.T) {
 
 	assertSerialize(t, Float(1.11).IN(table1.SELECT(table1Col1)),
-		`($1 IN ((
+		`($1 IN (
      SELECT table1.col1 AS "table1.col1"
      FROM db.table1
-)))`, float64(1.11))
+))`, float64(1.11))
 
 	assertSerialize(t, ROW(Int(12), table1Col1).IN(table2.SELECT(table2Col3, table3Col1)),
-		`(ROW($1, table1.col1) IN ((
+		`(ROW($1, table1.col1) IN (
      SELECT table2.col3 AS "table2.col3",
           table3.col1 AS "table3.col1"
      FROM db.table2
-)))`, int64(12))
+))`, int64(12))
 }
 
 func TestNOT_IN(t *testing.T) {
 
 	assertSerialize(t, Float(1.11).NOT_IN(table1.SELECT(table1Col1)),
-		`($1 NOT IN ((
+		`($1 NOT IN (
      SELECT table1.col1 AS "table1.col1"
      FROM db.table1
-)))`, float64(1.11))
+))`, float64(1.11))
 
 	assertSerialize(t, ROW(Int(12), table1Col1).NOT_IN(table2.SELECT(table2Col3, table3Col1)),
-		`(ROW($1, table1.col1) NOT IN ((
+		`(ROW($1, table1.col1) NOT IN (
      SELECT table2.col3 AS "table2.col3",
           table3.col1 AS "table3.col1"
      FROM db.table2
-)))`, int64(12))
+))`, int64(12))
 }
 
 func TestReservedWordEscaped(t *testing.T) {

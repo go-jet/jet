@@ -4,10 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"math/rand"
 	"os"
-	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
@@ -31,7 +30,9 @@ func TestMain(m *testing.M) {
 
 	setTestRoot()
 
-	for _, driverName := range []string{"postgres", "pgx"} {
+	for _, driverName := range []string{"pgx", "postgres"} {
+		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
+
 		func() {
 			var err error
 			db, err = sql.Open(driverName, dbconfig.PostgresConnectString)
@@ -51,13 +52,7 @@ func TestMain(m *testing.M) {
 }
 
 func setTestRoot() {
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	byteArr, err := cmd.Output()
-	if err != nil {
-		panic(err)
-	}
-
-	testRoot = strings.TrimSpace(string(byteArr)) + "/tests/"
+	testRoot = repo.GetTestsDirPath()
 }
 
 var loggedSQL string
@@ -79,8 +74,16 @@ func requireLogged(t *testing.T, statement postgres.Statement) {
 }
 
 func skipForPgxDriver(t *testing.T) {
-	switch db.Driver().(type) {
-	case *stdlib.Driver:
+	if isPgxDriver() {
 		t.SkipNow()
 	}
+}
+
+func isPgxDriver() bool {
+	switch db.Driver().(type) {
+	case *stdlib.Driver:
+		return true
+	}
+
+	return false
 }

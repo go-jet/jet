@@ -217,12 +217,13 @@ func (f *ClauseFor) Serialize(statementType StatementType, out *SQLBuilder, opti
 
 // ClauseSetStmtOperator struct
 type ClauseSetStmtOperator struct {
-	Operator string
-	All      bool
-	Selects  []SerializerStatement
-	OrderBy  ClauseOrderBy
-	Limit    ClauseLimit
-	Offset   ClauseOffset
+	Operator       string
+	All            bool
+	Selects        []SerializerStatement
+	OrderBy        ClauseOrderBy
+	Limit          ClauseLimit
+	Offset         ClauseOffset
+	SkipSelectWrap bool
 }
 
 // Projections returns set of projections for ClauseSetStmtOperator
@@ -242,6 +243,10 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SQLB
 	for i, selectStmt := range s.Selects {
 		out.NewLine()
 		if i > 0 {
+			if s.SkipSelectWrap {
+				out.NewLine()
+			}
+
 			out.WriteString(s.Operator)
 
 			if s.All {
@@ -254,7 +259,11 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SQLB
 			panic("jet: select statement of '" + s.Operator + "' is nil")
 		}
 
-		selectStmt.serialize(statementType, out, FallTrough(options)...)
+		if s.SkipSelectWrap {
+			options = append(FallTrough(options), NoWrap)
+		}
+
+		selectStmt.serialize(statementType, out, options...)
 	}
 
 	s.OrderBy.Serialize(statementType, out)
@@ -360,10 +369,6 @@ type ClauseValuesQuery struct {
 
 // Serialize serializes clause into SQLBuilder
 func (v *ClauseValuesQuery) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if len(v.Rows) == 0 && v.Query == nil {
-		panic("jet: VALUES or QUERY has to be specified for INSERT statement")
-	}
-
 	if len(v.Rows) > 0 && v.Query != nil {
 		panic("jet: VALUES or QUERY has to be specified for INSERT statement")
 	}
@@ -405,7 +410,8 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SQLBuilder, o
 
 // ClauseQuery struct
 type ClauseQuery struct {
-	Query SerializerStatement
+	Query          SerializerStatement
+	SkipSelectWrap bool
 }
 
 // Serialize serializes clause into SQLBuilder
@@ -414,7 +420,11 @@ func (v *ClauseQuery) Serialize(statementType StatementType, out *SQLBuilder, op
 		return
 	}
 
-	v.Query.serialize(statementType, out, FallTrough(options)...)
+	if v.SkipSelectWrap {
+		options = append(FallTrough(options), NoWrap)
+	}
+
+	v.Query.serialize(statementType, out, options...)
 }
 
 // ClauseDelete struct
@@ -560,4 +570,27 @@ type KeywordClause struct {
 // Serialize for KeywordClause
 func (k KeywordClause) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
 	k.serialize(statementType, out, FallTrough(options)...)
+}
+
+// ClauseReturning  type
+type ClauseReturning struct {
+	ProjectionList []Projection
+}
+
+// Serialize for ClauseReturning
+func (r *ClauseReturning) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(r.ProjectionList) == 0 {
+		return
+	}
+
+	out.NewLine()
+	out.WriteString("RETURNING")
+	out.IncreaseIdent()
+	out.WriteProjections(statementType, r.ProjectionList)
+	out.DecreaseIdent()
+}
+
+// Projections for ClauseReturning
+func (r ClauseReturning) Projections() ProjectionList {
+	return r.ProjectionList
 }

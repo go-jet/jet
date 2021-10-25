@@ -4,16 +4,21 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet/v2/generator/mysql"
-	"github.com/go-jet/jet/v2/generator/postgres"
-	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	"github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/go-jet/jet/v2/generator/postgres"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
+	"github.com/go-jet/jet/v2/tests/dbconfig"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 var testSuite string
@@ -38,8 +43,23 @@ func main() {
 		return
 	}
 
+	if testSuite == "sqlite" {
+		initSQLiteDB()
+		return
+	}
+
 	initMySQLDB()
 	initPostgresDB()
+	initSQLiteDB()
+}
+
+func initSQLiteDB() {
+	err := sqlite.GenerateDSN(dbconfig.SakilaDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/sakila"))
+	throw.OnError(err)
+	err = sqlite.GenerateDSN(dbconfig.ChinookDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/chinook"))
+	throw.OnError(err)
+	err = sqlite.GenerateDSN(dbconfig.TestSampleDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/test_sample"))
+	throw.OnError(err)
 }
 
 func initMySQLDB() {
@@ -62,7 +82,7 @@ func initMySQLDB() {
 		cmd.Stdout = os.Stdout
 
 		err := cmd.Run()
-		utils.PanicOnError(err)
+		throw.OnError(err)
 
 		err = mysql.Generate("./.gentestdata/mysql", mysql.DBConnection{
 			Host:     dbconfig.MySqLHost,
@@ -72,7 +92,7 @@ func initMySQLDB() {
 			DBName:   dbName,
 		})
 
-		utils.PanicOnError(err)
+		throw.OnError(err)
 	}
 }
 
@@ -99,24 +119,24 @@ func initPostgresDB() {
 		execFile(db, "./testdata/init/postgres/"+schemaName+".sql")
 
 		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
-			Host:       dbconfig.Host,
-			Port:       5432,
-			User:       dbconfig.User,
-			Password:   dbconfig.Password,
-			DBName:     dbconfig.DBName,
+			Host:       dbconfig.PgHost,
+			Port:       dbconfig.PgPort,
+			User:       dbconfig.PgUser,
+			Password:   dbconfig.PgPassword,
+			DBName:     dbconfig.PgDBName,
 			SchemaName: schemaName,
 			SslMode:    "disable",
 		})
-		utils.PanicOnError(err)
+		throw.OnError(err)
 	}
 }
 
 func execFile(db *sql.DB, sqlFilePath string) {
 	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	_, err = db.Exec(string(testSampleSql))
-	utils.PanicOnError(err)
+	throw.OnError(err)
 }
 
 func printOnError(err error) {

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -19,6 +19,11 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 )
+
+// UnixTimeComparer will compare time equality while ignoring time zone
+var UnixTimeComparer = cmp.Comparer(func(t1, t2 time.Time) bool {
+	return t1.Unix() == t2.Unix()
+})
 
 // AssertExec assert statement execution for successful execution and number of rows affected
 func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int64) {
@@ -66,7 +71,7 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 	filePath := getFullPath(testRelativePath)
 	err := ioutil.WriteFile(filePath, jsonText, 0644)
 
-	utils.PanicOnError(err)
+	throw.OnError(err)
 }
 
 // AssertJSONFile check if data json representation is the same as json at testRelativePath
@@ -113,7 +118,7 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 	_, args := query.Sql()
 
 	if len(expectedArgs) > 0 {
-		AssertDeepEqual(t, args, expectedArgs, "arguments are not equal")
+		AssertDeepEqual(t, args, expectedArgs)
 	}
 
 	debugSql := query.DebugSql()
@@ -223,9 +228,9 @@ func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...st
 }
 
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
-func AssertDeepEqual(t *testing.T, actual, expected interface{}, msg ...string) {
-	if !assert.True(t, cmp.Equal(actual, expected), msg) {
-		printDiff(actual, expected)
+func AssertDeepEqual(t *testing.T, actual, expected interface{}, option ...cmp.Option) {
+	if !assert.True(t, cmp.Equal(actual, expected, option...)) {
+		printDiff(actual, expected, option...)
 		t.FailNow()
 	}
 }
@@ -237,7 +242,8 @@ func assertQueryString(t *testing.T, actual, expected string) {
 	}
 }
 
-func printDiff(actual, expected interface{}) {
+func printDiff(actual, expected interface{}, options ...cmp.Option) {
+	fmt.Println(cmp.Diff(actual, expected, options...))
 	fmt.Println("Actual: ")
 	fmt.Println(actual)
 	fmt.Println("Expected: ")

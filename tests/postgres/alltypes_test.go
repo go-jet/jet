@@ -17,11 +17,12 @@ import (
 )
 
 func TestAllTypesSelect(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver returns time with time zone as string
-
 	dest := []model.AllTypes{}
 
-	err := AllTypes.SELECT(AllTypes.AllColumns).Query(db, &dest)
+	err := AllTypes.SELECT(
+		AllTypes.AllColumns,
+	).LIMIT(2).
+		Query(db, &dest)
 	require.NoError(t, err)
 
 	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
@@ -29,8 +30,6 @@ func TestAllTypesSelect(t *testing.T) {
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver returns time with time zone as string
-
 	type AllTypesView model.AllTypes
 
 	dest := []AllTypesView{}
@@ -43,7 +42,7 @@ func TestAllTypesViewSelect(t *testing.T) {
 }
 
 func TestAllTypesInsertModel(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver does not handle well time with time zone
+	skipForPgxDriver(t) // pgx driver bug ERROR: date/time field value out of range: "0000-01-01 12:05:06Z" (SQLSTATE 22008)
 
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(allTypesRow0).
@@ -60,8 +59,6 @@ func TestAllTypesInsertModel(t *testing.T) {
 }
 
 func TestAllTypesInsertQuery(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver does not handle well time with time zone
-
 	query := AllTypes.INSERT(AllTypes.AllColumns).
 		QUERY(
 			AllTypes.
@@ -80,8 +77,6 @@ func TestAllTypesInsertQuery(t *testing.T) {
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
-	skipForPgxDriver(t)
-
 	subQuery := SELECT(AllTypes.AllColumns).
 		FROM(AllTypes).
 		AsTable("allTypesSubQuery")
@@ -246,18 +241,18 @@ func TestExpressionOperators(t *testing.T) {
 SELECT all_types.integer IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN ($1, $2)) AS "result.in",
-     (all_types.small_int_ptr IN ((
+     (all_types.small_int_ptr IN (
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.in_select",
+     )) AS "result.in_select",
      (CURRENT_USER) AS "result.raw",
      ($3 + COALESCE(all_types.small_int_ptr, 0) + $4) AS "result.raw_arg",
      ($5 + all_types.integer + $6 + $5 + $7 + $8) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN ($9, $10, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN ((
+     (all_types.small_int_ptr NOT IN (
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.not_in_select"
+     )) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT $11;
 `, int64(11), int64(22), 78, 56, 11, 22, 33, 44, int64(11), int64(22), int64(2))
@@ -302,10 +297,10 @@ LIMIT $11;
 
 func TestExpressionCast(t *testing.T) {
 
-	skipForPgxDriver(t) // for some reason, pgx driver, 150:char(12) returns as int value
+	skipForPgxDriver(t) // pgx driver bug 'cannot convert 151 to Text'
 
 	query := AllTypes.SELECT(
-		CAST(Int(150)).AS_CHAR(12).AS("char12"),
+		CAST(Int(151)).AS_CHAR(12).AS("char12"),
 		CAST(String("TRUE")).AS_BOOL(),
 		CAST(String("111")).AS_SMALLINT(),
 		CAST(String("111")).AS_INTEGER(),
@@ -349,7 +344,7 @@ func TestExpressionCast(t *testing.T) {
 }
 
 func TestStringOperators(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver returns text column as int value
+	skipForPgxDriver(t) // pgx driver bug 'cannot convert 11 to Text'
 
 	query := AllTypes.SELECT(
 		AllTypes.Text.EQ(AllTypes.Char),
@@ -866,8 +861,6 @@ func TestInterval(t *testing.T) {
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver returns time with time zone as string value
-
 	type expected struct {
 		sql  string
 		args []interface{}
@@ -1044,8 +1037,6 @@ FROM`
 }
 
 func TestTimeLiterals(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver returns time with time zone as string
-
 	loc, err := time.LoadLocation("Europe/Berlin")
 	require.NoError(t, err)
 
@@ -1060,8 +1051,6 @@ func TestTimeLiterals(t *testing.T) {
 	).FROM(AllTypes).
 		LIMIT(1)
 
-	//fmt.Println(query.Sql())
-
 	testutils.AssertStatementSql(t, query, `
 SELECT $1::date AS "date",
      $2::time without time zone AS "time",
@@ -1073,25 +1062,29 @@ LIMIT $6;
 `)
 
 	var dest struct {
-		Date      time.Time
-		Time      time.Time
-		Timez     time.Time
-		Timestamp time.Time
-		//Timestampz time.Time
+		Date       time.Time
+		Time       time.Time
+		Timez      time.Time
+		Timestamp  time.Time
+		Timestampz time.Time
 	}
 
 	err = query.Query(db, &dest)
 
 	require.NoError(t, err)
 
-	//testutils.PrintJson(dest)
+	// pq driver will return time with time zone in local timezone,
+	// while pgx driver will return time in UTC time zone
+	dest.Timez = dest.Timez.UTC()
+	dest.Timestampz = dest.Timestampz.UTC()
 
 	testutils.AssertJSON(t, dest, `
 {
 	"Date": "2009-11-17T00:00:00Z",
 	"Time": "0000-01-01T20:34:58.651387Z",
-	"Timez": "0000-01-01T20:34:58.651387+01:00",
-	"Timestamp": "2009-11-17T20:34:58.651387Z"
+	"Timez": "0000-01-01T19:34:58.651387Z",
+	"Timestamp": "2009-11-17T20:34:58.651387Z",
+	"Timestampz": "2009-11-17T19:34:58.651387Z"
 }
 `)
 	requireLogged(t, query)

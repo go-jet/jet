@@ -1,15 +1,18 @@
 package postgres
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"reflect"
+	"testing"
+
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"reflect"
-	"testing"
 
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 )
@@ -61,20 +64,40 @@ func TestCmdGenerator(t *testing.T) {
 
 	err = os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
+
+	// Check that connection via DSN works
+	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
+		dbconfig.PgUser,
+		dbconfig.PgPassword,
+		dbconfig.PgHost,
+		dbconfig.PgPort,
+		"jetdb",
+	)
+	cmd = exec.Command("jet", "-dsn="+dsn, "-schema=dvds", "-path="+genTestDir2)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFiles(t)
+
+	err = os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
 }
 
 func TestGenerator(t *testing.T) {
 
 	for i := 0; i < 3; i++ {
 		err := postgres.Generate(genTestDir2, postgres.DBConnection{
-			Host:     dbconfig.Host,
-			Port:     dbconfig.Port,
-			User:     dbconfig.User,
-			Password: dbconfig.Password,
+			Host:     dbconfig.PgHost,
+			Port:     dbconfig.PgPort,
+			User:     dbconfig.PgUser,
+			Password: dbconfig.PgPassword,
 			SslMode:  "disable",
 			Params:   "",
 
-			DBName:     dbconfig.DBName,
+			DBName:     dbconfig.PgDBName,
 			SchemaName: "dvds",
 		})
 
@@ -83,7 +106,39 @@ func TestGenerator(t *testing.T) {
 		assertGeneratedFiles(t)
 	}
 
+	for i := 0; i < 3; i++ {
+		dsn := fmt.Sprintf("postgresql://%[1]s:%[2]s@%[3]s:%[4]d/%[5]s?sslmode=disable",
+			dbconfig.PgUser,
+			dbconfig.PgPassword,
+			dbconfig.PgHost,
+			dbconfig.PgPort,
+			dbconfig.PgDBName,
+		)
+		err := postgres.GenerateDSN(dsn, "dvds", genTestDir2)
+
+		require.NoError(t, err)
+
+		assertGeneratedFiles(t)
+	}
+
 	err := os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
+}
+
+func TestGeneratorSpecialCharacters(t *testing.T) {
+	t.SkipNow()
+	err := postgres.Generate(genTestDir2, postgres.DBConnection{
+		Host:     dbconfig.PgHost,
+		Port:     dbconfig.PgPort,
+		User:     "!@#$%^&* () {}[];+-",
+		Password: "!@#$%^&* () {}[];+-",
+		SslMode:  "disable",
+		Params:   "",
+
+		DBName:     "!@#$%^&* () {}[];+-",
+		SchemaName: "!@#$%^&* () {}[];+-",
+	})
+
 	require.NoError(t, err)
 }
 
@@ -331,16 +386,16 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 `
 
 func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
-	enumDir := testRoot + ".gentestdata/jetdb/test_sample/enum/"
-	modelDir := testRoot + ".gentestdata/jetdb/test_sample/model/"
-	tableDir := testRoot + ".gentestdata/jetdb/test_sample/table/"
+	enumDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/enum/")
+	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
+	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")
 
 	enumFiles, err := ioutil.ReadDir(enumDir)
 	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go", "level.go")
-	testutils.AssertFileContent(t, enumDir+"mood.go", moodEnumContent)
-	testutils.AssertFileContent(t, enumDir+"level.go", levelEnumContent)
+	testutils.AssertFileContent(t, enumDir+"/mood.go", moodEnumContent)
+	testutils.AssertFileContent(t, enumDir+"/level.go", levelEnumContent)
 
 	modelFiles, err := ioutil.ReadDir(modelDir)
 	require.NoError(t, err)
@@ -348,7 +403,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go")
 
-	testutils.AssertFileContent(t, modelDir+"all_types.go", allTypesModelContent)
+	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
 	tableFiles, err := ioutil.ReadDir(tableDir)
 	require.NoError(t, err)
@@ -356,7 +411,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go")
 
-	testutils.AssertFileContent(t, tableDir+"all_types.go", allTypesTableContent)
+	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 }
 
 var moodEnumContent = `

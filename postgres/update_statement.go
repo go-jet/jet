@@ -22,7 +22,7 @@ type updateStatementImpl struct {
 	Set       clauseSet
 	SetNew    jet.SetClauseNew
 	Where     jet.ClauseWhere
-	Returning clauseReturning
+	Returning jet.ClauseReturning
 }
 
 func newUpdateStatement(table WritableTable, columns []jet.Column) UpdateStatement {

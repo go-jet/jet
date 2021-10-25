@@ -2,7 +2,7 @@ package jet
 
 // ROW is construct one table row from list of expressions.
 func ROW(expressions ...Expression) Expression {
-	return newFunc("ROW", expressions, nil)
+	return NewFunc("ROW", expressions, nil)
 }
 
 // ------------------ Mathematical functions ---------------//
@@ -265,118 +265,118 @@ func OCTET_LENGTH(stringExpression StringExpression) IntegerExpression {
 
 // LOWER returns string expression in lower case
 func LOWER(stringExpression StringExpression) StringExpression {
-	return newStringFunc("LOWER", stringExpression)
+	return NewStringFunc("LOWER", stringExpression)
 }
 
 // UPPER returns string expression in upper case
 func UPPER(stringExpression StringExpression) StringExpression {
-	return newStringFunc("UPPER", stringExpression)
+	return NewStringFunc("UPPER", stringExpression)
 }
 
 // BTRIM removes the longest string consisting only of characters
 // in characters (a space by default) from the start and end of string
 func BTRIM(stringExpression StringExpression, trimChars ...StringExpression) StringExpression {
 	if len(trimChars) > 0 {
-		return newStringFunc("BTRIM", stringExpression, trimChars[0])
+		return NewStringFunc("BTRIM", stringExpression, trimChars[0])
 	}
-	return newStringFunc("BTRIM", stringExpression)
+	return NewStringFunc("BTRIM", stringExpression)
 }
 
 // LTRIM removes the longest string containing only characters
 // from characters (a space by default) from the start of string
 func LTRIM(str StringExpression, trimChars ...StringExpression) StringExpression {
 	if len(trimChars) > 0 {
-		return newStringFunc("LTRIM", str, trimChars[0])
+		return NewStringFunc("LTRIM", str, trimChars[0])
 	}
-	return newStringFunc("LTRIM", str)
+	return NewStringFunc("LTRIM", str)
 }
 
 // RTRIM removes the longest string containing only characters
 // from characters (a space by default) from the end of string
 func RTRIM(str StringExpression, trimChars ...StringExpression) StringExpression {
 	if len(trimChars) > 0 {
-		return newStringFunc("RTRIM", str, trimChars[0])
+		return NewStringFunc("RTRIM", str, trimChars[0])
 	}
-	return newStringFunc("RTRIM", str)
+	return NewStringFunc("RTRIM", str)
 }
 
 // CHR returns character with the given code.
 func CHR(integerExpression IntegerExpression) StringExpression {
-	return newStringFunc("CHR", integerExpression)
+	return NewStringFunc("CHR", integerExpression)
 }
 
 // CONCAT adds two or more expressions together
 func CONCAT(expressions ...Expression) StringExpression {
-	return newStringFunc("CONCAT", expressions...)
+	return NewStringFunc("CONCAT", expressions...)
 }
 
 // CONCAT_WS adds two or more expressions together with a separator.
 func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression {
-	return newStringFunc("CONCAT_WS", append([]Expression{separator}, expressions...)...)
+	return NewStringFunc("CONCAT_WS", append([]Expression{separator}, expressions...)...)
 }
 
 // CONVERT converts string to dest_encoding. The original encoding is
 // specified by src_encoding. The string must be valid in this encoding.
 func CONVERT(str StringExpression, srcEncoding StringExpression, destEncoding StringExpression) StringExpression {
-	return newStringFunc("CONVERT", str, srcEncoding, destEncoding)
+	return NewStringFunc("CONVERT", str, srcEncoding, destEncoding)
 }
 
 // CONVERT_FROM converts string to the database encoding. The original
 // encoding is specified by src_encoding. The string must be valid in this encoding.
 func CONVERT_FROM(str StringExpression, srcEncoding StringExpression) StringExpression {
-	return newStringFunc("CONVERT_FROM", str, srcEncoding)
+	return NewStringFunc("CONVERT_FROM", str, srcEncoding)
 }
 
 // CONVERT_TO converts string to dest_encoding.
 func CONVERT_TO(str StringExpression, toEncoding StringExpression) StringExpression {
-	return newStringFunc("CONVERT_TO", str, toEncoding)
+	return NewStringFunc("CONVERT_TO", str, toEncoding)
 }
 
 // ENCODE encodes binary data into a textual representation.
 // Supported formats are: base64, hex, escape. escape converts zero bytes and
 // high-bit-set bytes to octal sequences (\nnn) and doubles backslashes.
 func ENCODE(data StringExpression, format StringExpression) StringExpression {
-	return newStringFunc("ENCODE", data, format)
+	return NewStringFunc("ENCODE", data, format)
 }
 
 // DECODE decodes binary data from textual representation in string.
 // Options for format are same as in encode.
 func DECODE(data StringExpression, format StringExpression) StringExpression {
-	return newStringFunc("DECODE", data, format)
+	return NewStringFunc("DECODE", data, format)
 }
 
 // FORMAT formats a number to a format like "#,###,###.##", rounded to a specified number of decimal places, then it returns the result as a string.
 func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
 	args := []Expression{formatStr}
 	args = append(args, formatArgs...)
-	return newStringFunc("FORMAT", args...)
+	return NewStringFunc("FORMAT", args...)
 }
 
 // INITCAP converts the first letter of each word to upper case
 // and the rest to lower case. Words are sequences of alphanumeric
 // characters separated by non-alphanumeric characters.
 func INITCAP(str StringExpression) StringExpression {
-	return newStringFunc("INITCAP", str)
+	return NewStringFunc("INITCAP", str)
 }
 
 // LEFT returns first n characters in the string.
 // When n is negative, return all but last |n| characters.
 func LEFT(str StringExpression, n IntegerExpression) StringExpression {
-	return newStringFunc("LEFT", str, n)
+	return NewStringFunc("LEFT", str, n)
 }
 
 // RIGHT returns last n characters in the string.
 // When n is negative, return all but first |n| characters.
 func RIGHT(str StringExpression, n IntegerExpression) StringExpression {
-	return newStringFunc("RIGHT", str, n)
+	return NewStringFunc("RIGHT", str, n)
 }
 
 // LENGTH returns number of characters in string with a given encoding
 func LENGTH(str StringExpression, encoding ...StringExpression) StringExpression {
 	if len(encoding) > 0 {
-		return newStringFunc("LENGTH", str, encoding[0])
+		return NewStringFunc("LENGTH", str, encoding[0])
 	}
-	return newStringFunc("LENGTH", str)
+	return NewStringFunc("LENGTH", str)
 }
 
 // LPAD fills up the string to length length by prepending the characters
@@ -384,40 +384,40 @@ func LENGTH(str StringExpression, encoding ...StringExpression) StringExpression
 // then it is truncated (on the right).
 func LPAD(str StringExpression, length IntegerExpression, text ...StringExpression) StringExpression {
 	if len(text) > 0 {
-		return newStringFunc("LPAD", str, length, text[0])
+		return NewStringFunc("LPAD", str, length, text[0])
 	}
 
-	return newStringFunc("LPAD", str, length)
+	return NewStringFunc("LPAD", str, length)
 }
 
 // RPAD fills up the string to length length by appending the characters
 // fill (a space by default). If the string is already longer than length then it is truncated.
 func RPAD(str StringExpression, length IntegerExpression, text ...StringExpression) StringExpression {
 	if len(text) > 0 {
-		return newStringFunc("RPAD", str, length, text[0])
+		return NewStringFunc("RPAD", str, length, text[0])
 	}
 
-	return newStringFunc("RPAD", str, length)
+	return NewStringFunc("RPAD", str, length)
 }
 
 // MD5 calculates the MD5 hash of string, returning the result in hexadecimal
 func MD5(stringExpression StringExpression) StringExpression {
-	return newStringFunc("MD5", stringExpression)
+	return NewStringFunc("MD5", stringExpression)
 }
 
 // REPEAT repeats string the specified number of times
 func REPEAT(str StringExpression, n IntegerExpression) StringExpression {
-	return newStringFunc("REPEAT", str, n)
+	return NewStringFunc("REPEAT", str, n)
 }
 
 // REPLACE replaces all occurrences in string of substring from with substring to
 func REPLACE(text, from, to StringExpression) StringExpression {
-	return newStringFunc("REPLACE", text, from, to)
+	return NewStringFunc("REPLACE", text, from, to)
 }
 
 // REVERSE returns reversed string.
 func REVERSE(stringExpression StringExpression) StringExpression {
-	return newStringFunc("REVERSE", stringExpression)
+	return NewStringFunc("REVERSE", stringExpression)
 }
 
 // STRPOS returns location of specified substring (same as position(substring in string),
@@ -429,22 +429,22 @@ func STRPOS(str, substring StringExpression) IntegerExpression {
 // SUBSTR extracts substring
 func SUBSTR(str StringExpression, from IntegerExpression, count ...IntegerExpression) StringExpression {
 	if len(count) > 0 {
-		return newStringFunc("SUBSTR", str, from, count[0])
+		return NewStringFunc("SUBSTR", str, from, count[0])
 	}
-	return newStringFunc("SUBSTR", str, from)
+	return NewStringFunc("SUBSTR", str, from)
 }
 
 // TO_ASCII convert string to ASCII from another encoding
 func TO_ASCII(str StringExpression, encoding ...StringExpression) StringExpression {
 	if len(encoding) > 0 {
-		return newStringFunc("TO_ASCII", str, encoding[0])
+		return NewStringFunc("TO_ASCII", str, encoding[0])
 	}
-	return newStringFunc("TO_ASCII", str)
+	return NewStringFunc("TO_ASCII", str)
 }
 
 // TO_HEX converts number to its equivalent hexadecimal representation
 func TO_HEX(number IntegerExpression) StringExpression {
-	return newStringFunc("TO_HEX", number)
+	return NewStringFunc("TO_HEX", number)
 }
 
 // REGEXP_LIKE Returns 1 if the string expr matches the regular expression specified by the pattern pat, 0 otherwise.
@@ -460,12 +460,12 @@ func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType
 
 // TO_CHAR converts expression to string with format
 func TO_CHAR(expression Expression, format StringExpression) StringExpression {
-	return newStringFunc("TO_CHAR", expression, format)
+	return NewStringFunc("TO_CHAR", expression, format)
 }
 
 // TO_DATE converts string to date using format
 func TO_DATE(dateStr, format StringExpression) DateExpression {
-	return newDateFunc("TO_DATE", dateStr, format)
+	return NewDateFunc("TO_DATE", dateStr, format)
 }
 
 // TO_NUMBER converts string to numeric using format
@@ -482,7 +482,7 @@ func TO_TIMESTAMP(timestampzStr, format StringExpression) TimestampzExpression {
 
 // CURRENT_DATE returns current date
 func CURRENT_DATE() DateExpression {
-	dateFunc := newDateFunc("CURRENT_DATE")
+	dateFunc := NewDateFunc("CURRENT_DATE")
 	dateFunc.noBrackets = true
 	return dateFunc
 }
@@ -522,9 +522,9 @@ func LOCALTIME(precision ...int) TimeExpression {
 	var timeFunc *timeFunc
 
 	if len(precision) > 0 {
-		timeFunc = newTimeFunc("LOCALTIME", FixedLiteral(precision[0]))
+		timeFunc = NewTimeFunc("LOCALTIME", FixedLiteral(precision[0]))
 	} else {
-		timeFunc = newTimeFunc("LOCALTIME")
+		timeFunc = NewTimeFunc("LOCALTIME")
 	}
 
 	timeFunc.noBrackets = true
@@ -558,26 +558,26 @@ func NOW() TimestampzExpression {
 func COALESCE(value Expression, values ...Expression) Expression {
 	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
-	return newFunc("COALESCE", allValues, nil)
+	return NewFunc("COALESCE", allValues, nil)
 }
 
 // NULLIF function returns a null value if value1 equals value2; otherwise it returns value1.
 func NULLIF(value1, value2 Expression) Expression {
-	return newFunc("NULLIF", []Expression{value1, value2}, nil)
+	return NewFunc("NULLIF", []Expression{value1, value2}, nil)
 }
 
 // GREATEST selects the largest  value from a list of expressions
 func GREATEST(value Expression, values ...Expression) Expression {
 	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
-	return newFunc("GREATEST", allValues, nil)
+	return NewFunc("GREATEST", allValues, nil)
 }
 
 // LEAST selects the smallest  value from a list of expressions
 func LEAST(value Expression, values ...Expression) Expression {
 	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
-	return newFunc("LEAST", allValues, nil)
+	return NewFunc("LEAST", allValues, nil)
 }
 
 //--------------------------------------------------------------------//
@@ -590,7 +590,8 @@ type funcExpressionImpl struct {
 	noBrackets  bool
 }
 
-func newFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
+// NewFunc creates new function with name and expressions parameters
+func NewFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:        name,
 		expressions: expressions,
@@ -608,7 +609,7 @@ func newFunc(name string, expressions []Expression, parent Expression) *funcExpr
 // NewFloatWindowFunc creates new float function with name and expressions
 func newWindowFunc(name string, expressions ...Expression) windowExpression {
 
-	newFun := newFunc(name, expressions, nil)
+	newFun := NewFunc(name, expressions, nil)
 	windowExpr := newWindowExpression(newFun)
 	newFun.ExpressionInterfaceImpl.Parent = windowExpr
 
@@ -645,7 +646,7 @@ type boolFunc struct {
 func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 	boolFunc := &boolFunc{}
 
-	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
+	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
 	boolFunc.boolInterfaceImpl.parent = boolFunc
 	boolFunc.ExpressionInterfaceImpl.Parent = boolFunc
 
@@ -656,7 +657,7 @@ func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 func newBoolWindowFunc(name string, expressions ...Expression) boolWindowExpression {
 	boolFunc := &boolFunc{}
 
-	boolFunc.funcExpressionImpl = *newFunc(name, expressions, boolFunc)
+	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
 	intWindowFunc := newBoolWindowExpression(boolFunc)
 	boolFunc.boolInterfaceImpl.parent = intWindowFunc
 	boolFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
@@ -673,7 +674,7 @@ type floatFunc struct {
 func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 	floatFunc := &floatFunc{}
 
-	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
+	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
 	floatFunc.floatInterfaceImpl.parent = floatFunc
 
 	return floatFunc
@@ -683,7 +684,7 @@ func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpression {
 	floatFunc := &floatFunc{}
 
-	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
+	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
 	floatWindowFunc := newFloatWindowExpression(floatFunc)
 	floatFunc.floatInterfaceImpl.parent = floatWindowFunc
 	floatFunc.ExpressionInterfaceImpl.Parent = floatWindowFunc
@@ -699,7 +700,7 @@ type integerFunc struct {
 func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
 	floatFunc := &integerFunc{}
 
-	floatFunc.funcExpressionImpl = *newFunc(name, expressions, floatFunc)
+	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
 	floatFunc.integerInterfaceImpl.parent = floatFunc
 
 	return floatFunc
@@ -709,7 +710,7 @@ func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
 func newIntegerWindowFunc(name string, expressions ...Expression) integerWindowExpression {
 	integerFunc := &integerFunc{}
 
-	integerFunc.funcExpressionImpl = *newFunc(name, expressions, integerFunc)
+	integerFunc.funcExpressionImpl = *NewFunc(name, expressions, integerFunc)
 	intWindowFunc := newIntegerWindowExpression(integerFunc)
 	integerFunc.integerInterfaceImpl.parent = intWindowFunc
 	integerFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
@@ -722,10 +723,11 @@ type stringFunc struct {
 	stringInterfaceImpl
 }
 
-func newStringFunc(name string, expressions ...Expression) StringExpression {
+// NewStringFunc creates new string function with name and expression parameters
+func NewStringFunc(name string, expressions ...Expression) StringExpression {
 	stringFunc := &stringFunc{}
 
-	stringFunc.funcExpressionImpl = *newFunc(name, expressions, stringFunc)
+	stringFunc.funcExpressionImpl = *NewFunc(name, expressions, stringFunc)
 	stringFunc.stringInterfaceImpl.parent = stringFunc
 
 	return stringFunc
@@ -736,10 +738,11 @@ type dateFunc struct {
 	dateInterfaceImpl
 }
 
-func newDateFunc(name string, expressions ...Expression) *dateFunc {
+// NewDateFunc creates new date function with name and expression parameters
+func NewDateFunc(name string, expressions ...Expression) *dateFunc {
 	dateFunc := &dateFunc{}
 
-	dateFunc.funcExpressionImpl = *newFunc(name, expressions, dateFunc)
+	dateFunc.funcExpressionImpl = *NewFunc(name, expressions, dateFunc)
 	dateFunc.dateInterfaceImpl.parent = dateFunc
 
 	return dateFunc
@@ -750,10 +753,11 @@ type timeFunc struct {
 	timeInterfaceImpl
 }
 
-func newTimeFunc(name string, expressions ...Expression) *timeFunc {
+// NewTimeFunc creates new time function with name and expression parameters
+func NewTimeFunc(name string, expressions ...Expression) *timeFunc {
 	timeFun := &timeFunc{}
 
-	timeFun.funcExpressionImpl = *newFunc(name, expressions, timeFun)
+	timeFun.funcExpressionImpl = *NewFunc(name, expressions, timeFun)
 	timeFun.timeInterfaceImpl.parent = timeFun
 
 	return timeFun
@@ -767,7 +771,7 @@ type timezFunc struct {
 func newTimezFunc(name string, expressions ...Expression) *timezFunc {
 	timezFun := &timezFunc{}
 
-	timezFun.funcExpressionImpl = *newFunc(name, expressions, timezFun)
+	timezFun.funcExpressionImpl = *NewFunc(name, expressions, timezFun)
 	timezFun.timezInterfaceImpl.parent = timezFun
 
 	return timezFun
@@ -782,7 +786,7 @@ type timestampFunc struct {
 func NewTimestampFunc(name string, expressions ...Expression) *timestampFunc {
 	timestampFunc := &timestampFunc{}
 
-	timestampFunc.funcExpressionImpl = *newFunc(name, expressions, timestampFunc)
+	timestampFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampFunc)
 	timestampFunc.timestampInterfaceImpl.parent = timestampFunc
 
 	return timestampFunc
@@ -796,7 +800,7 @@ type timestampzFunc struct {
 func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 	timestampzFunc := &timestampzFunc{}
 
-	timestampzFunc.funcExpressionImpl = *newFunc(name, expressions, timestampzFunc)
+	timestampzFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampzFunc)
 	timestampzFunc.timestampzInterfaceImpl.parent = timestampzFunc
 
 	return timestampzFunc
@@ -804,5 +808,5 @@ func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 
 // Func can be used to call an custom or as of yet unsupported function in the database.
 func Func(name string, expressions ...Expression) Expression {
-	return newFunc(name, expressions, nil)
+	return NewFunc(name, expressions, nil)
 }

@@ -19,7 +19,7 @@ func (i *IsIntervalImpl) isInterval() {}
 // NewInterval creates new interval from serializer
 func NewInterval(s Serializer) *IntervalImpl {
 	newInterval := &IntervalImpl{
-		interval: s,
+		Value: s,
 	}
 
 	return newInterval
@@ -27,11 +27,11 @@ func NewInterval(s Serializer) *IntervalImpl {
 
 // IntervalImpl is implementation of Interval type
 type IntervalImpl struct {
-	interval Serializer
+	Value Serializer
 	IsIntervalImpl
 }
 
 func (i IntervalImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("INTERVAL")
-	i.interval.serialize(statement, out, FallTrough(options)...)
+	i.Value.serialize(statement, out, FallTrough(options)...)
 }

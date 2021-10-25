@@ -4,33 +4,10 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-type clauseReturning struct {
-	ProjectionList []jet.Projection
-}
-
-func (r *clauseReturning) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-	if len(r.ProjectionList) == 0 {
-		return
-	}
-
-	out.NewLine()
-	out.WriteString("RETURNING")
-	out.IncreaseIdent()
-	out.WriteProjections(statementType, r.ProjectionList)
-	out.DecreaseIdent()
-}
-
-func (r clauseReturning) Projections() ProjectionList {
-	return r.ProjectionList
-}
-
-// ========================================== //
-
 type onConflict interface {
 	ON_CONSTRAINT(name string) conflictTarget
 	WHERE(indexPredicate BoolExpression) conflictTarget
-	DO_NOTHING() InsertStatement
-	DO_UPDATE(action conflictAction) InsertStatement
+	conflictTarget
 }
 
 type conflictTarget interface {

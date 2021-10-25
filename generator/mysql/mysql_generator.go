@@ -3,11 +3,14 @@ package mysql
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/v2/generator/internal/metadata"
-	"github.com/go-jet/jet/v2/generator/internal/template"
+	"strings"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
+	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/mysql"
-	"path"
+	mysqldr "github.com/go-sql-driver/mysql"
 )
 
 // DBConnection contains MySQL connection details
@@ -22,34 +25,68 @@ type DBConnection struct {
 }
 
 // Generate generates jet files at destination dir from database connection details
-func Generate(destDir string, dbConn DBConnection) (err error) {
+func Generate(destDir string, dbConn DBConnection, generatorTemplate ...template.Template) (err error) {
 	defer utils.ErrorCatch(&err)
 
-	db := openConnection(dbConn)
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
+	if dbConn.Params != "" {
+		connectionString += "?" + dbConn.Params
+	}
+
+	db := openConnection(connectionString)
 	defer utils.DBClose(db)
 
-	fmt.Println("Retrieving database information...")
-	// No schemas in MySQL
-	dbInfo := metadata.GetSchemaMetaData(db, dbConn.DBName, &mySqlQuerySet{})
-
-	genPath := path.Join(destDir, dbConn.DBName)
-
-	template.GenerateFiles(genPath, dbInfo, mysql.Dialect)
+	generate(db, dbConn.DBName, destDir, generatorTemplate...)
 
 	return nil
 }
 
-func openConnection(dbConn DBConnection) *sql.DB {
-	var connectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
-	if dbConn.Params != "" {
-		connectionString += "?" + dbConn.Params
+// GenerateDSN opens connection via DSN string and does everything what Generate does.
+func GenerateDSN(dsn, destDir string, templates ...template.Template) (err error) {
+	defer utils.ErrorCatch(&err)
+
+	// Special case for go mysql driver. It does not understand schema,
+	// so we need to trim it before passing to generator
+	// https://github.com/go-sql-driver/mysql#dsn-data-source-name
+	idx := strings.Index(dsn, "://")
+	if idx != -1 {
+		dsn = dsn[idx+len("://"):]
 	}
+
+	cfg, err := mysqldr.ParseDSN(dsn)
+	throw.OnError(err)
+	if cfg.DBName == "" {
+		panic("database name is required")
+	}
+
+	db := openConnection(dsn)
+	defer utils.DBClose(db)
+
+	generate(db, cfg.DBName, destDir, templates...)
+
+	return nil
+}
+
+func openConnection(connectionString string) *sql.DB {
 	fmt.Println("Connecting to MySQL database: " + connectionString)
 	db, err := sql.Open("mysql", connectionString)
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	err = db.Ping()
-	utils.PanicOnError(err)
+	throw.OnError(err)
 
 	return db
+}
+
+func generate(db *sql.DB, dbName, destDir string, templates ...template.Template) {
+	fmt.Println("Retrieving database information...")
+	// No schemas in MySQL
+	schemaMetaData := metadata.GetSchema(db, &mySqlQuerySet{}, dbName)
+
+	genTemplate := template.Default(mysql.Dialect)
+	if len(templates) > 0 {
+		genTemplate = templates[0]
+	}
+
+	template.ProcessSchema(destDir, schemaMetaData, genTemplate)
 }

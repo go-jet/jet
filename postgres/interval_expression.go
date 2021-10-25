@@ -116,7 +116,7 @@ func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 		panic("jet: invalid number of quantity and unit fields")
 	}
 
-	fields := []string{}
+	var fields []string
 
 	for i := 0; i < len(quantityAndUnit); i += 2 {
 		quantity := strconv.FormatFloat(quantityAndUnit[i], 'f', -1, 64)

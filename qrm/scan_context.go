@@ -2,9 +2,7 @@ package qrm
 
 import (
 	"database/sql"
-	"database/sql/driver"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"reflect"
 	"strings"
 )
@@ -45,7 +43,7 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 	}
 
 	return &scanContext{
-		row:                  createScanValue(columnTypes),
+		row:                  createScanSlice(len(columnTypes)),
 		uniqueDestObjectsMap: make(map[string]int),
 
 		groupKeyInfoCache:        make(map[string]groupKeyInfo),
@@ -53,6 +51,17 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 
 		typeInfoMap: make(map[string]typeInfo),
 	}, nil
+}
+
+func createScanSlice(columnCount int) []interface{} {
+	scanSlice := make([]interface{}, columnCount)
+	scanPtrSlice := make([]interface{}, columnCount)
+
+	for i := range scanPtrSlice {
+		scanPtrSlice[i] = &scanSlice[i] // if destination is pointer to interface sql.Scan will just forward driver value
+	}
+
+	return scanPtrSlice
 }
 
 type typeInfo struct {
@@ -209,21 +218,22 @@ func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 }
 
 func (s *scanContext) rowElem(index int) interface{} {
+	cellValue := reflect.ValueOf(s.row[index])
 
-	valuer, ok := s.row[index].(driver.Valuer)
+	if cellValue.IsValid() && !cellValue.IsNil() {
+		return cellValue.Elem().Interface()
+	}
 
-	utils.MustBeTrue(ok, "jet: internal error, scan value doesn't implement driver.Valuer")
-
-	value, err := valuer.Value()
-
-	utils.PanicOnError(err)
-
-	return value
+	return nil
 }
 
 func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
 	rowElem := s.rowElem(index)
 	rowElemValue := reflect.ValueOf(rowElem)
+
+	if !rowElemValue.IsValid() {
+		return reflect.Value{}
+	}
 
 	if rowElemValue.Kind() == reflect.Ptr {
 		return rowElemValue

@@ -21,14 +21,19 @@ func SerializeClauseList(statement StatementType, clauses []Serializer, out *SQL
 	}
 }
 
-func serializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SQLBuilder) {
+func serializeExpressionList(
+	statement StatementType,
+	expressions []Expression,
+	separator string,
+	out *SQLBuilder,
+	options ...SerializeOption) {
 
-	for i, value := range expressions {
+	for i, expression := range expressions {
 		if i > 0 {
 			out.WriteString(separator)
 		}
 
-		value.serialize(statement, out)
+		expression.serialize(statement, out, options...)
 	}
 }
 

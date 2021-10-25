@@ -9,8 +9,12 @@ import (
 )
 
 // SnakeToCamel returns a string converted from snake case to uppercase
-func SnakeToCamel(s string) string {
-	return snakeToCamel(s, true)
+func SnakeToCamel(s string, firstLetterUppercase ...bool) string {
+	upperCase := true
+	if len(firstLetterUppercase) > 0 {
+		upperCase = firstLetterUppercase[0]
+	}
+	return snakeToCamel(s, upperCase)
 }
 
 func snakeToCamel(s string, upperCase bool) string {
