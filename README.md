@@ -20,17 +20,17 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
 
 ## Contents
 - [Features](#features)
-   - [Getting Started](#getting-started)
-      - [Prerequisites](#prerequisites)
-      - [Installation](#installation)
-      - [Quick Start](#quick-start)
-         - [Generate sql builder and model files](#generate-sql-builder-and-model-files)
-         - [Lets write some SQL queries in Go](#lets-write-some-sql-queries-in-go)
-         - [Execute query and store result](#execute-query-and-store-result)
-   - [Benefits](#benefits)
-   - [Dependencies](#dependencies)
-   - [Versioning](#versioning)
-   - [License](#license)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Quick Start](#quick-start)
+     - [Generate sql builder and model types](#generate-sql-builder-and-model-types)
+     - [Lets write some SQL queries in Go](#lets-write-some-sql-queries-in-go)
+     - [Execute query and store result](#execute-query-and-store-result)
+- [Benefits](#benefits)
+- [Dependencies](#dependencies)
+- [Versioning](#versioning)
+- [License](#license)
 
 ## Features
  1) Auto-generated type-safe SQL Builder. Statements supported:
@@ -60,43 +60,44 @@ Use the command bellow to add jet as a dependency into `go.mod` project:
 $ go get -u github.com/go-jet/jet/v2
 ```
 
-Jet generator can be install in the following ways:
+Jet generator can be installed in the following ways:
 
 1) Install jet generator to GOPATH/bin folder:
-```sh
-cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
-```
-*Make sure GOPATH/bin folder is added to the PATH environment variable.*
+    ```sh
+    cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
+    ```
+    *Make sure GOPATH/bin folder is added to the PATH environment variable.*   
 
-2) Install jet generator to specific folder:
-
-```sh
-git clone https://github.com/go-jet/jet.git
-cd jet && go build -o dir_path ./cmd/jet
-```
-*Make sure `dir_path` folder is added to the PATH environment variable.*
+2) Install jet generator into specific folder:
+    
+    ```sh
+    git clone https://github.com/go-jet/jet.git
+    cd jet && go build -o dir_path ./cmd/jet
+    ```
+    *Make sure `dir_path` folder is added to the PATH environment variable.*   
 
 3) (Go1.16+) Install jet generator using go install:
-```sh
-go install github.com/go-jet/jet/v2/cmd/jet@latest
-```
-*Jet generator is installed to the directory named by the GOBIN environment variable, 
-which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH environment variable is not set.*
+    ```sh
+    go install github.com/go-jet/jet/v2/cmd/jet@latest
+    ```
+    *Jet generator is installed to the directory named by the GOBIN environment variable, 
+    which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH environment variable is not set.*   
 
 ### Quick Start
-For this quick start example we will use PostgreSQL sample _'dvd rental'_ database. Full database dump can be found in [./tests/testdata/init/postgres/dvds.sql](./tests/testdata/init/postgres/dvds.sql).
+For this quick start example we will use PostgreSQL sample _'dvd rental'_ database. Full database dump can be found in
+[./tests/testdata/init/postgres/dvds.sql](https://github.com/go-jet/jet-test-data/blob/master/init/postgres/dvds.sql).
 Schema diagram of interest for example can be found [here](./examples/quick-start/diagram.png).
 
-#### Generate SQL Builder and Model files
-To generate jet SQL Builder and Data Model files from postgres database, we need to call `jet` generator with postgres 
-connection parameters and root destination folder path for generated files.\
-Assuming we are running local postgres database, with user `jetuser`, user password `jetpass`, database `jetdb` and 
+#### Generate SQL Builder and Model types
+To generate jet SQL Builder and Data Model types from postgres database, we need to call `jet` generator with postgres 
+connection parameters and root destination folder path for generated files. 
+Assuming we are running local postgres database, with user `user`, user password `pass`, database `jetdb` and 
 schema `dvds` we will use this command:
 ```sh
-jet -dsn=postgresql://jetuser:jetpass@localhost:5432/jetdb -schema=dvds -path=./.gen
+jet -dsn=postgresql://user:pass@localhost:5432/jetdb -schema=dvds -path=./.gen
 ```
 ```sh
-Connecting to postgres database: host=localhost port=5432 user=jetuser password=jetpass dbname=jetdb sslmode=disable 
+Connecting to postgres database: postgresql://user:pass@localhost:5432/jetdb 
 Retrieving schema information...
 	FOUND 15 table(s), 7 view(s), 1 enum(s)
 Cleaning up destination directory...
@@ -110,17 +111,17 @@ Done
 ```
 Procedure is similar for MySQL, MariaDB and SQLite. For instance:
 ```sh
-jet -source=mysql -dsn="jet:jet@tcp(localhost:3306)/dvds" -path=./gen
-jet -dsn="mariadb://jet:jet@tcp(localhost:3306)/dvds" -path=./gen              # source flag can be omitted if data source is the same as database
+jet -source=mysql -dsn="user:pass@tcp(localhost:3306)/dbname" -path=./gen
+jet -dsn="mariadb://user:pass@tcp(localhost:3306)/dvds" -path=./gen              # source flag can be omitted if data source appears in dsn
 jet -source=sqlite -dsn="/path/to/sqlite/database/file" -schema=dvds -path=./gen
-jet -dsn="file:///path/to/sqlite/database/file" -schema=dvds -path=./gen       # sqlite database assumed for 'file' data sources  
+jet -dsn="file:///path/to/sqlite/database/file" -schema=dvds -path=./gen         # sqlite database assumed for 'file' data sources
 ```
 _*User has to have a permission to read information schema tables._
 
 As command output suggest, Jet will:
 - connect to postgres database and retrieve information about the _tables_, _views_ and _enums_ of `dvds` schema
 - delete everything in schema destination folder -  `./gen/jetdb/dvds`,   
-- and finally generate SQL Builder and Model files for each schema table, view and enum.  
+- and finally generate SQL Builder and Model types for each schema table, view and enum.  
 
 
 Generated files folder structure will look like this:
@@ -145,14 +146,14 @@ Generated files folder structure will look like this:
 |           |   |-- mpaa_rating.go
 |           |   ...
 ```
-Types from `table`, `view` and `enum` are used to write type safe SQL in Go, and `model` types can be combined to store 
+Types from `table`, `view` and `enum` are used to write type safe SQL in Go, and `model` types are combined to store 
 results of the SQL queries.
 
 
 
-#### Lets write some SQL queries in Go
+#### Let's write some SQL queries in Go
 
-First we need to import jet and generated files from previous step:
+First we need to import postgres SQLBuilder and generated packages from the previous step:
 ```go
 import (
 	// dot import so go code would resemble as much as native SQL
@@ -163,7 +164,7 @@ import (
 	"github.com/go-jet/jet/v2/examples/quick-start/gen/jetdb/dvds/model"
 )
 ```
-Lets say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
+Let's say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
 and _film category_ is not 'Action'.  
 ```java
 stmt := SELECT(
@@ -192,12 +193,12 @@ Note that every column has a type. String column `Language.Name` and `Category.N
 string columns and expressions. `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns 
 and can be compared only with integer columns and expressions.
 
-__How to get parametrized SQL query from statement?__
+__How to get a parametrized SQL query from the statement?__
 ```go
 query, args := stmt.Sql()
 ```
-query - parametrized query\
-args - parameters for the query
+query - parametrized query  
+args - query parameters 
 
 <details>
   <summary>Click to see `query` and `args`</summary>
@@ -246,7 +247,7 @@ __How to get debug SQL from statement?__
  ```go
 debugSql := stmt.DebugSql()
 ```
-debugSql - query string that can be copy pasted to sql editor and executed. __It's not intended to be used in production!!!__
+debugSql - this query string can be copy-pasted to sql editor and executed. __It is not intended to be used in production, only for the purpose of debugging!!!__
 
 <details>
   <summary>Click to see debug sql</summary>
@@ -289,12 +290,15 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 #### Execute query and store result
 
-Well formed SQL is just a first half of the job. Let's see how can we make some sense of result set returned executing 
+Well-formed SQL is just a first half of the job. Let's see how can we make some sense of result set returned executing 
 above statement. Usually this is the most complex and tedious work, but with Jet it is the easiest.
 
 First we have to create desired structure to store query result. 
-This is done be combining autogenerated model types or it can be done 
-by combining custom model files(see [wiki](https://github.com/go-jet/jet/wiki/Query-Result-Mapping-(QRM)) for more information).
+This is done be combining autogenerated model types, or it can be done 
+by combining custom model types(see [wiki](https://github.com/go-jet/jet/wiki/Query-Result-Mapping-(QRM)#custom-model-types) for more information).  
+
+It's possible to overwrite default jet generator behavior, and all the aspects of generated model and SQLBuilder types can be 
+tailor-made([wiki](https://github.com/go-jet/jet/wiki/Generator#generator-customization)).
 
 Let's say this is our desired structure made of autogenerated types:  
 ```go
