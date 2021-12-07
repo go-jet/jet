@@ -34,7 +34,9 @@ func serializeExpressionList(
 			out.WriteString(separator)
 		}
 
-		expression.serialize(statement, out, options...)
+		if expression != nil {
+			expression.serialize(statement, out, options...)
+		}
 	}
 }
 

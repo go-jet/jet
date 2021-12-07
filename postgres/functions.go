@@ -336,3 +336,20 @@ func explicitLiteralCast(expresion Expression) jet.Expression {
 
 	return expresion
 }
+
+var MODE = jet.MODE
+
+func PERCENTILE_CONT(fraction FloatExpression) *jet.OrderSetAggregateFunc {
+	return jet.PERCENTILE_CONT(castFloatLiteral(fraction))
+}
+
+func PERCENTILE_DISC(fraction FloatExpression) *jet.OrderSetAggregateFunc {
+	return jet.PERCENTILE_DISC(castFloatLiteral(fraction))
+}
+
+func castFloatLiteral(fraction FloatExpression) FloatExpression {
+	if _, ok := fraction.(jet.LiteralExpression); ok {
+		return CAST(fraction).AS_DOUBLE() // to make postgres aware of the type
+	}
+	return fraction
+}
