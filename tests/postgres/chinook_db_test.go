@@ -743,3 +743,53 @@ var album347 = model.Album{
 	Title:    "Koyaanisqatsi (Soundtrack from the Motion Picture)",
 	ArtistId: 275,
 }
+
+func TestAggregateFunc(t *testing.T) {
+	stmt := SELECT(
+		PERCENTILE_DISC(Float(0.1)).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceId).AS("percentile_disc_1"),
+		PERCENTILE_DISC(Invoice.Total.DIV(Float(100))).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceDate.ASC()).AS("percentile_disc_2"),
+		PERCENTILE_DISC(RawFloat("(select array_agg(s) from generate_series(0, 1, 0.2) as s)")).
+			WITHIN_GROUP_ORDER_BY(Invoice.BillingAddress.DESC()).AS("percentile_disc_3"),
+
+		PERCENTILE_CONT(Float(0.3)).WITHIN_GROUP_ORDER_BY(Invoice.Total).AS("percentile_cont_1"),
+		PERCENTILE_CONT(Float(0.2)).WITHIN_GROUP_ORDER_BY(INTERVAL(1, HOUR).DESC()).AS("percentile_cont_int"),
+
+		MODE().WITHIN_GROUP_ORDER_BY(Invoice.BillingPostalCode.DESC()).AS("mode_1"),
+	).FROM(
+		Invoice,
+	).GROUP_BY(
+		Invoice.Total,
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT PERCENTILE_DISC ($1::double precision) WITHIN GROUP (ORDER BY "Invoice"."InvoiceId") AS "percentile_disc_1",
+     PERCENTILE_DISC ("Invoice"."Total" / $2) WITHIN GROUP (ORDER BY "Invoice"."InvoiceDate" ASC) AS "percentile_disc_2",
+     PERCENTILE_DISC ((select array_agg(s) from generate_series(0, 1, 0.2) as s)) WITHIN GROUP (ORDER BY "Invoice"."BillingAddress" DESC) AS "percentile_disc_3",
+     PERCENTILE_CONT ($3::double precision) WITHIN GROUP (ORDER BY "Invoice"."Total") AS "percentile_cont_1",
+     PERCENTILE_CONT ($4::double precision) WITHIN GROUP (ORDER BY INTERVAL '1 HOUR' DESC) AS "percentile_cont_int",
+     MODE () WITHIN GROUP (ORDER BY "Invoice"."BillingPostalCode" DESC) AS "mode_1"
+FROM chinook."Invoice"
+GROUP BY "Invoice"."Total";
+`, 0.1, 100.0, 0.3, 0.2)
+
+	var dest struct {
+		PercentileDisc1 string
+		PercentileDisc2 string
+		PercentileDisc3 string
+		PercentileCont1 string
+		Mode1           string
+	}
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"PercentileDisc1": "41",
+	"PercentileDisc2": "2009-01-19T00:00:00Z",
+	"PercentileDisc3": "{\"Via Degli Scipioni, 43\",\"Qe 7 Bloco G\",\"Berger Stra�e 10\",\"696 Osborne Street\",\"2211 W Berry Street\",\"1033 N Park Ave\"}",
+	"PercentileCont1": "0.99",
+	"Mode1": "X1A 1N6"
+}
+`)
+}
