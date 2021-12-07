@@ -2056,3 +2056,294 @@ FROM dvds.address;
 		require.Len(t, dest, 603)
 	})
 }
+
+type FilmWrap struct {
+	model.Film
+
+	Actors []ActorWrap
+}
+
+type ActorWrap struct {
+	model.Actor
+
+	Films []FilmWrap
+}
+
+func TestRecursionScanNxM(t *testing.T) {
+
+	stmt := SELECT(
+		Actor.AllColumns,
+		Film.AllColumns,
+	).FROM(
+		Actor.
+			INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
+			INNER_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)),
+	).ORDER_BY(
+		Actor.ActorID,
+		Film.FilmID,
+	).LIMIT(100)
+
+	t.Run("film->actors", func(t *testing.T) {
+		var films []FilmWrap
+		err := stmt.Query(db, &films)
+
+		require.NoError(t, err)
+		require.Len(t, films, 95)
+		testutils.AssertJSON(t, films[:2], `
+[
+	{
+		"FilmID": 1,
+		"Title": "Academy Dinosaur",
+		"Description": "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 6,
+		"RentalRate": 0.99,
+		"Length": 86,
+		"ReplacementCost": 20.99,
+		"Rating": "PG",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
+		"Actors": [
+			{
+				"ActorID": 1,
+				"FirstName": "Penelope",
+				"LastName": "Guiness",
+				"LastUpdate": "2013-05-26T14:47:57.62Z",
+				"Films": null
+			}
+		]
+	},
+	{
+		"FilmID": 23,
+		"Title": "Anaconda Confessions",
+		"Description": "A Lacklusture Display of a Dentist And a Dentist who must Fight a Girl in Australia",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 3,
+		"RentalRate": 0.99,
+		"Length": 92,
+		"ReplacementCost": 9.99,
+		"Rating": "R",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
+		"Actors": [
+			{
+				"ActorID": 1,
+				"FirstName": "Penelope",
+				"LastName": "Guiness",
+				"LastUpdate": "2013-05-26T14:47:57.62Z",
+				"Films": null
+			},
+			{
+				"ActorID": 4,
+				"FirstName": "Jennifer",
+				"LastName": "Davis",
+				"LastUpdate": "2013-05-26T14:47:57.62Z",
+				"Films": null
+			}
+		]
+	}
+]
+`)
+
+	})
+
+	t.Run("actors->films", func(t *testing.T) {
+		var actors []ActorWrap
+
+		err := stmt.Query(db, &actors)
+
+		require.NoError(t, err)
+		require.Equal(t, len(actors), 5)
+		require.Equal(t, actors[0].ActorID, int32(1))
+		require.Equal(t, actors[0].FirstName, "Penelope")
+		require.Len(t, actors[0].Films, 19)
+		testutils.AssertJSON(t, actors[0].Films[:2], `
+[
+	{
+		"FilmID": 1,
+		"Title": "Academy Dinosaur",
+		"Description": "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 6,
+		"RentalRate": 0.99,
+		"Length": 86,
+		"ReplacementCost": 20.99,
+		"Rating": "PG",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
+		"Actors": null
+	},
+	{
+		"FilmID": 23,
+		"Title": "Anaconda Confessions",
+		"Description": "A Lacklusture Display of a Dentist And a Dentist who must Fight a Girl in Australia",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 3,
+		"RentalRate": 0.99,
+		"Length": 92,
+		"ReplacementCost": 9.99,
+		"Rating": "R",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
+		"Actors": null
+	}
+]
+`)
+	})
+}
+
+type StoreWrap struct {
+	model.Store
+
+	Staffs []StaffWrap
+}
+
+type StaffWrap struct {
+	model.Staff
+
+	Store StoreWrap
+}
+
+func TestRecursionScanNx1(t *testing.T) {
+	stmt := SELECT(
+		Store.AllColumns,
+		Staff.AllColumns,
+	).FROM(
+		Store.
+			INNER_JOIN(Staff, Staff.StoreID.EQ(Store.StoreID)),
+	).ORDER_BY(
+		Store.StoreID,
+		Staff.StaffID,
+	)
+
+	t.Run("store->staff", func(t *testing.T) {
+		var stores []StoreWrap
+
+		err := stmt.Query(db, &stores)
+
+		require.NoError(t, err)
+		require.Len(t, stores, 2)
+
+		testutils.AssertJSON(t, stores, `
+[
+	{
+		"StoreID": 1,
+		"ManagerStaffID": 1,
+		"AddressID": 1,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": [
+			{
+				"StaffID": 1,
+				"FirstName": "Mike",
+				"LastName": "Hillyer",
+				"AddressID": 3,
+				"Email": "Mike.Hillyer@sakilastaff.com",
+				"StoreID": 1,
+				"Active": true,
+				"Username": "Mike",
+				"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+				"LastUpdate": "2006-05-16T16:13:11.79328Z",
+				"Picture": "iVBORw0KWgo=",
+				"Store": {
+					"StoreID": 0,
+					"ManagerStaffID": 0,
+					"AddressID": 0,
+					"LastUpdate": "0001-01-01T00:00:00Z",
+					"Staffs": null
+				}
+			}
+		]
+	},
+	{
+		"StoreID": 2,
+		"ManagerStaffID": 2,
+		"AddressID": 2,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": [
+			{
+				"StaffID": 2,
+				"FirstName": "Jon",
+				"LastName": "Stephens",
+				"AddressID": 4,
+				"Email": "Jon.Stephens@sakilastaff.com",
+				"StoreID": 2,
+				"Active": true,
+				"Username": "Jon",
+				"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+				"LastUpdate": "2006-05-16T16:13:11.79328Z",
+				"Picture": null,
+				"Store": {
+					"StoreID": 0,
+					"ManagerStaffID": 0,
+					"AddressID": 0,
+					"LastUpdate": "0001-01-01T00:00:00Z",
+					"Staffs": null
+				}
+			}
+		]
+	}
+]
+`)
+	})
+
+	t.Run("staff->store", func(t *testing.T) {
+
+		var staffs []StaffWrap
+
+		err := stmt.Query(db, &staffs)
+		require.NoError(t, err)
+
+		testutils.AssertJSON(t, staffs, `
+[
+	{
+		"StaffID": 1,
+		"FirstName": "Mike",
+		"LastName": "Hillyer",
+		"AddressID": 3,
+		"Email": "Mike.Hillyer@sakilastaff.com",
+		"StoreID": 1,
+		"Active": true,
+		"Username": "Mike",
+		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+		"LastUpdate": "2006-05-16T16:13:11.79328Z",
+		"Picture": "iVBORw0KWgo=",
+		"Store": {
+			"StoreID": 1,
+			"ManagerStaffID": 1,
+			"AddressID": 1,
+			"LastUpdate": "2006-02-15T09:57:12Z",
+			"Staffs": null
+		}
+	},
+	{
+		"StaffID": 2,
+		"FirstName": "Jon",
+		"LastName": "Stephens",
+		"AddressID": 4,
+		"Email": "Jon.Stephens@sakilastaff.com",
+		"StoreID": 2,
+		"Active": true,
+		"Username": "Jon",
+		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+		"LastUpdate": "2006-05-16T16:13:11.79328Z",
+		"Picture": null,
+		"Store": {
+			"StoreID": 2,
+			"ManagerStaffID": 2,
+			"AddressID": 2,
+			"LastUpdate": "2006-02-15T09:57:12Z",
+			"Staffs": null
+		}
+	}
+]
+`)
+	})
+}
