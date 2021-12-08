@@ -87,3 +87,9 @@ func isPgxDriver() bool {
 
 	return false
 }
+
+func beginTx(t *testing.T) *sql.Tx {
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	return tx
+}

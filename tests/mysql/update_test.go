@@ -261,15 +261,22 @@ func TestUpdateExecContext(t *testing.T) {
 }
 
 func TestUpdateWithJoin(t *testing.T) {
-	query := table.Staff.
-		INNER_JOIN(table.Address, table.Address.AddressID.EQ(table.Staff.AddressID)).
+	tx := beginTx(t)
+	defer tx.Rollback()
+
+	statement := table.Staff.INNER_JOIN(table.Address, table.Address.AddressID.EQ(table.Staff.AddressID)).
 		UPDATE(table.Staff.LastName).
-		SET(String("New name")).
+		SET(String("New staff name")).
 		WHERE(table.Staff.StaffID.EQ(Int(1)))
 
-	//fmt.Println(query.DebugSql())
+	testutils.AssertStatementSql(t, statement, `
+UPDATE dvds.staff
+INNER JOIN dvds.address ON (address.address_id = staff.address_id)
+SET last_name = ?
+WHERE staff.staff_id = ?;
+`, "New staff name", int64(1))
 
-	_, err := query.Exec(db)
+	_, err := statement.Exec(tx)
 	require.NoError(t, err)
 }
 

@@ -70,3 +70,9 @@ func skipForMariaDB(t *testing.T) {
 		t.SkipNow()
 	}
 }
+
+func beginTx(t *testing.T) *sql.Tx {
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	return tx
+}

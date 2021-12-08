@@ -9,14 +9,16 @@ type UpdateStatement interface {
 	SET(value interface{}, values ...interface{}) UpdateStatement
 	MODEL(data interface{}) UpdateStatement
 
+	FROM(tables ...ReadableTable) UpdateStatement
 	WHERE(expression BoolExpression) UpdateStatement
-	RETURNING(projections ...jet.Projection) UpdateStatement
+	RETURNING(projections ...Projection) UpdateStatement
 }
 
 type updateStatementImpl struct {
 	jet.SerializerStatement
 
 	Update    jet.ClauseUpdate
+	From      jet.ClauseFrom
 	Set       jet.SetClause
 	SetNew    jet.SetClauseNew
 	Where     jet.ClauseWhere
@@ -29,6 +31,7 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 		&update.Update,
 		&update.Set,
 		&update.SetNew,
+		&update.From,
 		&update.Where,
 		&update.Returning)
 
@@ -59,12 +62,17 @@ func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
 	return u
 }
 
+func (u *updateStatementImpl) FROM(tables ...ReadableTable) UpdateStatement {
+	u.From.Tables = readableTablesToSerializerList(tables)
+	return u
+}
+
 func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 	u.Where.Condition = expression
 	return u
 }
 
-func (u *updateStatementImpl) RETURNING(projections ...jet.Projection) UpdateStatement {
+func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStatement {
 	u.Returning.ProjectionList = projections
 	return u
 }

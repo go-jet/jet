@@ -45,6 +45,7 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 
 // ClauseFrom struct
 type ClauseFrom struct {
+	Name   string
 	Tables []Serializer
 }
 
@@ -54,7 +55,11 @@ func (f *ClauseFrom) Serialize(statementType StatementType, out *SQLBuilder, opt
 		return
 	}
 	out.NewLine()
-	out.WriteString("FROM")
+	if f.Name != "" {
+		out.WriteString(f.Name)
+	} else {
+		out.WriteString("FROM")
+	}
 
 	out.IncreaseIdent()
 	for i, table := range f.Tables {

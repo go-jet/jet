@@ -4,6 +4,8 @@ import (
 	"context"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
+	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/stretchr/testify/require"
@@ -369,6 +371,74 @@ func TestUpdateExecContext(t *testing.T) {
 	_, err := updateStmt.ExecContext(ctx, db)
 
 	require.Error(t, err, "context deadline exceeded")
+}
+
+func TestUpdateFrom(t *testing.T) {
+	tx := beginTx(t)
+	defer tx.Rollback()
+
+	stmt := table.Rental.UPDATE().
+		SET(
+			table.Rental.RentalDate.SET(Timestamp(2020, 2, 2, 0, 0, 0)),
+		).FROM(
+		table.Staff.
+			INNER_JOIN(table.Store, table.Store.StoreID.EQ(table.Staff.StaffID)),
+		table.Actor,
+	).WHERE(
+		table.Staff.StaffID.EQ(table.Rental.StaffID).
+			AND(table.Staff.StaffID.EQ(Int(2))).
+			AND(table.Rental.RentalID.LT(Int(10))),
+	).RETURNING(
+		table.Rental.AllColumns.Except(table.Rental.LastUpdate),
+		table.Store.AllColumns.Except(table.Store.LastUpdate),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+UPDATE dvds.rental
+SET rental_date = $1::timestamp without time zone
+FROM dvds.staff
+     INNER JOIN dvds.store ON (store.store_id = staff.staff_id),
+     dvds.actor
+WHERE ((staff.staff_id = rental.staff_id) AND (staff.staff_id = $2)) AND (rental.rental_id < $3)
+RETURNING rental.rental_id AS "rental.rental_id",
+          rental.rental_date AS "rental.rental_date",
+          rental.inventory_id AS "rental.inventory_id",
+          rental.customer_id AS "rental.customer_id",
+          rental.return_date AS "rental.return_date",
+          rental.staff_id AS "rental.staff_id",
+          store.store_id AS "store.store_id",
+          store.manager_staff_id AS "store.manager_staff_id",
+          store.address_id AS "store.address_id";
+`)
+
+	var dest []struct {
+		Rental model2.Rental
+		Store  model2.Store
+	}
+
+	err := stmt.Query(tx, &dest)
+
+	require.NoError(t, err)
+	require.Len(t, dest, 3)
+	testutils.AssertJSON(t, dest[0], `
+{
+	"Rental": {
+		"RentalID": 4,
+		"RentalDate": "2020-02-02T00:00:00Z",
+		"InventoryID": 2452,
+		"CustomerID": 333,
+		"ReturnDate": "2005-06-03T01:43:41Z",
+		"StaffID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	},
+	"Store": {
+		"StoreID": 2,
+		"ManagerStaffID": 2,
+		"AddressID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	}
+}
+`)
 }
 
 func setupLinkTableForUpdateTest(t *testing.T) {
