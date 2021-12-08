@@ -9,7 +9,7 @@ type DeleteStatement interface {
 	WHERE(expression BoolExpression) DeleteStatement
 	ORDER_BY(orderByClauses ...OrderByClause) DeleteStatement
 	LIMIT(limit int64) DeleteStatement
-	RETURNING(projections ...jet.Projection) DeleteStatement
+	RETURNING(projections ...Projection) DeleteStatement
 }
 
 type deleteStatementImpl struct {
