@@ -10,7 +10,12 @@ type CommonTableExpression struct {
 
 // WITH function creates new WITH statement from list of common table expressions
 func WITH(cte ...jet.CommonTableExpressionDefinition) func(statement jet.Statement) Statement {
-	return jet.WITH(Dialect, cte...)
+	return jet.WITH(Dialect, false, cte...)
+}
+
+// WITH_RECURSIVE function creates new WITH RECURSIVE statement from list of common table expressions
+func WITH_RECURSIVE(cte ...jet.CommonTableExpressionDefinition) func(statement jet.Statement) Statement {
+	return jet.WITH(Dialect, true, cte...)
 }
 
 // CTE creates new named CommonTableExpression
