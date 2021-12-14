@@ -1,9 +1,10 @@
 package jet
 
 // WITH function creates new with statement from list of common table expressions for specified dialect
-func WITH(dialect Dialect, cte ...CommonTableExpressionDefinition) func(statement Statement) Statement {
+func WITH(dialect Dialect, recursive bool, cte ...CommonTableExpressionDefinition) func(statement Statement) Statement {
 	newWithImpl := &withImpl{
-		ctes: cte,
+		recursive: recursive,
+		ctes:      cte,
 		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
 			dialect:       dialect,
 			statementType: WithStatementType,
@@ -23,6 +24,7 @@ func WITH(dialect Dialect, cte ...CommonTableExpressionDefinition) func(statemen
 
 type withImpl struct {
 	serializerStatementInterfaceImpl
+	recursive        bool
 	ctes             []CommonTableExpressionDefinition
 	primaryStatement SerializerStatement
 }
@@ -30,6 +32,10 @@ type withImpl struct {
 func (w withImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.NewLine()
 	out.WriteString("WITH")
+
+	if w.recursive {
+		out.WriteString("RECURSIVE")
+	}
 
 	for i, cte := range w.ctes {
 		if i > 0 {
