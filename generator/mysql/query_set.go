@@ -32,15 +32,14 @@ WHERE table_schema = ? and table_type = ?;
 
 func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) []metadata.Column {
 	query := `
-WITH primaryKeys AS (
-	SELECT k.column_name
-	FROM information_schema.table_constraints t
-		JOIN information_schema.key_column_usage k USING(constraint_name,table_schema,table_name)
-	WHERE table_schema = ? AND table_name = ? AND t.constraint_type='PRIMARY KEY'
-)
 SELECT COLUMN_NAME AS "column.Name", 
 	IS_NULLABLE = "YES" AS "column.IsNullable", 
-	(EXISTS(SELECT 1 FROM primaryKeys AS pk WHERE pk.column_name = columns.column_name)) AS "column.IsPrimaryKey",
+	(EXISTS(
+		SELECT 1
+		FROM information_schema.table_constraints t
+			JOIN information_schema.key_column_usage k USING(constraint_name,table_schema,table_name)
+		WHERE table_schema = ? AND table_name = ? AND t.constraint_type='PRIMARY KEY' AND k.column_name = columns.column_name
+	)) AS "column.IsPrimaryKey",
 	IF (COLUMN_TYPE = 'tinyint(1)', 
 			'boolean', 
 			IF (DATA_TYPE='enum', 
