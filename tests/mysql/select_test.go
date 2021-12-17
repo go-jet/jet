@@ -389,8 +389,6 @@ LIMIT ?;
 			).
 			LIMIT(1000)
 
-		//fmt.Println(query.Sql())
-
 		testutils.AssertStatementSql(t, query, expectedSQL, int64(1000))
 
 		var dest []struct {
@@ -414,12 +412,7 @@ LIMIT ?;
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		//require.Equal(t, len(dest), 1)
-		//require.Equal(t, len(dest[0].Films), 10)
-		//require.Equal(t, len(dest[0].Films[0].Actors), 10)
-
 		//testutils.SaveJsonFile(dest, "./mysql/testdata/lang_film_actor_inventory_rental.json")
-
 		testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/lang_film_actor_inventory_rental.json")
 	}
 }

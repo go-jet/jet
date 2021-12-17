@@ -20,3 +20,4 @@ gen
 .gentestdata
 .tests/testdata/
 .gen
+.docker

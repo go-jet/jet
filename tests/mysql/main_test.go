@@ -36,7 +36,7 @@ func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
 	var err error
-	db, err = sql.Open("mysql", dbconfig.MySQLConnectionString)
+	db, err = sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
 	if err != nil {
 		panic("Failed to connect to test db" + err.Error())
 	}

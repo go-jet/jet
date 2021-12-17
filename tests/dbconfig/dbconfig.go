@@ -8,7 +8,7 @@ import (
 // Postgres test database connection parameters
 const (
 	PgHost     = "localhost"
-	PgPort     = 5432
+	PgPort     = 50901
 	PgUser     = "jet"
 	PgPassword = "jet"
 	PgDBName   = "jetdb"
@@ -20,13 +20,24 @@ var PostgresConnectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbn
 // MySQL test database connection parameters
 const (
 	MySqLHost     = "localhost"
-	MySQLPort     = 3306
+	MySQLPort     = 50902
 	MySQLUser     = "jet"
 	MySQLPassword = "jet"
+
+	MariaDBHost     = "localhost"
+	MariaDBPort     = 50903
+	MariaDBUser     = "jet"
+	MariaDBPassword = "jet"
 )
 
-// MySQLConnectionString is MySQL driver connection string to test database
-var MySQLConnectionString = fmt.Sprintf("%s:%s@tcp(%s:%d)/", MySQLUser, MySQLPassword, MySqLHost, MySQLPort)
+// MySQLConnectionString is MySQL connection string for test database
+func MySQLConnectionString(isMariaDB bool, dbName string) string {
+	if isMariaDB {
+		return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", MariaDBUser, MariaDBPassword, MariaDBHost, MariaDBPort, dbName)
+	}
+
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", MySQLUser, MySQLPassword, MySqLHost, MySQLPort, dbName)
+}
 
 // sqllite
 var (

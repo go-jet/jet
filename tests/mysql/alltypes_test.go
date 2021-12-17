@@ -31,10 +31,6 @@ func TestAllTypes(t *testing.T) {
 
 	require.Equal(t, len(dest), 2)
 
-	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
-		return
-	}
-
 	//testutils.PrintJson(dest)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
@@ -48,10 +44,6 @@ func TestAllTypesViewSelect(t *testing.T) {
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 2)
-
-	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
-		return
-	}
 
 	testutils.AssertJSON(t, dest, allTypesJson)
 }

@@ -1,0 +1,42 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:14.1
+    restart: always
+    environment:
+      - POSTGRES_USER=jet
+      - POSTGRES_PASSWORD=jet
+      - POSTGRES_DB=jetdb
+    ports:
+      - '50901:5432'
+    volumes:
+      - ./testdata/init/postgres:/docker-entrypoint-initdb.d
+      - ./.docker/postgres-data:/var/lib/postgresql/data
+
+  mysql:
+    image: mysql:8.0.27
+    command: ['--default-authentication-plugin=mysql_native_password', '--log_bin_trust_function_creators=1']
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: jet
+      MYSQL_USER: jet
+      MYSQL_PASSWORD: jet
+    ports:
+      - '50902:3306'
+    volumes:
+      - ./testdata/init/mysql:/docker-entrypoint-initdb.d
+      - ./.docker/mysql-data:/var/lib/mysql
+
+  mariadb:
+    image: mariadb:10.3.32
+    command: ['--default-authentication-plugin=mysql_native_password', '--log_bin_trust_function_creators=1']
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: jet
+      MYSQL_USER: jet
+      MYSQL_PASSWORD: jet
+    ports:
+      - '50903:3306'
+    volumes:
+      - ./testdata/init/mysql:/docker-entrypoint-initdb.d
+      - ./.docker/mariadb-data:/var/lib/mysql
