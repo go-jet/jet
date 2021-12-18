@@ -21,3 +21,4 @@ gen
 .tests/testdata/
 .gen
 .docker
+.env

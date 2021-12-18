@@ -14,14 +14,28 @@ checkout-testdata:
 docker-compose-up:
 	docker-compose up
 
+init-all:
+	go run ./init/init.go -testsuite all
+
+init-postgres:
+	go run ./init/init.go -testsuite postgres
+
+init-mysql:
+	go run ./init/init.go -testsuite mysql
+
+init-mariadb:
+	go run ./init/init.go -testsuite mariadb
+
+init-sqlite:
+	go run ./init/init.go -testsuite sqlite
 
 # jet-gen will call generator on each of the test databases to generate sql builder and model files need to run the tests.
-jet-gen: install-jet-gen jet-gen-pg jet-gen-mysql jet-gen-mariadb jet-gen-sqlite
+jet-gen: install-jet-gen jet-gen-postgres jet-gen-mysql jet-gen-mariadb jet-gen-sqlite
 
 install-jet-gen:
 	go build -o ${GOPATH}/bin/jet ../cmd/jet/
 
-jet-gen-pg:
+jet-gen-postgres:
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=dvds  -path=./.gentestdata/
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=chinook  -path=./.gentestdata/
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=chinook2  -path=./.gentestdata/

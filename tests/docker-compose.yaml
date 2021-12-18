@@ -9,9 +9,9 @@ services:
       - POSTGRES_DB=jetdb
     ports:
       - '50901:5432'
-    volumes:
-      - ./testdata/init/postgres:/docker-entrypoint-initdb.d
-      - ./.docker/postgres-data:/var/lib/postgresql/data
+    # it is faster to init postgres using init command - make init-postgres
+#    volumes:
+#      - ./testdata/init/postgres:/docker-entrypoint-initdb.d
 
   mysql:
     image: mysql:8.0.27
@@ -25,7 +25,6 @@ services:
       - '50902:3306'
     volumes:
       - ./testdata/init/mysql:/docker-entrypoint-initdb.d
-      - ./.docker/mysql-data:/var/lib/mysql
 
   mariadb:
     image: mariadb:10.3.32
@@ -39,4 +38,3 @@ services:
       - '50903:3306'
     volumes:
       - ./testdata/init/mysql:/docker-entrypoint-initdb.d
-      - ./.docker/mariadb-data:/var/lib/mysql

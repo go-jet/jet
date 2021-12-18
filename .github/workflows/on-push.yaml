@@ -1,0 +1,104 @@
+on: [push, pull_request]
+name: Tests and coverage
+jobs:
+  container-job:
+    # Containers must run in Linux based operating systems
+    runs-on: ubuntu-latest
+    container: node:16.13
+
+    steps:
+      - run: git version
+
+      - name: Install MySQL CLI;
+        run: |
+          apt-get --allow-releaseinfo-change update && apt install -y netcat
+
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.17.5'
+      - run: go version
+
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-    
+
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+
+      - run: curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+      - run: chmod +x /usr/local/bin/docker-compose
+
+      - run: cd tests && make cleanup
+
+      - run: cd tests && make setup
+
+      - run: cd tests && make install-jet-gen
+
+      - name: Waiting for Postgres to be ready
+        run: |
+            for i in `seq 1 20`;
+            do
+              nc -z localhost 50901 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Postgres && exit 0
+
+      - run: cd tests && make init-postgres
+
+      - name: Waiting for MySQL to be ready
+        run: |
+          for i in `seq 1 20`;
+          do
+            nc -z 127.0.0.1 50902 && echo Success && exit 0
+            echo -n .
+            sleep 1
+          done
+          echo Failed waiting for MySQL && exit 0    
+
+      - name: Waiting for MariaDB to be ready
+        run: |
+          for i in `seq 1 20`;
+          do
+            nc -z 127.0.0.1 50903 && echo Success && exit 0
+            echo -n .
+            sleep 1
+          done
+          echo Failed waiting for MySQL && exit 0    
+      
+      - run: cd tests && make jet-gen
+
+      - run: mkdir -p ${GITHUB_WORKSPACE}/TEST_RESULTS
+
+      - run: rm -rf examples
+
+      - name: Run postgres, mysql and sqlite tests
+        run: |
+          go test -v ./... \
+            -covermode=atomic \
+            -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... \
+            -coverprofile=${GITHUB_WORKSPACE}/TEST_RESULTS/coverage.txt
+
+      - name: Run mariadb tests
+        run: MY_SQL_SOURCE=MariaDB go test -v ./tests/mysql/
+
+      - name: Upload code coverage
+        run: |
+          curl -Os https://uploader.codecov.io/v0.1.0_4653/linux/codecov
+          chmod +x codecov
+          ./codecov -v -t ${CODECOV_TOKEN} -f ${GITHUB_WORKSPACE}/TEST_RESULTS/coverage.txt
+
+
+
+
+
+
+
+

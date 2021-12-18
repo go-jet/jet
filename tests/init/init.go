@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
+	"github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	if testSuite == "mysql" || testSuite == "mariadb" {
-		initMySQLDB()
+		initMySQLDB(testSuite == "mariadb")
 		return
 	}
 
@@ -48,8 +48,9 @@ func main() {
 		return
 	}
 
-	initMySQLDB()
 	initPostgresDB()
+	initMySQLDB(false)
+	initMySQLDB(true)
 	initSQLiteDB()
 }
 
@@ -62,7 +63,7 @@ func initSQLiteDB() {
 	throw.OnError(err)
 }
 
-func initMySQLDB() {
+func initMySQLDB(isMariaDB bool) {
 
 	mySQLDBs := []string{
 		"dvds",
@@ -71,12 +72,19 @@ func initMySQLDB() {
 	}
 
 	for _, dbName := range mySQLDBs {
-		cmdLine := fmt.Sprintf("mysql -h %s -P%d -u %s -p%s %s < %s",
-			dbconfig.MySqLHost,
-			dbconfig.MySQLPort,
-			dbconfig.MySQLUser,
-			dbconfig.MySQLPassword,
-			dbName,
+		host := dbconfig.MySqLHost
+		port := dbconfig.MySQLPort
+		user := dbconfig.MySQLUser
+		pass := dbconfig.MySQLPassword
+
+		if isMariaDB {
+			host = dbconfig.MariaDBHost
+			port = dbconfig.MariaDBPort
+			user = dbconfig.MariaDBUser
+			pass = dbconfig.MariaDBPassword
+		}
+
+		cmdLine := fmt.Sprintf("mysql -h %s -P%d -u %s -p%s %s < %s", host, port, user, pass, dbName,
 			"./testdata/init/mysql/"+dbName+".sql")
 
 		fmt.Println(cmdLine)
@@ -90,10 +98,10 @@ func initMySQLDB() {
 		throw.OnError(err)
 
 		err = mysql.Generate("./.gentestdata/mysql", mysql.DBConnection{
-			Host:     dbconfig.MySqLHost,
-			Port:     dbconfig.MySQLPort,
-			User:     dbconfig.MySQLUser,
-			Password: dbconfig.MySQLPassword,
+			Host:     host,
+			Port:     port,
+			User:     user,
+			Password: pass,
 			DBName:   dbName,
 		})
 
@@ -104,7 +112,7 @@ func initMySQLDB() {
 func initPostgresDB() {
 	db, err := sql.Open("postgres", dbconfig.PostgresConnectString)
 	if err != nil {
-		panic("Failed to connect to test db")
+		panic("Failed to connect to test db: " + err.Error())
 	}
 	defer func() {
 		err := db.Close()
