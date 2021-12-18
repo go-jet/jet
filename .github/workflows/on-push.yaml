@@ -11,7 +11,7 @@ jobs:
 
       - name: Install MySQL CLI;
         run: |
-          apt-get --allow-releaseinfo-change update && apt install -y netcat
+          apt-get --allow-releaseinfo-change update && apt install -y netcat && apt-get -y install sudo
 
       - uses: actions/setup-go@v2
         with:
@@ -32,8 +32,8 @@ jobs:
         with:
           submodules: true
 
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
+#      - name: Setup tmate session
+#        uses: mxschmitt/action-tmate@v3
 
       - run: curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
       - run: chmod +x /usr/local/bin/docker-compose
@@ -44,9 +44,11 @@ jobs:
           docker-compose rm postgres
           docker-compose rm mysql
           docker-compose rm mariadb
-          docker-compose down
+          docker-compose down --volumes
 
-      - run: cd tests && make setup
+      - run: |
+          cd tests
+          docker-compose up
 
       - run: cd tests && make install-jet-gen
 
