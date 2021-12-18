@@ -32,10 +32,19 @@ jobs:
         with:
           submodules: true
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+
       - run: curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
       - run: chmod +x /usr/local/bin/docker-compose
 
-      - run: cd tests && make cleanup
+      - run: |
+          cd tests
+          rm -rf .docker
+          docker-compose rm postgres
+          docker-compose rm mysql
+          docker-compose rm mariadb
+          docker-compose down
 
       - run: cd tests && make setup
 
