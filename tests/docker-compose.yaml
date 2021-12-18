@@ -11,7 +11,6 @@ services:
       - '50901:5432'
     volumes:
       - ./testdata/init/postgres:/docker-entrypoint-initdb.d
-      - ./.docker/postgres-data:/var/lib/postgresql/data
 
   mysql:
     image: mysql:8.0.27
@@ -25,7 +24,6 @@ services:
       - '50902:3306'
     volumes:
       - ./testdata/init/mysql:/docker-entrypoint-initdb.d
-      - ./.docker/mysql-data:/var/lib/mysql
 
   mariadb:
     image: mariadb:10.3.32
@@ -39,4 +37,3 @@ services:
       - '50903:3306'
     volumes:
       - ./testdata/init/mysql:/docker-entrypoint-initdb.d
-      - ./.docker/mariadb-data:/var/lib/mysql

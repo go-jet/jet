@@ -14,8 +14,8 @@ To simplify the process there is a Makefile with a list of helper commands.
 # Note that on the first run this command might take a couple of minutes.
 make setup
 
-# When databases are ready, we can generate sql builder and model types needed to compile the tests.
-make jet-gen
+# When databases are ready, we can generate sql builder and model types for each of the test databases
+make jet-gen-all
 ```
 
 Then we can run the tests the usual way:
@@ -26,5 +26,4 @@ go test -v ./...
 To removes test containers, volumes, and images:
 ```shell
 make cleanup
-# If temp ./.docker folder is still not empty, use 'sudo rm -rf .docker' to remove it.
 ```
