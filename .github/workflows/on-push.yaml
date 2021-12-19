@@ -6,6 +6,23 @@ jobs:
     runs-on: ubuntu-latest
     container: node:16.13
 
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - '50901:5432'
+
     steps:
       - run: git version
 
@@ -35,20 +52,20 @@ jobs:
 #      - name: Setup tmate session
 #        uses: mxschmitt/action-tmate@v3
 
-      - run: curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
-      - run: chmod +x /usr/local/bin/docker-compose
-
-      - run: |
-          cd tests
-          rm -rf .docker
-          docker-compose rm postgres
-          docker-compose rm mysql
-          docker-compose rm mariadb
-          docker-compose down --volumes
-
-      - run: |
-          cd tests
-          docker-compose up
+#      - run: curl -L https://github.com/docker/compose/releases/download/1.29.2/docker-compose-`uname -s`-`uname -m` -o /usr/local/bin/docker-compose
+#      - run: chmod +x /usr/local/bin/docker-compose
+#
+#      - run: |
+#          cd tests
+#          rm -rf .docker
+#          docker-compose rm postgres
+#          docker-compose rm mysql
+#          docker-compose rm mariadb
+#          docker-compose down --volumes
+#
+#      - run: |
+#          cd tests
+#          docker-compose -v up
 
       - run: cd tests && make install-jet-gen
 

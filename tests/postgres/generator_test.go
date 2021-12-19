@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/go-jet/jet/v2/generator/postgres"
@@ -52,8 +53,13 @@ func TestCmdGenerator(t *testing.T) {
 	err := os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
 
-	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost", "-port=5432",
-		"-user=jet", "-password=jet", "-schema=dvds", "-path="+genTestDir2)
+	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost",
+		"-port="+strconv.Itoa(dbconfig.PgPort),
+		"-user=jet",
+		"-password=jet",
+		"-schema=dvds",
+		"-path="+genTestDir2)
+
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 

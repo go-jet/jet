@@ -19,12 +19,12 @@ var PostgresConnectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbn
 
 // MySQL test database connection parameters
 const (
-	MySqLHost     = "localhost"
+	MySqLHost     = "127.0.0.1"
 	MySQLPort     = 50902
 	MySQLUser     = "jet"
 	MySQLPassword = "jet"
 
-	MariaDBHost     = "localhost"
+	MariaDBHost     = "127.0.0.1"
 	MariaDBPort     = 50903
 	MariaDBUser     = "jet"
 	MariaDBPassword = "jet"
