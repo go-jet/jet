@@ -2,6 +2,8 @@
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
 version: 2
+orbs:
+  codecov: codecov/codecov@3.1.1
 jobs:
   build-postgres-and-mysql:
     docker:
@@ -45,22 +47,6 @@ jobs:
             go get github.com/jstemmer/go-junit-report
             go build -o /home/circleci/.local/bin/jet ./cmd/jet/
 
-#      - setup_remote_docker
-
-#      - run:
-#          command: |
-#            cd tests
-#            ls
-#            sudo docker-compose version
-
-
-#      - run:
-#          command: |
-#            cd tests
-#            docker-compose up -d
-
-
-
       - run:
           name: Waiting for Postgres to be ready
           command: |
@@ -71,6 +57,7 @@ jobs:
               sleep 1
             done
             echo Failed waiting for Postgres && exit 1
+
       - run:
           name: Waiting for MySQL to be ready
           command: |
@@ -114,11 +101,14 @@ jobs:
           go test -v ./... \
             -covermode=atomic \
             -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... \
-            -coverprofile=cover.out
+            -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
-      - run:
-          name: Upload code coverage
-          command: bash <(curl -s https://codecov.io/bash)
+#      - run:
+#          name: Upload code coverage
+#          command: bash <(curl -s https://codecov.io/bash)
+
+      - codecov/upload:
+          file: cover.out
 
       - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
           path: /tmp/test-results
@@ -139,7 +129,6 @@ jobs:
           MYSQL_DATABASE: dvds
           MYSQL_USER: jet
           MYSQL_PASSWORD: jet
-          MYSQL_TCP_PORT: 50903
 
     working_directory: /go/src/github.com/go-jet/jet
 
