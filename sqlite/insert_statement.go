@@ -24,7 +24,6 @@ func newInsertStatement(table Table, columns []jet.Column) InsertStatement {
 	newInsert.SerializerStatement = jet.NewStatementImpl(Dialect, jet.InsertStatementType, newInsert,
 		&newInsert.Insert,
 		&newInsert.ValuesQuery,
-		&newInsert.OnDuplicateKey,
 		&newInsert.DefaultValues,
 		&newInsert.OnConflict,
 		&newInsert.Returning,
@@ -40,12 +39,11 @@ func newInsertStatement(table Table, columns []jet.Column) InsertStatement {
 type insertStatementImpl struct {
 	jet.SerializerStatement
 
-	Insert         jet.ClauseInsert
-	ValuesQuery    jet.ClauseValuesQuery
-	OnDuplicateKey onDuplicateKeyUpdateClause
-	DefaultValues  jet.ClauseOptional
-	OnConflict     onConflictClause
-	Returning      jet.ClauseReturning
+	Insert        jet.ClauseInsert
+	ValuesQuery   jet.ClauseValuesQuery
+	DefaultValues jet.ClauseOptional
+	OnConflict    onConflictClause
+	Returning     jet.ClauseReturning
 }
 
 func (is *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
@@ -65,11 +63,6 @@ func (is *insertStatementImpl) MODELS(data interface{}) InsertStatement {
 	return is
 }
 
-func (is *insertStatementImpl) ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement {
-	is.OnDuplicateKey = assigments
-	return is
-}
-
 func (is *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
 	is.ValuesQuery.Query = selectStatement
 	return is
@@ -83,29 +76,6 @@ func (is *insertStatementImpl) DEFAULT_VALUES() InsertStatement {
 func (is *insertStatementImpl) RETURNING(projections ...jet.Projection) InsertStatement {
 	is.Returning.ProjectionList = projections
 	return is
-}
-
-type onDuplicateKeyUpdateClause []jet.ColumnAssigment
-
-// Serialize for SetClause
-func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-	if len(s) == 0 {
-		return
-	}
-	out.NewLine()
-	out.WriteString("ON DUPLICATE KEY UPDATE")
-	out.IncreaseIdent(24)
-
-	for i, assigment := range s {
-		if i > 0 {
-			out.WriteString(",")
-			out.NewLine()
-		}
-
-		jet.Serialize(assigment, statementType, out, jet.ShortName.WithFallTrough(options)...)
-	}
-
-	out.DecreaseIdent(24)
 }
 
 func (is *insertStatementImpl) ON_CONFLICT(indexExpressions ...jet.ColumnExpression) onConflict {
