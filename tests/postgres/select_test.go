@@ -864,62 +864,118 @@ LIMIT 1000;
 
 	require.NoError(t, err)
 
-	//spew.Dump(films)
-
 	require.Equal(t, len(films), 1000)
 	testutils.AssertDeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
 }
 
 func TestSubQuery(t *testing.T) {
-	expectedQuery := `
-SELECT actor.actor_id AS "actor.actor_id",
+	rRatingFilms :=
+		SELECT(
+			Film.FilmID,
+			Film.Title,
+			Film.Rating,
+		).FROM(
+			Film,
+		).WHERE(
+			Film.Rating.EQ(enum.MpaaRating.R),
+		).AsTable("rFilms")
+
+	rFilmID := Film.FilmID.From(rRatingFilms)
+
+	stmt :=
+		SELECT(
+			rRatingFilms.AllColumns(),
+			Actor.AllColumns,
+			FilmActor.AllColumns,
+		).FROM(
+			rRatingFilms.
+				INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(rFilmID)).
+				INNER_JOIN(Actor, FilmActor.ActorID.EQ(Actor.ActorID)),
+		).WHERE(
+			rFilmID.LT(Int(50)),
+		).ORDER_BY(
+			rFilmID.ASC(),
+			Actor.ActorID.ASC(),
+		)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "rFilms"."film.film_id" AS "film.film_id",
+     "rFilms"."film.title" AS "film.title",
+     "rFilms"."film.rating" AS "film.rating",
+     actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update",
      film_actor.actor_id AS "film_actor.actor_id",
      film_actor.film_id AS "film_actor.film_id",
-     film_actor.last_update AS "film_actor.last_update",
-     "rFilms"."film.film_id" AS "film.film_id",
-     "rFilms"."film.title" AS "film.title",
-     "rFilms"."film.rating" AS "film.rating"
-FROM dvds.actor
-     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
-     INNER JOIN (
+     film_actor.last_update AS "film_actor.last_update"
+FROM (
           SELECT film.film_id AS "film.film_id",
                film.title AS "film.title",
                film.rating AS "film.rating"
           FROM dvds.film
           WHERE film.rating = 'R'
-     ) AS "rFilms" ON (film_actor.film_id = "rFilms"."film.film_id");
-`
+     ) AS "rFilms"
+     INNER JOIN dvds.film_actor ON (film_actor.film_id = "rFilms"."film.film_id")
+     INNER JOIN dvds.actor ON (film_actor.actor_id = actor.actor_id)
+WHERE "rFilms"."film.film_id" < 50
+ORDER BY "rFilms"."film.film_id" ASC, actor.actor_id ASC;
+`)
 
-	rRatingFilms := Film.
-		SELECT(
-			Film.FilmID,
-			Film.Title,
-			Film.Rating,
-		).
-		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
-		AsTable("rFilms")
+	var dest []struct {
+		model.Film
 
-	rFilmID := Film.FilmID.From(rRatingFilms)
+		Actors []model.Actor
+	}
 
-	query := Actor.
-		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmID)).
-		SELECT(
-			Actor.AllColumns,
-			FilmActor.AllColumns,
-			rRatingFilms.AllColumns(),
-		)
-
-	testutils.AssertDebugStatementSql(t, query, expectedQuery)
-
-	dest := []model.Actor{}
-
-	err := query.Query(db, &dest)
-
+	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
+	require.Len(t, dest, 10)
+
+	testutils.AssertJSON(t, dest[0], `
+{
+	"FilmID": 8,
+	"Title": "Airport Pollock",
+	"Description": null,
+	"ReleaseYear": null,
+	"LanguageID": 0,
+	"RentalDuration": 0,
+	"RentalRate": 0,
+	"Length": null,
+	"ReplacementCost": 0,
+	"Rating": "R",
+	"LastUpdate": "0001-01-01T00:00:00Z",
+	"SpecialFeatures": null,
+	"Fulltext": "",
+	"Actors": [
+		{
+			"ActorID": 55,
+			"FirstName": "Fay",
+			"LastName": "Kilmer",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		},
+		{
+			"ActorID": 96,
+			"FirstName": "Gene",
+			"LastName": "Willis",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		},
+		{
+			"ActorID": 110,
+			"FirstName": "Susan",
+			"LastName": "Davis",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		},
+		{
+			"ActorID": 138,
+			"FirstName": "Lucille",
+			"LastName": "Dee",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		}
+	]
+}
+`)
+
 }
 
 func TestSelectFunctions(t *testing.T) {
