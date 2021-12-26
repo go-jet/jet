@@ -6,35 +6,52 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-// Bool creates new bool literal expression
-var Bool = jet.Bool
+func Bool(value bool) BoolExpression {
+	return CAST(jet.Bool(value)).AS_BOOL()
+}
 
 // Int is constructor for 64 bit signed integer expressions literals.
 var Int = jet.Int
 
 // Int8 is constructor for 8 bit signed integer expressions literals.
-var Int8 = jet.Int8
+func Int8(value int8) IntegerExpression {
+	return CAST(jet.Int8(value)).AS_SMALLINT()
+}
 
 // Int16 is constructor for 16 bit signed integer expressions literals.
-var Int16 = jet.Int16
+func Int16(value int16) IntegerExpression {
+	return CAST(jet.Int16(value)).AS_SMALLINT()
+}
 
 // Int32 is constructor for 32 bit signed integer expressions literals.
-var Int32 = jet.Int32
+func Int32(value int32) IntegerExpression {
+	return CAST(jet.Int32(value)).AS_INTEGER()
+}
 
 // Int64 is constructor for 64 bit signed integer expressions literals.
-var Int64 = jet.Int
+func Int64(value int64) IntegerExpression {
+	return CAST(jet.Int(value)).AS_BIGINT()
+}
 
 // Uint8 is constructor for 8 bit unsigned integer expressions literals.
-var Uint8 = jet.Uint8
+func Uint8(value uint8) IntegerExpression {
+	return CAST(jet.Uint8(value)).AS_SMALLINT()
+}
 
 // Uint16 is constructor for 16 bit unsigned integer expressions literals.
-var Uint16 = jet.Uint16
+func Uint16(value uint16) IntegerExpression {
+	return CAST(jet.Uint16(value)).AS_INTEGER()
+}
 
 // Uint32 is constructor for 32 bit unsigned integer expressions literals.
-var Uint32 = jet.Uint32
+func Uint32(value uint32) IntegerExpression {
+	return CAST(jet.Uint32(value)).AS_BIGINT()
+}
 
 // Uint64 is constructor for 64 bit unsigned integer expressions literals.
-var Uint64 = jet.Uint64
+func Uint64(value uint64) IntegerExpression {
+	return CAST(jet.Uint64(value)).AS_BIGINT()
+}
 
 // Float creates new float literal expression
 var Float = jet.Float

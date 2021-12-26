@@ -33,7 +33,7 @@ func TestExists(t *testing.T) {
 	).EQ(Bool(true)),
 		`((EXISTS (
      SELECT $1
-)) = $2)`, int64(1), true)
+)) = $2::boolean)`, int64(1), true)
 
 	assertProjectionSerialize(t, EXISTS(
 		SELECT(Int(1)),

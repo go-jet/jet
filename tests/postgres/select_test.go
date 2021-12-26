@@ -1943,7 +1943,7 @@ SELECT customer.customer_id AS "customer.customer_id",
      customer.last_update AS "customer.last_update",
      customer.active AS "customer.active"
 FROM dvds.customer
-WHERE ($1 AND (customer.customer_id = $2)) AND (customer.activebool = $3);
+WHERE ($1::boolean AND (customer.customer_id = $2)) AND (customer.activebool = $3::boolean);
 `, true, int64(1), true)
 
 	dest := []model.Customer{}
@@ -2402,4 +2402,25 @@ func TestRecursionScanNx1(t *testing.T) {
 ]
 `)
 	})
+}
+
+// In parameterized statements integer literals, like Int(num), are replaced with a placeholders. For some expressions,
+// postgres interpreter will not have enough information to deduce the type. If this is the case postgres returns an error.
+// Int8, Int16, .... functions will add automatic type cast over placeholder, so type deduction is always possible.
+func TestLiteralTypeDeduction(t *testing.T) {
+	stmt := SELECT(
+		SUM(
+			CASE().WHEN(Staff.Active.IS_TRUE()).
+				THEN(Int8(6)).   // if Int8 and Int32 are replaced with Int,
+				ELSE(Int32(-1)), // execution of this statement will return an error
+		).AS("num_passed"),
+	).FROM(Staff)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT SUM((CASE WHEN staff.active IS TRUE THEN $1::smallint ELSE $2::integer END)) AS "num_passed"
+FROM dvds.staff;
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
 }

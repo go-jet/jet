@@ -266,7 +266,7 @@ func TestUpdateWithModelData(t *testing.T) {
 	expectedSQL := `
 UPDATE test_sample.link
 SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
-WHERE link.id = 201;
+WHERE link.id = 201::integer;
 `
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(201))
 
@@ -293,7 +293,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 	var expectedSQL = `
 UPDATE test_sample.link
 SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
-WHERE link.id = 201;
+WHERE link.id = 201::integer;
 `
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int32(201))
 
