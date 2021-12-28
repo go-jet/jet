@@ -221,6 +221,83 @@ FROM log_discontinued;
 
 }
 
+// default column aliases from sub-queries are bubbled up to the main query,
+// cte name does not affect default column alias in main query
+func TestCTEColumnAliasBubbling(t *testing.T) {
+	cte1 := CTE("cte1")
+	cte2 := CTE("cte2")
+
+	stmt := WITH(
+		cte1.AS(
+			SELECT(
+				Territories.AllColumns,
+				String("custom_column_1").AS("custom_column_1"),
+			).FROM(
+				Territories,
+			).ORDER_BY(
+				Territories.TerritoryID.ASC(),
+			),
+		),
+		cte2.AS(
+			SELECT(
+				cte1.AllColumns(),
+				String("custom_column_2").AS("custom_column_2"),
+			).FROM(
+				cte1,
+			),
+		),
+	)(
+		SELECT(
+			cte2.AllColumns(),
+		).FROM(
+			cte2,
+		),
+	)
+
+	// fmt.Println(stmt.Sql())
+
+	testutils.AssertStatementSql(t, stmt, `
+WITH cte1 AS (
+     SELECT territories.territory_id AS "territories.territory_id",
+          territories.territory_description AS "territories.territory_description",
+          territories.region_id AS "territories.region_id",
+          $1 AS "custom_column_1"
+     FROM northwind.territories
+     ORDER BY territories.territory_id ASC
+),cte2 AS (
+     SELECT cte1."territories.territory_id" AS "territories.territory_id",
+          cte1."territories.territory_description" AS "territories.territory_description",
+          cte1."territories.region_id" AS "territories.region_id",
+          cte1.custom_column_1 AS "custom_column_1",
+          $2 AS "custom_column_2"
+     FROM cte1
+)
+SELECT cte2."territories.territory_id" AS "territories.territory_id",
+     cte2."territories.territory_description" AS "territories.territory_description",
+     cte2."territories.region_id" AS "territories.region_id",
+     cte2.custom_column_1 AS "custom_column_1",
+     cte2.custom_column_2 AS "custom_column_2"
+FROM cte2;
+`)
+
+	var dest []struct {
+		model.Territories
+		CustomColumn1 string
+		CustomColumn2 string
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Len(t, dest, 53)
+	require.Equal(t, dest[0].Territories, model.Territories{
+		TerritoryID:          "01581",
+		TerritoryDescription: "Westboro",
+		RegionID:             1,
+	})
+	require.Equal(t, dest[0].CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].CustomColumn2, "custom_column_2")
+}
+
 type EmployeeWrap struct {
 	model.Employees
 

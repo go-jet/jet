@@ -101,12 +101,166 @@ func TestJoinEverything(t *testing.T) {
 		}
 	}
 
+	testutils.AssertStatementSql(t, stmt, `
+SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+     "Artist"."Name" AS "Artist.Name",
+     "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId",
+     "Track"."TrackId" AS "Track.TrackId",
+     "Track"."Name" AS "Track.Name",
+     "Track"."AlbumId" AS "Track.AlbumId",
+     "Track"."MediaTypeId" AS "Track.MediaTypeId",
+     "Track"."GenreId" AS "Track.GenreId",
+     "Track"."Composer" AS "Track.Composer",
+     "Track"."Milliseconds" AS "Track.Milliseconds",
+     "Track"."Bytes" AS "Track.Bytes",
+     "Track"."UnitPrice" AS "Track.UnitPrice",
+     "Genre"."GenreId" AS "Genre.GenreId",
+     "Genre"."Name" AS "Genre.Name",
+     "MediaType"."MediaTypeId" AS "MediaType.MediaTypeId",
+     "MediaType"."Name" AS "MediaType.Name",
+     "PlaylistTrack"."PlaylistId" AS "PlaylistTrack.PlaylistId",
+     "PlaylistTrack"."TrackId" AS "PlaylistTrack.TrackId",
+     "Playlist"."PlaylistId" AS "Playlist.PlaylistId",
+     "Playlist"."Name" AS "Playlist.Name",
+     "Invoice"."InvoiceId" AS "Invoice.InvoiceId",
+     "Invoice"."CustomerId" AS "Invoice.CustomerId",
+     "Invoice"."InvoiceDate" AS "Invoice.InvoiceDate",
+     "Invoice"."BillingAddress" AS "Invoice.BillingAddress",
+     "Invoice"."BillingCity" AS "Invoice.BillingCity",
+     "Invoice"."BillingState" AS "Invoice.BillingState",
+     "Invoice"."BillingCountry" AS "Invoice.BillingCountry",
+     "Invoice"."BillingPostalCode" AS "Invoice.BillingPostalCode",
+     "Invoice"."Total" AS "Invoice.Total",
+     "Customer"."CustomerId" AS "Customer.CustomerId",
+     "Customer"."FirstName" AS "Customer.FirstName",
+     "Customer"."LastName" AS "Customer.LastName",
+     "Customer"."Company" AS "Customer.Company",
+     "Customer"."Address" AS "Customer.Address",
+     "Customer"."City" AS "Customer.City",
+     "Customer"."State" AS "Customer.State",
+     "Customer"."Country" AS "Customer.Country",
+     "Customer"."PostalCode" AS "Customer.PostalCode",
+     "Customer"."Phone" AS "Customer.Phone",
+     "Customer"."Fax" AS "Customer.Fax",
+     "Customer"."Email" AS "Customer.Email",
+     "Customer"."SupportRepId" AS "Customer.SupportRepId",
+     "Employee"."EmployeeId" AS "Employee.EmployeeId",
+     "Employee"."LastName" AS "Employee.LastName",
+     "Employee"."FirstName" AS "Employee.FirstName",
+     "Employee"."Title" AS "Employee.Title",
+     "Employee"."ReportsTo" AS "Employee.ReportsTo",
+     "Employee"."BirthDate" AS "Employee.BirthDate",
+     "Employee"."HireDate" AS "Employee.HireDate",
+     "Employee"."Address" AS "Employee.Address",
+     "Employee"."City" AS "Employee.City",
+     "Employee"."State" AS "Employee.State",
+     "Employee"."Country" AS "Employee.Country",
+     "Employee"."PostalCode" AS "Employee.PostalCode",
+     "Employee"."Phone" AS "Employee.Phone",
+     "Employee"."Fax" AS "Employee.Fax",
+     "Employee"."Email" AS "Employee.Email",
+     "Manager"."EmployeeId" AS "Manager.EmployeeId",
+     "Manager"."LastName" AS "Manager.LastName",
+     "Manager"."FirstName" AS "Manager.FirstName",
+     "Manager"."Title" AS "Manager.Title",
+     "Manager"."ReportsTo" AS "Manager.ReportsTo",
+     "Manager"."BirthDate" AS "Manager.BirthDate",
+     "Manager"."HireDate" AS "Manager.HireDate",
+     "Manager"."Address" AS "Manager.Address",
+     "Manager"."City" AS "Manager.City",
+     "Manager"."State" AS "Manager.State",
+     "Manager"."Country" AS "Manager.Country",
+     "Manager"."PostalCode" AS "Manager.PostalCode",
+     "Manager"."Phone" AS "Manager.Phone",
+     "Manager"."Fax" AS "Manager.Fax",
+     "Manager"."Email" AS "Manager.Email"
+FROM chinook."Artist"
+     LEFT JOIN chinook."Album" ON ("Artist"."ArtistId" = "Album"."ArtistId")
+     LEFT JOIN chinook."Track" ON ("Track"."AlbumId" = "Album"."AlbumId")
+     LEFT JOIN chinook."Genre" ON ("Genre"."GenreId" = "Track"."GenreId")
+     LEFT JOIN chinook."MediaType" ON ("MediaType"."MediaTypeId" = "Track"."MediaTypeId")
+     LEFT JOIN chinook."PlaylistTrack" ON ("PlaylistTrack"."TrackId" = "Track"."TrackId")
+     LEFT JOIN chinook."Playlist" ON ("Playlist"."PlaylistId" = "PlaylistTrack"."PlaylistId")
+     LEFT JOIN chinook."InvoiceLine" ON ("InvoiceLine"."TrackId" = "Track"."TrackId")
+     LEFT JOIN chinook."Invoice" ON ("Invoice"."InvoiceId" = "InvoiceLine"."InvoiceId")
+     LEFT JOIN chinook."Customer" ON ("Customer"."CustomerId" = "Invoice"."CustomerId")
+     LEFT JOIN chinook."Employee" ON ("Employee"."EmployeeId" = "Customer"."SupportRepId")
+     LEFT JOIN chinook."Employee" AS "Manager" ON ("Manager"."EmployeeId" = "Employee"."ReportsTo")
+ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId", "Genre"."GenreId", "MediaType"."MediaTypeId", "Playlist"."PlaylistId", "Invoice"."InvoiceId", "Customer"."CustomerId";
+`)
+
 	err := stmt.Query(db, &dest)
 
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 275)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
 	requireLogged(t, stmt)
+}
+
+// default column aliases from sub-CTEs are bubbled up to the main query,
+// cte name does not affect default column alias in main query
+func TestSubQueryColumnAliasBubbling(t *testing.T) {
+	subQuery1 := SELECT(
+		Artist.AllColumns,
+		String("custom_column_1").AS("custom_column_1"),
+	).FROM(
+		Artist,
+	).ORDER_BY(
+		Artist.ArtistId.ASC(),
+	).AsTable("subQuery1")
+
+	subQuery2 := SELECT(
+		subQuery1.AllColumns(),
+		String("custom_column_2").AS("custom_column_2"),
+	).FROM(
+		subQuery1,
+	).AsTable("subQuery2")
+
+	mainQuery := SELECT(
+		subQuery2.AllColumns(),
+	).FROM(
+		subQuery2,
+	)
+
+	//fmt.Println(mainQuery.Sql())
+
+	testutils.AssertStatementSql(t, mainQuery, `
+SELECT "subQuery2"."Artist.ArtistId" AS "Artist.ArtistId",
+     "subQuery2"."Artist.Name" AS "Artist.Name",
+     "subQuery2".custom_column_1 AS "custom_column_1",
+     "subQuery2".custom_column_2 AS "custom_column_2"
+FROM (
+          SELECT "subQuery1"."Artist.ArtistId" AS "Artist.ArtistId",
+               "subQuery1"."Artist.Name" AS "Artist.Name",
+               "subQuery1".custom_column_1 AS "custom_column_1",
+               $1 AS "custom_column_2"
+          FROM (
+                    SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+                         "Artist"."Name" AS "Artist.Name",
+                         $2 AS "custom_column_1"
+                    FROM chinook."Artist"
+                    ORDER BY "Artist"."ArtistId" ASC
+               ) AS "subQuery1"
+     ) AS "subQuery2";
+`)
+	var dest []struct {
+		model.Artist
+		CustomColumn1 string
+		CustomColumn2 string
+	}
+
+	err := mainQuery.Query(db, &dest)
+	require.NoError(t, err)
+
+	require.Len(t, dest, 275)
+	require.Equal(t, dest[0].Artist, model.Artist{
+		ArtistId: 1,
+		Name:     testutils.StringPtr("AC/DC"),
+	})
+	require.Equal(t, dest[0].CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].CustomColumn2, "custom_column_2")
 }
 
 func TestSelfJoin(t *testing.T) {
