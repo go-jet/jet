@@ -51,6 +51,12 @@ type HasProjections interface {
 	projections() ProjectionList
 }
 
+// SerializerHasProjections interface is combination of Serializer and HasProjections interface
+type SerializerHasProjections interface {
+	Serializer
+	HasProjections
+}
+
 // serializerStatementInterfaceImpl struct
 type serializerStatementInterfaceImpl struct {
 	dialect       Dialect
@@ -200,7 +206,7 @@ func (s *statementImpl) serialize(statement StatementType, out *SQLBuilder, opti
 	}
 
 	for _, clause := range s.Clauses {
-		clause.Serialize(statement, out, FallTrough(options)...)
+		clause.Serialize(s.statementType, out, FallTrough(options)...)
 	}
 
 	if contains(options, Ident) {

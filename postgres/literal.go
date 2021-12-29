@@ -6,6 +6,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
+// Bool is boolean literal constructor
 func Bool(value bool) BoolExpression {
 	return CAST(jet.Bool(value)).AS_BOOL()
 }

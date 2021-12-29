@@ -68,8 +68,8 @@ func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	}
 }
 
-// SerializeColumnExpressionNames func
-func SerializeColumnExpressionNames(columns []ColumnExpression, statementType StatementType,
+// SerializeColumnExpressions func
+func SerializeColumnExpressions(columns []ColumnExpression, statementType StatementType,
 	out *SQLBuilder, options ...SerializeOption) {
 	for i, col := range columns {
 		if i > 0 {
@@ -81,6 +81,21 @@ func SerializeColumnExpressionNames(columns []ColumnExpression, statementType St
 		}
 
 		col.serialize(statementType, out, options...)
+	}
+}
+
+// SerializeColumnExpressionNames func
+func SerializeColumnExpressionNames(columns []ColumnExpression, out *SQLBuilder) {
+	for i, col := range columns {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if col == nil {
+			panic("jet: nil column in columns list")
+		}
+
+		out.WriteIdentifier(col.Name())
 	}
 }
 

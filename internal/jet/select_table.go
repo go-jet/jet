@@ -2,20 +2,28 @@ package jet
 
 // SelectTable is interface for SELECT sub-queries
 type SelectTable interface {
-	Serializer
+	SerializerHasProjections
 	Alias() string
 	AllColumns() ProjectionList
 }
 
 type selectTableImpl struct {
-	selectStmt SerializerStatement
-	alias      string
+	Statement SerializerHasProjections
+	alias     string
 }
 
 // NewSelectTable func
-func NewSelectTable(selectStmt SerializerStatement, alias string) selectTableImpl {
-	selectTable := selectTableImpl{selectStmt: selectStmt, alias: alias}
+func NewSelectTable(selectStmt SerializerHasProjections, alias string) selectTableImpl {
+	selectTable := selectTableImpl{
+		Statement: selectStmt,
+		alias:     alias,
+	}
+
 	return selectTable
+}
+
+func (s selectTableImpl) projections() ProjectionList {
+	return s.Statement.projections()
 }
 
 func (s selectTableImpl) Alias() string {
@@ -23,17 +31,12 @@ func (s selectTableImpl) Alias() string {
 }
 
 func (s selectTableImpl) AllColumns() ProjectionList {
-	statementWithProjections, ok := s.selectStmt.(HasProjections)
-	if !ok {
-		return ProjectionList{}
-	}
-
-	projectionList := statementWithProjections.projections().fromImpl(s)
+	projectionList := s.projections().fromImpl(s)
 	return projectionList.(ProjectionList)
 }
 
 func (s selectTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	s.selectStmt.serialize(statement, out)
+	s.Statement.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteIdentifier(s.alias)
@@ -52,7 +55,7 @@ func NewLateral(selectStmt SerializerStatement, alias string) SelectTable {
 
 func (s lateralImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("LATERAL")
-	s.selectStmt.serialize(statement, out)
+	s.Statement.serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteIdentifier(s.alias)

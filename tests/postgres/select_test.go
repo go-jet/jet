@@ -814,10 +814,10 @@ ORDER BY f1.film_id ASC;
 	type F1 model.Film
 	type F2 model.Film
 
-	theSameLengthFilms := []struct {
+	var theSameLengthFilms []struct {
 		F1 F1
 		F2 F2
-	}{}
+	}
 
 	err := query.Query(db, &theSameLengthFilms)
 
@@ -858,7 +858,7 @@ LIMIT 1000;
 		Title2 string
 		Length int16
 	}
-	films := []thesameLengthFilms{}
+	var films []thesameLengthFilms
 
 	err := query.Query(db, &films)
 
