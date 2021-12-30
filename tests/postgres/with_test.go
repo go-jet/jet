@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/model"
@@ -745,4 +746,63 @@ WHERE not_from_us_or_aus."suppliers.contact_name" != 'John';
 
 	require.NoError(t, err)
 	require.Len(t, dest, 11)
+}
+
+func TestWitStatement_CTE_NotMaterialized(t *testing.T) {
+	orders1 := CTE("orders1")
+	orders1ID := Orders.OrderID.From(orders1)
+	orders2 := orders1.ALIAS("orders2")
+	orders2ID := Orders.OrderID.From(orders2)
+
+	stmt := WITH(
+		orders1.AS_NOT_MATERIALIZED(
+			SELECT(
+				Orders.OrderID,
+				Orders.EmployeeID,
+				Orders.ShipCity,
+			).FROM(
+				Orders,
+			),
+		),
+	)(
+		SELECT(
+			orders1.AllColumns().As("orders1.*"),
+			orders2.AllColumns().As("orders2.*"),
+		).FROM(
+			orders1.
+				INNER_JOIN(orders2, orders1ID.EQ(orders2ID)),
+		).WHERE(
+			orders1ID.LT(Int(10320)),
+		),
+	)
+
+	// fmt.Println(stmt.Sql())
+
+	testutils.AssertStatementSql(t, stmt, `
+WITH orders1 AS NOT MATERIALIZED (
+     SELECT orders.order_id AS "orders.order_id",
+          orders.employee_id AS "orders.employee_id",
+          orders.ship_city AS "orders.ship_city"
+     FROM northwind.orders
+)
+SELECT orders1."orders.order_id" AS "orders1.order_id",
+     orders1."orders.employee_id" AS "orders1.employee_id",
+     orders1."orders.ship_city" AS "orders1.ship_city",
+     orders2."orders.order_id" AS "orders2.order_id",
+     orders2."orders.employee_id" AS "orders2.employee_id",
+     orders2."orders.ship_city" AS "orders2.ship_city"
+FROM orders1
+     INNER JOIN orders1 AS orders2 ON (orders1."orders.order_id" = orders2."orders.order_id")
+WHERE orders1."orders.order_id" < $1;
+`)
+
+	var dest []struct {
+		Orders1 model.Orders `alias:"orders1.*"`
+		Orders2 model.Orders `alias:"orders2.*"`
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Len(t, dest, 72)
+	fmt.Println(len(dest))
 }
