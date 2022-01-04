@@ -14,6 +14,8 @@ type FloatExpression interface {
 	LT_EQ(rhs FloatExpression) BoolExpression
 	GT(rhs FloatExpression) BoolExpression
 	GT_EQ(rhs FloatExpression) BoolExpression
+	BETWEEN(min, max FloatExpression) BoolExpression
+	NOT_BETWEEN(min, max FloatExpression) BoolExpression
 
 	ADD(rhs NumericExpression) FloatExpression
 	SUB(rhs NumericExpression) FloatExpression
@@ -58,6 +60,14 @@ func (n *floatInterfaceImpl) LT(rhs FloatExpression) BoolExpression {
 
 func (n *floatInterfaceImpl) LT_EQ(rhs FloatExpression) BoolExpression {
 	return LtEq(n.parent, rhs)
+}
+
+func (n *floatInterfaceImpl) BETWEEN(min, max FloatExpression) BoolExpression {
+	return NewBetweenOperatorExpression(n.parent, min, max, false)
+}
+
+func (n *floatInterfaceImpl) NOT_BETWEEN(min, max FloatExpression) BoolExpression {
+	return NewBetweenOperatorExpression(n.parent, min, max, true)
 }
 
 func (n *floatInterfaceImpl) ADD(rhs NumericExpression) FloatExpression {

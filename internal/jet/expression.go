@@ -196,3 +196,45 @@ func (p *postfixOpExpression) serialize(statement StatementType, out *SQLBuilder
 
 	out.WriteString(p.operator)
 }
+
+type betweenOperatorExpression struct {
+	ExpressionInterfaceImpl
+
+	expression Expression
+	notBetween bool
+	min        Expression
+	max        Expression
+}
+
+// NewBetweenOperatorExpression creates new BETWEEN operator expression
+func NewBetweenOperatorExpression(expression, min, max Expression, notBetween bool) BoolExpression {
+	newBetweenOperator := &betweenOperatorExpression{
+		expression: expression,
+		notBetween: notBetween,
+		min:        min,
+		max:        max,
+	}
+
+	newBetweenOperator.ExpressionInterfaceImpl.Parent = newBetweenOperator
+
+	return BoolExp(newBetweenOperator)
+}
+
+func (p *betweenOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if !contains(options, NoWrap) {
+		out.WriteString("(")
+	}
+
+	p.expression.serialize(statement, out, FallTrough(options)...)
+	if p.notBetween {
+		out.WriteString("NOT")
+	}
+	out.WriteString("BETWEEN")
+	p.min.serialize(statement, out, FallTrough(options)...)
+	out.WriteString("AND")
+	p.max.serialize(statement, out, FallTrough(options)...)
+
+	if !contains(options, NoWrap) {
+		out.WriteString(")")
+	}
+}

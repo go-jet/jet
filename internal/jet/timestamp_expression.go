@@ -13,6 +13,8 @@ type TimestampExpression interface {
 	LT_EQ(rhs TimestampExpression) BoolExpression
 	GT(rhs TimestampExpression) BoolExpression
 	GT_EQ(rhs TimestampExpression) BoolExpression
+	BETWEEN(min, max TimestampExpression) BoolExpression
+	NOT_BETWEEN(min, max TimestampExpression) BoolExpression
 
 	ADD(rhs Interval) TimestampExpression
 	SUB(rhs Interval) TimestampExpression
@@ -52,6 +54,14 @@ func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) BoolExpression {
 
 func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) BoolExpression {
 	return GtEq(t.parent, rhs)
+}
+
+func (t *timestampInterfaceImpl) BETWEEN(min, max TimestampExpression) BoolExpression {
+	return NewBetweenOperatorExpression(t.parent, min, max, false)
+}
+
+func (t *timestampInterfaceImpl) NOT_BETWEEN(min, max TimestampExpression) BoolExpression {
+	return NewBetweenOperatorExpression(t.parent, min, max, true)
 }
 
 func (t *timestampInterfaceImpl) ADD(rhs Interval) TimestampExpression {

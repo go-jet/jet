@@ -99,3 +99,9 @@ func TestIntExpressionIntExp(t *testing.T) {
 	assertClauseSerialize(t, IntExp(table1ColFloat.ADD(table2ColFloat)).ADD(Int(11)),
 		"((table1.col_float + table2.col_float) + $1)", int64(11))
 }
+
+func TestIntExpressionBetween(t *testing.T) {
+	assertClauseSerialize(t, table1ColInt.BETWEEN(Int(1), table1Col3), "(table1.col_int BETWEEN $1 AND table1.col3)", int64(1))
+	assertClauseSerialize(t, table1ColInt.BETWEEN(Int(1), table1Col3).AND(table1ColBool),
+		"((table1.col_int BETWEEN $1 AND table1.col3) AND table1.col_bool)", int64(1))
+}
