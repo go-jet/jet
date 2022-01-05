@@ -1,5 +1,7 @@
 package jet
 
+import "fmt"
+
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
@@ -33,7 +35,8 @@ type ExpressionInterfaceImpl struct {
 }
 
 func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
-	return e.Parent
+	panic(fmt.Sprintf("jet: can't export unaliased expression subQuery: %s, expression: %s",
+		subQuery.Alias(), serializeToDefaultDebugString(e.Parent)))
 }
 
 // IS_NULL tests expression whether it is a NULL value.

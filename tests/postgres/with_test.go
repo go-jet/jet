@@ -364,7 +364,15 @@ func TestCTEColumnAliasBubbling(t *testing.T) {
 		),
 	)(
 		SELECT(
-			cte2.AllColumns(),
+			cte2.AllColumns(),                      // columns will have the same alias as in CTEs
+			cte2.AllColumns().As("territories2.*"), // all column aliases will be changed to territories2.*
+			cte2.AllColumns().Except(Territories.RegionID, Territories.TerritoryDescription).As("territories3.*"),
+			cte2.AllColumns().
+				Except(
+					Territories.MutableColumns,
+					StringColumn("custom_column_1").From(cte2), // custom_column_1 appears with the same alias in cte2
+					StringColumn("custom_column_2").From(cte2),
+				).As("territories4.*"),
 		).FROM(
 			cte2,
 		),
@@ -392,26 +400,78 @@ SELECT cte2."territories.territory_id" AS "territories.territory_id",
      cte2."territories.territory_description" AS "territories.territory_description",
      cte2."territories.region_id" AS "territories.region_id",
      cte2.custom_column_1 AS "custom_column_1",
-     cte2.custom_column_2 AS "custom_column_2"
+     cte2.custom_column_2 AS "custom_column_2",
+     cte2."territories.territory_id" AS "territories2.territory_id",
+     cte2."territories.territory_description" AS "territories2.territory_description",
+     cte2."territories.region_id" AS "territories2.region_id",
+     cte2.custom_column_1 AS "territories2.custom_column_1",
+     cte2.custom_column_2 AS "territories2.custom_column_2",
+     cte2."territories.territory_id" AS "territories3.territory_id",
+     cte2.custom_column_1 AS "territories3.custom_column_1",
+     cte2.custom_column_2 AS "territories3.custom_column_2",
+     cte2."territories.territory_id" AS "territories4.territory_id"
 FROM cte2;
 `)
 
 	var dest []struct {
-		model.Territories
-		CustomColumn1 string
-		CustomColumn2 string
+		// cte2.AllColumns()
+		Territories1 struct {
+			model.Territories
+
+			CustomColumn1 string
+			CustomColumn2 string
+		}
+
+		// cte2.AllColumns().As("territories2.*")
+		Territories2 struct {
+			model.Territories `alias:"territories2.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"territories2.*"`
+
+		// cte2.AllColumns().Except(Territories.RegionID, Territories.TerritoryDescription).As("territories3.*")
+		Territories3 struct {
+			model.Territories `alias:"territories3.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"territories3.*"`
+
+		// cte2.AllColumns() ... .As("territories4.*")
+		Territories4 struct {
+			model.Territories `alias:"territories3.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"territories4.*"`
 	}
 
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 	require.Len(t, dest, 53)
-	require.Equal(t, dest[0].Territories, model.Territories{
+	require.Equal(t, dest[0].Territories1.Territories, model.Territories{
 		TerritoryID:          "01581",
 		TerritoryDescription: "Westboro",
 		RegionID:             1,
 	})
-	require.Equal(t, dest[0].CustomColumn1, "custom_column_1")
-	require.Equal(t, dest[0].CustomColumn2, "custom_column_2")
+	require.Equal(t, dest[0].Territories1.CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].Territories1.CustomColumn2, "custom_column_2")
+
+	// Territories2
+	require.Equal(t, testutils.ToJSON(dest[0].Territories1), testutils.ToJSON(dest[0].Territories2))
+
+	// Territories3
+	require.Equal(t, dest[0].Territories3.TerritoryID, dest[0].Territories1.TerritoryID)
+	require.Equal(t, dest[0].Territories3.RegionID, int16(0))
+	require.Equal(t, dest[0].Territories3.TerritoryDescription, "")
+	require.Equal(t, dest[0].Territories1.CustomColumn1, dest[0].Territories3.CustomColumn1)
+	require.Equal(t, dest[0].Territories1.CustomColumn2, dest[0].Territories3.CustomColumn2)
+
+	// Territories4
+	require.Equal(t, dest[0].Territories3.Territories, dest[0].Territories4.Territories)
+	require.Equal(t, dest[0].Territories4.CustomColumn1, "")
+	require.Equal(t, dest[0].Territories4.CustomColumn2, "")
 }
 
 func TestRecursiveWithStatement(t *testing.T) {

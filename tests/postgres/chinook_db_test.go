@@ -219,18 +219,33 @@ func TestSubQueryColumnAliasBubbling(t *testing.T) {
 	).AsTable("subQuery2")
 
 	mainQuery := SELECT(
-		subQuery2.AllColumns(),
+		subQuery2.AllColumns(),                 // columns will have the same alias as in the sub-query
+		subQuery2.AllColumns().As("artist2.*"), // all column aliases will be changed to artist2.*
+		subQuery2.AllColumns().Except(Artist.Name).As("artist3.*"),
+		subQuery2.AllColumns().Except(
+			Artist.MutableColumns,
+			StringColumn("custom_column_1").From(subQuery2), // custom_column_1 appears with the same alias in subQuery2
+			StringColumn("custom_column_2").From(subQuery2),
+		).As("artist4.*"),
 	).FROM(
 		subQuery2,
 	)
 
-	//fmt.Println(mainQuery.Sql())
+	// fmt.Println(mainQuery.Sql())
 
 	testutils.AssertStatementSql(t, mainQuery, `
 SELECT "subQuery2"."Artist.ArtistId" AS "Artist.ArtistId",
      "subQuery2"."Artist.Name" AS "Artist.Name",
      "subQuery2".custom_column_1 AS "custom_column_1",
-     "subQuery2".custom_column_2 AS "custom_column_2"
+     "subQuery2".custom_column_2 AS "custom_column_2",
+     "subQuery2"."Artist.ArtistId" AS "artist2.ArtistId",
+     "subQuery2"."Artist.Name" AS "artist2.Name",
+     "subQuery2".custom_column_1 AS "artist2.custom_column_1",
+     "subQuery2".custom_column_2 AS "artist2.custom_column_2",
+     "subQuery2"."Artist.ArtistId" AS "artist3.ArtistId",
+     "subQuery2".custom_column_1 AS "artist3.custom_column_1",
+     "subQuery2".custom_column_2 AS "artist3.custom_column_2",
+     "subQuery2"."Artist.ArtistId" AS "artist4.ArtistId"
 FROM (
           SELECT "subQuery1"."Artist.ArtistId" AS "Artist.ArtistId",
                "subQuery1"."Artist.Name" AS "Artist.Name",
@@ -246,21 +261,180 @@ FROM (
      ) AS "subQuery2";
 `)
 	var dest []struct {
-		model.Artist
-		CustomColumn1 string
-		CustomColumn2 string
+		// subQuery2.AllColumns()
+		Artist1 struct {
+			model.Artist
+
+			CustomColumn1 string
+			CustomColumn2 string
+		}
+
+		// subQuery2.AllColumns().As("artist2.*")
+		Artist2 struct {
+			model.Artist `alias:"artist2.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"artist2.*"`
+
+		// subQuery2.AllColumns().Except(Artist.Name).As("artist3.*")
+		Artist3 struct {
+			model.Artist `alias:"artist3.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"artist3.*"`
+
+		// subQuery2.AllColumns().Except(...).As("artist4.*")
+		Artist4 struct {
+			model.Artist `alias:"artist4.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"artist4.*"`
 	}
 
 	err := mainQuery.Query(db, &dest)
 	require.NoError(t, err)
 
+	// Artist1
 	require.Len(t, dest, 275)
-	require.Equal(t, dest[0].Artist, model.Artist{
+	require.Equal(t, dest[0].Artist1.Artist, model.Artist{
 		ArtistId: 1,
 		Name:     testutils.StringPtr("AC/DC"),
 	})
-	require.Equal(t, dest[0].CustomColumn1, "custom_column_1")
-	require.Equal(t, dest[0].CustomColumn2, "custom_column_2")
+	require.Equal(t, dest[0].Artist1.CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].Artist1.CustomColumn2, "custom_column_2")
+
+	// Artist2
+	require.Equal(t, testutils.ToJSON(dest[0].Artist1), testutils.ToJSON(dest[0].Artist2))
+
+	// Artist3
+	require.Equal(t, dest[0].Artist3.ArtistId, int32(1))
+	require.Nil(t, dest[0].Artist3.Name)
+	require.Equal(t, dest[0].Artist3.CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].Artist3.CustomColumn2, "custom_column_2")
+
+	// Artist4
+	require.Equal(t, dest[0].Artist3.Artist, dest[0].Artist4.Artist)
+	require.Equal(t, dest[0].Artist4.CustomColumn1, "")
+	require.Equal(t, dest[0].Artist4.CustomColumn2, "")
+}
+
+func TestUnAliasedNamesPanicError(t *testing.T) {
+	subQuery1 := SELECT(
+		Artist.AllColumns,
+		Artist.Name.CONCAT(String("-musician")), //alias missing
+	).FROM(
+		Artist,
+	).ORDER_BY(
+		Artist.ArtistId.ASC(),
+	).AsTable("subQuery1")
+
+	require.Panics(t, func() {
+		SELECT(
+			subQuery1.AllColumns(), // panic, column not aliased
+		).FROM(
+			subQuery1,
+		)
+	}, "jet: can't export unaliased expression subQuery: subQuery1, expression: (\"Artist\".\"Name\" || '-musician')")
+}
+
+func TestProjectionListReAliasing(t *testing.T) {
+	projectionList := ProjectionList{
+		Track.GenreId,
+		SUM(Track.Milliseconds).AS("duration"),
+		MAX(Track.Milliseconds).AS("duration.max"),
+	}
+
+	stmt := SELECT(
+		projectionList.As("genre_info"),
+	).FROM(
+		Track,
+	).WHERE(
+		Track.GenreId.LT(Int(5)),
+	).GROUP_BY(
+		Track.GenreId,
+	).ORDER_BY(
+		Track.GenreId,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "Track"."GenreId" AS "genre_info.GenreId",
+     SUM("Track"."Milliseconds") AS "genre_info.duration",
+     MAX("Track"."Milliseconds") AS "genre_info.max"
+FROM chinook."Track"
+WHERE "Track"."GenreId" < 5
+GROUP BY "Track"."GenreId"
+ORDER BY "Track"."GenreId";
+`)
+
+	type GenreInfo struct {
+		GenreID  string
+		Duration int64
+		Max      int64
+	}
+
+	var dest []GenreInfo
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	expectedSQL := `
+[
+	{
+		"GenreID": "1",
+		"Duration": 368231326,
+		"Max": 1612329
+	},
+	{
+		"GenreID": "2",
+		"Duration": 37928199,
+		"Max": 907520
+	},
+	{
+		"GenreID": "3",
+		"Duration": 115846292,
+		"Max": 816509
+	},
+	{
+		"GenreID": "4",
+		"Duration": 77805478,
+		"Max": 558602
+	}
+]
+`
+	testutils.AssertJSON(t, dest, expectedSQL)
+
+	subQuery := stmt.AsTable("subQuery")
+
+	mainStmt := SELECT(
+		subQuery.AllColumns().As("genre_information.*"),
+	).FROM(
+		subQuery,
+	)
+
+	testutils.AssertDebugStatementSql(t, mainStmt, `
+SELECT "subQuery"."genre_info.GenreId" AS "genre_information.GenreId",
+     "subQuery"."genre_info.duration" AS "genre_information.duration",
+     "subQuery"."genre_info.max" AS "genre_information.max"
+FROM (
+          SELECT "Track"."GenreId" AS "genre_info.GenreId",
+               SUM("Track"."Milliseconds") AS "genre_info.duration",
+               MAX("Track"."Milliseconds") AS "genre_info.max"
+          FROM chinook."Track"
+          WHERE "Track"."GenreId" < 5
+          GROUP BY "Track"."GenreId"
+          ORDER BY "Track"."GenreId"
+     ) AS "subQuery";
+`)
+
+	type GenreInformation GenreInfo
+	var newDest []GenreInformation
+
+	err = mainStmt.Query(db, &newDest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, expectedSQL)
 }
 
 func TestSelfJoin(t *testing.T) {

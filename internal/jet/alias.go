@@ -13,7 +13,12 @@ func newAlias(expression Expression, aliasName string) Projection {
 }
 
 func (a *alias) fromImpl(subQuery SelectTable) Projection {
-	column := NewColumnImpl(a.alias, "", nil)
+	// if alias is in the form "table.column", we break it into two parts so that ProjectionList.As(newAlias) can
+	// overwrite tableName with a new alias. This method is called only for exporting aliased custom columns.
+	// Generated columns have default aliasing.
+	tableName, columnName := extractTableAndColumnName(a.alias)
+
+	column := NewColumnImpl(columnName, tableName, nil)
 	column.subQuery = subQuery
 
 	return &column

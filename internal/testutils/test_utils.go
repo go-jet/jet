@@ -56,6 +56,12 @@ func PrintJson(v interface{}) {
 	fmt.Println(string(jsonText))
 }
 
+// ToJSON converts v into json string
+func ToJSON(v interface{}) string {
+	jsonText, _ := json.MarshalIndent(v, "", "\t")
+	return string(jsonText)
+}
+
 // AssertJSON check if data json output is the same as expectedJSON
 func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	jsonData, err := json.MarshalIndent(data, "", "\t")
