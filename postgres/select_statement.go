@@ -44,7 +44,7 @@ type SelectStatement interface {
 	jet.HasProjections
 	Expression
 
-	DISTINCT() SelectStatement
+	DISTINCT(on ...jet.ColumnExpression) SelectStatement
 	FROM(tables ...ReadableTable) SelectStatement
 	WHERE(expression BoolExpression) SelectStatement
 	GROUP_BY(groupByClauses ...GroupByClause) SelectStatement
@@ -104,8 +104,9 @@ type selectStatementImpl struct {
 	For     jet.ClauseFor
 }
 
-func (s *selectStatementImpl) DISTINCT() SelectStatement {
+func (s *selectStatementImpl) DISTINCT(on ...jet.ColumnExpression) SelectStatement {
 	s.Select.Distinct = true
+	s.Select.DistinctOnColumns = on
 	return s
 }
 

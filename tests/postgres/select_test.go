@@ -48,6 +48,63 @@ WHERE actor.actor_id = 2;
 	requireLogged(t, query)
 }
 
+func TestSelectDistinctOn(t *testing.T) {
+
+	stmt := SELECT(
+		Rental.StaffID,
+		Rental.CustomerID,
+		Rental.RentalID,
+	).DISTINCT(
+		Rental.StaffID,
+		Rental.CustomerID,
+	).FROM(
+		Rental,
+	).WHERE(
+		Rental.CustomerID.LT(Int(2)),
+	).ORDER_BY(
+		Rental.StaffID.ASC(),
+		Rental.CustomerID.ASC(),
+		Rental.RentalID.ASC(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT DISTINCT ON (rental.staff_id, rental.customer_id) rental.staff_id AS "rental.staff_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.rental_id AS "rental.rental_id"
+FROM dvds.rental
+WHERE rental.customer_id < 2
+ORDER BY rental.staff_id ASC, rental.customer_id ASC, rental.rental_id ASC;
+`)
+
+	var dest []model.Rental
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"RentalID": 573,
+		"RentalDate": "0001-01-01T00:00:00Z",
+		"InventoryID": 0,
+		"CustomerID": 1,
+		"ReturnDate": null,
+		"StaffID": 1,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	},
+	{
+		"RentalID": 76,
+		"RentalDate": "0001-01-01T00:00:00Z",
+		"InventoryID": 0,
+		"CustomerID": 1,
+		"ReturnDate": null,
+		"StaffID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	}
+]
+`)
+}
+
 func TestClassicSelect(t *testing.T) {
 	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",

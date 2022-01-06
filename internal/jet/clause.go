@@ -18,8 +18,9 @@ type ClauseWithProjections interface {
 
 // ClauseSelect struct
 type ClauseSelect struct {
-	Distinct       bool
-	ProjectionList []Projection
+	Distinct          bool
+	DistinctOnColumns []ColumnExpression
+	ProjectionList    []Projection
 }
 
 // Projections returns list of projections for select clause
@@ -34,6 +35,12 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 
 	if s.Distinct {
 		out.WriteString("DISTINCT")
+	}
+
+	if len(s.DistinctOnColumns) > 0 {
+		out.WriteString("ON (")
+		SerializeColumnExpressions(s.DistinctOnColumns, statementType, out)
+		out.WriteByte(')')
 	}
 
 	if len(s.ProjectionList) == 0 {
