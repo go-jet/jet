@@ -147,10 +147,10 @@ func TestSelect_NOT_EXISTS(t *testing.T) {
 				))), `
 SELECT table1.col_int AS "table1.col_int"
 FROM db.table1
-WHERE (NOT (EXISTS (
+WHERE NOT (EXISTS (
           SELECT table2.col_int AS "table2.col_int"
           FROM db.table2
           WHERE table1.col_int = table2.col_int
-     )));
+     ));
 `)
 }

@@ -81,7 +81,7 @@ func LOG(floatExpression FloatExpression) FloatExpression {
 // ----------------- Aggregate functions  -------------------//
 
 // AVG is aggregate function used to calculate avg value from numeric expression
-func AVG(numericExpression NumericExpression) floatWindowExpression {
+func AVG(numericExpression Expression) floatWindowExpression {
 	return NewFloatWindowFunc("AVG", numericExpression)
 }
 
@@ -594,7 +594,7 @@ type funcExpressionImpl struct {
 func NewFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:        name,
-		expressions: expressions,
+		expressions: parameters(expressions),
 	}
 
 	if parent != nil {
@@ -606,9 +606,22 @@ func NewFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	return funcExp
 }
 
+func parameters(expressions []Expression) []Expression {
+	var ret []Expression
+
+	for _, expression := range expressions {
+		if _, isStatement := expression.(Statement); isStatement {
+			ret = append(ret, expression)
+		} else {
+			ret = append(ret, skipWrap(expression))
+		}
+	}
+
+	return ret
+}
+
 // NewFloatWindowFunc creates new float function with name and expressions
 func newWindowFunc(name string, expressions ...Expression) windowExpression {
-
 	newFun := NewFunc(name, expressions, nil)
 	windowExpr := newWindowExpression(newFun)
 	newFun.ExpressionInterfaceImpl.Parent = windowExpr
@@ -698,12 +711,12 @@ type integerFunc struct {
 }
 
 func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
-	floatFunc := &integerFunc{}
+	intFunc := &integerFunc{}
 
-	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
-	floatFunc.integerInterfaceImpl.parent = floatFunc
+	intFunc.funcExpressionImpl = *NewFunc(name, expressions, intFunc)
+	intFunc.integerInterfaceImpl.parent = intFunc
 
-	return floatFunc
+	return intFunc
 }
 
 // NewFloatWindowFunc creates new float function with name and expressions
@@ -806,7 +819,7 @@ func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 	return timestampzFunc
 }
 
-// Func can be used to call an custom or as of yet unsupported function in the database.
+// Func can be used to call custom or unsupported database functions.
 func Func(name string, expressions ...Expression) Expression {
 	return NewFunc(name, expressions, nil)
 }

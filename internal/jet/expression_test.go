@@ -4,10 +4,6 @@ import (
 	"testing"
 )
 
-func TestInvalidExpression(t *testing.T) {
-	assertClauseSerializeErr(t, table2Col3.ADD(nil), `jet: rhs is nil for '+' operator`)
-}
-
 func TestExpressionIS_NULL(t *testing.T) {
 	assertClauseSerialize(t, table2Col3.IS_NULL(), "table2.col3 IS NULL")
 	assertClauseSerialize(t, table2Col3.ADD(table2Col3).IS_NULL(), "(table2.col3 + table2.col3) IS NULL")
