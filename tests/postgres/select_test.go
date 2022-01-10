@@ -1191,6 +1191,66 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
 }
 
+func TestAggregateFunctionDistinct(t *testing.T) {
+	stmt := SELECT(
+		Payment.CustomerID,
+
+		COUNT(DISTINCT(Payment.Amount)).AS("distinct.count"),
+		SUM(DISTINCT(Payment.Amount)).AS("distinct.sum"),
+		AVG(DISTINCT(Payment.Amount)).AS("distinct.avg"),
+		MIN(DISTINCT(Payment.PaymentDate)).AS("distinct.first_payment_date"),
+		MAX(DISTINCT(Payment.PaymentDate)).AS("distinct.last_payment_date"),
+	).FROM(
+		Payment,
+	).WHERE(
+		Payment.CustomerID.EQ(Int(1)),
+	).GROUP_BY(
+		Payment.CustomerID,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT payment.customer_id AS "payment.customer_id",
+     COUNT(DISTINCT payment.amount) AS "distinct.count",
+     SUM(DISTINCT payment.amount) AS "distinct.sum",
+     AVG(DISTINCT payment.amount) AS "distinct.avg",
+     MIN(DISTINCT payment.payment_date) AS "distinct.first_payment_date",
+     MAX(DISTINCT payment.payment_date) AS "distinct.last_payment_date"
+FROM dvds.payment
+WHERE payment.customer_id = 1
+GROUP BY payment.customer_id;
+`)
+
+	type Distinct struct {
+		model.Payment
+
+		Count            int64
+		Sum              float64
+		Avg              float64
+		FirstPaymentDate time.Time
+		LastPaymentDate  time.Time
+	}
+
+	var dest Distinct
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"PaymentID": 0,
+	"CustomerID": 1,
+	"StaffID": 0,
+	"RentalID": 0,
+	"Amount": 0,
+	"PaymentDate": "0001-01-01T00:00:00Z",
+	"Count": 8,
+	"Sum": 38.92,
+	"Avg": 4.865,
+	"FirstPaymentDate": "2007-02-14T23:22:38.996577Z",
+	"LastPaymentDate": "2007-04-30T01:10:44.996577Z"
+}
+`)
+}
+
 func TestSelectGroupBy2(t *testing.T) {
 	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
