@@ -270,7 +270,9 @@ WHERE link.id = 201::integer;
 `
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(201))
 
-	AssertExec(t, stmt, 1)
+	_, err := stmt.Exec(db)
+	require.NoError(t, err)
+	requireQueryLogged(t, stmt, 1)
 }
 
 func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {

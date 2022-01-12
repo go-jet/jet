@@ -25,7 +25,14 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
-	AssertExec(t, deleteStmt, 2)
+
+	res, err := deleteStmt.ExecContext(context.Background(), db)
+
+	require.NoError(t, err)
+	rows, err := res.RowsAffected()
+	require.NoError(t, err)
+	require.Equal(t, rows, int64(2))
+	requireQueryLogged(t, deleteStmt, int64(2))
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {

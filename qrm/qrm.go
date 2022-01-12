@@ -17,7 +17,7 @@ var ErrNoRows = errors.New("qrm: no rows in result set")
 // using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
 // If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
-func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr interface{}) error {
+func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 
 	utils.MustBeInitializedPtr(db, "jet: db is nil")
 	utils.MustBeInitializedPtr(destPtr, "jet: destination is nil")
@@ -26,11 +26,11 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 	destinationPtrType := reflect.TypeOf(destPtr)
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		_, err := queryToSlice(ctx, db, query, args, destPtr)
+		rowsProcessed, err := queryToSlice(ctx, db, query, args, destPtr)
 		if err != nil {
-			return fmt.Errorf("jet: %w", err)
+			return rowsProcessed, fmt.Errorf("jet: %w", err)
 		}
-		return nil
+		return rowsProcessed, nil
 	} else if destinationPtrType.Elem().Kind() == reflect.Struct {
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
@@ -38,16 +38,16 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 		rowsProcessed, err := queryToSlice(ctx, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
-			return fmt.Errorf("jet: %w", err)
+			return rowsProcessed, fmt.Errorf("jet: %w", err)
 		}
 
 		if rowsProcessed == 0 {
-			return ErrNoRows
+			return 0, ErrNoRows
 		}
 
 		// edge case when row result set contains only NULLs.
 		if tempSliceValue.Len() == 0 {
-			return nil
+			return rowsProcessed, nil
 		}
 
 		structValue := reflect.ValueOf(destPtr).Elem()
@@ -56,7 +56,7 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 		if structValue.Type().AssignableTo(firstTempStruct.Type()) {
 			structValue.Set(tempSliceValue.Index(0).Elem())
 		}
-		return nil
+		return rowsProcessed, nil
 	} else {
 		panic("jet: destination has to be a pointer to slice or pointer to struct")
 	}
@@ -136,7 +136,7 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 		err = rows.Scan(scanContext.row...)
 
 		if err != nil {
-			return
+			return scanContext.rowNum, err
 		}
 
 		scanContext.rowNum++
@@ -144,24 +144,16 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 		_, err = mapRowToSlice(scanContext, "", newTypeStack(), slicePtrValue, nil)
 
 		if err != nil {
-			return
+			return scanContext.rowNum, err
 		}
 	}
 
 	err = rows.Close()
 	if err != nil {
-		return
+		return scanContext.rowNum, err
 	}
 
-	err = rows.Err()
-
-	if err != nil {
-		return
-	}
-
-	rowsProcessed = scanContext.rowNum
-
-	return
+	return scanContext.rowNum, rows.Err()
 }
 
 func mapRowToSlice(

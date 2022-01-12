@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"math/rand"
 	"os"
+	"runtime"
 	"testing"
 	"time"
 
@@ -59,10 +60,20 @@ var loggedSQL string
 var loggedSQLArgs []interface{}
 var loggedDebugSQL string
 
+var queryInfo postgres.QueryInfo
+var callerFile string
+var callerLine int
+var callerFunction string
+
 func init() {
 	postgres.SetLogger(func(ctx context.Context, statement postgres.PrintableStatement) {
 		loggedSQL, loggedSQLArgs = statement.Sql()
 		loggedDebugSQL = statement.DebugSql()
+	})
+
+	postgres.SetQueryLoggerFunc(func(ctx context.Context, info postgres.QueryInfo) {
+		queryInfo = info
+		callerFile, callerLine, callerFunction = info.Caller()
 	})
 }
 
@@ -71,6 +82,21 @@ func requireLogged(t *testing.T, statement postgres.Statement) {
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
+}
+
+func requireQueryLogged(t *testing.T, statement postgres.Statement, rowsProcessed int64) {
+	query, args := statement.Sql()
+	queryLogged, argsLogged := queryInfo.Statement.Sql()
+
+	require.Equal(t, query, queryLogged)
+	require.Equal(t, args, argsLogged)
+	require.Equal(t, queryInfo.RowsProcessed, rowsProcessed)
+
+	pc, file, _, _ := runtime.Caller(1)
+	funcDetails := runtime.FuncForPC(pc)
+	require.Equal(t, file, callerFile)
+	require.NotEmpty(t, callerLine)
+	require.Equal(t, funcDetails.Name(), callerFunction)
 }
 
 func skipForPgxDriver(t *testing.T) {

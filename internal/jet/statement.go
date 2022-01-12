@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/go-jet/jet/v2/qrm"
+	"time"
 )
 
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
@@ -21,9 +22,9 @@ type Statement interface {
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 	QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error
-	//Exec executes statement over db connection/transaction without returning any rows.
+	// Exec executes statement over db connection/transaction without returning any rows.
 	Exec(db qrm.DB) (sql.Result, error)
-	//Exec executes statement with context over db connection/transaction without returning any rows.
+	// ExecContext executes statement with context over db connection/transaction without returning any rows.
 	ExecContext(ctx context.Context, db qrm.DB) (sql.Result, error)
 	// Rows executes statements over db connection/transaction and returns rows
 	Rows(ctx context.Context, db qrm.DB) (*Rows, error)
@@ -84,12 +85,7 @@ func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 }
 
 func (s *serializerStatementInterfaceImpl) Query(db qrm.DB, destination interface{}) error {
-	query, args := s.Sql()
-	ctx := context.Background()
-
-	callLogger(ctx, s)
-
-	return qrm.Query(ctx, db, query, args, destination)
+	return s.QueryContext(context.Background(), db, destination)
 }
 
 func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error {
@@ -97,15 +93,25 @@ func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db 
 
 	callLogger(ctx, s)
 
-	return qrm.Query(ctx, db, query, args, destination)
+	var rowsProcessed int64
+	var err error
+
+	duration := duration(func() {
+		rowsProcessed, err = qrm.Query(ctx, db, query, args, destination)
+	})
+
+	callQueryLoggerFunc(ctx, QueryInfo{
+		Statement:     s,
+		RowsProcessed: rowsProcessed,
+		Duration:      duration,
+		Err:           err,
+	})
+
+	return err
 }
 
 func (s *serializerStatementInterfaceImpl) Exec(db qrm.DB) (res sql.Result, err error) {
-	query, args := s.Sql()
-
-	callLogger(context.Background(), s)
-
-	return db.Exec(query, args...)
+	return s.ExecContext(context.Background(), db)
 }
 
 func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db qrm.DB) (res sql.Result, err error) {
@@ -113,7 +119,24 @@ func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db q
 
 	callLogger(ctx, s)
 
-	return db.ExecContext(ctx, query, args...)
+	duration := duration(func() {
+		res, err = db.ExecContext(ctx, query, args...)
+	})
+
+	var rowsAffected int64
+
+	if err == nil {
+		rowsAffected, _ = res.RowsAffected()
+	}
+
+	callQueryLoggerFunc(ctx, QueryInfo{
+		Statement:     s,
+		RowsProcessed: rowsAffected,
+		Duration:      duration,
+		Err:           err,
+	})
+
+	return res, err
 }
 
 func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.DB) (*Rows, error) {
@@ -121,7 +144,18 @@ func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.DB) 
 
 	callLogger(ctx, s)
 
-	rows, err := db.QueryContext(ctx, query, args...)
+	var rows *sql.Rows
+	var err error
+
+	duration := duration(func() {
+		rows, err = db.QueryContext(ctx, query, args...)
+	})
+
+	callQueryLoggerFunc(ctx, QueryInfo{
+		Statement: s,
+		Duration:  duration,
+		Err:       err,
+	})
 
 	if err != nil {
 		return nil, err
@@ -130,10 +164,12 @@ func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.DB) 
 	return &Rows{rows}, nil
 }
 
-func callLogger(ctx context.Context, statement Statement) {
-	if logger != nil {
-		logger(ctx, statement)
-	}
+func duration(f func()) time.Duration {
+	start := time.Now()
+
+	f()
+
+	return time.Now().Sub(start)
 }
 
 // ExpressionStatement interfacess

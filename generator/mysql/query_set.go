@@ -20,7 +20,7 @@ WHERE table_schema = ? and table_type = ?;
 `
 	var tables []metadata.Table
 
-	err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
 	throw.OnError(err)
 
 	for i := range tables {
@@ -53,7 +53,7 @@ WHERE table_schema = ? AND table_name = ?
 ORDER BY ordinal_position;
 `
 	var columns []metadata.Column
-	err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, schemaName, tableName}, &columns)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, schemaName, tableName}, &columns)
 	throw.OnError(err)
 
 	return columns
@@ -72,7 +72,7 @@ WHERE c.table_schema = ? AND DATA_TYPE = 'enum';
 		Values string
 	}
 
-	err := qrm.Query(context.Background(), db, query, []interface{}{schemaName}, &queryResult)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName}, &queryResult)
 	throw.OnError(err)
 
 	var ret []metadata.Enum

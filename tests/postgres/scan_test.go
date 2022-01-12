@@ -62,7 +62,8 @@ func TestScanToValidDestination(t *testing.T) {
 	t.Run("global query function scan", func(t *testing.T) {
 		queryStr, args := oneInventoryQuery.Sql()
 		dest := []struct{}{}
-		err := qrm.Query(nil, db, queryStr, args, &dest)
+		rowProcessed, err := qrm.Query(nil, db, queryStr, args, &dest)
+		require.Equal(t, rowProcessed, int64(1))
 		require.NoError(t, err)
 	})
 
@@ -782,6 +783,7 @@ func TestRowsScan(t *testing.T) {
 	require.NoError(t, err)
 
 	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 0)
 }
 
 func TestScanNumericToFloat(t *testing.T) {

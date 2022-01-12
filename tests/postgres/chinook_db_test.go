@@ -35,6 +35,7 @@ ORDER BY "Album"."AlbumId" ASC;
 	testutils.AssertDeepEqual(t, dest[1], album2)
 	testutils.AssertDeepEqual(t, dest[len(dest)-1], album347)
 	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 347)
 }
 
 func TestJoinEverything(t *testing.T) {
@@ -191,12 +192,13 @@ FROM chinook."Artist"
 ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId", "Genre"."GenreId", "MediaType"."MediaTypeId", "Playlist"."PlaylistId", "Invoice"."InvoiceId", "Customer"."CustomerId";
 `)
 
-	err := stmt.Query(db, &dest)
+	err := stmt.QueryContext(context.Background(), db, &dest)
 
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 275)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
 	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 9423)
 }
 
 // default column aliases from sub-CTEs are bubbled up to the main query,

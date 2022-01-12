@@ -23,5 +23,12 @@ type OrderByClause = jet.OrderByClause
 // GroupByClause interface to use as input for GROUP_BY
 type GroupByClause = jet.GroupByClause
 
-// SetLogger sets automatic statement logging
+// SetLogger sets automatic statement logging.
+// Deprecated: use SetQueryLoggerFunc instead.
 var SetLogger = jet.SetLoggerFunc
+
+// SetQueryLoggerFunc sets automatic query logging function.
+var SetQueryLoggerFunc = jet.SetQueryLoggerFunc
+
+// QueryInfo contains information about executed query
+type QueryInfo = jet.QueryInfo

@@ -38,6 +38,7 @@ WHERE actor.actor_id = ?;
 
 	testutils.AssertDeepEqual(t, actor, actor2)
 	requireLogged(t, query)
+	requireQueryLogged(t, query, 1)
 }
 
 var actor2 = model.Actor{
@@ -60,9 +61,9 @@ SELECT actor.actor_id AS "actor.actor_id",
 FROM dvds.actor
 ORDER BY actor.actor_id;
 `)
-	dest := []model.Actor{}
+	var dest []model.Actor
 
-	err := query.Query(db, &dest)
+	err := query.QueryContext(context.Background(), db, &dest)
 
 	require.NoError(t, err)
 
@@ -73,6 +74,7 @@ ORDER BY actor.actor_id;
 	//testutils.SaveJsonFile(dest, "mysql/testdata/all_actors.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/all_actors.json")
 	requireLogged(t, query)
+	requireQueryLogged(t, query, 200)
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
