@@ -72,6 +72,39 @@ func TestCmdGenerator(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestCmdGeneratorIgnoreTablesViewsEnums(t *testing.T) {
+	cmd := exec.Command("jet",
+		"-source=SQLite",
+		"-dsn=file://"+testDatabaseFilePath,
+		"-ignore-tables=actor,Address,CATEGORY , city ,film,rental,store",
+		"-ignore-views=customer_list, film_list,STAFF_LIst",
+		"-path="+genDestDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	tableSQLBuilderFiles, err := ioutil.ReadDir(genDestDir + "/table")
+	require.NoError(t, err)
+	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "country.go",
+		"customer.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
+		"payment.go", "staff.go")
+
+	viewSQLBuilderFiles, err := ioutil.ReadDir(genDestDir + "/view")
+	require.NoError(t, err)
+	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "sales_by_film_category.go",
+		"sales_by_store.go")
+
+	modelFiles, err := ioutil.ReadDir(genDestDir + "/model")
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, modelFiles, "country.go",
+		"customer.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
+		"payment.go", "staff.go", "sales_by_film_category.go", "sales_by_store.go")
+}
+
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
 	tableSQLBuilderFiles, err := ioutil.ReadDir(genDestDir + "/table")

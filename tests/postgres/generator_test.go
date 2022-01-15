@@ -92,6 +92,59 @@ func TestCmdGenerator(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestGeneratorIgnoreTables(t *testing.T) {
+	err := os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
+
+	cmd := exec.Command("jet",
+		"-source=PostgreSQL",
+		"-host=localhost",
+		"-port="+strconv.Itoa(dbconfig.PgPort),
+		"-user=jet",
+		"-password=jet",
+		"-dbname=jetdb",
+		"-schema=dvds",
+		"-ignore-tables=actor,ADDRESS,country, Film , cITY,",
+		"-ignore-views=Actor_info, FILM_LIST ,staff_list",
+		"-ignore-enums=mpaa_rating",
+		"-path="+genTestDir2)
+
+	fmt.Println(cmd.Args)
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
+
+	// Table SQL Builder files
+	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "category.go",
+		"customer.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
+		"payment.go", "rental.go", "staff.go", "store.go")
+
+	// View SQL Builder files
+	viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go")
+
+	// Enums SQL Builder files
+	_, err = ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
+	require.Error(t, err, "open ./.gentestdata2/jetdb/dvds/enum: no such file or directory")
+
+	modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, modelFiles, "category.go",
+		"customer.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
+		"payment.go", "rental.go", "staff.go", "store.go",
+		"nicer_but_slower_film_list.go", "sales_by_film_category.go",
+		"customer_list.go", "sales_by_store.go")
+}
+
 func TestGenerator(t *testing.T) {
 
 	for i := 0; i < 3; i++ {

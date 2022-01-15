@@ -85,9 +85,48 @@ func TestCmdGenerator(t *testing.T) {
 
 	err = cmd.Run()
 	require.NoError(t, err)
+}
 
-	err = os.RemoveAll(genTestDirRoot)
+func TestIgnoreTablesViewsEnums(t *testing.T) {
+	cmd := exec.Command("jet",
+		"-source=MySQL",
+		"-dbname=dvds",
+		"-host="+dbconfig.MySqLHost,
+		"-port="+strconv.Itoa(dbconfig.MySQLPort),
+		"-user="+dbconfig.MySQLUser,
+		"-password="+dbconfig.MySQLPassword,
+		"-ignore-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+		"-ignore-views=actor_info,CUSTomER_LIST, film_list",
+		"-ignore-enums=film_list_rating,film_rating",
+		"-path="+genTestDir3)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
 	require.NoError(t, err)
+
+	tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
+	require.NoError(t, err)
+	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "customer.go", "film.go", "film_actor.go",
+		"film_category.go", "film_text.go", "inventory.go", "language.go", "payment.go")
+
+	viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
+	require.NoError(t, err)
+	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "sales_by_store.go", "staff_list.go")
+
+	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
+	require.NoError(t, err)
+	testutils.AssertFileNamesEqual(t, enumFiles, "nicer_but_slower_film_list_rating.go")
+
+	modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, modelFiles,
+		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
+		"payment.go", "nicer_but_slower_film_list_rating.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
+		"sales_by_store.go", "staff_list.go")
 }
 
 func assertGeneratedFiles(t *testing.T) {
