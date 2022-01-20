@@ -104,8 +104,8 @@ func TestDeleteWithUsing(t *testing.T) {
 			table.Actor,
 		).
 		WHERE(
-			table.Staff.StaffID.EQ(Int(2)).
-				AND(table.Rental.RentalID.LT(Int(10))),
+			table.Staff.StaffID.NOT_EQ(Int(2)).
+				AND(table.Rental.RentalID.LT(Int(100))),
 		)
 
 	testutils.AssertStatementSql(t, stmt, `
@@ -113,8 +113,8 @@ DELETE FROM dvds.rental
 USING dvds.rental
      INNER JOIN dvds.staff ON (rental.staff_id = staff.staff_id),
      dvds.actor
-WHERE (staff.staff_id = ?) AND (rental.rental_id < ?);
+WHERE (staff.staff_id != ?) AND (rental.rental_id < ?);
 `)
 
-	testutils.AssertExec(t, stmt, db, 3)
+	testutils.AssertExec(t, stmt, tx, 42)
 }
