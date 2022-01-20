@@ -116,5 +116,5 @@ USING dvds.rental
 WHERE (staff.staff_id != ?) AND (rental.rental_id < ?);
 `)
 
-	testutils.AssertExec(t, stmt, tx, 42)
+	testutils.AssertExec(t, stmt, tx)
 }

@@ -2541,3 +2541,41 @@ FROM dvds.staff;
 	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
 }
+
+func GET_FILM_COUNT(lenFrom, lenTo IntegerExpression) IntegerExpression {
+	return IntExp(Func("dvds.get_film_count", lenFrom, lenTo))
+}
+
+func TestCustomFunctionCall(t *testing.T) {
+	stmt := SELECT(
+		GET_FILM_COUNT(Int(100), Int(120)).AS("film_count"),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT dvds.get_film_count(100, 120) AS "film_count";
+`)
+
+	var dest struct {
+		FilmCount int
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmCount, 165)
+
+	stmt2 := SELECT(
+		Raw("dvds.get_film_count(#1, #2)", RawArgs{"#1": 100, "#2": 120}).AS("film_count"),
+	)
+
+	err = stmt2.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmCount, 165)
+
+	stmt3 := RawStatement(`
+		SELECT dvds.get_film_count(#1, #2) AS "film_count";`, RawArgs{"#1": 100, "#2": 120},
+	)
+
+	err = stmt3.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmCount, 165)
+}
