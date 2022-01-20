@@ -60,28 +60,26 @@ Use the command bellow to add jet as a dependency into `go.mod` project:
 $ go get -u github.com/go-jet/jet/v2
 ```
 
-Jet generator can be installed in the following ways:
+Jet generator can be installed in one of the following ways:
 
-1) Install jet generator to GOPATH/bin folder:
+1) (Go1.16+) Install jet generator using go install:
+    ```sh
+    go install github.com/go-jet/jet/v2/cmd/jet@latest
+    ```
+
+2) Install jet generator to GOPATH/bin folder:
     ```sh
     cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
-    ```
-    *Make sure GOPATH/bin folder is added to the PATH environment variable.*   
+    ``` 
 
-2) Install jet generator into specific folder:
-    
+3) Install jet generator into specific folder:
     ```sh
     git clone https://github.com/go-jet/jet.git
     cd jet && go build -o dir_path ./cmd/jet
     ```
-    *Make sure `dir_path` folder is added to the PATH environment variable.*   
+*Make sure that the destination folder is added to the PATH environment variable.*   
 
-3) (Go1.16+) Install jet generator using go install:
-    ```sh
-    go install github.com/go-jet/jet/v2/cmd/jet@latest
-    ```
-    *Jet generator is installed to the directory named by the GOBIN environment variable, 
-    which defaults to $GOPATH/bin or $HOME/go/bin if the GOPATH environment variable is not set.*   
+
 
 ### Quick Start
 For this quick start example we will use PostgreSQL sample _'dvd rental'_ database. Full database dump can be found in

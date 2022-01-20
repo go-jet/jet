@@ -3,6 +3,7 @@ package jet
 import (
 	"github.com/go-jet/jet/v2/internal/utils"
 	"reflect"
+	"strings"
 )
 
 // SerializeClauseList func
@@ -33,7 +34,9 @@ func serializeExpressionList(
 			out.WriteString(separator)
 		}
 
-		expression.serialize(statement, out, options...)
+		if expression != nil {
+			expression.serialize(statement, out, options...)
+		}
 	}
 }
 
@@ -68,8 +71,8 @@ func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	}
 }
 
-// SerializeColumnExpressionNames func
-func SerializeColumnExpressionNames(columns []ColumnExpression, statementType StatementType,
+// SerializeColumnExpressions func
+func SerializeColumnExpressions(columns []ColumnExpression, statementType StatementType,
 	out *SQLBuilder, options ...SerializeOption) {
 	for i, col := range columns {
 		if i > 0 {
@@ -81,6 +84,21 @@ func SerializeColumnExpressionNames(columns []ColumnExpression, statementType St
 		}
 
 		col.serialize(statementType, out, options...)
+	}
+}
+
+// SerializeColumnExpressionNames func
+func SerializeColumnExpressionNames(columns []ColumnExpression, out *SQLBuilder) {
+	for i, col := range columns {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if col == nil {
+			panic("jet: nil column in columns list")
+		}
+
+		out.WriteIdentifier(col.Name())
 	}
 }
 
@@ -228,4 +246,23 @@ func OptionalOrDefaultExpression(defaultExpression Expression, expression ...Exp
 	}
 
 	return defaultExpression
+}
+
+func extractTableAndColumnName(alias string) (tableName string, columnName string) {
+	parts := strings.Split(alias, ".")
+
+	if len(parts) >= 2 {
+		tableName = parts[0]
+		columnName = parts[1]
+	} else {
+		columnName = parts[0]
+	}
+
+	return
+}
+
+func serializeToDefaultDebugString(expr Serializer) string {
+	out := SQLBuilder{Dialect: defaultDialect, Debug: true}
+	expr.serialize(SelectStatementType, &out)
+	return out.Buff.String()
 }

@@ -13,6 +13,8 @@ type StringExpression interface {
 	LT_EQ(rhs StringExpression) BoolExpression
 	GT(rhs StringExpression) BoolExpression
 	GT_EQ(rhs StringExpression) BoolExpression
+	BETWEEN(min, max StringExpression) BoolExpression
+	NOT_BETWEEN(min, max StringExpression) BoolExpression
 
 	CONCAT(rhs Expression) StringExpression
 
@@ -57,6 +59,14 @@ func (s *stringInterfaceImpl) LT(rhs StringExpression) BoolExpression {
 
 func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
 	return LtEq(s.parent, rhs)
+}
+
+func (s *stringInterfaceImpl) BETWEEN(min, max StringExpression) BoolExpression {
+	return NewBetweenOperatorExpression(s.parent, min, max, false)
+}
+
+func (s *stringInterfaceImpl) NOT_BETWEEN(min, max StringExpression) BoolExpression {
+	return NewBetweenOperatorExpression(s.parent, min, max, true)
 }
 
 func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {

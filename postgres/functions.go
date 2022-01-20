@@ -336,3 +336,25 @@ func explicitLiteralCast(expresion Expression) jet.Expression {
 
 	return expresion
 }
+
+// MODE computes the most frequent value of the aggregated argument
+var MODE = jet.MODE
+
+// PERCENTILE_CONT computes a value corresponding to the specified fraction within the ordered set of
+// aggregated argument values. This will interpolate between adjacent input items if needed.
+func PERCENTILE_CONT(fraction FloatExpression) *jet.OrderSetAggregateFunc {
+	return jet.PERCENTILE_CONT(castFloatLiteral(fraction))
+}
+
+// PERCENTILE_DISC computes  the first value within the ordered set of aggregated argument values whose position
+// in the ordering equals or exceeds the specified fraction. The aggregated argument must be of a sortable type.
+func PERCENTILE_DISC(fraction FloatExpression) *jet.OrderSetAggregateFunc {
+	return jet.PERCENTILE_DISC(castFloatLiteral(fraction))
+}
+
+func castFloatLiteral(fraction FloatExpression) FloatExpression {
+	if _, ok := fraction.(jet.LiteralExpression); ok {
+		return CAST(fraction).AS_DOUBLE() // to make postgres aware of the type
+	}
+	return fraction
+}

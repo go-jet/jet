@@ -25,18 +25,30 @@ var defaultViewSQLBuilderFilePath = path.Join(tempTestDir, "dvds/view")
 var defaultEnumSQLBuilderFilePath = path.Join(tempTestDir, "dvds/enum")
 var defaultActorSQLBuilderFilePath = path.Join(tempTestDir, "dvds/table", "actor.go")
 
-var dbConnection = mysql2.DBConnection{
-	Host:     dbconfig.MySqLHost,
-	Port:     dbconfig.MySQLPort,
-	User:     dbconfig.MySQLUser,
-	Password: dbconfig.MySQLPassword,
-	DBName:   "dvds",
+func dbConnection(dbName string) mysql2.DBConnection {
+	if sourceIsMariaDB() {
+		return mysql2.DBConnection{
+			Host:     dbconfig.MariaDBHost,
+			Port:     dbconfig.MariaDBPort,
+			User:     dbconfig.MariaDBUser,
+			Password: dbconfig.MariaDBPassword,
+			DBName:   dbName,
+		}
+	}
+
+	return mysql2.DBConnection{
+		Host:     dbconfig.MySqLHost,
+		Port:     dbconfig.MySQLPort,
+		User:     dbconfig.MySQLUser,
+		Password: dbconfig.MySQLPassword,
+		DBName:   dbName,
+	}
 }
 
 func TestGeneratorTemplate_Schema_ChangePath(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).UsePath("new/schema/path")
@@ -54,7 +66,7 @@ func TestGeneratorTemplate_Schema_ChangePath(t *testing.T) {
 func TestGeneratorTemplate_Model_SkipGeneration(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -75,7 +87,7 @@ func TestGeneratorTemplate_Model_SkipGeneration(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_SkipGeneration(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -98,7 +110,7 @@ func TestGeneratorTemplate_Model_ChangePath(t *testing.T) {
 
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -116,7 +128,7 @@ func TestGeneratorTemplate_SQLBuilder_ChangePath(t *testing.T) {
 
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -137,7 +149,7 @@ func TestGeneratorTemplate_SQLBuilder_ChangePath(t *testing.T) {
 func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -175,7 +187,7 @@ func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -203,7 +215,7 @@ func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_SkipTableAndEnum(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -236,7 +248,7 @@ func TestGeneratorTemplate_SQLBuilder_SkipTableAndEnum(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_ChangeTypeAndFileName(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -277,7 +289,7 @@ func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
 
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -318,7 +330,7 @@ func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
 func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -361,7 +373,7 @@ func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_ChangeColumnTypes(t *testing.T) {
 	err := mysql2.Generate(
 		tempTestDir,
-		dbConnection,
+		dbConnection("dvds"),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).

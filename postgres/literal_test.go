@@ -7,7 +7,7 @@ import (
 )
 
 func TestBool(t *testing.T) {
-	assertSerialize(t, Bool(false), `$1`, false)
+	assertSerialize(t, Bool(false), `$1::boolean`, false)
 }
 
 func TestInt(t *testing.T) {
@@ -16,42 +16,42 @@ func TestInt(t *testing.T) {
 
 func TestInt8(t *testing.T) {
 	val := int8(math.MinInt8)
-	assertSerialize(t, Int8(val), `$1`, val)
+	assertSerialize(t, Int8(val), `$1::smallint`, val)
 }
 
 func TestInt16(t *testing.T) {
 	val := int16(math.MinInt16)
-	assertSerialize(t, Int16(val), `$1`, val)
+	assertSerialize(t, Int16(val), `$1::smallint`, val)
 }
 
 func TestInt32(t *testing.T) {
 	val := int32(math.MinInt32)
-	assertSerialize(t, Int32(val), `$1`, val)
+	assertSerialize(t, Int32(val), `$1::integer`, val)
 }
 
 func TestInt64(t *testing.T) {
 	val := int64(math.MinInt64)
-	assertSerialize(t, Int64(val), `$1`, val)
+	assertSerialize(t, Int64(val), `$1::bigint`, val)
 }
 
 func TestUint8(t *testing.T) {
 	val := uint8(math.MaxUint8)
-	assertSerialize(t, Uint8(val), `$1`, val)
+	assertSerialize(t, Uint8(val), `$1::smallint`, val)
 }
 
 func TestUint16(t *testing.T) {
 	val := uint16(math.MaxUint16)
-	assertSerialize(t, Uint16(val), `$1`, val)
+	assertSerialize(t, Uint16(val), `$1::integer`, val)
 }
 
 func TestUint32(t *testing.T) {
 	val := uint32(math.MaxUint32)
-	assertSerialize(t, Uint32(val), `$1`, val)
+	assertSerialize(t, Uint32(val), `$1::bigint`, val)
 }
 
 func TestUint64(t *testing.T) {
 	val := uint64(math.MaxUint64)
-	assertSerialize(t, Uint64(val), `$1`, val)
+	assertSerialize(t, Uint64(val), `$1::bigint`, val)
 }
 
 func TestFloat(t *testing.T) {

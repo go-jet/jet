@@ -48,6 +48,63 @@ WHERE actor.actor_id = 2;
 	requireLogged(t, query)
 }
 
+func TestSelectDistinctOn(t *testing.T) {
+
+	stmt := SELECT(
+		Rental.StaffID,
+		Rental.CustomerID,
+		Rental.RentalID,
+	).DISTINCT(
+		Rental.StaffID,
+		Rental.CustomerID,
+	).FROM(
+		Rental,
+	).WHERE(
+		Rental.CustomerID.LT(Int(2)),
+	).ORDER_BY(
+		Rental.StaffID.ASC(),
+		Rental.CustomerID.ASC(),
+		Rental.RentalID.ASC(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT DISTINCT ON (rental.staff_id, rental.customer_id) rental.staff_id AS "rental.staff_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.rental_id AS "rental.rental_id"
+FROM dvds.rental
+WHERE rental.customer_id < 2
+ORDER BY rental.staff_id ASC, rental.customer_id ASC, rental.rental_id ASC;
+`)
+
+	var dest []model.Rental
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"RentalID": 573,
+		"RentalDate": "0001-01-01T00:00:00Z",
+		"InventoryID": 0,
+		"CustomerID": 1,
+		"ReturnDate": null,
+		"StaffID": 1,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	},
+	{
+		"RentalID": 76,
+		"RentalDate": "0001-01-01T00:00:00Z",
+		"InventoryID": 0,
+		"CustomerID": 1,
+		"ReturnDate": null,
+		"StaffID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	}
+]
+`)
+}
+
 func TestClassicSelect(t *testing.T) {
 	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
@@ -814,10 +871,10 @@ ORDER BY f1.film_id ASC;
 	type F1 model.Film
 	type F2 model.Film
 
-	theSameLengthFilms := []struct {
+	var theSameLengthFilms []struct {
 		F1 F1
 		F2 F2
-	}{}
+	}
 
 	err := query.Query(db, &theSameLengthFilms)
 
@@ -858,68 +915,124 @@ LIMIT 1000;
 		Title2 string
 		Length int16
 	}
-	films := []thesameLengthFilms{}
+	var films []thesameLengthFilms
 
 	err := query.Query(db, &films)
 
 	require.NoError(t, err)
-
-	//spew.Dump(films)
 
 	require.Equal(t, len(films), 1000)
 	testutils.AssertDeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
 }
 
 func TestSubQuery(t *testing.T) {
-	expectedQuery := `
-SELECT actor.actor_id AS "actor.actor_id",
+	rRatingFilms :=
+		SELECT(
+			Film.FilmID,
+			Film.Title,
+			Film.Rating,
+		).FROM(
+			Film,
+		).WHERE(
+			Film.Rating.EQ(enum.MpaaRating.R),
+		).AsTable("rFilms")
+
+	rFilmID := Film.FilmID.From(rRatingFilms)
+
+	stmt :=
+		SELECT(
+			rRatingFilms.AllColumns(),
+			Actor.AllColumns,
+			FilmActor.AllColumns,
+		).FROM(
+			rRatingFilms.
+				INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(rFilmID)).
+				INNER_JOIN(Actor, FilmActor.ActorID.EQ(Actor.ActorID)),
+		).WHERE(
+			rFilmID.LT(Int(50)),
+		).ORDER_BY(
+			rFilmID.ASC(),
+			Actor.ActorID.ASC(),
+		)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "rFilms"."film.film_id" AS "film.film_id",
+     "rFilms"."film.title" AS "film.title",
+     "rFilms"."film.rating" AS "film.rating",
+     actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update",
      film_actor.actor_id AS "film_actor.actor_id",
      film_actor.film_id AS "film_actor.film_id",
-     film_actor.last_update AS "film_actor.last_update",
-     "rFilms"."film.film_id" AS "film.film_id",
-     "rFilms"."film.title" AS "film.title",
-     "rFilms"."film.rating" AS "film.rating"
-FROM dvds.actor
-     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
-     INNER JOIN (
+     film_actor.last_update AS "film_actor.last_update"
+FROM (
           SELECT film.film_id AS "film.film_id",
                film.title AS "film.title",
                film.rating AS "film.rating"
           FROM dvds.film
           WHERE film.rating = 'R'
-     ) AS "rFilms" ON (film_actor.film_id = "rFilms"."film.film_id");
-`
+     ) AS "rFilms"
+     INNER JOIN dvds.film_actor ON (film_actor.film_id = "rFilms"."film.film_id")
+     INNER JOIN dvds.actor ON (film_actor.actor_id = actor.actor_id)
+WHERE "rFilms"."film.film_id" < 50
+ORDER BY "rFilms"."film.film_id" ASC, actor.actor_id ASC;
+`)
 
-	rRatingFilms := Film.
-		SELECT(
-			Film.FilmID,
-			Film.Title,
-			Film.Rating,
-		).
-		WHERE(Film.Rating.EQ(enum.MpaaRating.R)).
-		AsTable("rFilms")
+	var dest []struct {
+		model.Film
 
-	rFilmID := Film.FilmID.From(rRatingFilms)
+		Actors []model.Actor
+	}
 
-	query := Actor.
-		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(rRatingFilms, FilmActor.FilmID.EQ(rFilmID)).
-		SELECT(
-			Actor.AllColumns,
-			FilmActor.AllColumns,
-			rRatingFilms.AllColumns(),
-		)
-
-	testutils.AssertDebugStatementSql(t, query, expectedQuery)
-
-	dest := []model.Actor{}
-
-	err := query.Query(db, &dest)
-
+	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
+	require.Len(t, dest, 10)
+
+	testutils.AssertJSON(t, dest[0], `
+{
+	"FilmID": 8,
+	"Title": "Airport Pollock",
+	"Description": null,
+	"ReleaseYear": null,
+	"LanguageID": 0,
+	"RentalDuration": 0,
+	"RentalRate": 0,
+	"Length": null,
+	"ReplacementCost": 0,
+	"Rating": "R",
+	"LastUpdate": "0001-01-01T00:00:00Z",
+	"SpecialFeatures": null,
+	"Fulltext": "",
+	"Actors": [
+		{
+			"ActorID": 55,
+			"FirstName": "Fay",
+			"LastName": "Kilmer",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		},
+		{
+			"ActorID": 96,
+			"FirstName": "Gene",
+			"LastName": "Willis",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		},
+		{
+			"ActorID": 110,
+			"FirstName": "Susan",
+			"LastName": "Davis",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		},
+		{
+			"ActorID": 138,
+			"FirstName": "Lucille",
+			"LastName": "Dee",
+			"LastUpdate": "2013-05-26T14:47:57.62Z"
+		}
+	]
+}
+`)
+
 }
 
 func TestSelectFunctions(t *testing.T) {
@@ -1076,6 +1189,66 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 
 	//testutils.SaveJsonFile(dest, "postgres/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
+}
+
+func TestAggregateFunctionDistinct(t *testing.T) {
+	stmt := SELECT(
+		Payment.CustomerID,
+
+		COUNT(DISTINCT(Payment.Amount)).AS("distinct.count"),
+		SUM(DISTINCT(Payment.Amount)).AS("distinct.sum"),
+		AVG(DISTINCT(Payment.Amount)).AS("distinct.avg"),
+		MIN(DISTINCT(Payment.PaymentDate)).AS("distinct.first_payment_date"),
+		MAX(DISTINCT(Payment.PaymentDate)).AS("distinct.last_payment_date"),
+	).FROM(
+		Payment,
+	).WHERE(
+		Payment.CustomerID.EQ(Int(1)),
+	).GROUP_BY(
+		Payment.CustomerID,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT payment.customer_id AS "payment.customer_id",
+     COUNT(DISTINCT payment.amount) AS "distinct.count",
+     SUM(DISTINCT payment.amount) AS "distinct.sum",
+     AVG(DISTINCT payment.amount) AS "distinct.avg",
+     MIN(DISTINCT payment.payment_date) AS "distinct.first_payment_date",
+     MAX(DISTINCT payment.payment_date) AS "distinct.last_payment_date"
+FROM dvds.payment
+WHERE payment.customer_id = 1
+GROUP BY payment.customer_id;
+`)
+
+	type Distinct struct {
+		model.Payment
+
+		Count            int64
+		Sum              float64
+		Avg              float64
+		FirstPaymentDate time.Time
+		LastPaymentDate  time.Time
+	}
+
+	var dest Distinct
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"PaymentID": 0,
+	"CustomerID": 1,
+	"StaffID": 0,
+	"RentalID": 0,
+	"Amount": 0,
+	"PaymentDate": "0001-01-01T00:00:00Z",
+	"Count": 8,
+	"Sum": 38.92,
+	"Avg": 4.865,
+	"FirstPaymentDate": "2007-02-14T23:22:38.996577Z",
+	"LastPaymentDate": "2007-04-30T01:10:44.996577Z"
+}
+`)
 }
 
 func TestSelectGroupBy2(t *testing.T) {
@@ -1887,7 +2060,7 @@ SELECT customer.customer_id AS "customer.customer_id",
      customer.last_update AS "customer.last_update",
      customer.active AS "customer.active"
 FROM dvds.customer
-WHERE ($1 AND (customer.customer_id = $2)) AND (customer.activebool = $3);
+WHERE ($1::boolean AND (customer.customer_id = $2)) AND (customer.activebool = $3::boolean);
 `, true, int64(1), true)
 
 	dest := []model.Customer{}
@@ -2055,4 +2228,354 @@ FROM dvds.address;
 		require.NoError(t, stmt.Query(db, &dest))
 		require.Len(t, dest, 603)
 	})
+}
+
+type FilmWrap struct {
+	model.Film
+
+	Actors []ActorWrap
+}
+
+type ActorWrap struct {
+	model.Actor
+
+	Films []FilmWrap
+}
+
+func TestRecursionScanNxM(t *testing.T) {
+
+	stmt := SELECT(
+		Actor.AllColumns,
+		Film.AllColumns,
+	).FROM(
+		Actor.
+			INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
+			INNER_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)),
+	).ORDER_BY(
+		Actor.ActorID,
+		Film.FilmID,
+	).LIMIT(100)
+
+	t.Run("film->actors", func(t *testing.T) {
+		var films []FilmWrap
+		err := stmt.Query(db, &films)
+
+		require.NoError(t, err)
+		require.Len(t, films, 95)
+		testutils.AssertJSON(t, films[:2], `
+[
+	{
+		"FilmID": 1,
+		"Title": "Academy Dinosaur",
+		"Description": "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 6,
+		"RentalRate": 0.99,
+		"Length": 86,
+		"ReplacementCost": 20.99,
+		"Rating": "PG",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
+		"Actors": [
+			{
+				"ActorID": 1,
+				"FirstName": "Penelope",
+				"LastName": "Guiness",
+				"LastUpdate": "2013-05-26T14:47:57.62Z",
+				"Films": null
+			}
+		]
+	},
+	{
+		"FilmID": 23,
+		"Title": "Anaconda Confessions",
+		"Description": "A Lacklusture Display of a Dentist And a Dentist who must Fight a Girl in Australia",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 3,
+		"RentalRate": 0.99,
+		"Length": 92,
+		"ReplacementCost": 9.99,
+		"Rating": "R",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
+		"Actors": [
+			{
+				"ActorID": 1,
+				"FirstName": "Penelope",
+				"LastName": "Guiness",
+				"LastUpdate": "2013-05-26T14:47:57.62Z",
+				"Films": null
+			},
+			{
+				"ActorID": 4,
+				"FirstName": "Jennifer",
+				"LastName": "Davis",
+				"LastUpdate": "2013-05-26T14:47:57.62Z",
+				"Films": null
+			}
+		]
+	}
+]
+`)
+
+	})
+
+	t.Run("actors->films", func(t *testing.T) {
+		var actors []ActorWrap
+
+		err := stmt.Query(db, &actors)
+
+		require.NoError(t, err)
+		require.Equal(t, len(actors), 5)
+		require.Equal(t, actors[0].ActorID, int32(1))
+		require.Equal(t, actors[0].FirstName, "Penelope")
+		require.Len(t, actors[0].Films, 19)
+		testutils.AssertJSON(t, actors[0].Films[:2], `
+[
+	{
+		"FilmID": 1,
+		"Title": "Academy Dinosaur",
+		"Description": "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 6,
+		"RentalRate": 0.99,
+		"Length": 86,
+		"ReplacementCost": 20.99,
+		"Rating": "PG",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
+		"Actors": null
+	},
+	{
+		"FilmID": 23,
+		"Title": "Anaconda Confessions",
+		"Description": "A Lacklusture Display of a Dentist And a Dentist who must Fight a Girl in Australia",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"RentalDuration": 3,
+		"RentalRate": 0.99,
+		"Length": 92,
+		"ReplacementCost": 9.99,
+		"Rating": "R",
+		"LastUpdate": "2013-05-26T14:50:58.951Z",
+		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
+		"Actors": null
+	}
+]
+`)
+	})
+}
+
+type StoreWrap struct {
+	model.Store
+
+	Staffs []StaffWrap
+}
+
+type StaffWrap struct {
+	model.Staff
+
+	Store StoreWrap
+}
+
+func TestRecursionScanNx1(t *testing.T) {
+	stmt := SELECT(
+		Store.AllColumns,
+		Staff.AllColumns,
+	).FROM(
+		Store.
+			INNER_JOIN(Staff, Staff.StoreID.EQ(Store.StoreID)),
+	).ORDER_BY(
+		Store.StoreID,
+		Staff.StaffID,
+	)
+
+	t.Run("store->staff", func(t *testing.T) {
+		var stores []StoreWrap
+
+		err := stmt.Query(db, &stores)
+
+		require.NoError(t, err)
+		require.Len(t, stores, 2)
+
+		testutils.AssertJSON(t, stores, `
+[
+	{
+		"StoreID": 1,
+		"ManagerStaffID": 1,
+		"AddressID": 1,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": [
+			{
+				"StaffID": 1,
+				"FirstName": "Mike",
+				"LastName": "Hillyer",
+				"AddressID": 3,
+				"Email": "Mike.Hillyer@sakilastaff.com",
+				"StoreID": 1,
+				"Active": true,
+				"Username": "Mike",
+				"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+				"LastUpdate": "2006-05-16T16:13:11.79328Z",
+				"Picture": "iVBORw0KWgo=",
+				"Store": {
+					"StoreID": 0,
+					"ManagerStaffID": 0,
+					"AddressID": 0,
+					"LastUpdate": "0001-01-01T00:00:00Z",
+					"Staffs": null
+				}
+			}
+		]
+	},
+	{
+		"StoreID": 2,
+		"ManagerStaffID": 2,
+		"AddressID": 2,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": [
+			{
+				"StaffID": 2,
+				"FirstName": "Jon",
+				"LastName": "Stephens",
+				"AddressID": 4,
+				"Email": "Jon.Stephens@sakilastaff.com",
+				"StoreID": 2,
+				"Active": true,
+				"Username": "Jon",
+				"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+				"LastUpdate": "2006-05-16T16:13:11.79328Z",
+				"Picture": null,
+				"Store": {
+					"StoreID": 0,
+					"ManagerStaffID": 0,
+					"AddressID": 0,
+					"LastUpdate": "0001-01-01T00:00:00Z",
+					"Staffs": null
+				}
+			}
+		]
+	}
+]
+`)
+	})
+
+	t.Run("staff->store", func(t *testing.T) {
+
+		var staffs []StaffWrap
+
+		err := stmt.Query(db, &staffs)
+		require.NoError(t, err)
+
+		testutils.AssertJSON(t, staffs, `
+[
+	{
+		"StaffID": 1,
+		"FirstName": "Mike",
+		"LastName": "Hillyer",
+		"AddressID": 3,
+		"Email": "Mike.Hillyer@sakilastaff.com",
+		"StoreID": 1,
+		"Active": true,
+		"Username": "Mike",
+		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+		"LastUpdate": "2006-05-16T16:13:11.79328Z",
+		"Picture": "iVBORw0KWgo=",
+		"Store": {
+			"StoreID": 1,
+			"ManagerStaffID": 1,
+			"AddressID": 1,
+			"LastUpdate": "2006-02-15T09:57:12Z",
+			"Staffs": null
+		}
+	},
+	{
+		"StaffID": 2,
+		"FirstName": "Jon",
+		"LastName": "Stephens",
+		"AddressID": 4,
+		"Email": "Jon.Stephens@sakilastaff.com",
+		"StoreID": 2,
+		"Active": true,
+		"Username": "Jon",
+		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+		"LastUpdate": "2006-05-16T16:13:11.79328Z",
+		"Picture": null,
+		"Store": {
+			"StoreID": 2,
+			"ManagerStaffID": 2,
+			"AddressID": 2,
+			"LastUpdate": "2006-02-15T09:57:12Z",
+			"Staffs": null
+		}
+	}
+]
+`)
+	})
+}
+
+// In parameterized statements integer literals, like Int(num), are replaced with a placeholders. For some expressions,
+// postgres interpreter will not have enough information to deduce the type. If this is the case postgres returns an error.
+// Int8, Int16, .... functions will add automatic type cast over placeholder, so type deduction is always possible.
+func TestLiteralTypeDeduction(t *testing.T) {
+	stmt := SELECT(
+		SUM(
+			CASE().WHEN(Staff.Active.IS_TRUE()).
+				THEN(Int8(6)).   // if Int8 and Int32 are replaced with Int,
+				ELSE(Int32(-1)), // execution of this statement will return an error
+		).AS("num_passed"),
+	).FROM(Staff)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT SUM((CASE WHEN staff.active IS TRUE THEN $1::smallint ELSE $2::integer END)) AS "num_passed"
+FROM dvds.staff;
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
+}
+
+func GET_FILM_COUNT(lenFrom, lenTo IntegerExpression) IntegerExpression {
+	return IntExp(Func("dvds.get_film_count", lenFrom, lenTo))
+}
+
+func TestCustomFunctionCall(t *testing.T) {
+	stmt := SELECT(
+		GET_FILM_COUNT(Int(100), Int(120)).AS("film_count"),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT dvds.get_film_count(100, 120) AS "film_count";
+`)
+
+	var dest struct {
+		FilmCount int
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmCount, 165)
+
+	stmt2 := SELECT(
+		Raw("dvds.get_film_count(#1, #2)", RawArgs{"#1": 100, "#2": 120}).AS("film_count"),
+	)
+
+	err = stmt2.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmCount, 165)
+
+	stmt3 := RawStatement(`
+		SELECT dvds.get_film_count(#1, #2) AS "film_count";`, RawArgs{"#1": 100, "#2": 120},
+	)
+
+	err = stmt3.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmCount, 165)
 }

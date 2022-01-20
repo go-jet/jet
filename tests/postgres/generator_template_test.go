@@ -27,7 +27,7 @@ var defaultActorSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/table", 
 
 var dbConnection = postgres.DBConnection{
 	Host:       dbconfig.PgHost,
-	Port:       5432,
+	Port:       dbconfig.PgPort,
 	User:       dbconfig.PgUser,
 	Password:   dbconfig.PgPassword,
 	DBName:     dbconfig.PgDBName,

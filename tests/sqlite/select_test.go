@@ -39,6 +39,7 @@ WHERE actor.actor_id = ?;
 
 	testutils.AssertDeepEqual(t, actor, actor2)
 	requireLogged(t, query)
+	requireQueryLogged(t, query, 1)
 }
 
 var actor2 = model.Actor{
@@ -63,7 +64,7 @@ ORDER BY actor.actor_id;
 `)
 	dest := []model.Actor{}
 
-	err := query.Query(db, &dest)
+	err := query.QueryContext(context.Background(), db, &dest)
 
 	require.NoError(t, err)
 
@@ -73,6 +74,7 @@ ORDER BY actor.actor_id;
 	//testutils.SaveJSONFile(dest, "./testdata/results/sqlite/all_actors.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/sqlite/all_actors.json")
 	requireLogged(t, query)
+	requireQueryLogged(t, query, 200)
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
@@ -141,6 +143,67 @@ ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 	//testutils.SaveJSONFile(dest, "./testdata/results/sqlite/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/sqlite/customer_payment_sum.json")
 	requireLogged(t, query)
+}
+
+func TestAggregateFunctionDistinct(t *testing.T) {
+	stmt := SELECT(
+		Payment.CustomerID,
+
+		COUNT(DISTINCT(Payment.Amount)).AS("distinct.count"),
+		SUM(DISTINCT(Payment.Amount)).AS("distinct.sum"),
+		AVG(DISTINCT(Payment.Amount)).AS("distinct.avg"),
+		MIN(DISTINCT(Payment.PaymentDate)).AS("distinct.first_payment_date"),
+		MAX(DISTINCT(Payment.PaymentDate)).AS("distinct.last_payment_date"),
+	).FROM(
+		Payment,
+	).WHERE(
+		Payment.CustomerID.EQ(Int(1)),
+	).GROUP_BY(
+		Payment.CustomerID,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT payment.customer_id AS "payment.customer_id",
+     COUNT(DISTINCT payment.amount) AS "distinct.count",
+     SUM(DISTINCT payment.amount) AS "distinct.sum",
+     AVG(DISTINCT payment.amount) AS "distinct.avg",
+     MIN(DISTINCT payment.payment_date) AS "distinct.first_payment_date",
+     MAX(DISTINCT payment.payment_date) AS "distinct.last_payment_date"
+FROM payment
+WHERE payment.customer_id = 1
+GROUP BY payment.customer_id;
+`)
+
+	type Distinct struct {
+		model.Payment
+
+		Count            int64
+		Sum              float64
+		Avg              float64
+		FirstPaymentDate time.Time
+		LastPaymentDate  time.Time
+	}
+
+	var dest Distinct
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"PaymentID": 0,
+	"CustomerID": 1,
+	"StaffID": 0,
+	"RentalID": null,
+	"Amount": 0,
+	"PaymentDate": "0001-01-01T00:00:00Z",
+	"LastUpdate": "0001-01-01T00:00:00Z",
+	"Count": 8,
+	"Sum": 38.92000000000001,
+	"Avg": 4.865000000000001,
+	"FirstPaymentDate": "2005-05-25T11:30:37Z",
+	"LastPaymentDate": "2005-08-22T20:03:46Z"
+}
+`)
 }
 
 func TestSubQuery(t *testing.T) {

@@ -31,10 +31,6 @@ func TestAllTypes(t *testing.T) {
 
 	require.Equal(t, len(dest), 2)
 
-	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
-		return
-	}
-
 	//testutils.PrintJson(dest)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
@@ -48,10 +44,6 @@ func TestAllTypesViewSelect(t *testing.T) {
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 2)
-
-	if sourceIsMariaDB() { // MariaDB saves current timestamp in a case of NULL value insert
-		return
-	}
 
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
@@ -224,6 +216,8 @@ func TestFloatOperators(t *testing.T) {
 		AllTypes.Numeric.LT(Float(34.56)).AS("lt2"),
 		AllTypes.Numeric.GT(Float(124)).AS("gt1"),
 		AllTypes.Numeric.GT(Float(34.56)).AS("gt2"),
+		AllTypes.Numeric.BETWEEN(Float(1.34), AllTypes.Decimal).AS("between"),
+		AllTypes.Numeric.NOT_BETWEEN(AllTypes.Decimal.MUL(Float(3)), Float(100.12)).AS("not_between"),
 
 		TRUNC(AllTypes.Decimal.ADD(AllTypes.Decimal), Int(2)).AS("add1"),
 		TRUNC(AllTypes.Decimal.ADD(Float(11.22)), Int(2)).AS("add2"),
@@ -252,11 +246,9 @@ func TestFloatOperators(t *testing.T) {
 		TRUNC(AllTypes.Decimal, Int(1)).AS("trunc"),
 	).LIMIT(2)
 
-	queryStr, _ := query.Sql()
+	// fmt.Println(query.Sql())
 
-	//fmt.Println(queryStr)
-
-	require.Equal(t, queryStr, strings.Replace(`
+	testutils.AssertStatementSql(t, query, strings.Replace(`
 SELECT (all_types.'numeric' = all_types.'numeric') AS "eq1",
      (all_types.'decimal' = ?) AS "eq2",
      (all_types.'real' = ?) AS "eq3",
@@ -270,22 +262,24 @@ SELECT (all_types.'numeric' = all_types.'numeric') AS "eq1",
      (all_types.'numeric' < ?) AS "lt2",
      (all_types.'numeric' > ?) AS "gt1",
      (all_types.'numeric' > ?) AS "gt2",
-     TRUNCATE((all_types.'decimal' + all_types.'decimal'), ?) AS "add1",
-     TRUNCATE((all_types.'decimal' + ?), ?) AS "add2",
-     TRUNCATE((all_types.'decimal' - all_types.decimal_ptr), ?) AS "sub1",
-     TRUNCATE((all_types.'decimal' - ?), ?) AS "sub2",
-     TRUNCATE((all_types.'decimal' * all_types.decimal_ptr), ?) AS "mul1",
-     TRUNCATE((all_types.'decimal' * ?), ?) AS "mul2",
-     TRUNCATE((all_types.'decimal' / all_types.decimal_ptr), ?) AS "div1",
-     TRUNCATE((all_types.'decimal' / ?), ?) AS "div2",
-     TRUNCATE((all_types.'decimal' % all_types.decimal_ptr), ?) AS "mod1",
-     TRUNCATE((all_types.'decimal' % ?), ?) AS "mod2",
+     (all_types.'numeric' BETWEEN ? AND all_types.'decimal') AS "between",
+     (all_types.'numeric' NOT BETWEEN (all_types.'decimal' * ?) AND ?) AS "not_between",
+     TRUNCATE(all_types.'decimal' + all_types.'decimal', ?) AS "add1",
+     TRUNCATE(all_types.'decimal' + ?, ?) AS "add2",
+     TRUNCATE(all_types.'decimal' - all_types.decimal_ptr, ?) AS "sub1",
+     TRUNCATE(all_types.'decimal' - ?, ?) AS "sub2",
+     TRUNCATE(all_types.'decimal' * all_types.decimal_ptr, ?) AS "mul1",
+     TRUNCATE(all_types.'decimal' * ?, ?) AS "mul2",
+     TRUNCATE(all_types.'decimal' / all_types.decimal_ptr, ?) AS "div1",
+     TRUNCATE(all_types.'decimal' / ?, ?) AS "div2",
+     TRUNCATE(all_types.'decimal' % all_types.decimal_ptr, ?) AS "mod1",
+     TRUNCATE(all_types.'decimal' % ?, ?) AS "mod2",
      TRUNCATE(POW(all_types.'decimal', all_types.decimal_ptr), ?) AS "pow1",
      TRUNCATE(POW(all_types.'decimal', ?), ?) AS "pow2",
      TRUNCATE(ABS(all_types.'decimal'), ?) AS "abs",
      TRUNCATE(POWER(all_types.'decimal', ?), ?) AS "power",
      TRUNCATE(SQRT(all_types.'decimal'), ?) AS "sqrt",
-     TRUNCATE(POWER(all_types.'decimal', (? / ?)), ?) AS "cbrt",
+     TRUNCATE(POWER(all_types.'decimal', ? / ?), ?) AS "cbrt",
      CEIL(all_types.'real') AS "ceil",
      FLOOR(all_types.'real') AS "floor",
      ROUND(all_types.'decimal') AS "round1",
@@ -316,61 +310,48 @@ func TestIntegerOperators(t *testing.T) {
 
 		AllTypes.BigInt.EQ(AllTypes.BigInt).AS("eq1"),
 		AllTypes.BigInt.EQ(Int(12)).AS("eq2"),
-
 		AllTypes.BigInt.NOT_EQ(AllTypes.BigIntPtr).AS("neq1"),
 		AllTypes.BigInt.NOT_EQ(Int(12)).AS("neq2"),
-
 		AllTypes.BigInt.IS_DISTINCT_FROM(AllTypes.BigInt).AS("distinct1"),
 		AllTypes.BigInt.IS_DISTINCT_FROM(Int(12)).AS("distinct2"),
-
 		AllTypes.BigInt.IS_NOT_DISTINCT_FROM(AllTypes.BigInt).AS("not distinct1"),
 		AllTypes.BigInt.IS_NOT_DISTINCT_FROM(Int(12)).AS("not distinct2"),
 
 		AllTypes.BigInt.LT(AllTypes.BigIntPtr).AS("lt1"),
 		AllTypes.BigInt.LT(Int(65)).AS("lt2"),
-
 		AllTypes.BigInt.LT_EQ(AllTypes.BigIntPtr).AS("lte1"),
 		AllTypes.BigInt.LT_EQ(Int(65)).AS("lte2"),
-
 		AllTypes.BigInt.GT(AllTypes.BigIntPtr).AS("gt1"),
 		AllTypes.BigInt.GT(Int(65)).AS("gt2"),
-
 		AllTypes.BigInt.GT_EQ(AllTypes.BigIntPtr).AS("gte1"),
 		AllTypes.BigInt.GT_EQ(Int(65)).AS("gte2"),
+		AllTypes.Integer.BETWEEN(Int(11), Int(200)).AS("between"),
+		AllTypes.Integer.NOT_BETWEEN(Int(66), Int(77)).AS("not_between"),
 
 		AllTypes.BigInt.ADD(AllTypes.BigInt).AS("add1"),
 		AllTypes.BigInt.ADD(Int(11)).AS("add2"),
-
 		AllTypes.BigInt.SUB(AllTypes.BigInt).AS("sub1"),
 		AllTypes.BigInt.SUB(Int(11)).AS("sub2"),
-
 		AllTypes.BigInt.MUL(AllTypes.BigInt).AS("mul1"),
 		AllTypes.BigInt.MUL(Int(11)).AS("mul2"),
-
 		AllTypes.BigInt.DIV(AllTypes.BigInt).AS("div1"),
 		AllTypes.BigInt.DIV(Int(11)).AS("div2"),
-
 		AllTypes.BigInt.MOD(AllTypes.BigInt).AS("mod1"),
 		AllTypes.BigInt.MOD(Int(11)).AS("mod2"),
-
 		AllTypes.SmallInt.POW(AllTypes.SmallInt.DIV(Int(3))).AS("pow1"),
 		AllTypes.SmallInt.POW(Int(6)).AS("pow2"),
 
 		AllTypes.SmallInt.BIT_AND(AllTypes.SmallInt).AS("bit_and1"),
 		AllTypes.SmallInt.BIT_AND(AllTypes.SmallInt).AS("bit_and2"),
-
 		AllTypes.SmallInt.BIT_OR(AllTypes.SmallInt).AS("bit or 1"),
 		AllTypes.SmallInt.BIT_OR(Int(22)).AS("bit or 2"),
-
 		AllTypes.SmallInt.BIT_XOR(AllTypes.SmallInt).AS("bit xor 1"),
 		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
-
 		BIT_NOT(Int(-1).MUL(AllTypes.SmallInt)).AS("bit_not_1"),
 		BIT_NOT(Int(-1).MUL(Int(11))).AS("bit_not_2"),
 
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int(2))).AS("bit shift left 1"),
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
-
 		AllTypes.SmallInt.BIT_SHIFT_RIGHT(AllTypes.SmallInt.DIV(Int(5))).AS("bit shift right 1"),
 		AllTypes.SmallInt.BIT_SHIFT_RIGHT(Int(1)).AS("bit shift right 2"),
 
@@ -379,9 +360,9 @@ func TestIntegerOperators(t *testing.T) {
 		CBRT(ABSi(AllTypes.BigInt)).AS("cbrt"),
 	).LIMIT(2)
 
-	//fmt.Println(query.Sql())
+	// fmt.Println(query.Sql())
 
-	testutils.AssertStatementSql(t, query, `
+	testutils.AssertStatementSql(t, query, strings.ReplaceAll(`
 SELECT all_types.big_int AS "all_types.big_int",
      all_types.big_int_ptr AS "all_types.big_int_ptr",
      all_types.small_int AS "all_types.small_int",
@@ -402,6 +383,8 @@ SELECT all_types.big_int AS "all_types.big_int",
      (all_types.big_int > ?) AS "gt2",
      (all_types.big_int >= all_types.big_int_ptr) AS "gte1",
      (all_types.big_int >= ?) AS "gte2",
+     (all_types.''integer'' BETWEEN ? AND ?) AS "between",
+     (all_types.''integer'' NOT BETWEEN ? AND ?) AS "not_between",
      (all_types.big_int + all_types.big_int) AS "add1",
      (all_types.big_int + ?) AS "add2",
      (all_types.big_int - all_types.big_int) AS "sub1",
@@ -412,7 +395,7 @@ SELECT all_types.big_int AS "all_types.big_int",
      (all_types.big_int DIV ?) AS "div2",
      (all_types.big_int % all_types.big_int) AS "mod1",
      (all_types.big_int % ?) AS "mod2",
-     POW(all_types.small_int, (all_types.small_int DIV ?)) AS "pow1",
+     POW(all_types.small_int, all_types.small_int DIV ?) AS "pow1",
      POW(all_types.small_int, ?) AS "pow2",
      (all_types.small_int & all_types.small_int) AS "bit_and1",
      (all_types.small_int & all_types.small_int) AS "bit_and2",
@@ -428,10 +411,10 @@ SELECT all_types.big_int AS "all_types.big_int",
      (all_types.small_int >> ?) AS "bit shift right 2",
      ABS(all_types.big_int) AS "abs",
      SQRT(ABS(all_types.big_int)) AS "sqrt",
-     POWER(ABS(all_types.big_int), (? / ?)) AS "cbrt"
+     POWER(ABS(all_types.big_int), ? / ?) AS "cbrt"
 FROM test_sample.all_types
 LIMIT ?;
-`)
+`, "''", "`"))
 
 	var dest []struct {
 		common.AllTypesIntegerExpResult `alias:"."`
@@ -461,6 +444,8 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.LT(String("Text")),
 		AllTypes.Text.LT_EQ(AllTypes.VarCharPtr),
 		AllTypes.Text.LT_EQ(String("Text")),
+		AllTypes.Text.BETWEEN(String("min"), String("max")),
+		AllTypes.Text.NOT_BETWEEN(AllTypes.VarChar, AllTypes.CharPtr),
 		AllTypes.Text.CONCAT(String("text2")),
 		AllTypes.Text.CONCAT(Int(11)),
 		AllTypes.Text.LIKE(String("abc")),
@@ -528,24 +513,21 @@ func TestTimeExpressions(t *testing.T) {
 
 		AllTypes.TimePtr.NOT_EQ(AllTypes.Time),
 		AllTypes.TimePtr.NOT_EQ(Time(20, 16, 6)),
-
 		AllTypes.Time.IS_DISTINCT_FROM(AllTypes.Time),
 		AllTypes.Time.IS_DISTINCT_FROM(Time(19, 26, 6)),
-
 		AllTypes.Time.IS_NOT_DISTINCT_FROM(AllTypes.Time),
 		AllTypes.Time.IS_NOT_DISTINCT_FROM(Time(18, 36, 6)),
 
 		AllTypes.Time.LT(AllTypes.Time),
 		AllTypes.Time.LT(Time(17, 46, 6)),
-
 		AllTypes.Time.LT_EQ(AllTypes.Time),
 		AllTypes.Time.LT_EQ(Time(16, 56, 56)),
-
 		AllTypes.Time.GT(AllTypes.Time),
 		AllTypes.Time.GT(Time(15, 16, 46)),
-
 		AllTypes.Time.GT_EQ(AllTypes.Time),
 		AllTypes.Time.GT_EQ(Time(14, 26, 36)),
+		AllTypes.Time.BETWEEN(Time(11, 0, 30, 100), AllTypes.TimePtr),
+		AllTypes.Time.NOT_BETWEEN(AllTypes.TimePtr, AllTypes.Time.ADD(INTERVAL(2, HOUR))),
 
 		AllTypes.Time.ADD(INTERVAL(10, MINUTE)),
 		AllTypes.Time.ADD(INTERVALe(AllTypes.Integer, MINUTE)),
@@ -583,6 +565,8 @@ SELECT CAST('20:34:58' AS TIME),
      all_types.time > CAST('15:16:46' AS TIME),
      all_types.time >= all_types.time,
      all_types.time >= CAST('14:26:36' AS TIME),
+     all_types.time BETWEEN CAST('11:00:30.0000001' AS TIME) AND all_types.time_ptr,
+     all_types.time NOT BETWEEN all_types.time_ptr AND (all_types.time + INTERVAL 2 HOUR),
      all_types.time + INTERVAL 10 MINUTE,
      all_types.time + INTERVAL all_types.''integer'' MINUTE,
      all_types.time + INTERVAL 3 HOUR,
@@ -594,7 +578,7 @@ SELECT CAST('20:34:58' AS TIME),
      CURRENT_TIME(3)
 FROM test_sample.all_types;
 `, "''", "`", -1), "20:34:58", "23:06:06", "22:06:06.011", "21:06:06.011111", "20:16:06",
-		"19:26:06", "18:36:06", "17:46:06", "16:56:56", "15:16:46", "14:26:36")
+		"19:26:06", "18:36:06", "17:46:06", "16:56:56", "15:16:46", "14:26:36", "11:00:30.0000001")
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
@@ -608,27 +592,23 @@ func TestDateExpressions(t *testing.T) {
 
 		AllTypes.Date.EQ(AllTypes.Date),
 		AllTypes.Date.EQ(Date(2019, 6, 6)),
-
 		AllTypes.DatePtr.NOT_EQ(AllTypes.Date),
 		AllTypes.DatePtr.NOT_EQ(Date(2019, 1, 6)),
-
 		AllTypes.Date.IS_DISTINCT_FROM(AllTypes.Date),
 		AllTypes.Date.IS_DISTINCT_FROM(Date(2019, 2, 6)),
-
 		AllTypes.Date.IS_NOT_DISTINCT_FROM(AllTypes.Date),
 		AllTypes.Date.IS_NOT_DISTINCT_FROM(Date(2019, 3, 6)),
 
 		AllTypes.Date.LT(AllTypes.Date),
 		AllTypes.Date.LT(Date(2019, 4, 6)),
-
 		AllTypes.Date.LT_EQ(AllTypes.Date),
 		AllTypes.Date.LT_EQ(Date(2019, 5, 5)),
-
 		AllTypes.Date.GT(AllTypes.Date),
 		AllTypes.Date.GT(Date(2019, 1, 4)),
-
 		AllTypes.Date.GT_EQ(AllTypes.Date),
 		AllTypes.Date.GT_EQ(Date(2019, 2, 3)),
+		AllTypes.Date.BETWEEN(Date(2000, 2, 2), AllTypes.DatePtr),
+		AllTypes.Date.NOT_BETWEEN(AllTypes.DatePtr, Date(2000, 2, 2)),
 
 		AllTypes.Date.ADD(INTERVAL("10:20.000100", MINUTE_MICROSECOND)),
 		AllTypes.Date.ADD(INTERVALe(AllTypes.BigInt, MINUTE)),
@@ -661,6 +641,8 @@ SELECT CAST('2009-11-17' AS DATE),
      all_types.date > CAST('2019-01-04' AS DATE),
      all_types.date >= all_types.date,
      all_types.date >= CAST('2019-02-03' AS DATE),
+     all_types.date BETWEEN CAST('2000-02-02' AS DATE) AND all_types.date_ptr,
+     all_types.date NOT BETWEEN all_types.date_ptr AND CAST('2000-02-02' AS DATE),
      all_types.date + INTERVAL '10:20.000100' MINUTE_MICROSECOND,
      all_types.date + INTERVAL all_types.big_int MINUTE,
      all_types.date + INTERVAL 15 HOUR,
@@ -684,27 +666,23 @@ func TestDateTimeExpressions(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.DateTime.EQ(AllTypes.DateTime),
 		AllTypes.DateTime.EQ(dateTime),
-
 		AllTypes.DateTimePtr.NOT_EQ(AllTypes.DateTime),
 		AllTypes.DateTimePtr.NOT_EQ(DateTime(2019, 6, 6, 10, 2, 46, 100*time.Millisecond)),
-
 		AllTypes.DateTime.IS_DISTINCT_FROM(AllTypes.DateTime),
 		AllTypes.DateTime.IS_DISTINCT_FROM(dateTime),
-
 		AllTypes.DateTime.IS_NOT_DISTINCT_FROM(AllTypes.DateTime),
 		AllTypes.DateTime.IS_NOT_DISTINCT_FROM(dateTime),
 
 		AllTypes.DateTime.LT(AllTypes.DateTime),
 		AllTypes.DateTime.LT(dateTime),
-
 		AllTypes.DateTime.LT_EQ(AllTypes.DateTime),
 		AllTypes.DateTime.LT_EQ(dateTime),
-
 		AllTypes.DateTime.GT(AllTypes.DateTime),
 		AllTypes.DateTime.GT(dateTime),
-
 		AllTypes.DateTime.GT_EQ(AllTypes.DateTime),
 		AllTypes.DateTime.GT_EQ(dateTime),
+		AllTypes.DateTime.BETWEEN(AllTypes.DateTimePtr, AllTypes.TimestampPtr),
+		AllTypes.DateTime.NOT_BETWEEN(AllTypes.DateTimePtr, AllTypes.TimestampPtr),
 
 		AllTypes.DateTime.ADD(INTERVAL("05:10:20.000100", HOUR_MICROSECOND)),
 		AllTypes.DateTime.ADD(INTERVALe(AllTypes.BigInt, HOUR)),
@@ -718,7 +696,7 @@ func TestDateTimeExpressions(t *testing.T) {
 		NOW(1),
 	)
 
-	//Println(query.DebugSql())
+	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, `
 SELECT all_types.date_time = all_types.date_time,
@@ -737,6 +715,8 @@ SELECT all_types.date_time = all_types.date_time,
      all_types.date_time > CAST('2019-06-06 10:02:46' AS DATETIME),
      all_types.date_time >= all_types.date_time,
      all_types.date_time >= CAST('2019-06-06 10:02:46' AS DATETIME),
+     all_types.date_time BETWEEN all_types.date_time_ptr AND all_types.timestamp_ptr,
+     all_types.date_time NOT BETWEEN all_types.date_time_ptr AND all_types.timestamp_ptr,
      all_types.date_time + INTERVAL '05:10:20.000100' HOUR_MICROSECOND,
      all_types.date_time + INTERVAL all_types.big_int HOUR,
      all_types.date_time + INTERVAL 2 HOUR,
@@ -761,27 +741,23 @@ func TestTimestampExpressions(t *testing.T) {
 	query := AllTypes.SELECT(
 		AllTypes.Timestamp.EQ(AllTypes.Timestamp),
 		AllTypes.Timestamp.EQ(timestamp),
-
 		AllTypes.TimestampPtr.NOT_EQ(AllTypes.Timestamp),
 		AllTypes.TimestampPtr.NOT_EQ(Timestamp(2019, 6, 6, 10, 2, 46, 100*time.Millisecond)),
-
 		AllTypes.Timestamp.IS_DISTINCT_FROM(AllTypes.Timestamp),
 		AllTypes.Timestamp.IS_DISTINCT_FROM(timestamp),
-
 		AllTypes.Timestamp.IS_NOT_DISTINCT_FROM(AllTypes.Timestamp),
 		AllTypes.Timestamp.IS_NOT_DISTINCT_FROM(timestamp),
 
 		AllTypes.Timestamp.LT(AllTypes.Timestamp),
 		AllTypes.Timestamp.LT(timestamp),
-
 		AllTypes.Timestamp.LT_EQ(AllTypes.Timestamp),
 		AllTypes.Timestamp.LT_EQ(timestamp),
-
 		AllTypes.Timestamp.GT(AllTypes.Timestamp),
 		AllTypes.Timestamp.GT(timestamp),
-
 		AllTypes.Timestamp.GT_EQ(AllTypes.Timestamp),
 		AllTypes.Timestamp.GT_EQ(timestamp),
+		AllTypes.Timestamp.BETWEEN(AllTypes.DateTimePtr, AllTypes.TimestampPtr),
+		AllTypes.Timestamp.NOT_BETWEEN(AllTypes.DateTimePtr, AllTypes.TimestampPtr),
 
 		AllTypes.Timestamp.ADD(INTERVAL("05:10:20.000100", HOUR_MICROSECOND)),
 		AllTypes.Timestamp.ADD(INTERVALe(AllTypes.BigInt, HOUR)),
@@ -814,6 +790,8 @@ SELECT all_types.timestamp = all_types.timestamp,
      all_types.timestamp > TIMESTAMP('2019-06-06 10:02:46'),
      all_types.timestamp >= all_types.timestamp,
      all_types.timestamp >= TIMESTAMP('2019-06-06 10:02:46'),
+     all_types.timestamp BETWEEN all_types.date_time_ptr AND all_types.timestamp_ptr,
+     all_types.timestamp NOT BETWEEN all_types.date_time_ptr AND all_types.timestamp_ptr,
      all_types.timestamp + INTERVAL '05:10:20.000100' HOUR_MICROSECOND,
      all_types.timestamp + INTERVAL all_types.big_int HOUR,
      all_types.timestamp + INTERVAL 2 HOUR,

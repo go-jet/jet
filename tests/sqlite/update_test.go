@@ -2,6 +2,8 @@ package sqlite
 
 import (
 	"context"
+	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/table"
 	"testing"
 	"time"
 
@@ -287,4 +289,78 @@ func TestUpdateContextDeadlineExceeded(t *testing.T) {
 
 	_, err = updateStmt.ExecContext(ctx, tx)
 	require.Error(t, err, "context deadline exceeded")
+}
+
+func TestUpdateFrom(t *testing.T) {
+	tx := beginDBTx(t)
+	defer tx.Rollback()
+
+	stmt := table.Rental.UPDATE().
+		SET(
+			table.Rental.RentalDate.SET(DateTime(2020, 2, 2, 0, 0, 0)),
+		).
+		FROM(
+			table.Staff.
+				INNER_JOIN(table.Store, table.Store.StoreID.EQ(table.Staff.StaffID)),
+		).
+		WHERE(
+			table.Staff.StaffID.EQ(table.Rental.StaffID).
+				AND(table.Staff.StaffID.EQ(Int(2))).
+				AND(table.Rental.RentalID.LT(Int(10))),
+		).
+		RETURNING(
+			table.Rental.AllColumns.Except(table.Rental.LastUpdate),
+		)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+UPDATE rental
+SET rental_date = DATETIME('2020-02-02 00:00:00')
+FROM staff
+     INNER JOIN store ON (store.store_id = staff.staff_id)
+WHERE ((staff.staff_id = rental.staff_id) AND (staff.staff_id = 2)) AND (rental.rental_id < 10)
+RETURNING rental.rental_id AS "rental.rental_id",
+          rental.rental_date AS "rental.rental_date",
+          rental.inventory_id AS "rental.inventory_id",
+          rental.customer_id AS "rental.customer_id",
+          rental.return_date AS "rental.return_date",
+          rental.staff_id AS "rental.staff_id";
+`)
+
+	var dest []model2.Rental
+
+	err := stmt.Query(tx, &dest)
+
+	require.NoError(t, err)
+	require.Len(t, dest, 3)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"RentalID": 4,
+		"RentalDate": "2020-02-02T00:00:00Z",
+		"InventoryID": 2452,
+		"CustomerID": 333,
+		"ReturnDate": "2005-06-03T01:43:41Z",
+		"StaffID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	},
+	{
+		"RentalID": 7,
+		"RentalDate": "2020-02-02T00:00:00Z",
+		"InventoryID": 3995,
+		"CustomerID": 269,
+		"ReturnDate": "2005-05-29T20:34:53Z",
+		"StaffID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	},
+	{
+		"RentalID": 8,
+		"RentalDate": "2020-02-02T00:00:00Z",
+		"InventoryID": 2346,
+		"CustomerID": 239,
+		"ReturnDate": "2005-05-27T23:33:46Z",
+		"StaffID": 2,
+		"LastUpdate": "0001-01-01T00:00:00Z"
+	}
+]
+`)
 }

@@ -52,7 +52,7 @@ func (o *onConflictClause) Serialize(statementType jet.StatementType, out *jet.S
 	out.WriteString("ON CONFLICT")
 	if len(o.indexExpressions) > 0 {
 		out.WriteString("(")
-		jet.SerializeColumnExpressionNames(o.indexExpressions, statementType, out, jet.ShortName)
+		jet.SerializeColumnExpressions(o.indexExpressions, statementType, out, jet.ShortName)
 		out.WriteString(")")
 	}
 

@@ -23,7 +23,7 @@ func TestSelectLiterals(t *testing.T) {
 	assertStatementSql(t, SELECT(Int(1), Float(2.2), Bool(false)).FROM(table1), `
 SELECT $1,
      $2,
-     $3
+     $3::boolean
 FROM db.table1;
 `, int64(1), 2.2, false)
 }
@@ -59,7 +59,7 @@ func TestSelectWhere(t *testing.T) {
 	assertStatementSql(t, SELECT(table1ColInt).FROM(table1).WHERE(Bool(true)), `
 SELECT table1.col_int AS "table1.col_int"
 FROM db.table1
-WHERE $1;
+WHERE $1::boolean;
 `, true)
 	assertStatementSql(t, SELECT(table1ColInt).FROM(table1).WHERE(table1ColInt.GT_EQ(Int(10))), `
 SELECT table1.col_int AS "table1.col_int"
@@ -80,7 +80,7 @@ func TestSelectHaving(t *testing.T) {
 	assertStatementSql(t, SELECT(table3ColInt).FROM(table3).HAVING(table1ColBool.EQ(Bool(true))), `
 SELECT table3.col_int AS "table3.col_int"
 FROM db.table3
-HAVING table1.col_bool = $1;
+HAVING table1.col_bool = $1::boolean;
 `, true)
 }
 

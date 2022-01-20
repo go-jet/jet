@@ -2,7 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
-// SelectTable is interface for MySQL sub-queries
+// SelectTable is interface for postgres sub-queries
 type SelectTable interface {
 	readableTable
 	jet.SelectTable
@@ -13,7 +13,7 @@ type selectTableImpl struct {
 	readableTableInterfaceImpl
 }
 
-func newSelectTable(selectStmt jet.SerializerStatement, alias string) SelectTable {
+func newSelectTable(selectStmt jet.SerializerHasProjections, alias string) SelectTable {
 	subQuery := &selectTableImpl{
 		SelectTable: jet.NewSelectTable(selectStmt, alias),
 	}

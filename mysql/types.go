@@ -24,4 +24,11 @@ type OrderByClause = jet.OrderByClause
 type GroupByClause = jet.GroupByClause
 
 // SetLogger sets automatic statement logging
+// Deprecated: use SetQueryLogger instead.
 var SetLogger = jet.SetLoggerFunc
+
+// SetQueryLogger sets automatic query logging function.
+var SetQueryLogger = jet.SetQueryLogger
+
+// QueryInfo contains information about executed query
+type QueryInfo = jet.QueryInfo

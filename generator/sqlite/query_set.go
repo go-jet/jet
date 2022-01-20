@@ -28,7 +28,7 @@ func (p sqliteQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableTy
 
 	var tables []metadata.Table
 
-	err := qrm.Query(context.Background(), db, query, []interface{}{sqlTableType}, &tables)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{sqlTableType}, &tables)
 	throw.OnError(err)
 
 	for i := range tables {
@@ -47,7 +47,7 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 		Pk      int32
 	}
 
-	err := qrm.Query(context.Background(), db, query, []interface{}{tableName}, &columnInfos)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{tableName}, &columnInfos)
 	throw.OnError(err)
 
 	var columns []metadata.Column

@@ -132,7 +132,7 @@ func (s *scanContext) getGroupKey(structType reflect.Type, structField *reflect.
 		return s.constructGroupKey(groupKeyInfo)
 	}
 
-	groupKeyInfo := s.getGroupKeyInfo(structType, structField)
+	groupKeyInfo := s.getGroupKeyInfo(structType, structField, newTypeStack())
 
 	s.groupKeyInfoCache[mapKey] = groupKeyInfo
 
@@ -144,7 +144,7 @@ func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 		return fmt.Sprintf("|ROW:%d|", s.rowNum)
 	}
 
-	groupKeys := []string{}
+	var groupKeys []string
 
 	for _, index := range groupKeyInfo.indexes {
 		cellValue := s.rowElem(index)
@@ -153,7 +153,7 @@ func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 		groupKeys = append(groupKeys, subKey)
 	}
 
-	subTypesGroupKeys := []string{}
+	var subTypesGroupKeys []string
 	for _, subType := range groupKeyInfo.subTypes {
 		subTypesGroupKeys = append(subTypesGroupKeys, s.constructGroupKey(subType))
 	}
@@ -161,8 +161,19 @@ func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 	return groupKeyInfo.typeName + "(" + strings.Join(groupKeys, ",") + strings.Join(subTypesGroupKeys, ",") + ")"
 }
 
-func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *reflect.StructField) groupKeyInfo {
+func (s *scanContext) getGroupKeyInfo(
+	structType reflect.Type,
+	parentField *reflect.StructField,
+	typeVisited *typeStack) groupKeyInfo {
+
 	ret := groupKeyInfo{typeName: structType.Name()}
+
+	if typeVisited.contains(&structType) {
+		return ret
+	}
+
+	typeVisited.push(&structType)
+	defer typeVisited.pop()
 
 	typeName := getTypeName(structType, parentField)
 	primaryKeyOverwrites := parentFieldPrimaryKeyOverwrite(parentField)
@@ -176,7 +187,7 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 				continue
 			}
 
-			subType := s.getGroupKeyInfo(fieldType, &field)
+			subType := s.getGroupKeyInfo(fieldType, &field, typeVisited)
 
 			if len(subType.indexes) != 0 || len(subType.subTypes) != 0 {
 				ret.subTypes = append(ret.subTypes, subType)

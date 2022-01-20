@@ -5,46 +5,29 @@ type IntegerExpression interface {
 	Expression
 	numericExpression
 
-	// Check if expression is equal to rhs
 	EQ(rhs IntegerExpression) BoolExpression
-	// Check if expression is not equal to rhs
 	NOT_EQ(rhs IntegerExpression) BoolExpression
-	// Check if expression is distinct from rhs
 	IS_DISTINCT_FROM(rhs IntegerExpression) BoolExpression
-	// Check if expression is not distinct from rhs
 	IS_NOT_DISTINCT_FROM(rhs IntegerExpression) BoolExpression
 
-	// Check if expression is less then rhs
 	LT(rhs IntegerExpression) BoolExpression
-	// Check if expression is less then equal rhs
 	LT_EQ(rhs IntegerExpression) BoolExpression
-	// Check if expression is greater then rhs
 	GT(rhs IntegerExpression) BoolExpression
-	// Check if expression is greater then equal rhs
 	GT_EQ(rhs IntegerExpression) BoolExpression
+	BETWEEN(min, max IntegerExpression) BoolExpression
+	NOT_BETWEEN(min, max IntegerExpression) BoolExpression
 
-	// expression + rhs
 	ADD(rhs IntegerExpression) IntegerExpression
-	// expression - rhs
 	SUB(rhs IntegerExpression) IntegerExpression
-	// expression * rhs
 	MUL(rhs IntegerExpression) IntegerExpression
-	// expression / rhs
 	DIV(rhs IntegerExpression) IntegerExpression
-	// expression % rhs
 	MOD(rhs IntegerExpression) IntegerExpression
-	// expression ^ rhs
 	POW(rhs IntegerExpression) IntegerExpression
 
-	// expression & rhs
 	BIT_AND(rhs IntegerExpression) IntegerExpression
-	// expression | rhs
 	BIT_OR(rhs IntegerExpression) IntegerExpression
-	// expression # rhs
 	BIT_XOR(rhs IntegerExpression) IntegerExpression
-	// expression << rhs
 	BIT_SHIFT_LEFT(shift IntegerExpression) IntegerExpression
-	// expression >> rhs
 	BIT_SHIFT_RIGHT(shift IntegerExpression) IntegerExpression
 }
 
@@ -83,6 +66,14 @@ func (i *integerInterfaceImpl) LT(rhs IntegerExpression) BoolExpression {
 
 func (i *integerInterfaceImpl) LT_EQ(rhs IntegerExpression) BoolExpression {
 	return LtEq(i.parent, rhs)
+}
+
+func (i *integerInterfaceImpl) BETWEEN(min, max IntegerExpression) BoolExpression {
+	return NewBetweenOperatorExpression(i.parent, min, max, false)
+}
+
+func (i *integerInterfaceImpl) NOT_BETWEEN(min, max IntegerExpression) BoolExpression {
+	return NewBetweenOperatorExpression(i.parent, min, max, true)
 }
 
 func (i *integerInterfaceImpl) ADD(rhs IntegerExpression) IntegerExpression {

@@ -165,7 +165,7 @@ VALUES ('one', 'two'),
        ('1', '2'),
        ('theta', 'beta')
 ON CONFLICT (col_bool) WHERE col_bool IS NOT FALSE DO UPDATE
-       SET col_bool = TRUE,
+       SET col_bool = TRUE::boolean,
            col_int = 1,
            (col1, col_bool) = ROW(2, 'two')
        WHERE table1.col1 > 2
@@ -191,7 +191,7 @@ INSERT INTO db.table1 (col1, col_bool)
 VALUES ('one', 'two'),
        ('1', '2')
 ON CONFLICT ON CONSTRAINT idk_primary_key DO UPDATE
-       SET col_bool = FALSE,
+       SET col_bool = FALSE::boolean,
            col_int = 1,
            (col1, col_bool) = ROW(2, 'two')
        WHERE table1.col1 > 2

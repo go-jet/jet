@@ -41,6 +41,8 @@ type IntervalExpression interface {
 	LT_EQ(rhs IntervalExpression) BoolExpression
 	GT(rhs IntervalExpression) BoolExpression
 	GT_EQ(rhs IntervalExpression) BoolExpression
+	BETWEEN(min, max IntervalExpression) BoolExpression
+	NOT_BETWEEN(min, max IntervalExpression) BoolExpression
 
 	ADD(rhs IntervalExpression) IntervalExpression
 	SUB(rhs IntervalExpression) IntervalExpression
@@ -85,6 +87,14 @@ func (i *intervalInterfaceImpl) GT(rhs IntervalExpression) BoolExpression {
 
 func (i *intervalInterfaceImpl) GT_EQ(rhs IntervalExpression) BoolExpression {
 	return jet.GtEq(i.parent, rhs)
+}
+
+func (i *intervalInterfaceImpl) BETWEEN(min, max IntervalExpression) BoolExpression {
+	return jet.NewBetweenOperatorExpression(i.parent, min, max, false)
+}
+
+func (i *intervalInterfaceImpl) NOT_BETWEEN(min, max IntervalExpression) BoolExpression {
+	return jet.NewBetweenOperatorExpression(i.parent, min, max, true)
 }
 
 func (i *intervalInterfaceImpl) ADD(rhs IntervalExpression) IntervalExpression {

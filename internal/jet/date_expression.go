@@ -13,6 +13,8 @@ type DateExpression interface {
 	LT_EQ(rhs DateExpression) BoolExpression
 	GT(rhs DateExpression) BoolExpression
 	GT_EQ(rhs DateExpression) BoolExpression
+	BETWEEN(min, max DateExpression) BoolExpression
+	NOT_BETWEEN(min, max DateExpression) BoolExpression
 
 	ADD(rhs Interval) TimestampExpression
 	SUB(rhs Interval) TimestampExpression
@@ -52,6 +54,14 @@ func (d *dateInterfaceImpl) GT(rhs DateExpression) BoolExpression {
 
 func (d *dateInterfaceImpl) GT_EQ(rhs DateExpression) BoolExpression {
 	return GtEq(d.parent, rhs)
+}
+
+func (d *dateInterfaceImpl) BETWEEN(min, max DateExpression) BoolExpression {
+	return NewBetweenOperatorExpression(d.parent, min, max, false)
+}
+
+func (d *dateInterfaceImpl) NOT_BETWEEN(min, max DateExpression) BoolExpression {
+	return NewBetweenOperatorExpression(d.parent, min, max, true)
 }
 
 func (d *dateInterfaceImpl) ADD(rhs Interval) TimestampExpression {

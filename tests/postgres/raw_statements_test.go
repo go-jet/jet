@@ -9,7 +9,7 @@ import (
 
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
-	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
+	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 
 	. "github.com/go-jet/jet/v2/postgres"
 )

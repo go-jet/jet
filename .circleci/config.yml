@@ -1,28 +1,37 @@
 # Golang CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
+version: 2.1
+orbs:
+  codecov: codecov/codecov@3.1.1
 jobs:
-  build-postgres-and-mysql:
+  build_and_tests:
     docker:
       # specify the version
-      - image: circleci/golang:1.13
-
-      - image: circleci/postgres:10.8-alpine
-        environment: # environment variables for primary container
+      - image: circleci/golang:1.16
+      - image: circleci/postgres:12
+        environment:
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
           POSTGRES_DB: jetdb
+          PGPORT: 50901
 
-      - image: circleci/mysql:8.0.16
-        command: [--default-authentication-plugin=mysql_native_password]
+      - image: circleci/mysql:8.0.27
+        command: [ --default-authentication-plugin=mysql_native_password ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
           MYSQL_DATABASE: dvds
           MYSQL_USER: jet
           MYSQL_PASSWORD: jet
+          MYSQL_TCP_PORT: 50902
 
-    working_directory: /go/src/github.com/go-jet/jet
+      - image: circleci/mariadb:10.3
+        command: [ '--default-authentication-plugin=mysql_native_password', '--port=50903' ]
+        environment:
+          MYSQL_ROOT_PASSWORD: jet
+          MYSQL_DATABASE: dvds
+          MYSQL_USER: jet
+          MYSQL_PASSWORD: jet
 
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/test-results # path to where test results will be saved
@@ -32,25 +41,22 @@ jobs:
 
       - run:
           name: Submodule init
-          command: |
-            git submodule init
-            git submodule update
-            cd ./tests/testdata && git fetch && git checkout master
+          command: cd tests && make checkout-testdata
 
+      - restore_cache: # restores saved cache if no changes are detected since last run
+          keys:
+            - go-mod-v4-{{ checksum "go.sum" }}
 
       - run:
-          name: Install dependencies
-          command: |
-            cd /go/src/github.com/go-jet/jet
-            go get github.com/jstemmer/go-junit-report
-            go build -o /home/circleci/.local/bin/jet ./cmd/jet/
+          name: Install jet generator
+          command: cd tests && make install-jet-gen
 
       - run:
           name: Waiting for Postgres to be ready
           command: |
             for i in `seq 1 10`;
             do
-              nc -z localhost 5432 && echo Success && exit 0
+              nc -z localhost 50901 && echo Success && exit 0
               echo -n .
               sleep 1
             done
@@ -61,39 +67,71 @@ jobs:
           command: |
             for i in `seq 1 10`;
             do
-              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              nc -z 127.0.0.1 50902 && echo Success && exit 0
               echo -n .
               sleep 1
             done
             echo Failed waiting for MySQL && exit 1
+
+      - run:
+          name: Waiting for MariaDB to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 50903 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1      
+
       - run:
           name: Install MySQL CLI;
           command: |
             sudo apt-get --allow-releaseinfo-change update && sudo apt-get install default-mysql-client
 
       - run:
-          name: Create MySQL user and databases
+          name: Create MySQL/MariaDB user and test databases
           command: |
-            mysql -h 127.0.0.1 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
-            mysql -h 127.0.0.1 -u jet -pjet -e "create database test_sample"
-            mysql -h 127.0.0.1 -u jet -pjet -e "create database dvds2"
+            mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
+            mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "create database test_sample"
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "create database dvds2"
+            
+            mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
+            mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database test_sample"
+            mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database dvds2"
 
       - run:
-         name: Init Postgres database
-         command: |
-           cd tests
-           go run ./init/init.go -testsuite all
-           cd ..
+          name: Init databases
+          command: |
+            cd tests
+            go run ./init/init.go -testsuite all
 
+      # to create test results report
+      - run:
+          name: Install go-junit-report
+          command: go install github.com/jstemmer/go-junit-report@latest
 
       - run: mkdir -p $TEST_RESULTS
-      # this will run all tests and exclude test files from code coverage report
-      - run: MY_SQL_SOURCE=MySQL go test -v ./... -covermode=atomic -coverpkg=github.com/go-jet/jet/postgres/...,github.com/go-jet/jet/mysql/...,github.com/go-jet/jet/sqlite/...,github.com/go-jet/jet/qrm/...,github.com/go-jet/jet/generator/...,github.com/go-jet/jet/internal/... -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
-      - run:
-          name: Upload code coverage
-          command: bash <(curl -s https://codecov.io/bash)
+      # this will run all tests and exclude test files from code coverage report
+      - run:  |
+          go test -v ./... \
+            -covermode=atomic \
+            -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... \
+            -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
+
+      # run mariaDB tests. No need to collect coverage, because coverage is already included with mysql tests
+      - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
+
+      - save_cache:
+          key: go-mod-v4-{{ checksum "go.sum" }}
+          paths:
+            - "/go/pkg/mod"
+
+      - codecov/upload:
+          file: cover.out
 
       - store_artifacts: # Upload test summary for display in Artifacts: https://circleci.com/docs/2.0/artifacts/
           path: /tmp/test-results
@@ -101,69 +139,9 @@ jobs:
 
       - store_test_results: # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: /tmp/test-results
-  build-mariadb:
-    docker:
-      # specify the version
-      - image: circleci/golang:1.13
-
-      - image: circleci/mariadb:10.3
-        command: [--default-authentication-plugin=mysql_native_password]
-        environment:
-          MYSQL_ROOT_PASSWORD: jet
-          MYSQL_DATABASE: dvds
-          MYSQL_USER: jet
-          MYSQL_PASSWORD: jet
-
-    working_directory: /go/src/github.com/go-jet/jet
-
-    environment: # environment variables for the build itself
-      TEST_RESULTS: /tmp/test-results # path to where test results will be saved
-
-    steps:
-      - checkout
-
-      - run:
-          name: Submodule init
-          command: |
-            git submodule init
-            git submodule update
-            cd ./tests/testdata && git fetch && git checkout master
-
-      - run:
-          name: Install dependencies
-          command: |
-            cd /go/src/github.com/go-jet/jet
-            go get github.com/jstemmer/go-junit-report
-            go build -o /home/circleci/.local/bin/jet ./cmd/jet/
-
-      - run:
-          name: Install MySQL CLI;
-          command: |
-            sudo apt-get --allow-releaseinfo-change update && sudo apt-get install default-mysql-client
-
-      - run:
-          name: Init MariaDB database
-          command: |
-            mysql -h 127.0.0.1 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
-            mysql -h 127.0.0.1 -u jet -pjet -e "create database test_sample"
-            mysql -h 127.0.0.1 -u jet -pjet -e "create database dvds2"
-
-      - run:
-          name: Init MariaDB database
-          command: |
-            cd tests
-            go run ./init/init.go -testsuite MariaDB
-            cd ..
-
-      - run:
-          name: Run MariaDB tests
-          command: |
-            MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
 
 workflows:
   version: 2
   build_and_test:
     jobs:
-      - build-postgres-and-mysql
-      - build-mariadb
+      - build_and_tests

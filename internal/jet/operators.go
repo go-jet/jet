@@ -173,3 +173,8 @@ func (c *caseOperatorImpl) serialize(statement StatementType, out *SQLBuilder, o
 
 	out.WriteString("END)")
 }
+
+// DISTINCT operator can be used to return distinct values of expr
+func DISTINCT(expr Expression) Expression {
+	return newPrefixOperatorExpression(expr, "DISTINCT")
+}

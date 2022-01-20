@@ -29,7 +29,7 @@ ON CONFLICT (col_bool) ON CONSTRAINT table_pkey DO NOTHING`)
 		)
 	assertClauseSerialize(t, onConflict, `
 ON CONFLICT (col_bool, col_float) WHERE (col_float + col_int) > col_float DO UPDATE
-       SET col_bool = $1,
+       SET col_bool = $1::boolean,
            col_int = $2
        WHERE table2.col_float > $3`)
 }

@@ -18,8 +18,9 @@ type ClauseWithProjections interface {
 
 // ClauseSelect struct
 type ClauseSelect struct {
-	Distinct       bool
-	ProjectionList []Projection
+	Distinct          bool
+	DistinctOnColumns []ColumnExpression
+	ProjectionList    []Projection
 }
 
 // Projections returns list of projections for select clause
@@ -36,6 +37,12 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 		out.WriteString("DISTINCT")
 	}
 
+	if len(s.DistinctOnColumns) > 0 {
+		out.WriteString("ON (")
+		SerializeColumnExpressions(s.DistinctOnColumns, statementType, out)
+		out.WriteByte(')')
+	}
+
 	if len(s.ProjectionList) == 0 {
 		panic("jet: SELECT clause has to have at least one projection")
 	}
@@ -45,6 +52,7 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 
 // ClauseFrom struct
 type ClauseFrom struct {
+	Name   string
 	Tables []Serializer
 }
 
@@ -54,7 +62,11 @@ func (f *ClauseFrom) Serialize(statementType StatementType, out *SQLBuilder, opt
 		return
 	}
 	out.NewLine()
-	out.WriteString("FROM")
+	if f.Name != "" {
+		out.WriteString(f.Name)
+	} else {
+		out.WriteString("FROM")
+	}
 
 	out.IncreaseIdent()
 	for i, table := range f.Tables {

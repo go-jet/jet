@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/stretchr/testify/require"
@@ -90,4 +91,30 @@ func initForDeleteTest(t *testing.T) {
 		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
 
 	testutils.AssertExec(t, stmt, db, 2)
+}
+
+func TestDeleteWithUsing(t *testing.T) {
+	tx := beginTx(t)
+	defer tx.Rollback()
+
+	stmt := table.Rental.DELETE().
+		USING(
+			table.Rental.
+				INNER_JOIN(table.Staff, table.Rental.StaffID.EQ(table.Staff.StaffID)),
+			table.Actor,
+		).
+		WHERE(
+			table.Staff.StaffID.NOT_EQ(Int(2)).
+				AND(table.Rental.RentalID.LT(Int(100))),
+		)
+
+	testutils.AssertStatementSql(t, stmt, `
+DELETE FROM dvds.rental
+USING dvds.rental
+     INNER JOIN dvds.staff ON (rental.staff_id = staff.staff_id),
+     dvds.actor
+WHERE (staff.staff_id != ?) AND (rental.rental_id < ?);
+`)
+
+	testutils.AssertExec(t, stmt, tx)
 }

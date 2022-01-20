@@ -1,5 +1,7 @@
 package jet
 
+import "fmt"
+
 // Expression is common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
@@ -33,7 +35,8 @@ type ExpressionInterfaceImpl struct {
 }
 
 func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
-	return e.Parent
+	panic(fmt.Sprintf("jet: can't export unaliased expression subQuery: %s, expression: %s",
+		subQuery.Alias(), serializeToDefaultDebugString(e.Parent)))
 }
 
 // IS_NULL tests expression whether it is a NULL value.
@@ -93,7 +96,7 @@ type binaryOperatorExpression struct {
 }
 
 // NewBinaryOperatorExpression creates new binaryOperatorExpression
-func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) *binaryOperatorExpression {
+func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) Expression {
 	binaryExpression := &binaryOperatorExpression{
 		lhs:      lhs,
 		rhs:      rhs,
@@ -106,23 +109,10 @@ func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additiona
 
 	binaryExpression.ExpressionInterfaceImpl.Parent = binaryExpression
 
-	return binaryExpression
+	return complexExpr(binaryExpression)
 }
 
 func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if c.lhs == nil {
-		panic("jet: lhs is nil for '" + c.operator + "' operator")
-	}
-	if c.rhs == nil {
-		panic("jet: rhs is nil for '" + c.operator + "' operator")
-	}
-
-	wrap := !contains(options, NoWrap)
-
-	if wrap {
-		out.WriteString("(")
-	}
-
 	if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
 		serializeOverrideFunc(statement, out, FallTrough(options)...)
@@ -130,10 +120,6 @@ func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBu
 		c.lhs.serialize(statement, out, FallTrough(options)...)
 		out.WriteString(c.operator)
 		c.rhs.serialize(statement, out, FallTrough(options)...)
-	}
-
-	if wrap {
-		out.WriteString(")")
 	}
 }
 
@@ -145,27 +131,19 @@ type prefixExpression struct {
 	operator   string
 }
 
-func newPrefixOperatorExpression(expression Expression, operator string) *prefixExpression {
+func newPrefixOperatorExpression(expression Expression, operator string) Expression {
 	prefixExpression := &prefixExpression{
 		expression: expression,
 		operator:   operator,
 	}
 	prefixExpression.ExpressionInterfaceImpl.Parent = prefixExpression
 
-	return prefixExpression
+	return complexExpr(prefixExpression)
 }
 
 func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.WriteString("(")
 	out.WriteString(p.operator)
-
-	if p.expression == nil {
-		panic("jet: nil prefix expression in prefix operator " + p.operator)
-	}
-
 	p.expression.serialize(statement, out, FallTrough(options)...)
-
-	out.WriteString(")")
 }
 
 // A postfix operator Expression
@@ -188,11 +166,77 @@ func newPostfixOperatorExpression(expression Expression, operator string) *postf
 }
 
 func (p *postfixOpExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if p.expression == nil {
-		panic("jet: nil prefix expression in postfix operator " + p.operator)
+	p.expression.serialize(statement, out, FallTrough(options)...)
+	out.WriteString(p.operator)
+}
+
+type betweenOperatorExpression struct {
+	ExpressionInterfaceImpl
+
+	expression Expression
+	notBetween bool
+	min        Expression
+	max        Expression
+}
+
+// NewBetweenOperatorExpression creates new BETWEEN operator expression
+func NewBetweenOperatorExpression(expression, min, max Expression, notBetween bool) BoolExpression {
+	newBetweenOperator := &betweenOperatorExpression{
+		expression: expression,
+		notBetween: notBetween,
+		min:        min,
+		max:        max,
 	}
 
-	p.expression.serialize(statement, out, FallTrough(options)...)
+	newBetweenOperator.ExpressionInterfaceImpl.Parent = newBetweenOperator
 
-	out.WriteString(p.operator)
+	return BoolExp(complexExpr(newBetweenOperator))
+}
+
+func (p *betweenOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	p.expression.serialize(statement, out, FallTrough(options)...)
+	if p.notBetween {
+		out.WriteString("NOT")
+	}
+	out.WriteString("BETWEEN")
+	p.min.serialize(statement, out, FallTrough(options)...)
+	out.WriteString("AND")
+	p.max.serialize(statement, out, FallTrough(options)...)
+}
+
+type complexExpression struct {
+	ExpressionInterfaceImpl
+	expressions Expression
+}
+
+func complexExpr(expressions Expression) Expression {
+	complexExpression := &complexExpression{expressions: expressions}
+	complexExpression.ExpressionInterfaceImpl.Parent = complexExpression
+
+	return complexExpression
+}
+
+func (s *complexExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if !contains(options, NoWrap) {
+		out.WriteString("(")
+	}
+
+	s.expressions.serialize(statement, out, options...) // FallTrough here because complexExpression is just a wrapper
+
+	if !contains(options, NoWrap) {
+		out.WriteString(")")
+	}
+}
+
+type skipParenthesisWrap struct {
+	Expression
+}
+
+func skipWrap(expression Expression) Expression {
+	return &skipParenthesisWrap{expression}
+}
+
+// since the expression is a function parameter, there is no need to wrap it in parentheses
+func (s *skipParenthesisWrap) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	s.Expression.serialize(statement, out, append(options, NoWrap)...)
 }

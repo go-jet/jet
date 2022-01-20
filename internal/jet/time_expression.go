@@ -13,6 +13,8 @@ type TimeExpression interface {
 	LT_EQ(rhs TimeExpression) BoolExpression
 	GT(rhs TimeExpression) BoolExpression
 	GT_EQ(rhs TimeExpression) BoolExpression
+	BETWEEN(min, max TimeExpression) BoolExpression
+	NOT_BETWEEN(min, max TimeExpression) BoolExpression
 
 	ADD(rhs Interval) TimeExpression
 	SUB(rhs Interval) TimeExpression
@@ -52,6 +54,14 @@ func (t *timeInterfaceImpl) GT(rhs TimeExpression) BoolExpression {
 
 func (t *timeInterfaceImpl) GT_EQ(rhs TimeExpression) BoolExpression {
 	return GtEq(t.parent, rhs)
+}
+
+func (t *timeInterfaceImpl) BETWEEN(min, max TimeExpression) BoolExpression {
+	return NewBetweenOperatorExpression(t.parent, min, max, false)
+}
+
+func (t *timeInterfaceImpl) NOT_BETWEEN(min, max TimeExpression) BoolExpression {
+	return NewBetweenOperatorExpression(t.parent, min, max, true)
 }
 
 func (t *timeInterfaceImpl) ADD(rhs Interval) TimeExpression {

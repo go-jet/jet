@@ -35,6 +35,7 @@ ORDER BY "Album"."AlbumId" ASC;
 	testutils.AssertDeepEqual(t, dest[1], album2)
 	testutils.AssertDeepEqual(t, dest[len(dest)-1], album347)
 	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 347)
 }
 
 func TestJoinEverything(t *testing.T) {
@@ -101,12 +102,341 @@ func TestJoinEverything(t *testing.T) {
 		}
 	}
 
-	err := stmt.Query(db, &dest)
+	testutils.AssertStatementSql(t, stmt, `
+SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+     "Artist"."Name" AS "Artist.Name",
+     "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId",
+     "Track"."TrackId" AS "Track.TrackId",
+     "Track"."Name" AS "Track.Name",
+     "Track"."AlbumId" AS "Track.AlbumId",
+     "Track"."MediaTypeId" AS "Track.MediaTypeId",
+     "Track"."GenreId" AS "Track.GenreId",
+     "Track"."Composer" AS "Track.Composer",
+     "Track"."Milliseconds" AS "Track.Milliseconds",
+     "Track"."Bytes" AS "Track.Bytes",
+     "Track"."UnitPrice" AS "Track.UnitPrice",
+     "Genre"."GenreId" AS "Genre.GenreId",
+     "Genre"."Name" AS "Genre.Name",
+     "MediaType"."MediaTypeId" AS "MediaType.MediaTypeId",
+     "MediaType"."Name" AS "MediaType.Name",
+     "PlaylistTrack"."PlaylistId" AS "PlaylistTrack.PlaylistId",
+     "PlaylistTrack"."TrackId" AS "PlaylistTrack.TrackId",
+     "Playlist"."PlaylistId" AS "Playlist.PlaylistId",
+     "Playlist"."Name" AS "Playlist.Name",
+     "Invoice"."InvoiceId" AS "Invoice.InvoiceId",
+     "Invoice"."CustomerId" AS "Invoice.CustomerId",
+     "Invoice"."InvoiceDate" AS "Invoice.InvoiceDate",
+     "Invoice"."BillingAddress" AS "Invoice.BillingAddress",
+     "Invoice"."BillingCity" AS "Invoice.BillingCity",
+     "Invoice"."BillingState" AS "Invoice.BillingState",
+     "Invoice"."BillingCountry" AS "Invoice.BillingCountry",
+     "Invoice"."BillingPostalCode" AS "Invoice.BillingPostalCode",
+     "Invoice"."Total" AS "Invoice.Total",
+     "Customer"."CustomerId" AS "Customer.CustomerId",
+     "Customer"."FirstName" AS "Customer.FirstName",
+     "Customer"."LastName" AS "Customer.LastName",
+     "Customer"."Company" AS "Customer.Company",
+     "Customer"."Address" AS "Customer.Address",
+     "Customer"."City" AS "Customer.City",
+     "Customer"."State" AS "Customer.State",
+     "Customer"."Country" AS "Customer.Country",
+     "Customer"."PostalCode" AS "Customer.PostalCode",
+     "Customer"."Phone" AS "Customer.Phone",
+     "Customer"."Fax" AS "Customer.Fax",
+     "Customer"."Email" AS "Customer.Email",
+     "Customer"."SupportRepId" AS "Customer.SupportRepId",
+     "Employee"."EmployeeId" AS "Employee.EmployeeId",
+     "Employee"."LastName" AS "Employee.LastName",
+     "Employee"."FirstName" AS "Employee.FirstName",
+     "Employee"."Title" AS "Employee.Title",
+     "Employee"."ReportsTo" AS "Employee.ReportsTo",
+     "Employee"."BirthDate" AS "Employee.BirthDate",
+     "Employee"."HireDate" AS "Employee.HireDate",
+     "Employee"."Address" AS "Employee.Address",
+     "Employee"."City" AS "Employee.City",
+     "Employee"."State" AS "Employee.State",
+     "Employee"."Country" AS "Employee.Country",
+     "Employee"."PostalCode" AS "Employee.PostalCode",
+     "Employee"."Phone" AS "Employee.Phone",
+     "Employee"."Fax" AS "Employee.Fax",
+     "Employee"."Email" AS "Employee.Email",
+     "Manager"."EmployeeId" AS "Manager.EmployeeId",
+     "Manager"."LastName" AS "Manager.LastName",
+     "Manager"."FirstName" AS "Manager.FirstName",
+     "Manager"."Title" AS "Manager.Title",
+     "Manager"."ReportsTo" AS "Manager.ReportsTo",
+     "Manager"."BirthDate" AS "Manager.BirthDate",
+     "Manager"."HireDate" AS "Manager.HireDate",
+     "Manager"."Address" AS "Manager.Address",
+     "Manager"."City" AS "Manager.City",
+     "Manager"."State" AS "Manager.State",
+     "Manager"."Country" AS "Manager.Country",
+     "Manager"."PostalCode" AS "Manager.PostalCode",
+     "Manager"."Phone" AS "Manager.Phone",
+     "Manager"."Fax" AS "Manager.Fax",
+     "Manager"."Email" AS "Manager.Email"
+FROM chinook."Artist"
+     LEFT JOIN chinook."Album" ON ("Artist"."ArtistId" = "Album"."ArtistId")
+     LEFT JOIN chinook."Track" ON ("Track"."AlbumId" = "Album"."AlbumId")
+     LEFT JOIN chinook."Genre" ON ("Genre"."GenreId" = "Track"."GenreId")
+     LEFT JOIN chinook."MediaType" ON ("MediaType"."MediaTypeId" = "Track"."MediaTypeId")
+     LEFT JOIN chinook."PlaylistTrack" ON ("PlaylistTrack"."TrackId" = "Track"."TrackId")
+     LEFT JOIN chinook."Playlist" ON ("Playlist"."PlaylistId" = "PlaylistTrack"."PlaylistId")
+     LEFT JOIN chinook."InvoiceLine" ON ("InvoiceLine"."TrackId" = "Track"."TrackId")
+     LEFT JOIN chinook."Invoice" ON ("Invoice"."InvoiceId" = "InvoiceLine"."InvoiceId")
+     LEFT JOIN chinook."Customer" ON ("Customer"."CustomerId" = "Invoice"."CustomerId")
+     LEFT JOIN chinook."Employee" ON ("Employee"."EmployeeId" = "Customer"."SupportRepId")
+     LEFT JOIN chinook."Employee" AS "Manager" ON ("Manager"."EmployeeId" = "Employee"."ReportsTo")
+ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId", "Genre"."GenreId", "MediaType"."MediaTypeId", "Playlist"."PlaylistId", "Invoice"."InvoiceId", "Customer"."CustomerId";
+`)
+
+	err := stmt.QueryContext(context.Background(), db, &dest)
 
 	require.NoError(t, err)
 	require.Equal(t, len(dest), 275)
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
 	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 9423)
+}
+
+// default column aliases from sub-CTEs are bubbled up to the main query,
+// cte name does not affect default column alias in main query
+func TestSubQueryColumnAliasBubbling(t *testing.T) {
+	subQuery1 := SELECT(
+		Artist.AllColumns,
+		String("custom_column_1").AS("custom_column_1"),
+	).FROM(
+		Artist,
+	).ORDER_BY(
+		Artist.ArtistId.ASC(),
+	).AsTable("subQuery1")
+
+	subQuery2 := SELECT(
+		subQuery1.AllColumns(),
+		String("custom_column_2").AS("custom_column_2"),
+	).FROM(
+		subQuery1,
+	).AsTable("subQuery2")
+
+	mainQuery := SELECT(
+		subQuery2.AllColumns(),                 // columns will have the same alias as in the sub-query
+		subQuery2.AllColumns().As("artist2.*"), // all column aliases will be changed to artist2.*
+		subQuery2.AllColumns().Except(Artist.Name).As("artist3.*"),
+		subQuery2.AllColumns().Except(
+			Artist.MutableColumns,
+			StringColumn("custom_column_1").From(subQuery2), // custom_column_1 appears with the same alias in subQuery2
+			StringColumn("custom_column_2").From(subQuery2),
+		).As("artist4.*"),
+	).FROM(
+		subQuery2,
+	)
+
+	// fmt.Println(mainQuery.Sql())
+
+	testutils.AssertStatementSql(t, mainQuery, `
+SELECT "subQuery2"."Artist.ArtistId" AS "Artist.ArtistId",
+     "subQuery2"."Artist.Name" AS "Artist.Name",
+     "subQuery2".custom_column_1 AS "custom_column_1",
+     "subQuery2".custom_column_2 AS "custom_column_2",
+     "subQuery2"."Artist.ArtistId" AS "artist2.ArtistId",
+     "subQuery2"."Artist.Name" AS "artist2.Name",
+     "subQuery2".custom_column_1 AS "artist2.custom_column_1",
+     "subQuery2".custom_column_2 AS "artist2.custom_column_2",
+     "subQuery2"."Artist.ArtistId" AS "artist3.ArtistId",
+     "subQuery2".custom_column_1 AS "artist3.custom_column_1",
+     "subQuery2".custom_column_2 AS "artist3.custom_column_2",
+     "subQuery2"."Artist.ArtistId" AS "artist4.ArtistId"
+FROM (
+          SELECT "subQuery1"."Artist.ArtistId" AS "Artist.ArtistId",
+               "subQuery1"."Artist.Name" AS "Artist.Name",
+               "subQuery1".custom_column_1 AS "custom_column_1",
+               $1 AS "custom_column_2"
+          FROM (
+                    SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+                         "Artist"."Name" AS "Artist.Name",
+                         $2 AS "custom_column_1"
+                    FROM chinook."Artist"
+                    ORDER BY "Artist"."ArtistId" ASC
+               ) AS "subQuery1"
+     ) AS "subQuery2";
+`)
+	var dest []struct {
+		// subQuery2.AllColumns()
+		Artist1 struct {
+			model.Artist
+
+			CustomColumn1 string
+			CustomColumn2 string
+		}
+
+		// subQuery2.AllColumns().As("artist2.*")
+		Artist2 struct {
+			model.Artist `alias:"artist2.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"artist2.*"`
+
+		// subQuery2.AllColumns().Except(Artist.Name).As("artist3.*")
+		Artist3 struct {
+			model.Artist `alias:"artist3.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"artist3.*"`
+
+		// subQuery2.AllColumns().Except(...).As("artist4.*")
+		Artist4 struct {
+			model.Artist `alias:"artist4.*"`
+
+			CustomColumn1 string
+			CustomColumn2 string
+		} `alias:"artist4.*"`
+	}
+
+	err := mainQuery.Query(db, &dest)
+	require.NoError(t, err)
+
+	// Artist1
+	require.Len(t, dest, 275)
+	require.Equal(t, dest[0].Artist1.Artist, model.Artist{
+		ArtistId: 1,
+		Name:     testutils.StringPtr("AC/DC"),
+	})
+	require.Equal(t, dest[0].Artist1.CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].Artist1.CustomColumn2, "custom_column_2")
+
+	// Artist2
+	require.Equal(t, testutils.ToJSON(dest[0].Artist1), testutils.ToJSON(dest[0].Artist2))
+
+	// Artist3
+	require.Equal(t, dest[0].Artist3.ArtistId, int32(1))
+	require.Nil(t, dest[0].Artist3.Name)
+	require.Equal(t, dest[0].Artist3.CustomColumn1, "custom_column_1")
+	require.Equal(t, dest[0].Artist3.CustomColumn2, "custom_column_2")
+
+	// Artist4
+	require.Equal(t, dest[0].Artist3.Artist, dest[0].Artist4.Artist)
+	require.Equal(t, dest[0].Artist4.CustomColumn1, "")
+	require.Equal(t, dest[0].Artist4.CustomColumn2, "")
+}
+
+func TestUnAliasedNamesPanicError(t *testing.T) {
+	subQuery1 := SELECT(
+		Artist.AllColumns,
+		Artist.Name.CONCAT(String("-musician")), //alias missing
+	).FROM(
+		Artist,
+	).ORDER_BY(
+		Artist.ArtistId.ASC(),
+	).AsTable("subQuery1")
+
+	require.Panics(t, func() {
+		SELECT(
+			subQuery1.AllColumns(), // panic, column not aliased
+		).FROM(
+			subQuery1,
+		)
+	}, "jet: can't export unaliased expression subQuery: subQuery1, expression: (\"Artist\".\"Name\" || '-musician')")
+}
+
+func TestProjectionListReAliasing(t *testing.T) {
+	projectionList := ProjectionList{
+		Track.GenreId,
+		SUM(Track.Milliseconds).AS("duration"),
+		MAX(Track.Milliseconds).AS("duration.max"),
+	}
+
+	stmt := SELECT(
+		projectionList.As("genre_info"),
+	).FROM(
+		Track,
+	).WHERE(
+		Track.GenreId.LT(Int(5)),
+	).GROUP_BY(
+		Track.GenreId,
+	).ORDER_BY(
+		Track.GenreId,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "Track"."GenreId" AS "genre_info.GenreId",
+     SUM("Track"."Milliseconds") AS "genre_info.duration",
+     MAX("Track"."Milliseconds") AS "genre_info.max"
+FROM chinook."Track"
+WHERE "Track"."GenreId" < 5
+GROUP BY "Track"."GenreId"
+ORDER BY "Track"."GenreId";
+`)
+
+	type GenreInfo struct {
+		GenreID  string
+		Duration int64
+		Max      int64
+	}
+
+	var dest []GenreInfo
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	expectedSQL := `
+[
+	{
+		"GenreID": "1",
+		"Duration": 368231326,
+		"Max": 1612329
+	},
+	{
+		"GenreID": "2",
+		"Duration": 37928199,
+		"Max": 907520
+	},
+	{
+		"GenreID": "3",
+		"Duration": 115846292,
+		"Max": 816509
+	},
+	{
+		"GenreID": "4",
+		"Duration": 77805478,
+		"Max": 558602
+	}
+]
+`
+	testutils.AssertJSON(t, dest, expectedSQL)
+
+	subQuery := stmt.AsTable("subQuery")
+
+	mainStmt := SELECT(
+		subQuery.AllColumns().As("genre_information.*"),
+	).FROM(
+		subQuery,
+	)
+
+	testutils.AssertDebugStatementSql(t, mainStmt, `
+SELECT "subQuery"."genre_info.GenreId" AS "genre_information.GenreId",
+     "subQuery"."genre_info.duration" AS "genre_information.duration",
+     "subQuery"."genre_info.max" AS "genre_information.max"
+FROM (
+          SELECT "Track"."GenreId" AS "genre_info.GenreId",
+               SUM("Track"."Milliseconds") AS "genre_info.duration",
+               MAX("Track"."Milliseconds") AS "genre_info.max"
+          FROM chinook."Track"
+          WHERE "Track"."GenreId" < 5
+          GROUP BY "Track"."GenreId"
+          ORDER BY "Track"."GenreId"
+     ) AS "subQuery";
+`)
+
+	type GenreInformation GenreInfo
+	var newDest []GenreInformation
+
+	err = mainStmt.Query(db, &newDest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, expectedSQL)
 }
 
 func TestSelfJoin(t *testing.T) {
@@ -412,4 +742,54 @@ var album347 = model.Album{
 	AlbumId:  347,
 	Title:    "Koyaanisqatsi (Soundtrack from the Motion Picture)",
 	ArtistId: 275,
+}
+
+func TestAggregateFunc(t *testing.T) {
+	stmt := SELECT(
+		PERCENTILE_DISC(Float(0.1)).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceId).AS("percentile_disc_1"),
+		PERCENTILE_DISC(Invoice.Total.DIV(Float(100))).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceDate.ASC()).AS("percentile_disc_2"),
+		PERCENTILE_DISC(RawFloat("(select array_agg(s) from generate_series(0, 1, 0.2) as s)")).
+			WITHIN_GROUP_ORDER_BY(Invoice.BillingAddress.DESC()).AS("percentile_disc_3"),
+
+		PERCENTILE_CONT(Float(0.3)).WITHIN_GROUP_ORDER_BY(Invoice.Total).AS("percentile_cont_1"),
+		PERCENTILE_CONT(Float(0.2)).WITHIN_GROUP_ORDER_BY(INTERVAL(1, HOUR).DESC()).AS("percentile_cont_int"),
+
+		MODE().WITHIN_GROUP_ORDER_BY(Invoice.BillingPostalCode.DESC()).AS("mode_1"),
+	).FROM(
+		Invoice,
+	).GROUP_BY(
+		Invoice.Total,
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT PERCENTILE_DISC ($1::double precision) WITHIN GROUP (ORDER BY "Invoice"."InvoiceId") AS "percentile_disc_1",
+     PERCENTILE_DISC ("Invoice"."Total" / $2) WITHIN GROUP (ORDER BY "Invoice"."InvoiceDate" ASC) AS "percentile_disc_2",
+     PERCENTILE_DISC ((select array_agg(s) from generate_series(0, 1, 0.2) as s)) WITHIN GROUP (ORDER BY "Invoice"."BillingAddress" DESC) AS "percentile_disc_3",
+     PERCENTILE_CONT ($3::double precision) WITHIN GROUP (ORDER BY "Invoice"."Total") AS "percentile_cont_1",
+     PERCENTILE_CONT ($4::double precision) WITHIN GROUP (ORDER BY INTERVAL '1 HOUR' DESC) AS "percentile_cont_int",
+     MODE () WITHIN GROUP (ORDER BY "Invoice"."BillingPostalCode" DESC) AS "mode_1"
+FROM chinook."Invoice"
+GROUP BY "Invoice"."Total";
+`, 0.1, 100.0, 0.3, 0.2)
+
+	var dest struct {
+		PercentileDisc1 string
+		PercentileDisc2 string
+		PercentileDisc3 string
+		PercentileCont1 string
+		Mode1           string
+	}
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"PercentileDisc1": "41",
+	"PercentileDisc2": "2009-01-19T00:00:00Z",
+	"PercentileDisc3": "{\"Via Degli Scipioni, 43\",\"Qe 7 Bloco G\",\"Berger Stra�e 10\",\"696 Osborne Street\",\"2211 W Berry Street\",\"1033 N Park Ave\"}",
+	"PercentileCont1": "0.99",
+	"Mode1": "X1A 1N6"
+}
+`)
 }

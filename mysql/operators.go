@@ -7,3 +7,6 @@ var NOT = jet.NOT
 
 // BIT_NOT inverts every bit in integer expression result
 var BIT_NOT = jet.BIT_NOT
+
+// DISTINCT operator can be used to return distinct values of expr
+var DISTINCT = jet.DISTINCT

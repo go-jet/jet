@@ -232,3 +232,117 @@ FROM payment;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 }
+
+func TestRecursiveWithStatement_Fibonacci(t *testing.T) {
+	// CTE columns are listed as part of CTE definition
+	n1 := IntegerColumn("n1")
+	fibN1 := IntegerColumn("fibN1")
+	nextFibN1 := IntegerColumn("nextFibN1")
+	fibonacci1 := CTE("fibonacci1", n1, fibN1, nextFibN1)
+
+	// CTE columns are columns from non-recursive select
+	fibonacci2 := CTE("fibonacci2")
+	n2 := IntegerColumn("n2").From(fibonacci2)
+	fibN2 := IntegerColumn("fibN2").From(fibonacci2)
+	nextFibN2 := IntegerColumn("nextFibN2").From(fibonacci2)
+
+	stmt := WITH_RECURSIVE(
+		fibonacci1.AS(
+			SELECT(
+				Int32(1), Int32(0), Int32(1),
+			).UNION_ALL(
+				SELECT(
+					n1.ADD(Int(1)), nextFibN1, fibN1.ADD(nextFibN1),
+				).FROM(
+					fibonacci1,
+				).WHERE(
+					n1.LT(Int(20)),
+				),
+			),
+		),
+		fibonacci2.AS(
+			SELECT(
+				Int32(1).AS(n2.Name()),
+				Int32(0).AS(fibN2.Name()),
+				Int32(1).AS(nextFibN2.Name()),
+			).UNION_ALL(
+				SELECT(
+					n2.ADD(Int(1)), nextFibN2, fibN2.ADD(nextFibN2),
+				).FROM(
+					fibonacci2,
+				).WHERE(
+					n2.LT(Int(20)),
+				),
+			),
+		),
+	)(
+		SELECT(
+			fibonacci1.AllColumns(),
+			fibonacci2.AllColumns(),
+		).FROM(
+			fibonacci1.INNER_JOIN(fibonacci2, n1.EQ(n2)),
+		).WHERE(
+			n1.EQ(Int(20)),
+		),
+	)
+
+	//fmt.Println(stmt.Sql())
+
+	testutils.AssertStatementSql(t, stmt, strings.ReplaceAll(`
+WITH RECURSIVE fibonacci1 (n1, ''fibN1'', ''nextFibN1'') AS (
+     
+     SELECT ?,
+          ?,
+          ?
+     
+     UNION ALL
+     
+     SELECT fibonacci1.n1 + ?,
+          fibonacci1.''nextFibN1'' AS "nextFibN1",
+          fibonacci1.''fibN1'' + fibonacci1.''nextFibN1''
+     FROM fibonacci1
+     WHERE fibonacci1.n1 < ?
+),fibonacci2 AS (
+     
+     SELECT ? AS "n2",
+          ? AS "fibN2",
+          ? AS "nextFibN2"
+     
+     UNION ALL
+     
+     SELECT fibonacci2.n2 + ?,
+          fibonacci2.''nextFibN2'' AS "nextFibN2",
+          fibonacci2.''fibN2'' + fibonacci2.''nextFibN2''
+     FROM fibonacci2
+     WHERE fibonacci2.n2 < ?
+)
+SELECT fibonacci1.n1 AS "n1",
+     fibonacci1.''fibN1'' AS "fibN1",
+     fibonacci1.''nextFibN1'' AS "nextFibN1",
+     fibonacci2.n2 AS "n2",
+     fibonacci2.''fibN2'' AS "fibN2",
+     fibonacci2.''nextFibN2'' AS "nextFibN2"
+FROM fibonacci1
+     INNER JOIN fibonacci2 ON (fibonacci1.n1 = fibonacci2.n2)
+WHERE fibonacci1.n1 = ?;
+`, "''", "`"))
+
+	var dest struct {
+		N1        int
+		FibN1     int
+		NextFibN1 int
+
+		N2        int
+		FibN2     int
+		NextFibN2 int
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.N1, 20)
+	require.Equal(t, dest.FibN1, 4181)
+	require.Equal(t, dest.NextFibN1, 6765)
+	require.Equal(t, dest.N2, 20)
+	require.Equal(t, dest.FibN2, 4181)
+	require.Equal(t, dest.NextFibN2, 6765)
+}

@@ -58,7 +58,7 @@ type SelectStatement interface {
 	AsTable(alias string) SelectTable
 }
 
-//SELECT creates new SelectStatement with list of projections
+// SELECT creates new SelectStatement with list of projections
 func SELECT(projection Projection, projections ...Projection) SelectStatement {
 	return newSelectStatement(nil, append([]Projection{projection}, projections...))
 }
@@ -106,10 +106,7 @@ func (s *selectStatementImpl) DISTINCT() SelectStatement {
 }
 
 func (s *selectStatementImpl) FROM(tables ...ReadableTable) SelectStatement {
-	s.From.Tables = nil
-	for _, table := range tables {
-		s.From.Tables = append(s.From.Tables, table)
-	}
+	s.From.Tables = readableTablesToSerializerList(tables)
 	return s
 }
 
@@ -188,4 +185,12 @@ func toJetFrameOffset(offset interface{}) jet.Serializer {
 	//}
 
 	return jet.FixedLiteral(offset)
+}
+
+func readableTablesToSerializerList(tables []ReadableTable) []jet.Serializer {
+	var ret []jet.Serializer
+	for _, table := range tables {
+		ret = append(ret, table)
+	}
+	return ret
 }
