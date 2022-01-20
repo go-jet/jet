@@ -122,14 +122,16 @@ func TestDeleteFrom(t *testing.T) {
 			table.Staff.
 				INNER_JOIN(table.Store, table.Store.StoreID.EQ(table.Staff.StaffID)),
 			table.Actor,
-		).WHERE(
-		table.Staff.StaffID.EQ(table.Rental.StaffID).
-			AND(table.Staff.StaffID.EQ(Int(2))).
-			AND(table.Rental.RentalID.LT(Int(10))),
-	).RETURNING(
-		table.Rental.AllColumns,
-		table.Store.AllColumns,
-	)
+		).
+		WHERE(
+			table.Staff.StaffID.EQ(table.Rental.StaffID).
+				AND(table.Staff.StaffID.EQ(Int(2))).
+				AND(table.Rental.RentalID.LT(Int(10))),
+		).
+		RETURNING(
+			table.Rental.AllColumns,
+			table.Store.AllColumns,
+		)
 
 	testutils.AssertStatementSql(t, stmt, `
 DELETE FROM dvds.rental

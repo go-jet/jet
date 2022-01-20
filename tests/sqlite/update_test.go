@@ -298,16 +298,19 @@ func TestUpdateFrom(t *testing.T) {
 	stmt := table.Rental.UPDATE().
 		SET(
 			table.Rental.RentalDate.SET(DateTime(2020, 2, 2, 0, 0, 0)),
-		).FROM(
-		table.Staff.
-			INNER_JOIN(table.Store, table.Store.StoreID.EQ(table.Staff.StaffID)),
-	).WHERE(
-		table.Staff.StaffID.EQ(table.Rental.StaffID).
-			AND(table.Staff.StaffID.EQ(Int(2))).
-			AND(table.Rental.RentalID.LT(Int(10))),
-	).RETURNING(
-		table.Rental.AllColumns.Except(table.Rental.LastUpdate),
-	)
+		).
+		FROM(
+			table.Staff.
+				INNER_JOIN(table.Store, table.Store.StoreID.EQ(table.Staff.StaffID)),
+		).
+		WHERE(
+			table.Staff.StaffID.EQ(table.Rental.StaffID).
+				AND(table.Staff.StaffID.EQ(Int(2))).
+				AND(table.Rental.RentalID.LT(Int(10))),
+		).
+		RETURNING(
+			table.Rental.AllColumns.Except(table.Rental.LastUpdate),
+		)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 UPDATE rental
