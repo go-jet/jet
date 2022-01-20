@@ -76,7 +76,7 @@ func init() {
 		loggedDebugSQL = statement.DebugSql()
 	})
 
-	sqlite.SetQueryLoggerFunc(func(ctx context.Context, info sqlite.QueryInfo) {
+	sqlite.SetQueryLogger(func(ctx context.Context, info sqlite.QueryInfo) {
 		queryInfo = info
 		callerFile, callerLine, callerFunction = info.Caller()
 	})

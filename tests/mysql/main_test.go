@@ -63,7 +63,7 @@ func init() {
 		loggedDebugSQL = statement.DebugSql()
 	})
 
-	jetmysql.SetQueryLoggerFunc(func(ctx context.Context, info jetmysql.QueryInfo) {
+	jetmysql.SetQueryLogger(func(ctx context.Context, info jetmysql.QueryInfo) {
 		queryInfo = info
 		callerFile, callerLine, callerFunction = info.Caller()
 	})

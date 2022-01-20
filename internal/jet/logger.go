@@ -32,7 +32,7 @@ func callLogger(ctx context.Context, statement Statement) {
 // QueryInfo contains information about executed query
 type QueryInfo struct {
 	Statement PrintableStatement
-	// Depending of statement execution method RowsProcessed is:
+	// Depending on how the statement is executed, RowsProcessed is:
 	// 	- Number of rows returned for Query() and QueryContext() methods
 	// 	- RowsAffected() for Exec() and ExecContext() methods
 	// 	- Always 0 for Rows() method.
@@ -46,8 +46,8 @@ type QueryLoggerFunc func(ctx context.Context, info QueryInfo)
 
 var queryLoggerFunc QueryLoggerFunc
 
-// SetQueryLoggerFunc sets automatic query logging function.
-func SetQueryLoggerFunc(loggerFunc QueryLoggerFunc) {
+// SetQueryLogger sets automatic query logging function.
+func SetQueryLogger(loggerFunc QueryLoggerFunc) {
 	queryLoggerFunc = loggerFunc
 }
 

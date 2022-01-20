@@ -71,7 +71,7 @@ func init() {
 		loggedDebugSQL = statement.DebugSql()
 	})
 
-	postgres.SetQueryLoggerFunc(func(ctx context.Context, info postgres.QueryInfo) {
+	postgres.SetQueryLogger(func(ctx context.Context, info postgres.QueryInfo) {
 		queryInfo = info
 		callerFile, callerLine, callerFunction = info.Caller()
 	})
