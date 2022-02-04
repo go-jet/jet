@@ -201,23 +201,38 @@ func isFloatType(value reflect.Type) bool {
 	return false
 }
 
-func tryAssign(source, destination reflect.Value) error {
-
-	if source.Type() != destination.Type() &&
-		!isFloatType(destination.Type()) && // to preserve precision during conversion
-		!(isIntegerType(source.Type()) && destination.Kind() == reflect.String) && // default conversion will convert int to 1 rune string
-		source.Type().ConvertibleTo(destination.Type()) {
-
-		source = source.Convert(destination.Type())
-	}
-
+func assignIfAssignable(source, destination reflect.Value) bool {
 	if source.Type().AssignableTo(destination.Type()) {
-		switch b := source.Interface().(type) {
-		case []byte:
-			destination.SetBytes(cloneBytes(b))
+		switch source.Type() {
+		case byteArrayType:
+			destination.SetBytes(cloneBytes(source.Interface().([]byte)))
 		default:
 			destination.Set(source)
 		}
+		return true
+	}
+
+	return false
+}
+
+func tryAssign(source, destination reflect.Value) error {
+
+	if assignIfAssignable(source, destination) {
+		return nil
+	}
+
+	sourceType := source.Type()
+	destinationType := destination.Type()
+
+	if sourceType != destinationType &&
+		!isFloatType(destinationType) && // to preserve precision during conversion
+		!(isIntegerType(sourceType) && destination.Kind() == reflect.String) && // default conversion will convert int to 1 rune string
+		sourceType.ConvertibleTo(destinationType) {
+
+		source = source.Convert(destinationType)
+	}
+
+	if assignIfAssignable(source, destination) {
 		return nil
 	}
 
@@ -302,38 +317,32 @@ func tryAssign(source, destination reflect.Value) error {
 	return nil
 }
 
+func setZeroValue(value reflect.Value) {
+	if !value.IsZero() {
+		value.Set(reflect.Zero(value.Type()))
+	}
+}
+
 func setReflectValue(source, destination reflect.Value) error {
+
+	if source.Kind() == reflect.Ptr {
+		if source.IsNil() {
+			// source is nil, destination should be its zero value
+			setZeroValue(destination)
+			return nil
+		}
+		source = source.Elem()
+	}
 
 	if destination.Kind() == reflect.Ptr {
 		if destination.IsNil() {
 			initializeValueIfNilPtr(destination)
 		}
 
-		if source.Kind() == reflect.Ptr {
-			if source.IsNil() {
-				return nil // source is nil, destination should keep its zero value
-			}
-			source = source.Elem()
-		}
-
-		if err := tryAssign(source, destination.Elem()); err != nil {
-			return err
-		}
-
-	} else {
-		if source.Kind() == reflect.Ptr {
-			if source.IsNil() {
-				return nil // source is nil, destination should keep its zero value
-			}
-			source = source.Elem()
-		}
-
-		if err := tryAssign(source, destination); err != nil {
-			return err
-		}
+		destination = destination.Elem()
 	}
 
-	return nil
+	return tryAssign(source, destination)
 }
 
 func isPrimaryKey(field reflect.StructField, primaryKeyOverwrites []string) bool {

@@ -63,46 +63,26 @@ func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr
 }
 
 // ScanOneRowToDest will scan one row into struct destination
-func ScanOneRowToDest(rows *sql.Rows, destPtr interface{}) error {
+func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interface{}) error {
 	utils.MustBeInitializedPtr(destPtr, "jet: destination is nil")
 	utils.MustBe(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
-
-	scanContext, err := newScanContext(rows)
-
-	if err != nil {
-		return fmt.Errorf("failed to create scan context, %w", err)
-	}
 
 	if len(scanContext.row) == 0 {
 		return errors.New("empty row slice")
 	}
 
-	err = rows.Scan(scanContext.row...)
+	err := rows.Scan(scanContext.row...)
 
 	if err != nil {
 		return fmt.Errorf("rows scan error, %w", err)
 	}
 
-	destinationPtrType := reflect.TypeOf(destPtr)
-	tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
-	tempSliceValue := tempSlicePtrValue.Elem()
+	destValue := reflect.ValueOf(destPtr)
 
-	_, err = mapRowToSlice(scanContext, "", newTypeStack(), tempSlicePtrValue, nil)
+	_, err = mapRowToStruct(scanContext, "", newTypeStack(), destValue, nil)
 
 	if err != nil {
 		return fmt.Errorf("failed to map a row, %w", err)
-	}
-
-	// edge case when row result set contains only NULLs.
-	if tempSliceValue.Len() == 0 {
-		return nil
-	}
-
-	destValue := reflect.ValueOf(destPtr).Elem()
-	firstTempSliceValue := tempSliceValue.Index(0).Elem()
-
-	if destValue.Type().AssignableTo(firstTempSliceValue.Type()) {
-		destValue.Set(tempSliceValue.Index(0).Elem())
 	}
 
 	return nil
@@ -120,7 +100,7 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 	}
 	defer rows.Close()
 
-	scanContext, err := newScanContext(rows)
+	scanContext, err := NewScanContext(rows)
 
 	if err != nil {
 		return
@@ -157,7 +137,7 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 }
 
 func mapRowToSlice(
-	scanContext *scanContext,
+	scanContext *ScanContext,
 	groupKey string,
 	typesVisited *typeStack,
 	slicePtrValue reflect.Value,
@@ -204,7 +184,7 @@ func mapRowToSlice(
 	return
 }
 
-func mapRowToBaseTypeSlice(scanContext *scanContext, slicePtrValue reflect.Value, field *reflect.StructField) (updated bool, err error) {
+func mapRowToBaseTypeSlice(scanContext *ScanContext, slicePtrValue reflect.Value, field *reflect.StructField) (updated bool, err error) {
 	index := 0
 	if field != nil {
 		typeName, columnName := getTypeAndFieldName("", *field)
@@ -226,7 +206,7 @@ func mapRowToBaseTypeSlice(scanContext *scanContext, slicePtrValue reflect.Value
 }
 
 func mapRowToStruct(
-	scanContext *scanContext,
+	scanContext *ScanContext,
 	groupKey string,
 	typesVisited *typeStack, // to prevent circular dependency scan
 	structPtrValue reflect.Value,
@@ -308,7 +288,7 @@ func mapRowToStruct(
 }
 
 func mapRowToDestinationValue(
-	scanContext *scanContext,
+	scanContext *ScanContext,
 	groupKey string,
 	typesVisited *typeStack,
 	dest reflect.Value,
@@ -340,7 +320,7 @@ func mapRowToDestinationValue(
 }
 
 func mapRowToDestinationPtr(
-	scanContext *scanContext,
+	scanContext *ScanContext,
 	groupKey string,
 	typesVisited *typeStack,
 	destPtrValue reflect.Value,

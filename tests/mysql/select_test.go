@@ -951,8 +951,12 @@ func TestRowsScan(t *testing.T) {
 
 	stmt := SELECT(
 		Inventory.AllColumns,
+		Film.AllColumns,
+		Store.AllColumns,
 	).FROM(
-		Inventory,
+		Inventory.
+			INNER_JOIN(Film, Film.FilmID.EQ(Inventory.FilmID)).
+			INNER_JOIN(Store, Store.StoreID.EQ(Inventory.StoreID)),
 	).ORDER_BY(
 		Inventory.InventoryID.ASC(),
 	)
@@ -961,19 +965,42 @@ func TestRowsScan(t *testing.T) {
 	require.NoError(t, err)
 
 	for rows.Next() {
-		var inventory model.Inventory
+		var inventory struct {
+			model.Inventory
+
+			Film  model.Film
+			Store model.Store
+		}
+
 		err = rows.Scan(&inventory)
 		require.NoError(t, err)
 
-		require.NotEqual(t, inventory.InventoryID, uint32(0))
-		require.NotEqual(t, inventory.FilmID, uint16(0))
-		require.NotEqual(t, inventory.StoreID, uint16(0))
-		require.NotEqual(t, inventory.LastUpdate, time.Time{})
+		require.NotEmpty(t, inventory.InventoryID)
+		require.NotEmpty(t, inventory.FilmID)
+		require.NotEmpty(t, inventory.StoreID)
+		require.NotEmpty(t, inventory.LastUpdate)
+
+		require.NotEmpty(t, inventory.Film.FilmID)
+		require.NotEmpty(t, inventory.Film.Title)
+		require.NotEmpty(t, inventory.Film.Description)
+
+		require.NotEmpty(t, inventory.Store.StoreID)
+		require.NotEmpty(t, inventory.Store.AddressID)
+		require.NotEmpty(t, inventory.Store.ManagerStaffID)
 
 		if inventory.InventoryID == 2103 {
 			require.Equal(t, inventory.FilmID, uint16(456))
 			require.Equal(t, inventory.StoreID, uint8(2))
 			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2006-02-15T05:09:17Z")
+
+			require.Equal(t, inventory.Film.FilmID, uint16(456))
+			require.Equal(t, inventory.Film.Title, "INCH JET")
+			require.Equal(t, *inventory.Film.Description, "A Fateful Saga of a Womanizer And a Student who must Defeat a Butler in A Monastery")
+			require.Equal(t, *inventory.Film.ReleaseYear, int16(2006))
+
+			require.Equal(t, inventory.Store.StoreID, uint8(2))
+			require.Equal(t, inventory.Store.ManagerStaffID, uint8(2))
+			require.Equal(t, inventory.Store.AddressID, uint16(2))
 		}
 	}
 

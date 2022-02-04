@@ -7,7 +7,9 @@ import (
 	"strings"
 )
 
-type scanContext struct {
+// ScanContext  contains information about current row processed, mapping from the row to the
+// destination types and type grouping information.
+type ScanContext struct {
 	rowNum                   int64
 	row                      []interface{}
 	uniqueDestObjectsMap     map[string]int
@@ -16,7 +18,8 @@ type scanContext struct {
 	typeInfoMap              map[string]typeInfo
 }
 
-func newScanContext(rows *sql.Rows) (*scanContext, error) {
+// NewScanContext creates new ScanContext from rows
+func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 	aliases, err := rows.Columns()
 
 	if err != nil {
@@ -42,7 +45,7 @@ func newScanContext(rows *sql.Rows) (*scanContext, error) {
 		commonIdentToColumnIndex[commonIdentifier] = i
 	}
 
-	return &scanContext{
+	return &ScanContext{
 		row:                  createScanSlice(len(columnTypes)),
 		uniqueDestObjectsMap: make(map[string]int),
 
@@ -74,7 +77,7 @@ type fieldMapping struct {
 	implementsScanner bool
 }
 
-func (s *scanContext) getTypeInfo(structType reflect.Type, parentField *reflect.StructField) typeInfo {
+func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.StructField) typeInfo {
 
 	typeMapKey := structType.String()
 
@@ -120,7 +123,7 @@ type groupKeyInfo struct {
 	subTypes []groupKeyInfo
 }
 
-func (s *scanContext) getGroupKey(structType reflect.Type, structField *reflect.StructField) string {
+func (s *ScanContext) getGroupKey(structType reflect.Type, structField *reflect.StructField) string {
 
 	mapKey := structType.Name()
 
@@ -139,7 +142,7 @@ func (s *scanContext) getGroupKey(structType reflect.Type, structField *reflect.
 	return s.constructGroupKey(groupKeyInfo)
 }
 
-func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
+func (s *ScanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 	if len(groupKeyInfo.indexes) == 0 && len(groupKeyInfo.subTypes) == 0 {
 		return fmt.Sprintf("|ROW:%d|", s.rowNum)
 	}
@@ -161,7 +164,7 @@ func (s *scanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
 	return groupKeyInfo.typeName + "(" + strings.Join(groupKeys, ",") + strings.Join(subTypesGroupKeys, ",") + ")"
 }
 
-func (s *scanContext) getGroupKeyInfo(
+func (s *ScanContext) getGroupKeyInfo(
 	structType reflect.Type,
 	parentField *reflect.StructField,
 	typeVisited *typeStack) groupKeyInfo {
@@ -210,7 +213,7 @@ func (s *scanContext) getGroupKeyInfo(
 	return ret
 }
 
-func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
+func (s *ScanContext) typeToColumnIndex(typeName, fieldName string) int {
 	var key string
 
 	if typeName != "" {
@@ -228,7 +231,7 @@ func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 	return index
 }
 
-func (s *scanContext) rowElem(index int) interface{} {
+func (s *ScanContext) rowElem(index int) interface{} {
 	cellValue := reflect.ValueOf(s.row[index])
 
 	if cellValue.IsValid() && !cellValue.IsNil() {
@@ -238,7 +241,7 @@ func (s *scanContext) rowElem(index int) interface{} {
 	return nil
 }
 
-func (s *scanContext) rowElemValuePtr(index int) reflect.Value {
+func (s *ScanContext) rowElemValuePtr(index int) reflect.Value {
 	rowElem := s.rowElem(index)
 	rowElemValue := reflect.ValueOf(rowElem)
 
