@@ -198,6 +198,9 @@ GROUP BY payment.customer_id;
 
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
+
+	testutils.PrintJson(dest)
+
 	testutils.AssertJSON(t, dest, `
 {
 	"PaymentID": 0,
