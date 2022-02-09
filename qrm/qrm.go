@@ -74,15 +74,15 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 	err := rows.Scan(scanContext.row...)
 
 	if err != nil {
-		return fmt.Errorf("rows scan error, %w", err)
+		return fmt.Errorf("jet: rows scan error, %w", err)
 	}
 
-	destValue := reflect.ValueOf(destPtr)
+	destValuePtr := reflect.ValueOf(destPtr)
 
-	_, err = mapRowToStruct(scanContext, "", newTypeStack(), destValue, nil)
+	_, err = mapRowToStruct(scanContext, "", destValuePtr, nil)
 
 	if err != nil {
-		return fmt.Errorf("failed to map a row, %w", err)
+		return fmt.Errorf("jet: failed to scan a row into destination, %w", err)
 	}
 
 	return nil
@@ -121,7 +121,7 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 
 		scanContext.rowNum++
 
-		_, err = mapRowToSlice(scanContext, "", newTypeStack(), slicePtrValue, nil)
+		_, err = mapRowToSlice(scanContext, "", slicePtrValue, nil)
 
 		if err != nil {
 			return scanContext.rowNum, err
@@ -139,7 +139,6 @@ func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, 
 func mapRowToSlice(
 	scanContext *ScanContext,
 	groupKey string,
-	typesVisited *typeStack,
 	slicePtrValue reflect.Value,
 	field *reflect.StructField) (updated bool, err error) {
 
@@ -154,19 +153,19 @@ func mapRowToSlice(
 
 	structGroupKey := scanContext.getGroupKey(sliceElemType, field)
 
-	groupKey = groupKey + "," + structGroupKey
+	groupKey = concat(groupKey, ",", structGroupKey)
 
 	index, ok := scanContext.uniqueDestObjectsMap[groupKey]
 
 	if ok {
 		structPtrValue := getSliceElemPtrAt(slicePtrValue, index)
 
-		return mapRowToStruct(scanContext, groupKey, typesVisited, structPtrValue, field, true)
+		return mapRowToStruct(scanContext, groupKey, structPtrValue, field, true)
 	}
 
 	destinationStructPtr := newElemPtrValueForSlice(slicePtrValue)
 
-	updated, err = mapRowToStruct(scanContext, groupKey, typesVisited, destinationStructPtr, field)
+	updated, err = mapRowToStruct(scanContext, groupKey, destinationStructPtr, field)
 
 	if err != nil {
 		return
@@ -192,7 +191,7 @@ func mapRowToBaseTypeSlice(scanContext *ScanContext, slicePtrValue reflect.Value
 			return
 		}
 	}
-	rowElemPtr := scanContext.rowElemValuePtr(index)
+	rowElemPtr := scanContext.rowElemValueClonePtr(index)
 
 	if rowElemPtr.IsValid() && !rowElemPtr.IsNil() {
 		updated = true
@@ -208,7 +207,6 @@ func mapRowToBaseTypeSlice(scanContext *ScanContext, slicePtrValue reflect.Value
 func mapRowToStruct(
 	scanContext *ScanContext,
 	groupKey string,
-	typesVisited *typeStack, // to prevent circular dependency scan
 	structPtrValue reflect.Value,
 	parentField *reflect.StructField,
 	onlySlices ...bool, // small optimization, not to assign to already assigned struct fields
@@ -217,12 +215,12 @@ func mapRowToStruct(
 	mapOnlySlices := len(onlySlices) > 0
 	structType := structPtrValue.Type().Elem()
 
-	if typesVisited.contains(&structType) {
+	if scanContext.typesVisited.contains(&structType) {
 		return false, nil
 	}
 
-	typesVisited.push(&structType)
-	defer typesVisited.pop()
+	scanContext.typesVisited.push(&structType)
+	defer scanContext.typesVisited.pop()
 
 	typeInf := scanContext.getTypeInfo(structType, parentField)
 
@@ -240,7 +238,7 @@ func mapRowToStruct(
 
 		if fieldMap.complexType {
 			var changed bool
-			changed, err = mapRowToDestinationValue(scanContext, groupKey, typesVisited, fieldValue, &field)
+			changed, err = mapRowToDestinationValue(scanContext, groupKey, fieldValue, &field)
 
 			if err != nil {
 				return
@@ -251,34 +249,36 @@ func mapRowToStruct(
 			}
 
 		} else {
-			if mapOnlySlices || fieldMap.columnIndex == -1 {
+			if mapOnlySlices || fieldMap.rowIndex == -1 {
 				continue
 			}
 
-			cellValue := scanContext.rowElem(fieldMap.columnIndex)
+			scannedValue := scanContext.rowElemValue(fieldMap.rowIndex)
 
-			if cellValue == nil {
+			if !scannedValue.IsValid() {
+				setZeroValue(fieldValue) // scannedValue is nil, destination should be set to zero value
 				continue
 			}
 
-			initializeValueIfNilPtr(fieldValue)
 			updated = true
 
 			if fieldMap.implementsScanner {
-				scanner := getScanner(fieldValue)
+				initializeValueIfNilPtr(fieldValue)
+				fieldScanner := getScanner(fieldValue)
 
-				err = scanner.Scan(cellValue)
+				value := scannedValue.Interface()
+
+				err := fieldScanner.Scan(value)
 
 				if err != nil {
-					err = fmt.Errorf(`can't scan %T(%q) to '%s %s': %w`, cellValue, cellValue, field.Name, field.Type.String(), err)
-					return
+					return updated, fmt.Errorf(`can't scan %T(%q) to '%s %s': %w`, value, value, field.Name, field.Type.String(), err)
 				}
 			} else {
-				err = setReflectValue(reflect.ValueOf(cellValue), fieldValue)
+				err := assign(scannedValue, fieldValue)
 
 				if err != nil {
-					err = fmt.Errorf(`can't assign %T(%q) to '%s %s': %w`, cellValue, cellValue, field.Name, field.Type.String(), err)
-					return
+					return updated, fmt.Errorf(`can't assign %T(%q) to '%s %s': %w`, scannedValue.Interface(), scannedValue.Interface(),
+						field.Name, field.Type.String(), err)
 				}
 			}
 		}
@@ -290,7 +290,6 @@ func mapRowToStruct(
 func mapRowToDestinationValue(
 	scanContext *ScanContext,
 	groupKey string,
-	typesVisited *typeStack,
 	dest reflect.Value,
 	structField *reflect.StructField) (updated bool, err error) {
 
@@ -306,7 +305,7 @@ func mapRowToDestinationValue(
 		}
 	}
 
-	updated, err = mapRowToDestinationPtr(scanContext, groupKey, typesVisited, destPtrValue, structField)
+	updated, err = mapRowToDestinationPtr(scanContext, groupKey, destPtrValue, structField)
 
 	if err != nil {
 		return
@@ -322,7 +321,6 @@ func mapRowToDestinationValue(
 func mapRowToDestinationPtr(
 	scanContext *ScanContext,
 	groupKey string,
-	typesVisited *typeStack,
 	destPtrValue reflect.Value,
 	structField *reflect.StructField) (updated bool, err error) {
 
@@ -331,9 +329,9 @@ func mapRowToDestinationPtr(
 	destValueKind := destPtrValue.Elem().Kind()
 
 	if destValueKind == reflect.Struct {
-		return mapRowToStruct(scanContext, groupKey, typesVisited, destPtrValue, structField)
+		return mapRowToStruct(scanContext, groupKey, destPtrValue, structField)
 	} else if destValueKind == reflect.Slice {
-		return mapRowToSlice(scanContext, groupKey, typesVisited, destPtrValue, structField)
+		return mapRowToSlice(scanContext, groupKey, destPtrValue, structField)
 	} else {
 		panic("jet: unsupported dest type: " + structField.Name + " " + structField.Type.String())
 	}

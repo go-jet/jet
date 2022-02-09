@@ -2521,6 +2521,79 @@ func TestRecursionScanNx1(t *testing.T) {
 	})
 }
 
+type StoreInfo struct {
+	model.Store
+
+	Staffs ManagerInfo
+}
+
+type ManagerInfo struct {
+	model.Staff
+	Store *StoreInfo
+}
+
+func TestRecursionScan1x1(t *testing.T) {
+
+	stmt := SELECT(
+		Store.AllColumns,
+		Staff.AllColumns,
+	).FROM(
+		Store.
+			INNER_JOIN(Staff, Staff.StaffID.EQ(Store.ManagerStaffID)),
+	).ORDER_BY(
+		Store.StoreID,
+	)
+
+	var dest []StoreInfo
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"StoreID": 1,
+		"ManagerStaffID": 1,
+		"AddressID": 1,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": {
+			"StaffID": 1,
+			"FirstName": "Mike",
+			"LastName": "Hillyer",
+			"AddressID": 3,
+			"Email": "Mike.Hillyer@sakilastaff.com",
+			"StoreID": 1,
+			"Active": true,
+			"Username": "Mike",
+			"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+			"LastUpdate": "2006-05-16T16:13:11.79328Z",
+			"Picture": "iVBORw0KWgo=",
+			"Store": null
+		}
+	},
+	{
+		"StoreID": 2,
+		"ManagerStaffID": 2,
+		"AddressID": 2,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": {
+			"StaffID": 2,
+			"FirstName": "Jon",
+			"LastName": "Stephens",
+			"AddressID": 4,
+			"Email": "Jon.Stephens@sakilastaff.com",
+			"StoreID": 2,
+			"Active": true,
+			"Username": "Jon",
+			"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+			"LastUpdate": "2006-05-16T16:13:11.79328Z",
+			"Picture": null,
+			"Store": null
+		}
+	}
+]
+`)
+}
+
 // In parameterized statements integer literals, like Int(num), are replaced with a placeholders. For some expressions,
 // postgres interpreter will not have enough information to deduce the type. If this is the case postgres returns an error.
 // Int8, Int16, .... functions will add automatic type cast over placeholder, so type deduction is always possible.

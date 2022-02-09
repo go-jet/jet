@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/model"
@@ -864,5 +863,4 @@ WHERE orders1."orders.order_id" < $1;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 	require.Len(t, dest, 72)
-	fmt.Println(len(dest))
 }

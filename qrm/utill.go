@@ -18,9 +18,9 @@ func implementsScannerType(fieldType reflect.Type) bool {
 		return true
 	}
 
-	typePtr := reflect.New(fieldType).Type()
+	fieldTypePtr := reflect.New(fieldType).Type()
 
-	return typePtr.Implements(scannerInterfaceType)
+	return fieldTypePtr.Implements(scannerInterfaceType)
 }
 
 func getScanner(value reflect.Value) sql.Scanner {
@@ -68,9 +68,9 @@ func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) e
 
 		if newSliceElemValue.Kind() == reflect.Ptr {
 			newSliceElemValue.Set(reflect.New(newSliceElemValue.Type().Elem()))
-			err = tryAssign(objPtrValue.Elem(), newSliceElemValue.Elem())
+			err = assign(objPtrValue.Elem(), newSliceElemValue.Elem())
 		} else {
-			err = tryAssign(objPtrValue.Elem(), newSliceElemValue)
+			err = assign(objPtrValue.Elem(), newSliceElemValue)
 		}
 
 		if err != nil {
@@ -138,29 +138,6 @@ func initializeValueIfNilPtr(value reflect.Value) {
 	}
 }
 
-func valueToString(value reflect.Value) string {
-
-	if !value.IsValid() {
-		return "nil"
-	}
-
-	var valueInterface interface{}
-	if value.Kind() == reflect.Ptr {
-		if value.IsNil() {
-			return "nil"
-		}
-		valueInterface = value.Elem().Interface()
-	} else {
-		valueInterface = value.Interface()
-	}
-
-	if t, ok := valueInterface.(fmt.Stringer); ok {
-		return t.String()
-	}
-
-	return fmt.Sprintf("%#v", valueInterface)
-}
-
 var timeType = reflect.TypeOf(time.Now())
 var uuidType = reflect.TypeOf(uuid.New())
 var byteArrayType = reflect.TypeOf([]byte(""))
@@ -180,30 +157,35 @@ func isSimpleModelType(objType reflect.Type) bool {
 	return objType == timeType || objType == uuidType || objType == byteArrayType
 }
 
-func isIntegerType(objType reflect.Type) bool {
-	objType = indirectType(objType)
+// source can't be pointer
+// destination can be pointer
+func assign(source, destination reflect.Value) error {
+	if destination.Kind() == reflect.Ptr {
+		if destination.IsNil() {
+			initializeValueIfNilPtr(destination)
+		}
 
-	switch objType.Kind() {
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return true
+		destination = destination.Elem()
 	}
 
-	return false
-}
+	err := tryAssign(source, destination)
 
-func isFloatType(value reflect.Type) bool {
-	switch value.Kind() {
-	case reflect.Float32, reflect.Float64:
-		return true
+	if err != nil {
+		// needs for the type conversions are rare, so we leave conversion as a last assign step if everything else fails
+		if tryConvert(source, destination) {
+			return nil
+		}
+
+		return err
 	}
 
-	return false
+	return nil
 }
 
 func assignIfAssignable(source, destination reflect.Value) bool {
-	if source.Type().AssignableTo(destination.Type()) {
-		switch source.Type() {
+	sourceType := source.Type()
+	if sourceType.AssignableTo(destination.Type()) {
+		switch sourceType {
 		case byteArrayType:
 			destination.SetBytes(cloneBytes(source.Interface().([]byte)))
 		default:
@@ -215,22 +197,8 @@ func assignIfAssignable(source, destination reflect.Value) bool {
 	return false
 }
 
+// source and destination are non-ptr values
 func tryAssign(source, destination reflect.Value) error {
-
-	if assignIfAssignable(source, destination) {
-		return nil
-	}
-
-	sourceType := source.Type()
-	destinationType := destination.Type()
-
-	if sourceType != destinationType &&
-		!isFloatType(destinationType) && // to preserve precision during conversion
-		!(isIntegerType(sourceType) && destination.Kind() == reflect.String) && // default conversion will convert int to 1 rune string
-		sourceType.ConvertibleTo(destinationType) {
-
-		source = source.Convert(destinationType)
-	}
 
 	if assignIfAssignable(source, destination) {
 		return nil
@@ -238,8 +206,8 @@ func tryAssign(source, destination reflect.Value) error {
 
 	sourceInterface := source.Interface()
 
-	switch destination.Interface().(type) {
-	case bool:
+	switch destination.Type().Kind() {
+	case reflect.Bool:
 		var nullBool internal.NullBool
 
 		err := nullBool.Scan(sourceInterface)
@@ -250,7 +218,7 @@ func tryAssign(source, destination reflect.Value) error {
 
 		destination.SetBool(nullBool.Bool)
 
-	case float32, float64:
+	case reflect.Float32, reflect.Float64:
 		var nullFloat sql.NullFloat64
 
 		err := nullFloat.Scan(sourceInterface)
@@ -261,7 +229,7 @@ func tryAssign(source, destination reflect.Value) error {
 		if nullFloat.Valid {
 			destination.SetFloat(nullFloat.Float64)
 		}
-	case int, int8, int16, int32, int64:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		var integer sql.NullInt64
 
 		err := integer.Scan(sourceInterface)
@@ -273,7 +241,7 @@ func tryAssign(source, destination reflect.Value) error {
 			destination.SetInt(integer.Int64)
 		}
 
-	case uint, uint8, uint16, uint32, uint64:
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		var uInt internal.NullUInt64
 
 		err := uInt.Scan(sourceInterface)
@@ -286,7 +254,7 @@ func tryAssign(source, destination reflect.Value) error {
 			destination.SetUint(uInt.UInt64)
 		}
 
-	case string:
+	case reflect.String:
 		var str sql.NullString
 
 		err := str.Scan(sourceInterface)
@@ -298,51 +266,42 @@ func tryAssign(source, destination reflect.Value) error {
 			destination.SetString(str.String)
 		}
 
-	case time.Time:
-		var nullTime internal.NullTime
-
-		err := nullTime.Scan(sourceInterface)
-		if err != nil {
-			return err
-		}
-
-		if nullTime.Valid {
-			destination.Set(reflect.ValueOf(nullTime.Time))
-		}
-
 	default:
-		return fmt.Errorf("can't assign %T to %T", sourceInterface, destination.Interface())
+		switch destination.Interface().(type) {
+		case time.Time:
+			var nullTime internal.NullTime
+
+			err := nullTime.Scan(sourceInterface)
+			if err != nil {
+				return err
+			}
+
+			if nullTime.Valid {
+				destination.Set(reflect.ValueOf(nullTime.Time))
+			}
+		default:
+			return fmt.Errorf("can't assign %T to %T", sourceInterface, destination.Interface())
+		}
 	}
 
 	return nil
+}
+
+func tryConvert(source, destination reflect.Value) bool {
+	destinationType := destination.Type()
+
+	if source.Type().ConvertibleTo(destinationType) {
+		source = source.Convert(destinationType)
+		return assignIfAssignable(source, destination)
+	}
+
+	return false
 }
 
 func setZeroValue(value reflect.Value) {
 	if !value.IsZero() {
 		value.Set(reflect.Zero(value.Type()))
 	}
-}
-
-func setReflectValue(source, destination reflect.Value) error {
-
-	if source.Kind() == reflect.Ptr {
-		if source.IsNil() {
-			// source is nil, destination should be its zero value
-			setZeroValue(destination)
-			return nil
-		}
-		source = source.Elem()
-	}
-
-	if destination.Kind() == reflect.Ptr {
-		if destination.IsNil() {
-			initializeValueIfNilPtr(destination)
-		}
-
-		destination = destination.Elem()
-	}
-
-	return tryAssign(source, destination)
 }
 
 func isPrimaryKey(field reflect.StructField, primaryKeyOverwrites []string) bool {
@@ -397,4 +356,12 @@ func cloneBytes(b []byte) []byte {
 	c := make([]byte, len(b))
 	copy(c, b)
 	return c
+}
+
+func concat(stringList ...string) string {
+	var b strings.Builder
+	for _, str := range stringList {
+		b.WriteString(str)
+	}
+	return b.String()
 }

@@ -206,7 +206,7 @@ GROUP BY payment.customer_id;
 	"RentalID": null,
 	"Amount": 0,
 	"PaymentDate": "0001-01-01T00:00:00Z",
-	"LastUpdate": "0001-01-01T00:00:00Z",
+	"LastUpdate": null,
 	"Count": 8,
 	"Sum": 38.92,
 	"Avg": 4.865,
@@ -964,14 +964,14 @@ func TestRowsScan(t *testing.T) {
 	rows, err := stmt.Rows(context.Background(), db)
 	require.NoError(t, err)
 
+	var inventory struct {
+		model.Inventory
+
+		Film  model.Film
+		Store model.Store
+	}
+
 	for rows.Next() {
-		var inventory struct {
-			model.Inventory
-
-			Film  model.Film
-			Store model.Store
-		}
-
 		err = rows.Scan(&inventory)
 		require.NoError(t, err)
 
@@ -1055,4 +1055,51 @@ func TestScanNumericToNumber(t *testing.T) {
 	require.Equal(t, number.UInt64, uint64(1234567890))
 	require.Equal(t, number.Float32, float32(1.234568e+09))
 	require.Equal(t, number.Float64, float64(1.23456789e+09))
+}
+
+// scan into custom base types should be equivalent to the scan into base go types
+func TestScanIntoCustomBaseTypes(t *testing.T) {
+
+	type MyUint8 uint8
+	type MyUint16 uint16
+	type MyUint32 uint32
+	type MyInt16 int16
+	type MyFloat32 float32
+	type MyFloat64 float64
+	type MyString string
+	type MyTime = time.Time
+
+	type film struct {
+		FilmID             MyUint16 `sql:"primary_key"`
+		Title              MyString
+		Description        *MyString
+		ReleaseYear        *MyInt16
+		LanguageID         MyUint8
+		OriginalLanguageID *MyUint8
+		RentalDuration     MyUint8
+		RentalRate         MyFloat32
+		Length             *MyUint32
+		ReplacementCost    MyFloat64
+		Rating             *model.FilmRating
+		SpecialFeatures    *MyString
+		LastUpdate         MyTime
+	}
+
+	stmt := SELECT(
+		Film.AllColumns,
+	).FROM(
+		Film,
+	).ORDER_BY(
+		Film.FilmID.ASC(),
+	).LIMIT(3)
+
+	var films []model.Film
+	err := stmt.Query(db, &films)
+	require.NoError(t, err)
+
+	var myFilms []film
+	err = stmt.Query(db, &myFilms)
+	require.NoError(t, err)
+
+	require.Equal(t, testutils.ToJSON(films), testutils.ToJSON(myFilms))
 }
