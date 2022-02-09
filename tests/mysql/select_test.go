@@ -206,7 +206,7 @@ GROUP BY payment.customer_id;
 	"RentalID": null,
 	"Amount": 0,
 	"PaymentDate": "0001-01-01T00:00:00Z",
-	"LastUpdate": null,
+	"LastUpdate": "0001-01-01T00:00:00Z",
 	"Count": 8,
 	"Sum": 38.92,
 	"Avg": 4.865,
