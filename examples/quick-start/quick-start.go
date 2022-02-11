@@ -36,7 +36,7 @@ func main() {
 	stmt := SELECT(
 		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,
 		Film.AllColumns,
-		Language.AllColumns,
+		Language.AllColumns.Except(Language.LastUpdate),
 		Category.AllColumns,
 	).FROM(
 		Actor.
