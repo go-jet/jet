@@ -1,5 +1,17 @@
 package jet
 
+// AND function adds AND operator between expressions. This function can be used, instead of method AND,
+// to have a better inlining of a complex condition in the Go code and in the generated SQL.
+func AND(expressions ...BoolExpression) BoolExpression {
+	return newBoolExpressionListOperator("AND", expressions...)
+}
+
+// OR function adds OR operator between expressions. This function can be used, instead of method OR,
+// to have a better inlining of a complex condition in the Go code and in the generated SQL.
+func OR(expressions ...BoolExpression) BoolExpression {
+	return newBoolExpressionListOperator("OR", expressions...)
+}
+
 // ROW is construct one table row from list of expressions.
 func ROW(expressions ...Expression) Expression {
 	return NewFunc("ROW", expressions, nil)

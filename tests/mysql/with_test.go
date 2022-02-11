@@ -165,9 +165,9 @@ WITH payments_to_delete AS (
 )
 DELETE FROM dvds.payment
 WHERE payment.payment_id IN (
-          SELECT payments_to_delete.''payment.payment_id'' AS "payment.payment_id"
-          FROM payments_to_delete
-     );
+           SELECT payments_to_delete.''payment.payment_id'' AS "payment.payment_id"
+           FROM payments_to_delete
+      );
 `, "''", "`"))
 
 	tx, err := db.Begin()

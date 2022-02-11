@@ -2,6 +2,15 @@ package mysql
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
+// This functions can be used, instead of its method counterparts, to have a better indentation of a complex condition
+// in the Go code and in the generated SQL.
+var (
+	// AND function adds AND operator between expressions.
+	AND = jet.AND
+	// OR function adds OR operator between expressions.
+	OR = jet.OR
+)
+
 // ROW is construct one table row from list of expressions.
 var ROW = jet.ROW
 

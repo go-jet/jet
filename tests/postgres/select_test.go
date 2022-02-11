@@ -395,8 +395,15 @@ func TestExecution1(t *testing.T) {
 			Customer.CustomerID,
 			Customer.LastName,
 		).
-		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
-		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+		WHERE(
+			OR(
+				City.City.EQ(String("London")),
+				City.City.EQ(String("York")),
+			),
+		).
+		ORDER_BY(
+			City.CityID, Address.AddressID, Customer.CustomerID,
+		)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
@@ -408,7 +415,10 @@ SELECT city.city_id AS "city.city_id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
+WHERE (
+          (city.city = 'London')
+              OR (city.city = 'York')
+      )
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -1073,9 +1083,9 @@ SELECT film.film_id AS "film.film_id",
      film.fulltext AS "film.fulltext"
 FROM dvds.film
 WHERE film.rental_rate = (
-          SELECT MAX(film.rental_rate)
-          FROM dvds.film
-     )
+           SELECT MAX(film.rental_rate)
+           FROM dvds.film
+      )
 ORDER BY film.film_id ASC;
 `
 

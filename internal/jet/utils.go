@@ -113,6 +113,17 @@ func ExpressionListToSerializerList(expressions []Expression) []Serializer {
 	return ret
 }
 
+// BoolExpressionListToExpressionList converts list of bool expressions to list of expressions
+func BoolExpressionListToExpressionList(expressions []BoolExpression) []Expression {
+	var ret []Expression
+
+	for _, expression := range expressions {
+		ret = append(ret, expression)
+	}
+
+	return ret
+}
+
 // ColumnListToProjectionList func
 func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
 	var ret []Projection

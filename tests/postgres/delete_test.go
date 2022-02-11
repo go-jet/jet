@@ -124,9 +124,11 @@ func TestDeleteFrom(t *testing.T) {
 			table.Actor,
 		).
 		WHERE(
-			table.Staff.StaffID.EQ(table.Rental.StaffID).
-				AND(table.Staff.StaffID.EQ(Int(2))).
-				AND(table.Rental.RentalID.LT(Int(10))),
+			AND(
+				table.Staff.StaffID.EQ(table.Rental.StaffID),
+				table.Store.StoreID.EQ(Int(2)),
+				table.Rental.RentalID.LT(Int(10)),
+			),
 		).
 		RETURNING(
 			table.Rental.AllColumns,
@@ -138,7 +140,11 @@ DELETE FROM dvds.rental
 USING dvds.staff
      INNER JOIN dvds.store ON (store.store_id = staff.staff_id),
      dvds.actor
-WHERE ((staff.staff_id = rental.staff_id) AND (staff.staff_id = $1)) AND (rental.rental_id < $2)
+WHERE (
+          (staff.staff_id = rental.staff_id)
+              AND (store.store_id = $1)
+              AND (rental.rental_id < $2)
+      )
 RETURNING rental.rental_id AS "rental.rental_id",
           rental.rental_date AS "rental.rental_date",
           rental.inventory_id AS "rental.inventory_id",

@@ -26,6 +26,7 @@ type SQLBuilder struct {
 	Debug bool
 }
 
+const tabSize = 4
 const defaultIdent = 5
 
 // IncreaseIdent adds ident or defaultIdent number of spaces to each new line
