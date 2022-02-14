@@ -4,6 +4,28 @@ import (
 	"testing"
 )
 
+func TestAND(t *testing.T) {
+	assertClauseSerializeErr(t, AND(), "jet: syntax error, expression list empty")
+	assertClauseSerialize(t, AND(table1ColInt.IS_NULL()), `table1.col_int IS NULL`) // IS NULL doesn't add parenthesis
+	assertClauseSerialize(t, AND(table1ColInt.LT(Int(11))), `(table1.col_int < $1)`, int64(11))
+	assertClauseSerialize(t, AND(table1ColInt.GT(Int(11)), table1ColFloat.EQ(Float(0))),
+		`(
+    (table1.col_int > $1)
+        AND (table1.col_float = $2)
+)`, int64(11), 0.0)
+}
+
+func TestOR(t *testing.T) {
+	assertClauseSerializeErr(t, OR(), "jet: syntax error, expression list empty")
+	assertClauseSerialize(t, OR(table1ColInt.IS_NULL()), `table1.col_int IS NULL`) // IS NULL doesn't add parenthesis
+	assertClauseSerialize(t, OR(table1ColInt.LT(Int(11))), `(table1.col_int < $1)`, int64(11))
+	assertClauseSerialize(t, OR(table1ColInt.GT(Int(11)), table1ColFloat.EQ(Float(0))),
+		`(
+    (table1.col_int > $1)
+        OR (table1.col_float = $2)
+)`, int64(11), 0.0)
+}
+
 func TestFuncAVG(t *testing.T) {
 	assertClauseSerialize(t, AVG(table1ColFloat), "AVG(table1.col_float)")
 	assertClauseSerialize(t, AVG(table1ColInt), "AVG(table1.col_int)")

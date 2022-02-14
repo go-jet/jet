@@ -38,6 +38,152 @@ ORDER BY "Album"."AlbumId" ASC;
 	requireQueryLogged(t, stmt, 347)
 }
 
+func TestComplex_AND_OR(t *testing.T) {
+	stmt := SELECT(
+		Artist.AllColumns,
+		Album.AllColumns,
+		Track.AllColumns,
+	).FROM(
+		Artist.
+			LEFT_JOIN(Album, Artist.ArtistId.EQ(Album.ArtistId)).
+			LEFT_JOIN(Track, Track.AlbumId.EQ(Album.AlbumId)),
+	).WHERE(
+		AND(
+			Artist.ArtistId.BETWEEN(Int(5), Int(11)),
+			Album.AlbumId.GT_EQ(Int(7)),
+			Track.TrackId.GT(Int(74)),
+			OR(
+				Track.GenreId.EQ(Int(2)),
+				Track.UnitPrice.GT(Float(1.01)),
+			),
+			Track.TrackId.LT(Int(125)),
+		),
+	).ORDER_BY(
+		Artist.ArtistId,
+		Album.AlbumId,
+		Track.TrackId,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+     "Artist"."Name" AS "Artist.Name",
+     "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId",
+     "Track"."TrackId" AS "Track.TrackId",
+     "Track"."Name" AS "Track.Name",
+     "Track"."AlbumId" AS "Track.AlbumId",
+     "Track"."MediaTypeId" AS "Track.MediaTypeId",
+     "Track"."GenreId" AS "Track.GenreId",
+     "Track"."Composer" AS "Track.Composer",
+     "Track"."Milliseconds" AS "Track.Milliseconds",
+     "Track"."Bytes" AS "Track.Bytes",
+     "Track"."UnitPrice" AS "Track.UnitPrice"
+FROM chinook."Artist"
+     LEFT JOIN chinook."Album" ON ("Artist"."ArtistId" = "Album"."ArtistId")
+     LEFT JOIN chinook."Track" ON ("Track"."AlbumId" = "Album"."AlbumId")
+WHERE (
+          ("Artist"."ArtistId" BETWEEN 5 AND 11)
+              AND ("Album"."AlbumId" >= 7)
+              AND ("Track"."TrackId" > 74)
+              AND (
+                      ("Track"."GenreId" = 2)
+                          OR ("Track"."UnitPrice" > 1.01)
+                  )
+              AND ("Track"."TrackId" < 125)
+      )
+ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
+`)
+
+	var dest []struct {
+		model.Artist
+
+		Albums []struct {
+			model.Album
+
+			Tracks []model.Track
+		}
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"ArtistId": 6,
+		"Name": "Ant�nio Carlos Jobim",
+		"Albums": [
+			{
+				"AlbumId": 8,
+				"Title": "Warner 25 Anos",
+				"ArtistId": 6,
+				"Tracks": [
+					{
+						"TrackId": 75,
+						"Name": "O Boto (B�to)",
+						"AlbumId": 8,
+						"MediaTypeId": 1,
+						"GenreId": 2,
+						"Composer": null,
+						"Milliseconds": 366837,
+						"Bytes": 12089673,
+						"UnitPrice": 0.99
+					},
+					{
+						"TrackId": 76,
+						"Name": "Canta, Canta Mais",
+						"AlbumId": 8,
+						"MediaTypeId": 1,
+						"GenreId": 2,
+						"Composer": null,
+						"Milliseconds": 271856,
+						"Bytes": 8719426,
+						"UnitPrice": 0.99
+					}
+				]
+			}
+		]
+	},
+	{
+		"ArtistId": 10,
+		"Name": "Billy Cobham",
+		"Albums": [
+			{
+				"AlbumId": 13,
+				"Title": "The Best Of Billy Cobham",
+				"ArtistId": 10,
+				"Tracks": [
+					{
+						"TrackId": 123,
+						"Name": "Quadrant",
+						"AlbumId": 13,
+						"MediaTypeId": 1,
+						"GenreId": 2,
+						"Composer": "Billy Cobham",
+						"Milliseconds": 261851,
+						"Bytes": 8538199,
+						"UnitPrice": 0.99
+					},
+					{
+						"TrackId": 124,
+						"Name": "Snoopy's search-Red baron",
+						"AlbumId": 13,
+						"MediaTypeId": 1,
+						"GenreId": 2,
+						"Composer": "Billy Cobham",
+						"Milliseconds": 456071,
+						"Bytes": 15075616,
+						"UnitPrice": 0.99
+					}
+				]
+			}
+		]
+	}
+]
+`)
+}
+
 func TestJoinEverything(t *testing.T) {
 
 	manager := Employee.AS("Manager")

@@ -786,6 +786,123 @@ func TestRowsScan(t *testing.T) {
 	requireQueryLogged(t, stmt, 0)
 }
 
+func TestScanNullColumn(t *testing.T) {
+	stmt := SELECT(
+		Address.AllColumns,
+	).FROM(
+		Address,
+	).WHERE(
+		Address.Address2.IS_NULL(),
+	)
+
+	var dest []model.Address
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"AddressID": 1,
+		"Address": "47 MySakila Drive",
+		"Address2": null,
+		"District": "Alberta",
+		"CityID": 300,
+		"PostalCode": "",
+		"Phone": "",
+		"LastUpdate": "2006-02-15T09:45:30Z"
+	},
+	{
+		"AddressID": 2,
+		"Address": "28 MySQL Boulevard",
+		"Address2": null,
+		"District": "QLD",
+		"CityID": 576,
+		"PostalCode": "",
+		"Phone": "",
+		"LastUpdate": "2006-02-15T09:45:30Z"
+	},
+	{
+		"AddressID": 3,
+		"Address": "23 Workhaven Lane",
+		"Address2": null,
+		"District": "Alberta",
+		"CityID": 300,
+		"PostalCode": "",
+		"Phone": "14033335568",
+		"LastUpdate": "2006-02-15T09:45:30Z"
+	},
+	{
+		"AddressID": 4,
+		"Address": "1411 Lillydale Drive",
+		"Address2": null,
+		"District": "QLD",
+		"CityID": 576,
+		"PostalCode": "",
+		"Phone": "6172235589",
+		"LastUpdate": "2006-02-15T09:45:30Z"
+	}
+]
+`)
+}
+
+func TestRowsScanSetZeroValue(t *testing.T) {
+	stmt := SELECT(
+		Rental.AllColumns,
+	).FROM(
+		Rental,
+	).WHERE(
+		Rental.RentalID.IN(Int(16049), Int(15966)),
+	).ORDER_BY(
+		Rental.RentalID.DESC(),
+	)
+
+	rows, err := stmt.Rows(context.Background(), db)
+	require.NoError(t, err)
+
+	defer rows.Close()
+
+	// destination object is used as destination for all rows scan.
+	// this tests checks that ReturnedDate is set to nil with the second call
+	// check qrm.setZeroValue
+	var dest model.Rental
+
+	for rows.Next() {
+		err := rows.Scan(&dest)
+		require.NoError(t, err)
+
+		if dest.RentalID == 16049 {
+			testutils.AssertJSON(t, dest, `
+{
+	"RentalID": 16049,
+	"RentalDate": "2005-08-23T22:50:12Z",
+	"InventoryID": 2666,
+	"CustomerID": 393,
+	"ReturnDate": "2005-08-30T01:01:12Z",
+	"StaffID": 2,
+	"LastUpdate": "2006-02-16T02:30:53Z"
+}
+`)
+		} else {
+			testutils.AssertJSON(t, dest, `
+{
+	"RentalID": 15966,
+	"RentalDate": "2006-02-14T15:16:03Z",
+	"InventoryID": 4472,
+	"CustomerID": 374,
+	"ReturnDate": null,
+	"StaffID": 1,
+	"LastUpdate": "2006-02-16T02:30:53Z"
+}
+`)
+		}
+	}
+
+	err = rows.Close()
+	require.NoError(t, err)
+	err = rows.Err()
+	require.NoError(t, err)
+}
+
 func TestScanNumericToFloat(t *testing.T) {
 	type Number struct {
 		Float32 float32
@@ -824,6 +941,54 @@ func TestScanNumericToIntegerError(t *testing.T) {
 		require.Contains(t, err.Error(), `jet: can't assign []uint8("1234567890.111") to 'Integer int32': converting driver.Value type []uint8 ("1234567890.111") to a int64: invalid syntax`)
 	}
 
+}
+
+func TestScanIntoCustomBaseTypes(t *testing.T) {
+
+	type MyUint8 uint8
+	type MyUint16 uint16
+	type MyUint32 uint32
+	type MyInt16 int16
+	type MyFloat32 float32
+	type MyFloat64 float64
+	type MyString string
+	type MyTime = time.Time
+
+	type film struct {
+		FilmID          MyUint16 `sql:"primary_key"`
+		Title           MyString
+		Description     *MyString
+		ReleaseYear     *MyInt16
+		LanguageID      MyUint8
+		RentalDuration  MyUint8
+		RentalRate      MyFloat32
+		Length          *MyUint32
+		ReplacementCost MyFloat64
+		Rating          *model.MpaaRating
+		LastUpdate      MyTime
+		SpecialFeatures *MyString
+		Fulltext        MyString
+	}
+
+	stmt := SELECT(
+		Film.AllColumns,
+	).FROM(
+		Film,
+	).ORDER_BY(
+		Film.FilmID.ASC(),
+	).LIMIT(3)
+
+	var films []model.Film
+
+	err := stmt.Query(db, &films)
+	require.NoError(t, err)
+
+	var myFilms []film
+
+	err = stmt.Query(db, &myFilms)
+	require.NoError(t, err)
+
+	require.Equal(t, testutils.ToJSON(films), testutils.ToJSON(myFilms))
 }
 
 // QueryContext panic when the scanned value is nil and the destination is a slice of primitive

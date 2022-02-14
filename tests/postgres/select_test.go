@@ -395,8 +395,15 @@ func TestExecution1(t *testing.T) {
 			Customer.CustomerID,
 			Customer.LastName,
 		).
-		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
-		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+		WHERE(
+			OR(
+				City.City.EQ(String("London")),
+				City.City.EQ(String("York")),
+			),
+		).
+		ORDER_BY(
+			City.CityID, Address.AddressID, Customer.CustomerID,
+		)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
@@ -408,7 +415,10 @@ SELECT city.city_id AS "city.city_id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
+WHERE (
+          (city.city = 'London')
+              OR (city.city = 'York')
+      )
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -1073,9 +1083,9 @@ SELECT film.film_id AS "film.film_id",
      film.fulltext AS "film.fulltext"
 FROM dvds.film
 WHERE film.rental_rate = (
-          SELECT MAX(film.rental_rate)
-          FROM dvds.film
-     )
+           SELECT MAX(film.rental_rate)
+           FROM dvds.film
+      )
 ORDER BY film.film_id ASC;
 `
 
@@ -2519,6 +2529,79 @@ func TestRecursionScanNx1(t *testing.T) {
 ]
 `)
 	})
+}
+
+type StoreInfo struct {
+	model.Store
+
+	Staffs ManagerInfo
+}
+
+type ManagerInfo struct {
+	model.Staff
+	Store *StoreInfo
+}
+
+func TestRecursionScan1x1(t *testing.T) {
+
+	stmt := SELECT(
+		Store.AllColumns,
+		Staff.AllColumns,
+	).FROM(
+		Store.
+			INNER_JOIN(Staff, Staff.StaffID.EQ(Store.ManagerStaffID)),
+	).ORDER_BY(
+		Store.StoreID,
+	)
+
+	var dest []StoreInfo
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"StoreID": 1,
+		"ManagerStaffID": 1,
+		"AddressID": 1,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": {
+			"StaffID": 1,
+			"FirstName": "Mike",
+			"LastName": "Hillyer",
+			"AddressID": 3,
+			"Email": "Mike.Hillyer@sakilastaff.com",
+			"StoreID": 1,
+			"Active": true,
+			"Username": "Mike",
+			"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+			"LastUpdate": "2006-05-16T16:13:11.79328Z",
+			"Picture": "iVBORw0KWgo=",
+			"Store": null
+		}
+	},
+	{
+		"StoreID": 2,
+		"ManagerStaffID": 2,
+		"AddressID": 2,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"Staffs": {
+			"StaffID": 2,
+			"FirstName": "Jon",
+			"LastName": "Stephens",
+			"AddressID": 4,
+			"Email": "Jon.Stephens@sakilastaff.com",
+			"StoreID": 2,
+			"Active": true,
+			"Username": "Jon",
+			"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+			"LastUpdate": "2006-05-16T16:13:11.79328Z",
+			"Picture": null,
+			"Store": null
+		}
+	}
+]
+`)
 }
 
 // In parameterized statements integer literals, like Int(num), are replaced with a placeholders. For some expressions,

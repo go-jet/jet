@@ -123,6 +123,65 @@ func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBu
 	}
 }
 
+type expressionListOperator struct {
+	ExpressionInterfaceImpl
+
+	operator    string
+	expressions []Expression
+}
+
+func newExpressionListOperator(operator string, expressions ...Expression) *expressionListOperator {
+	ret := &expressionListOperator{
+		operator:    operator,
+		expressions: expressions,
+	}
+
+	ret.ExpressionInterfaceImpl.Parent = ret
+
+	return ret
+}
+
+func newBoolExpressionListOperator(operator string, expressions ...BoolExpression) BoolExpression {
+	return BoolExp(newExpressionListOperator(operator, BoolExpressionListToExpressionList(expressions)...))
+}
+
+func (elo *expressionListOperator) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(elo.expressions) == 0 {
+		panic("jet: syntax error, expression list empty")
+	}
+
+	shouldWrap := len(elo.expressions) > 1
+	if shouldWrap {
+		out.WriteByte('(')
+		out.IncreaseIdent(tabSize)
+		out.NewLine()
+	}
+
+	for i, expression := range elo.expressions {
+		if i == 1 {
+			out.IncreaseIdent(tabSize)
+		}
+		if i > 0 {
+			out.NewLine()
+			out.WriteString(elo.operator)
+		}
+
+		out.IncreaseIdent(len(elo.operator) + 1)
+		expression.serialize(statement, out, FallTrough(options)...)
+		out.DecreaseIdent(len(elo.operator) + 1)
+	}
+
+	if len(elo.expressions) > 1 {
+		out.DecreaseIdent(tabSize)
+	}
+
+	if shouldWrap {
+		out.DecreaseIdent(tabSize)
+		out.NewLine()
+		out.WriteByte(')')
+	}
+}
+
 // A prefix operator Expression
 type prefixExpression struct {
 	ExpressionInterfaceImpl
@@ -209,8 +268,8 @@ type complexExpression struct {
 	expressions Expression
 }
 
-func complexExpr(expressions Expression) Expression {
-	complexExpression := &complexExpression{expressions: expressions}
+func complexExpr(expression Expression) Expression {
+	complexExpression := &complexExpression{expressions: expression}
 	complexExpression.ExpressionInterfaceImpl.Parent = complexExpression
 
 	return complexExpression

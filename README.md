@@ -42,7 +42,7 @@ https://medium.com/@go.jet/jet-5f3667efa0cc
     * [WITH](https://github.com/go-jet/jet/wiki/WITH)
     
  2) Auto-generated Data Model types - Go types mapped to database type (table, view or enum), used to store
- result of database queries. Can be combined to create desired query result destination. 
+ result of database queries. Can be combined to create complex query result destination. 
  3) Query execution with result mapping to arbitrary destination. 
 
 ## Getting Started
@@ -164,11 +164,11 @@ import (
 ```
 Let's say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
 and _film category_ is not 'Action'.  
-```java
+```golang
 stmt := SELECT(
     Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,  // or just Actor.AllColumns
     Film.AllColumns,                                                  
-    Language.AllColumns,
+    Language.AllColumns.Except(Language.LastUpdate), 
     Category.AllColumns,
 ).FROM(
     Actor.
@@ -358,7 +358,7 @@ fmt.Println(string(jsonText))
 				"Language": {
 					"LanguageID": 1,
 					"Name": "English             ",
-					"LastUpdate": "2006-02-15T10:02:19Z"
+					"LastUpdate": "0001-01-01T00:00:00Z"
 				},
 				"Categories": [
 					{
@@ -393,7 +393,7 @@ fmt.Println(string(jsonText))
 				"Language": {
 					"LanguageID": 1,
 					"Name": "English             ",
-					"LastUpdate": "2006-02-15T10:02:19Z"
+					"LastUpdate": "0001-01-01T00:00:00Z"
 				},
 				"Categories": [
 					{
@@ -580,5 +580,5 @@ To run the tests, additional dependencies are required:
 
 ## License
 
-Copyright 2019-2021 Goran Bjelanovic  
+Copyright 2019-2022 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.

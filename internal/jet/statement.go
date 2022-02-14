@@ -33,11 +33,13 @@ type Statement interface {
 // Rows wraps sql.Rows type to add query result mapping for Scan method
 type Rows struct {
 	*sql.Rows
+
+	scanContext *qrm.ScanContext
 }
 
 // Scan will map the Row values into struct destination
 func (r *Rows) Scan(destination interface{}) error {
-	return qrm.ScanOneRowToDest(r.Rows, destination)
+	return qrm.ScanOneRowToDest(r.scanContext, r.Rows, destination)
 }
 
 // SerializerStatement interface
@@ -161,7 +163,16 @@ func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.DB) 
 		return nil, err
 	}
 
-	return &Rows{rows}, nil
+	scanContext, err := qrm.NewScanContext(rows)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &Rows{
+		Rows:        rows,
+		scanContext: scanContext,
+	}, nil
 }
 
 func duration(f func()) time.Duration {

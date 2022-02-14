@@ -4,9 +4,9 @@ import "reflect"
 
 type typeStack []*reflect.Type
 
-func newTypeStack() *typeStack {
+func newTypeStack() typeStack {
 	stack := make(typeStack, 0, 20)
-	return &stack
+	return stack
 }
 
 func (s *typeStack) isEmpty() bool {

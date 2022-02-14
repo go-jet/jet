@@ -98,9 +98,9 @@ func (c *ClauseWhere) Serialize(statementType StatementType, out *SQLBuilder, op
 	}
 	out.WriteString("WHERE")
 
-	out.IncreaseIdent()
+	out.IncreaseIdent(6)
 	c.Condition.serialize(statementType, out, NoWrap.WithFallTrough(options)...)
-	out.DecreaseIdent()
+	out.DecreaseIdent(6)
 }
 
 // ClauseGroupBy struct

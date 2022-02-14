@@ -951,8 +951,12 @@ func TestRowsScan(t *testing.T) {
 
 	stmt := SELECT(
 		Inventory.AllColumns,
+		Film.AllColumns,
+		Store.AllColumns,
 	).FROM(
-		Inventory,
+		Inventory.
+			INNER_JOIN(Film, Film.FilmID.EQ(Inventory.FilmID)).
+			INNER_JOIN(Store, Store.StoreID.EQ(Inventory.StoreID)),
 	).ORDER_BY(
 		Inventory.InventoryID.ASC(),
 	)
@@ -960,20 +964,43 @@ func TestRowsScan(t *testing.T) {
 	rows, err := stmt.Rows(context.Background(), db)
 	require.NoError(t, err)
 
+	var inventory struct {
+		model.Inventory
+
+		Film  model.Film
+		Store model.Store
+	}
+
 	for rows.Next() {
-		var inventory model.Inventory
 		err = rows.Scan(&inventory)
 		require.NoError(t, err)
 
-		require.NotEqual(t, inventory.InventoryID, uint32(0))
-		require.NotEqual(t, inventory.FilmID, uint16(0))
-		require.NotEqual(t, inventory.StoreID, uint16(0))
-		require.NotEqual(t, inventory.LastUpdate, time.Time{})
+		require.NotEmpty(t, inventory.InventoryID)
+		require.NotEmpty(t, inventory.FilmID)
+		require.NotEmpty(t, inventory.StoreID)
+		require.NotEmpty(t, inventory.LastUpdate)
+
+		require.NotEmpty(t, inventory.Film.FilmID)
+		require.NotEmpty(t, inventory.Film.Title)
+		require.NotEmpty(t, inventory.Film.Description)
+
+		require.NotEmpty(t, inventory.Store.StoreID)
+		require.NotEmpty(t, inventory.Store.AddressID)
+		require.NotEmpty(t, inventory.Store.ManagerStaffID)
 
 		if inventory.InventoryID == 2103 {
 			require.Equal(t, inventory.FilmID, uint16(456))
 			require.Equal(t, inventory.StoreID, uint8(2))
 			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2006-02-15T05:09:17Z")
+
+			require.Equal(t, inventory.Film.FilmID, uint16(456))
+			require.Equal(t, inventory.Film.Title, "INCH JET")
+			require.Equal(t, *inventory.Film.Description, "A Fateful Saga of a Womanizer And a Student who must Defeat a Butler in A Monastery")
+			require.Equal(t, *inventory.Film.ReleaseYear, int16(2006))
+
+			require.Equal(t, inventory.Store.StoreID, uint8(2))
+			require.Equal(t, inventory.Store.ManagerStaffID, uint8(2))
+			require.Equal(t, inventory.Store.AddressID, uint16(2))
 		}
 	}
 
@@ -1028,4 +1055,51 @@ func TestScanNumericToNumber(t *testing.T) {
 	require.Equal(t, number.UInt64, uint64(1234567890))
 	require.Equal(t, number.Float32, float32(1.234568e+09))
 	require.Equal(t, number.Float64, float64(1.23456789e+09))
+}
+
+// scan into custom base types should be equivalent to the scan into base go types
+func TestScanIntoCustomBaseTypes(t *testing.T) {
+
+	type MyUint8 uint8
+	type MyUint16 uint16
+	type MyUint32 uint32
+	type MyInt16 int16
+	type MyFloat32 float32
+	type MyFloat64 float64
+	type MyString string
+	type MyTime = time.Time
+
+	type film struct {
+		FilmID             MyUint16 `sql:"primary_key"`
+		Title              MyString
+		Description        *MyString
+		ReleaseYear        *MyInt16
+		LanguageID         MyUint8
+		OriginalLanguageID *MyUint8
+		RentalDuration     MyUint8
+		RentalRate         MyFloat32
+		Length             *MyUint32
+		ReplacementCost    MyFloat64
+		Rating             *model.FilmRating
+		SpecialFeatures    *MyString
+		LastUpdate         MyTime
+	}
+
+	stmt := SELECT(
+		Film.AllColumns,
+	).FROM(
+		Film,
+	).ORDER_BY(
+		Film.FilmID.ASC(),
+	).LIMIT(3)
+
+	var films []model.Film
+	err := stmt.Query(db, &films)
+	require.NoError(t, err)
+
+	var myFilms []film
+	err = stmt.Query(db, &myFilms)
+	require.NoError(t, err)
+
+	require.Equal(t, testutils.ToJSON(films), testutils.ToJSON(myFilms))
 }
