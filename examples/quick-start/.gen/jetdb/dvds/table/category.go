@@ -41,6 +41,16 @@ func (a CategoryTable) FromSchema(schemaName string) *CategoryTable {
 	return newCategoryTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new CategoryTable with assigned table prefix
+func (a CategoryTable) WithPrefix(prefix string) *CategoryTable {
+	return newCategoryTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new CategoryTable with assigned table suffix
+func (a CategoryTable) WithSuffix(suffix string) *CategoryTable {
+	return newCategoryTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newCategoryTable(schemaName, tableName, alias string) *CategoryTable {
 	return &CategoryTable{
 		categoryTable: newCategoryTableImpl(schemaName, tableName, alias),

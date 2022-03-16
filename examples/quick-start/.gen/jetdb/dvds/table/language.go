@@ -41,6 +41,16 @@ func (a LanguageTable) FromSchema(schemaName string) *LanguageTable {
 	return newLanguageTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new LanguageTable with assigned table prefix
+func (a LanguageTable) WithPrefix(prefix string) *LanguageTable {
+	return newLanguageTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new LanguageTable with assigned table suffix
+func (a LanguageTable) WithSuffix(suffix string) *LanguageTable {
+	return newLanguageTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newLanguageTable(schemaName, tableName, alias string) *LanguageTable {
 	return &LanguageTable{
 		languageTable: newLanguageTableImpl(schemaName, tableName, alias),

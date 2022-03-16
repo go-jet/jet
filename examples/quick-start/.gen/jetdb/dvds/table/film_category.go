@@ -41,6 +41,16 @@ func (a FilmCategoryTable) FromSchema(schemaName string) *FilmCategoryTable {
 	return newFilmCategoryTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new FilmCategoryTable with assigned table prefix
+func (a FilmCategoryTable) WithPrefix(prefix string) *FilmCategoryTable {
+	return newFilmCategoryTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new FilmCategoryTable with assigned table suffix
+func (a FilmCategoryTable) WithSuffix(suffix string) *FilmCategoryTable {
+	return newFilmCategoryTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newFilmCategoryTable(schemaName, tableName, alias string) *FilmCategoryTable {
 	return &FilmCategoryTable{
 		filmCategoryTable: newFilmCategoryTableImpl(schemaName, tableName, alias),

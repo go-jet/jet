@@ -49,6 +49,16 @@ func (a {{tableTemplate.TypeName}}) FromSchema(schemaName string) {{tableTemplat
 	return new{{tableTemplate.TypeName}}(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new {{tableTemplate.TypeName}} with assigned table prefix
+func (a {{tableTemplate.TypeName}}) WithPrefix(prefix string) {{tableTemplate.TypeName}} {
+	return new{{tableTemplate.TypeName}}(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new {{tableTemplate.TypeName}} with assigned table suffix
+func (a {{tableTemplate.TypeName}}) WithSuffix(suffix string) {{tableTemplate.TypeName}} {
+	return new{{tableTemplate.TypeName}}(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func new{{tableTemplate.TypeName}}(schemaName, tableName, alias string) {{tableTemplate.TypeName}} {
 	var (
 {{- range $i, $c := .Columns}}
@@ -117,6 +127,16 @@ func (a {{tableTemplate.TypeName}}) AS(alias string) *{{tableTemplate.TypeName}}
 // Schema creates new {{tableTemplate.TypeName}} with assigned schema name
 func (a {{tableTemplate.TypeName}}) FromSchema(schemaName string) *{{tableTemplate.TypeName}} {
 	return new{{tableTemplate.TypeName}}(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new {{tableTemplate.TypeName}} with assigned table prefix
+func (a {{tableTemplate.TypeName}}) WithPrefix(prefix string) *{{tableTemplate.TypeName}} {
+	return new{{tableTemplate.TypeName}}(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new {{tableTemplate.TypeName}} with assigned table suffix
+func (a {{tableTemplate.TypeName}}) WithSuffix(suffix string) *{{tableTemplate.TypeName}} {
+	return new{{tableTemplate.TypeName}}(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
 func new{{tableTemplate.TypeName}}(schemaName, tableName, alias string) *{{tableTemplate.TypeName}} {
