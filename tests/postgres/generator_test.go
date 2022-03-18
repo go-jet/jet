@@ -313,6 +313,16 @@ func (a ActorTable) FromSchema(schemaName string) *ActorTable {
 	return newActorTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new ActorTable with assigned table prefix
+func (a ActorTable) WithPrefix(prefix string) *ActorTable {
+	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorTable with assigned table suffix
+func (a ActorTable) WithSuffix(suffix string) *ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newActorTable(schemaName, tableName, alias string) *ActorTable {
 	return &ActorTable{
 		actorTable: newActorTableImpl(schemaName, tableName, alias),
@@ -410,6 +420,16 @@ func (a ActorInfoTable) AS(alias string) *ActorInfoTable {
 // Schema creates new ActorInfoTable with assigned schema name
 func (a ActorInfoTable) FromSchema(schemaName string) *ActorInfoTable {
 	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new ActorInfoTable with assigned table prefix
+func (a ActorInfoTable) WithPrefix(prefix string) *ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorInfoTable with assigned table suffix
+func (a ActorInfoTable) WithSuffix(suffix string) *ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
 func newActorInfoTable(schemaName, tableName, alias string) *ActorInfoTable {
@@ -703,6 +723,16 @@ func (a AllTypesTable) AS(alias string) *AllTypesTable {
 // Schema creates new AllTypesTable with assigned schema name
 func (a AllTypesTable) FromSchema(schemaName string) *AllTypesTable {
 	return newAllTypesTable(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new AllTypesTable with assigned table prefix
+func (a AllTypesTable) WithPrefix(prefix string) *AllTypesTable {
+	return newAllTypesTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new AllTypesTable with assigned table suffix
+func (a AllTypesTable) WithSuffix(suffix string) *AllTypesTable {
+	return newAllTypesTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
 func newAllTypesTable(schemaName, tableName, alias string) *AllTypesTable {

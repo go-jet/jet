@@ -236,6 +236,16 @@ func (a ActorTable) FromSchema(schemaName string) ActorTable {
 	return newActorTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new ActorTable with assigned table prefix
+func (a ActorTable) WithPrefix(prefix string) ActorTable {
+	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorTable with assigned table suffix
+func (a ActorTable) WithSuffix(suffix string) ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newActorTable(schemaName, tableName, alias string) ActorTable {
 	var (
 		ActorIDColumn    = mysql.IntegerColumn("actor_id")
@@ -320,6 +330,16 @@ func (a ActorInfoTable) AS(alias string) ActorInfoTable {
 // Schema creates new ActorInfoTable with assigned schema name
 func (a ActorInfoTable) FromSchema(schemaName string) ActorInfoTable {
 	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new ActorInfoTable with assigned table prefix
+func (a ActorInfoTable) WithPrefix(prefix string) ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorInfoTable with assigned table suffix
+func (a ActorInfoTable) WithSuffix(suffix string) ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
 func newActorInfoTable(schemaName, tableName, alias string) ActorInfoTable {
