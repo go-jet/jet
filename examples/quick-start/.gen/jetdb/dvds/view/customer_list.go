@@ -47,6 +47,16 @@ func (a CustomerListTable) FromSchema(schemaName string) *CustomerListTable {
 	return newCustomerListTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new CustomerListTable with assigned table prefix
+func (a CustomerListTable) WithPrefix(prefix string) *CustomerListTable {
+	return newCustomerListTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new CustomerListTable with assigned table suffix
+func (a CustomerListTable) WithSuffix(suffix string) *CustomerListTable {
+	return newCustomerListTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newCustomerListTable(schemaName, tableName, alias string) *CustomerListTable {
 	return &CustomerListTable{
 		customerListTable: newCustomerListTableImpl(schemaName, tableName, alias),

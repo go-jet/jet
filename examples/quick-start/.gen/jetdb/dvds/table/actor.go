@@ -42,6 +42,16 @@ func (a ActorTable) FromSchema(schemaName string) *ActorTable {
 	return newActorTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new ActorTable with assigned table prefix
+func (a ActorTable) WithPrefix(prefix string) *ActorTable {
+	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorTable with assigned table suffix
+func (a ActorTable) WithSuffix(suffix string) *ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newActorTable(schemaName, tableName, alias string) *ActorTable {
 	return &ActorTable{
 		actorTable: newActorTableImpl(schemaName, tableName, alias),
