@@ -62,17 +62,17 @@ $ go get -u github.com/go-jet/jet/v2
 
 Jet generator can be installed in one of the following ways:
 
-1) (Go1.16+) Install jet generator using go install:
+- (Go1.16+) Install jet generator using go install:
     ```sh
     go install github.com/go-jet/jet/v2/cmd/jet@latest
     ```
 
-2) Install jet generator to GOPATH/bin folder:
+- Install jet generator to GOPATH/bin folder:
     ```sh
     cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
     ``` 
 
-3) Install jet generator into specific folder:
+- Install jet generator into specific folder:
     ```sh
     git clone https://github.com/go-jet/jet.git
     cd jet && go build -o dir_path ./cmd/jet
