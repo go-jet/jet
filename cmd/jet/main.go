@@ -3,6 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/generator/template"
@@ -11,8 +14,6 @@ import (
 	"github.com/go-jet/jet/v2/mysql"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/sqlite"
-	"os"
-	"strings"
 
 	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
@@ -112,8 +113,9 @@ func main() {
 
 	switch source {
 	case "postgresql", "postgres":
+		generatorTemplate := genTemplate(postgres2.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
 		if dsn != "" {
-			err = postgresgen.GenerateDSN(dsn, schemaName, destDir)
+			err = postgresgen.GenerateDSN(dsn, schemaName, destDir, generatorTemplate)
 			break
 		}
 		dbConn := postgresgen.DBConnection{
@@ -131,12 +133,13 @@ func main() {
 		err = postgresgen.Generate(
 			destDir,
 			dbConn,
-			genTemplate(postgres2.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList),
+			generatorTemplate,
 		)
 
 	case "mysql", "mysqlx", "mariadb":
+		generatorTemplate := genTemplate(mysql.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
 		if dsn != "" {
-			err = mysqlgen.GenerateDSN(dsn, destDir)
+			err = mysqlgen.GenerateDSN(dsn, destDir, generatorTemplate)
 			break
 		}
 		dbConn := mysqlgen.DBConnection{
@@ -151,7 +154,7 @@ func main() {
 		err = mysqlgen.Generate(
 			destDir,
 			dbConn,
-			genTemplate(mysql.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList),
+			generatorTemplate,
 		)
 	case "sqlite":
 		if dsn == "" {
