@@ -20,7 +20,7 @@ import (
 
 func TestAllTypes(t *testing.T) {
 
-	dest := []model.AllTypes{}
+	var dest []model.AllTypes
 
 	err := AllTypes.
 		SELECT(AllTypes.AllColumns).
@@ -39,7 +39,7 @@ func TestAllTypesViewSelect(t *testing.T) {
 
 	type AllTypesView model.AllTypes
 
-	dest := []AllTypesView{}
+	var dest []AllTypesView
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
 	require.NoError(t, err)

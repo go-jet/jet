@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"io/ioutil"
@@ -12,46 +14,52 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v4/stdlib"
 
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var testSuite string
 
 func init() {
-	flag.StringVar(&testSuite, "testsuite", "all", "Test suite name (postgres or mysql)")
-
+	flag.StringVar(&testSuite, "testsuite", "all", "Test suite name (postgres, mysql, mariadb, cockroach, sqlite or all)")
 	flag.Parse()
 }
 
+const (
+	Postgres  = "postgres"
+	MySql     = "mysql"
+	MariaDB   = "mariadb"
+	Sqlite    = "sqlite"
+	Cockroach = "cockroach"
+)
+
 func main() {
 
-	testSuite = strings.ToLower(testSuite)
-
-	if testSuite == "postgres" {
-		initPostgresDB()
-		return
-	}
-
-	if testSuite == "mysql" || testSuite == "mariadb" {
-		initMySQLDB(testSuite == "mariadb")
-		return
-	}
-
-	if testSuite == "sqlite" {
+	switch strings.ToLower(testSuite) {
+	case Postgres:
+		initPostgresDB(Postgres, dbconfig.PostgresConnectString)
+	case Cockroach:
+		initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
+	case MySql:
+		initMySQLDB(false)
+	case MariaDB:
+		initMySQLDB(true)
+	case Sqlite:
 		initSQLiteDB()
-		return
+	case "all":
+		initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
+		initPostgresDB(Postgres, dbconfig.PostgresConnectString)
+		initMySQLDB(false)
+		initMySQLDB(true)
+		initSQLiteDB()
+	default:
+		panic("invalid testsuite flag. Test suite name (postgres, mysql, mariadb, cockroach, sqlite or all)")
 	}
-
-	initPostgresDB()
-	initMySQLDB(false)
-	initMySQLDB(true)
-	initSQLiteDB()
 }
 
 func initSQLiteDB() {
@@ -109,8 +117,8 @@ func initMySQLDB(isMariaDB bool) {
 	}
 }
 
-func initPostgresDB() {
-	db, err := sql.Open("postgres", dbconfig.PostgresConnectString)
+func initPostgresDB(dbType string, connectionString string) {
+	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		panic("Failed to connect to test db: " + err.Error())
 	}
@@ -120,26 +128,19 @@ func initPostgresDB() {
 	}()
 
 	schemaNames := []string{
+		"northwind",
 		"dvds",
 		"test_sample",
 		"chinook",
 		"chinook2",
-		"northwind",
 	}
 
 	for _, schemaName := range schemaNames {
+		fmt.Println("\nInitializing", schemaName, "schema...")
 
-		execFile(db, "./testdata/init/postgres/"+schemaName+".sql")
+		execFile(db, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName))
 
-		err = postgres.Generate("./.gentestdata", postgres.DBConnection{
-			Host:       dbconfig.PgHost,
-			Port:       dbconfig.PgPort,
-			User:       dbconfig.PgUser,
-			Password:   dbconfig.PgPassword,
-			DBName:     dbconfig.PgDBName,
-			SchemaName: schemaName,
-			SslMode:    "disable",
-		})
+		err = postgres.GenerateDSN(connectionString, schemaName, "./.gentestdata")
 		throw.OnError(err)
 	}
 }
@@ -148,8 +149,30 @@ func execFile(db *sql.DB, sqlFilePath string) {
 	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
 	throw.OnError(err)
 
-	_, err = db.Exec(string(testSampleSql))
+	err = execInTx(db, func(tx *sql.Tx) error {
+		_, err := tx.Exec(string(testSampleSql))
+		return err
+	})
 	throw.OnError(err)
+}
+
+func execInTx(db *sql.DB, f func(tx *sql.Tx) error) error {
+	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
+		Isolation: sql.LevelReadUncommitted, // to speed up initialization of test database
+	})
+
+	if err != nil {
+		return err
+	}
+
+	err = f(tx)
+
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func printOnError(err error) {

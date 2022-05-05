@@ -13,24 +13,20 @@ import (
 )
 
 func TestDeleteWithWhere(t *testing.T) {
-	initForDeleteTest(t)
-
-	var expectedSQL = `
-DELETE FROM test_sample.link
-WHERE link.name IN ('Gmail', 'Outlook');
-`
 	deleteStmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
-	testutils.AssertExec(t, deleteStmt, db, 2)
+	testutils.AssertDebugStatementSql(t, deleteStmt, `
+DELETE FROM test_sample.link
+WHERE link.name IN ('Gmail', 'Outlook');
+`, "Gmail", "Outlook")
+
+	testutils.AssertExecAndRollback(t, deleteStmt, db, 2)
 	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteWithWhereOrderByLimit(t *testing.T) {
-	initForDeleteTest(t)
-
 	var expectedSQL = `
 DELETE FROM test_sample.link
 WHERE link.name IN ('Gmail', 'Outlook')
@@ -44,13 +40,11 @@ LIMIT 1;
 		LIMIT(1)
 
 	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook", int64(1))
-	testutils.AssertExec(t, deleteStmt, db, 1)
+	testutils.AssertExecAndRollback(t, deleteStmt, db, 1)
 	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteQueryContext(t *testing.T) {
-	initForDeleteTest(t)
-
 	deleteStmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
@@ -60,7 +54,7 @@ func TestDeleteQueryContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	dest := []model.Link{}
+	var dest []model.Link
 	err := deleteStmt.QueryContext(ctx, db, &dest)
 
 	require.Error(t, err, "context deadline exceeded")
@@ -68,8 +62,6 @@ func TestDeleteQueryContext(t *testing.T) {
 }
 
 func TestDeleteExecContext(t *testing.T) {
-	initForDeleteTest(t)
-
 	deleteStmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
@@ -84,19 +76,7 @@ func TestDeleteExecContext(t *testing.T) {
 	require.Error(t, err, "context deadline exceeded")
 }
 
-func initForDeleteTest(t *testing.T) {
-	cleanUpLinkTable(t)
-	stmt := Link.INSERT(Link.URL, Link.Name, Link.Description).
-		VALUES("www.gmail.com", "Gmail", "Email service developed by Google").
-		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
-
-	testutils.AssertExec(t, stmt, db, 2)
-}
-
 func TestDeleteWithUsing(t *testing.T) {
-	tx := beginTx(t)
-	defer tx.Rollback()
-
 	stmt := table.Rental.DELETE().
 		USING(
 			table.Rental.
@@ -116,5 +96,5 @@ USING dvds.rental
 WHERE (staff.staff_id != ?) AND (rental.rental_id < ?);
 `)
 
-	testutils.AssertExec(t, stmt, tx)
+	testutils.AssertExecAndRollback(t, stmt, db)
 }

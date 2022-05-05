@@ -416,8 +416,8 @@ FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
 WHERE (
-          (city.city = 'London')
-              OR (city.city = 'York')
+          (city.city = 'London'::text)
+              OR (city.city = 'York'::text)
       )
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
@@ -492,7 +492,7 @@ SELECT city.city_id AS "my_city.id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
+WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -550,7 +550,7 @@ SELECT city.city_id AS "city_id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
+WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -607,7 +607,7 @@ SELECT city.city_id AS "city.city_id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
+WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -685,9 +685,6 @@ func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
 	err := query.Query(db, &customers)
 
 	require.NoError(t, err)
-
-	//spew.Dump(customers)
-
 	require.Equal(t, len(customers), 599)
 }
 
@@ -770,27 +767,35 @@ ORDER BY customer.customer_id ASC;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
-	allCustomersAndAddress := []struct {
+	var allCustomersAndAddress []struct {
 		Address  *model.Address
 		Customer *model.Customer
-	}{}
+	}
 
 	err := query.Query(db, &allCustomersAndAddress)
 
 	require.NoError(t, err)
 	require.Equal(t, len(allCustomersAndAddress), 603)
 
-	testutils.AssertDeepEqual(t, allCustomersAndAddress[0].Customer, &customer0)
-	require.True(t, allCustomersAndAddress[0].Address != nil)
+	if sourceIsCockroachDB() {
+		nullsFirst := allCustomersAndAddress[0]
+		require.True(t, nullsFirst.Customer == nil)
+		require.True(t, nullsFirst.Address != nil)
 
-	lastCustomerAddress := allCustomersAndAddress[len(allCustomersAndAddress)-1]
+		testutils.AssertDeepEqual(t, allCustomersAndAddress[4].Customer, &customer0)
+		require.True(t, allCustomersAndAddress[0].Address != nil)
+	} else { // postgres
+		testutils.AssertDeepEqual(t, allCustomersAndAddress[0].Customer, &customer0)
+		require.True(t, allCustomersAndAddress[0].Address != nil)
 
-	require.True(t, lastCustomerAddress.Customer == nil)
-	require.True(t, lastCustomerAddress.Address != nil)
+		nullsLast := allCustomersAndAddress[len(allCustomersAndAddress)-1]
+		require.True(t, nullsLast.Customer == nil)
+		require.True(t, nullsLast.Address != nil)
+	}
 
 }
 
-func TestSelectFullCrossJoin(t *testing.T) {
+func TestSelectCrossJoin(t *testing.T) {
 	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
@@ -1128,6 +1133,7 @@ ORDER BY film.film_id ASC;
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
+
 	expectedSQL := `
 SELECT customer.customer_id AS "customer.customer_id",
      customer.store_id AS "customer.store_id",
@@ -1197,6 +1203,9 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 
 	require.Equal(t, len(dest), 104)
 
+	if sourceIsCockroachDB() {
+		return // small precision difference in result
+	}
 	//testutils.SaveJsonFile(dest, "postgres/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
 }
@@ -1395,9 +1404,6 @@ ORDER BY payment.payment_date ASC;
 	err := query.Query(db, &payments)
 
 	require.NoError(t, err)
-
-	//spew.Dump(payments)
-
 	require.Equal(t, len(payments), 9)
 	testutils.AssertDeepEqual(t, payments[0], model.Payment{
 		PaymentID:   17793,
@@ -1531,7 +1537,7 @@ func TestAllSetOperators(t *testing.T) {
 
 func TestSelectWithCase(t *testing.T) {
 	expectedQuery := `
-SELECT (CASE payment.staff_id WHEN 1 THEN 'ONE' WHEN 2 THEN 'TWO' WHEN 3 THEN 'THREE' ELSE 'OTHER' END) AS "staff_id_num"
+SELECT (CASE payment.staff_id WHEN 1 THEN 'ONE'::text WHEN 2 THEN 'TWO'::text WHEN 3 THEN 'THREE'::text ELSE 'OTHER'::text END) AS "staff_id_num"
 FROM dvds.payment
 ORDER BY payment.payment_id ASC
 LIMIT 20;
@@ -1611,6 +1617,10 @@ FOR`
 		require.NoError(t, err)
 	}
 
+	if sourceIsCockroachDB() {
+		return // SKIP LOCKED lock wait policy is not supported
+	}
+
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
@@ -1660,7 +1670,7 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English') AND (category.name != 'Action')) AND (film.length > 180)
+WHERE ((language.name = 'English'::text) AND (category.name != 'Action'::text)) AND (film.length > 180)
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 `
 
@@ -1927,10 +1937,11 @@ func TestSimpleView(t *testing.T) {
 
 	query := SELECT(
 		view.ActorInfo.AllColumns,
-	).
-		FROM(view.ActorInfo).
-		ORDER_BY(view.ActorInfo.ActorID).
-		LIMIT(10)
+	).FROM(
+		view.ActorInfo,
+	).ORDER_BY(
+		view.ActorInfo.ActorID,
+	).LIMIT(10)
 
 	type ActorInfo struct {
 		ActorID   int
@@ -1943,6 +1954,10 @@ func TestSimpleView(t *testing.T) {
 
 	err := query.Query(db, &dest)
 	require.NoError(t, err)
+
+	if sourceIsCockroachDB() {
+		return // skip for cockroach db, FilmInfo is set to '' in ddl
+	}
 
 	testutils.AssertJSON(t, dest[1:2], `
 [
@@ -2117,7 +2132,7 @@ FROM dvds.film
                language.name AS "language.name",
                language.last_update AS "language.last_update"
           FROM dvds.language
-          WHERE (language.name NOT IN ('spanish')) AND (film.language_id = language.language_id)
+          WHERE (language.name NOT IN ('spanish'::text)) AND (film.language_id = language.language_id)
      ) AS films
 WHERE film.film_id = 1
 ORDER BY film.film_id
@@ -2162,7 +2177,7 @@ FROM dvds.film,
                language.name AS "language.name",
                language.last_update AS "language.last_update"
           FROM dvds.language
-          WHERE (language.name NOT IN ('spanish')) AND (film.language_id = language.language_id)
+          WHERE (language.name NOT IN ('spanish'::text)) AND (film.language_id = language.language_id)
      ) AS films
 WHERE film.film_id = 1
 ORDER BY film.film_id
@@ -2630,6 +2645,8 @@ func GET_FILM_COUNT(lenFrom, lenTo IntegerExpression) IntegerExpression {
 }
 
 func TestCustomFunctionCall(t *testing.T) {
+	skipForCockroachDB(t)
+
 	stmt := SELECT(
 		GET_FILM_COUNT(Int(100), Int(120)).AS("film_count"),
 	)
@@ -2661,4 +2678,43 @@ SELECT dvds.get_film_count(100, 120) AS "film_count";
 	err = stmt3.Query(db, &dest)
 	require.NoError(t, err)
 	require.Equal(t, dest.FilmCount, 165)
+}
+
+var customer0 = model.Customer{
+	CustomerID: 1,
+	StoreID:    1,
+	FirstName:  "Mary",
+	LastName:   "Smith",
+	Email:      testutils.StringPtr("mary.smith@sakilacustomer.org"),
+	AddressID:  5,
+	Activebool: true,
+	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
+	Active:     testutils.Int32Ptr(1),
+}
+
+var customer1 = model.Customer{
+	CustomerID: 2,
+	StoreID:    1,
+	FirstName:  "Patricia",
+	LastName:   "Johnson",
+	Email:      testutils.StringPtr("patricia.johnson@sakilacustomer.org"),
+	AddressID:  6,
+	Activebool: true,
+	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
+	Active:     testutils.Int32Ptr(1),
+}
+
+var lastCustomer = model.Customer{
+	CustomerID: 599,
+	StoreID:    2,
+	FirstName:  "Austin",
+	LastName:   "Cintron",
+	Email:      testutils.StringPtr("austin.cintron@sakilacustomer.org"),
+	AddressID:  605,
+	Activebool: true,
+	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
+	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
+	Active:     testutils.Int32Ptr(1),
 }

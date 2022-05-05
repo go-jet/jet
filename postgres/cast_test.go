@@ -5,7 +5,7 @@ import (
 )
 
 func TestExpressionCAST_AS(t *testing.T) {
-	assertSerialize(t, CAST(String("test")).AS("text"), `$1::text`, "test")
+	assertSerialize(t, CAST(Int(11)).AS("text"), `$1::text`, int64(11))
 }
 
 func TestExpressionCAST_AS_BOOL(t *testing.T) {

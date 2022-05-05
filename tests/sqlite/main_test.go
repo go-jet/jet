@@ -35,14 +35,13 @@ func TestMain(m *testing.M) {
 	var err error
 	db, err = sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
 	throw.OnError(err)
+	defer db.Close()
 
 	_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
 	throw.OnError(err)
 
 	sampleDB, err = sql.Open("sqlite3", dbconfig.TestSampleDBPath)
 	throw.OnError(err)
-
-	defer db.Close()
 
 	ret := m.Run()
 

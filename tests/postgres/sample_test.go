@@ -1,9 +1,9 @@
 package postgres
 
 import (
+	"github.com/google/uuid"
 	"testing"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	"github.com/go-jet/jet/v2/internal/testutils"
@@ -13,30 +13,6 @@ import (
 
 	"github.com/shopspring/decimal"
 )
-
-func TestUUIDType(t *testing.T) {
-
-	id := uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
-
-	query := AllTypes.
-		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
-		WHERE(AllTypes.UUID.EQ(UUID(id)))
-
-	testutils.AssertDebugStatementSql(t, query, `
-SELECT all_types.uuid AS "all_types.uuid",
-     all_types.uuid_ptr AS "all_types.uuid_ptr"
-FROM test_sample.all_types
-WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
-`, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
-
-	result := model.AllTypes{}
-
-	err := query.Query(db, &result)
-	require.NoError(t, err)
-	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
-	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
-	requireLogged(t, query)
-}
 
 func TestExactDecimals(t *testing.T) {
 
@@ -80,7 +56,7 @@ func TestExactDecimals(t *testing.T) {
 	t.Run("should insert decimal", func(t *testing.T) {
 
 		insertQuery := Floats.INSERT(
-			Floats.AllColumns,
+			Floats.MutableColumns,
 		).MODEL(
 			floats{
 				Floats: model.Floats{
@@ -102,7 +78,7 @@ func TestExactDecimals(t *testing.T) {
 				DecimalPtr: decimal.RequireFromString("3.3333333333333333333"),
 			},
 		).RETURNING(
-			Floats.AllColumns,
+			Floats.MutableColumns,
 		)
 
 		testutils.AssertDebugStatementSql(t, insertQuery, `
@@ -199,7 +175,9 @@ func TestUUIDComplex(t *testing.T) {
 	})
 
 	t.Run("single struct", func(t *testing.T) {
-		singleQuery := query.WHERE(Person.PersonID.EQ(String("b68dbff6-a87d-11e9-a7f2-98ded00c39c8")))
+		uuid, err := uuid.Parse("b68dbff6-a87d-11e9-a7f2-98ded00c39c8")
+		require.NoError(t, err)
+		singleQuery := query.WHERE(Person.PersonID.EQ(UUID(uuid)))
 
 		var dest struct {
 			model.Person
@@ -207,7 +185,7 @@ func TestUUIDComplex(t *testing.T) {
 				model.PersonPhone
 			}
 		}
-		err := singleQuery.Query(db, &dest)
+		err = singleQuery.Query(db, &dest)
 		require.NoError(t, err)
 
 		testutils.AssertJSON(t, dest, `
@@ -304,7 +282,7 @@ SELECT person.person_id AS "person.person_id",
 FROM test_sample.person;
 `)
 
-	result := []model.Person{}
+	var result []model.Person
 
 	err := query.Query(db, &result)
 
@@ -333,7 +311,7 @@ FROM test_sample.person;
 `)
 }
 
-func TestSelecSelfJoin1(t *testing.T) {
+func TestSelectSelfJoin1(t *testing.T) {
 
 	// clean up
 	_, err := Employee.DELETE().WHERE(Employee.EmployeeID.GT(Int(100))).Exec(db)
@@ -398,7 +376,7 @@ ORDER BY employee.employee_id;
 }
 
 func TestWierdNamesTable(t *testing.T) {
-	stmt := WeirdNamesTable.SELECT(WeirdNamesTable.AllColumns)
+	stmt := WeirdNamesTable.SELECT(WeirdNamesTable.MutableColumns)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "WEIRD NAMES TABLE".weird_column_name1 AS "WEIRD NAMES TABLE.weird_column_name1",
@@ -420,7 +398,7 @@ SELECT "WEIRD NAMES TABLE".weird_column_name1 AS "WEIRD NAMES TABLE.weird_column
 FROM test_sample."WEIRD NAMES TABLE";
 `)
 
-	dest := []model.WeirdNamesTable{}
+	var dest []model.WeirdNamesTable
 
 	err := stmt.Query(db, &dest)
 
@@ -448,7 +426,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 }
 
 func TestReserwedWordEscape(t *testing.T) {
-	stmt := SELECT(User.AllColumns).
+	stmt := SELECT(User.MutableColumns).
 		FROM(User)
 
 	//fmt.Println(stmt.DebugSql())
@@ -480,6 +458,7 @@ FROM test_sample."User";
 	testutils.AssertJSON(t, dest, `
 [
 	{
+		"ID": 0,
 		"Column": "Column",
 		"Check": "CHECK",
 		"Ceil": "CEIL",
@@ -496,55 +475,4 @@ FROM test_sample."User";
 	}
 ]
 `)
-}
-
-func TestBytea(t *testing.T) {
-	byteArrHex := "\\x48656c6c6f20476f7068657221"
-	byteArrBin := []byte("\x48\x65\x6c\x6c\x6f\x20\x47\x6f\x70\x68\x65\x72\x21")
-
-	insertStmt := AllTypes.INSERT(AllTypes.Bytea, AllTypes.ByteaPtr).
-		VALUES(byteArrHex, byteArrBin).
-		RETURNING(AllTypes.Bytea, AllTypes.ByteaPtr)
-
-	testutils.AssertStatementSql(t, insertStmt, `
-INSERT INTO test_sample.all_types (bytea, bytea_ptr)
-VALUES ($1, $2)
-RETURNING all_types.bytea AS "all_types.bytea",
-          all_types.bytea_ptr AS "all_types.bytea_ptr";
-`, byteArrHex, byteArrBin)
-
-	var inserted model.AllTypes
-	err := insertStmt.Query(db, &inserted)
-	require.NoError(t, err)
-
-	require.Equal(t, string(*inserted.ByteaPtr), "Hello Gopher!")
-	// It is not possible to initiate bytea column using hex format '\xDEADBEEF' with pq driver.
-	// pq driver always encodes parameter string if destination column is of type bytea.
-	// Probably pq driver error.
-	// require.Equal(t, string(inserted.Bytea), "Hello Gopher!")
-
-	stmt := SELECT(
-		AllTypes.Bytea,
-		AllTypes.ByteaPtr,
-	).FROM(
-		AllTypes,
-	).WHERE(
-		AllTypes.ByteaPtr.EQ(Bytea(byteArrBin)),
-	)
-
-	testutils.AssertStatementSql(t, stmt, `
-SELECT all_types.bytea AS "all_types.bytea",
-     all_types.bytea_ptr AS "all_types.bytea_ptr"
-FROM test_sample.all_types
-WHERE all_types.bytea_ptr = $1::bytea;
-`, byteArrBin)
-
-	var dest model.AllTypes
-
-	err = stmt.Query(db, &dest)
-	require.NoError(t, err)
-
-	require.Equal(t, string(*dest.ByteaPtr), "Hello Gopher!")
-	// Probably pq driver error.
-	// require.Equal(t, string(dest.Bytea), "Hello Gopher!")
 }

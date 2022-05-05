@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
@@ -14,69 +15,49 @@ import (
 )
 
 func TestDeleteWithWhere(t *testing.T) {
-	initForDeleteTest(t)
-
-	var expectedSQL = `
-DELETE FROM test_sample.link
-WHERE link.name IN ('Gmail', 'Outlook');
-`
 	deleteStmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	testutils.AssertDebugStatementSql(t, deleteStmt, `
+DELETE FROM test_sample.link
+WHERE link.name IN ('Gmail'::text, 'Outlook'::text);
+`, "Gmail", "Outlook")
 
-	res, err := deleteStmt.ExecContext(context.Background(), db)
-
-	require.NoError(t, err)
-	rows, err := res.RowsAffected()
-	require.NoError(t, err)
-	require.Equal(t, rows, int64(2))
+	testutils.AssertExecAndRollback(t, deleteStmt, db, 2)
 	requireQueryLogged(t, deleteStmt, int64(2))
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {
-	initForDeleteTest(t)
-
-	var expectedSQL = `
-DELETE FROM test_sample.link
-WHERE link.name IN ('Gmail', 'Outlook')
-RETURNING link.id AS "link.id",
-          link.url AS "link.url",
-          link.name AS "link.name",
-          link.description AS "link.description";
-`
 	deleteStmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
 		RETURNING(Link.AllColumns)
 
-	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	testutils.AssertDebugStatementSql(t, deleteStmt, `
+DELETE FROM test_sample.link
+WHERE link.name IN ('Gmail'::text, 'Outlook'::text)
+RETURNING link.id AS "link.id",
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
+`, "Gmail", "Outlook")
 
-	dest := []model.Link{}
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var dest []model.Link
 
-	err := deleteStmt.Query(db, &dest)
+		err := deleteStmt.Query(tx, &dest)
 
-	require.NoError(t, err)
+		require.NoError(t, err)
 
-	require.Equal(t, len(dest), 2)
-	testutils.AssertDeepEqual(t, dest[0].Name, "Gmail")
-	testutils.AssertDeepEqual(t, dest[1].Name, "Outlook")
-	requireLogged(t, deleteStmt)
-}
-
-func initForDeleteTest(t *testing.T) {
-	cleanUpLinkTable(t)
-	stmt := Link.INSERT(Link.URL, Link.Name, Link.Description).
-		VALUES("www.gmail.com", "Gmail", "Email service developed by Google").
-		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
-
-	AssertExec(t, stmt, 2)
+		require.Equal(t, len(dest), 2)
+		testutils.AssertDeepEqual(t, dest[0].Name, "Gmail")
+		testutils.AssertDeepEqual(t, dest[1].Name, "Outlook")
+		requireLogged(t, deleteStmt)
+	})
 }
 
 func TestDeleteQueryContext(t *testing.T) {
-	initForDeleteTest(t)
-
 	deleteStmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
@@ -86,16 +67,16 @@ func TestDeleteQueryContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	dest := []model.Link{}
-	err := deleteStmt.QueryContext(ctx, db, &dest)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		dest := []model.Link{}
+		err := deleteStmt.QueryContext(ctx, tx, &dest)
 
-	require.Error(t, err, "context deadline exceeded")
-	requireLogged(t, deleteStmt)
+		require.Error(t, err, "context deadline exceeded")
+		requireLogged(t, deleteStmt)
+	})
 }
 
 func TestDeleteExecContext(t *testing.T) {
-	initForDeleteTest(t)
-
 	list := []Expression{String("Gmail"), String("Outlook")}
 
 	deleteStmt := Link.
@@ -107,15 +88,16 @@ func TestDeleteExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	_, err := deleteStmt.ExecContext(ctx, db)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		_, err := deleteStmt.ExecContext(ctx, tx)
 
-	require.Error(t, err, "context deadline exceeded")
-	requireLogged(t, deleteStmt)
+		require.Error(t, err, "context deadline exceeded")
+		requireLogged(t, deleteStmt)
+	})
 }
 
 func TestDeleteFrom(t *testing.T) {
-	tx := beginTx(t)
-	defer tx.Rollback()
+	skipForCockroachDB(t) // USING is not supported
 
 	stmt := table.Rental.DELETE().
 		USING(
@@ -158,16 +140,17 @@ RETURNING rental.rental_id AS "rental.rental_id",
           store.last_update AS "store.last_update";
 `)
 
-	var dest []struct {
-		Rental model2.Rental
-		Store  model2.Store
-	}
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var dest []struct {
+			Rental model2.Rental
+			Store  model2.Store
+		}
 
-	err := stmt.Query(tx, &dest)
+		err := stmt.Query(tx, &dest)
 
-	require.NoError(t, err)
-	require.Len(t, dest, 3)
-	testutils.AssertJSON(t, dest[0], `
+		require.NoError(t, err)
+		require.Len(t, dest, 3)
+		testutils.AssertJSON(t, dest[0], `
 {
 	"Rental": {
 		"RentalID": 4,
@@ -186,4 +169,5 @@ RETURNING rental.rental_id AS "rental.rental_id",
 	}
 }
 `)
+	})
 }

@@ -497,6 +497,8 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 `
 
 func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
+	skipForCockroachDB(t)
+
 	enumDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/enum/")
 	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
 	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")

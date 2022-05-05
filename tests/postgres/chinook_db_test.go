@@ -188,34 +188,36 @@ func TestJoinEverything(t *testing.T) {
 
 	manager := Employee.AS("Manager")
 
-	stmt := Artist.
-		LEFT_JOIN(Album, Artist.ArtistId.EQ(Album.ArtistId)).
-		LEFT_JOIN(Track, Track.AlbumId.EQ(Album.AlbumId)).
-		LEFT_JOIN(Genre, Genre.GenreId.EQ(Track.GenreId)).
-		LEFT_JOIN(MediaType, MediaType.MediaTypeId.EQ(Track.MediaTypeId)).
-		LEFT_JOIN(PlaylistTrack, PlaylistTrack.TrackId.EQ(Track.TrackId)).
-		LEFT_JOIN(Playlist, Playlist.PlaylistId.EQ(PlaylistTrack.PlaylistId)).
-		LEFT_JOIN(InvoiceLine, InvoiceLine.TrackId.EQ(Track.TrackId)).
-		LEFT_JOIN(Invoice, Invoice.InvoiceId.EQ(InvoiceLine.InvoiceId)).
-		LEFT_JOIN(Customer, Customer.CustomerId.EQ(Invoice.CustomerId)).
-		LEFT_JOIN(Employee, Employee.EmployeeId.EQ(Customer.SupportRepId)).
-		LEFT_JOIN(manager, manager.EmployeeId.EQ(Employee.ReportsTo)).
-		SELECT(
-			Artist.AllColumns,
-			Album.AllColumns,
-			Track.AllColumns,
-			Genre.AllColumns,
-			MediaType.AllColumns,
-			PlaylistTrack.AllColumns,
-			Playlist.AllColumns,
-			Invoice.AllColumns,
-			Customer.AllColumns,
-			Employee.AllColumns,
-			manager.AllColumns,
-		).
-		ORDER_BY(Artist.ArtistId, Album.AlbumId, Track.TrackId,
-			Genre.GenreId, MediaType.MediaTypeId, Playlist.PlaylistId,
-			Invoice.InvoiceId, Customer.CustomerId)
+	stmt := SELECT(
+		Artist.AllColumns,
+		Album.AllColumns,
+		Track.AllColumns,
+		Genre.AllColumns,
+		MediaType.AllColumns,
+		PlaylistTrack.AllColumns,
+		Playlist.AllColumns,
+		Invoice.AllColumns,
+		Customer.AllColumns,
+		Employee.AllColumns,
+		manager.AllColumns,
+	).FROM(
+		Artist.
+			LEFT_JOIN(Album, Artist.ArtistId.EQ(Album.ArtistId)).
+			LEFT_JOIN(Track, Track.AlbumId.EQ(Album.AlbumId)).
+			LEFT_JOIN(Genre, Genre.GenreId.EQ(Track.GenreId)).
+			LEFT_JOIN(MediaType, MediaType.MediaTypeId.EQ(Track.MediaTypeId)).
+			LEFT_JOIN(PlaylistTrack, PlaylistTrack.TrackId.EQ(Track.TrackId)).
+			LEFT_JOIN(Playlist, Playlist.PlaylistId.EQ(PlaylistTrack.PlaylistId)).
+			LEFT_JOIN(InvoiceLine, InvoiceLine.TrackId.EQ(Track.TrackId)).
+			LEFT_JOIN(Invoice, Invoice.InvoiceId.EQ(InvoiceLine.InvoiceId)).
+			LEFT_JOIN(Customer, Customer.CustomerId.EQ(Invoice.CustomerId)).
+			LEFT_JOIN(Employee, Employee.EmployeeId.EQ(Customer.SupportRepId)).
+			LEFT_JOIN(manager, manager.EmployeeId.EQ(Employee.ReportsTo)),
+	).ORDER_BY(
+		Artist.ArtistId, Album.AlbumId, Track.TrackId,
+		Genre.GenreId, MediaType.MediaTypeId, Playlist.PlaylistId,
+		Invoice.InvoiceId, Customer.CustomerId,
+	)
 
 	var dest []struct { //list of all artist
 		model.Artist
@@ -398,11 +400,11 @@ FROM (
           SELECT "subQuery1"."Artist.ArtistId" AS "Artist.ArtistId",
                "subQuery1"."Artist.Name" AS "Artist.Name",
                "subQuery1".custom_column_1 AS "custom_column_1",
-               $1 AS "custom_column_2"
+               $1::text AS "custom_column_2"
           FROM (
                     SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
                          "Artist"."Name" AS "Artist.Name",
-                         $2 AS "custom_column_1"
+                         $2::text AS "custom_column_1"
                     FROM chinook."Artist"
                     ORDER BY "Artist"."ArtistId" ASC
                ) AS "subQuery1"
@@ -721,11 +723,14 @@ ORDER BY "Album.AlbumId";
 }
 
 func TestQueryWithContext(t *testing.T) {
+	if sourceIsCockroachDB() && !isPgxDriver() {
+		return // context cancellation doesn't work for pq driver
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
-	dest := []model.Album{}
+	var dest []model.Album
 
 	err := Album.
 		CROSS_JOIN(Track).
@@ -737,6 +742,9 @@ func TestQueryWithContext(t *testing.T) {
 }
 
 func TestExecWithContext(t *testing.T) {
+	if sourceIsCockroachDB() && !isPgxDriver() {
+		return // context cancellation doesn't work for pq driver
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
@@ -828,10 +836,12 @@ func Test_SchemaRename(t *testing.T) {
 
 	albumArtistID := Album2.ArtistId.From(first10Albums)
 
-	stmt := SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
-		FROM(first10Artist.
-			INNER_JOIN(first10Albums, artistID.EQ(albumArtistID))).
-		ORDER_BY(artistID)
+	stmt := SELECT(
+		first10Artist.AllColumns(),
+		first10Albums.AllColumns(),
+	).FROM(first10Artist.
+		INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)),
+	).ORDER_BY(artistID)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
@@ -891,6 +901,8 @@ var album347 = model.Album{
 }
 
 func TestAggregateFunc(t *testing.T) {
+	skipForCockroachDB(t)
+
 	stmt := SELECT(
 		PERCENTILE_DISC(Float(0.1)).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceId).AS("percentile_disc_1"),
 		PERCENTILE_DISC(Invoice.Total.DIV(Float(100))).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceDate.ASC()).AS("percentile_disc_2"),

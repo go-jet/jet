@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
 
@@ -85,12 +86,10 @@ func TestRawStatementSelectWithArguments(t *testing.T) {
 }
 
 func TestRawInsert(t *testing.T) {
-	cleanUpLinkTable(t)
-
 	stmt := RawStatement(`
 INSERT INTO test_sample.link (id, url, name, description)
 VALUES (@id1, @url1, @name1, DEFAULT),
-       (200, @url1, @name1, NULL),
+       (2000, @url1, @name1, NULL),
        (@id2, @url2, @name2, DEFAULT),
 	   (@id3, @url3, @name3, NULL)
 RETURNING link.id AS "link.id",
@@ -98,45 +97,47 @@ RETURNING link.id AS "link.id",
          link.name AS "link.name",
          link.description AS "link.description"`,
 		RawArgs{
-			"@id1": 100, "@url1": "http://www.postgresqltutorial.com", "@name1": "PostgreSQL Tutorial",
-			"@id2": 101, "@url2": "http://www.google.com", "@name2": "Google",
-			"@id3": 102, "@url3": "http://www.yahoo.com", "@name3": "Yahoo",
+			"@id1": 1000, "@url1": "http://www.postgresqltutorial.com", "@name1": "PostgreSQL Tutorial",
+			"@id2": 1010, "@url2": "http://www.google.com", "@name2": "Google",
+			"@id3": 1020, "@url3": "http://www.yahoo.com", "@name3": "Yahoo",
 		})
 
 	testutils.AssertStatementSql(t, stmt, `
 INSERT INTO test_sample.link (id, url, name, description)
 VALUES ($1, $2, $3, DEFAULT),
-       (200, $2, $3, NULL),
+       (2000, $2, $3, NULL),
        ($4, $5, $6, DEFAULT),
 	   ($7, $8, $9, NULL)
 RETURNING link.id AS "link.id",
          link.url AS "link.url",
          link.name AS "link.name",
          link.description AS "link.description";
-`, 100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
-		101, "http://www.google.com", "Google",
-		102, "http://www.yahoo.com", "Yahoo")
+`, 1000, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
+		1010, "http://www.google.com", "Google",
+		1020, "http://www.yahoo.com", "Yahoo")
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 INSERT INTO test_sample.link (id, url, name, description)
-VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
-       (200, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', NULL),
-       (101, 'http://www.google.com', 'Google', DEFAULT),
-	   (102, 'http://www.yahoo.com', 'Yahoo', NULL)
+VALUES (1000, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
+       (2000, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', NULL),
+       (1010, 'http://www.google.com', 'Google', DEFAULT),
+	   (1020, 'http://www.yahoo.com', 'Yahoo', NULL)
 RETURNING link.id AS "link.id",
          link.url AS "link.url",
          link.name AS "link.name",
          link.description AS "link.description";
 `)
 
-	var links []model2.Link
-	err := stmt.Query(db, &links)
-	require.NoError(t, err)
-	require.Len(t, links, 4)
-	require.Equal(t, links[0].ID, int32(100))
-	require.Equal(t, links[1].URL, "http://www.postgresqltutorial.com")
-	require.Equal(t, links[2].Name, "Google")
-	require.Nil(t, links[2].Description)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var links []model2.Link
+		err := stmt.Query(tx, &links)
+		require.NoError(t, err)
+		require.Len(t, links, 4)
+		require.Equal(t, links[0].ID, int64(1000))
+		require.Equal(t, links[1].URL, "http://www.postgresqltutorial.com")
+		require.Equal(t, links[2].Name, "Google")
+		require.Nil(t, links[2].Description)
+	})
 }
 
 func TestRawStatementRows(t *testing.T) {

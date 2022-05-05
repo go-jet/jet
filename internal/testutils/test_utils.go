@@ -2,6 +2,8 @@ package testutils
 
 import (
 	"bytes"
+	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
@@ -25,6 +27,18 @@ var UnixTimeComparer = cmp.Comparer(func(t1, t2 time.Time) bool {
 	return t1.Unix() == t2.Unix()
 })
 
+// AssertExecAndRollback will execute and rollback statement in sql transaction
+func AssertExecAndRollback(t *testing.T, stmt jet.Statement, db *sql.DB, rowsAffected ...int64) {
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer func() {
+		err := tx.Rollback()
+		require.NoError(t, err)
+	}()
+
+	AssertExec(t, stmt, tx, rowsAffected...)
+}
+
 // AssertExec assert statement execution for successful execution and number of rows affected
 func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int64) {
 	res, err := stmt.Exec(db)
@@ -38,9 +52,28 @@ func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int
 	}
 }
 
+// ExecuteInTxAndRollback will execute function in sql transaction and then rollback transaction
+func ExecuteInTxAndRollback(t *testing.T, db *sql.DB, f func(tx *sql.Tx)) {
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer func() {
+		err := tx.Rollback()
+		require.NoError(t, err)
+	}()
+
+	f(tx)
+}
+
 // AssertExecErr assert statement execution for failed execution with error string errorStr
 func AssertExecErr(t *testing.T, stmt jet.Statement, db qrm.DB, errorStr string) {
 	_, err := stmt.Exec(db)
+
+	require.Error(t, err, errorStr)
+}
+
+// AssertExecContextErr assert statement execution for failed execution with error string errorStr
+func AssertExecContextErr(t *testing.T, stmt jet.Statement, ctx context.Context, db qrm.DB, errorStr string) {
+	_, err := stmt.ExecContext(ctx, db)
 
 	require.Error(t, err, errorStr)
 }
