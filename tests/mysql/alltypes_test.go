@@ -539,6 +539,8 @@ func TestTimeExpressions(t *testing.T) {
 
 		AllTypes.Time.ADD(INTERVAL(20, MINUTE)).SUB(INTERVAL(11, HOUR)),
 
+		EXTRACT(DAY_HOUR, AllTypes.Time),
+
 		CURRENT_TIME(),
 		CURRENT_TIME(3),
 	)
@@ -574,6 +576,7 @@ SELECT CAST('20:34:58' AS TIME),
      all_types.time - INTERVAL all_types.small_int MINUTE,
      all_types.time - INTERVAL 3 MINUTE,
      (all_types.time + INTERVAL 20 MINUTE) - INTERVAL 11 HOUR,
+     EXTRACT(DAY_HOUR FROM all_types.time),
      CURRENT_TIME,
      CURRENT_TIME(3)
 FROM test_sample.all_types;
@@ -933,6 +936,62 @@ func TestINTERVAL(t *testing.T) {
 	//fmt.Println(query.DebugSql())
 
 	err := query.Query(db, &struct{}{})
+	require.NoError(t, err)
+}
+
+func TestTimeEXTRACT(t *testing.T) {
+	stmt := SELECT(
+		EXTRACT(MICROSECOND, TimeT(time.Now())),
+		EXTRACT(SECOND, AllTypes.Time),
+		EXTRACT(MINUTE, AllTypes.Timestamp),
+		EXTRACT(HOUR, AllTypes.Timestamp),
+		EXTRACT(DAY, AllTypes.Date),
+		EXTRACT(WEEK, AllTypes.Timestamp),
+		EXTRACT(MONTH, AllTypes.Timestamp.ADD(INTERVAL(1, DAY))),
+		EXTRACT(QUARTER, AllTypes.Timestamp),
+		EXTRACT(YEAR, AllTypes.Timestamp).EQ(Int(1189654)),
+		EXTRACT(SECOND_MICROSECOND, AllTypes.Time),
+		EXTRACT(MINUTE_MICROSECOND, AllTypes.DateTime),
+		EXTRACT(MINUTE_SECOND, AllTypes.Timestamp),
+		EXTRACT(HOUR_MICROSECOND, AllTypes.Timestamp),
+		EXTRACT(HOUR_SECOND, AllTypes.Timestamp),
+		EXTRACT(HOUR_MINUTE, AllTypes.Timestamp),
+		EXTRACT(DAY_MICROSECOND, AllTypes.Timestamp),
+		EXTRACT(DAY_SECOND, AllTypes.Timestamp),
+		EXTRACT(DAY_MINUTE, AllTypes.Timestamp),
+		EXTRACT(DAY_HOUR, AllTypes.Timestamp),
+		EXTRACT(YEAR_MONTH, AllTypes.Timestamp),
+	).FROM(
+		AllTypes,
+	)
+
+	//fmt.Println(stmt.Sql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT EXTRACT(MICROSECOND FROM CAST(? AS TIME)),
+     EXTRACT(SECOND FROM all_types.time),
+     EXTRACT(MINUTE FROM all_types.timestamp),
+     EXTRACT(HOUR FROM all_types.timestamp),
+     EXTRACT(DAY FROM all_types.date),
+     EXTRACT(WEEK FROM all_types.timestamp),
+     EXTRACT(MONTH FROM all_types.timestamp + INTERVAL 1 DAY),
+     EXTRACT(QUARTER FROM all_types.timestamp),
+     EXTRACT(YEAR FROM all_types.timestamp) = ?,
+     EXTRACT(SECOND_MICROSECOND FROM all_types.time),
+     EXTRACT(MINUTE_MICROSECOND FROM all_types.date_time),
+     EXTRACT(MINUTE_SECOND FROM all_types.timestamp),
+     EXTRACT(HOUR_MICROSECOND FROM all_types.timestamp),
+     EXTRACT(HOUR_SECOND FROM all_types.timestamp),
+     EXTRACT(HOUR_MINUTE FROM all_types.timestamp),
+     EXTRACT(DAY_MICROSECOND FROM all_types.timestamp),
+     EXTRACT(DAY_SECOND FROM all_types.timestamp),
+     EXTRACT(DAY_MINUTE FROM all_types.timestamp),
+     EXTRACT(DAY_HOUR FROM all_types.timestamp),
+     EXTRACT(YEAR_MONTH FROM all_types.timestamp)
+FROM test_sample.all_types;
+`)
+
+	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
 }
 

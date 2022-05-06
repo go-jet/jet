@@ -380,6 +380,6 @@ func TestInsertWithExecContext(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
-		testutils.AssertExecContextErr(t, stmt, ctx, tx, "context deadline exceeded")
+		testutils.AssertExecContextErr(ctx, t, stmt, tx, "context deadline exceeded")
 	})
 }

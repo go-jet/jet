@@ -1,6 +1,8 @@
 package postgres
 
-import "github.com/go-jet/jet/v2/internal/jet"
+import (
+	"github.com/go-jet/jet/v2/internal/jet"
+)
 
 // This functions can be used, instead of its method counterparts, to have a better indentation of a complex condition
 // in the Go code and in the generated SQL.
@@ -278,6 +280,26 @@ var TO_NUMBER = jet.TO_NUMBER
 var TO_TIMESTAMP = jet.TO_TIMESTAMP
 
 //----------------- Date/Time Functions and Operators ------------//
+
+// Additional time unit types for EXTRACT function
+const (
+	DOW unit = MILLENNIUM + 1 + iota
+	DOY
+	EPOCH
+	ISODOW
+	ISOYEAR
+	JULIAN
+	QUARTER
+	TIMEZONE
+	TIMEZONE_HOUR
+	TIMEZONE_MINUTE
+)
+
+// EXTRACT function retrieves subfields such as year or hour from date/time values
+//          EXTRACT(DAY, User.CreatedAt)
+func EXTRACT(field unit, from Expression) FloatExpression {
+	return FloatExp(jet.EXTRACT(unitToString(field), from))
+}
 
 // CURRENT_DATE returns current date
 var CURRENT_DATE = jet.CURRENT_DATE

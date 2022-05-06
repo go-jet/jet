@@ -32,8 +32,14 @@ init-sqlite:
 # jet-gen will call generator on each of the test databases to generate sql builder and model files need to run the tests.
 jet-gen-all: install-jet-gen jet-gen-postgres jet-gen-mysql jet-gen-mariadb jet-gen-sqlite
 
+ifeq ($(OS),Windows_NT)
+    target := jet.exe
+else
+    target := jet
+endif
+
 install-jet-gen:
-	go build -o ${GOPATH}/bin/jet ../cmd/jet/
+	go build -o ${GOPATH}/bin/${target} ../cmd/jet/
 
 jet-gen-postgres:
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=dvds  -path=./.gentestdata/

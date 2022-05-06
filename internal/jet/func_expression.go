@@ -492,6 +492,11 @@ func TO_TIMESTAMP(timestampzStr, format StringExpression) TimestampzExpression {
 
 //----------------- Date/Time Functions and Operators ---------------//
 
+// EXTRACT extracts time component from time expression
+func EXTRACT(field string, from Expression) Expression {
+	return newCustomExpression(Token("EXTRACT("), Token(field), Token("FROM"), from, Token(")"))
+}
+
 // CURRENT_DATE returns current date
 func CURRENT_DATE() DateExpression {
 	dateFunc := NewDateFunc("CURRENT_DATE")

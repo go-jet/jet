@@ -30,6 +30,7 @@ func init() {
 	flag.Parse()
 }
 
+// Database names
 const (
 	Postgres  = "postgres"
 	MySql     = "mysql"

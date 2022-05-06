@@ -899,9 +899,9 @@ func TestTimeExpression(t *testing.T) {
 		NOW(),
 	)
 
-	//fmt.Println(query.DebugSql())
+	// fmt.Println(query.DebugSql())
 
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
@@ -961,6 +961,66 @@ func TestInterval(t *testing.T) {
 	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
 	requireLogged(t, stmt)
+}
+
+func TestTimeEXTRACT(t *testing.T) {
+	stmt := SELECT(
+		EXTRACT(CENTURY, AllTypes.Timestampz),
+		EXTRACT(DAY, AllTypes.Timestamp),
+		EXTRACT(DECADE, AllTypes.Date),
+		EXTRACT(DOW, AllTypes.TimestampzPtr),
+		EXTRACT(DOY, DateT(time.Now())),
+		EXTRACT(EPOCH, TimestampT(time.Now())),
+		EXTRACT(HOUR, AllTypes.Time.ADD(INTERVAL(1, HOUR))),
+		EXTRACT(ISODOW, AllTypes.Timestampz),
+		EXTRACT(ISOYEAR, AllTypes.Timestampz),
+		EXTRACT(JULIAN, AllTypes.Timestampz).EQ(Float(3456.123)),
+		EXTRACT(MICROSECOND, AllTypes.Timestampz),
+		EXTRACT(MILLENNIUM, AllTypes.Timestampz),
+		EXTRACT(MILLISECOND, AllTypes.Timez),
+		EXTRACT(MINUTE, INTERVAL(1, HOUR, 2, MINUTE)),
+		EXTRACT(MONTH, AllTypes.Timestampz),
+		EXTRACT(QUARTER, AllTypes.Timestampz),
+		EXTRACT(SECOND, AllTypes.Timestampz),
+		EXTRACT(TIMEZONE, AllTypes.Timestampz),
+		EXTRACT(TIMEZONE_HOUR, AllTypes.Timestampz),
+		EXTRACT(TIMEZONE_MINUTE, AllTypes.Timestampz),
+		EXTRACT(WEEK, AllTypes.Timestampz),
+		EXTRACT(YEAR, AllTypes.Timestampz),
+	).FROM(
+		AllTypes,
+	)
+
+	// fmt.Println(stmt.Sql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT EXTRACT(CENTURY FROM all_types.timestampz),
+     EXTRACT(DAY FROM all_types.timestamp),
+     EXTRACT(DECADE FROM all_types.date),
+     EXTRACT(DOW FROM all_types.timestampz_ptr),
+     EXTRACT(DOY FROM $1::date),
+     EXTRACT(EPOCH FROM $2::timestamp without time zone),
+     EXTRACT(HOUR FROM all_types.time + INTERVAL '1 HOUR'),
+     EXTRACT(ISODOW FROM all_types.timestampz),
+     EXTRACT(ISOYEAR FROM all_types.timestampz),
+     EXTRACT(JULIAN FROM all_types.timestampz) = $3,
+     EXTRACT(MICROSECOND FROM all_types.timestampz),
+     EXTRACT(MILLENNIUM FROM all_types.timestampz),
+     EXTRACT(MILLISECOND FROM all_types.timez),
+     EXTRACT(MINUTE FROM INTERVAL '1 HOUR 2 MINUTE'),
+     EXTRACT(MONTH FROM all_types.timestampz),
+     EXTRACT(QUARTER FROM all_types.timestampz),
+     EXTRACT(SECOND FROM all_types.timestampz),
+     EXTRACT(TIMEZONE FROM all_types.timestampz),
+     EXTRACT(TIMEZONE_HOUR FROM all_types.timestampz),
+     EXTRACT(TIMEZONE_MINUTE FROM all_types.timestampz),
+     EXTRACT(WEEK FROM all_types.timestampz),
+     EXTRACT(YEAR FROM all_types.timestampz)
+FROM test_sample.all_types;
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
 }
 
 func TestSubQueryColumnReference(t *testing.T) {

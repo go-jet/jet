@@ -10,10 +10,11 @@ import (
 )
 
 type quantityAndUnit = float64
+type unit = float64
 
 // Interval unit types
 const (
-	YEAR quantityAndUnit = 123456789 + iota
+	YEAR unit = 123456789 + iota
 	MONTH
 	WEEK
 	DAY
@@ -119,7 +120,7 @@ type intervalExpression struct {
 }
 
 // INTERVAL creates new interval expression from the list of quantity-unit pairs.
-// For example: INTERVAL(1, DAY, 3, MINUTE)
+// 		INTERVAL(1, DAY, 3, MINUTE)
 func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 	quantityAndUnitLen := len(quantityAndUnit)
 	if quantityAndUnitLen == 0 || quantityAndUnitLen%2 != 0 {
@@ -208,6 +209,27 @@ func unitToString(unit quantityAndUnit) string {
 		return "CENTURY"
 	case MILLENNIUM:
 		return "MILLENNIUM"
+	// additional field units for EXTRACT function
+	case DOW:
+		return "DOW"
+	case DOY:
+		return "DOY"
+	case EPOCH:
+		return "EPOCH"
+	case ISODOW:
+		return "ISODOW"
+	case ISOYEAR:
+		return "ISOYEAR"
+	case JULIAN:
+		return "JULIAN"
+	case QUARTER:
+		return "QUARTER"
+	case TIMEZONE:
+		return "TIMEZONE"
+	case TIMEZONE_HOUR:
+		return "TIMEZONE_HOUR"
+	case TIMEZONE_MINUTE:
+		return "TIMEZONE_MINUTE"
 	default:
 		panic("jet: invalid INTERVAL unit type")
 	}

@@ -344,7 +344,7 @@ func TestUpdateExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.AssertExecContextErr(t, updateStmt, ctx, db, "context deadline exceeded")
+	testutils.AssertExecContextErr(ctx, t, updateStmt, db, "context deadline exceeded")
 }
 
 func TestUpdateFrom(t *testing.T) {

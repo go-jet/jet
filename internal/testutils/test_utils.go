@@ -72,7 +72,7 @@ func AssertExecErr(t *testing.T, stmt jet.Statement, db qrm.DB, errorStr string)
 }
 
 // AssertExecContextErr assert statement execution for failed execution with error string errorStr
-func AssertExecContextErr(t *testing.T, stmt jet.Statement, ctx context.Context, db qrm.DB, errorStr string) {
+func AssertExecContextErr(ctx context.Context, t *testing.T, stmt jet.Statement, db qrm.DB, errorStr string) {
 	_, err := stmt.ExecContext(ctx, db)
 
 	require.Error(t, err, errorStr)
