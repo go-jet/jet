@@ -11,23 +11,23 @@ import (
 type Statement interface {
 	// Sql returns parametrized sql query with list of arguments.
 	Sql() (query string, args []interface{})
-	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
+	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument string representation.
 	// Do not use it in production. Use it only for debug purposes.
 	DebugSql() (query string)
-	// Query executes statement over database connection/transaction db and stores row result in destination.
+	// Query executes statement over database connection/transaction db and stores row results in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
-	Query(db qrm.DB, destination interface{}) error
+	Query(db qrm.Queryable, destination interface{}) error
 	// QueryContext executes statement with a context over database connection/transaction db and stores row result in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
-	QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error
+	QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error
 	// Exec executes statement over db connection/transaction without returning any rows.
-	Exec(db qrm.DB) (sql.Result, error)
+	Exec(db qrm.Executable) (sql.Result, error)
 	// ExecContext executes statement with context over db connection/transaction without returning any rows.
-	ExecContext(ctx context.Context, db qrm.DB) (sql.Result, error)
+	ExecContext(ctx context.Context, db qrm.Executable) (sql.Result, error)
 	// Rows executes statements over db connection/transaction and returns rows
-	Rows(ctx context.Context, db qrm.DB) (*Rows, error)
+	Rows(ctx context.Context, db qrm.Queryable) (*Rows, error)
 }
 
 // Rows wraps sql.Rows type to add query result mapping for Scan method
@@ -86,11 +86,11 @@ func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 	return
 }
 
-func (s *serializerStatementInterfaceImpl) Query(db qrm.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) Query(db qrm.Queryable, destination interface{}) error {
 	return s.QueryContext(context.Background(), db, destination)
 }
 
-func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db qrm.DB, destination interface{}) error {
+func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error {
 	query, args := s.Sql()
 
 	callLogger(ctx, s)
@@ -112,11 +112,11 @@ func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db 
 	return err
 }
 
-func (s *serializerStatementInterfaceImpl) Exec(db qrm.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) Exec(db qrm.Executable) (res sql.Result, err error) {
 	return s.ExecContext(context.Background(), db)
 }
 
-func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db qrm.DB) (res sql.Result, err error) {
+func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db qrm.Executable) (res sql.Result, err error) {
 	query, args := s.Sql()
 
 	callLogger(ctx, s)
@@ -141,7 +141,7 @@ func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db q
 	return res, err
 }
 
-func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.DB) (*Rows, error) {
+func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.Queryable) (*Rows, error) {
 	query, args := s.Sql()
 
 	callLogger(ctx, s)

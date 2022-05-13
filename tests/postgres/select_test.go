@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"context"
+	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
 
@@ -24,9 +26,9 @@ FROM dvds.actor
 WHERE actor.actor_id = 2;
 `
 
-	query := Actor.
-		SELECT(Actor.AllColumns).
+	query := SELECT(Actor.AllColumns).
 		DISTINCT().
+		FROM(Actor).
 		WHERE(Actor.ActorID.EQ(Int(2)))
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(2))
@@ -44,7 +46,6 @@ WHERE actor.actor_id = 2;
 	}
 
 	testutils.AssertDeepEqual(t, actor, expectedActor)
-
 	requireLogged(t, query)
 }
 
@@ -166,7 +167,7 @@ SELECT customer.customer_id AS "customer.customer_id",
 FROM dvds.customer
 ORDER BY customer.customer_id ASC;
 `
-	customers := []model.Customer{}
+	var customers []model.Customer
 
 	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
@@ -2678,6 +2679,48 @@ SELECT dvds.get_film_count(100, 120) AS "film_count";
 	err = stmt3.Query(db, &dest)
 	require.NoError(t, err)
 	require.Equal(t, dest.FilmCount, 165)
+}
+
+func TestScanUsingConn(t *testing.T) {
+	conn, err := db.Conn(context.Background())
+	require.NoError(t, err)
+	defer conn.Close()
+
+	stmt := SELECT(Actor.AllColumns).
+		FROM(Actor).
+		DISTINCT().
+		WHERE(Actor.ActorID.EQ(Int(2)))
+
+	var actor model.Actor
+	err = stmt.Query(conn, &actor)
+	require.NoError(t, err)
+	err = stmt.QueryContext(context.Background(), conn, &actor)
+	require.NoError(t, err)
+	testutils.AssertDeepEqual(t, actor, model.Actor{
+		ActorID:    2,
+		FirstName:  "Nick",
+		LastName:   "Wahlberg",
+		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
+	})
+
+	_, err = stmt.Exec(conn)
+	require.NoError(t, err)
+	_, err = stmt.ExecContext(context.Background(), conn)
+	require.NoError(t, err)
+
+	t.Run("ensure qrm.DB still works", func(t *testing.T) {
+		var qrmDB qrm.DB = db
+
+		err = stmt.Query(qrmDB, &actor)
+		require.NoError(t, err)
+		err = stmt.QueryContext(context.Background(), qrmDB, &actor)
+		require.NoError(t, err)
+
+		_, err = stmt.Exec(qrmDB)
+		require.NoError(t, err)
+		_, err = stmt.ExecContext(context.Background(), qrmDB)
+		require.NoError(t, err)
+	})
 }
 
 var customer0 = model.Customer{
