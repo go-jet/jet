@@ -4,6 +4,10 @@ package jet
 type ColumnList []ColumnExpression
 
 // SET creates column assigment for each column in column list. expression should be created by ROW function
+//		Link.UPDATE().
+//			SET(Link.MutableColumns.SET(ROW(String("github.com"), Bool(false))).
+//			WHERE(Link.ID.EQ(Int(0)))
+//
 func (cl ColumnList) SET(expression Expression) ColumnAssigment {
 	return columnAssigmentImpl{
 		column:     cl,
@@ -11,7 +15,9 @@ func (cl ColumnList) SET(expression Expression) ColumnAssigment {
 	}
 }
 
-// Except will create new column list in which columns contained in excluded column names are removed
+// Except will create new column list in which columns contained in list of excluded column names are removed
+//		Address.AllColumns.Except(Address.PostalCode, Address.Phone)
+//
 func (cl ColumnList) Except(excludedColumns ...Column) ColumnList {
 	excludedColumnList := UnwidColumnList(excludedColumns)
 	excludedColumnNames := map[string]bool{}
