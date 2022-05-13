@@ -71,33 +71,7 @@ func init() {
 }
 
 func main() {
-
-	flag.Usage = func() {
-		fmt.Println("Jet generator 2.7.0")
-		fmt.Println()
-		fmt.Println("Usage:")
-
-		order := []string{
-			"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
-			"path",
-			"ignore-tables", "ignore-views", "ignore-enums",
-		}
-		for _, name := range order {
-			flagEntry := flag.CommandLine.Lookup(name)
-			fmt.Printf("  -%s\n", flagEntry.Name)
-			fmt.Printf("\t%s\n", flagEntry.Usage)
-		}
-
-		fmt.Println()
-		fmt.Println(`Example command:
-
-	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=dvds -path=./gen
-	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
-	$ jet -source=mysql -host=localhost -port=3306 -user=jet -password=jet -dbname=jetdb -path=./gen
-	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen
-		`)
-	}
-
+	flag.Usage = usage
 	flag.Parse()
 
 	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") {
@@ -112,12 +86,14 @@ func main() {
 	var err error
 
 	switch source {
-	case "postgresql", "postgres":
+	case "postgresql", "postgres", "cockroachdb", "cockroach":
 		generatorTemplate := genTemplate(postgres2.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+
 		if dsn != "" {
 			err = postgresgen.GenerateDSN(dsn, schemaName, destDir, generatorTemplate)
 			break
 		}
+
 		dbConn := postgresgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -138,10 +114,12 @@ func main() {
 
 	case "mysql", "mysqlx", "mariadb":
 		generatorTemplate := genTemplate(mysql.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+
 		if dsn != "" {
 			err = mysqlgen.GenerateDSN(dsn, destDir, generatorTemplate)
 			break
 		}
+
 		dbConn := mysqlgen.DBConnection{
 			Host:     host,
 			Port:     port,
@@ -160,6 +138,7 @@ func main() {
 		if dsn == "" {
 			printErrorAndExit("ERROR: required -dsn flag missing.")
 		}
+
 		err = sqlitegen.GenerateDSN(
 			dsn,
 			destDir,
@@ -177,6 +156,33 @@ func main() {
 		fmt.Println(err.Error())
 		os.Exit(-5)
 	}
+}
+
+func usage() {
+	fmt.Println("Jet generator 2.8.0")
+	fmt.Println()
+	fmt.Println("Usage:")
+
+	order := []string{
+		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
+		"path",
+		"ignore-tables", "ignore-views", "ignore-enums",
+	}
+
+	for _, name := range order {
+		flagEntry := flag.CommandLine.Lookup(name)
+		fmt.Printf("  -%s\n", flagEntry.Name)
+		fmt.Printf("\t%s\n", flagEntry.Usage)
+	}
+
+	fmt.Println()
+	fmt.Println(`Example command:
+
+	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=dvds -path=./gen
+	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
+	$ jet -source=mysql -host=localhost -port=3306 -user=jet -password=jet -dbname=jetdb -path=./gen
+	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen
+		`)
 }
 
 func printErrorAndExit(error string) {
