@@ -2,6 +2,7 @@ package jet
 
 import (
 	"bytes"
+	"database/sql/driver"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
 	"github.com/go-jet/jet/v2/internal/utils"
@@ -232,15 +233,24 @@ func argToString(value interface{}) string {
 	case time.Time:
 		return stringQuote(string(pq.FormatTimestamp(bindVal)))
 	default:
-		if strBindValue, ok := bindVal.(toStringInterface); ok {
+		if strBindValue, ok := bindVal.(fmt.Stringer); ok {
 			return stringQuote(strBindValue.String())
 		}
+
+		if valuer, ok := bindVal.(driver.Valuer); ok {
+			val, err := valuer.Value()
+
+			if err != nil {
+				// If valuer for some reason returns an error, we return error string representation.
+				// This is fine because argToString is called only from DebugSQL, and DebugSQL shouldn't be used in production.
+				return err.Error()
+			}
+
+			return argToString(val)
+		}
+
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
-}
-
-type toStringInterface interface {
-	String() string
 }
 
 func integerTypesToString(value interface{}) string {

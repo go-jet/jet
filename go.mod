@@ -17,4 +17,5 @@ require (
 	github.com/pkg/profile v1.6.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.7.0
+	github.com/volatiletech/null/v8 v8.1.2
 )

@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"github.com/volatiletech/null/v8"
 	"testing"
 	"time"
 
@@ -1032,6 +1033,44 @@ func TestScanToPrimitiveElementsSlice(t *testing.T) {
 	require.Equal(t, dest[0].Title, []string(nil))
 	require.Equal(t, dest[1].ActorID, 200)
 	require.Len(t, dest[1].Title, 20)
+}
+
+// https://github.com/go-jet/jet/issues/127
+func TestValuerTypeDebugSQL(t *testing.T) {
+	type customer struct {
+		CustomerID null.Int32 `sql:"primary_key"`
+		StoreID    null.Int16
+		FirstName  null.String
+		LastName   string
+		Email      null.String
+		AddressID  int16
+		Activebool null.Bool
+		CreateDate null.Time
+		LastUpdate null.Time
+		Active     null.Int8
+	}
+
+	stmt := Customer.INSERT().
+		MODEL(
+			customer{
+				CustomerID: null.Int32From(1234),
+				StoreID:    null.Int16From(0),
+				FirstName:  null.StringFrom("Joe"),
+				LastName:   "",
+				Email:      null.StringFromPtr(nil),
+				AddressID:  1,
+				Activebool: null.BoolFrom(true),
+				CreateDate: null.TimeFrom(time.Date(2020, 2, 2, 10, 0, 0, 0, time.UTC)),
+				LastUpdate: null.TimeFromPtr(nil),
+				Active:     null.Int8From(1),
+			},
+		)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+INSERT INTO dvds.customer
+VALUES (1234, 0, 'Joe', '', NULL, 1, TRUE, '2020-02-02 10:00:00Z', NULL, 1);
+`)
+	testutils.AssertExecAndRollback(t, stmt, db)
 }
 
 var address256 = model.Address{
