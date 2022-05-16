@@ -43,7 +43,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&source, "source", "", "Database system name (postgres, mysql, mariadb or sqlite)")
+	flag.StringVar(&source, "source", "", "Database system name (postgres, mysql, cockroachdb, mariadb or sqlite)")
 
 	flag.StringVar(&dsn, "dsn", "", `Data source name. Unified format for connecting to database.
     	PostgreSQL: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING
@@ -60,7 +60,7 @@ func init() {
 	flag.StringVar(&user, "user", "", "Database user. Used only if dsn is not set.")
 	flag.StringVar(&password, "password", "", "The user’s password. Used only if dsn is not set.")
 	flag.StringVar(&dbName, "dbname", "", "Database name. Used only if dsn is not set.")
-	flag.StringVar(&schemaName, "schema", "public", `Database schema name. Used only if dsn is not set. (default "public")(PostgreSQL only)`)
+	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public")(PostgreSQL only)`)
 	flag.StringVar(&params, "params", "", "Additional connection string parameters(optional). Used only if dsn is not set.")
 	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL. Used only if dsn is not set. (optional)(default "disable")(PostgreSQL only)`)
 	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore`)
@@ -178,7 +178,8 @@ func usage() {
 	fmt.Println()
 	fmt.Println(`Example command:
 
-	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb -schema=dvds -path=./gen
+	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb?sslmode=disable -schema=dvds -path=./gen
+	$ jet -dsn=postgres://jet:jet@localhost:26257/jetdb?sslmode=disable -schema=dvds -path=./gen   #cockroachdb
 	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
 	$ jet -source=mysql -host=localhost -port=3306 -user=jet -password=jet -dbname=jetdb -path=./gen
 	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen
