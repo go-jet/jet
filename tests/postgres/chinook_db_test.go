@@ -6,6 +6,7 @@ import (
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/table"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook2/table"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -815,7 +816,7 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	require.NoError(t, err)
 }
 
-func Test_SchemaRename(t *testing.T) {
+func TestMultiTenantDifferentSchema(t *testing.T) {
 
 	Artist2 := Artist.FromSchema("chinook2")
 	Album2 := Album.FromSchema("chinook2")
@@ -880,6 +881,182 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	require.Equal(t, *dest[0].Artist.Name, "Apocalyptica")
 	require.Len(t, dest[0].Album, 1)
 	require.Equal(t, dest[0].Album[0].Title, "Plays Metallica By Four Cellos")
+}
+
+func TestMultiTenantSameSchemaDifferentTablePrefix(t *testing.T) {
+
+	var selectAlbumsFrom = func(tenant string) SelectStatement {
+		Album := table.Album.WithPrefix(tenant)
+
+		return SELECT(
+			Album.AllColumns,
+		).FROM(
+			Album,
+		).ORDER_BY(
+			Album.AlbumId.ASC(),
+		).LIMIT(3)
+	}
+
+	t.Run("tenant1", func(t *testing.T) {
+		stmt := selectAlbumsFrom("tenant1.")
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId"
+FROM chinook2."tenant1.Album" AS "Album"
+ORDER BY "Album"."AlbumId" ASC
+LIMIT $1;
+`)
+
+		var albums []model.Album
+		err := stmt.Query(db, &albums)
+		require.NoError(t, err)
+
+		testutils.AssertJSON(t, albums, `
+[
+	{
+		"AlbumId": 80,
+		"Title": "In Your Honor [Disc 2]",
+		"ArtistId": 84
+	},
+	{
+		"AlbumId": 81,
+		"Title": "One By One",
+		"ArtistId": 84
+	},
+	{
+		"AlbumId": 82,
+		"Title": "The Colour And The Shape",
+		"ArtistId": 84
+	}
+]
+`)
+	})
+
+	t.Run("tenant2", func(t *testing.T) {
+		stmt := selectAlbumsFrom("tenant2.")
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId"
+FROM chinook2."tenant2.Album" AS "Album"
+ORDER BY "Album"."AlbumId" ASC
+LIMIT $1;
+`)
+
+		var albums []model.Album
+		err := stmt.Query(db, &albums)
+		require.NoError(t, err)
+		testutils.AssertJSON(t, albums, `
+[
+	{
+		"AlbumId": 152,
+		"Title": "Master Of Puppets",
+		"ArtistId": 50
+	},
+	{
+		"AlbumId": 153,
+		"Title": "ReLoad",
+		"ArtistId": 50
+	},
+	{
+		"AlbumId": 154,
+		"Title": "Ride The Lightning",
+		"ArtistId": 50
+	}
+]
+`)
+	})
+}
+
+func TestMultiTenantSameSchemaDifferentTableSuffix(t *testing.T) {
+
+	var selectAlbumsFrom = func(tenant string) SelectStatement {
+		Album := table.Album.WithSuffix(tenant)
+
+		return SELECT(
+			Album.AllColumns,
+		).FROM(
+			Album,
+		).ORDER_BY(
+			Album.AlbumId.ASC(),
+		).LIMIT(3)
+	}
+
+	t.Run("tenant1", func(t *testing.T) {
+		stmt := selectAlbumsFrom(".tenant1")
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId"
+FROM chinook2."Album.tenant1" AS "Album"
+ORDER BY "Album"."AlbumId" ASC
+LIMIT $1;
+`)
+
+		var albums []model.Album
+		err := stmt.Query(db, &albums)
+		require.NoError(t, err)
+
+		testutils.AssertJSON(t, albums, `
+[
+	{
+		"AlbumId": 80,
+		"Title": "In Your Honor [Disc 2]",
+		"ArtistId": 84
+	},
+	{
+		"AlbumId": 81,
+		"Title": "One By One",
+		"ArtistId": 84
+	},
+	{
+		"AlbumId": 82,
+		"Title": "The Colour And The Shape",
+		"ArtistId": 84
+	}
+]
+`)
+	})
+
+	t.Run("tenant2", func(t *testing.T) {
+		stmt := selectAlbumsFrom(".tenant2")
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT "Album"."AlbumId" AS "Album.AlbumId",
+     "Album"."Title" AS "Album.Title",
+     "Album"."ArtistId" AS "Album.ArtistId"
+FROM chinook2."Album.tenant2" AS "Album"
+ORDER BY "Album"."AlbumId" ASC
+LIMIT $1;
+`)
+
+		var albums []model.Album
+		err := stmt.Query(db, &albums)
+		require.NoError(t, err)
+		testutils.AssertJSON(t, albums, `
+[
+	{
+		"AlbumId": 152,
+		"Title": "Master Of Puppets",
+		"ArtistId": 50
+	},
+	{
+		"AlbumId": 153,
+		"Title": "ReLoad",
+		"ArtistId": 50
+	},
+	{
+		"AlbumId": 154,
+		"Title": "Ride The Lightning",
+		"ArtistId": 50
+	}
+]
+`)
+	})
 }
 
 var album1 = model.Album{
