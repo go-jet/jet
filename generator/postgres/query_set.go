@@ -35,7 +35,9 @@ WITH primaryKeys AS (
 	SELECT column_name
 	FROM information_schema.key_column_usage AS c
 		LEFT JOIN information_schema.table_constraints AS t
-		ON t.constraint_name = c.constraint_name
+             ON t.constraint_name = c.constraint_name AND 
+                c.table_schema = t.table_schema AND 
+                c.table_name = t.table_name
 	WHERE t.table_schema = $1 AND t.table_name = $2 AND t.constraint_type = 'PRIMARY KEY'
 )
 SELECT column_name as "column.Name", 

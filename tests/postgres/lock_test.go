@@ -12,6 +12,8 @@ import (
 )
 
 func TestLockTable(t *testing.T) {
+	skipForCockroachDB(t) // doesn't support
+
 	expectedSQL := `
 LOCK TABLE dvds.address IN`
 
@@ -62,6 +64,8 @@ LOCK TABLE dvds.address IN`
 }
 
 func TestLockExecContext(t *testing.T) {
+	skipForCockroachDB(t)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 

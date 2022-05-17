@@ -25,6 +25,24 @@ import (
 var db *sql.DB
 var testRoot string
 
+var source string
+
+const CockroachDB = "COCKROACH_DB"
+
+func init() {
+	source = os.Getenv("PG_SOURCE")
+}
+
+func sourceIsCockroachDB() bool {
+	return source == CockroachDB
+}
+
+func skipForCockroachDB(t *testing.T) {
+	if sourceIsCockroachDB() {
+		t.SkipNow()
+	}
+}
+
 func TestMain(m *testing.M) {
 	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
@@ -35,8 +53,15 @@ func TestMain(m *testing.M) {
 		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
 
 		func() {
+
+			connectionString := dbconfig.PostgresConnectString
+
+			if sourceIsCockroachDB() {
+				connectionString = dbconfig.CockroachConnectString
+			}
+
 			var err error
-			db, err = sql.Open(driverName, dbconfig.PostgresConnectString)
+			db, err = sql.Open(driverName, connectionString)
 			if err != nil {
 				fmt.Println(err.Error())
 				panic("Failed to connect to test db")
@@ -112,10 +137,4 @@ func isPgxDriver() bool {
 	}
 
 	return false
-}
-
-func beginTx(t *testing.T) *sql.Tx {
-	tx, err := db.Begin()
-	require.NoError(t, err)
-	return tx
 }

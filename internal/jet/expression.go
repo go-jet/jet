@@ -263,6 +263,25 @@ func (p *betweenOperatorExpression) serialize(statement StatementType, out *SQLB
 	p.max.serialize(statement, out, FallTrough(options)...)
 }
 
+type customExpression struct {
+	ExpressionInterfaceImpl
+	parts []Serializer
+}
+
+func newCustomExpression(parts ...Serializer) Expression {
+	ret := customExpression{
+		parts: parts,
+	}
+	ret.ExpressionInterfaceImpl.Parent = &ret
+	return &ret
+}
+
+func (c *customExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	for _, expression := range c.parts {
+		expression.serialize(statement, out, options...)
+	}
+}
+
 type complexExpression struct {
 	ExpressionInterfaceImpl
 	expressions Expression

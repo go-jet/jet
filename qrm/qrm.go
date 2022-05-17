@@ -17,7 +17,7 @@ var ErrNoRows = errors.New("qrm: no rows in result set")
 // using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
 // If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
-func Query(ctx context.Context, db DB, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+func Query(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 
 	utils.MustBeInitializedPtr(db, "jet: db is nil")
 	utils.MustBeInitializedPtr(destPtr, "jet: destination is nil")
@@ -88,7 +88,7 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 	return nil
 }
 
-func queryToSlice(ctx context.Context, db DB, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {
+func queryToSlice(ctx context.Context, db Queryable, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}

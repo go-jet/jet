@@ -1,16 +1,17 @@
 package sqlite
 
 import (
-	"github.com/go-jet/jet/v2/generator/sqlite"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
-	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"reflect"
 	"testing"
+
+	"github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGeneratedModel(t *testing.T) {
@@ -183,6 +184,16 @@ func (a ActorTable) FromSchema(schemaName string) *ActorTable {
 	return newActorTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new ActorTable with assigned table prefix
+func (a ActorTable) WithPrefix(prefix string) *ActorTable {
+	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorTable with assigned table suffix
+func (a ActorTable) WithSuffix(suffix string) *ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newActorTable(schemaName, tableName, alias string) *ActorTable {
 	return &ActorTable{
 		actorTable: newActorTableImpl(schemaName, tableName, alias),
@@ -262,6 +273,16 @@ func (a FilmListTable) AS(alias string) *FilmListTable {
 // Schema creates new FilmListTable with assigned schema name
 func (a FilmListTable) FromSchema(schemaName string) *FilmListTable {
 	return newFilmListTable(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new FilmListTable with assigned table prefix
+func (a FilmListTable) WithPrefix(prefix string) *FilmListTable {
+	return newFilmListTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new FilmListTable with assigned table suffix
+func (a FilmListTable) WithSuffix(suffix string) *FilmListTable {
+	return newFilmListTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
 func newFilmListTable(schemaName, tableName, alias string) *FilmListTable {

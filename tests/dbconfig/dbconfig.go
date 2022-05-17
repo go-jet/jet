@@ -15,7 +15,24 @@ const (
 )
 
 // PostgresConnectString is PostgreSQL test database connection string
-var PostgresConnectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", PgHost, PgPort, PgUser, PgPassword, PgDBName)
+var PostgresConnectString = pgConnectionString(PgHost, PgPort, PgUser, PgPassword, PgDBName)
+
+// Postgres test database connection parameters
+const (
+	CockroachHost     = "localhost"
+	CockroachPort     = 26257
+	CockroachUser     = "jet"
+	CockroachPassword = "jet"
+	CockroachDBName   = "jetdb"
+)
+
+// CockroachConnectString is Cockroach test database connection string
+var CockroachConnectString = pgConnectionString(CockroachHost, CockroachPort, CockroachUser, CockroachPassword, CockroachDBName)
+
+func pgConnectionString(host string, port int, user, password, dbName string) string {
+	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host, port, user, password, dbName)
+}
 
 // MySQL test database connection parameters
 const (

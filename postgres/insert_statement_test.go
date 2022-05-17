@@ -167,7 +167,7 @@ VALUES ('one', 'two'),
 ON CONFLICT (col_bool) WHERE col_bool IS NOT FALSE DO UPDATE
        SET col_bool = TRUE::boolean,
            col_int = 1,
-           (col1, col_bool) = ROW(2, 'two')
+           (col1, col_bool) = ROW(2, 'two'::text)
        WHERE table1.col1 > 2
 RETURNING table1.col1 AS "table1.col1",
           table1.col_bool AS "table1.col_bool";
@@ -193,7 +193,7 @@ VALUES ('one', 'two'),
 ON CONFLICT ON CONSTRAINT idk_primary_key DO UPDATE
        SET col_bool = FALSE::boolean,
            col_int = 1,
-           (col1, col_bool) = ROW(2, 'two')
+           (col1, col_bool) = ROW(2, 'two'::text)
        WHERE table1.col1 > 2
 RETURNING table1.col1 AS "table1.col1",
           table1.col_bool AS "table1.col_bool";

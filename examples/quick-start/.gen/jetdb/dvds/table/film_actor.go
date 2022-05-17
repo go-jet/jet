@@ -41,6 +41,16 @@ func (a FilmActorTable) FromSchema(schemaName string) *FilmActorTable {
 	return newFilmActorTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new FilmActorTable with assigned table prefix
+func (a FilmActorTable) WithPrefix(prefix string) *FilmActorTable {
+	return newFilmActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new FilmActorTable with assigned table suffix
+func (a FilmActorTable) WithSuffix(suffix string) *FilmActorTable {
+	return newFilmActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newFilmActorTable(schemaName, tableName, alias string) *FilmActorTable {
 	return &FilmActorTable{
 		filmActorTable: newFilmActorTableImpl(schemaName, tableName, alias),

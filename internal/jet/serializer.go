@@ -96,3 +96,10 @@ func (s serializerImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		clause.Serialize(statement, out, FallTrough(options)...)
 	}
 }
+
+// Token can be used to construct complex custom expressions
+type Token string
+
+func (t Token) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	out.WriteString(string(t))
+}

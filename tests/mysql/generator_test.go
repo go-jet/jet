@@ -88,45 +88,70 @@ func TestCmdGenerator(t *testing.T) {
 }
 
 func TestIgnoreTablesViewsEnums(t *testing.T) {
-	cmd := exec.Command("jet",
-		"-source=MySQL",
-		"-dbname=dvds",
-		"-host="+dbconfig.MySqLHost,
-		"-port="+strconv.Itoa(dbconfig.MySQLPort),
-		"-user="+dbconfig.MySQLUser,
-		"-password="+dbconfig.MySQLPassword,
-		"-ignore-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
-		"-ignore-views=actor_info,CUSTomER_LIST, film_list",
-		"-ignore-enums=film_list_rating,film_rating",
-		"-path="+genTestDir3)
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with dsn",
+			args: []string{
+				"-dsn=mysql://" + dbconfig.MySQLConnectionString(sourceIsMariaDB(), "dvds"),
+				"-ignore-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+				"-ignore-views=actor_info,CUSTomER_LIST, film_list",
+				"-ignore-enums=film_list_rating,film_rating",
+				"-path=" + genTestDir3,
+			},
+		},
+		{
+			name: "without dsn",
+			args: []string{
+				"-source=MySQL",
+				"-dbname=dvds",
+				"-host=" + dbconfig.MySqLHost,
+				"-port=" + strconv.Itoa(dbconfig.MySQLPort),
+				"-user=" + dbconfig.MySQLUser,
+				"-password=" + dbconfig.MySQLPassword,
+				"-ignore-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+				"-ignore-views=actor_info,CUSTomER_LIST, film_list",
+				"-ignore-enums=film_list_rating,film_rating",
+				"-path=" + genTestDir3,
+			},
+		},
+	}
 
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
 
-	err := cmd.Run()
-	require.NoError(t, err)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
 
-	tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
-	require.NoError(t, err)
-	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "customer.go", "film.go", "film_actor.go",
-		"film_category.go", "film_text.go", "inventory.go", "language.go", "payment.go")
+			err := cmd.Run()
+			require.NoError(t, err)
 
-	viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
-	require.NoError(t, err)
-	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "nicer_but_slower_film_list.go",
-		"sales_by_film_category.go", "sales_by_store.go", "staff_list.go")
+			tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
+			require.NoError(t, err)
+			testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "customer.go", "film.go", "film_actor.go",
+				"film_category.go", "film_text.go", "inventory.go", "language.go", "payment.go")
 
-	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
-	require.NoError(t, err)
-	testutils.AssertFileNamesEqual(t, enumFiles, "nicer_but_slower_film_list_rating.go")
+			viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
+			require.NoError(t, err)
+			testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "nicer_but_slower_film_list.go",
+				"sales_by_film_category.go", "sales_by_store.go", "staff_list.go")
 
-	modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
-	require.NoError(t, err)
+			enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
+			require.NoError(t, err)
+			testutils.AssertFileNamesEqual(t, enumFiles, "nicer_but_slower_film_list_rating.go")
 
-	testutils.AssertFileNamesEqual(t, modelFiles,
-		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
-		"payment.go", "nicer_but_slower_film_list_rating.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
-		"sales_by_store.go", "staff_list.go")
+			modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
+			require.NoError(t, err)
+
+			testutils.AssertFileNamesEqual(t, modelFiles,
+				"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
+				"payment.go", "nicer_but_slower_film_list_rating.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
+				"sales_by_store.go", "staff_list.go")
+		})
+	}
 }
 
 func assertGeneratedFiles(t *testing.T) {
@@ -236,6 +261,16 @@ func (a ActorTable) FromSchema(schemaName string) ActorTable {
 	return newActorTable(schemaName, a.TableName(), a.Alias())
 }
 
+// WithPrefix creates new ActorTable with assigned table prefix
+func (a ActorTable) WithPrefix(prefix string) ActorTable {
+	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorTable with assigned table suffix
+func (a ActorTable) WithSuffix(suffix string) ActorTable {
+	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
 func newActorTable(schemaName, tableName, alias string) ActorTable {
 	var (
 		ActorIDColumn    = mysql.IntegerColumn("actor_id")
@@ -320,6 +355,16 @@ func (a ActorInfoTable) AS(alias string) ActorInfoTable {
 // Schema creates new ActorInfoTable with assigned schema name
 func (a ActorInfoTable) FromSchema(schemaName string) ActorInfoTable {
 	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new ActorInfoTable with assigned table prefix
+func (a ActorInfoTable) WithPrefix(prefix string) ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new ActorInfoTable with assigned table suffix
+func (a ActorInfoTable) WithSuffix(suffix string) ActorInfoTable {
+	return newActorInfoTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
 func newActorInfoTable(schemaName, tableName, alias string) ActorInfoTable {

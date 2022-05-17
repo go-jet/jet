@@ -59,7 +59,7 @@ func TestFloat(t *testing.T) {
 }
 
 func TestString(t *testing.T) {
-	assertSerialize(t, String("Some text"), `$1`, "Some text")
+	assertSerialize(t, String("Some text"), `$1::text`, "Some text")
 }
 
 func TestBytea(t *testing.T) {

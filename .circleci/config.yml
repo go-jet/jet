@@ -33,6 +33,13 @@ jobs:
           MYSQL_USER: jet
           MYSQL_PASSWORD: jet
 
+      - image: cockroachdb/cockroach-unstable:v22.1.0-beta.4
+        command: ['start-single-node', '--insecure']
+        environment:
+          COCKROACH_USER: jet
+          COCKROACH_PASSWORD: jet
+          COCKROACH_DATABASE: jetdb
+
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/test-results # path to where test results will be saved
 
@@ -82,7 +89,18 @@ jobs:
               echo -n .
               sleep 1
             done
-            echo Failed waiting for MySQL && exit 1      
+            echo Failed waiting for MySQL && exit 1    
+
+      - run:
+          name: Waiting for Cockroach to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z localhost 26257 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for Cockroach && exit 1            
 
       - run:
           name: Install MySQL CLI;
@@ -122,8 +140,9 @@ jobs:
             -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... \
             -coverprofile=cover.out 2>&1 | go-junit-report > $TEST_RESULTS/results.xml
 
-      # run mariaDB tests. No need to collect coverage, because coverage is already included with mysql tests
+      # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
+      - run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/
 
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}

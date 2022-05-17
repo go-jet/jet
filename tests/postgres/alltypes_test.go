@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"database/sql"
 	"testing"
 	"time"
 
@@ -17,10 +18,10 @@ import (
 )
 
 func TestAllTypesSelect(t *testing.T) {
-	dest := []model.AllTypes{}
+	var dest []model.AllTypes
 
 	err := AllTypes.SELECT(
-		AllTypes.AllColumns,
+		AllTypesAllColumns,
 	).LIMIT(2).
 		Query(db, &dest)
 	require.NoError(t, err)
@@ -32,7 +33,7 @@ func TestAllTypesSelect(t *testing.T) {
 func TestAllTypesViewSelect(t *testing.T) {
 	type AllTypesView model.AllTypes
 
-	dest := []AllTypesView{}
+	var dest []AllTypesView
 
 	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
 	require.NoError(t, err)
@@ -44,40 +45,123 @@ func TestAllTypesViewSelect(t *testing.T) {
 func TestAllTypesInsertModel(t *testing.T) {
 	skipForPgxDriver(t) // pgx driver bug ERROR: date/time field value out of range: "0000-01-01 12:05:06Z" (SQLSTATE 22008)
 
-	query := AllTypes.INSERT(AllTypes.AllColumns).
+	query := AllTypes.INSERT(AllTypesAllColumns).
 		MODEL(allTypesRow0).
 		MODEL(&allTypesRow1).
 		RETURNING(AllTypes.AllColumns)
 
-	dest := []model.AllTypes{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var dest []model.AllTypes
+		err := query.Query(tx, &dest)
+		require.NoError(t, err)
 
-	require.Equal(t, len(dest), 2)
-	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
-	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
+		if sourceIsCockroachDB() {
+			return
+		}
+		require.Equal(t, len(dest), 2)
+		testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+		testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
+	})
 }
 
+var AllTypesAllColumns = AllTypes.AllColumns.Except(IntegerColumn("rowid"))
+
 func TestAllTypesInsertQuery(t *testing.T) {
-	query := AllTypes.INSERT(AllTypes.AllColumns).
+	query := AllTypes.INSERT(AllTypesAllColumns).
 		QUERY(
 			AllTypes.
-				SELECT(AllTypes.AllColumns).
+				SELECT(AllTypesAllColumns).
 				LIMIT(2),
 		).
-		RETURNING(AllTypes.AllColumns)
+		RETURNING(AllTypesAllColumns)
 
-	dest := []model.AllTypes{}
-	err := query.Query(db, &dest)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var dest []model.AllTypes
+		err := query.Query(tx, &dest)
 
+		require.NoError(t, err)
+		require.Equal(t, len(dest), 2)
+		testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
+		testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
+	})
+}
+
+func TestUUIDType(t *testing.T) {
+	id := uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+
+	query := AllTypes.
+		SELECT(AllTypes.UUID, AllTypes.UUIDPtr).
+		WHERE(AllTypes.UUID.EQ(UUID(id)))
+
+	testutils.AssertDebugStatementSql(t, query, `
+SELECT all_types.uuid AS "all_types.uuid",
+     all_types.uuid_ptr AS "all_types.uuid_ptr"
+FROM test_sample.all_types
+WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+`, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
+
+	result := model.AllTypes{}
+
+	err := query.Query(db, &result)
 	require.NoError(t, err)
-	require.Equal(t, len(dest), 2)
-	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
-	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
+	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
+	requireLogged(t, query)
+}
+
+func TestBytea(t *testing.T) {
+	byteArrHex := "\\x48656c6c6f20476f7068657221"
+	byteArrBin := []byte("\x48\x65\x6c\x6c\x6f\x20\x47\x6f\x70\x68\x65\x72\x21")
+
+	insertStmt := AllTypes.INSERT(AllTypes.Bytea, AllTypes.ByteaPtr).
+		VALUES(byteArrHex, byteArrBin).
+		RETURNING(AllTypes.Bytea, AllTypes.ByteaPtr)
+
+	testutils.AssertStatementSql(t, insertStmt, `
+INSERT INTO test_sample.all_types (bytea, bytea_ptr)
+VALUES ($1, $2)
+RETURNING all_types.bytea AS "all_types.bytea",
+          all_types.bytea_ptr AS "all_types.bytea_ptr";
+`, byteArrHex, byteArrBin)
+
+	var inserted model.AllTypes
+	err := insertStmt.Query(db, &inserted)
+	require.NoError(t, err)
+
+	require.Equal(t, string(*inserted.ByteaPtr), "Hello Gopher!")
+	// It is not possible to initiate bytea column using hex format '\xDEADBEEF' with pq driver.
+	// pq driver always encodes parameter string if destination column is of type bytea.
+	// Probably pq driver error.
+	// require.Equal(t, string(inserted.Bytea), "Hello Gopher!")
+
+	stmt := SELECT(
+		AllTypes.Bytea,
+		AllTypes.ByteaPtr,
+	).FROM(
+		AllTypes,
+	).WHERE(
+		AllTypes.ByteaPtr.EQ(Bytea(byteArrBin)),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT all_types.bytea AS "all_types.bytea",
+     all_types.bytea_ptr AS "all_types.bytea_ptr"
+FROM test_sample.all_types
+WHERE all_types.bytea_ptr = $1::bytea;
+`, byteArrBin)
+
+	var dest model.AllTypes
+
+	err = stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	require.Equal(t, string(*dest.ByteaPtr), "Hello Gopher!")
+	// Probably pq driver error.
+	// require.Equal(t, string(dest.Bytea), "Hello Gopher!")
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
-	subQuery := SELECT(AllTypes.AllColumns).
+	subQuery := SELECT(AllTypesAllColumns).
 		FROM(AllTypes).
 		AsTable("allTypesSubQuery")
 
@@ -214,7 +298,7 @@ FROM (
 LIMIT 2;
 `)
 
-	dest := []model.AllTypes{}
+	var dest []model.AllTypes
 	err := mainQuery.Query(db, &dest)
 
 	require.NoError(t, err)
@@ -298,7 +382,6 @@ LIMIT $11;
 }
 
 func TestExpressionCast(t *testing.T) {
-
 	skipForPgxDriver(t) // pgx driver bug 'cannot convert 151 to Text'
 
 	query := AllTypes.SELECT(
@@ -315,19 +398,28 @@ func TestExpressionCast(t *testing.T) {
 		CAST(Int(234)).AS_TEXT(),
 		CAST(String("1/8/1999")).AS_DATE(),
 		CAST(String("04:05:06.789")).AS_TIME(),
-		CAST(String("04:05:06 PST")).AS_TIMEZ(),
+		CAST(String("04:05:06+01:00")).AS_TIMEZ(),
 		CAST(String("1999-01-08 04:05:06")).AS_TIMESTAMP(),
-		CAST(String("January 8 04:05:06 1999 PST")).AS_TIMESTAMPZ(),
+		CAST(String("1999-01-08 04:05:06+01:00")).AS_TIMESTAMPZ(),
 		CAST(String("04:05:06")).AS_INTERVAL(),
 
-		TO_CHAR(AllTypes.Timestamp, String("HH12:MI:SS")),
-		TO_CHAR(AllTypes.Integer, String("999")),
-		TO_CHAR(AllTypes.DoublePrecision, String("999D9")),
-		TO_CHAR(AllTypes.Numeric, String("999D99S")),
+		func() ProjectionList {
+			if sourceIsCockroachDB() {
+				return ProjectionList{NULL}
+			}
 
-		TO_DATE(String("05 Dec 2000"), String("DD Mon YYYY")),
-		TO_NUMBER(String("12,454"), String("99G999D9S")),
-		TO_TIMESTAMP(String("05 Dec 2000"), String("DD Mon YYYY")),
+			// cockroach doesn't support currently
+			return ProjectionList{
+				TO_CHAR(AllTypes.Timestamp, String("HH12:MI:SS")),
+				TO_CHAR(AllTypes.Integer, String("999")),
+				TO_CHAR(AllTypes.DoublePrecision, String("999D9")),
+				TO_CHAR(AllTypes.Numeric, String("999D99S")),
+
+				TO_DATE(String("05 Dec 2000"), String("DD Mon YYYY")),
+				TO_NUMBER(String("12,454"), String("99G999D9S")),
+				TO_TIMESTAMP(String("05 Dec 2000"), String("DD Mon YYYY")),
+			}
+		}(),
 
 		COALESCE(AllTypes.IntegerPtr, AllTypes.SmallIntPtr, NULL, Int(11)),
 		NULLIF(AllTypes.Text, String("(none)")),
@@ -337,16 +429,15 @@ func TestExpressionCast(t *testing.T) {
 		Raw("current_database()"),
 	)
 
-	//fmt.Println(query.DebugSql())
-
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
 }
 
 func TestStringOperators(t *testing.T) {
-	skipForPgxDriver(t) // pgx driver bug 'cannot convert 11 to Text'
+	skipForCockroachDB(t) // some string functions are still unimplemented
+	skipForPgxDriver(t)   // pgx driver bug 'cannot convert 11 to Text'
 
 	query := AllTypes.SELECT(
 		AllTypes.Text.EQ(AllTypes.Char),
@@ -395,18 +486,18 @@ func TestStringOperators(t *testing.T) {
 		CONCAT(AllTypes.VarCharPtr, AllTypes.VarCharPtr, String("aaa"), Int(1)),
 		CONCAT(Bool(false), Int(1), Float(22.2), String("test test")),
 		CONCAT_WS(String("string1"), Int(1), Float(11.22), String("bytea"), Bool(false)), //Float(11.12)),
-		CONVERT(String("bytea"), String("UTF8"), String("LATIN1")),
+		CONVERT(Bytea("bytea"), String("UTF8"), String("LATIN1")),
 		CONVERT(AllTypes.Bytea, String("UTF8"), String("LATIN1")),
-		CONVERT_FROM(String("text_in_utf8"), String("UTF8")),
+		CONVERT_FROM(Bytea("text_in_utf8"), String("UTF8")),
 		CONVERT_TO(String("text_in_utf8"), String("UTF8")),
-		ENCODE(String("123\000\001"), String("base64")),
+		ENCODE(Bytea("123\000\001"), String("base64")),
 		DECODE(String("MTIzAAE="), String("base64")),
 		FORMAT(String("Hello %s, %1$s"), String("World")),
 		INITCAP(String("hi THOMAS")),
 		LEFT(String("abcde"), Int(2)),
 		RIGHT(String("abcde"), Int(2)),
-		LENGTH(String("jose")),
-		LENGTH(String("jose"), String("UTF8")),
+		LENGTH(Bytea("jose")),
+		LENGTH(Bytea("jose"), String("UTF8")),
 		LPAD(String("Hi"), Int(5)),
 		LPAD(String("Hi"), Int(5), String("xy")),
 		RPAD(String("Hi"), Int(5)),
@@ -420,8 +511,6 @@ func TestStringOperators(t *testing.T) {
 		SUBSTR(AllTypes.CharPtr, Int(3), Int(2)),
 		TO_HEX(AllTypes.IntegerPtr),
 	)
-
-	//fmt.Println(query.DebugSql())
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
@@ -501,6 +590,8 @@ LIMIT $5;
 }
 
 func TestFloatOperators(t *testing.T) {
+	skipForCockroachDB(t) // some functions are still unimplemented
+
 	query := AllTypes.SELECT(
 		AllTypes.Numeric.EQ(AllTypes.Numeric).AS("eq1"),
 		AllTypes.Decimal.EQ(Float(12.22)).AS("eq2"),
@@ -604,6 +695,8 @@ LIMIT $38;
 }
 
 func TestIntegerOperators(t *testing.T) {
+	skipForCockroachDB(t) // some functions are still unimplemented
+
 	query := AllTypes.SELECT(
 		AllTypes.BigInt,
 		AllTypes.BigIntPtr,
@@ -733,6 +826,8 @@ LIMIT $27;
 }
 
 func TestTimeExpression(t *testing.T) {
+	skipForCockroachDB(t)
+
 	query := AllTypes.SELECT(
 		AllTypes.Time.EQ(AllTypes.Time),
 		AllTypes.Time.EQ(Time(23, 6, 6, 1)),
@@ -804,15 +899,17 @@ func TestTimeExpression(t *testing.T) {
 		NOW(),
 	)
 
-	//fmt.Println(query.DebugSql())
+	// fmt.Println(query.DebugSql())
 
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
 }
 
 func TestInterval(t *testing.T) {
+	skipForCockroachDB(t)
+
 	stmt := SELECT(
 		INTERVAL(1, YEAR),
 		INTERVAL(1, MONTH),
@@ -864,6 +961,66 @@ func TestInterval(t *testing.T) {
 	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
 	requireLogged(t, stmt)
+}
+
+func TestTimeEXTRACT(t *testing.T) {
+	stmt := SELECT(
+		EXTRACT(CENTURY, AllTypes.Timestampz),
+		EXTRACT(DAY, AllTypes.Timestamp),
+		EXTRACT(DECADE, AllTypes.Date),
+		EXTRACT(DOW, AllTypes.TimestampzPtr),
+		EXTRACT(DOY, DateT(time.Now())),
+		EXTRACT(EPOCH, TimestampT(time.Now())),
+		EXTRACT(HOUR, AllTypes.Time.ADD(INTERVAL(1, HOUR))),
+		EXTRACT(ISODOW, AllTypes.Timestampz),
+		EXTRACT(ISOYEAR, AllTypes.Timestampz),
+		EXTRACT(JULIAN, AllTypes.Timestampz).EQ(Float(3456.123)),
+		EXTRACT(MICROSECOND, AllTypes.Timestampz),
+		EXTRACT(MILLENNIUM, AllTypes.Timestampz),
+		EXTRACT(MILLISECOND, AllTypes.Timez),
+		EXTRACT(MINUTE, INTERVAL(1, HOUR, 2, MINUTE)),
+		EXTRACT(MONTH, AllTypes.Timestampz),
+		EXTRACT(QUARTER, AllTypes.Timestampz),
+		EXTRACT(SECOND, AllTypes.Timestampz),
+		EXTRACT(TIMEZONE, AllTypes.Timestampz),
+		EXTRACT(TIMEZONE_HOUR, AllTypes.Timestampz),
+		EXTRACT(TIMEZONE_MINUTE, AllTypes.Timestampz),
+		EXTRACT(WEEK, AllTypes.Timestampz),
+		EXTRACT(YEAR, AllTypes.Timestampz),
+	).FROM(
+		AllTypes,
+	)
+
+	// fmt.Println(stmt.Sql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT EXTRACT(CENTURY FROM all_types.timestampz),
+     EXTRACT(DAY FROM all_types.timestamp),
+     EXTRACT(DECADE FROM all_types.date),
+     EXTRACT(DOW FROM all_types.timestampz_ptr),
+     EXTRACT(DOY FROM $1::date),
+     EXTRACT(EPOCH FROM $2::timestamp without time zone),
+     EXTRACT(HOUR FROM all_types.time + INTERVAL '1 HOUR'),
+     EXTRACT(ISODOW FROM all_types.timestampz),
+     EXTRACT(ISOYEAR FROM all_types.timestampz),
+     EXTRACT(JULIAN FROM all_types.timestampz) = $3,
+     EXTRACT(MICROSECOND FROM all_types.timestampz),
+     EXTRACT(MILLENNIUM FROM all_types.timestampz),
+     EXTRACT(MILLISECOND FROM all_types.timez),
+     EXTRACT(MINUTE FROM INTERVAL '1 HOUR 2 MINUTE'),
+     EXTRACT(MONTH FROM all_types.timestampz),
+     EXTRACT(QUARTER FROM all_types.timestampz),
+     EXTRACT(SECOND FROM all_types.timestampz),
+     EXTRACT(TIMEZONE FROM all_types.timestampz),
+     EXTRACT(TIMEZONE_HOUR FROM all_types.timestampz),
+     EXTRACT(TIMEZONE_MINUTE FROM all_types.timestampz),
+     EXTRACT(WEEK FROM all_types.timestampz),
+     EXTRACT(YEAR FROM all_types.timestampz)
+FROM test_sample.all_types;
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
 }
 
 func TestSubQueryColumnReference(t *testing.T) {
@@ -1083,6 +1240,10 @@ LIMIT $6;
 	// while pgx driver will return time in UTC time zone
 	dest.Timez = dest.Timez.UTC()
 	dest.Timestampz = dest.Timestampz.UTC()
+
+	if sourceIsCockroachDB() {
+		return // rounding differences
+	}
 
 	testutils.AssertJSON(t, dest, `
 {
