@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/jackc/pgconn v1.12.0
 	github.com/lib/pq v1.10.5
-	github.com/mattn/go-sqlite3 v1.14.8
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible
 )
 
 // test dependencies
