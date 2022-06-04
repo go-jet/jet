@@ -66,8 +66,13 @@ func String(value string) StringExpression {
 }
 
 // Json creates new json literal expression
-func Json(value string) StringExpression {
-	return StringExp(CAST(jet.String(value)).AS("json"))
+func Json(value interface{}) StringExpression {
+	switch value.(type) {
+	case string, []byte:
+	default:
+		panic("Bytea parameter value has to be of the type string or []byte")
+	}
+	return StringExp(CAST(jet.Literal(value)).AS("json"))
 }
 
 // UUID is a helper function to create string literal expression from uuid object
