@@ -208,6 +208,7 @@ type ColumnTimez interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTimez
+	SET(timeExp TimezExpression) ColumnAssigment
 }
 
 type timezColumnImpl struct {
