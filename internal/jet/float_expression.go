@@ -1,6 +1,6 @@
 package jet
 
-//FloatExpression is interface for SQL float columns
+// FloatExpression is interface for SQL float columns
 type FloatExpression interface {
 	Expression
 	numericExpression

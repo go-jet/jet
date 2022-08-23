@@ -3,44 +3,45 @@ Package jet is a complete solution for efficient and high performance database a
 with code generation and automatic query result data mapping.
 Jet currently supports PostgreSQL, MySQL, MariaDB and SQLite. Future releases will add support for additional databases.
 
-
-Installation
-
+# Installation
 
 Use the command bellow to add jet as a dependency into go.mod project:
+
 	$ go get -u github.com/go-jet/jet/v2
 
 Jet generator can be installed in one of the following ways:
 
-	1) (Go1.16+) Install jet generator using go install:
-		go install github.com/go-jet/jet/v2/cmd/jet@latest
+ 1. (Go1.16+) Install jet generator using go install:
+    go install github.com/go-jet/jet/v2/cmd/jet@latest
 
-	2) Install jet generator to GOPATH/bin folder:
-		cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
+ 2. Install jet generator to GOPATH/bin folder:
+    cd $GOPATH/src/ && GO111MODULE=off go get -u github.com/go-jet/jet/cmd/jet
 
-	3) Install jet generator into specific folder:
-		git clone https://github.com/go-jet/jet.git
-		cd jet && go build -o dir_path ./cmd/jet
+ 3. Install jet generator into specific folder:
+    git clone https://github.com/go-jet/jet.git
+    cd jet && go build -o dir_path ./cmd/jet
 
 Make sure that the destination folder is added to the PATH environment variable.
 
-
-Usage
-
+# Usage
 
 Jet requires already defined database schema(with tables, enums etc), so that jet generator can generate SQL Builder
 and Model files. File generation is very fast, and can be added as every pre-build step.
 Sample command:
+
 	jet -dsn=postgresql://user:pass@localhost:5432/jetdb -schema=dvds -path=./.gen
 
 Before we can write SQL queries in Go, we need to import generated SQL builder and model types:
+
 	import . "some_path/.gen/jetdb/dvds/table"
 	import "some_path/.gen/jetdb/dvds/model"
 
 To write postgres SQL queries we import:
+
 	. "github.com/go-jet/jet/v2/postgres" // Dot import is used so that Go code resemble as much as native SQL. It is not mandatory.
 
 Then we can write the SQL query:
+
 	// sub-query
 	rRatingFilms :=
 		SELECT(
@@ -72,6 +73,7 @@ Then we can write the SQL query:
 		)
 
 Now we can run the statement and store the result into desired destination:
+
 	var dest []struct {
 		model.Film
 
@@ -81,9 +83,11 @@ Now we can run the statement and store the result into desired destination:
 	err := stmt.Query(db, &dest)
 
 We can print a statement to see SQL query and arguments sent to postgres server:
+
 	fmt.Println(stmt.Sql())
 
 Output:
+
 	SELECT "rFilms"."film.film_id" AS "film.film_id",
 		 "rFilms"."film.title" AS "film.title",
 		 "rFilms"."film.rating" AS "film.rating",

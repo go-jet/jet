@@ -120,17 +120,14 @@ func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) 
 	return newBinaryIntegerOperatorExpression(i.parent, intExpression, ">>")
 }
 
-//---------------------------------------------------//
 func newBinaryIntegerOperatorExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
 	return IntExp(NewBinaryOperatorExpression(lhs, rhs, operator))
 }
 
-//---------------------------------------------------//
 func newPrefixIntegerOperatorExpression(expression IntegerExpression, operator string) IntegerExpression {
 	return IntExp(newPrefixOperatorExpression(expression, operator))
 }
 
-//---------------------------------------------------//
 type integerExpressionWrapper struct {
 	integerInterfaceImpl
 

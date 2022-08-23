@@ -296,7 +296,8 @@ const (
 )
 
 // EXTRACT function retrieves subfields such as year or hour from date/time values
-//          EXTRACT(DAY, User.CreatedAt)
+//
+//	EXTRACT(DAY, User.CreatedAt)
 func EXTRACT(field unit, from Expression) FloatExpression {
 	return FloatExp(jet.EXTRACT(unitToString(field), from))
 }

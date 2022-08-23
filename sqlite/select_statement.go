@@ -58,7 +58,7 @@ type SelectStatement interface {
 	AsTable(alias string) SelectTable
 }
 
-//SELECT creates new SelectStatement with list of projections
+// SELECT creates new SelectStatement with list of projections
 func SELECT(projection Projection, projections ...Projection) SelectStatement {
 	return newSelectStatement(nil, append([]Projection{projection}, projections...))
 }

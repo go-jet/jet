@@ -225,7 +225,8 @@ var REGEXP_LIKE = jet.REGEXP_LIKE
 //----------------- Date/Time Functions and Operators ------------//
 
 // EXTRACT function retrieves subfields such as year or hour from date/time values
-//          EXTRACT(DAY, User.CreatedAt)
+//
+//	EXTRACT(DAY, User.CreatedAt)
 func EXTRACT(field unitType, from Expression) IntegerExpression {
 	return IntExp(jet.EXTRACT(string(field), from))
 }

@@ -120,7 +120,8 @@ type intervalExpression struct {
 }
 
 // INTERVAL creates new interval expression from the list of quantity-unit pairs.
-// 		INTERVAL(1, DAY, 3, MINUTE)
+//
+//	INTERVAL(1, DAY, 3, MINUTE)
 func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 	quantityAndUnitLen := len(quantityAndUnit)
 	if quantityAndUnitLen == 0 || quantityAndUnitLen%2 != 0 {
