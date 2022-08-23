@@ -12,6 +12,7 @@ type InsertStatement interface {
 	// If data is not struct or there is no field for every column selected, this method will panic.
 	MODEL(data interface{}) InsertStatement
 	MODELS(data interface{}) InsertStatement
+	AS_NEW() InsertStatement
 
 	ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement
 
@@ -52,6 +53,11 @@ func (is *insertStatementImpl) MODELS(data interface{}) InsertStatement {
 	return is
 }
 
+func (is *insertStatementImpl) AS_NEW() InsertStatement {
+	is.ValuesQuery.As = "new"
+	return is
+}
+
 func (is *insertStatementImpl) ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement {
 	is.OnDuplicateKey = assigments
 	return is
@@ -79,7 +85,7 @@ func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, o
 			out.NewLine()
 		}
 
-		jet.Serialize(assigment, statementType, out, jet.ShortName.WithFallTrough(options)...)
+		jet.Serialize(assigment, statementType, out, jet.FallTrough(options)...)
 	}
 
 	out.DecreaseIdent(24)

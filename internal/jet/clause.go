@@ -392,6 +392,7 @@ func (v *ClauseValuesQuery) Serialize(statementType StatementType, out *SQLBuild
 // ClauseValues struct
 type ClauseValues struct {
 	Rows [][]Serializer
+	As   string
 }
 
 // Serialize serializes clause into SQLBuilder
@@ -417,6 +418,12 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SQLBuilder, o
 
 		out.WriteByte(')')
 	}
+
+	if len(v.As) > 0 {
+		out.WriteString("AS")
+		out.WriteIdentifier(v.As)
+	}
+
 	out.DecreaseIdent(7)
 }
 

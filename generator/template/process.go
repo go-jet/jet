@@ -120,29 +120,29 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 	for _, tableMetaData := range tablesMetaData {
 
-		var tableSQLBuilderTemplate TableSQLBuilder
+		var tableSQLBuilder TableSQLBuilder
 
 		if fileTypes == "view" {
-			tableSQLBuilderTemplate = sqlBuilderTemplate.View(tableMetaData)
+			tableSQLBuilder = sqlBuilderTemplate.View(tableMetaData)
 		} else {
-			tableSQLBuilderTemplate = sqlBuilderTemplate.Table(tableMetaData)
+			tableSQLBuilder = sqlBuilderTemplate.Table(tableMetaData)
 		}
 
-		if tableSQLBuilderTemplate.Skip {
+		if tableSQLBuilder.Skip {
 			continue
 		}
 
-		tableSQLBuilderPath := path.Join(dirPath, tableSQLBuilderTemplate.Path)
+		tableSQLBuilderPath := path.Join(dirPath, tableSQLBuilder.Path)
 
 		err := utils.EnsureDirPath(tableSQLBuilderPath)
 		throw.OnError(err)
 
 		text, err := generateTemplate(
-			autoGenWarningTemplate+getTableSQLBuilderTemplate(dialect),
+			autoGenWarningTemplate+tableSQLBuilderTemplate,
 			tableMetaData,
 			template.FuncMap{
 				"package": func() string {
-					return tableSQLBuilderTemplate.PackageName()
+					return tableSQLBuilder.PackageName()
 				},
 				"dialect": func() jet.Dialect {
 					return dialect
@@ -151,29 +151,33 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 					return schemaMetaData.Name
 				},
 				"tableTemplate": func() TableSQLBuilder {
-					return tableSQLBuilderTemplate
+					return tableSQLBuilder
 				},
 				"structImplName": func() string { // postgres only
-					structName := tableSQLBuilderTemplate.TypeName
+					structName := tableSQLBuilder.TypeName
 					return string(strings.ToLower(structName)[0]) + structName[1:]
 				},
 				"columnField": func(columnMetaData metadata.Column) TableSQLBuilderColumn {
-					return tableSQLBuilderTemplate.Column(columnMetaData)
+					return tableSQLBuilder.Column(columnMetaData)
+				},
+				"toUpper": strings.ToUpper,
+				"insertedRowAlias": func() string {
+					return insertedRowAlias(dialect)
 				},
 			})
 		throw.OnError(err)
 
-		err = utils.SaveGoFile(tableSQLBuilderPath, tableSQLBuilderTemplate.FileName, text)
+		err = utils.SaveGoFile(tableSQLBuilderPath, tableSQLBuilder.FileName, text)
 		throw.OnError(err)
 	}
 }
 
-func getTableSQLBuilderTemplate(dialect jet.Dialect) string {
-	if dialect.Name() == "PostgreSQL" || dialect.Name() == "SQLite" {
-		return tableSQLBuilderTemplateWithEXCLUDED
+func insertedRowAlias(dialect jet.Dialect) string {
+	if dialect.Name() == "MySQL" {
+		return "new"
 	}
 
-	return tableSQLBuilderTemplate
+	return "excluded"
 }
 
 func processTableModels(fileTypes, modelDirPath string, tablesMetaData []metadata.Table, modelTemplate Model) {
