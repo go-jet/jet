@@ -167,6 +167,7 @@ var reservedWords = []string{
 	"PRIMARY",
 	"REFERENCES",
 	"RETURNING",
+	"RIGHT",
 	"SELECT",
 	"SESSION_USER",
 	"SOME",
