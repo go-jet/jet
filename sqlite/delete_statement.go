@@ -15,7 +15,7 @@ type DeleteStatement interface {
 type deleteStatementImpl struct {
 	jet.SerializerStatement
 
-	Delete    jet.ClauseStatementBegin
+	Delete    jet.ClauseDelete
 	Where     jet.ClauseWhere
 	OrderBy   jet.ClauseOrderBy
 	Limit     jet.ClauseLimit
@@ -32,8 +32,7 @@ func newDeleteStatement(table Table) DeleteStatement {
 		&newDelete.Returning,
 	)
 
-	newDelete.Delete.Name = "DELETE FROM"
-	newDelete.Delete.Tables = append(newDelete.Delete.Tables, table)
+	newDelete.Delete.Table = table
 	newDelete.Where.Mandatory = true
 	newDelete.Limit.Count = -1
 

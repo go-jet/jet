@@ -14,7 +14,7 @@ type DeleteStatement interface {
 type deleteStatementImpl struct {
 	jet.SerializerStatement
 
-	Delete    jet.ClauseStatementBegin
+	Delete    jet.ClauseDelete
 	Using     jet.ClauseFrom
 	Where     jet.ClauseWhere
 	Returning jet.ClauseReturning
@@ -28,8 +28,7 @@ func newDeleteStatement(table WritableTable) DeleteStatement {
 		&newDelete.Where,
 		&newDelete.Returning)
 
-	newDelete.Delete.Name = "DELETE FROM"
-	newDelete.Delete.Tables = append(newDelete.Delete.Tables, table)
+	newDelete.Delete.Table = table
 	newDelete.Using.Name = "USING"
 	newDelete.Where.Mandatory = true
 

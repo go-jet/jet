@@ -6,6 +6,8 @@ import "github.com/go-jet/jet/v2/internal/jet"
 type InsertStatement interface {
 	Statement
 
+	OPTIMIZER_HINTS(hints ...OptimizerHint) InsertStatement
+
 	// Insert row of values
 	VALUES(value interface{}, values ...interface{}) InsertStatement
 	// Insert row of values, where value for each column is extracted from filed of structure data.
@@ -22,7 +24,10 @@ type InsertStatement interface {
 func newInsertStatement(table Table, columns []jet.Column) InsertStatement {
 	newInsert := &insertStatementImpl{}
 	newInsert.SerializerStatement = jet.NewStatementImpl(Dialect, jet.InsertStatementType, newInsert,
-		&newInsert.Insert, &newInsert.ValuesQuery, &newInsert.OnDuplicateKey)
+		&newInsert.Insert,
+		&newInsert.ValuesQuery,
+		&newInsert.OnDuplicateKey,
+	)
 
 	newInsert.Insert.Table = table
 	newInsert.Insert.Columns = columns
@@ -36,6 +41,11 @@ type insertStatementImpl struct {
 	Insert         jet.ClauseInsert
 	ValuesQuery    jet.ClauseValuesQuery
 	OnDuplicateKey onDuplicateKeyUpdateClause
+}
+
+func (is *insertStatementImpl) OPTIMIZER_HINTS(hints ...OptimizerHint) InsertStatement {
+	is.Insert.OptimizerHints = hints
+	return is
 }
 
 func (is *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {

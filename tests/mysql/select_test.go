@@ -1189,3 +1189,25 @@ ORDER BY film.film_id;
 ]
 `)
 }
+
+func TestSelectOptimizerHints(t *testing.T) {
+
+	stmt := SELECT(Actor.AllColumns).
+		OPTIMIZER_HINTS(MAX_EXECUTION_TIME(1), QB_NAME("mainQueryBlock"), "NO_ICP(actor)").
+		DISTINCT().
+		FROM(Actor)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT /*+ MAX_EXECUTION_TIME(1) QB_NAME(mainQueryBlock) NO_ICP(actor) */ DISTINCT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor;
+`)
+
+	var actors []model.Actor
+
+	err := stmt.QueryContext(context.Background(), db, &actors)
+	require.NoError(t, err)
+	require.Len(t, actors, 200)
+}

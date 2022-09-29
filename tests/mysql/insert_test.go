@@ -370,3 +370,23 @@ func TestInsertWithExecContext(t *testing.T) {
 
 	require.Error(t, err, "context deadline exceeded")
 }
+
+func TestInsertOptimizerHints(t *testing.T) {
+
+	stmt := Link.INSERT(Link.MutableColumns).
+		OPTIMIZER_HINTS(QB_NAME("qbIns"), "NO_ICP(link)").
+		MODEL(model.Link{
+			URL:  "http://www.google.com",
+			Name: "Google",
+		})
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+INSERT /*+ QB_NAME(qbIns) NO_ICP(link) */ INTO test_sample.link (url, name, description)
+VALUES ('http://www.google.com', 'Google', NULL);
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		_, err := stmt.Exec(tx)
+		require.NoError(t, err)
+	})
+}

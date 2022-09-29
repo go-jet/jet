@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
+	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
 	"github.com/stretchr/testify/require"
@@ -260,10 +260,10 @@ func TestUpdateExecContext(t *testing.T) {
 }
 
 func TestUpdateWithJoin(t *testing.T) {
-	statement := table.Staff.INNER_JOIN(table.Address, table.Address.AddressID.EQ(table.Staff.AddressID)).
-		UPDATE(table.Staff.LastName).
+	statement := Staff.INNER_JOIN(Address, Address.AddressID.EQ(Staff.AddressID)).
+		UPDATE(Staff.LastName).
 		SET(String("New staff name")).
-		WHERE(table.Staff.StaffID.EQ(Int(1)))
+		WHERE(Staff.StaffID.EQ(Int(1)))
 
 	testutils.AssertStatementSql(t, statement, `
 UPDATE dvds.staff
@@ -273,4 +273,30 @@ WHERE staff.staff_id = ?;
 `, "New staff name", int64(1))
 
 	testutils.AssertExecAndRollback(t, statement, db)
+}
+
+func TestUpdateOptimizerHints(t *testing.T) {
+
+	stmt := Link.UPDATE(Link.AllColumns).
+		OPTIMIZER_HINTS(QB_NAME("qbInsert"), "MRR(link)").
+		MODEL(model.Link{
+			ID:   501,
+			URL:  "http://www.duckduckgo.com",
+			Name: "DuckDuckGo",
+		}).
+		WHERE(Link.Name.EQ(String("Bing")))
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+UPDATE /*+ QB_NAME(qbInsert) MRR(link) */ test_sample.link
+SET id = 501,
+    url = 'http://www.duckduckgo.com',
+    name = 'DuckDuckGo',
+    description = NULL
+WHERE link.name = 'Bing';
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		_, err := stmt.Exec(tx)
+		require.NoError(t, err)
+	})
 }
