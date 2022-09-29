@@ -248,7 +248,7 @@ func getUserDefinedType(column metadata.Column) string {
 	switch column.DataType.Kind {
 	case metadata.EnumType:
 		return utils.ToGoIdentifier(column.DataType.Name)
-	case metadata.UserDefinedType, metadata.ArrayType:
+	case metadata.UserDefinedType:
 		return "string"
 	}
 
@@ -257,6 +257,11 @@ func getUserDefinedType(column metadata.Column) string {
 
 func getGoType(column metadata.Column) interface{} {
 	defaultGoType := toGoType(column)
+
+	if column.DataType.Kind == metadata.ArrayType {
+		sliceType := reflect.SliceOf(reflect.TypeOf(defaultGoType))
+		return reflect.Zero(sliceType).Interface()
+	}
 
 	if column.IsNullable {
 		return reflect.New(reflect.TypeOf(defaultGoType)).Interface()
