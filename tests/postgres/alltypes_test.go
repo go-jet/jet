@@ -1257,6 +1257,28 @@ LIMIT $6;
 	requireLogged(t, query)
 }
 
+func TestJsonLiteral(t *testing.T) {
+	stmt := AllTypes.UPDATE().
+		SET(AllTypes.JSON.SET(Json(`{"firstName": "John", "lastName": "Doe"}`))).
+		WHERE(AllTypes.SmallInt.EQ(Int(14))).
+		RETURNING(AllTypes.JSON)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+UPDATE test_sample.all_types
+SET json = '{"firstName": "John", "lastName": "Doe"}'::json
+WHERE all_types.small_int = 14
+RETURNING all_types.json AS "all_types.json";
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var res model.AllTypes
+
+		err := stmt.Query(tx, &res)
+		require.NoError(t, err)
+		require.Equal(t, res.JSON, `{"firstName": "John", "lastName": "Doe"}`)
+	})
+}
+
 var allTypesRow0 = model.AllTypes{
 	SmallIntPtr:        testutils.Int16Ptr(14),
 	SmallInt:           14,
