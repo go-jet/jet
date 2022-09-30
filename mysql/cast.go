@@ -68,7 +68,7 @@ func (c *castImpl) AS_CHAR(length ...int) StringExpression {
 	return StringExp(c.AS("CHAR"))
 }
 
-//  AS_DATE casts expression AS DATE type
+// AS_DATE casts expression AS DATE type
 func (c *castImpl) AS_DATE() DateExpression {
 	return DateExp(c.AS("DATE"))
 }

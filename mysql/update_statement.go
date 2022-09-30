@@ -6,6 +6,8 @@ import "github.com/go-jet/jet/v2/internal/jet"
 type UpdateStatement interface {
 	jet.Statement
 
+	OPTIMIZER_HINTS(hints ...OptimizerHint) UpdateStatement
+
 	SET(value interface{}, values ...interface{}) UpdateStatement
 	MODEL(data interface{}) UpdateStatement
 
@@ -34,6 +36,11 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 	update.Where.Mandatory = true
 
 	return update
+}
+
+func (u *updateStatementImpl) OPTIMIZER_HINTS(hints ...OptimizerHint) UpdateStatement {
+	u.Update.OptimizerHints = hints
+	return u
 }
 
 func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {

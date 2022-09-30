@@ -6,6 +6,8 @@ import "github.com/go-jet/jet/v2/internal/jet"
 type DeleteStatement interface {
 	Statement
 
+	OPTIMIZER_HINTS(hints ...OptimizerHint) DeleteStatement
+
 	USING(tables ...ReadableTable) DeleteStatement
 	WHERE(expression BoolExpression) DeleteStatement
 	ORDER_BY(orderByClauses ...OrderByClause) DeleteStatement
@@ -15,7 +17,7 @@ type DeleteStatement interface {
 type deleteStatementImpl struct {
 	jet.SerializerStatement
 
-	Delete  jet.ClauseStatementBegin
+	Delete  jet.ClauseDelete
 	Using   jet.ClauseFrom
 	Where   jet.ClauseWhere
 	OrderBy jet.ClauseOrderBy
@@ -29,15 +31,20 @@ func newDeleteStatement(table Table) DeleteStatement {
 		&newDelete.Using,
 		&newDelete.Where,
 		&newDelete.OrderBy,
-		&newDelete.Limit)
+		&newDelete.Limit,
+	)
 
-	newDelete.Delete.Name = "DELETE FROM"
+	newDelete.Delete.Table = table
 	newDelete.Using.Name = "USING"
-	newDelete.Delete.Tables = append(newDelete.Delete.Tables, table)
 	newDelete.Where.Mandatory = true
 	newDelete.Limit.Count = -1
 
 	return newDelete
+}
+
+func (d *deleteStatementImpl) OPTIMIZER_HINTS(hints ...OptimizerHint) DeleteStatement {
+	d.Delete.OptimizerHints = hints
+	return d
 }
 
 func (d *deleteStatementImpl) USING(tables ...ReadableTable) DeleteStatement {

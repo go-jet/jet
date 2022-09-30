@@ -89,7 +89,7 @@ func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSens
 	return newBinaryBoolOperatorExpression(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
 }
 
-//---------------------------------------------------//
+// ---------------------------------------------------//
 func newBinaryStringOperatorExpression(lhs, rhs Expression, operator string) StringExpression {
 	return StringExp(NewBinaryOperatorExpression(lhs, rhs, operator))
 }

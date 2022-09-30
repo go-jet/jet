@@ -26,80 +26,6 @@ import (
 
 var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName}}", "{{.Name}}", "")
 
-type {{tableTemplate.TypeName}} struct {
-	{{dialect.PackageName}}.Table
-	
-	//Columns
-{{- range $i, $c := .Columns}}
-{{- $field := columnField $c}}
-	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}}
-{{- end}}
-
-	AllColumns     {{dialect.PackageName}}.ColumnList
-	MutableColumns {{dialect.PackageName}}.ColumnList
-}
-
-// AS creates new {{tableTemplate.TypeName}} with assigned alias
-func (a {{tableTemplate.TypeName}}) AS(alias string) {{tableTemplate.TypeName}} {
-	return new{{tableTemplate.TypeName}}(a.SchemaName(), a.TableName(), alias)
-}
-
-// Schema creates new {{tableTemplate.TypeName}} with assigned schema name
-func (a {{tableTemplate.TypeName}}) FromSchema(schemaName string) {{tableTemplate.TypeName}} {
-	return new{{tableTemplate.TypeName}}(schemaName, a.TableName(), a.Alias())
-}
-
-// WithPrefix creates new {{tableTemplate.TypeName}} with assigned table prefix
-func (a {{tableTemplate.TypeName}}) WithPrefix(prefix string) {{tableTemplate.TypeName}} {
-	return new{{tableTemplate.TypeName}}(a.SchemaName(), prefix+a.TableName(), a.TableName())
-}
-
-// WithSuffix creates new {{tableTemplate.TypeName}} with assigned table suffix
-func (a {{tableTemplate.TypeName}}) WithSuffix(suffix string) {{tableTemplate.TypeName}} {
-	return new{{tableTemplate.TypeName}}(a.SchemaName(), a.TableName()+suffix, a.TableName())
-}
-
-func new{{tableTemplate.TypeName}}(schemaName, tableName, alias string) {{tableTemplate.TypeName}} {
-	var (
-{{- range $i, $c := .Columns}}
-{{- $field := columnField $c}}
-		{{$field.Name}}Column = {{dialect.PackageName}}.{{$field.Type}}Column("{{$c.Name}}")
-{{- end}}
-		allColumns     = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} }
-		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} }
-	)
-
-	return {{tableTemplate.TypeName}}{
-		Table: {{dialect.PackageName}}.NewTable(schemaName, tableName, alias, allColumns...),
-
-		//Columns
-{{- range $i, $c := .Columns}}
-{{- $field := columnField $c}}
-		{{$field.Name}}: {{$field.Name}}Column,
-{{- end}}
-
-		AllColumns:     allColumns,
-		MutableColumns: mutableColumns,
-	}
-}
-`
-
-var tableSQLBuilderTemplateWithEXCLUDED = ` 
-{{define "column-list" -}}
-	{{- range $i, $c := . }}
-{{- $field := columnField $c}}
-		{{- if gt $i 0 }}, {{end}}{{$field.Name}}Column
-	{{- end}}
-{{- end}}
-
-package {{package}}
-
-import (
-	"github.com/go-jet/jet/v2/{{dialect.PackageName}}"
-)
-
-var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName}}", "{{.Name}}", "")
-
 type {{structImplName}} struct {
 	{{dialect.PackageName}}.Table
 	
@@ -116,7 +42,7 @@ type {{structImplName}} struct {
 type {{tableTemplate.TypeName}} struct {
 	{{structImplName}}
 
-	EXCLUDED {{structImplName}}
+	{{toUpper insertedRowAlias}} {{structImplName}}
 }
 
 // AS creates new {{tableTemplate.TypeName}} with assigned alias
@@ -142,7 +68,7 @@ func (a {{tableTemplate.TypeName}}) WithSuffix(suffix string) *{{tableTemplate.T
 func new{{tableTemplate.TypeName}}(schemaName, tableName, alias string) *{{tableTemplate.TypeName}} {
 	return &{{tableTemplate.TypeName}}{
 		{{structImplName}}: new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias),
-		EXCLUDED:  new{{tableTemplate.TypeName}}Impl("", "excluded", ""),
+		{{toUpper insertedRowAlias}}:  new{{tableTemplate.TypeName}}Impl("", "{{insertedRowAlias}}", ""),
 	}
 }
 

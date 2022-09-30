@@ -1,6 +1,6 @@
 package jet
 
-//BoolExpression interface
+// BoolExpression interface
 type BoolExpression interface {
 	Expression
 
@@ -84,22 +84,18 @@ func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
 	return newPostfixBoolOperatorExpression(b.parent, "IS NOT UNKNOWN")
 }
 
-//---------------------------------------------------//
 func newBinaryBoolOperatorExpression(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
 	return BoolExp(NewBinaryOperatorExpression(lhs, rhs, operator, additionalParams...))
 }
 
-//---------------------------------------------------//
 func newPrefixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
 	return BoolExp(newPrefixOperatorExpression(expression, operator))
 }
 
-//---------------------------------------------------//
 func newPostfixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
 	return BoolExp(newPostfixOperatorExpression(expression, operator))
 }
 
-//---------------------------------------------------//
 type boolExpressionWrapper struct {
 	boolInterfaceImpl
 	Expression

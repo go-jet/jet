@@ -51,7 +51,7 @@ type ColumnDateTime = jet.ColumnTimestamp
 // DateTimeColumn creates named timestamp column
 var DateTimeColumn = jet.TimestampColumn
 
-//ColumnTimestamp is interface of SQL timestamp columns.
+// ColumnTimestamp is interface of SQL timestamp columns.
 type ColumnTimestamp = jet.ColumnTimestamp
 
 // TimestampColumn creates named timestamp column

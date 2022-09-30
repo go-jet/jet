@@ -1103,3 +1103,111 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 
 	require.Equal(t, testutils.ToJSON(films), testutils.ToJSON(myFilms))
 }
+
+func TestConditionalFunctions(t *testing.T) {
+	stmt := SELECT(
+		EXISTS(
+			Film.SELECT(Film.FilmID).WHERE(Film.RentalDuration.GT(Int(100))),
+		).AS("exists"),
+		CASE(Film.Length.GT(Int(120))).
+			WHEN(Bool(true)).THEN(String("long film")).
+			ELSE(String("short film")).AS("case"),
+		COALESCE(Film.Description, String("none")).AS("coalesce"),
+		NULLIF(Film.ReleaseYear, Int(200)).AS("null_if"),
+		GREATEST(Film.RentalDuration, Int(4), Int(5)).AS("greatest"),
+		LEAST(Film.RentalDuration, Int(7), Int(6)).AS("least"),
+	).FROM(
+		Film,
+	).WHERE(
+		Film.FilmID.LT(Int(5)),
+	).ORDER_BY(
+		Film.FilmID,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT (EXISTS (
+          SELECT film.film_id AS "film.film_id"
+          FROM dvds.film
+          WHERE film.rental_duration > 100
+     )) AS "exists",
+     (CASE (film.length > 120) WHEN TRUE THEN 'long film' ELSE 'short film' END) AS "case",
+     COALESCE(film.description, 'none') AS "coalesce",
+     NULLIF(film.release_year, 200) AS "null_if",
+     GREATEST(film.rental_duration, 4, 5) AS "greatest",
+     LEAST(film.rental_duration, 7, 6) AS "least"
+FROM dvds.film
+WHERE film.film_id < 5
+ORDER BY film.film_id;
+`)
+
+	var res []struct {
+		Exists   string
+		Case     string
+		Coalesce string
+		NullIf   string
+		Greatest string
+		Least    string
+	}
+
+	err := stmt.Query(db, &res)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, res, `
+[
+	{
+		"Exists": "0",
+		"Case": "short film",
+		"Coalesce": "A Epic Drama of a Feminist And a Mad Scientist who must Battle a Teacher in The Canadian Rockies",
+		"NullIf": "2006",
+		"Greatest": "6",
+		"Least": "6"
+	},
+	{
+		"Exists": "0",
+		"Case": "short film",
+		"Coalesce": "A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China",
+		"NullIf": "2006",
+		"Greatest": "5",
+		"Least": "3"
+	},
+	{
+		"Exists": "0",
+		"Case": "short film",
+		"Coalesce": "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
+		"NullIf": "2006",
+		"Greatest": "7",
+		"Least": "6"
+	},
+	{
+		"Exists": "0",
+		"Case": "short film",
+		"Coalesce": "A Fanciful Documentary of a Frisbee And a Lumberjack who must Chase a Monkey in A Shark Tank",
+		"NullIf": "2006",
+		"Greatest": "5",
+		"Least": "5"
+	}
+]
+`)
+}
+
+func TestSelectOptimizerHints(t *testing.T) {
+
+	stmt := SELECT(Actor.AllColumns).
+		OPTIMIZER_HINTS(MAX_EXECUTION_TIME(1), QB_NAME("mainQueryBlock"), "NO_ICP(actor)").
+		DISTINCT().
+		FROM(Actor)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT /*+ MAX_EXECUTION_TIME(1) QB_NAME(mainQueryBlock) NO_ICP(actor) */ DISTINCT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor;
+`)
+
+	var actors []model.Actor
+
+	err := stmt.QueryContext(context.Background(), db, &actors)
+	require.NoError(t, err)
+	require.Len(t, actors, 200)
+}

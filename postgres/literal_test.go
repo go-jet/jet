@@ -67,6 +67,11 @@ func TestBytea(t *testing.T) {
 	assertSerialize(t, Bytea([]byte("Some byte array")), `$1::bytea`, []byte("Some byte array"))
 }
 
+func TestJson(t *testing.T) {
+	assertSerialize(t, Json("{\"key\": \"value\"}"), `$1::json`, "{\"key\": \"value\"}")
+	assertSerialize(t, Json([]byte("{\"key\": \"value\"}")), `$1::json`, []byte("{\"key\": \"value\"}"))
+}
+
 func TestDate(t *testing.T) {
 	assertSerialize(t, Date(2014, time.January, 2), `$1::date`, "2014-01-02")
 	assertSerialize(t, DateT(time.Now()), `$1::date`)

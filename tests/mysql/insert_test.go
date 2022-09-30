@@ -255,7 +255,7 @@ func TestInsertOnDuplicateKey(t *testing.T) {
 INSERT INTO test_sample.link
 VALUES (?, ?, ?, DEFAULT),
        (?, ?, ?, DEFAULT)
-ON DUPLICATE KEY UPDATE id = (id + ?),
+ON DUPLICATE KEY UPDATE id = (link.id + ?),
                         name = ?;
 `, randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
@@ -279,6 +279,65 @@ ON DUPLICATE KEY UPDATE id = (id + ?),
 			URL:         "http://www.postgresqltutorial.com",
 			Name:        "PostgreSQL Tutorial 2",
 			Description: nil,
+		})
+	})
+}
+
+func TestInsertOnDuplicateKeyUpdateNEW(t *testing.T) {
+	skipForMariaDB(t)
+
+	randId := rand.Int31()
+
+	stmt := Link.INSERT().
+		MODELS([]model.Link{
+			{
+				ID:          randId,
+				URL:         "https://www.postgresqltutorial.com",
+				Name:        "PostgreSQL Tutorial",
+				Description: nil,
+			},
+			{
+				ID:          randId,
+				URL:         "https://www.yahoo.com",
+				Name:        "Yahoo",
+				Description: testutils.StringPtr("web portal and search engine"),
+			},
+		}).AS_NEW().
+		ON_DUPLICATE_KEY_UPDATE(
+			Link.ID.SET(Link.ID.ADD(Int(11))),
+			Link.URL.SET(Link.NEW.URL),
+			Link.Name.SET(Link.NEW.Name),
+			Link.Description.SET(Link.NEW.Description),
+		)
+
+	testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.link
+VALUES (?, ?, ?, ?),
+       (?, ?, ?, ?) AS new
+ON DUPLICATE KEY UPDATE id = (link.id + ?),
+                        url = new.url,
+                        name = new.name,
+                        description = new.description;
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		_, err := stmt.Exec(tx)
+		require.NoError(t, err)
+
+		stmt := SELECT(Link.AllColumns).
+			FROM(Link).
+			WHERE(Link.ID.EQ(Int32(randId + 11)))
+
+		var dest model.Link
+
+		err = stmt.Query(tx, &dest)
+		require.NoError(t, err)
+
+		testutils.AssertDeepEqual(t, dest, model.Link{
+			ID:          randId + 11,
+			URL:         "https://www.yahoo.com",
+			Name:        "Yahoo",
+			Description: testutils.StringPtr("web portal and search engine"),
 		})
 	})
 }
@@ -310,4 +369,24 @@ func TestInsertWithExecContext(t *testing.T) {
 	_, err := stmt.ExecContext(ctx, db)
 
 	require.Error(t, err, "context deadline exceeded")
+}
+
+func TestInsertOptimizerHints(t *testing.T) {
+
+	stmt := Link.INSERT(Link.MutableColumns).
+		OPTIMIZER_HINTS(QB_NAME("qbIns"), "NO_ICP(link)").
+		MODEL(model.Link{
+			URL:  "http://www.google.com",
+			Name: "Google",
+		})
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+INSERT /*+ QB_NAME(qbIns) NO_ICP(link) */ INTO test_sample.link (url, name, description)
+VALUES ('http://www.google.com', 'Google', NULL);
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		_, err := stmt.Exec(tx)
+		require.NoError(t, err)
+	})
 }

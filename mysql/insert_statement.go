@@ -6,12 +6,15 @@ import "github.com/go-jet/jet/v2/internal/jet"
 type InsertStatement interface {
 	Statement
 
+	OPTIMIZER_HINTS(hints ...OptimizerHint) InsertStatement
+
 	// Insert row of values
 	VALUES(value interface{}, values ...interface{}) InsertStatement
 	// Insert row of values, where value for each column is extracted from filed of structure data.
 	// If data is not struct or there is no field for every column selected, this method will panic.
 	MODEL(data interface{}) InsertStatement
 	MODELS(data interface{}) InsertStatement
+	AS_NEW() InsertStatement
 
 	ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement
 
@@ -21,7 +24,10 @@ type InsertStatement interface {
 func newInsertStatement(table Table, columns []jet.Column) InsertStatement {
 	newInsert := &insertStatementImpl{}
 	newInsert.SerializerStatement = jet.NewStatementImpl(Dialect, jet.InsertStatementType, newInsert,
-		&newInsert.Insert, &newInsert.ValuesQuery, &newInsert.OnDuplicateKey)
+		&newInsert.Insert,
+		&newInsert.ValuesQuery,
+		&newInsert.OnDuplicateKey,
+	)
 
 	newInsert.Insert.Table = table
 	newInsert.Insert.Columns = columns
@@ -37,6 +43,11 @@ type insertStatementImpl struct {
 	OnDuplicateKey onDuplicateKeyUpdateClause
 }
 
+func (is *insertStatementImpl) OPTIMIZER_HINTS(hints ...OptimizerHint) InsertStatement {
+	is.Insert.OptimizerHints = hints
+	return is
+}
+
 func (is *insertStatementImpl) VALUES(value interface{}, values ...interface{}) InsertStatement {
 	is.ValuesQuery.Rows = append(is.ValuesQuery.Rows, jet.UnwindRowFromValues(value, values))
 	return is
@@ -49,6 +60,11 @@ func (is *insertStatementImpl) MODEL(data interface{}) InsertStatement {
 
 func (is *insertStatementImpl) MODELS(data interface{}) InsertStatement {
 	is.ValuesQuery.Rows = append(is.ValuesQuery.Rows, jet.UnwindRowsFromModels(is.Insert.GetColumns(), data)...)
+	return is
+}
+
+func (is *insertStatementImpl) AS_NEW() InsertStatement {
+	is.ValuesQuery.As = "new"
 	return is
 }
 
@@ -79,7 +95,7 @@ func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, o
 			out.NewLine()
 		}
 
-		jet.Serialize(assigment, statementType, out, jet.ShortName.WithFallTrough(options)...)
+		jet.Serialize(assigment, statementType, out, jet.FallTrough(options)...)
 	}
 
 	out.DecreaseIdent(24)

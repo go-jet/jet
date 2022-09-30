@@ -39,10 +39,11 @@ const (
 type Interval = jet.Interval
 
 // INTERVAL creates new temporal interval.
-// 	In a case of MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR unit type
-// 	value parameter has to be a number.
+//
+//	In a case of MICROSECOND, SECOND, MINUTE, HOUR, DAY, WEEK, MONTH, QUARTER, YEAR unit type
+//	value parameter has to be a number.
 //			INTERVAL(1, DAY)
-// 	In a case of other unit types, value should be string with appropriate format.
+//	In a case of other unit types, value should be string with appropriate format.
 //			INTERVAL("10:08:50", HOUR_SECOND)
 func INTERVAL(value interface{}, unitType unitType) Interval {
 	switch unitType {

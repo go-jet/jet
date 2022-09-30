@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-//Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
+// Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement interface {
 	// Sql returns parametrized sql query with list of arguments.
 	Sql() (query string, args []interface{})

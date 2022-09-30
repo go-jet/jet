@@ -18,7 +18,7 @@ type NumericExpression = jet.NumericExpression
 // IntegerExpression interface
 type IntegerExpression = jet.IntegerExpression
 
-//FloatExpression is interface
+// FloatExpression is interface
 type FloatExpression = jet.FloatExpression
 
 // TimeExpression interface

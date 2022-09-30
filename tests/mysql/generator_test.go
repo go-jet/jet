@@ -238,7 +238,7 @@ import (
 
 var Actor = newActorTable("dvds", "actor", "")
 
-type ActorTable struct {
+type actorTable struct {
 	mysql.Table
 
 	//Columns
@@ -251,27 +251,40 @@ type ActorTable struct {
 	MutableColumns mysql.ColumnList
 }
 
+type ActorTable struct {
+	actorTable
+
+	NEW actorTable
+}
+
 // AS creates new ActorTable with assigned alias
-func (a ActorTable) AS(alias string) ActorTable {
+func (a ActorTable) AS(alias string) *ActorTable {
 	return newActorTable(a.SchemaName(), a.TableName(), alias)
 }
 
 // Schema creates new ActorTable with assigned schema name
-func (a ActorTable) FromSchema(schemaName string) ActorTable {
+func (a ActorTable) FromSchema(schemaName string) *ActorTable {
 	return newActorTable(schemaName, a.TableName(), a.Alias())
 }
 
 // WithPrefix creates new ActorTable with assigned table prefix
-func (a ActorTable) WithPrefix(prefix string) ActorTable {
+func (a ActorTable) WithPrefix(prefix string) *ActorTable {
 	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
 }
 
 // WithSuffix creates new ActorTable with assigned table suffix
-func (a ActorTable) WithSuffix(suffix string) ActorTable {
+func (a ActorTable) WithSuffix(suffix string) *ActorTable {
 	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
-func newActorTable(schemaName, tableName, alias string) ActorTable {
+func newActorTable(schemaName, tableName, alias string) *ActorTable {
+	return &ActorTable{
+		actorTable: newActorTableImpl(schemaName, tableName, alias),
+		NEW:        newActorTableImpl("", "new", ""),
+	}
+}
+
+func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 	var (
 		ActorIDColumn    = mysql.IntegerColumn("actor_id")
 		FirstNameColumn  = mysql.StringColumn("first_name")
@@ -281,7 +294,7 @@ func newActorTable(schemaName, tableName, alias string) ActorTable {
 		mutableColumns   = mysql.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
 	)
 
-	return ActorTable{
+	return actorTable{
 		Table: mysql.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
@@ -334,7 +347,7 @@ import (
 
 var ActorInfo = newActorInfoTable("dvds", "actor_info", "")
 
-type ActorInfoTable struct {
+type actorInfoTable struct {
 	mysql.Table
 
 	//Columns
@@ -347,27 +360,40 @@ type ActorInfoTable struct {
 	MutableColumns mysql.ColumnList
 }
 
+type ActorInfoTable struct {
+	actorInfoTable
+
+	NEW actorInfoTable
+}
+
 // AS creates new ActorInfoTable with assigned alias
-func (a ActorInfoTable) AS(alias string) ActorInfoTable {
+func (a ActorInfoTable) AS(alias string) *ActorInfoTable {
 	return newActorInfoTable(a.SchemaName(), a.TableName(), alias)
 }
 
 // Schema creates new ActorInfoTable with assigned schema name
-func (a ActorInfoTable) FromSchema(schemaName string) ActorInfoTable {
+func (a ActorInfoTable) FromSchema(schemaName string) *ActorInfoTable {
 	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
 }
 
 // WithPrefix creates new ActorInfoTable with assigned table prefix
-func (a ActorInfoTable) WithPrefix(prefix string) ActorInfoTable {
+func (a ActorInfoTable) WithPrefix(prefix string) *ActorInfoTable {
 	return newActorInfoTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
 }
 
 // WithSuffix creates new ActorInfoTable with assigned table suffix
-func (a ActorInfoTable) WithSuffix(suffix string) ActorInfoTable {
+func (a ActorInfoTable) WithSuffix(suffix string) *ActorInfoTable {
 	return newActorInfoTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
 }
 
-func newActorInfoTable(schemaName, tableName, alias string) ActorInfoTable {
+func newActorInfoTable(schemaName, tableName, alias string) *ActorInfoTable {
+	return &ActorInfoTable{
+		actorInfoTable: newActorInfoTableImpl(schemaName, tableName, alias),
+		NEW:            newActorInfoTableImpl("", "new", ""),
+	}
+}
+
+func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 	var (
 		ActorIDColumn   = mysql.IntegerColumn("actor_id")
 		FirstNameColumn = mysql.StringColumn("first_name")
@@ -377,7 +403,7 @@ func newActorInfoTable(schemaName, tableName, alias string) ActorInfoTable {
 		mutableColumns  = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 	)
 
-	return ActorInfoTable{
+	return actorInfoTable{
 		Table: mysql.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
