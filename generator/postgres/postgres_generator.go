@@ -69,7 +69,7 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) (e
 }
 
 func openConnection(dsn string) *sql.DB {
-	fmt.Println("Connecting to postgres database: " + dsn)
+	fmt.Printf("Connecting to postgres database: %v...", dsn[:15])
 
 	db, err := sql.Open("postgres", dsn)
 	throw.OnError(err)
