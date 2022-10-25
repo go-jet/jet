@@ -68,7 +68,7 @@ func GenerateDSN(dsn, destDir string, templates ...template.Template) (err error
 }
 
 func openConnection(connectionString string) *sql.DB {
-	fmt.Println("Connecting to MySQL database: " + connectionString)
+	fmt.Println("Connecting to MySQL database")
 	db, err := sql.Open("mysql", connectionString)
 	throw.OnError(err)
 
