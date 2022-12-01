@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
 )
 
 const genTestDirRoot = "./.gentestdata3"
@@ -306,6 +307,25 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
 	}
+}
+
+func SetDvdsSchema(schema string) {
+	Actor = Actor.FromSchema(schema)
+	Address = Address.FromSchema(schema)
+	Category = Category.FromSchema(schema)
+	City = City.FromSchema(schema)
+	Country = Country.FromSchema(schema)
+	Customer = Customer.FromSchema(schema)
+	Film = Film.FromSchema(schema)
+	FilmActor = FilmActor.FromSchema(schema)
+	FilmCategory = FilmCategory.FromSchema(schema)
+	FilmText = FilmText.FromSchema(schema)
+	Inventory = Inventory.FromSchema(schema)
+	Language = Language.FromSchema(schema)
+	Payment = Payment.FromSchema(schema)
+	Rental = Rental.FromSchema(schema)
+	Staff = Staff.FromSchema(schema)
+	Store = Store.FromSchema(schema)
 }
 `
 

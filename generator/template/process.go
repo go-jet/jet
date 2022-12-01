@@ -63,11 +63,11 @@ func processSQLBuilder(dirPath string, dialect jet.Dialect, schemaMetaData metad
 	processTableSQLBuilder("table", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.TablesMetaData, sqlBuilderTemplate)
 	processTableSQLBuilder("view", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.ViewsMetaData, sqlBuilderTemplate)
 	processEnumSQLBuilder(sqlBuilderPath, dialect, schemaMetaData.EnumsMetaData, sqlBuilderTemplate)
-	processTableSQLBuilderSetSchema(sqlBuilderPath, schemaMetaData.TablesMetaData, sqlBuilderTemplate)
+	processTableSQLBuilderSetSchema(sqlBuilderPath, schemaMetaData, sqlBuilderTemplate)
 }
 
-func processTableSQLBuilderSetSchema(dirPath string, tablesMetadata []metadata.Table, builderTemplate SQLBuilder) {
-	if len(tablesMetadata) == 0 {
+func processTableSQLBuilderSetSchema(dirPath string, schemaMetadata metadata.Schema, builderTemplate SQLBuilder) {
+	if schemaMetadata.IsEmpty() {
 		return
 	}
 
@@ -77,9 +77,11 @@ func processTableSQLBuilderSetSchema(dirPath string, tablesMetadata []metadata.T
 	throw.OnError(err)
 
 	var builders []TableSQLBuilder
-	for _, tm := range tablesMetadata {
+	for _, tm := range schemaMetadata.TablesMetaData {
 		builders = append(builders, builderTemplate.Table(tm))
 	}
+
+	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
 
 	funcPath := path.Join(dirPath, builders[0].Path)
 
@@ -89,7 +91,11 @@ func processTableSQLBuilderSetSchema(dirPath string, tablesMetadata []metadata.T
 	text, err := generateTemplate(
 		tableSqlBuilderSetSchemaTemplate,
 		builders,
-		nil,
+		template.FuncMap{
+			"setSchemaMethodName": func() string {
+				return "Set" + schemaIdentifier + "Schema"
+			},
+		},
 	)
 	throw.OnError(err)
 
