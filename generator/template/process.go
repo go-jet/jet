@@ -80,8 +80,12 @@ func processTableSQLBuilderSetSchema(dirPath string, schemaMetadata metadata.Sch
 		builders = append(builders, table)
 
 		if table.Skip {
-			return
+			continue
 		}
+	}
+
+	if len(builders) == 0 {
+		return
 	}
 
 	fmt.Println("Generating global `SetSchema` method...")
