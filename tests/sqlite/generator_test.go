@@ -7,11 +7,12 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGeneratedModel(t *testing.T) {
@@ -223,6 +224,25 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
 	}
+}
+
+func SetSchema(schema string) {
+	Actor = Actor.FromSchema(schema)
+	Address = Address.FromSchema(schema)
+	Category = Category.FromSchema(schema)
+	City = City.FromSchema(schema)
+	Country = Country.FromSchema(schema)
+	Customer = Customer.FromSchema(schema)
+	Film = Film.FromSchema(schema)
+	FilmActor = FilmActor.FromSchema(schema)
+	FilmCategory = FilmCategory.FromSchema(schema)
+	FilmText = FilmText.FromSchema(schema)
+	Inventory = Inventory.FromSchema(schema)
+	Language = Language.FromSchema(schema)
+	Payment = Payment.FromSchema(schema)
+	Rental = Rental.FromSchema(schema)
+	Staff = Staff.FromSchema(schema)
+	Store = Store.FromSchema(schema)
 }
 `
 

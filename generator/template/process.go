@@ -71,16 +71,20 @@ func processTableSQLBuilderSetSchema(dirPath string, schemaMetadata metadata.Sch
 		return
 	}
 
-	fmt.Println("Generating global `SetSchema` method...")
-
 	err := utils.EnsureDirPath(dirPath)
 	throw.OnError(err)
 
 	var builders []TableSQLBuilder
 	for _, tm := range schemaMetadata.TablesMetaData {
-		builders = append(builders, builderTemplate.Table(tm))
+		table := builderTemplate.Table(tm)
+		builders = append(builders, table)
+
+		if table.Skip {
+			return
+		}
 	}
 
+	fmt.Println("Generating global `SetSchema` method...")
 	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
 
 	funcPath := path.Join(dirPath, builders[0].Path)

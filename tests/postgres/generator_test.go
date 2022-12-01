@@ -10,10 +10,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
 
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 )
@@ -912,5 +913,16 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
 	}
+}
+
+func SetTestSampleSchema(schema string) {
+	AllTypes = AllTypes.FromSchema(schema)
+	Link = Link.FromSchema(schema)
+	Employee = Employee.FromSchema(schema)
+	Person = Person.FromSchema(schema)
+	PersonPhone = PersonPhone.FromSchema(schema)
+	WeirdNamesTable = WeirdNamesTable.FromSchema(schema)
+	User = User.FromSchema(schema)
+	Floats = Floats.FromSchema(schema)
 }
 `
