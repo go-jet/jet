@@ -97,6 +97,14 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 }
 `
 
+var tableSqlBuilderSetSchemaTemplate = `
+func SetSchema(schema string) {
+{{- range .}}
+	{{ .InstanceName }} = {{ .InstanceName }}.FromSchema(schema)
+{{- end}}
+}
+`
+
 var tableModelFileTemplate = `package {{package}}
 
 {{ with modelImports }}

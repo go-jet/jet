@@ -3,13 +3,15 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"path"
+	"strings"
+	"text/template"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
-	"path"
-	"strings"
-	"text/template"
 )
 
 // ProcessSchema will process schema metadata and constructs go files using generator Template
@@ -61,6 +63,40 @@ func processSQLBuilder(dirPath string, dialect jet.Dialect, schemaMetaData metad
 	processTableSQLBuilder("table", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.TablesMetaData, sqlBuilderTemplate)
 	processTableSQLBuilder("view", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.ViewsMetaData, sqlBuilderTemplate)
 	processEnumSQLBuilder(sqlBuilderPath, dialect, schemaMetaData.EnumsMetaData, sqlBuilderTemplate)
+	processTableSQLBuilderSetSchema(sqlBuilderPath, schemaMetaData.TablesMetaData, sqlBuilderTemplate)
+}
+
+func processTableSQLBuilderSetSchema(dirPath string, tablesMetadata []metadata.Table, builderTemplate SQLBuilder) {
+	if len(tablesMetadata) == 0 {
+		return
+	}
+
+	fmt.Println("Generating global `SetSchema` method...")
+
+	err := utils.EnsureDirPath(dirPath)
+	throw.OnError(err)
+
+	var builders []TableSQLBuilder
+	for _, tm := range tablesMetadata {
+		builders = append(builders, builderTemplate.Table(tm))
+	}
+
+	funcPath := path.Join(dirPath, builders[0].Path)
+
+	origText, err := os.ReadFile(path.Join(funcPath, builders[0].FileName+".go"))
+	throw.OnError(err)
+
+	text, err := generateTemplate(
+		tableSqlBuilderSetSchemaTemplate,
+		builders,
+		nil,
+	)
+	throw.OnError(err)
+
+	text = append(origText, text...)
+
+	err = utils.SaveGoFile(funcPath, builders[0].FileName, text)
+	throw.OnError(err)
 }
 
 func processEnumSQLBuilder(dirPath string, dialect jet.Dialect, enumsMetaData []metadata.Enum, sqlBuilder SQLBuilder) {
