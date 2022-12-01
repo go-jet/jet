@@ -22,3 +22,5 @@ gen
 .gen
 .docker
 .env
+.tempTestDir
+.gentestdata3

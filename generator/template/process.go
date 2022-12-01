@@ -67,28 +67,26 @@ func processSQLBuilder(dirPath string, dialect jet.Dialect, schemaMetaData metad
 }
 
 func processTableSQLBuilderSetSchema(dirPath string, schemaMetadata metadata.Schema, builderTemplate SQLBuilder) {
-	if schemaMetadata.IsEmpty() {
-		return
-	}
-
-	err := utils.EnsureDirPath(dirPath)
-	throw.OnError(err)
 
 	var builders []TableSQLBuilder
 	for _, tm := range schemaMetadata.TablesMetaData {
-		table := builderTemplate.Table(tm)
-		builders = append(builders, table)
 
+		table := builderTemplate.Table(tm)
 		if table.Skip {
 			continue
 		}
+
+		builders = append(builders, table)
 	}
 
 	if len(builders) == 0 {
 		return
 	}
 
-	fmt.Println("Generating global `SetSchema` method...")
+	err := utils.EnsureDirPath(dirPath)
+	throw.OnError(err)
+
+	fmt.Println("Generating global `SetSchema` method")
 	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
 
 	funcPath := path.Join(dirPath, builders[0].Path)
