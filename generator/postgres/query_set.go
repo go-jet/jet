@@ -35,14 +35,14 @@ WITH primaryKeys AS (
 	SELECT column_name
 	FROM information_schema.key_column_usage AS c
 		LEFT JOIN information_schema.table_constraints AS t
-             ON t.constraint_name = c.constraint_name AND 
-                c.table_schema = t.table_schema AND 
-                c.table_name = t.table_name
+			 ON t.constraint_name = c.constraint_name AND 
+				c.table_schema = t.table_schema AND 
+				c.table_name = t.table_name
 	WHERE t.table_schema = $1 AND t.table_name = $2 AND t.constraint_type = 'PRIMARY KEY'
 )
 SELECT column_name as "column.Name", 
 	   is_nullable = 'YES' as "column.isNullable",
-       (EXISTS(SELECT 1 from primaryKeys as pk where pk.column_name = columns.column_name)) as "column.IsPrimaryKey",
+	   (EXISTS(SELECT 1 from primaryKeys as pk where pk.column_name = columns.column_name)) as "column.IsPrimaryKey",
 	   dataType.kind as "dataType.Kind",	
 	   (case dataType.Kind when 'base' then data_type else LTRIM(udt_name, '_') end) as "dataType.Name", 
 	   FALSE as "dataType.isUnsigned"
@@ -50,7 +50,10 @@ FROM information_schema.columns,
 	 LATERAL (select (case data_type
 				when 'ARRAY' then 'array'
 				when 'USER-DEFINED' then 
-					case (select typtype from pg_type where typname = columns.udt_name)
+					case (select t.typtype 
+						  from pg_type as t 
+						  join pg_namespace as p on p.oid = t.typnamespace 
+						  where t.typname = columns.udt_name and p.nspname = $1)
 						when 'e' then 'enum'
 						else 'user-defined'
 					end
