@@ -3,7 +3,6 @@ package template
 import (
 	"bytes"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 	"text/template"
@@ -63,52 +62,6 @@ func processSQLBuilder(dirPath string, dialect jet.Dialect, schemaMetaData metad
 	processTableSQLBuilder("table", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.TablesMetaData, sqlBuilderTemplate)
 	processTableSQLBuilder("view", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.ViewsMetaData, sqlBuilderTemplate)
 	processEnumSQLBuilder(sqlBuilderPath, dialect, schemaMetaData.EnumsMetaData, sqlBuilderTemplate)
-	processTableSQLBuilderSetSchema(sqlBuilderPath, schemaMetaData, sqlBuilderTemplate)
-}
-
-func processTableSQLBuilderSetSchema(dirPath string, schemaMetadata metadata.Schema, builderTemplate SQLBuilder) {
-
-	var builders []TableSQLBuilder
-	for _, tm := range schemaMetadata.TablesMetaData {
-
-		table := builderTemplate.Table(tm)
-		if table.Skip {
-			continue
-		}
-
-		builders = append(builders, table)
-	}
-
-	if len(builders) == 0 {
-		return
-	}
-
-	err := utils.EnsureDirPath(dirPath)
-	throw.OnError(err)
-
-	fmt.Println("Generating global `SetSchema` method")
-	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
-
-	funcPath := path.Join(dirPath, builders[0].Path)
-
-	origText, err := os.ReadFile(path.Join(funcPath, builders[0].FileName+".go"))
-	throw.OnError(err)
-
-	text, err := generateTemplate(
-		tableSqlBuilderSetSchemaTemplate,
-		builders,
-		template.FuncMap{
-			"setSchemaMethodName": func() string {
-				return "Set" + schemaIdentifier + "Schema"
-			},
-		},
-	)
-	throw.OnError(err)
-
-	text = append(origText, text...)
-
-	err = utils.SaveGoFile(funcPath, builders[0].FileName, text)
-	throw.OnError(err)
 }
 
 func processEnumSQLBuilder(dirPath string, dialect jet.Dialect, enumsMetaData []metadata.Enum, sqlBuilder SQLBuilder) {
@@ -166,6 +119,8 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 	fmt.Printf("Generating %s sql builder files\n", fileTypes)
 
+	var generatedBuilders []TableSQLBuilder
+
 	for _, tableMetaData := range tablesMetaData {
 
 		var tableSQLBuilder TableSQLBuilder
@@ -217,7 +172,38 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 		err = utils.SaveGoFile(tableSQLBuilderPath, tableSQLBuilder.FileName, text)
 		throw.OnError(err)
+
+		generatedBuilders = append(generatedBuilders, tableSQLBuilder)
 	}
+
+	if len(generatedBuilders) > 0 {
+		generateSetSchema(dirPath, fileTypes, schemaMetaData, generatedBuilders)
+	}
+}
+
+func generateSetSchema(dirPath, fileTypes string, schemaMetadata metadata.Schema, builders []TableSQLBuilder) {
+
+	basePath := path.Join(dirPath, builders[0].Path)
+	err := utils.EnsureDirPath(basePath)
+	throw.OnError(err)
+
+	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
+	methodName := fmt.Sprintf("Set%sSchema", schemaIdentifier)
+
+	fmt.Printf("Generating global `%s` method for %s\n", methodName, fileTypes)
+
+	text, err := generateTemplate(
+		autoGenWarningTemplate+tableSqlBuilderSetSchemaTemplate,
+		builders,
+		template.FuncMap{
+			"package":             func() string { return builders[0].PackageName() },
+			"setSchemaMethodName": func() string { return methodName },
+		},
+	)
+	throw.OnError(err)
+
+	err = utils.SaveGoFile(basePath, fileTypes, text)
+	throw.OnError(err)
 }
 
 func insertedRowAlias(dialect jet.Dialect) string {
