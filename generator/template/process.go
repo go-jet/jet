@@ -177,16 +177,16 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 	}
 
 	if len(generatedBuilders) > 0 {
-		generateSetSchema(dirPath, fileTypes, schemaMetaData, generatedBuilders)
+		generateUseSchemaFunc(dirPath, fileTypes, schemaMetaData, generatedBuilders)
 	}
 }
 
-func generateSetSchema(dirPath, fileTypes string, schemaMetadata metadata.Schema, builders []TableSQLBuilder) {
+func generateUseSchemaFunc(dirPath, fileTypes string, schemaMetadata metadata.Schema, builders []TableSQLBuilder) {
 
 	basePath := path.Join(dirPath, builders[0].Path)
 
 	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
-	methodName := fmt.Sprintf("Set%sSchema", schemaIdentifier)
+	methodName := fmt.Sprintf("Use%sSchema", schemaIdentifier)
 
 	fmt.Printf("Generating global `%s` method for %s\n", methodName, fileTypes)
 
@@ -194,8 +194,8 @@ func generateSetSchema(dirPath, fileTypes string, schemaMetadata metadata.Schema
 		autoGenWarningTemplate+tableSqlBuilderSetSchemaTemplate,
 		builders,
 		template.FuncMap{
-			"package":             func() string { return builders[0].PackageName() },
-			"setSchemaMethodName": func() string { return methodName },
+			"package":          func() string { return builders[0].PackageName() },
+			"schemaMethodName": func() string { return methodName },
 		},
 	)
 	throw.OnError(err)

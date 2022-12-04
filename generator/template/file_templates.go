@@ -99,7 +99,10 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 
 var tableSqlBuilderSetSchemaTemplate = `package {{package}}
 
-func {{setSchemaMethodName}}(schema string) {
+// {{schemaMethodName}} changes all global tables/views with the value returned
+// returned by calling FromSchema on them. Passing an empty string to this function
+// will cause queries to be generated without any table/view alias.
+func {{schemaMethodName}}(schema string) {
 {{- range .}}
 	{{ .InstanceName }} = {{ .InstanceName }}.FromSchema(schema)
 {{- end}}

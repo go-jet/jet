@@ -400,7 +400,10 @@ var actorSQLBuilderTableFile = `
 
 package table
 
-func SetDvdsSchema(schema string) {
+// UseDvdsSchema changes all global tables/views with the value returned
+// returned by calling FromSchema on them. Passing an empty string to this function
+// will cause queries to be generated without any table/view alias.
+func UseDvdsSchema(schema string) {
 	Film = Film.FromSchema(schema)
 	Address = Address.FromSchema(schema)
 	Actor = Actor.FromSchema(schema)
@@ -538,7 +541,10 @@ var actorInfoSQLBuilderViewFile = `
 
 package view
 
-func SetDvdsSchema(schema string) {
+// UseDvdsSchema changes all global tables/views with the value returned
+// returned by calling FromSchema on them. Passing an empty string to this function
+// will cause queries to be generated without any table/view alias.
+func UseDvdsSchema(schema string) {
 	ActorInfo = ActorInfo.FromSchema(schema)
 	CustomerList = CustomerList.FromSchema(schema)
 	FilmList = FilmList.FromSchema(schema)
