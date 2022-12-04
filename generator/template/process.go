@@ -184,8 +184,6 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 func generateSetSchema(dirPath, fileTypes string, schemaMetadata metadata.Schema, builders []TableSQLBuilder) {
 
 	basePath := path.Join(dirPath, builders[0].Path)
-	err := utils.EnsureDirPath(basePath)
-	throw.OnError(err)
 
 	schemaIdentifier := utils.ToGoIdentifier(schemaMetadata.Name)
 	methodName := fmt.Sprintf("Set%sSchema", schemaIdentifier)
