@@ -404,20 +404,20 @@ package table
 // returned by calling FromSchema on them. Passing an empty string to this function
 // will cause queries to be generated without any table/view alias.
 func UseSchema(schema string) {
-	Film = Film.FromSchema(schema)
-	Address = Address.FromSchema(schema)
 	Actor = Actor.FromSchema(schema)
+	Address = Address.FromSchema(schema)
 	Category = Category.FromSchema(schema)
 	City = City.FromSchema(schema)
 	Country = Country.FromSchema(schema)
 	Customer = Customer.FromSchema(schema)
+	Film = Film.FromSchema(schema)
 	FilmActor = FilmActor.FromSchema(schema)
 	FilmCategory = FilmCategory.FromSchema(schema)
 	Inventory = Inventory.FromSchema(schema)
 	Language = Language.FromSchema(schema)
+	Payment = Payment.FromSchema(schema)
 	Rental = Rental.FromSchema(schema)
 	Staff = Staff.FromSchema(schema)
-	Payment = Payment.FromSchema(schema)
 	Store = Store.FromSchema(schema)
 }
 `

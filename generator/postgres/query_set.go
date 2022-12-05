@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
@@ -15,7 +16,8 @@ func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, table
 	query := `
 SELECT table_name as "table.name" 
 FROM information_schema.tables
-WHERE table_schema = $1 and table_type = $2;
+WHERE table_schema = $1 and table_type = $2
+ORDER BY table_name;
 `
 	var tables []metadata.Table
 
