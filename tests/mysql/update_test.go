@@ -3,14 +3,15 @@ package mysql
 import (
 	"context"
 	"database/sql"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/mysql"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
+	. "github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
+	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
 )
 
 func TestUpdateValues(t *testing.T) {
@@ -257,22 +258,6 @@ func TestUpdateExecContext(t *testing.T) {
 	_, err := updateStmt.ExecContext(ctx, db)
 
 	require.Error(t, err, "context deadline exceeded")
-}
-
-func TestUpdateWithJoin(t *testing.T) {
-	statement := Staff.INNER_JOIN(Address, Address.AddressID.EQ(Staff.AddressID)).
-		UPDATE(Staff.LastName).
-		SET(String("New staff name")).
-		WHERE(Staff.StaffID.EQ(Int(1)))
-
-	testutils.AssertStatementSql(t, statement, `
-UPDATE dvds.staff
-INNER JOIN dvds.address ON (address.address_id = staff.address_id)
-SET last_name = ?
-WHERE staff.staff_id = ?;
-`, "New staff name", int64(1))
-
-	testutils.AssertExecAndRollback(t, statement, db)
 }
 
 func TestUpdateOptimizerHints(t *testing.T) {

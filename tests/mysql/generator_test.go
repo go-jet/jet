@@ -322,10 +322,10 @@ var tableSetSchemaFile = `
 
 package table
 
-// UseDvdsSchema changes all global tables/views with the value returned
+// UseSchema changes all global tables/views with the value returned
 // returned by calling FromSchema on them. Passing an empty string to this function
 // will cause queries to be generated without any table/view alias.
-func UseDvdsSchema(schema string) {
+func UseSchema(schema string) {
 	Actor = Actor.FromSchema(schema)
 	Address = Address.FromSchema(schema)
 	Category = Category.FromSchema(schema)
@@ -463,10 +463,10 @@ var viewSetSchemaFile = `
 
 package view
 
-// UseDvdsSchema changes all global tables/views with the value returned
+// UseSchema changes all global tables/views with the value returned
 // returned by calling FromSchema on them. Passing an empty string to this function
 // will cause queries to be generated without any table/view alias.
-func UseDvdsSchema(schema string) {
+func UseSchema(schema string) {
 	ActorInfo = ActorInfo.FromSchema(schema)
 	CustomerList = CustomerList.FromSchema(schema)
 	FilmList = FilmList.FromSchema(schema)
