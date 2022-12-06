@@ -3,10 +3,11 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"strings"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
-	"strings"
 )
 
 // mySqlQuerySet is dialect query set for MySQL
@@ -16,7 +17,8 @@ func (m mySqlQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableTyp
 	query := `
 SELECT table_name as "table.name"
 FROM INFORMATION_SCHEMA.tables
-WHERE table_schema = ? and table_type = ?;
+WHERE table_schema = ? and table_type = ?
+ORDER BY table_name;
 `
 	var tables []metadata.Table
 

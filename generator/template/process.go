@@ -3,13 +3,14 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"path"
+	"strings"
+	"text/template"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
-	"path"
-	"strings"
-	"text/template"
 )
 
 // ProcessSchema will process schema metadata and constructs go files using generator Template
@@ -118,6 +119,8 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 	fmt.Printf("Generating %s sql builder files\n", fileTypes)
 
+	var generatedBuilders []TableSQLBuilder
+
 	for _, tableMetaData := range tablesMetaData {
 
 		var tableSQLBuilder TableSQLBuilder
@@ -169,7 +172,31 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 		err = utils.SaveGoFile(tableSQLBuilderPath, tableSQLBuilder.FileName, text)
 		throw.OnError(err)
+
+		generatedBuilders = append(generatedBuilders, tableSQLBuilder)
 	}
+
+	if len(generatedBuilders) > 0 {
+		generateUseSchemaFunc(dirPath, fileTypes, generatedBuilders)
+	}
+}
+
+func generateUseSchemaFunc(dirPath, fileTypes string, builders []TableSQLBuilder) {
+
+	basePath := path.Join(dirPath, builders[0].Path)
+
+	fmt.Printf("Generating global `UseSchema` method for %s\n", fileTypes)
+	text, err := generateTemplate(
+		autoGenWarningTemplate+tableSqlBuilderSetSchemaTemplate,
+		builders,
+		template.FuncMap{
+			"package": func() string { return builders[0].PackageName() },
+		},
+	)
+	throw.OnError(err)
+
+	err = utils.SaveGoFile(basePath, fileTypes, text)
+	throw.OnError(err)
 }
 
 func insertedRowAlias(dialect jet.Dialect) string {
