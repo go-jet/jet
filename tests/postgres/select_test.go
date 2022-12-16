@@ -2,9 +2,11 @@ package postgres
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/qrm"
+	"database/sql"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/qrm"
 
 	"github.com/stretchr/testify/require"
 
@@ -580,6 +582,98 @@ func TestExecution4(t *testing.T) {
 			Address struct {
 				AddressID   int32  `sql:"primary_key" alias:"AddressId"`
 				AddressLine string `alias:"address.address"`
+			} `alias:"address.*"`
+		} `alias:"customer"`
+	}
+
+	stmt := City.
+		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
+		SELECT(
+			City.CityID,
+			City.City,
+			Customer.CustomerID,
+			Customer.LastName,
+			Address.AddressID,
+			Address.Address,
+		).
+		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT city.city_id AS "city.city_id",
+     city.city AS "city.city",
+     customer.customer_id AS "customer.customer_id",
+     customer.last_name AS "customer.last_name",
+     address.address_id AS "address.address_id",
+     address.address AS "address.address"
+FROM dvds.city
+     INNER JOIN dvds.address ON (address.city_id = city.city_id)
+     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
+WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
+ORDER BY city.city_id, address.address_id, customer.customer_id;
+`, "London", "York")
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	require.Equal(t, len(dest), 2)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"CityID": 312,
+		"CityName": "London",
+		"Customers": [
+			{
+				"CustomerID": 252,
+				"LastName": "Hoffman",
+				"Address": {
+					"AddressID": 256,
+					"AddressLine": "1497 Yuzhou Drive"
+				}
+			},
+			{
+				"CustomerID": 512,
+				"LastName": "Vines",
+				"Address": {
+					"AddressID": 517,
+					"AddressLine": "548 Uruapan Street"
+				}
+			}
+		]
+	},
+	{
+		"CityID": 589,
+		"CityName": "York",
+		"Customers": [
+			{
+				"CustomerID": 497,
+				"LastName": "Sledge",
+				"Address": {
+					"AddressID": 502,
+					"AddressLine": "1515 Korla Way"
+				}
+			}
+		]
+	}
+]
+`)
+}
+
+// Test join with sql.NullInt64 primary keys
+func TestExecution5(t *testing.T) {
+
+	var dest []struct {
+		CityID   sql.NullInt64 `sql:"primary_key" alias:"city.city_id"`
+		CityName string        `alias:"city.city"`
+
+		Customers []struct {
+			CustomerID sql.NullInt64 `sql:"primary_key" alias:"customer_id"`
+			LastName   *string       `alias:"last_name"`
+
+			Address struct {
+				AddressID   sql.NullInt64 `sql:"primary_key" alias:"AddressId"`
+				AddressLine string        `alias:"address.address"`
 			} `alias:"address.*"`
 		} `alias:"customer"`
 	}

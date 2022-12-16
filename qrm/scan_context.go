@@ -187,20 +187,7 @@ func (s *ScanContext) getGroupKeyInfo(
 		field := structType.Field(i)
 		fieldType := indirectType(field.Type)
 
-		if !isPrimaryKey(field, primaryKeyOverwrites) {
-			if !isSimpleModelType(fieldType) {
-				if fieldType.Kind() != reflect.Struct {
-					continue
-				}
-
-				subType := s.getGroupKeyInfo(fieldType, &field, typeVisited)
-
-				if len(subType.indexes) != 0 || len(subType.subTypes) != 0 {
-					ret.subTypes = append(ret.subTypes, subType)
-				}
-			}
-		} else {
-
+		if isPrimaryKey(field, primaryKeyOverwrites) {
 			newTypeName, fieldName := getTypeAndFieldName(typeName, field)
 
 			index := s.typeToColumnIndex(newTypeName, fieldName)
@@ -211,6 +198,13 @@ func (s *ScanContext) getGroupKeyInfo(
 
 			ret.indexes = append(ret.indexes, index)
 
+		} else if fieldType.Kind() == reflect.Struct {
+
+			subType := s.getGroupKeyInfo(fieldType, &field, typeVisited)
+
+			if len(subType.indexes) != 0 || len(subType.subTypes) != 0 {
+				ret.subTypes = append(ret.subTypes, subType)
+			}
 		}
 	}
 
