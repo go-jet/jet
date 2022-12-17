@@ -660,8 +660,8 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 `)
 }
 
-// Test join with sql.NullInt64 primary keys
-func TestExecution5(t *testing.T) {
+// Test join with custom primary keys (sql.NullInt64)
+func TestExecutionCustomPKTypes1(t *testing.T) {
 
 	var dest []struct {
 		CityID   sql.NullInt64 `sql:"primary_key" alias:"city.city_id"`
@@ -713,36 +713,60 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 	testutils.AssertJSON(t, dest, `
 [
 	{
-		"CityID": 312,
+		"CityID": {
+			"Int64": 312,
+			"Valid": true
+		},
 		"CityName": "London",
 		"Customers": [
 			{
-				"CustomerID": 252,
+				"CustomerID": {
+					"Int64": 252,
+					"Valid": true
+				},
 				"LastName": "Hoffman",
 				"Address": {
-					"AddressID": 256,
+					"AddressID": {
+						"Int64": 256,
+						"Valid": true
+					},
 					"AddressLine": "1497 Yuzhou Drive"
 				}
 			},
 			{
-				"CustomerID": 512,
+				"CustomerID": {
+					"Int64": 512,
+					"Valid": true
+				},
 				"LastName": "Vines",
 				"Address": {
-					"AddressID": 517,
+					"AddressID": {
+						"Int64": 517,
+						"Valid": true
+					},
 					"AddressLine": "548 Uruapan Street"
 				}
 			}
 		]
 	},
 	{
-		"CityID": 589,
+		"CityID": {
+			"Int64": 589,
+			"Valid": true
+		},
 		"CityName": "York",
 		"Customers": [
 			{
-				"CustomerID": 497,
+				"CustomerID": {
+					"Int64": 497,
+					"Valid": true
+				},
 				"LastName": "Sledge",
 				"Address": {
-					"AddressID": 502,
+					"AddressID": {
+						"Int64": 502,
+						"Valid": true
+					},
 					"AddressLine": "1515 Korla Way"
 				}
 			}
