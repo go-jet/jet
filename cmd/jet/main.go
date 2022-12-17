@@ -39,6 +39,8 @@ var (
 	ignoreViews  string
 	ignoreEnums  string
 
+	fromSchemaFile string
+
 	destDir string
 )
 
@@ -68,13 +70,16 @@ func init() {
 	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore`)
 
 	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
+
+	flag.StringVar(&fromSchemaFile, "from-schema-file", "", `SQLite only: specify a schema file`)
+
 }
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
 
-	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") {
+	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") && fromSchemaFile == "" {
 		printErrorAndExit("ERROR: required flag(s) missing")
 	}
 
@@ -135,15 +140,26 @@ func main() {
 			generatorTemplate,
 		)
 	case "sqlite":
-		if dsn == "" {
-			printErrorAndExit("ERROR: required -dsn flag missing.")
+		if dsn == "" && fromSchemaFile == "" {
+			printErrorAndExit("ERROR: required -dsn or -from-schema-file flag missing.")
 		}
 
-		err = sqlitegen.GenerateDSN(
-			dsn,
-			destDir,
-			genTemplate(sqlite.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList),
-		)
+		generatorTemplate := genTemplate(sqlite.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+
+		if fromSchemaFile == "" {
+			err = sqlitegen.GenerateDSN(
+				dsn,
+				destDir,
+				generatorTemplate,
+			)
+		} else {
+			err = sqlitegen.GenerateFromSchema(
+				dsn,
+				fromSchemaFile,
+				destDir,
+				generatorTemplate,
+			)
+		}
 
 	case "":
 		printErrorAndExit("ERROR: required -source or -dns flag missing.")
@@ -164,7 +180,7 @@ func usage() {
 	fmt.Println("Usage:")
 
 	order := []string{
-		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
+		"source", "dsn", "from-schema-file", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
 	}

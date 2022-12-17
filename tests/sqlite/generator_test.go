@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"reflect"
 	"testing"
 
@@ -45,6 +46,7 @@ func TestGeneratedModel(t *testing.T) {
 }
 
 var testDatabaseFilePath = repo.GetTestDataFilePath("/init/sqlite/sakila.db")
+var testSchemaFilePath = repo.GetTestDataFilePath("/init/sqlite/sakila.sql")
 var genDestDir = repo.GetTestsFilePath("/sqlite/.gen")
 
 func TestGenerator(t *testing.T) {
@@ -59,8 +61,52 @@ func TestGenerator(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestGeneratorFromSchema(t *testing.T) {
+	for i := 0; i < 3; i++ {
+		err := sqlite.GenerateFromSchema("", testSchemaFilePath, genDestDir)
+		require.NoError(t, err)
+
+		assertGeneratedFiles(t)
+	}
+
+	err := os.RemoveAll(genDestDir)
+	require.NoError(t, err)
+}
+
 func TestCmdGenerator(t *testing.T) {
 	cmd := exec.Command("jet", "-source=SQLite", "-dsn=file://"+testDatabaseFilePath, "-path="+genDestDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFiles(t)
+
+	err = os.RemoveAll(genDestDir)
+	require.NoError(t, err)
+}
+
+func TestCmdGeneratorFromSchema(t *testing.T) {
+	cmd := exec.Command("jet", "-source=SQLite", "-from-schema-file="+testSchemaFilePath, "-path="+genDestDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFiles(t)
+
+	err = os.RemoveAll(genDestDir)
+	require.NoError(t, err)
+}
+
+func TestCmdGeneratorFromSchemaWithDSN(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	cmd := exec.Command("jet", "-source=SQLite", "-dsn=file://"+path.Join(tmpDir, "tmp.db"), "-from-schema-file="+testSchemaFilePath, "-path="+genDestDir)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -105,6 +151,9 @@ func TestCmdGeneratorIgnoreTablesViewsEnums(t *testing.T) {
 	testutils.AssertFileNamesEqual(t, modelFiles, "country.go",
 		"customer.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
 		"payment.go", "staff.go", "sales_by_film_category.go", "sales_by_store.go")
+
+	err = os.RemoveAll(genDestDir)
+	require.NoError(t, err)
 }
 
 func assertGeneratedFiles(t *testing.T) {
