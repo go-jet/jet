@@ -128,6 +128,7 @@ func TestAllTypesViewSelect(t *testing.T) {
 
 func TestAllTypesInsert(t *testing.T) {
 	tx := beginSampleDBTx(t)
+	defer tx.Rollback()
 
 	stmt := AllTypes.INSERT(AllTypes.AllColumns).
 		MODEL(toInsert).
@@ -147,7 +148,6 @@ func TestAllTypesInsert(t *testing.T) {
 	require.NoError(t, err)
 	testutils.AssertDeepEqual(t, dest, toInsert, testutils.UnixTimeComparer)
 
-	err = tx.Rollback()
 	require.NoError(t, err)
 }
 
