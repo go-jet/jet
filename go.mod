@@ -12,7 +12,7 @@ require (
 
 // test dependencies
 require (
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/pkg/profile v1.7.0
 	github.com/shopspring/decimal v1.3.1
