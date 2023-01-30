@@ -5,6 +5,7 @@ type Column struct {
 	Name         string
 	IsPrimaryKey bool
 	IsNullable   bool
+	IsGenerated  bool
 	DataType     DataType
 }
 

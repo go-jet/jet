@@ -134,6 +134,7 @@ func initPostgresDB(dbType string, connectionString string) {
 		"test_sample",
 		"chinook",
 		"chinook2",
+		"test_generated",
 	}
 
 	for _, schemaName := range schemaNames {
