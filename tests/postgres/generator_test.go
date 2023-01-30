@@ -573,7 +573,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
-		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go")
+		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go")
 
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
@@ -581,7 +581,7 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	require.NoError(t, err)
 
 	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
-		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "table.go")
+		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "table.go", "people.go")
 
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 }

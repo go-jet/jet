@@ -476,3 +476,78 @@ FROM test_sample."User";
 ]
 `)
 }
+
+func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
+	// clean up
+	_, err := People.DELETE().WHERE(People.PeopleID.GT(Int(3))).Exec(db)
+	require.NoError(t, err)
+
+	t.Run("should not have the generated column in mutableColumns", func(t *testing.T) {
+		require.Equal(t, 2, len(People.MutableColumns))
+		require.Equal(t, People.PeopleName, People.MutableColumns[0])
+		require.Equal(t, People.PeopleHeightCm, People.MutableColumns[1])
+	})
+
+	t.Run("should query with all columns", func(t *testing.T) {
+		query := SELECT(
+			People.AllColumns,
+		).FROM(
+			People,
+		).WHERE(
+			People.PeopleID.EQ(Int(3)),
+		)
+
+		var result model.People
+
+		err := query.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "Carla", result.PeopleName)
+		require.Equal(t, 155., *result.PeopleHeightCm)
+		require.InEpsilon(t, 61.02, *result.PeopleHeightIn, 1e-3)
+	})
+
+	t.Run("should insert without generated columns", func(t *testing.T) {
+		insertQuery := People.INSERT(
+			People.MutableColumns,
+		).MODEL(
+			model.People{
+				PeopleName:     "Dario",
+				PeopleHeightCm: testutils.Float64Ptr(120),
+			},
+		).RETURNING(
+			People.MutableColumns,
+		)
+
+		testutils.AssertDebugStatementSql(t, insertQuery, `
+INSERT INTO test_sample.people (people_name, people_height_cm)
+VALUES ('Dario', 120)
+RETURNING people.people_name AS "people.people_name",
+          people.people_height_cm AS "people.people_height_cm";
+`)
+
+		var result model.People
+		err := insertQuery.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "Dario", result.PeopleName)
+		require.Equal(t, 120., *result.PeopleHeightCm)
+
+		query := SELECT(
+			People.AllColumns,
+		).FROM(
+			People,
+		).ORDER_BY(
+			People.PeopleID.DESC(),
+		).LIMIT(1)
+
+		result = model.People{}
+
+		err = query.Query(db, &result)
+		require.NoError(t, err)
+
+		require.Equal(t, "Dario", result.PeopleName)
+		require.Equal(t, 120., *result.PeopleHeightCm)
+		require.InEpsilon(t, 47.24, *result.PeopleHeightIn, 1e-3)
+	})
+}

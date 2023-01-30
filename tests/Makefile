@@ -47,7 +47,6 @@ jet-gen-postgres:
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=chinook2  -path=./.gentestdata/
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=northwind  -path=./.gentestdata/
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=test_sample  -path=./.gentestdata/
-	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=test_generated  -path=./.gentestdata/
 
 jet-gen-mysql:
 	jet -source=mysql -dsn="jet:jet@tcp(localhost:50902)/dvds" -path=./.gentestdata/mysql
