@@ -44,7 +44,7 @@ WITH primaryKeys AS (
 )
 SELECT column_name as "column.Name", 
 	   is_nullable = 'YES' as "column.isNullable",
-	   is_generated = 'ALWAYS' as "column.isGenerated",
+	   is_generated = 'ALWAYS' or is_generated = 'YES' as "column.isGenerated",
 	   (EXISTS(SELECT 1 from primaryKeys as pk where pk.column_name = columns.column_name)) as "column.IsPrimaryKey",
 	   dataType.kind as "dataType.Kind",	
 	   (case dataType.Kind when 'base' then data_type else LTRIM(udt_name, '_') end) as "dataType.Name", 
