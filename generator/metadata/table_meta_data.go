@@ -11,7 +11,7 @@ func (t Table) MutableColumns() []Column {
 	var ret []Column
 
 	for _, column := range t.Columns {
-		if column.IsPrimaryKey {
+		if column.IsPrimaryKey || column.IsGenerated {
 			continue
 		}
 
