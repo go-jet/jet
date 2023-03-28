@@ -11,7 +11,7 @@ var (
 	OR = jet.OR
 )
 
-// ROW is construct one table row from list of expressions.
+// ROW function is used to create a tuple value that consists of a set of expressions or column values.
 var ROW = jet.ROW
 
 // ------------------ Mathematical functions ---------------//
@@ -281,3 +281,15 @@ var GREATEST = jet.GREATEST
 
 // LEAST selects the smallest value from a list of expressions, or null if any of the expressions is null.
 var LEAST = jet.LEAST
+
+// ----------------------- Group By operators ----------------------------//
+
+// WITH_ROLLUP operator is used with the GROUP BY clause to generate all prefixes of a group of columns including the empty list.
+// It creates extra rows in the result set that represent the subtotal values for each combination of columns.
+var WITH_ROLLUP = jet.WITH_ROLLUP
+
+// GROUPING function is used to identify which columns are included in a grouping set or a subtotal row. It takes as input
+// the name of a column and returns 1 if the column is not included in the current grouping set, and 0 otherwise.
+// It can be also used with multiple parameters to check if a set of columns is included in the current grouping set. The result
+// of the GROUPING function would then be an integer bit mask having 1’s for the arguments which have GROUPING(argument) as 1.
+var GROUPING = jet.GROUPING

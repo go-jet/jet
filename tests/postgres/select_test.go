@@ -1370,26 +1370,26 @@ GROUP BY customer.customer_id
 HAVING SUM(payment.amount) > 125.6
 ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 `
-	query := Payment.
-		INNER_JOIN(Customer, Customer.CustomerID.EQ(Payment.CustomerID)).
-		SELECT(
-			Customer.AllColumns,
+	query := SELECT(
+		Customer.AllColumns,
 
-			SUMf(Payment.Amount).AS("amount.sum"),
-			AVG(Payment.Amount).AS("amount.avg"),
-			MAX(Payment.PaymentDate).AS("amount.max_date"),
-			MAXf(Payment.Amount).AS("amount.max"),
-			MIN(Payment.PaymentDate).AS("amount.min_date"),
-			MINf(Payment.Amount).AS("amount.min"),
-			COUNT(Payment.Amount).AS("amount.count"),
-		).
-		GROUP_BY(Customer.CustomerID).
-		HAVING(
-			SUMf(Payment.Amount).GT(Float(125.6)),
-		).
-		ORDER_BY(
-			Customer.CustomerID, SUMf(Payment.Amount).ASC(),
-		)
+		SUMf(Payment.Amount).AS("amount.sum"),
+		AVG(Payment.Amount).AS("amount.avg"),
+		MAX(Payment.PaymentDate).AS("amount.max_date"),
+		MAXf(Payment.Amount).AS("amount.max"),
+		MIN(Payment.PaymentDate).AS("amount.min_date"),
+		MINf(Payment.Amount).AS("amount.min"),
+		COUNT(Payment.Amount).AS("amount.count"),
+	).FROM(
+		Payment.
+			INNER_JOIN(Customer, Customer.CustomerID.EQ(Payment.CustomerID)),
+	).GROUP_BY(
+		Customer.CustomerID,
+	).HAVING(
+		SUMf(Payment.Amount).GT(Float(125.6)),
+	).ORDER_BY(
+		Customer.CustomerID, SUMf(Payment.Amount).ASC(),
+	)
 
 	//fmt.Println(query.DebugSql())
 
@@ -1420,6 +1420,252 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 	}
 	//testutils.SaveJsonFile(dest, "postgres/testdata/customer_payment_sum.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
+}
+
+func TestGroupByGroupingSets(t *testing.T) {
+	skipForCockroachDB(t)
+
+	stmt := SELECT(
+		GROUPING(Inventory.FilmID, Inventory.StoreID).AS("grouping_filmId_store_id"),
+		Inventory.FilmID.AS("film_id"),
+		Inventory.StoreID.AS("store_id"),
+		COUNT(Inventory.InventoryID).AS("count"),
+	).FROM(
+		Inventory,
+	).WHERE(
+		Inventory.FilmID.IN(Int(2), Int(3)),
+	).GROUP_BY(
+		GROUPING_SETS(
+			WRAP(Inventory.FilmID, Inventory.StoreID),
+			WRAP(Inventory.FilmID),
+			WRAP(),
+		),
+	).ORDER_BY(
+		Inventory.FilmID,
+		Inventory.StoreID,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT GROUPING(inventory.film_id, inventory.store_id) AS "grouping_filmId_store_id",
+     inventory.film_id AS "film_id",
+     inventory.store_id AS "store_id",
+     COUNT(inventory.inventory_id) AS "count"
+FROM dvds.inventory
+WHERE inventory.film_id IN (2, 3)
+GROUP BY GROUPING SETS((inventory.film_id, inventory.store_id), (inventory.film_id), ())
+ORDER BY inventory.film_id, inventory.store_id;
+`)
+
+	var dest []struct {
+		GroupingFilmIDStoreID int
+		FilmID                *int
+		StoreID               *int
+		Count                 int
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	//testutils.PrintJson(dest)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"GroupingFilmIDStoreID": 0,
+		"FilmID": 2,
+		"StoreID": 2,
+		"Count": 3
+	},
+	{
+		"GroupingFilmIDStoreID": 1,
+		"FilmID": 2,
+		"StoreID": null,
+		"Count": 3
+	},
+	{
+		"GroupingFilmIDStoreID": 0,
+		"FilmID": 3,
+		"StoreID": 2,
+		"Count": 4
+	},
+	{
+		"GroupingFilmIDStoreID": 1,
+		"FilmID": 3,
+		"StoreID": null,
+		"Count": 4
+	},
+	{
+		"GroupingFilmIDStoreID": 3,
+		"FilmID": null,
+		"StoreID": null,
+		"Count": 7
+	}
+]
+`)
+}
+
+func TestGroupByCube(t *testing.T) {
+	skipForCockroachDB(t)
+
+	stmt := SELECT(
+		Country.Country.AS("country"),
+		City.City.AS("city"),
+		COUNT(City.CityID).AS("count"),
+	).FROM(
+		City.INNER_JOIN(
+			Country,
+			Country.CountryID.EQ(City.CountryID),
+		),
+	).WHERE(
+		Country.Country.EQ(String("Belarus")),
+	).GROUP_BY(
+		CUBE(Country.Country, City.City),
+	).ORDER_BY(
+		Country.Country,
+		City.City,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT country.country AS "country",
+     city.city AS "city",
+     COUNT(city.city_id) AS "count"
+FROM dvds.city
+     INNER JOIN dvds.country ON (country.country_id = city.country_id)
+WHERE country.country = 'Belarus'::text
+GROUP BY CUBE(country.country, city.city)
+ORDER BY country.country, city.city;
+`)
+
+	var dest []struct {
+		Country string
+		City    string
+		Count   int
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"Country": "Belarus",
+		"City": "Mogiljov",
+		"Count": 1
+	},
+	{
+		"Country": "",
+		"City": "Mogiljov",
+		"Count": 1
+	},
+	{
+		"Country": "Belarus",
+		"City": "Molodetno",
+		"Count": 1
+	},
+	{
+		"Country": "",
+		"City": "Molodetno",
+		"Count": 1
+	},
+	{
+		"Country": "",
+		"City": "",
+		"Count": 2
+	},
+	{
+		"Country": "Belarus",
+		"City": "",
+		"Count": 2
+	}
+]
+`)
+}
+
+func TestGroupByRollup(t *testing.T) {
+	skipForCockroachDB(t)
+
+	stmt := SELECT(
+		EXTRACT(YEAR, Rental.RentalDate).AS("year"),
+		EXTRACT(MONTH, Rental.RentalDate).AS("month"),
+		EXTRACT(DAY, Rental.RentalDate).AS("day"),
+		COUNT(Rental.RentalID).AS("count"),
+	).FROM(
+		Rental,
+	).WHERE(
+		Rental.RentalDate.LT(Timestamp(2005, 5, 26, 1, 1, 1)),
+	).GROUP_BY(
+		ROLLUP(
+			EXTRACT(YEAR, Rental.RentalDate),
+			EXTRACT(MONTH, Rental.RentalDate),
+			EXTRACT(DAY, Rental.RentalDate),
+		),
+	).ORDER_BY(
+		IntegerColumn("year").ASC(),
+		EXTRACT(MONTH, Rental.RentalDate).ASC(),
+		IntegerColumn("day").ASC(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT EXTRACT(YEAR FROM rental.rental_date) AS "year",
+     EXTRACT(MONTH FROM rental.rental_date) AS "month",
+     EXTRACT(DAY FROM rental.rental_date) AS "day",
+     COUNT(rental.rental_id) AS "count"
+FROM dvds.rental
+WHERE rental.rental_date < '2005-05-26 01:01:01'::timestamp without time zone
+GROUP BY ROLLUP(EXTRACT(YEAR FROM rental.rental_date), EXTRACT(MONTH FROM rental.rental_date), EXTRACT(DAY FROM rental.rental_date))
+ORDER BY year ASC, EXTRACT(MONTH FROM rental.rental_date) ASC, day ASC;
+`)
+
+	var dest []struct {
+		Year  *int
+		Month *int
+		Day   *int
+		Count int
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"Year": 2005,
+		"Month": 5,
+		"Day": 24,
+		"Count": 8
+	},
+	{
+		"Year": 2005,
+		"Month": 5,
+		"Day": 25,
+		"Count": 137
+	},
+	{
+		"Year": 2005,
+		"Month": 5,
+		"Day": 26,
+		"Count": 9
+	},
+	{
+		"Year": 2005,
+		"Month": 5,
+		"Day": null,
+		"Count": 154
+	},
+	{
+		"Year": 2005,
+		"Month": null,
+		"Day": null,
+		"Count": 154
+	},
+	{
+		"Year": null,
+		"Month": null,
+		"Day": null,
+		"Count": 154
+	}
+]
+`)
 }
 
 func TestAggregateFunctionDistinct(t *testing.T) {

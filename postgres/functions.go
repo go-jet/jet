@@ -13,7 +13,7 @@ var (
 	OR = jet.OR
 )
 
-// ROW is construct one table row from list of expressions.
+// ROW function is used to create a tuple value that consists of a set of expressions or column values.
 var ROW = jet.ROW
 
 // ------------------ Mathematical functions ---------------//
@@ -390,3 +390,34 @@ func castFloatLiteral(fraction FloatExpression) FloatExpression {
 	}
 	return fraction
 }
+
+// ----------------- Group By operators --------------------------//
+
+// GROUPING_SETS operator allows grouping of the rows in a table by multiple sets of columns(or expressions) in a single query.
+// This can be useful when we want to analyze data by different combinations of columns, without having to write separate
+// queries for each combination. GROUPING_SETS sets of columns are constructed with WRAP method.
+//
+//	GROUPING_SETS(
+//		WRAP(Inventory.FilmID, Inventory.StoreID),
+//		WRAP(),
+//	),
+var GROUPING_SETS = jet.GROUPING_SETS
+
+// WRAP wraps list of expressions with brackets - ( expression1, expression2, ... )
+// The construct (a, b) is normally recognized in expressions as a row constructor. WRAP and ROW method behave exactly the same,
+// except when used in GROUPING_SETS. For top level GROUPING SETS expression lists WRAP has to be used.
+var WRAP = jet.WRAP
+
+// ROLLUP operator is used with the GROUP BY clause to generate all prefixes of a group of columns including the empty list.
+// It creates extra rows in the result set that represent the subtotal values for each combination of columns.
+var ROLLUP = jet.ROLLUP
+
+// CUBE operator is used with the GROUP BY clause to generate subtotals for all possible combinations of a group of columns.
+// It creates extra rows in the result set that represent the subtotal values for each combination of columns.
+var CUBE = jet.CUBE
+
+// GROUPING function is used to identify which columns are included in a grouping set or a subtotal row. It takes as input
+// the name of a column and returns 1 if the column is not included in the current grouping set, and 0 otherwise.
+// It can be also used with multiple parameters to check if a set of columns is included in the current grouping set. The result
+// of the GROUPING function would then be an integer bit mask having 1’s for the arguments which have GROUPING(argument) as 1.
+var GROUPING = jet.GROUPING

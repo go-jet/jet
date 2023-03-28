@@ -12,7 +12,7 @@ func OR(expressions ...BoolExpression) BoolExpression {
 	return newBoolExpressionListOperator("OR", expressions...)
 }
 
-// ROW is construct one table row from list of expressions.
+// ROW function is used to create a tuple value that consists of a set of expressions or column values.
 func ROW(expressions ...Expression) Expression {
 	return NewFunc("ROW", expressions, nil)
 }
@@ -602,16 +602,16 @@ func LEAST(value Expression, values ...Expression) Expression {
 type funcExpressionImpl struct {
 	ExpressionInterfaceImpl
 
-	name        string
-	expressions []Expression
-	noBrackets  bool
+	name       string
+	parameters parametersSerializer
+	noBrackets bool
 }
 
 // NewFunc creates new function with name and expressions parameters
 func NewFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
-		name:        name,
-		expressions: parameters(expressions),
+		name:       name,
+		parameters: parametersSerializer(expressions),
 	}
 
 	if parent != nil {
@@ -623,18 +623,43 @@ func NewFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	return funcExp
 }
 
-func parameters(expressions []Expression) []Expression {
-	var ret []Expression
-
-	for _, expression := range expressions {
-		if _, isStatement := expression.(Statement); isStatement {
-			ret = append(ret, expression)
-		} else {
-			ret = append(ret, skipWrap(expression))
-		}
+func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
+		serializeOverrideFunc := serializeOverride(ExpressionListToSerializerList(f.parameters)...)
+		serializeOverrideFunc(statement, out, FallTrough(options)...)
+		return
 	}
 
-	return ret
+	addBrackets := !f.noBrackets || len(f.parameters) > 0
+
+	if addBrackets {
+		out.WriteString(f.name + "(")
+	} else {
+		out.WriteString(f.name)
+	}
+
+	f.parameters.serialize(statement, out, options...)
+
+	if addBrackets {
+		out.WriteString(")")
+	}
+}
+
+type parametersSerializer []Expression
+
+func (p parametersSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+
+	for i, expression := range p {
+		if i > 0 {
+			out.WriteString(", ")
+		}
+
+		if _, isStatement := expression.(Statement); isStatement {
+			expression.serialize(statement, out, options...)
+		} else {
+			skipWrap(expression).serialize(statement, out, options...)
+		}
+	}
 }
 
 // NewFloatWindowFunc creates new float function with name and expressions
@@ -644,28 +669,6 @@ func newWindowFunc(name string, expressions ...Expression) windowExpression {
 	newFun.ExpressionInterfaceImpl.Parent = windowExpr
 
 	return windowExpr
-}
-
-func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(ExpressionListToSerializerList(f.expressions)...)
-		serializeOverrideFunc(statement, out, FallTrough(options)...)
-		return
-	}
-
-	addBrackets := !f.noBrackets || len(f.expressions) > 0
-
-	if addBrackets {
-		out.WriteString(f.name + "(")
-	} else {
-		out.WriteString(f.name)
-	}
-
-	serializeExpressionList(statement, f.expressions, ", ", out)
-
-	if addBrackets {
-		out.WriteString(")")
-	}
 }
 
 type boolFunc struct {

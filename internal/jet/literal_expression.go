@@ -386,7 +386,7 @@ func (n *wrap) serialize(statementType StatementType, out *SQLBuilder, options .
 	out.WriteString(")")
 }
 
-// WRAP wraps list of expressions with brackets '(' and ')'
+// WRAP wraps list of expressions with brackets - ( expression1, expression2, ... )
 func WRAP(expression ...Expression) Expression {
 	wrap := &wrap{expressions: expression}
 	wrap.ExpressionInterfaceImpl.Parent = wrap
