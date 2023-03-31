@@ -35,7 +35,8 @@ ORDER BY table_name;
 func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) []metadata.Column {
 	query := `
 SELECT COLUMN_NAME AS "column.Name", 
-	IS_NULLABLE = "YES" AS "column.IsNullable", 
+	IS_NULLABLE = "YES" AS "column.IsNullable",
+	columns.COLUMN_COMMENT as "column.Comment",
 	(EXISTS(
 		SELECT 1
 		FROM information_schema.table_constraints t

@@ -7,6 +7,7 @@ type Column struct {
 	IsNullable   bool
 	IsGenerated  bool
 	DataType     DataType
+	Comment      string
 }
 
 // DataTypeKind is database type kind(base, enum, user-defined, array)

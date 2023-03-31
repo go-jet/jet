@@ -29,10 +29,10 @@ var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName
 type {{structImplName}} struct {
 	{{dialect.PackageName}}.Table
 	
-	//Columns
+	// Columns
 {{- range $i, $c := .Columns}}
 {{- $field := columnField $c}}
-	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}}
+	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{- if $c.Comment }} // {{$c.Comment}} {{end}}
 {{- end}}
 
 	AllColumns     {{dialect.PackageName}}.ColumnList
@@ -123,7 +123,7 @@ import (
 type {{$modelTableTemplate.TypeName}} struct {
 {{- range .Columns}}
 {{- $field := structField .}}
-	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + `
+	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + ` {{- if .Comment }} // {{.Comment}} {{end}}
 {{- end}}
 }
 

@@ -322,7 +322,7 @@ var Actor = newActorTable("dvds", "actor", "")
 type actorTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	ActorID    postgres.ColumnInteger
 	FirstName  postgres.ColumnString
 	LastName   postgres.ColumnString
@@ -463,7 +463,7 @@ var ActorInfo = newActorInfoTable("dvds", "actor_info", "")
 type actorInfoTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	ActorID   postgres.ColumnInteger
 	FirstName postgres.ColumnString
 	LastName  postgres.ColumnString
@@ -735,7 +735,7 @@ var AllTypes = newAllTypesTable("test_sample", "all_types", "")
 type allTypesTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	SmallIntPtr          postgres.ColumnInteger
 	SmallInt             postgres.ColumnInteger
 	IntegerPtr           postgres.ColumnInteger

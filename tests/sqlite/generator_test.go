@@ -161,7 +161,7 @@ var Actor = newActorTable("", "actor", "")
 type actorTable struct {
 	sqlite.Table
 
-	//Columns
+	// Columns
 	ActorID    sqlite.ColumnInteger
 	FirstName  sqlite.ColumnString
 	LastName   sqlite.ColumnString
@@ -280,7 +280,7 @@ var FilmList = newFilmListTable("", "film_list", "")
 type filmListTable struct {
 	sqlite.Table
 
-	//Columns
+	// Columns
 	Fid         sqlite.ColumnInteger
 	Title       sqlite.ColumnString
 	Description sqlite.ColumnString
