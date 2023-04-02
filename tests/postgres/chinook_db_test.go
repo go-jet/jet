@@ -883,6 +883,36 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	require.Equal(t, dest[0].Album[0].Title, "Plays Metallica By Four Cellos")
 }
 
+func TestUseSchema(t *testing.T) {
+	UseSchema("chinook2")
+	defer UseSchema("chinook")
+
+	stmt := SELECT(
+		Artist.AllColumns,
+	).FROM(
+		Artist,
+	).WHERE(Artist.ArtistId.EQ(Int(11)))
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
+     "Artist"."Name" AS "Artist.Name"
+FROM chinook2."Artist"
+WHERE "Artist"."ArtistId" = 11;
+`)
+
+	var artist model.Artist
+
+	err := stmt.Query(db, &artist)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, artist, `
+{
+	"ArtistId": 11,
+	"Name": "Black Label Society"
+}
+`)
+}
+
 func TestMultiTenantSameSchemaDifferentTablePrefix(t *testing.T) {
 
 	var selectAlbumsFrom = func(tenant string) SelectStatement {

@@ -253,12 +253,15 @@ func AssertFileContent(t *testing.T, filePath string, expectedContent string) {
 }
 
 // AssertFileNamesEqual check if all filesInfos are contained in fileNames
-func AssertFileNamesEqual(t *testing.T, fileInfos []os.FileInfo, fileNames ...string) {
-	require.Equal(t, len(fileInfos), len(fileNames))
+func AssertFileNamesEqual(t *testing.T, dirPath string, fileNames ...string) {
+	files, err := ioutil.ReadDir(dirPath)
+	require.NoError(t, err)
+
+	require.Equal(t, len(files), len(fileNames))
 
 	fileNamesMap := map[string]bool{}
 
-	for _, fileInfo := range fileInfos {
+	for _, fileInfo := range files {
 		fileNamesMap[fileInfo.Name()] = true
 	}
 

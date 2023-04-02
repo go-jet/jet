@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"fmt"
-	"io/ioutil"
+	"github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -148,28 +148,20 @@ func TestGeneratorIgnoreTables(t *testing.T) {
 			require.NoError(t, err)
 
 			// Table SQL Builder files
-			tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
-			require.NoError(t, err)
-
-			testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "category.go",
-				"customer.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
-				"payment.go", "rental.go", "staff.go", "store.go", "table.go")
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/table",
+				"category.go", "customer.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
+				"payment.go", "rental.go", "staff.go", "store.go", "table_use_schema.go")
 
 			// View SQL Builder files
-			viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
-			require.NoError(t, err)
-
-			testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "nicer_but_slower_film_list.go",
-				"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "view.go")
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/view",
+				"nicer_but_slower_film_list.go", "sales_by_film_category.go", "customer_list.go",
+				"sales_by_store.go", "view_use_schema.go")
 
 			// Enums SQL Builder files
-			_, err = ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
-			require.Error(t, err, "open ./.gentestdata2/jetdb/dvds/enum: no such file or directory")
+			file.NotExists(t, "./.gentestdata2/jetdb/dvds/enum", "mpaa_rating.go")
 
-			modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
-			require.NoError(t, err)
-
-			testutils.AssertFileNamesEqual(t, modelFiles, "category.go",
+			// Model files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/model", "category.go",
 				"customer.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 				"payment.go", "rental.go", "staff.go", "store.go",
 				"nicer_but_slower_film_list.go", "sales_by_film_category.go",
@@ -236,38 +228,28 @@ func TestGeneratorSpecialCharacters(t *testing.T) {
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
-	tableSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/table")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/table",
+		"actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
-		"payment.go", "rental.go", "staff.go", "store.go", "table.go")
+		"payment.go", "rental.go", "staff.go", "store.go", "table_use_schema.go")
 
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/table/actor.go", actorSQLBuilderFile)
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/table/table.go", actorSQLBuilderTableFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/table/table_use_schema.go", tableUseSchemaFile)
 
 	// View SQL Builder files
-	viewSQLBuilderFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/view")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
-		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view.go")
+	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/view",
+		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view_use_schema.go")
 
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/view/actor_info.go", actorInfoSQLBuilderFile)
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/view/view.go", actorInfoSQLBuilderViewFile)
+	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/view/view_use_schema.go", viewUseSchemaFile)
 
 	// Enums SQL Builder files
-	enumFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/enum")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, enumFiles, "mpaa_rating.go")
+	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/enum", "mpaa_rating.go")
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/enum/mpaa_rating.go", mpaaRatingEnumFile)
 
 	// Model files
-	modelFiles, err := ioutil.ReadDir("./.gentestdata2/jetdb/dvds/model")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/model", "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go", "mpaa_rating.go",
 		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
@@ -390,7 +372,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 }
 `
 
-var actorSQLBuilderTableFile = `
+var tableUseSchemaFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
 //
@@ -400,9 +382,8 @@ var actorSQLBuilderTableFile = `
 
 package table
 
-// UseSchema changes all global tables/views with the value returned
-// returned by calling FromSchema on them. Passing an empty string to this function
-// will cause queries to be generated without any table/view alias.
+// UseSchema sets a new schema name for all generated table SQL builder types. It is recommended to invoke
+// this method only once at the beginning of the program.
 func UseSchema(schema string) {
 	Actor = Actor.FromSchema(schema)
 	Address = Address.FromSchema(schema)
@@ -531,7 +512,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 }
 `
 
-var actorInfoSQLBuilderViewFile = `
+var viewUseSchemaFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
 //
@@ -541,9 +522,8 @@ var actorInfoSQLBuilderViewFile = `
 
 package view
 
-// UseSchema changes all global tables/views with the value returned
-// returned by calling FromSchema on them. Passing an empty string to this function
-// will cause queries to be generated without any table/view alias.
+// UseSchema sets a new schema name for all generated view SQL builder types. It is recommended to invoke
+// this method only once at the beginning of the program.
 func UseSchema(schema string) {
 	ActorInfo = ActorInfo.FromSchema(schema)
 	CustomerList = CustomerList.FromSchema(schema)
@@ -562,26 +542,17 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
 	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")
 
-	enumFiles, err := ioutil.ReadDir(enumDir)
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, enumFiles, "mood.go", "level.go")
+	testutils.AssertFileNamesEqual(t, enumDir, "mood.go", "level.go")
 	testutils.AssertFileContent(t, enumDir+"/mood.go", moodEnumContent)
 	testutils.AssertFileContent(t, enumDir+"/level.go", levelEnumContent)
 
-	modelFiles, err := ioutil.ReadDir(modelDir)
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, modelFiles, "all_types.go", "all_types_view.go", "employee.go", "link.go",
+	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go")
 
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
-	tableFiles, err := ioutil.ReadDir(tableDir)
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, tableFiles, "all_types.go", "employee.go", "link.go",
-		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "table.go", "people.go")
+	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go", "employee.go", "link.go",
+		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go")
 
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 }

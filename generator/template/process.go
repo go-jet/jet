@@ -183,19 +183,20 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 func generateUseSchemaFunc(dirPath, fileTypes string, builders []TableSQLBuilder) {
 
-	basePath := path.Join(dirPath, builders[0].Path)
-
-	fmt.Printf("Generating global `UseSchema` method for %s\n", fileTypes)
 	text, err := generateTemplate(
 		autoGenWarningTemplate+tableSqlBuilderSetSchemaTemplate,
 		builders,
 		template.FuncMap{
 			"package": func() string { return builders[0].PackageName() },
+			"type":    func() string { return fileTypes },
 		},
 	)
 	throw.OnError(err)
 
-	err = utils.SaveGoFile(basePath, fileTypes, text)
+	basePath := path.Join(dirPath, builders[0].Path)
+	fileName := fileTypes + "_use_schema"
+
+	err = utils.SaveGoFile(basePath, fileName, text)
 	throw.OnError(err)
 }
 

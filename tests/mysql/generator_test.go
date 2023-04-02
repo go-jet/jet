@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strconv"
@@ -130,24 +129,15 @@ func TestIgnoreTablesViewsEnums(t *testing.T) {
 			err := cmd.Run()
 			require.NoError(t, err)
 
-			tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
-			require.NoError(t, err)
-			testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "customer.go", "film.go", "film_actor.go",
-				"film_category.go", "film_text.go", "inventory.go", "language.go", "payment.go", "table.go")
+			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/table", "customer.go", "film.go", "film_actor.go",
+				"film_category.go", "film_text.go", "inventory.go", "language.go", "payment.go", "table_use_schema.go")
 
-			viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
-			require.NoError(t, err)
-			testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "nicer_but_slower_film_list.go",
-				"sales_by_film_category.go", "sales_by_store.go", "staff_list.go", "view.go")
+			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/view", "nicer_but_slower_film_list.go",
+				"sales_by_film_category.go", "sales_by_store.go", "staff_list.go", "view_use_schema.go")
 
-			enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
-			require.NoError(t, err)
-			testutils.AssertFileNamesEqual(t, enumFiles, "nicer_but_slower_film_list_rating.go")
+			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/enum", "nicer_but_slower_film_list_rating.go")
 
-			modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
-			require.NoError(t, err)
-
-			testutils.AssertFileNamesEqual(t, modelFiles,
+			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/model",
 				"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
 				"payment.go", "nicer_but_slower_film_list_rating.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
 				"sales_by_store.go", "staff_list.go")
@@ -157,38 +147,26 @@ func TestIgnoreTablesViewsEnums(t *testing.T) {
 
 func assertGeneratedFiles(t *testing.T) {
 	// Table SQL Builder files
-	tableSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/table")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, tableSQLBuilderFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/table", "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
-		"payment.go", "rental.go", "staff.go", "store.go", "table.go")
+		"payment.go", "rental.go", "staff.go", "store.go", "table_use_schema.go")
 
 	testutils.AssertFileContent(t, genTestDir3+"/dvds/table/actor.go", actorSQLBuilderFile)
-	testutils.AssertFileContent(t, genTestDir3+"/dvds/table/table.go", tableSetSchemaFile)
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/table/table_use_schema.go", tableUseSchemaFile)
 
 	// View SQL Builder files
-	viewSQLBuilderFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/view")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, viewSQLBuilderFiles, "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
-		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view.go")
+	testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/view", "actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view_use_schema.go")
 
 	testutils.AssertFileContent(t, genTestDir3+"/dvds/view/actor_info.go", actorInfoSQLBuilderFile)
-	testutils.AssertFileContent(t, genTestDir3+"/dvds/view/view.go", viewSetSchemaFile)
+	testutils.AssertFileContent(t, genTestDir3+"/dvds/view/view_use_schema.go", viewUseSchemaFile)
 
 	// Enums SQL Builder files
-	enumFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/enum")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, enumFiles, "film_rating.go", "film_list_rating.go", "nicer_but_slower_film_list_rating.go")
+	testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/enum", "film_rating.go", "film_list_rating.go", "nicer_but_slower_film_list_rating.go")
 	testutils.AssertFileContent(t, genTestDir3+"/dvds/enum/film_rating.go", mpaaRatingEnumFile)
 
 	// Model files
-	modelFiles, err := ioutil.ReadDir(genTestDir3 + "/dvds/model")
-	require.NoError(t, err)
-
-	testutils.AssertFileNamesEqual(t, modelFiles, "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/model", "actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "film_text.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go",
 		"film_rating.go", "film_list_rating.go", "nicer_but_slower_film_list_rating.go",
@@ -332,7 +310,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 }
 `
 
-var tableSetSchemaFile = `
+var tableUseSchemaFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
 //
@@ -342,9 +320,8 @@ var tableSetSchemaFile = `
 
 package table
 
-// UseSchema changes all global tables/views with the value returned
-// returned by calling FromSchema on them. Passing an empty string to this function
-// will cause queries to be generated without any table/view alias.
+// UseSchema sets a new schema name for all generated table SQL builder types. It is recommended to invoke
+// this method only once at the beginning of the program.
 func UseSchema(schema string) {
 	Actor = Actor.FromSchema(schema)
 	Address = Address.FromSchema(schema)
@@ -473,7 +450,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 	}
 }
 `
-var viewSetSchemaFile = `
+var viewUseSchemaFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
 //
@@ -483,9 +460,8 @@ var viewSetSchemaFile = `
 
 package view
 
-// UseSchema changes all global tables/views with the value returned
-// returned by calling FromSchema on them. Passing an empty string to this function
-// will cause queries to be generated without any table/view alias.
+// UseSchema sets a new schema name for all generated view SQL builder types. It is recommended to invoke
+// this method only once at the beginning of the program.
 func UseSchema(schema string) {
 	ActorInfo = ActorInfo.FromSchema(schema)
 	CustomerList = CustomerList.FromSchema(schema)

@@ -99,9 +99,8 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 
 var tableSqlBuilderSetSchemaTemplate = `package {{package}}
 
-// UseSchema changes all global tables/views with the value returned
-// returned by calling FromSchema on them. Passing an empty string to this function
-// will cause queries to be generated without any table/view alias.
+// UseSchema sets a new schema name for all generated {{type}} SQL builder types. It is recommended to invoke 
+// this method only once at the beginning of the program.
 func UseSchema(schema string) {
 {{- range .}}
 	{{ .InstanceName }} = {{ .InstanceName }}.FromSchema(schema)

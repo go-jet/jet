@@ -928,6 +928,36 @@ LIMIT 5;
 	require.Equal(t, dest.Films[4].Title, "AFRICAN EGG")
 }
 
+func TestUseSchema(t *testing.T) {
+	UseSchema("dvds2")
+	defer UseSchema("dvds")
+
+	stmt := SELECT(
+		Film.FilmID,
+		Film.Title,
+		Film.LanguageID,
+	).FROM(
+		Film,
+	).WHERE(
+		Film.Title.EQ(String("AFRICAN EGG")),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     film.language_id AS "film.language_id"
+FROM dvds2.film
+WHERE film.title = 'AFRICAN EGG';
+`)
+
+	var dest model.Film
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Equal(t, dest.FilmID, uint16(5))
+	require.Equal(t, dest.Title, "AFRICAN EGG")
+	require.Equal(t, dest.LanguageID, uint8(1))
+}
+
 func TestLateral(t *testing.T) {
 	skipForMariaDB(t) // MariaDB does not implement LATERAL
 

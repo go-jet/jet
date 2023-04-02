@@ -728,6 +728,36 @@ LIMIT 10;
 	require.Len(t, dest, 7)
 }
 
+func TestUseSchema(t *testing.T) {
+	table.UseSchema("chinook")
+	defer table.UseSchema("")
+
+	stmt := SELECT(
+		table.Artists.AllColumns,
+	).FROM(
+		table.Artists,
+	).WHERE(table.Artists.ArtistId.EQ(Int(11)))
+
+	testutils.AssertDebugStatementSql(t, stmt, strings.Replace(`
+SELECT artists.''ArtistId'' AS "artists.ArtistId",
+     artists.''Name'' AS "artists.Name"
+FROM chinook.artists
+WHERE artists.''ArtistId'' = 11;
+`, "''", "`", -1))
+
+	var artist model2.Artists
+
+	err := stmt.Query(db, &artist)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, artist, `
+{
+	"ArtistId": 11,
+	"Name": "Black Label Society"
+}
+`)
+}
+
 func TestRowsScan(t *testing.T) {
 	stmt :=
 		SELECT(
