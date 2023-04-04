@@ -13,20 +13,19 @@ import (
 )
 
 func TestSelect(t *testing.T) {
-	stmt := Album.
-		SELECT(Album.AllColumns).
+	stmt := SELECT(Album.AllColumns).
+		FROM(Album).
 		ORDER_BY(Album.AlbumId.ASC())
-
-	//fmt.Println(stmt.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "Album"."AlbumId" AS "Album.AlbumId",
      "Album"."Title" AS "Album.Title",
-     "Album"."ArtistId" AS "Album.ArtistId"
+     "Album"."ArtistId" AS "Album.ArtistId",
+     "Album"."Type" AS "Album.Type"
 FROM chinook."Album"
 ORDER BY "Album"."AlbumId" ASC;
 `)
-	dest := []model.Album{}
+	var dest []model.Album
 
 	err := stmt.Query(db, &dest)
 
@@ -71,6 +70,7 @@ SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
      "Album"."AlbumId" AS "Album.AlbumId",
      "Album"."Title" AS "Album.Title",
      "Album"."ArtistId" AS "Album.ArtistId",
+     "Album"."Type" AS "Album.Type",
      "Track"."TrackId" AS "Track.TrackId",
      "Track"."Name" AS "Track.Name",
      "Track"."AlbumId" AS "Track.AlbumId",
@@ -119,6 +119,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 				"AlbumId": 8,
 				"Title": "Warner 25 Anos",
 				"ArtistId": 6,
+				"Type": "Studio",
 				"Tracks": [
 					{
 						"TrackId": 75,
@@ -154,6 +155,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 				"AlbumId": 13,
 				"Title": "The Best Of Billy Cobham",
 				"ArtistId": 10,
+				"Type": "Studio",
 				"Tracks": [
 					{
 						"TrackId": 123,
@@ -257,6 +259,7 @@ SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
      "Album"."AlbumId" AS "Album.AlbumId",
      "Album"."Title" AS "Album.Title",
      "Album"."ArtistId" AS "Album.ArtistId",
+     "Album"."Type" AS "Album.Type",
      "Track"."TrackId" AS "Track.TrackId",
      "Track"."Name" AS "Track.Name",
      "Track"."AlbumId" AS "Track.AlbumId",
@@ -597,17 +600,19 @@ func TestSelfJoin(t *testing.T) {
 
 	manager := Employee.AS("Manager")
 
-	stmt := Employee.
-		LEFT_JOIN(manager, Employee.ReportsTo.EQ(manager.EmployeeId)).
-		SELECT(
-			Employee.EmployeeId,
-			Employee.FirstName,
-			Employee.LastName,
-			manager.EmployeeId,
-			manager.FirstName,
-			manager.LastName,
-		).
-		ORDER_BY(Employee.EmployeeId)
+	stmt := SELECT(
+		Employee.EmployeeId,
+		Employee.FirstName,
+		Employee.LastName,
+		manager.EmployeeId,
+		manager.FirstName,
+		manager.LastName,
+	).FROM(
+		Employee.
+			LEFT_JOIN(manager, Employee.ReportsTo.EQ(manager.EmployeeId)),
+	).ORDER_BY(
+		Employee.EmployeeId,
+	)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "Employee"."EmployeeId" AS "Employee.EmployeeId",
@@ -689,15 +694,17 @@ func TestUnionForQuotedNames(t *testing.T) {
 	stmt := UNION_ALL(
 		Album.SELECT(Album.AllColumns).WHERE(Album.AlbumId.EQ(Int(1))),
 		Album.SELECT(Album.AllColumns).WHERE(Album.AlbumId.EQ(Int(2))),
-	).
-		ORDER_BY(Album.AlbumId)
+	).ORDER_BY(
+		Album.AlbumId,
+	)
 
 	//fmt.Println(stmt.DebugSql())
 	testutils.AssertDebugStatementSql(t, stmt, `
 (
      SELECT "Album"."AlbumId" AS "Album.AlbumId",
           "Album"."Title" AS "Album.Title",
-          "Album"."ArtistId" AS "Album.ArtistId"
+          "Album"."ArtistId" AS "Album.ArtistId",
+          "Album"."Type" AS "Album.Type"
      FROM chinook."Album"
      WHERE "Album"."AlbumId" = 1
 )
@@ -705,7 +712,8 @@ UNION ALL
 (
      SELECT "Album"."AlbumId" AS "Album.AlbumId",
           "Album"."Title" AS "Album.Title",
-          "Album"."ArtistId" AS "Album.ArtistId"
+          "Album"."ArtistId" AS "Album.ArtistId",
+          "Album"."Type" AS "Album.Type"
      FROM chinook."Album"
      WHERE "Album"."AlbumId" = 2
 )
@@ -760,33 +768,39 @@ func TestExecWithContext(t *testing.T) {
 }
 
 func TestSubQueriesForQuotedNames(t *testing.T) {
-	first10Artist := Artist.
-		SELECT(Artist.AllColumns).
+	first10Artist := SELECT(Artist.AllColumns).
+		FROM(Artist).
 		ORDER_BY(Artist.ArtistId).
 		LIMIT(10).
 		AsTable("first10Artist")
 
 	artistID := Artist.ArtistId.From(first10Artist)
 
-	first10Albums := Album.
-		SELECT(Album.AllColumns).
+	first10Albums := SELECT(Album.AllColumns).
+		FROM(Album).
 		ORDER_BY(Album.AlbumId).
 		LIMIT(10).
 		AsTable("first10Albums")
 
 	albumArtistID := Album.ArtistId.From(first10Albums)
 
-	stmt := first10Artist.
-		INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)).
-		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
-		ORDER_BY(artistID)
+	stmt := SELECT(
+		first10Artist.AllColumns(),
+		first10Albums.AllColumns(),
+	).FROM(
+		first10Artist.
+			INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)),
+	).ORDER_BY(
+		artistID,
+	)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
      "first10Artist"."Artist.Name" AS "Artist.Name",
      "first10Albums"."Album.AlbumId" AS "Album.AlbumId",
      "first10Albums"."Album.Title" AS "Album.Title",
-     "first10Albums"."Album.ArtistId" AS "Album.ArtistId"
+     "first10Albums"."Album.ArtistId" AS "Album.ArtistId",
+     "first10Albums"."Album.Type" AS "Album.Type"
 FROM (
           SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
                "Artist"."Name" AS "Artist.Name"
@@ -797,7 +811,8 @@ FROM (
      INNER JOIN (
           SELECT "Album"."AlbumId" AS "Album.AlbumId",
                "Album"."Title" AS "Album.Title",
-               "Album"."ArtistId" AS "Album.ArtistId"
+               "Album"."ArtistId" AS "Album.ArtistId",
+               "Album"."Type" AS "Album.Type"
           FROM chinook."Album"
           ORDER BY "Album"."AlbumId"
           LIMIT 10
@@ -812,8 +827,8 @@ ORDER BY "first10Artist"."Artist.ArtistId";
 	}
 
 	err := stmt.Query(db, &dest)
-
 	require.NoError(t, err)
+	require.Len(t, dest, 8)
 }
 
 func TestMultiTenantDifferentSchema(t *testing.T) {
@@ -821,16 +836,16 @@ func TestMultiTenantDifferentSchema(t *testing.T) {
 	Artist2 := Artist.FromSchema("chinook2")
 	Album2 := Album.FromSchema("chinook2")
 
-	first10Artist := Artist2.
-		SELECT(Artist2.AllColumns).
+	first10Artist := SELECT(Artist2.AllColumns).
+		FROM(Artist2).
 		ORDER_BY(Artist2.ArtistId).
 		LIMIT(10).
 		AsTable("first10Artist")
 
 	artistID := Artist2.ArtistId.From(first10Artist)
 
-	first10Albums := Album2.
-		SELECT(Album2.AllColumns).
+	first10Albums := SELECT(Album2.AllColumns).
+		FROM(Album2).
 		ORDER_BY(Album2.AlbumId).
 		LIMIT(10).
 		AsTable("first10Albums")
@@ -840,16 +855,20 @@ func TestMultiTenantDifferentSchema(t *testing.T) {
 	stmt := SELECT(
 		first10Artist.AllColumns(),
 		first10Albums.AllColumns(),
-	).FROM(first10Artist.
-		INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)),
-	).ORDER_BY(artistID)
+	).FROM(
+		first10Artist.
+			INNER_JOIN(first10Albums, artistID.EQ(albumArtistID)),
+	).ORDER_BY(
+		artistID,
+	)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
      "first10Artist"."Artist.Name" AS "Artist.Name",
      "first10Albums"."Album.AlbumId" AS "Album.AlbumId",
      "first10Albums"."Album.Title" AS "Album.Title",
-     "first10Albums"."Album.ArtistId" AS "Album.ArtistId"
+     "first10Albums"."Album.ArtistId" AS "Album.ArtistId",
+     "first10Albums"."Album.Type" AS "Album.Type"
 FROM (
           SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
                "Artist"."Name" AS "Artist.Name"
@@ -860,7 +879,8 @@ FROM (
      INNER JOIN (
           SELECT "Album"."AlbumId" AS "Album.AlbumId",
                "Album"."Title" AS "Album.Title",
-               "Album"."ArtistId" AS "Album.ArtistId"
+               "Album"."ArtistId" AS "Album.ArtistId",
+               "Album"."Type" AS "Album.Type"
           FROM chinook2."Album"
           ORDER BY "Album"."AlbumId"
           LIMIT 10
@@ -919,7 +939,9 @@ func TestMultiTenantSameSchemaDifferentTablePrefix(t *testing.T) {
 		Album := table.Album.WithPrefix(tenant)
 
 		return SELECT(
-			Album.AllColumns,
+			Album.AlbumId,
+			Album.Title,
+			Album.ArtistId,
 		).FROM(
 			Album,
 		).ORDER_BY(
@@ -948,17 +970,20 @@ LIMIT $1;
 	{
 		"AlbumId": 80,
 		"Title": "In Your Honor [Disc 2]",
-		"ArtistId": 84
+		"ArtistId": 84,
+		"Type": ""
 	},
 	{
 		"AlbumId": 81,
 		"Title": "One By One",
-		"ArtistId": 84
+		"ArtistId": 84,
+		"Type": ""
 	},
 	{
 		"AlbumId": 82,
 		"Title": "The Colour And The Shape",
-		"ArtistId": 84
+		"ArtistId": 84,
+		"Type": ""
 	}
 ]
 `)
@@ -984,17 +1009,20 @@ LIMIT $1;
 	{
 		"AlbumId": 152,
 		"Title": "Master Of Puppets",
-		"ArtistId": 50
+		"ArtistId": 50,
+		"Type": ""
 	},
 	{
 		"AlbumId": 153,
 		"Title": "ReLoad",
-		"ArtistId": 50
+		"ArtistId": 50,
+		"Type": ""
 	},
 	{
 		"AlbumId": 154,
 		"Title": "Ride The Lightning",
-		"ArtistId": 50
+		"ArtistId": 50,
+		"Type": ""
 	}
 ]
 `)
@@ -1007,7 +1035,9 @@ func TestMultiTenantSameSchemaDifferentTableSuffix(t *testing.T) {
 		Album := table.Album.WithSuffix(tenant)
 
 		return SELECT(
-			Album.AllColumns,
+			Album.AlbumId,
+			Album.Title,
+			Album.ArtistId,
 		).FROM(
 			Album,
 		).ORDER_BY(
@@ -1030,23 +1060,25 @@ LIMIT $1;
 		var albums []model.Album
 		err := stmt.Query(db, &albums)
 		require.NoError(t, err)
-
 		testutils.AssertJSON(t, albums, `
 [
 	{
 		"AlbumId": 80,
 		"Title": "In Your Honor [Disc 2]",
-		"ArtistId": 84
+		"ArtistId": 84,
+		"Type": ""
 	},
 	{
 		"AlbumId": 81,
 		"Title": "One By One",
-		"ArtistId": 84
+		"ArtistId": 84,
+		"Type": ""
 	},
 	{
 		"AlbumId": 82,
 		"Title": "The Colour And The Shape",
-		"ArtistId": 84
+		"ArtistId": 84,
+		"Type": ""
 	}
 ]
 `)
@@ -1072,17 +1104,20 @@ LIMIT $1;
 	{
 		"AlbumId": 152,
 		"Title": "Master Of Puppets",
-		"ArtistId": 50
+		"ArtistId": 50,
+		"Type": ""
 	},
 	{
 		"AlbumId": 153,
 		"Title": "ReLoad",
-		"ArtistId": 50
+		"ArtistId": 50,
+		"Type": ""
 	},
 	{
 		"AlbumId": 154,
 		"Title": "Ride The Lightning",
-		"ArtistId": 50
+		"ArtistId": 50,
+		"Type": ""
 	}
 ]
 `)
@@ -1093,18 +1128,21 @@ var album1 = model.Album{
 	AlbumId:  1,
 	Title:    "For Those About To Rock We Salute You",
 	ArtistId: 1,
+	Type:     model.AlbumType_Studio,
 }
 
 var album2 = model.Album{
 	AlbumId:  2,
 	Title:    "Balls to the Wall",
 	ArtistId: 2,
+	Type:     model.AlbumType_Studio,
 }
 
 var album347 = model.Album{
 	AlbumId:  347,
 	Title:    "Koyaanisqatsi (Soundtrack from the Motion Picture)",
 	ArtistId: 275,
+	Type:     model.AlbumType_Studio,
 }
 
 func TestAggregateFunc(t *testing.T) {
