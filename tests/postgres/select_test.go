@@ -679,19 +679,24 @@ func TestExecutionCustomPKTypes1(t *testing.T) {
 		} `alias:"customer"`
 	}
 
-	stmt := City.
-		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
-		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
-		SELECT(
-			City.CityID,
-			City.City,
-			Customer.CustomerID,
-			Customer.LastName,
-			Address.AddressID,
-			Address.Address,
-		).
-		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
-		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+	stmt := SELECT(
+		City.CityID,
+		City.City,
+		Customer.CustomerID,
+		Customer.LastName,
+		Address.AddressID,
+		Address.Address,
+	).FROM(
+		City.
+			INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+			INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)),
+	).WHERE(
+		City.City.EQ(String("London")).OR(City.City.EQ(String("York"))),
+	).ORDER_BY(
+		City.CityID,
+		Address.AddressID,
+		Customer.CustomerID,
+	)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
@@ -795,19 +800,24 @@ func TestExecutionCustomPKTypes2(t *testing.T) {
 		} `alias:"customer"`
 	}
 
-	stmt := City.
-		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
-		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
-		SELECT(
-			City.CityID,
-			City.City,
-			Customer.CustomerID,
-			Customer.LastName,
-			Address.AddressID,
-			Address.Address,
-		).
-		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
-		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
+	stmt := SELECT(
+		City.CityID,
+		City.City,
+		Customer.CustomerID,
+		Customer.LastName,
+		Address.AddressID,
+		Address.Address,
+	).FROM(
+		City.
+			INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+			INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)),
+	).WHERE(
+		City.City.EQ(String("London")).OR(City.City.EQ(String("York"))),
+	).ORDER_BY(
+		City.CityID,
+		Address.AddressID,
+		Customer.CustomerID,
+	)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT city.city_id AS "city.city_id",
@@ -875,24 +885,28 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 		Film     *[]*model.Film
 	}
 
-	limit := int64(3)
+	query := SELECT(
+		Language.AllColumns,
+		Film.AllColumns,
+	).FROM(
+		Film.
+			INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)),
+	).LIMIT(
+		int64(3),
+	)
 
-	query := Film.INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
-		SELECT(Language.AllColumns, Film.AllColumns).
-		LIMIT(limit)
-
-	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
+	var filmsPerLanguageWithPtrs []*FilmsPerLanguage
 	err := query.Query(db, &filmsPerLanguageWithPtrs)
 
 	require.NoError(t, err)
 	require.Equal(t, len(filmsPerLanguageWithPtrs), 1)
-	require.Equal(t, len(*filmsPerLanguageWithPtrs[0].Film), int(limit))
+	require.Equal(t, len(*filmsPerLanguageWithPtrs[0].Film), 3)
 }
 
 func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
 	query := Customer.SELECT(Customer.FirstName, Customer.LastName, Customer.Email)
 
-	customers := []model.Customer{}
+	var customers []model.Customer
 
 	err := query.Query(db, &customers)
 
@@ -901,9 +915,10 @@ func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
 }
 
 func TestSelectOrderByAscDesc(t *testing.T) {
-	customersAsc := []model.Customer{}
+	var customersAsc []model.Customer
 
-	err := Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+	err := SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		FROM(Customer).
 		ORDER_BY(Customer.FirstName.ASC()).
 		Query(db, &customersAsc)
 
