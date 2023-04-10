@@ -387,6 +387,44 @@ LIMIT 15;
 	require.Equal(t, len(filmsPerLanguage[0].Film), limit)
 }
 
+func TestGroupingBug226(t *testing.T) {
+	type Address1 struct {
+		model.Address
+	}
+
+	type Staff1 struct {
+		model.Staff
+	}
+
+	type Store1 struct {
+		model.Store
+
+		Address *Address1
+		Staffs  []Staff1
+	}
+
+	stmt := SELECT(
+		Store.AllColumns,
+		Address.AllColumns,
+		Staff.AllColumns,
+	).FROM(
+		Store.INNER_JOIN(
+			Address,
+			Address.AddressID.EQ(Store.AddressID),
+		).INNER_JOIN(
+			Staff,
+			Staff.StoreID.EQ(Store.StoreID),
+		),
+	)
+
+	var dest []Store1
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.PrintJson(dest)
+}
+
 func TestExecution1(t *testing.T) {
 	stmt := City.
 		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
