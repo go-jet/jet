@@ -238,7 +238,7 @@ func mapRowToStruct(
 
 		if fieldMap.complexType {
 			var changed bool
-			changed, err = mapRowToDestinationValue(scanContext, groupKey, fieldValue, &field)
+			changed, err = mapRowToDestinationValue(scanContext, concat(groupKey, ":", field.Name), fieldValue, &field)
 
 			if err != nil {
 				return

@@ -387,42 +387,115 @@ LIMIT 15;
 	require.Equal(t, len(filmsPerLanguage[0].Film), limit)
 }
 
+// https://github.com/go-jet/jet/issues/226
 func TestGroupingBug226(t *testing.T) {
-	type Address1 struct {
-		model.Address
+
+	type Staffs struct {
+		StaffList []model.Staff
 	}
 
-	type Staff1 struct {
-		model.Staff
-	}
-
-	type Store1 struct {
+	type MyStore struct {
 		model.Store
 
-		Address *Address1
-		Staffs  []Staff1
+		StaffList []model.Staff
+		Staffs    Staffs
 	}
 
 	stmt := SELECT(
 		Store.AllColumns,
-		Address.AllColumns,
 		Staff.AllColumns,
 	).FROM(
 		Store.INNER_JOIN(
-			Address,
-			Address.AddressID.EQ(Store.AddressID),
-		).INNER_JOIN(
 			Staff,
 			Staff.StoreID.EQ(Store.StoreID),
 		),
 	)
 
-	var dest []Store1
+	var dest []MyStore
 
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	testutils.PrintJson(dest)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"StoreID": 1,
+		"ManagerStaffID": 1,
+		"AddressID": 1,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"StaffList": [
+			{
+				"StaffID": 1,
+				"FirstName": "Mike",
+				"LastName": "Hillyer",
+				"AddressID": 3,
+				"Email": "Mike.Hillyer@sakilastaff.com",
+				"StoreID": 1,
+				"Active": true,
+				"Username": "Mike",
+				"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+				"LastUpdate": "2006-05-16T16:13:11.79328Z",
+				"Picture": "iVBORw0KWgo="
+			}
+		],
+		"Staffs": {
+			"StaffList": [
+				{
+					"StaffID": 1,
+					"FirstName": "Mike",
+					"LastName": "Hillyer",
+					"AddressID": 3,
+					"Email": "Mike.Hillyer@sakilastaff.com",
+					"StoreID": 1,
+					"Active": true,
+					"Username": "Mike",
+					"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+					"LastUpdate": "2006-05-16T16:13:11.79328Z",
+					"Picture": "iVBORw0KWgo="
+				}
+			]
+		}
+	},
+	{
+		"StoreID": 2,
+		"ManagerStaffID": 2,
+		"AddressID": 2,
+		"LastUpdate": "2006-02-15T09:57:12Z",
+		"StaffList": [
+			{
+				"StaffID": 2,
+				"FirstName": "Jon",
+				"LastName": "Stephens",
+				"AddressID": 4,
+				"Email": "Jon.Stephens@sakilastaff.com",
+				"StoreID": 2,
+				"Active": true,
+				"Username": "Jon",
+				"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+				"LastUpdate": "2006-05-16T16:13:11.79328Z",
+				"Picture": null
+			}
+		],
+		"Staffs": {
+			"StaffList": [
+				{
+					"StaffID": 2,
+					"FirstName": "Jon",
+					"LastName": "Stephens",
+					"AddressID": 4,
+					"Email": "Jon.Stephens@sakilastaff.com",
+					"StoreID": 2,
+					"Active": true,
+					"Username": "Jon",
+					"Password": "8cb2237d0679ca88db6464eac60da96345513964",
+					"LastUpdate": "2006-05-16T16:13:11.79328Z",
+					"Picture": null
+				}
+			]
+		}
+	}
+]
+`)
 }
 
 func TestExecution1(t *testing.T) {
@@ -470,13 +543,14 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 		Customers []struct {
 			model.Customer
 
-			Address model.Address
+			Address []model.Address
 		}
 	}
 
 	err := stmt.Query(db, &dest)
-
 	require.NoError(t, err)
+
+	testutils.PrintJson(dest)
 
 	require.Equal(t, len(dest), 2)
 	require.Equal(t, dest[0].City.City, "London")
@@ -498,7 +572,7 @@ func TestExecution2(t *testing.T) {
 		ID       int32 `sql:"primary_key"`
 		LastName *string
 
-		Address MyAddress
+		Address []MyAddress
 	}
 
 	type MyCity struct {
