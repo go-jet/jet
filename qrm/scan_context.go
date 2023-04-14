@@ -122,9 +122,9 @@ func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 }
 
 type groupKeyInfo struct {
-	typeName string
-	indexes  []int
-	subTypes []groupKeyInfo
+	typeName  string
+	pkIndexes []int
+	subTypes  []groupKeyInfo
 }
 
 func (s *ScanContext) getGroupKey(structType reflect.Type, structField *reflect.StructField) string {
@@ -148,13 +148,13 @@ func (s *ScanContext) getGroupKey(structType reflect.Type, structField *reflect.
 }
 
 func (s *ScanContext) constructGroupKey(groupKeyInfo groupKeyInfo) string {
-	if len(groupKeyInfo.indexes) == 0 && len(groupKeyInfo.subTypes) == 0 {
+	if len(groupKeyInfo.pkIndexes) == 0 && len(groupKeyInfo.subTypes) == 0 {
 		return fmt.Sprintf("|ROW:%d|", s.rowNum)
 	}
 
 	var groupKeys []string
 
-	for _, index := range groupKeyInfo.indexes {
+	for _, index := range groupKeyInfo.pkIndexes {
 		groupKeys = append(groupKeys, s.rowElemToString(index))
 	}
 
@@ -190,19 +190,19 @@ func (s *ScanContext) getGroupKeyInfo(
 		if isPrimaryKey(field, primaryKeyOverwrites) {
 			newTypeName, fieldName := getTypeAndFieldName(typeName, field)
 
-			index := s.typeToColumnIndex(newTypeName, fieldName)
+			pkIndex := s.typeToColumnIndex(newTypeName, fieldName)
 
-			if index < 0 {
+			if pkIndex < 0 {
 				continue
 			}
 
-			ret.indexes = append(ret.indexes, index)
+			ret.pkIndexes = append(ret.pkIndexes, pkIndex)
 
-		} else if fieldType.Kind() == reflect.Struct {
+		} else if fieldType.Kind() == reflect.Struct && fieldType != timeType {
 
 			subType := s.getGroupKeyInfo(fieldType, &field, typeVisited)
 
-			if len(subType.indexes) != 0 || len(subType.subTypes) != 0 {
+			if len(subType.pkIndexes) != 0 || len(subType.subTypes) != 0 {
 				ret.subTypes = append(ret.subTypes, subType)
 			}
 		}
