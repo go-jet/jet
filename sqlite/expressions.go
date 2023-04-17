@@ -82,6 +82,7 @@ type RawArgs = map[string]interface{}
 var (
 	Raw = jet.Raw
 
+	RawBool      = jet.RawBool
 	RawInt       = jet.RawInt
 	RawFloat     = jet.RawFloat
 	RawString    = jet.RawString

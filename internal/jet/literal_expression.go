@@ -445,6 +445,11 @@ func RawWithParent(raw string, parent ...Expression) Expression {
 	return rawExp
 }
 
+// RawBool helper that for raw string boolean expressions
+func RawBool(raw string, namedArgs ...map[string]interface{}) BoolExpression {
+	return BoolExp(Raw(raw, namedArgs...))
+}
+
 // RawInt helper that for integer expressions
 func RawInt(raw string, namedArgs ...map[string]interface{}) IntegerExpression {
 	return IntExp(Raw(raw, namedArgs...))
