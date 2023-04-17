@@ -90,7 +90,10 @@ func TestRawStatementRows(t *testing.T) {
 		FROM actor
 		ORDER BY actor.actor_id`)
 
-	rows, err := stmt.Rows(context.Background(), db)
+	var rows *Rows
+	var err error
+
+	rows, err = stmt.Rows(context.Background(), db)
 	require.NoError(t, err)
 
 	for rows.Next() {

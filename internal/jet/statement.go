@@ -30,7 +30,7 @@ type Statement interface {
 	Rows(ctx context.Context, db qrm.Queryable) (*Rows, error)
 }
 
-// Rows wraps sql.Rows type to add query result mapping for Scan method
+// Rows wraps sql.Rows type with a support for query result mapping
 type Rows struct {
 	*sql.Rows
 
