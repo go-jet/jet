@@ -3,7 +3,7 @@ module github.com/go-jet/jet/v2
 go 1.11
 
 require (
-	github.com/go-sql-driver/mysql v1.7.0
+	github.com/go-sql-driver/mysql v1.7.1
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgconn v1.14.0
 	github.com/lib/pq v1.10.8
