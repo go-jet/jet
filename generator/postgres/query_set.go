@@ -156,5 +156,5 @@ ORDER BY columns.ordinal_position;
 // GetEnumsMetaData
 // redshift does not support enums
 func (r redshiftQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.Enum {
-	return []metadata.Enum{}
+	return nil
 }

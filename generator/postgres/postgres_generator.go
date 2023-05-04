@@ -62,9 +62,7 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) (e
 
 	var isRedshift bool
 	err = db.QueryRow("SELECT version() LIKE '%Redshift%';").Scan(&isRedshift)
-	if err != nil {
-		throw.OnError(err)
-	}
+	throw.OnError(err)
 
 	var schemaMetadata metadata.Schema
 	if isRedshift {
