@@ -94,7 +94,22 @@ ORDER BY n.nspname, t.typname, e.enumsortorder;`
 }
 
 func (r redshiftQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) []metadata.Table {
-	return postgresQuerySet{}.GetTablesMetaData(db, schemaName, tableType)
+	query := `
+SELECT table_name as "table.name" 
+FROM information_schema.tables
+WHERE table_schema = $1 and table_type = $2
+ORDER BY table_name;
+`
+	var tables []metadata.Table
+
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
+	throw.OnError(err)
+
+	for i := range tables {
+		tables[i].Columns = r.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+	}
+
+	return tables
 }
 
 func (r redshiftQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) []metadata.Column {
