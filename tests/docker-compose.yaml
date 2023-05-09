@@ -50,3 +50,13 @@ services:
 #    volumes:
 #      - ./testdata/init/cockroach:/docker-entrypoint-initdb.d
 
+  redshift:
+    image: foundryai/postgres8:redshift
+    environment:
+      - POSTGRES_USER=jet
+      - POSTGRES_PASSWORD=jet
+      - POSTGRES_DATABASE=jetdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./testdata/init/redshift:/docker-entrypoint-initdb.d
