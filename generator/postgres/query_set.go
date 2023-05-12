@@ -121,29 +121,23 @@ WITH primaryKeys AS (
 			 ON t.constraint_name = c.constraint_name AND
 				c.table_schema = t.table_schema AND
 				c.table_name = t.table_name
-	WHERE t.table_schema = $1 AND t.table_name = $2 AND t.constraint_type = 'PRIMARY KEY'
+	WHERE t.table_schema = 'reporting' AND t.table_name = 'post_metrics' AND t.constraint_type = 'PRIMARY KEY'
 )
 SELECT columns.column_name as "column.Name",
 	   is_nullable = 'YES' as "column.isNullable",
 	   'false' as "column.isGenerated",
 	   (pk.column_name IS NOT NULL) as "column.IsPrimaryKey",
-	   columns.data_type as "dataType.Kind",
-	   columns.udt_name AS "dataType.Name",
-	   FALSE as "dataType.isUnsigned"
-FROM information_schema.columns AS columns
-JOIN (SELECT columns.table_name,
-             columns.column_name,
-             (CASE columns.data_type
+	   (CASE columns.data_type
                  WHEN 'ARRAY' THEN 'array'
                  WHEN 'USER-DEFINED' THEN 'user-defined'
                  ELSE 'base'
-             END) AS kind
-      FROM information_schema.columns
-      WHERE table_schema = $1 AND table_name = $2) AS dataType
-    ON columns.table_name = dataType.table_name AND columns.column_name = dataType.column_name
+       END) AS "dataType.Kind",
+	   columns.udt_name AS "dataType.Name",
+	   FALSE as "dataType.isUnsigned"
+FROM information_schema.columns AS columns
 LEFT JOIN primaryKeys AS pk
     ON pk.column_name = columns.column_name
-WHERE columns.table_schema = $1 AND columns.table_name = $2
+WHERE columns.table_schema = 'reporting' AND columns.table_name = 'post_metrics'
 ORDER BY columns.ordinal_position;
 `
 	var columns []metadata.Column

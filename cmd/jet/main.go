@@ -159,7 +159,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Println("Jet generator 2.8.0")
+	fmt.Println("Jet generator 2.9.0")
 	fmt.Println()
 	fmt.Println("Usage:")
 
