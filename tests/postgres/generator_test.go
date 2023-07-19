@@ -547,12 +547,14 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 	testutils.AssertFileContent(t, enumDir+"/level.go", levelEnumContent)
 
 	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_view.go", "employee.go", "link.go",
-		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go")
+		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go",
+		"components.go", "vulnerabilities.go")
 
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
 	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go", "employee.go", "link.go",
-		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go")
+		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go",
+		"components.go", "vulnerabilities.go")
 
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 }

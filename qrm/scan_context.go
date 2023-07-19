@@ -132,7 +132,7 @@ func (s *ScanContext) getGroupKey(structType reflect.Type, structField *reflect.
 	mapKey := structType.Name()
 
 	if structField != nil {
-		mapKey = concat(mapKey, structField.Type.String())
+		mapKey = concat(mapKey, structField.Type.String(), string(structField.Tag))
 	}
 
 	if groupKeyInfo, ok := s.groupKeyInfoCache[mapKey]; ok {

@@ -1410,3 +1410,135 @@ var allTypesRow1 = model.AllTypes{
 	TextMultiDimArrayPtr: nil,
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 }
+
+func TestAliasedDuplicateSliceSubType(t *testing.T) {
+
+	children := Components.AS("children")
+	childrenVulnerabilities := Vulnerabilities.AS("children_vulnerabilities")
+
+	stmt := SELECT(
+		Components.AllColumns,
+		Vulnerabilities.AllColumns,
+		children.AllColumns,
+		childrenVulnerabilities.AllColumns,
+	).FROM(
+		Components.
+			LEFT_JOIN(Vulnerabilities, Vulnerabilities.ComponentsID.EQ(Components.ID)).
+			LEFT_JOIN(children, children.ParentID.EQ(Components.ID)).
+			LEFT_JOIN(childrenVulnerabilities, childrenVulnerabilities.ComponentsID.EQ(children.ID)),
+	).ORDER_BY(
+		Components.ID,
+		Vulnerabilities.ID,
+		children.ID,
+		childrenVulnerabilities.ID,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT components.id AS "components.id",
+     components.parent_id AS "components.parent_id",
+     vulnerabilities.id AS "vulnerabilities.id",
+     vulnerabilities.components_id AS "vulnerabilities.components_id",
+     children.id AS "children.id",
+     children.parent_id AS "children.parent_id",
+     children_vulnerabilities.id AS "children_vulnerabilities.id",
+     children_vulnerabilities.components_id AS "children_vulnerabilities.components_id"
+FROM test_sample.components
+     LEFT JOIN test_sample.vulnerabilities ON (vulnerabilities.components_id = components.id)
+     LEFT JOIN test_sample.components AS children ON (children.parent_id = components.id)
+     LEFT JOIN test_sample.vulnerabilities AS children_vulnerabilities ON (children_vulnerabilities.components_id = children.id)
+ORDER BY components.id, vulnerabilities.id, children.id, children_vulnerabilities.id;
+`)
+
+	var dest []struct {
+		model.Components
+		Vulnerabilities []model.Vulnerabilities
+		Children        []struct {
+			model.Components `alias:"children"`
+			Vulnerabilities  []model.Vulnerabilities `alias:"children_vulnerabilities"`
+		}
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.PrintJson(dest)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"ID": "component_00",
+		"ParentID": null,
+		"Vulnerabilities": [
+			{
+				"ID": "vulnerability_00",
+				"ComponentsID": "component_00"
+			},
+			{
+				"ID": "vulnerability_01",
+				"ComponentsID": "component_00"
+			},
+			{
+				"ID": "vulnerability_02",
+				"ComponentsID": "component_00"
+			},
+			{
+				"ID": "vulnerability_03",
+				"ComponentsID": "component_00"
+			}
+		],
+		"Children": [
+			{
+				"ID": "component_01",
+				"ParentID": "component_00",
+				"Vulnerabilities": [
+					{
+						"ID": "vulnerability_11",
+						"ComponentsID": "component_01"
+					},
+					{
+						"ID": "vulnerability_12",
+						"ComponentsID": "component_01"
+					}
+				]
+			},
+			{
+				"ID": "component_02",
+				"ParentID": "component_00",
+				"Vulnerabilities": [
+					{
+						"ID": "vulnerability_21",
+						"ComponentsID": "component_02"
+					}
+				]
+			}
+		]
+	},
+	{
+		"ID": "component_01",
+		"ParentID": "component_00",
+		"Vulnerabilities": [
+			{
+				"ID": "vulnerability_11",
+				"ComponentsID": "component_01"
+			},
+			{
+				"ID": "vulnerability_12",
+				"ComponentsID": "component_01"
+			}
+		],
+		"Children": null
+	},
+	{
+		"ID": "component_02",
+		"ParentID": "component_00",
+		"Vulnerabilities": [
+			{
+				"ID": "vulnerability_21",
+				"ComponentsID": "component_02"
+			}
+		],
+		"Children": null
+	}
+]
+`)
+}
