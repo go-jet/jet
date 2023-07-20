@@ -686,7 +686,53 @@ ORDER BY "Employee"."EmployeeId";
 	}
 ]
 `)
+}
 
+func TestMultipleNestedAliasedSlices(t *testing.T) {
+	manager := Employee.AS("manager")
+	managerEmployees := Employee.AS("manager_employees")
+	managerEmployeesEmployees := Employee.AS("manager_employees_employees")
+	managerEmployeeEmployeesCustomers := Customer.AS("manager_employee_employee_customers")
+
+	trimmedCustomersResultSet := managerEmployeeEmployeesCustomers.CustomerId.BETWEEN(Int(37), Int(42))
+
+	stmt := SELECT(
+		manager.AllColumns,
+		managerEmployees.AllColumns,
+		managerEmployeesEmployees.AllColumns,
+		managerEmployeeEmployeesCustomers.AllColumns,
+	).FROM(
+		manager.
+			LEFT_JOIN(managerEmployees, managerEmployees.ReportsTo.EQ(manager.EmployeeId)).
+			LEFT_JOIN(managerEmployeesEmployees, managerEmployeesEmployees.ReportsTo.EQ(managerEmployees.EmployeeId)).
+			LEFT_JOIN(managerEmployeeEmployeesCustomers,
+				managerEmployeeEmployeesCustomers.SupportRepId.EQ(managerEmployeesEmployees.EmployeeId).
+					AND(trimmedCustomersResultSet)),
+	).WHERE(
+		manager.ReportsTo.IS_NULL(),
+	).ORDER_BY(
+		manager.EmployeeId.ASC(),
+		managerEmployees.EmployeeId.ASC(),
+		managerEmployeesEmployees.EmployeeId.ASC(),
+		managerEmployeeEmployeesCustomers.CustomerId.ASC(),
+	)
+
+	var dest []struct {
+		model.Employee   `alias:"manager"`
+		Employees        []model.Employee `alias:"manager_employees"`
+		EmployeesCustom1 []struct {
+			model.Employee   `alias:"manager_employees"`
+			Employees1       []model.Employee `alias:"manager_employees_employees"`
+			EmployeesCustom2 []struct {
+				model.Employee `alias:"manager_employees_employees"`
+				Customers2     []model.Customer `alias:"manager_employee_employee_customers"`
+			}
+		}
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, testMultipleNestedAliasedSlices)
 }
 
 func TestUnionForQuotedNames(t *testing.T) {
