@@ -1,5 +1,7 @@
 package main
 
+//go:generate sh -c "printf 'package main\n\nconst version = \"'%s'\"' $(git describe --tags --abbrev=0) > version.go"
+
 import (
 	"flag"
 	"fmt"
@@ -159,7 +161,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Println("Jet generator 2.8.0")
+	fmt.Println("Jet generator", version)
 	fmt.Println()
 	fmt.Println("Usage:")
 
@@ -176,14 +178,14 @@ func usage() {
 	}
 
 	fmt.Println()
-	fmt.Println(`Example command:
+	fmt.Println(`Example commands:
 
 	$ jet -dsn=postgresql://jet:jet@localhost:5432/jetdb?sslmode=disable -schema=dvds -path=./gen
 	$ jet -dsn=postgres://jet:jet@localhost:26257/jetdb?sslmode=disable -schema=dvds -path=./gen   #cockroachdb
 	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
 	$ jet -source=mysql -host=localhost -port=3306 -user=jet -password=jet -dbname=jetdb -path=./gen
 	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen
-		`)
+	`)
 }
 
 func printErrorAndExit(error string) {
