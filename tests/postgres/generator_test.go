@@ -19,6 +19,26 @@ import (
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 )
 
+func dsn(host string, port int, dbName, user, password string) string {
+	return fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
+		user,
+		password,
+		host,
+		port,
+		dbName,
+	)
+}
+
+func defaultDSN() string {
+	return dsn(
+		dbconfig.PgHost,
+		dbconfig.PgPort,
+		dbconfig.PgDBName,
+		dbconfig.PgUser,
+		dbconfig.PgPassword,
+	)
+}
+
 func TestGeneratedModel(t *testing.T) {
 	actor := model.Actor{}
 
@@ -73,14 +93,7 @@ func TestCmdGenerator(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check that connection via DSN works
-	dsn := fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
-		dbconfig.PgUser,
-		dbconfig.PgPassword,
-		dbconfig.PgHost,
-		dbconfig.PgPort,
-		"jetdb",
-	)
-	cmd = exec.Command("jet", "-dsn="+dsn, "-schema=dvds", "-path="+genTestDir2)
+	cmd = exec.Command("jet", "-dsn="+defaultDSN(), "-schema=dvds", "-path="+genTestDir2)
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 
@@ -101,13 +114,7 @@ func TestGeneratorIgnoreTables(t *testing.T) {
 		{
 			name: "with dsn",
 			args: []string{
-				"-dsn=" + fmt.Sprintf("postgresql://%s:%s@%s:%d/%s?sslmode=disable",
-					dbconfig.PgUser,
-					dbconfig.PgPassword,
-					dbconfig.PgHost,
-					dbconfig.PgPort,
-					"jetdb",
-				),
+				"-dsn=" + defaultDSN(),
 				"-schema=dvds",
 				"-ignore-tables=actor,ADDRESS,country, Film , cITY,",
 				"-ignore-views=Actor_info, FILM_LIST ,staff_list",
@@ -191,15 +198,7 @@ func TestGenerator(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		dsn := fmt.Sprintf("postgresql://%[1]s:%[2]s@%[3]s:%[4]d/%[5]s?sslmode=disable",
-			dbconfig.PgUser,
-			dbconfig.PgPassword,
-			dbconfig.PgHost,
-			dbconfig.PgPort,
-			dbconfig.PgDBName,
-		)
-		err := postgres.GenerateDSN(dsn, "dvds", genTestDir2)
-
+		err := postgres.GenerateDSN(defaultDSN(), "dvds", genTestDir2)
 		require.NoError(t, err)
 
 		assertGeneratedFiles(t)
@@ -224,6 +223,19 @@ func TestGeneratorSpecialCharacters(t *testing.T) {
 	})
 
 	require.NoError(t, err)
+}
+
+func TestGenerateErrorCases(t *testing.T) {
+	err := postgres.GenerateDSN("!@#$%&*", "", "")
+	require.ErrorContains(t, err, "failed to parse as DSN")
+	err = postgres.GenerateDSN(dsn(dbconfig.PgHost, -1, "!@!#", "", ""), "", "")
+	require.ErrorContains(t, err, "invalid port")
+	err = postgres.GenerateDSN(dsn(dbconfig.PgHost, dbconfig.PgPort, "!@!#", "", ""), "", "")
+	require.ErrorContains(t, err, "failed to open db connection")
+	err = postgres.GenerateDSN(dsn(dbconfig.PgHost, dbconfig.PgPort, dbconfig.PgDBName, "", ""), "", "")
+	require.ErrorContains(t, err, "password authentication failed")
+	err = postgres.GenerateDSN(dsn(dbconfig.PgHost, dbconfig.PgPort, dbconfig.PgDBName, dbconfig.PgUser, ""), "", "")
+	require.ErrorContains(t, err, "password authentication failed for user \"jet\"")
 }
 
 func assertGeneratedFiles(t *testing.T) {
