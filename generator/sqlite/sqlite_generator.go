@@ -6,16 +6,15 @@ import (
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/sqlite"
 )
 
 // GenerateDSN generates jet files using dsn connection string
-func GenerateDSN(dsn, destDir string, templates ...template.Template) (err error) {
-	defer utils.ErrorCatch(&err)
-
+func GenerateDSN(dsn, destDir string, templates ...template.Template) error {
 	db, err := sql.Open("sqlite3", dsn)
-	throw.OnError(err)
+	if err != nil {
+		return fmt.Errorf("failed to open sqlite connection: %w", err)
+	}
 	defer utils.DBClose(db)
 
 	fmt.Println("Retrieving schema information...")
@@ -25,8 +24,15 @@ func GenerateDSN(dsn, destDir string, templates ...template.Template) (err error
 		generatorTemplate = templates[0]
 	}
 
-	schemaMetadata := metadata.GetSchema(db, &sqliteQuerySet{}, "")
+	schemaMetadata, err := metadata.GetSchema(db, &sqliteQuerySet{}, "")
+	if err != nil {
+		return fmt.Errorf("failed to query database metadata: %w", err)
+	}
 
-	template.ProcessSchema(destDir, schemaMetadata, generatorTemplate)
-	return
+	err = template.ProcessSchema(destDir, schemaMetadata, generatorTemplate)
+	if err != nil {
+		return fmt.Errorf("failed to process database %s: %w", schemaMetadata.Name, err)
+	}
+
+	return nil
 }

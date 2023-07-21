@@ -3,16 +3,16 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
 )
 
 // postgresQuerySet is dialect query set for PostgreSQL
 type postgresQuerySet struct{}
 
-func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) []metadata.Table {
+func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
 SELECT table_name as "table.name" 
 FROM information_schema.tables
@@ -22,16 +22,21 @@ ORDER BY table_name;
 	var tables []metadata.Table
 
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
-	throw.OnError(err)
-
-	for i := range tables {
-		tables[i].Columns = p.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query %s metadata: %w", tableType, err)
 	}
 
-	return tables
+	for i := range tables {
+		tables[i].Columns, err = p.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query %s columns metadata: %w", tableType, err)
+		}
+	}
+
+	return tables, nil
 }
 
-func (p postgresQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) []metadata.Column {
+func (p postgresQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
 	query := `
 WITH primaryKeys AS (
 	SELECT column_name
@@ -67,12 +72,14 @@ order by ordinal_position;
 `
 	var columns []metadata.Column
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName}, &columns)
-	throw.OnError(err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query '%s' columns metadata: %w", tableName, err)
+	}
 
-	return columns
+	return columns, nil
 }
 
-func (p postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.Enum {
+func (p postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
 	query := `
 SELECT t.typname as "enum.name",  
        e.enumlabel as "values"
@@ -85,7 +92,9 @@ ORDER BY n.nspname, t.typname, e.enumsortorder;`
 	var result []metadata.Enum
 
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName}, &result)
-	throw.OnError(err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query enums metadata for schema '%s': %w", schemaName, err)
+	}
 
-	return result
+	return result, nil
 }

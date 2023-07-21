@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
 	"strings"
 )
@@ -13,7 +12,7 @@ import (
 // sqliteQuerySet is dialect query set for SQLite
 type sqliteQuerySet struct{}
 
-func (p sqliteQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) []metadata.Table {
+func (p sqliteQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
 	SELECT name as "table.name" 
 	FROM sqlite_master
@@ -29,16 +28,21 @@ func (p sqliteQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableTy
 	var tables []metadata.Table
 
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{sqlTableType}, &tables)
-	throw.OnError(err)
-
-	for i := range tables {
-		tables[i].Columns = p.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query %s metadata: %w", schemaName, err)
 	}
 
-	return tables
+	for i := range tables {
+		tables[i].Columns, err = p.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query column metadata: %w", err)
+		}
+	}
+
+	return tables, nil
 }
 
-func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) []metadata.Column {
+func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
 	query := fmt.Sprintf(`select * from pragma_table_info(?);`)
 	var columnInfos []struct {
 		Name    string
@@ -48,7 +52,9 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 	}
 
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{tableName}, &columnInfos)
-	throw.OnError(err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query '%s' column metadata: %w", tableName, err)
+	}
 
 	var columns []metadata.Column
 
@@ -67,7 +73,7 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 		})
 	}
 
-	return columns
+	return columns, nil
 }
 
 // will convert VARCHAR(10) -> VARCHAR, etc...
@@ -75,6 +81,6 @@ func getColumnType(columnType string) string {
 	return strings.TrimSpace(strings.Split(columnType, "(")[0])
 }
 
-func (p sqliteQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.Enum {
-	return nil
+func (p sqliteQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
+	return nil, nil
 }

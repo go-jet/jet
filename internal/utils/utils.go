@@ -39,14 +39,16 @@ func SaveGoFile(dirPath, fileName string, text []byte) error {
 	defer file.Close()
 
 	p, err := format.Source(text)
+
+	// if there is a format error we will write unformulated text for debug purposes
 	if err != nil {
-		return err
+		file.Write(text)
+		return fmt.Errorf("failed to format '%s', check '%s' for syntax errors: %w", fileName, newGoFilePath, err)
 	}
 
 	_, err = file.Write(p)
-
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to save '%s' file: %w", newGoFilePath, err)
 	}
 
 	return nil
@@ -58,7 +60,7 @@ func EnsureDirPath(dirPath string) error {
 		err := os.MkdirAll(dirPath, os.ModePerm)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("can't create directory - %s: %w", dirPath, err)
 		}
 	}
 

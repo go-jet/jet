@@ -8,13 +8,13 @@ import (
 	"github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 
-	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -40,39 +40,65 @@ const (
 )
 
 func main() {
+	var err error
 
 	switch strings.ToLower(testSuite) {
 	case Postgres:
-		initPostgresDB(Postgres, dbconfig.PostgresConnectString)
+		err = initPostgresDB(Postgres, dbconfig.PostgresConnectString)
 	case Cockroach:
-		initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
+		err = initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
 	case MySql:
-		initMySQLDB(false)
+		err = initMySQLDB(false)
 	case MariaDB:
-		initMySQLDB(true)
+		err = initMySQLDB(true)
 	case Sqlite:
-		initSQLiteDB()
+		err = initSQLiteDB()
 	case "all":
-		initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
-		initPostgresDB(Postgres, dbconfig.PostgresConnectString)
-		initMySQLDB(false)
-		initMySQLDB(true)
-		initSQLiteDB()
+		err = initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
+		if err != nil {
+			break
+		}
+		err = initPostgresDB(Postgres, dbconfig.PostgresConnectString)
+		if err != nil {
+			break
+		}
+		err = initMySQLDB(false)
+		if err != nil {
+			break
+		}
+
+		err = initMySQLDB(true)
+		if err != nil {
+			break
+		}
+		err = initSQLiteDB()
 	default:
 		panic("invalid testsuite flag. Test suite name (postgres, mysql, mariadb, cockroach, sqlite or all)")
 	}
+
+	if err != nil {
+		fmt.Println(errfmt.Trace(err))
+	}
 }
 
-func initSQLiteDB() {
+func initSQLiteDB() error {
 	err := sqlite.GenerateDSN(dbconfig.SakilaDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/sakila"))
-	throw.OnError(err)
+	if err != nil {
+		return fmt.Errorf("failed to generate sqlite sakila database types: %w", err)
+	}
 	err = sqlite.GenerateDSN(dbconfig.ChinookDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/chinook"))
-	throw.OnError(err)
+	if err != nil {
+		return fmt.Errorf("failed to generate sqlite chinook database types: %w", err)
+	}
 	err = sqlite.GenerateDSN(dbconfig.TestSampleDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/test_sample"))
-	throw.OnError(err)
+	if err != nil {
+		return fmt.Errorf("failed to generate sqlite test_sample database types: %w", err)
+	}
+
+	return nil
 }
 
-func initMySQLDB(isMariaDB bool) {
+func initMySQLDB(isMariaDB bool) error {
 
 	mySQLDBs := []string{
 		"dvds",
@@ -104,7 +130,9 @@ func initMySQLDB(isMariaDB bool) {
 		cmd.Stdout = os.Stdout
 
 		err := cmd.Run()
-		throw.OnError(err)
+		if err != nil {
+			return fmt.Errorf("failed to initialize mysql database %s: %w", dbName, err)
+		}
 
 		err = mysql.Generate("./.gentestdata/mysql", mysql.DBConnection{
 			Host:     host,
@@ -114,19 +142,20 @@ func initMySQLDB(isMariaDB bool) {
 			DBName:   dbName,
 		})
 
-		throw.OnError(err)
+		if err != nil {
+			return fmt.Errorf("failed to generate jet types for '%s' database: %w", dbName, err)
+		}
 	}
+
+	return nil
 }
 
-func initPostgresDB(dbType string, connectionString string) {
+func initPostgresDB(dbType string, connectionString string) error {
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
-		panic("Failed to connect to test db: " + err.Error())
+		return fmt.Errorf("failed to open '%s' db connection '%s': %w", dbType, connectionString, err)
 	}
-	defer func() {
-		err := db.Close()
-		printOnError(err)
-	}()
+	defer db.Close()
 
 	schemaNames := []string{
 		"northwind",
@@ -139,31 +168,43 @@ func initPostgresDB(dbType string, connectionString string) {
 	for _, schemaName := range schemaNames {
 		fmt.Println("\nInitializing", schemaName, "schema...")
 
-		execFile(db, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName))
+		err = execFile(db, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName))
+		if err != nil {
+			return fmt.Errorf("failed to execute sql file: %w", err)
+		}
 
 		err = postgres.GenerateDSN(connectionString, schemaName, "./.gentestdata")
-		throw.OnError(err)
+		if err != nil {
+			return fmt.Errorf("failed to generate jet types: %w", err)
+		}
 	}
+
+	return nil
 }
 
-func execFile(db *sql.DB, sqlFilePath string) {
+func execFile(db *sql.DB, sqlFilePath string) error {
 	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
-	throw.OnError(err)
+	if err != nil {
+		return fmt.Errorf("failed to read sql file - %s: %w", sqlFilePath, err)
+	}
 
 	err = execInTx(db, func(tx *sql.Tx) error {
 		_, err := tx.Exec(string(testSampleSql))
 		return err
 	})
-	throw.OnError(err)
+	if err != nil {
+		return fmt.Errorf("failed to execute sql file - %s: %w", sqlFilePath, err)
+	}
+
+	return nil
 }
 
 func execInTx(db *sql.DB, f func(tx *sql.Tx) error) error {
 	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
 		Isolation: sql.LevelReadUncommitted, // to speed up initialization of test database
 	})
-
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to start transaction: %w", err)
 	}
 
 	err = f(tx)
@@ -173,11 +214,10 @@ func execInTx(db *sql.DB, f func(tx *sql.Tx) error) error {
 		return err
 	}
 
-	return tx.Commit()
-}
-
-func printOnError(err error) {
+	err = tx.Commit()
 	if err != nil {
-		fmt.Println(err.Error())
+		return fmt.Errorf("failed to commit transaction")
 	}
+
+	return nil
 }

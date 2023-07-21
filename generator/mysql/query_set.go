@@ -3,17 +3,17 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
 )
 
 // mySqlQuerySet is dialect query set for MySQL
 type mySqlQuerySet struct{}
 
-func (m mySqlQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) []metadata.Table {
+func (m mySqlQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
 SELECT table_name as "table.name"
 FROM INFORMATION_SCHEMA.tables
@@ -23,16 +23,21 @@ ORDER BY table_name;
 	var tables []metadata.Table
 
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
-	throw.OnError(err)
-
-	for i := range tables {
-		tables[i].Columns = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query %s metadata result: %w", tableType, err)
 	}
 
-	return tables
+	for i := range tables {
+		tables[i].Columns, err = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get '%s' table columns metadata: %w", tables[i].Name, err)
+		}
+	}
+
+	return tables, nil
 }
 
-func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) []metadata.Column {
+func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
 	query := `
 SELECT COLUMN_NAME AS "column.Name", 
 	IS_NULLABLE = "YES" AS "column.IsNullable",
@@ -57,12 +62,14 @@ ORDER BY ordinal_position;
 `
 	var columns []metadata.Column
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, schemaName, tableName}, &columns)
-	throw.OnError(err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query %s column meta data: %w", tableName, err)
+	}
 
-	return columns
+	return columns, nil
 }
 
-func (m *mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) []metadata.Enum {
+func (m mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
 	query := `
 SELECT (CASE c.DATA_TYPE WHEN 'enum' then CONCAT(c.TABLE_NAME, '_', c.COLUMN_NAME) ELSE '' END ) as "name", 
        SUBSTRING(c.COLUMN_TYPE,5) as "values"
@@ -76,7 +83,9 @@ WHERE c.table_schema = ? AND DATA_TYPE = 'enum';
 	}
 
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName}, &queryResult)
-	throw.OnError(err)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query enums meta data: %w", err)
+	}
 
 	var ret []metadata.Enum
 
@@ -89,5 +98,5 @@ WHERE c.table_schema = ? AND DATA_TYPE = 'enum';
 		})
 	}
 
-	return ret
+	return ret, nil
 }

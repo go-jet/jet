@@ -1,10 +1,11 @@
 package main
 
-//go:generate sh -c "printf 'package main\n\nconst version = \"'%s'\"' $(git describe --tags --abbrev=0) > version.go"
+//go:generate sh -c "printf 'package main\n\nconst version = \"'%s'\"\n' $(git describe --tags --abbrev=0) > version.go"
 
 import (
 	"flag"
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"os"
 	"strings"
 
@@ -155,8 +156,8 @@ func main() {
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(-5)
+		fmt.Println(errfmt.Trace(err))
+		os.Exit(2)
 	}
 }
 
@@ -192,7 +193,7 @@ func printErrorAndExit(error string) {
 	fmt.Println("\n", error)
 	fmt.Println()
 	flag.Usage()
-	os.Exit(-2)
+	os.Exit(1)
 }
 
 func getSource() string {
