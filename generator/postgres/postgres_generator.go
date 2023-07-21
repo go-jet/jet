@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/jackc/pgconn"
 )
@@ -54,7 +53,7 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) er
 	if err != nil {
 		return fmt.Errorf("failed to open db connection: %w", err)
 	}
-	defer utils.DBClose(db)
+	defer db.Close()
 
 	fmt.Println("Retrieving schema information...")
 	generatorTemplate := template.Default(postgres.Dialect)

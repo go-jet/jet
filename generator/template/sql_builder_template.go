@@ -3,7 +3,7 @@ package template
 import (
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	"path"
 	"strings"
 	"unicode"
@@ -69,9 +69,9 @@ type ViewSQLBuilder = TableSQLBuilder
 func DefaultTableSQLBuilder(tableMetaData metadata.Table) TableSQLBuilder {
 	return TableSQLBuilder{
 		Path:         "/table",
-		FileName:     utils.ToGoFileName(tableMetaData.Name),
-		InstanceName: utils.ToGoIdentifier(tableMetaData.Name),
-		TypeName:     utils.ToGoIdentifier(tableMetaData.Name) + "Table",
+		FileName:     dbidentifier.ToGoFileName(tableMetaData.Name),
+		InstanceName: dbidentifier.ToGoIdentifier(tableMetaData.Name),
+		TypeName:     dbidentifier.ToGoIdentifier(tableMetaData.Name) + "Table",
 		Column:       DefaultTableSQLBuilderColumn,
 	}
 }
@@ -127,7 +127,7 @@ type TableSQLBuilderColumn struct {
 // DefaultTableSQLBuilderColumn returns default implementation of TableSQLBuilderColumn
 func DefaultTableSQLBuilderColumn(columnMetaData metadata.Column) TableSQLBuilderColumn {
 	return TableSQLBuilderColumn{
-		Name: utils.ToGoIdentifier(columnMetaData.Name),
+		Name: dbidentifier.ToGoIdentifier(columnMetaData.Name),
 		Type: getSqlBuilderColumnType(columnMetaData),
 	}
 }
@@ -185,8 +185,8 @@ type EnumSQLBuilder struct {
 func DefaultEnumSQLBuilder(enumMetaData metadata.Enum) EnumSQLBuilder {
 	return EnumSQLBuilder{
 		Path:         "/enum",
-		FileName:     utils.ToGoFileName(enumMetaData.Name),
-		InstanceName: utils.ToGoIdentifier(enumMetaData.Name),
+		FileName:     dbidentifier.ToGoFileName(enumMetaData.Name),
+		InstanceName: dbidentifier.ToGoIdentifier(enumMetaData.Name),
 		ValueName: func(enumValue string) string {
 			return defaultEnumValueName(enumMetaData.Name, enumValue)
 		},
@@ -217,9 +217,9 @@ func (e EnumSQLBuilder) UseInstanceName(name string) EnumSQLBuilder {
 }
 
 func defaultEnumValueName(enumName, enumValue string) string {
-	enumValueName := utils.ToGoIdentifier(enumValue)
+	enumValueName := dbidentifier.ToGoIdentifier(enumValue)
 	if !unicode.IsLetter([]rune(enumValueName)[0]) {
-		return utils.ToGoIdentifier(enumName) + enumValueName
+		return dbidentifier.ToGoIdentifier(enumName) + enumValueName
 	}
 
 	return enumValueName

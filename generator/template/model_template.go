@@ -3,7 +3,7 @@ package template
 import (
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	"github.com/google/uuid"
 	"path"
 	"reflect"
@@ -77,8 +77,8 @@ var DefaultViewModel = DefaultTableModel
 // DefaultTableModel is default table template implementation
 func DefaultTableModel(tableMetaData metadata.Table) TableModel {
 	return TableModel{
-		FileName: utils.ToGoFileName(tableMetaData.Name),
-		TypeName: utils.ToGoIdentifier(tableMetaData.Name),
+		FileName: dbidentifier.ToGoFileName(tableMetaData.Name),
+		TypeName: dbidentifier.ToGoIdentifier(tableMetaData.Name),
 		Field:    DefaultTableModelField,
 	}
 }
@@ -142,13 +142,13 @@ func (em EnumModel) UseTypeName(typeName string) EnumModel {
 
 // DefaultEnumModel returns default implementation for EnumModel
 func DefaultEnumModel(enumMetaData metadata.Enum) EnumModel {
-	typeName := utils.ToGoIdentifier(enumMetaData.Name)
+	typeName := dbidentifier.ToGoIdentifier(enumMetaData.Name)
 
 	return EnumModel{
-		FileName: utils.ToGoFileName(enumMetaData.Name),
+		FileName: dbidentifier.ToGoFileName(enumMetaData.Name),
 		TypeName: typeName,
 		ValueName: func(value string) string {
-			return typeName + "_" + utils.ToGoIdentifier(value)
+			return typeName + "_" + dbidentifier.ToGoIdentifier(value)
 		},
 	}
 }
@@ -169,7 +169,7 @@ func DefaultTableModelField(columnMetaData metadata.Column) TableModelField {
 	}
 
 	return TableModelField{
-		Name: utils.ToGoIdentifier(columnMetaData.Name),
+		Name: dbidentifier.ToGoIdentifier(columnMetaData.Name),
 		Type: getType(columnMetaData),
 		Tags: tags,
 	}
@@ -247,7 +247,7 @@ func getType(columnMetadata metadata.Column) Type {
 func getUserDefinedType(column metadata.Column) string {
 	switch column.DataType.Kind {
 	case metadata.EnumType:
-		return utils.ToGoIdentifier(column.DataType.Name)
+		return dbidentifier.ToGoIdentifier(column.DataType.Name)
 	case metadata.UserDefinedType, metadata.ArrayType:
 		return "string"
 	}

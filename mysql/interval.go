@@ -2,11 +2,11 @@ package mysql
 
 import (
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/utils/datetime"
 	"regexp"
 	"time"
 
 	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 type unitType string
@@ -112,7 +112,7 @@ func INTERVALd(duration time.Duration) Interval {
 		duration = -duration
 	}
 
-	days, hours, minutes, sec, microsec := utils.ExtractDateTimeComponents(duration)
+	days, hours, minutes, sec, microsec := datetime.ExtractTimeComponents(duration)
 
 	if days != 0 {
 		switch {

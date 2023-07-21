@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/utils/filesys"
 	"path"
 	"strings"
 	"text/template"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 // ProcessSchema will process schema metadata and constructs go files using generator Template
@@ -24,7 +24,7 @@ func ProcessSchema(dirPath string, schemaMetaData metadata.Schema, generatorTemp
 
 	fmt.Println("Destination directory:", schemaPath)
 	fmt.Println("Cleaning up destination directory...")
-	err := utils.CleanUpGeneratedFiles(schemaPath)
+	err := filesys.RemoveDir(schemaPath)
 	if err != nil {
 		return errors.New("failed to cleanup generated files")
 	}
@@ -52,7 +52,7 @@ func processModel(dirPath string, schemaMetaData metadata.Schema, schemaTemplate
 
 	modelDirPath := path.Join(dirPath, modelTemplate.Path)
 
-	err := utils.EnsureDirPath(modelDirPath)
+	err := filesys.EnsureDirPathExist(modelDirPath)
 	if err != nil {
 		return fmt.Errorf("destination dir path does not exist: %w", err)
 	}
@@ -119,7 +119,7 @@ func processEnumSQLBuilder(dirPath string, dialect jet.Dialect, enumsMetaData []
 
 		enumSQLBuilderPath := path.Join(dirPath, enumTemplate.Path)
 
-		err := utils.EnsureDirPath(enumSQLBuilderPath)
+		err := filesys.EnsureDirPathExist(enumSQLBuilderPath)
 		if err != nil {
 			return fmt.Errorf("failed to create enum sql builder directory - %s: %w", enumSQLBuilderPath, err)
 		}
@@ -145,7 +145,7 @@ func processEnumSQLBuilder(dirPath string, dialect jet.Dialect, enumsMetaData []
 			return fmt.Errorf("failed to generete enum type %s: %w", enumTemplate.FileName, err)
 		}
 
-		err = utils.SaveGoFile(enumSQLBuilderPath, enumTemplate.FileName, text)
+		err = filesys.FormatAndSaveGoFile(enumSQLBuilderPath, enumTemplate.FileName, text)
 		if err != nil {
 			return fmt.Errorf("failed to format and save '%s' enum type : %w", enumTemplate.FileName, err)
 		}
@@ -183,7 +183,7 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 
 		tableSQLBuilderPath := path.Join(dirPath, tableSQLBuilder.Path)
 
-		err := utils.EnsureDirPath(tableSQLBuilderPath)
+		err := filesys.EnsureDirPathExist(tableSQLBuilderPath)
 		if err != nil {
 			return fmt.Errorf("failed to create table sql builder directory - %s: %w", tableSQLBuilderPath, err)
 		}
@@ -220,7 +220,7 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 			return fmt.Errorf("failed to generate table sql builder type %s: %w", tableSQLBuilder.TypeName, err)
 		}
 
-		err = utils.SaveGoFile(tableSQLBuilderPath, tableSQLBuilder.FileName, text)
+		err = filesys.FormatAndSaveGoFile(tableSQLBuilderPath, tableSQLBuilder.FileName, text)
 		if err != nil {
 			return fmt.Errorf("failed to format and save generated sql builder type '%s': %w", tableSQLBuilder.FileName, err)
 		}
@@ -256,7 +256,7 @@ func generateUseSchemaFunc(dirPath, fileTypes string, builders []TableSQLBuilder
 	basePath := path.Join(dirPath, builders[0].Path)
 	fileName := fileTypes + "_use_schema"
 
-	err = utils.SaveGoFile(basePath, fileName, text)
+	err = filesys.FormatAndSaveGoFile(basePath, fileName, text)
 	if err != nil {
 		return fmt.Errorf("failed to save %s file: %w", fileName, err)
 	}
@@ -312,7 +312,7 @@ func processTableModels(fileTypes, modelDirPath string, tablesMetaData []metadat
 			return fmt.Errorf("failed to generate model type '%s': %w", tableMetaData.Name, err)
 		}
 
-		err = utils.SaveGoFile(modelDirPath, tableTemplate.FileName, text)
+		err = filesys.FormatAndSaveGoFile(modelDirPath, tableTemplate.FileName, text)
 		if err != nil {
 			return fmt.Errorf("failed to save '%s' model type: %w", tableTemplate.FileName, err)
 		}
@@ -353,7 +353,7 @@ func processEnumModels(modelDir string, enumsMetaData []metadata.Enum, modelTemp
 			return fmt.Errorf("failed to generate enum type '%s': %w", enumMetaData.Name, err)
 		}
 
-		err = utils.SaveGoFile(modelDir, enumTemplate.FileName, text)
+		err = filesys.FormatAndSaveGoFile(modelDir, enumTemplate.FileName, text)
 		if err != nil {
 			return fmt.Errorf("failed to save '%s' enum type: %w", enumTemplate.FileName, err)
 		}

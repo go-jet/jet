@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/sqlite"
 )
 
@@ -15,7 +14,7 @@ func GenerateDSN(dsn, destDir string, templates ...template.Template) error {
 	if err != nil {
 		return fmt.Errorf("failed to open sqlite connection: %w", err)
 	}
-	defer utils.DBClose(db)
+	defer db.Close()
 
 	fmt.Println("Retrieving schema information...")
 

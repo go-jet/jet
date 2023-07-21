@@ -1,8 +1,6 @@
 package jet
 
-import (
-	"github.com/go-jet/jet/v2/internal/utils"
-)
+import "github.com/go-jet/jet/v2/internal/utils/is"
 
 // SerializerTable interface
 type SerializerTable interface {
@@ -158,7 +156,7 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		panic("jet: Join table is nil. ")
 	}
 
-	if utils.IsNil(t.lhs) {
+	if is.Nil(t.lhs) {
 		panic("jet: left hand side of join operation is nil table")
 	}
 
@@ -179,7 +177,7 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		out.WriteString("CROSS JOIN")
 	}
 
-	if utils.IsNil(t.rhs) {
+	if is.Nil(t.rhs) {
 		panic("jet: right hand side of join operation is nil table")
 	}
 

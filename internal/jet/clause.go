@@ -1,8 +1,6 @@
 package jet
 
-import (
-	"github.com/go-jet/jet/v2/internal/utils"
-)
+import "github.com/go-jet/jet/v2/internal/utils/is"
 
 // Clause interface
 type Clause interface {
@@ -322,7 +320,7 @@ func (u *ClauseUpdate) Serialize(statementType StatementType, out *SQLBuilder, o
 	out.WriteString("UPDATE")
 	u.OptimizerHints.Serialize(statementType, out, options...)
 
-	if utils.IsNil(u.Table) {
+	if is.Nil(u.Table) {
 		panic("jet: table to update is nil")
 	}
 
@@ -387,7 +385,7 @@ func (i *ClauseInsert) GetColumns() []Column {
 
 // Serialize serializes clause into SQLBuilder
 func (i *ClauseInsert) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if utils.IsNil(i.Table) {
+	if is.Nil(i.Table) {
 		panic("jet: table is nil for INSERT clause")
 	}
 

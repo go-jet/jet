@@ -1,7 +1,6 @@
-package utils
+package dbidentifier
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -23,28 +22,4 @@ func TestToGoIdentifier(t *testing.T) {
 	require.Equal(t, ToGoIdentifier("My_Table"), "MyTable")
 	require.Equal(t, ToGoIdentifier("My Table"), "MyTable")
 	require.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
-}
-
-func TestErrorCatchErr(t *testing.T) {
-	var err error
-
-	func() {
-		defer ErrorCatch(&err)
-
-		panic(fmt.Errorf("newError"))
-	}()
-
-	require.Error(t, err, "newError")
-}
-
-func TestErrorCatchNonErr(t *testing.T) {
-	var err error
-
-	func() {
-		defer ErrorCatch(&err)
-
-		panic(11)
-	}()
-
-	require.Error(t, err, "11")
 }

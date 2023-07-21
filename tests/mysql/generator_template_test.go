@@ -7,7 +7,7 @@ import (
 	mysql2 "github.com/go-jet/jet/v2/generator/mysql"
 	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
@@ -157,17 +157,17 @@ func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 						UseTable(func(table metadata.Table) template.TableModel {
 							return template.DefaultTableModel(table).
 								UseFileName(schemaMetaData.Name + "_" + table.Name).
-								UseTypeName(utils.ToGoIdentifier(table.Name) + "Table")
+								UseTypeName(dbidentifier.ToGoIdentifier(table.Name) + "Table")
 						}).
 						UseView(func(table metadata.Table) template.ViewModel {
 							return template.DefaultViewModel(table).
 								UseFileName(schemaMetaData.Name + "_" + table.Name + "_view").
-								UseTypeName(utils.ToGoIdentifier(table.Name) + "View")
+								UseTypeName(dbidentifier.ToGoIdentifier(table.Name) + "View")
 						}).
 						UseEnum(func(enumMetaData metadata.Enum) template.EnumModel {
 							return template.DefaultEnumModel(enumMetaData).
 								UseFileName(enumMetaData.Name + "_enum").
-								UseTypeName(utils.ToGoIdentifier(enumMetaData.Name) + "Enum")
+								UseTypeName(dbidentifier.ToGoIdentifier(enumMetaData.Name) + "Enum")
 						}),
 					)
 			}),
@@ -256,19 +256,19 @@ func TestGeneratorTemplate_SQLBuilder_ChangeTypeAndFileName(t *testing.T) {
 						UseTable(func(table metadata.Table) template.TableSQLBuilder {
 							return template.DefaultTableSQLBuilder(table).
 								UseFileName(schemaMetaData.Name + "_" + table.Name + "_table").
-								UseTypeName(utils.ToGoIdentifier(table.Name) + "TableSQLBuilder").
-								UseInstanceName("T_" + utils.ToGoIdentifier(table.Name))
+								UseTypeName(dbidentifier.ToGoIdentifier(table.Name) + "TableSQLBuilder").
+								UseInstanceName("T_" + dbidentifier.ToGoIdentifier(table.Name))
 						}).
 						UseView(func(table metadata.Table) template.ViewSQLBuilder {
 							return template.DefaultViewSQLBuilder(table).
 								UseFileName(schemaMetaData.Name + "_" + table.Name + "_view").
-								UseTypeName(utils.ToGoIdentifier(table.Name) + "ViewSQLBuilder").
-								UseInstanceName("V_" + utils.ToGoIdentifier(table.Name))
+								UseTypeName(dbidentifier.ToGoIdentifier(table.Name) + "ViewSQLBuilder").
+								UseInstanceName("V_" + dbidentifier.ToGoIdentifier(table.Name))
 						}).
 						UseEnum(func(enum metadata.Enum) template.EnumSQLBuilder {
 							return template.DefaultEnumSQLBuilder(enum).
 								UseFileName(schemaMetaData.Name + "_" + enum.Name + "_enum").
-								UseInstanceName(utils.ToGoIdentifier(enum.Name) + "EnumSQLBuilder")
+								UseInstanceName(dbidentifier.ToGoIdentifier(enum.Name) + "EnumSQLBuilder")
 						}),
 					)
 			}),

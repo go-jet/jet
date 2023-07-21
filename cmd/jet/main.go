@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
+	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"os"
 	"strings"
 
@@ -13,7 +14,6 @@ import (
 	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"github.com/go-jet/jet/v2/mysql"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/sqlite"
@@ -232,15 +232,15 @@ func parseList(list string) []string {
 func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []string, ignoreEnums []string) template.Template {
 
 	shouldSkipTable := func(table metadata.Table) bool {
-		return utils.StringSliceContains(ignoreTables, strings.ToLower(table.Name))
+		return strslice.Contains(ignoreTables, strings.ToLower(table.Name))
 	}
 
 	shouldSkipView := func(view metadata.Table) bool {
-		return utils.StringSliceContains(ignoreViews, strings.ToLower(view.Name))
+		return strslice.Contains(ignoreViews, strings.ToLower(view.Name))
 	}
 
 	shouldSkipEnum := func(enum metadata.Enum) bool {
-		return utils.StringSliceContains(ignoreEnums, strings.ToLower(enum.Name))
+		return strslice.Contains(ignoreEnums, strings.ToLower(enum.Name))
 	}
 
 	return template.Default(dialect).

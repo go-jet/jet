@@ -3,7 +3,7 @@ package postgres
 import (
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/datetime"
 	"strconv"
 	"strings"
 	"time"
@@ -148,9 +148,9 @@ func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 
 // INTERVALd creates interval expression from time.Duration
 func INTERVALd(duration time.Duration) IntervalExpression {
-	days, hours, minutes, seconds, microseconds := utils.ExtractDateTimeComponents(duration)
+	days, hours, minutes, seconds, microseconds := datetime.ExtractTimeComponents(duration)
 
-	quantityAndUnits := []quantityAndUnit{}
+	var quantityAndUnits []quantityAndUnit
 
 	if days > 0 {
 		quantityAndUnits = append(quantityAndUnits, quantityAndUnit(days))

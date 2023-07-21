@@ -3,7 +3,8 @@ package qrm
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/must"
+	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"github.com/go-jet/jet/v2/qrm/internal"
 	"github.com/google/uuid"
 	"reflect"
@@ -50,7 +51,7 @@ func getSliceElemPtrAt(slicePtrValue reflect.Value, index int) reflect.Value {
 }
 
 func appendElemToSlice(slicePtrValue reflect.Value, objPtrValue reflect.Value) error {
-	utils.MustBeTrue(!slicePtrValue.IsNil(), "jet: internal, slice is nil")
+	must.BeTrue(!slicePtrValue.IsNil(), "jet: internal, slice is nil")
 
 	sliceValue := slicePtrValue.Elem()
 	sliceElemType := sliceValue.Type().Elem()
@@ -306,7 +307,7 @@ func setZeroValue(value reflect.Value) {
 
 func isPrimaryKey(field reflect.StructField, primaryKeyOverwrites []string) bool {
 	if len(primaryKeyOverwrites) > 0 {
-		return utils.StringSliceContains(primaryKeyOverwrites, field.Name)
+		return strslice.Contains(primaryKeyOverwrites, field.Name)
 	}
 
 	sqlTag := field.Tag.Get("sql")

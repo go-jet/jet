@@ -5,7 +5,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
-	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/internal/utils/is"
 	"github.com/google/uuid"
 	"reflect"
 	"sort"
@@ -206,7 +206,7 @@ func (s *SQLBuilder) insertRawQuery(raw string, namedArg map[string]interface{})
 }
 
 func argToString(value interface{}) string {
-	if utils.IsNil(value) {
+	if is.Nil(value) {
 		return "NULL"
 	}
 
