@@ -32,7 +32,7 @@ type {{structImplName}} struct {
 	// Columns
 {{- range $i, $c := .Columns}}
 {{- $field := columnField $c}}
-	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{- if $c.Comment }} // {{$c.Comment}} {{end}}
+	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{- if $c.Comment }} // {{$c.GoLangComment}} {{end}}
 {{- end}}
 
 	AllColumns     {{dialect.PackageName}}.ColumnList
@@ -122,7 +122,7 @@ import (
 type {{$modelTableTemplate.TypeName}} struct {
 {{- range .Columns}}
 {{- $field := structField .}}
-	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + ` {{- if .Comment }} // {{.Comment}} {{end}}
+	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + ` {{- if .Comment }} // {{.GoLangComment}} {{end}}
 {{- end}}
 }
 
