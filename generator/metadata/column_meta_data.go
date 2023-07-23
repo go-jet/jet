@@ -1,6 +1,8 @@
 package metadata
 
-import "regexp"
+import (
+	"regexp"
+)
 
 // Column struct
 type Column struct {

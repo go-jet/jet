@@ -190,7 +190,7 @@ package model
 type Link struct {
 	ID          int32   `+"`sql:\"primary_key\"`"+` // this is link id
 	URL         string  // link url
-	Name        string  // link name
+	Name        string  // Unicode characters comment ₲鬼佬℧⇄↻
 	Description *string // '"\\%\_
 }
 `)
@@ -219,7 +219,7 @@ type linkTable struct {
 	// Columns
 	ID          mysql.ColumnInteger // this is link id
 	URL         mysql.ColumnString  // link url
-	Name        mysql.ColumnString  // link name
+	Name        mysql.ColumnString  // Unicode characters comment ₲鬼佬℧⇄↻
 	Description mysql.ColumnString  // '"\\%\_
 
 	AllColumns     mysql.ColumnList
