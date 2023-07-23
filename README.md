@@ -1,6 +1,6 @@
 # Jet
 
-[![CircleCI](https://circleci.com/gh/go-jet/jet/tree/master.svg?style=svg&circle-token=97f255c6a4a3ab6590ea2e9195eb3ebf9f97b4a7)](https://circleci.com/gh/go-jet/jet/tree/develop)
+[![go-jet](https://circleci.com/gh/go-jet/jet.svg?style=svg)](https://app.circleci.com/pipelines/github/go-jet/jet?branch=master)
 [![codecov](https://codecov.io/gh/go-jet/jet/branch/master/graph/badge.svg)](https://codecov.io/gh/go-jet/jet)
 [![Go Report Card](https://goreportcard.com/badge/github.com/go-jet/jet)](https://goreportcard.com/report/github.com/go-jet/jet/v2)
 [![Documentation](https://godoc.org/github.com/go-jet/jet?status.svg)](http://godoc.org/github.com/go-jet/jet/v2)
