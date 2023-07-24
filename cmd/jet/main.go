@@ -149,7 +149,7 @@ func main() {
 		)
 
 	case "":
-		printErrorAndExit("ERROR: required -source or -dns flag missing.")
+		printErrorAndExit("ERROR: required -source or -dsn flag missing.")
 
 	default:
 		printErrorAndExit("ERROR: unknown data source " + source + ". Only postgres, mysql, mariadb and sqlite are supported.")
