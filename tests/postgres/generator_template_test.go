@@ -341,6 +341,29 @@ func UseSchema(schema string) {
 `)
 }
 
+func TestGeneratorTemplate_SQLBuilder_DefaultAlias(t *testing.T) {
+	err := postgres.Generate(
+		tempTestDir,
+		dbConnection,
+		template.Default(postgres2.Dialect).
+			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
+				return template.DefaultSchema(schemaMetaData).
+					UseSQLBuilder(template.DefaultSQLBuilder().
+						UseTable(func(table metadata.Table) template.TableSQLBuilder {
+							if table.Name == "actor" {
+								return template.DefaultTableSQLBuilder(table).UseDefaultAlias("actors")
+							}
+							return template.DefaultTableSQLBuilder(table)
+						}),
+					)
+			}),
+	)
+	require.Nil(t, err)
+
+	actor := file2.Exists(t, defaultTableSQLBuilderFilePath, "actor.go")
+	require.Contains(t, actor, "var Actor = newActorTable(\"dvds\", \"actor\", \"actors\")")
+}
+
 func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
 
 	err := postgres.Generate(

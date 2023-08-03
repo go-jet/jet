@@ -59,6 +59,7 @@ type TableSQLBuilder struct {
 	FileName     string
 	InstanceName string
 	TypeName     string
+	DefaultAlias string
 	Column       func(columnMetaData metadata.Column) TableSQLBuilderColumn
 }
 
@@ -72,6 +73,7 @@ func DefaultTableSQLBuilder(tableMetaData metadata.Table) TableSQLBuilder {
 		FileName:     dbidentifier.ToGoFileName(tableMetaData.Name),
 		InstanceName: dbidentifier.ToGoIdentifier(tableMetaData.Name),
 		TypeName:     dbidentifier.ToGoIdentifier(tableMetaData.Name) + "Table",
+		DefaultAlias: "",
 		Column:       DefaultTableSQLBuilderColumn,
 	}
 }
@@ -109,6 +111,12 @@ func (tb TableSQLBuilder) UseInstanceName(name string) TableSQLBuilder {
 // UseTypeName returns new TableSQLBuilder with new type name set
 func (tb TableSQLBuilder) UseTypeName(name string) TableSQLBuilder {
 	tb.TypeName = name
+	return tb
+}
+
+// UseDefaultAlias returns new TableSQLBuilder with new default alias set
+func (tb TableSQLBuilder) UseDefaultAlias(defaultAlias string) TableSQLBuilder {
+	tb.DefaultAlias = defaultAlias
 	return tb
 }
 
