@@ -74,7 +74,7 @@ SELECT
 		col.COLUMN_NAME AS "column.Name",
 		col.IS_NULLABLE = "YES" AS "column.IsNullable",
 		col.COLUMN_COMMENT AS "column.Comment",
-		pk.IsPrimaryKey AS "column.IsPrimaryKey",
+		COALESCE(pk.IsPrimaryKey, 0) AS "column.IsPrimaryKey",
 		IF (col.COLUMN_TYPE = 'tinyint(1)',
 				'boolean',
 				IF (col.DATA_TYPE = 'enum',
