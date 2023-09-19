@@ -4,12 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"runtime"
 	"strings"
-	"sync"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/qrm"
+	"golang.org/x/sync/errgroup"
 )
 
 // mySqlQuerySet is dialect query set for MySQL
@@ -29,43 +28,21 @@ ORDER BY table_name;
 		return nil, fmt.Errorf("failed to query %s metadata result: %w", tableType, err)
 	}
 
-	tblChan := make(chan int, len(tables))
-	errChan := make(chan error, 1)
+	const maxConns = 32
+	db.SetMaxOpenConns(maxConns)
+	db.SetMaxIdleConns(maxConns)
 
-	wg := sync.WaitGroup{}
-	for i := 0; i < runtime.NumCPU(); i++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			var err1 error
-			for tblIdx := range tblChan {
-				tables[tblIdx].Columns, err1 = m.GetTableColumnsMetaData(db, schemaName, tables[tblIdx].Name)
-				if err1 != nil {
-					select {
-					case errChan <- fmt.Errorf("failed to get '%s' table columns metadata: %w", tables[tblIdx].Name, err1):
-						return
-					default:
-					}
-					return
-				}
-			}
-		}()
+	wg := errgroup.Group{}
+	for i := 0; i < len(tables); i++ {
+		i := i
+		wg.Go(func() (err1 error) {
+			tables[i].Columns, err1 = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+			return err1
+		})
 	}
 
-	for i := range tables {
-		tblChan <- i
-	}
-
-	close(tblChan)
-	wg.Wait()
-
-	select {
-	case err = <-errChan:
-		return nil, err
-	default:
-	}
-
-	return tables, nil
+	err = wg.Wait()
+	return tables, err
 }
 
 func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
