@@ -28,10 +28,6 @@ ORDER BY table_name;
 		return nil, fmt.Errorf("failed to query %s metadata result: %w", tableType, err)
 	}
 
-	const maxConns = 32
-	db.SetMaxOpenConns(maxConns)
-	db.SetMaxIdleConns(maxConns)
-
 	wg := errgroup.Group{}
 	for i := 0; i < len(tables); i++ {
 		i := i
