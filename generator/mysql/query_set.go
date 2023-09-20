@@ -8,6 +8,7 @@ import (
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/qrm"
+	"golang.org/x/sync/errgroup"
 )
 
 // mySqlQuerySet is dialect query set for MySQL
@@ -27,39 +28,51 @@ ORDER BY table_name;
 		return nil, fmt.Errorf("failed to query %s metadata result: %w", tableType, err)
 	}
 
-	for i := range tables {
-		tables[i].Columns, err = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get '%s' table columns metadata: %w", tables[i].Name, err)
-		}
+	wg := errgroup.Group{}
+	for i := 0; i < len(tables); i++ {
+		i := i
+		wg.Go(func() (err1 error) {
+			tables[i].Columns, err1 = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+			return err1
+		})
 	}
 
-	return tables, nil
+	err = wg.Wait()
+	return tables, err
 }
 
 func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
 	query := `
-SELECT COLUMN_NAME AS "column.Name", 
-	IS_NULLABLE = "YES" AS "column.IsNullable",
-	columns.COLUMN_COMMENT as "column.Comment",
-	(EXISTS(
-		SELECT 1
+SELECT
+		col.COLUMN_NAME AS "column.Name",
+		col.IS_NULLABLE = "YES" AS "column.IsNullable",
+		col.COLUMN_COMMENT AS "column.Comment",
+		COALESCE(pk.IsPrimaryKey, 0) AS "column.IsPrimaryKey",
+		IF (col.COLUMN_TYPE = 'tinyint(1)',
+				'boolean',
+				IF (col.DATA_TYPE = 'enum',
+						CONCAT(col.TABLE_NAME, '_', col.COLUMN_NAME),
+						col.DATA_TYPE)
+		) AS "dataType.Name",
+		IF (col.DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind",
+		col.COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned"
+FROM
+		information_schema.columns AS col
+LEFT JOIN (
+		SELECT k.column_name, 1 AS IsPrimaryKey
 		FROM information_schema.table_constraints t
-			JOIN information_schema.key_column_usage k USING(constraint_name,table_schema,table_name)
-		WHERE table_schema = ? AND table_name = ? AND t.constraint_type='PRIMARY KEY' AND k.column_name = columns.column_name
-	)) AS "column.IsPrimaryKey",
-	IF (COLUMN_TYPE = 'tinyint(1)', 
-			'boolean', 
-			IF (DATA_TYPE='enum', 
-					CONCAT(TABLE_NAME, '_', COLUMN_NAME), 
-					DATA_TYPE)
-	) AS "dataType.Name", 
-	IF (DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind", 
-	COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned"
-FROM information_schema.columns
-WHERE table_schema = ? AND table_name = ?
-ORDER BY ordinal_position;
-`
+		JOIN information_schema.key_column_usage k USING(constraint_name, table_schema, table_name)
+		WHERE t.table_schema =  ?
+			AND t.table_name = ?
+			AND t.constraint_type = 'PRIMARY KEY'
+) AS pk ON col.COLUMN_NAME = pk.column_name
+WHERE
+		col.table_schema = ?
+		AND col.table_name = ?
+ORDER BY
+		col.ordinal_position;
+	`
+
 	var columns []metadata.Column
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, schemaName, tableName}, &columns)
 	if err != nil {
