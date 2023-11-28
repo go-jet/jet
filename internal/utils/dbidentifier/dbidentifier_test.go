@@ -6,11 +6,14 @@ import (
 )
 
 func TestToGoIdentifier(t *testing.T) {
+
 	require.Equal(t, ToGoIdentifier(""), "")
 	require.Equal(t, ToGoIdentifier("uuid"), "UUID")
 	require.Equal(t, ToGoIdentifier("col1"), "Col1")
 	require.Equal(t, ToGoIdentifier("PG-13"), "Pg13")
 	require.Equal(t, ToGoIdentifier("13_pg"), "13Pg")
+	require.Equal(t, ToGoIdentifier("S3:INIT"), "S3Init")
+	require.Equal(t, ToGoIdentifier("S3%INIT"), "S3Init")
 
 	require.Equal(t, ToGoIdentifier("mytable"), "Mytable")
 	require.Equal(t, ToGoIdentifier("MYTABLE"), "Mytable")

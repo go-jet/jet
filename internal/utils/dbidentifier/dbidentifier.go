@@ -2,6 +2,7 @@ package dbidentifier
 
 import (
 	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
+	"regexp"
 	"strings"
 )
 
@@ -15,10 +16,8 @@ func ToGoFileName(databaseIdentifier string) string {
 	return strings.ToLower(replaceInvalidChars(databaseIdentifier))
 }
 
-func replaceInvalidChars(str string) string {
-	str = strings.Replace(str, " ", "_", -1)
-	str = strings.Replace(str, "-", "_", -1)
-	str = strings.Replace(str, ".", "_", -1)
+var regx = regexp.MustCompile(`[^_a-zA-Z0-9]{1,30}`)
 
-	return str
+func replaceInvalidChars(str string) string {
+	return regx.ReplaceAllString(str, "_")
 }
