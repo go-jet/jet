@@ -2251,6 +2251,18 @@ FOR`
 	}
 }
 
+func TestRowLockWithJoins(t *testing.T) {
+	query := SELECT(STAR).
+		FROM(
+			Film.
+				INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
+				LEFT_JOIN(FilmActor, FilmActor.FilmID.EQ(Film.FilmID))).
+		LIMIT(1).
+		FOR(UPDATE().OF(Film, FilmCategory).NOWAIT())
+
+	testutils.AssertExecAndRollback(t, query, db, 1)
+}
+
 func TestQuickStart(t *testing.T) {
 
 	var expectedSQL = `
