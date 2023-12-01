@@ -133,4 +133,10 @@ SELECT table1.col_bool AS "table1.col_bool"
 FROM db.table1
 FOR NO KEY UPDATE SKIP LOCKED;
 `)
+
+	assertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(UPDATE().OF(table1, table2).NOWAIT()), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR UPDATE OF table1, table2 NOWAIT;
+`)
 }
