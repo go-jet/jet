@@ -177,6 +177,18 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	case "real", "numeric", "decimal", "double precision", "float", "float4", "float8",
 		"double": // MySQL
 		return "Float"
+	case "daterange":
+		return "DateRange"
+	case "tsrange":
+		return "TimestampRange"
+	case "tstzrange":
+		return "TimestampzRange"
+	case "int4range":
+		return "Int4Range"
+	case "int8range":
+		return "Int8Range"
+	case "numrange":
+		return "NumericRange"
 	default:
 		fmt.Println("- [SQL Builder] Unsupported sql column '" + columnMetaData.Name + " " + columnMetaData.DataType.Name + "', using StringColumn instead.")
 		return "String"

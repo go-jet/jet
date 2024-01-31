@@ -333,6 +333,10 @@ var (
 	NULL = newNullLiteral()
 	// STAR is jet equivalent of SQL *
 	STAR = newStarLiteral()
+	// PLUS_INFINITY is jet equivalent for sql infinity
+	PLUS_INFINITY = String("infinity")
+	// MINUS_INFINITY is jet equivalent for sql -infinity
+	MINUS_INFINITY = String("-infinity")
 )
 
 type nullLiteral struct {
@@ -488,6 +492,11 @@ func RawTimestampz(raw string, namedArgs ...map[string]interface{}) TimestampzEx
 // RawDate helper that for date expressions
 func RawDate(raw string, namedArgs ...map[string]interface{}) DateExpression {
 	return DateExp(Raw(raw, namedArgs...))
+}
+
+// RawRange helper that for range expressions
+func RawRange[T Expression](raw string, namedArgs ...map[string]interface{}) Range[T] {
+	return RangeExp[T](Raw(raw, namedArgs...))
 }
 
 // UUID is a helper function to create string literal expression from uuid object

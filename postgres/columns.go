@@ -65,6 +65,42 @@ type ColumnTimestampz = jet.ColumnTimestampz
 // TimestampzColumn creates named timestamp with time zone column.
 var TimestampzColumn = jet.TimestampzColumn
 
+// ColumnDateRange is interface of SQL date range column
+type ColumnDateRange = jet.ColumnRange[DateExpression]
+
+// DateRangeColumn creates named range with range column
+var DateRangeColumn = jet.RangeColumn[DateExpression]
+
+// ColumnNumericRange is interface of SQL numeric range column
+type ColumnNumericRange = jet.ColumnRange[NumericExpression]
+
+// NumericRangeColumn creates named range with range column
+var NumericRangeColumn = jet.RangeColumn[NumericExpression]
+
+// ColumnTimestampRange is interface of SQL timestamp range column
+type ColumnTimestampRange = jet.ColumnRange[TimestampExpression]
+
+// TimestampRangeColumn creates named range with range column
+var TimestampRangeColumn = jet.RangeColumn[TimestampExpression]
+
+// ColumnTimestampzRange is interface of SQL timestamp range column
+type ColumnTimestampzRange = jet.ColumnRange[TimestampzExpression]
+
+// TimestampzRangeColumn creates named range with range column
+var TimestampzRangeColumn = jet.RangeColumn[TimestampzExpression]
+
+// ColumnInt4Range is interface of SQL int range column
+type ColumnInt4Range = jet.ColumnRange[IntegerExpression]
+
+// Int4RangeColumn creates named range with range column
+var Int4RangeColumn = jet.RangeColumn[IntegerExpression]
+
+// ColumnInt8Range is interface of SQL int range column
+type ColumnInt8Range = jet.ColumnRange[IntegerExpression]
+
+// Int8RangeColumn creates named range with range column
+var Int8RangeColumn = jet.RangeColumn[IntegerExpression]
+
 //------------------------------------------------------//
 
 // ColumnInterval is interface of PostgreSQL interval columns.

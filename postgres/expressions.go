@@ -36,6 +36,24 @@ type TimestampExpression = jet.TimestampExpression
 // TimestampzExpression interface
 type TimestampzExpression = jet.TimestampzExpression
 
+// DateRange Expression interface
+type DateRange = jet.Range[DateExpression]
+
+// TimestampRange Expression interface
+type TimestampRange = jet.Range[TimestampExpression]
+
+// TimestampzRange Expression interface
+type TimestampzRange = jet.Range[TimestampzExpression]
+
+// NumericRange Expression interface
+type NumericRange = jet.Range[NumericExpression]
+
+// Int4Range Expression interface
+type Int4Range = jet.Range[IntegerExpression]
+
+// Int8Range Expression interface
+type Int8Range = jet.Range[IntegerExpression]
+
 // BoolExp is bool expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as bool expression.
 // Does not add sql cast to generated sql builder output.
@@ -81,6 +99,13 @@ var TimestampExp = jet.TimestampExp
 // Does not add sql cast to generated sql builder output.
 var TimestampzExp = jet.TimestampzExp
 
+// RangeExp is range expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as range expression.
+// Does not add sql cast to generated sql builder output.
+func RangeExp[T Expression](expression T) jet.Range[T] {
+	return jet.RangeExp[T](expression)
+}
+
 // RawArgs is type used to pass optional arguments to Raw method
 type RawArgs = map[string]interface{}
 
@@ -90,15 +115,21 @@ type RawArgs = map[string]interface{}
 var (
 	Raw = jet.Raw
 
-	RawBool       = jet.RawBool
-	RawInt        = jet.RawInt
-	RawFloat      = jet.RawFloat
-	RawString     = jet.RawString
-	RawTime       = jet.RawTime
-	RawTimez      = jet.RawTimez
-	RawTimestamp  = jet.RawTimestamp
-	RawTimestampz = jet.RawTimestampz
-	RawDate       = jet.RawDate
+	RawBool            = jet.RawBool
+	RawInt             = jet.RawInt
+	RawFloat           = jet.RawFloat
+	RawString          = jet.RawString
+	RawTime            = jet.RawTime
+	RawTimez           = jet.RawTimez
+	RawTimestamp       = jet.RawTimestamp
+	RawTimestampz      = jet.RawTimestampz
+	RawDate            = jet.RawDate
+	RawNumRange        = jet.RawRange[jet.NumericExpression]
+	RawInt4Range       = jet.RawRange[jet.IntegerExpression]
+	RawInt8Range       = jet.RawRange[jet.IntegerExpression]
+	RawTimestampRange  = jet.RawRange[jet.TimestampExpression]
+	RawTimestampzRange = jet.RawRange[jet.TimestampzExpression]
+	RawDateRange       = jet.RawRange[jet.DateExpression]
 )
 
 // Func can be used to call custom or unsupported database functions.

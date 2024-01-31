@@ -12,4 +12,8 @@ var (
 	NULL = jet.NULL
 	// STAR is jet equivalent of SQL *
 	STAR = jet.STAR
+	// PLUS_INFINITY is jet equivalent for sql infinity
+	PLUS_INFINITY = jet.PLUS_INFINITY
+	// MINUS_INFINITY is jet equivalent for sql -infinity
+	MINUS_INFINITY = jet.MINUS_INFINITY
 )
