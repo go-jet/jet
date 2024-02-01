@@ -548,11 +548,12 @@ func UseSchema(schema string) {
 `
 
 func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
-	skipForCockroachDB(t)
+	skipForCockroachDB(t) // because of rowid column
 
 	enumDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/enum/")
 	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
 	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")
+	viewDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/view/")
 
 	testutils.AssertFileNamesEqual(t, enumDir, "mood.go", "level.go")
 	testutils.AssertFileContent(t, enumDir+"/mood.go", moodEnumContent)
@@ -560,15 +561,16 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 
 	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go",
-		"components.go", "vulnerabilities.go")
-
+		"components.go", "vulnerabilities.go", "all_types_materialized_view.go")
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
 	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go",
 		"components.go", "vulnerabilities.go")
-
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
+
+	testutils.AssertFileNamesEqual(t, viewDir, "all_types_materialized_view.go", "all_types_view.go",
+		"view_use_schema.go")
 }
 
 var moodEnumContent = `
@@ -698,6 +700,8 @@ type AllTypes struct {
 	JsonbArray           string
 	TextMultiDimArrayPtr *string
 	TextMultiDimArray    string
+	MoodPtr              *Mood
+	Mood                 Mood
 }
 `
 
@@ -782,6 +786,8 @@ type allTypesTable struct {
 	JsonbArray           postgres.ColumnString
 	TextMultiDimArrayPtr postgres.ColumnString
 	TextMultiDimArray    postgres.ColumnString
+	MoodPtr              postgres.ColumnString
+	Mood                 postgres.ColumnString
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -883,8 +889,10 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		JsonbArrayColumn           = postgres.StringColumn("jsonb_array")
 		TextMultiDimArrayPtrColumn = postgres.StringColumn("text_multi_dim_array_ptr")
 		TextMultiDimArrayColumn    = postgres.StringColumn("text_multi_dim_array")
-		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
-		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
+		MoodPtrColumn              = postgres.StringColumn("mood_ptr")
+		MoodColumn                 = postgres.StringColumn("mood")
+		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
+		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
 	)
 
 	return allTypesTable{
@@ -952,6 +960,8 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		JsonbArray:           JsonbArrayColumn,
 		TextMultiDimArrayPtr: TextMultiDimArrayPtrColumn,
 		TextMultiDimArray:    TextMultiDimArrayColumn,
+		MoodPtr:              MoodPtrColumn,
+		Mood:                 MoodColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

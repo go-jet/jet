@@ -26,8 +26,25 @@ ORDER BY table_name;
 		return nil, fmt.Errorf("failed to query %s metadata: %w", tableType, err)
 	}
 
+	// add materialized views separately, because materialized views are not part of standard information schema
+	if tableType == metadata.ViewTable {
+		matViewQuery := `
+			select matviewname as "table.name"
+			from pg_matviews
+			where schemaname = $1;
+		`
+		var matViews []metadata.Table
+
+		_, err := qrm.Query(context.Background(), db, matViewQuery, []interface{}{schemaName}, &matViews)
+		if err != nil {
+			return nil, fmt.Errorf("failed to query materialized view metadata: %w", err)
+		}
+
+		tables = append(tables, matViews...)
+	}
+
 	for i := range tables {
-		tables[i].Columns, err = p.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
+		tables[i].Columns, err = getColumnsMetaData(db, schemaName, tables[i].Name)
 		if err != nil {
 			return nil, fmt.Errorf("failed to query %s columns metadata: %w", tableType, err)
 		}
@@ -36,39 +53,39 @@ ORDER BY table_name;
 	return tables, nil
 }
 
-func (p postgresQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
+func getColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
 	query := `
-WITH primaryKeys AS (
-	SELECT column_name
-	FROM information_schema.key_column_usage AS c
-		LEFT JOIN information_schema.table_constraints AS t
-			 ON t.constraint_name = c.constraint_name AND 
-				c.table_schema = t.table_schema AND 
-				c.table_name = t.table_name
-	WHERE t.table_schema = $1 AND t.table_name = $2 AND t.constraint_type = 'PRIMARY KEY'
-)
-SELECT column_name as "column.Name", 
-	   is_nullable = 'YES' as "column.isNullable",
-	   is_generated = 'ALWAYS' or is_generated = 'YES' as "column.isGenerated",
-	   (EXISTS(SELECT 1 from primaryKeys as pk where pk.column_name = columns.column_name)) as "column.IsPrimaryKey",
-	   dataType.kind as "dataType.Kind",	
-	   (case dataType.Kind when 'base' then data_type else LTRIM(udt_name, '_') end) as "dataType.Name", 
-	   FALSE as "dataType.isUnsigned"
-FROM information_schema.columns,
-	 LATERAL (select (case data_type
-				when 'ARRAY' then 'array'
-				when 'USER-DEFINED' then 
-					case (select t.typtype 
-						  from pg_type as t 
-						  join pg_namespace as p on p.oid = t.typnamespace 
-						  where t.typname = columns.udt_name and p.nspname = $1)
-						when 'e' then 'enum'
-						else 'user-defined'
-					end
-				else 'base'
-			end) as Kind) as dataType
-where table_schema = $1 and table_name = $2
-order by ordinal_position;
+select  
+    attr.attname as "column.Name",
+    exists(
+        select 1
+        from pg_catalog.pg_index indx
+        where attr.attrelid = indx.indrelid and attr.attnum = any(indx.indkey) and indx.indisprimary
+    ) as "column.IsPrimaryKey",
+    not attr.attnotnull as "column.isNullable",
+    attr.attgenerated = 's' as "column.isGenerated",
+    (case tp.typtype 
+        when 'b' then 'base'
+        when 'd' then 'base'
+        when 'e' then 'enum'
+        when 'r' then 'range'
+     end) as "dataType.Kind",
+    (case when tp.typtype = 'd' then (select pg_type.typname from pg_catalog.pg_type where pg_type.oid = tp.typbasetype)
+          when tp.typcategory = 'A' then pg_catalog.format_type(attr.atttypid, attr.atttypmod)
+          else tp.typname
+     end) as "dataType.Name",
+    false as "dataType.isUnsigned"
+from pg_catalog.pg_attribute as attr
+     join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
+     join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
+     join pg_catalog.pg_type as tp on tp.oid = attr.atttypid
+where 
+    ns.nspname = $1 and
+    cls.relname = $2 and 
+    not attr.attisdropped and 
+    attr.attnum > 0
+order by 
+    attr.attnum;
 `
 	var columns []metadata.Column
 	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName}, &columns)

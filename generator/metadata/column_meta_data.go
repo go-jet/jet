@@ -33,6 +33,7 @@ const (
 	EnumType        DataTypeKind = "enum"
 	UserDefinedType DataTypeKind = "user-defined"
 	ArrayType       DataTypeKind = "array"
+	RangeType       DataTypeKind = "range"
 )
 
 // DataType contains information about column data type

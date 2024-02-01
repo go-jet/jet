@@ -142,14 +142,15 @@ func DefaultTableSQLBuilderColumn(columnMetaData metadata.Column) TableSQLBuilde
 
 // getSqlBuilderColumnType returns type of jet sql builder column
 func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
-	if columnMetaData.DataType.Kind != metadata.BaseType {
+	if columnMetaData.DataType.Kind != metadata.BaseType &&
+		columnMetaData.DataType.Kind != metadata.RangeType {
 		return "String"
 	}
 
 	switch strings.ToLower(columnMetaData.DataType.Name) {
-	case "boolean":
+	case "boolean", "bool":
 		return "Bool"
-	case "smallint", "integer", "bigint",
+	case "smallint", "integer", "bigint", "int2", "int4", "int8",
 		"tinyint", "mediumint", "int", "year": //MySQL
 		return "Integer"
 	case "date":
@@ -157,21 +158,21 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	case "timestamp without time zone",
 		"timestamp", "datetime": //MySQL:
 		return "Timestamp"
-	case "timestamp with time zone":
+	case "timestamp with time zone", "timestamptz":
 		return "Timestampz"
 	case "time without time zone",
 		"time": //MySQL
 		return "Time"
-	case "time with time zone":
+	case "time with time zone", "timetz":
 		return "Timez"
 	case "interval":
 		return "Interval"
 	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
-		"char", "varchar", "nvarchar", "binary", "varbinary",
+		"char", "varchar", "nvarchar", "binary", "varbinary", "bpchar", "varbit",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
-	case "real", "numeric", "decimal", "double precision", "float",
+	case "real", "numeric", "decimal", "double precision", "float", "float4", "float8",
 		"double": // MySQL
 		return "Float"
 	default:

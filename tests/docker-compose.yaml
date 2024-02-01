@@ -39,14 +39,14 @@ services:
       - ./testdata/init/mysql:/docker-entrypoint-initdb.d
 
   cockroach:
-    image: cockroachdb/cockroach-unstable:v22.1.0-beta.4
+    image: cockroachdb/cockroach-unstable:v23.1.0-rc.2
     environment:
       - COCKROACH_USER=jet
       - COCKROACH_PASSWORD=jet
       - COCKROACH_DATABASE=jetdb
     ports:
       - "26257:26257"
-    command: start-single-node --insecure
+    command: start-single-node --accept-sql-without-tls
 #    volumes:
 #      - ./testdata/init/cockroach:/docker-entrypoint-initdb.d
 
