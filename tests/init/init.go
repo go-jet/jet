@@ -78,6 +78,7 @@ func main() {
 
 	if err != nil {
 		fmt.Println(errfmt.Trace(err))
+		os.Exit(1)
 	}
 }
 
