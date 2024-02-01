@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"testing"
 	"time"
@@ -630,6 +631,86 @@ FOR`
 		err = tx.Rollback()
 		require.NoError(t, err)
 	}
+}
+
+func TestRowLockWithUpdateOf(t *testing.T) {
+	skipForMariaDB(t) // MariaDB does not support UPDATE OF
+
+	stmt := SELECT(
+		Film.FilmID,
+		Film.Title,
+		Actor.ActorID,
+		Actor.FirstName,
+	).FROM(
+		Film.
+			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Actor, Actor.ActorID.EQ(FilmActor.ActorID)),
+	).LIMIT(
+		1,
+	).FOR(
+		UPDATE().OF(Film, Actor).NOWAIT(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name"
+FROM dvds.film
+     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+     INNER JOIN dvds.film_actor ON (film_actor.film_id = film.film_id)
+     INNER JOIN dvds.actor ON (actor.actor_id = film_actor.actor_id)
+LIMIT 1
+FOR UPDATE OF film, actor NOWAIT;
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var dest []struct {
+			model.Film
+			CategoryID int
+			Actor      []model.Actor
+		}
+
+		err := stmt.Query(tx, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 1)
+	})
+}
+
+func TestRowLockWithUpdateOfAliasedTable(t *testing.T) {
+	skipForMariaDB(t) // MariaDB does not support UPDATE OF
+
+	myFilm := Film.AS("myFilm")
+
+	stmt := SELECT(
+		myFilm.FilmID,
+		myFilm.Title,
+	).FROM(
+		myFilm,
+	).LIMIT(
+		1,
+	).FOR(
+		UPDATE().OF(myFilm),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT ''myFilm''.film_id AS "myFilm.film_id",
+     ''myFilm''.title AS "myFilm.title"
+FROM dvds.film AS ''myFilm''
+LIMIT 1
+FOR UPDATE OF ''myFilm'';
+`, "''", "`"))
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		var dest []struct {
+			model.Film `alias:"myFilm.*"`
+		}
+
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 1)
+	})
 }
 
 func TestExpressionWrappers(t *testing.T) {
