@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/qrm"
-	"golang.org/x/sync/errgroup"
 )
 
 // mySqlQuerySet is dialect query set for MySQL
@@ -16,34 +15,8 @@ type mySqlQuerySet struct{}
 
 func (m mySqlQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name"
-FROM INFORMATION_SCHEMA.tables
-WHERE table_schema = ? and table_type = ?
-ORDER BY table_name;
-`
-	var tables []metadata.Table
-
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query %s metadata result: %w", tableType, err)
-	}
-
-	wg := errgroup.Group{}
-	for i := 0; i < len(tables); i++ {
-		i := i
-		wg.Go(func() (err1 error) {
-			tables[i].Columns, err1 = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
-			return err1
-		})
-	}
-
-	err = wg.Wait()
-	return tables, err
-}
-
-func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
-	query := `
 SELECT
+		t.table_name as "table.name",
 		col.COLUMN_NAME AS "column.Name",
 		col.IS_NULLABLE = "YES" AS "column.IsNullable",
 		col.COLUMN_COMMENT AS "column.Comment",
@@ -56,30 +29,32 @@ SELECT
 		) AS "dataType.Name",
 		IF (col.DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind",
 		col.COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned"
-FROM
+FROM INFORMATION_SCHEMA.tables AS t
+INNER JOIN
 		information_schema.columns AS col
+		ON t.table_schema = col.table_schema AND t.table_name = col.table_name
 LEFT JOIN (
-		SELECT k.column_name, 1 AS IsPrimaryKey
+		SELECT k.column_name, 1 AS IsPrimaryKey, k.table_name
 		FROM information_schema.table_constraints t
 		JOIN information_schema.key_column_usage k USING(constraint_name, table_schema, table_name)
 		WHERE t.table_schema =  ?
-			AND t.table_name = ?
 			AND t.constraint_type = 'PRIMARY KEY'
-) AS pk ON col.COLUMN_NAME = pk.column_name
-WHERE
-		col.table_schema = ?
-		AND col.table_name = ?
+) AS pk ON col.COLUMN_NAME = pk.column_name AND col.table_name = pk.table_name 
+WHERE t.table_schema = ?
+	AND t.table_type = ?
 ORDER BY
+		t.table_name,
 		col.ordinal_position;
 	`
 
-	var columns []metadata.Column
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, schemaName, tableName}, &columns)
+	var tables []metadata.Table
+
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, schemaName, tableType}, &tables)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query %s column meta data: %w", tableName, err)
+		return nil, fmt.Errorf("failed to query column meta data: %w", err)
 	}
 
-	return columns, nil
+	return tables, nil
 }
 
 func (m mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
