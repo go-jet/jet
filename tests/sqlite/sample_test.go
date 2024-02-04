@@ -32,7 +32,8 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 SELECT people.people_id AS "people.people_id",
      people.people_name AS "people.people_name",
      people.people_height_cm AS "people.people_height_cm",
-     people.people_height_in AS "people.people_height_in"
+     people.people_height_inch AS "people.people_height_inch",
+     people.people_height_feet AS "people.people_height_feet"
 FROM people
 WHERE people.people_id = ?;
 `)
@@ -43,7 +44,7 @@ WHERE people.people_id = ?;
 
 		require.Equal(t, "Carla", result.PeopleName)
 		require.Equal(t, 155., *result.PeopleHeightCm)
-		require.InEpsilon(t, 61.02, *result.PeopleHeightIn, 1e-3)
+		require.InEpsilon(t, 61.02, *result.PeopleHeightInch, 1e-3)
 	})
 
 	t.Run("should insert without generated columns", func(t *testing.T) {
@@ -53,7 +54,7 @@ WHERE people.people_id = ?;
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: testutils.Float64Ptr(120),
+					PeopleHeightCm: testutils.Float64Ptr(190),
 				},
 			).RETURNING(
 				People.AllColumns,
@@ -61,18 +62,21 @@ WHERE people.people_id = ?;
 
 			testutils.AssertDebugStatementSql(t, insertQuery, `
 INSERT INTO people (people_name, people_height_cm)
-VALUES ('Dario', 120)
+VALUES ('Dario', 190)
 RETURNING people.people_id AS "people.people_id",
           people.people_name AS "people.people_name",
           people.people_height_cm AS "people.people_height_cm",
-          people.people_height_in AS "people.people_height_in";
+          people.people_height_inch AS "people.people_height_inch",
+          people.people_height_feet AS "people.people_height_feet";
 `)
 			var result model.People
 			err := insertQuery.Query(tx, &result)
 			require.NoError(t, err)
 
 			require.Equal(t, "Dario", result.PeopleName)
-			require.Equal(t, 120., *result.PeopleHeightCm)
+			require.Equal(t, 190., *result.PeopleHeightCm)
+			require.InEpsilon(t, float32(74.80314), *result.PeopleHeightInch, 1e-3)
+			require.InEpsilon(t, float32(6.233595), *result.PeopleHeightFeet, 1e-3)
 		})
 	})
 }

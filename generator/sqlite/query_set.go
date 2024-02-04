@@ -89,7 +89,7 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 	var columns []metadata.Column
 
 	for _, columnInfo := range columnInfos {
-		columnType := getColumnType(columnInfo.Type)
+		columnType := strings.TrimSuffix(getColumnType(columnInfo.Type), " GENERATED ALWAYS")
 		isGenerated := columnInfo.Hidden == 2 || columnInfo.Hidden == 3 // stored or virtual column
 
 		columns = append(columns, metadata.Column{
