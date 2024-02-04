@@ -8,7 +8,7 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: circleci/golang:1.19
+      - image: cimg/go:1.21.6
       - image: circleci/postgres:12
         environment:
           POSTGRES_USER: jet
