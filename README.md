@@ -121,9 +121,9 @@ As command output suggest, Jet will:
 
 Generated files folder structure will look like this:
 ```sh 
-|-- .gen                              # -path
-|   `-- jetdb                         # database name
-|       `-- dvds                      # schema name
+|-- .gen                              # path
+|   -- jetdb                          # database name
+|       -- dvds                       # schema name
 |           |-- enum                  # sql builder package for enums
 |           |   |-- mpaa_rating.go
 |           |-- table                 # sql builder package for tables
@@ -131,7 +131,7 @@ Generated files folder structure will look like this:
 |               |-- address.go
 |               |-- category.go
 |               ...
-|           |-- view                 # sql builder package for views
+|           |-- view                  # sql builder package for views
 |               |-- actor_info.go
 |               |-- film_list.go
 |               ...
@@ -530,8 +530,8 @@ Automatic scan to arbitrary structure removes a lot of headache and boilerplate 
 
 ##### Speed of execution
 
-While ORM libraries can introduce significant performance penalties due to number of round-trips to the database, 
-Jet will always perform better as developers can write complex query and retrieve result with a single database call. 
+While ORM libraries can introduce significant performance penalties due to number of round-trips to the database(N+1 query problem), 
+`jet` will always perform better as developers can write complex query and retrieve result with a single database call. 
 Thus handler time lost on latency between server and database can be constant. Handler execution will be proportional 
 only to the query complexity and the number of rows returned from database. 
 
