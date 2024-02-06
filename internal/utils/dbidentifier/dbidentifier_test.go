@@ -1,8 +1,9 @@
 package dbidentifier
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestToGoIdentifier(t *testing.T) {
@@ -22,4 +23,7 @@ func TestToGoIdentifier(t *testing.T) {
 	require.Equal(t, ToGoIdentifier("My_Table"), "MyTable")
 	require.Equal(t, ToGoIdentifier("My Table"), "MyTable")
 	require.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
+
+	require.Equal(t, ToGoIdentifier("My-Table+"), "MyTablePlus")
+	require.Equal(t, ToGoIdentifier("My-Table-"), "MyTableMinus")
 }
