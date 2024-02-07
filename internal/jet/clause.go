@@ -234,6 +234,29 @@ func (o *ClauseOffset) Serialize(statementType StatementType, out *SQLBuilder, o
 	}
 }
 
+// ClauseFetch struct
+type ClauseFetch struct {
+	Count    IntegerExpression
+	WithTies bool
+}
+
+// Serialize serializes ClauseFetch into sql builder output
+func (o *ClauseFetch) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if is.Nil(o.Count) {
+		return
+	}
+
+	out.NewLine()
+	out.WriteString("FETCH FIRST")
+	o.Count.serialize(statementType, out, options...)
+
+	if o.WithTies {
+		out.WriteString("ROWS WITH TIES")
+	} else {
+		out.WriteString("ROWS ONLY")
+	}
+}
+
 // ClauseFor struct
 type ClauseFor struct {
 	Lock RowLock

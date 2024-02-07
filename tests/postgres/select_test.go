@@ -236,6 +236,90 @@ LIMIT 12;
 	require.NoError(t, err)
 }
 
+func TestFetchFirst(t *testing.T) {
+
+	t.Run("rows only", func(t *testing.T) {
+		stmt := SELECT(Actor.AllColumns).
+			FROM(Actor).
+			ORDER_BY(Actor.ActorID).
+			OFFSET(2).
+			FETCH_FIRST(Int(3)).ROWS_ONLY()
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor
+ORDER BY actor.actor_id
+OFFSET $1
+FETCH FIRST $2 ROWS ONLY;
+`)
+
+		var dest []model.Actor
+
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 3)
+		require.Equal(t, dest[0].ActorID, int32(3))
+		require.Equal(t, dest[2].ActorID, int32(5))
+	})
+
+	t.Run("rows with ties", func(t *testing.T) {
+		skipForCockroachDB(t) // ROWS_WITH_TIES is not supported on cockroachdb
+
+		stmt := SELECT(Actor.AllColumns).
+			FROM(Actor).
+			ORDER_BY(Actor.LastUpdate).
+			FETCH_FIRST(Int(3)).ROWS_WITH_TIES()
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor
+ORDER BY actor.last_update
+FETCH FIRST $1 ROWS WITH TIES;
+`)
+
+		var dest []model.Actor
+
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 200)
+	})
+
+	t.Run("complex expression", func(t *testing.T) {
+		stmt := SELECT(Actor.AllColumns).
+			FROM(Actor).
+			ORDER_BY(Actor.LastUpdate).
+			FETCH_FIRST(IntExp(
+				SELECT(MAX(Store.StoreID)).
+					FROM(Store),
+			)).ROWS_ONLY()
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor
+ORDER BY actor.last_update
+FETCH FIRST (
+     SELECT MAX(store.store_id)
+     FROM dvds.store
+) ROWS ONLY;
+`)
+
+		var dest []model.Actor
+
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 2)
+	})
+}
+
 func TestJoinQueryStruct(t *testing.T) {
 
 	expectedSQL := `
