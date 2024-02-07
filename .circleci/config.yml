@@ -9,7 +9,7 @@ jobs:
     docker:
       # specify the version
       - image: cimg/go:1.21.6
-      - image: circleci/postgres:12
+      - image: cimg/postgres:16.1.0
         environment:
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
