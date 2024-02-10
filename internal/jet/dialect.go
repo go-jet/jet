@@ -12,6 +12,7 @@ type Dialect interface {
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
 	IsReservedWord(name string) bool
+	SerializeOrderBy() func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 }
 
 // SerializerFunc func
@@ -33,6 +34,7 @@ type DialectParams struct {
 	IdentifierQuoteChar        byte
 	ArgumentPlaceholder        QueryPlaceholderFunc
 	ReservedWords              []string
+	SerializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 }
 
 // NewDialect creates new dialect with params
@@ -46,6 +48,7 @@ func NewDialect(params DialectParams) Dialect {
 		identifierQuoteChar:        params.IdentifierQuoteChar,
 		argumentPlaceholder:        params.ArgumentPlaceholder,
 		reservedWords:              arrayOfStringsToMapOfStrings(params.ReservedWords),
+		serializeOrderBy:           params.SerializeOrderBy,
 	}
 }
 
@@ -58,8 +61,7 @@ type dialectImpl struct {
 	identifierQuoteChar        byte
 	argumentPlaceholder        QueryPlaceholderFunc
 	reservedWords              map[string]bool
-
-	supportsReturning bool
+	serializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 }
 
 func (d *dialectImpl) Name() string {
@@ -99,6 +101,10 @@ func (d *dialectImpl) ArgumentPlaceholder() QueryPlaceholderFunc {
 func (d *dialectImpl) IsReservedWord(name string) bool {
 	_, isReservedWord := d.reservedWords[strings.ToLower(name)]
 	return isReservedWord
+}
+
+func (d *dialectImpl) SerializeOrderBy() func(expression Expression, ascending, nullsFirst *bool) SerializerFunc {
+	return d.serializeOrderBy
 }
 
 func arrayOfStringsToMapOfStrings(arr []string) map[string]bool {

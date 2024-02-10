@@ -26,7 +26,8 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(int) string {
 			return "?"
 		},
-		ReservedWords: reservedWords,
+		ReservedWords:    reservedWords,
+		SerializeOrderBy: serializeOrderBy,
 	}
 
 	return jet.NewDialect(mySQLDialectParams)
@@ -159,6 +160,53 @@ func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 		}
 
 		jet.Serialize(expressions[1], statement, out, options...)
+	}
+}
+
+func serializeOrderBy(expression Expression, ascending, nullsFirst *bool) jet.SerializerFunc {
+	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
+
+		if nullsFirst == nil {
+			jet.SerializeForOrderBy(expression, statement, out)
+
+			if ascending != nil {
+				serializeAscending(*ascending, out)
+			}
+			return
+		}
+
+		asc := true
+
+		if ascending != nil {
+			asc = *ascending
+		}
+
+		if asc {
+			if !*nullsFirst {
+				jet.SerializeForOrderBy(expression.IS_NULL(), statement, out)
+				out.WriteString(", ")
+			}
+			jet.SerializeForOrderBy(expression, statement, out)
+			if ascending != nil {
+				serializeAscending(asc, out)
+			}
+		} else {
+			if *nullsFirst {
+				jet.SerializeForOrderBy(expression.IS_NOT_NULL(), statement, out)
+				out.WriteString(", ")
+			}
+
+			jet.SerializeForOrderBy(expression, statement, out)
+			serializeAscending(asc, out)
+		}
+	}
+}
+
+func serializeAscending(ascending bool, out *jet.SQLBuilder) {
+	if ascending {
+		out.WriteString("ASC")
+	} else {
+		out.WriteString("DESC")
 	}
 }
 

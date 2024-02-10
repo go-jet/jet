@@ -44,6 +44,10 @@ func Serialize(exp Serializer, statementType StatementType, out *SQLBuilder, opt
 	exp.serialize(statementType, out, options...)
 }
 
+func SerializeForOrderBy(exp Expression, statementType StatementType, out *SQLBuilder) {
+	exp.serializeForOrderBy(statementType, out)
+}
+
 func contains(options []SerializeOption, option SerializeOption) bool {
 	for _, opt := range options {
 		if opt == option {

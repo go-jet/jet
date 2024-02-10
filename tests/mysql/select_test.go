@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"github.com/go-jet/jet/v2/postgres"
 	"strings"
 	"testing"
 	"time"
@@ -294,6 +295,296 @@ ORDER BY inventory.film_id, inventory.store_id;
 	}
 ]
 `)
+}
+
+func TestOrderBy(t *testing.T) {
+	// NULLS_FIRST and NULLS_LAST are simulated using IS_NULL, ...
+
+	ensureNullsFirstRentalResult := func(t *testing.T, stmt postgres.Statement, asc bool) {
+		var dest []model.Rental
+
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 200)
+		require.Nil(t, dest[0].ReturnDate)
+		require.NotNil(t, dest[199].ReturnDate)
+
+		if asc {
+			require.True(t, dest[198].ReturnDate.Before(*dest[199].ReturnDate))
+		} else {
+			require.True(t, dest[199].ReturnDate.Before(*dest[198].ReturnDate))
+		}
+	}
+
+	ensureNullsLastRentalResult := func(t *testing.T, stmt postgres.Statement, asc bool) {
+		var dest []model.Rental
+
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 200)
+		require.NotNil(t, dest[0].ReturnDate)
+		require.Nil(t, dest[199].ReturnDate)
+
+		if asc {
+			require.True(t, dest[0].ReturnDate.Before(*dest[1].ReturnDate))
+		} else {
+			require.True(t, dest[1].ReturnDate.Before(*dest[0].ReturnDate))
+		}
+	}
+
+	t.Run("default", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate,
+		).LIMIT(200)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date
+LIMIT 200;
+`)
+		ensureNullsFirstRentalResult(t, stmt, true)
+	})
+
+	t.Run("NULLS FIRST", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.NULLS_FIRST(),
+		).LIMIT(200)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date
+LIMIT 200;
+`)
+		ensureNullsFirstRentalResult(t, stmt, true)
+	})
+
+	t.Run("NULLS LAST", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.NULLS_LAST(),
+		).LIMIT(200).OFFSET(15800)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date IS NULL, rental.return_date
+LIMIT 200
+OFFSET 15800;
+`)
+		ensureNullsLastRentalResult(t, stmt, true)
+	})
+
+	t.Run("ASC", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.ASC(),
+		).LIMIT(200)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date ASC
+LIMIT 200;
+`)
+		ensureNullsFirstRentalResult(t, stmt, true)
+	})
+
+	t.Run("ASC NULLS FIRST", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.ASC().NULLS_FIRST(),
+		).LIMIT(200)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date ASC
+LIMIT 200;
+`)
+
+		ensureNullsFirstRentalResult(t, stmt, true)
+	})
+
+	t.Run("ASC NULLS LAST", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.ASC().NULLS_LAST(),
+		).LIMIT(200).OFFSET(15800)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date IS NULL, rental.return_date ASC
+LIMIT 200
+OFFSET 15800;
+`)
+
+		ensureNullsLastRentalResult(t, stmt, true)
+	})
+
+	t.Run("DESC", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.DESC(),
+		).LIMIT(200).OFFSET(15800)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date DESC
+LIMIT 200
+OFFSET 15800;
+`)
+
+		ensureNullsLastRentalResult(t, stmt, false)
+	})
+
+	t.Run("DESC NULLS LAST", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.DESC().NULLS_LAST(),
+		).LIMIT(200).OFFSET(15800)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date DESC
+LIMIT 200
+OFFSET 15800;
+`)
+
+		ensureNullsLastRentalResult(t, stmt, false)
+	})
+
+	t.Run("DESC NULLS FIRST", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.ReturnDate.DESC().NULLS_FIRST(),
+		).LIMIT(200)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.return_date IS NOT NULL, rental.return_date DESC
+LIMIT 200;
+`)
+
+		ensureNullsFirstRentalResult(t, stmt, false)
+	})
+
+	t.Run("complex", func(t *testing.T) {
+		stmt := SELECT(
+			Rental.AllColumns,
+		).FROM(
+			Rental,
+		).ORDER_BY(
+			Rental.RentalID.DESC(),
+			Rental.ReturnDate.DESC().NULLS_FIRST(),
+			Rental.LastUpdate.ASC(),
+			Rental.InventoryID.ADD(Rental.RentalID).ASC().NULLS_LAST(),
+		).LIMIT(200)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+SELECT rental.rental_id AS "rental.rental_id",
+     rental.rental_date AS "rental.rental_date",
+     rental.inventory_id AS "rental.inventory_id",
+     rental.customer_id AS "rental.customer_id",
+     rental.return_date AS "rental.return_date",
+     rental.staff_id AS "rental.staff_id",
+     rental.last_update AS "rental.last_update"
+FROM dvds.rental
+ORDER BY rental.rental_id DESC, rental.return_date IS NOT NULL, rental.return_date DESC, rental.last_update ASC, (rental.inventory_id + rental.rental_id) IS NULL, rental.inventory_id + rental.rental_id ASC
+LIMIT 200;
+`)
+		require.NoError(t, stmt.Query(db, &struct{}{}))
+
+	})
+
 }
 
 func TestSubQuery(t *testing.T) {
