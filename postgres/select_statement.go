@@ -53,6 +53,8 @@ type SelectStatement interface {
 	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
+	// OFFSET_e can be used when an integer expression is needed as offset, otherwise OFFSET can be used
+	OFFSET_e(offset IntegerExpression) SelectStatement
 	FETCH_FIRST(count IntegerExpression) fetchExpand
 	FOR(lock RowLock) SelectStatement
 
@@ -91,7 +93,6 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 		newSelect.From.Tables = []jet.Serializer{table}
 	}
 	newSelect.Limit.Count = -1
-	newSelect.Offset.Count = -1
 
 	newSelect.setOperatorsImpl.parent = newSelect
 
@@ -157,6 +158,11 @@ func (s *selectStatementImpl) LIMIT(limit int64) SelectStatement {
 }
 
 func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
+	s.Offset.Count = Int(offset)
+	return s
+}
+
+func (s *selectStatementImpl) OFFSET_e(offset IntegerExpression) SelectStatement {
 	s.Offset.Count = offset
 	return s
 }

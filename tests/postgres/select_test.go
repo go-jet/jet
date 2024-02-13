@@ -320,6 +320,38 @@ FETCH FIRST (
 	})
 }
 
+func TestOffsetExpression(t *testing.T) {
+
+	stmt := SELECT(Actor.AllColumns).
+		FROM(Actor).
+		ORDER_BY(Actor.ActorID).
+		OFFSET_e(IntExp(
+			SELECT(MAX(Store.StoreID)).
+				FROM(Store),
+		)).LIMIT(10)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor
+ORDER BY actor.actor_id
+LIMIT 10
+OFFSET (
+     SELECT MAX(store.store_id)
+     FROM dvds.store
+);
+`)
+
+	var dest []model.Actor
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Len(t, dest, 10)
+	require.Equal(t, dest[0].ActorID, int32(3))
+}
+
 func TestJoinQueryStruct(t *testing.T) {
 
 	expectedSQL := `
@@ -2365,16 +2397,14 @@ OFFSET 20;
 		Payment.
 			SELECT(Payment.PaymentID, Payment.Amount).
 			WHERE(Payment.Amount.GT_EQ(Float(200))),
-	).
-		ORDER_BY(IntegerColumn("payment.payment_id").ASC(), Payment.Amount.DESC()).
-		LIMIT(10).
-		OFFSET(20)
-
-	//fmt.Println(query.DebugSql())
+	).ORDER_BY(
+		IntegerColumn("payment.payment_id").ASC(),
+		Payment.Amount.DESC(),
+	).LIMIT(10).OFFSET(20)
 
 	testutils.AssertDebugStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
 
-	dest := []model.Payment{}
+	var dest []model.Payment
 
 	err := query.Query(db, &dest)
 
@@ -2392,6 +2422,56 @@ OFFSET 20;
 		PaymentID: 17532,
 		Amount:    8.99,
 	})
+}
+
+func TestUnionOffsetWithExpression(t *testing.T) {
+	stmt := UNION(
+		SELECT(Rental.AllColumns).
+			FROM(Rental).
+			WHERE(Rental.ReturnDate.IS_NULL()),
+
+		SELECT(Rental.AllColumns).
+			FROM(Rental).
+			WHERE(Rental.LastUpdate.GT(LOCALTIMESTAMP())),
+	).OFFSET_e(IntExp(
+		SELECT(Int32(3)),
+	)).LIMIT(10)
+
+	testutils.AssertStatementSql(t, stmt, `
+(
+     SELECT rental.rental_id AS "rental.rental_id",
+          rental.rental_date AS "rental.rental_date",
+          rental.inventory_id AS "rental.inventory_id",
+          rental.customer_id AS "rental.customer_id",
+          rental.return_date AS "rental.return_date",
+          rental.staff_id AS "rental.staff_id",
+          rental.last_update AS "rental.last_update"
+     FROM dvds.rental
+     WHERE rental.return_date IS NULL
+)
+UNION
+(
+     SELECT rental.rental_id AS "rental.rental_id",
+          rental.rental_date AS "rental.rental_date",
+          rental.inventory_id AS "rental.inventory_id",
+          rental.customer_id AS "rental.customer_id",
+          rental.return_date AS "rental.return_date",
+          rental.staff_id AS "rental.staff_id",
+          rental.last_update AS "rental.last_update"
+     FROM dvds.rental
+     WHERE rental.last_update > LOCALTIMESTAMP
+)
+LIMIT $1
+OFFSET (
+     SELECT $2::integer
+);
+`)
+
+	var dest []model.Rental
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.Len(t, dest, 10)
 }
 
 func TestAllSetOperators(t *testing.T) {

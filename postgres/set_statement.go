@@ -45,6 +45,8 @@ type setStatement interface {
 
 	LIMIT(limit int64) setStatement
 	OFFSET(offset int64) setStatement
+	// OFFSET_e can be used when an integer expression is needed as offset, otherwise OFFSET can be used
+	OFFSET_e(offset IntegerExpression) setStatement
 
 	AsTable(alias string) SelectTable
 }
@@ -107,7 +109,6 @@ func newSetStatementImpl(operator string, all bool, selects []jet.SerializerStat
 	newSetStatement.setOperator.All = all
 	newSetStatement.setOperator.Selects = selects
 	newSetStatement.setOperator.Limit.Count = -1
-	newSetStatement.setOperator.Offset.Count = -1
 
 	newSetStatement.setOperatorsImpl.parent = newSetStatement
 
@@ -125,6 +126,11 @@ func (s *setStatementImpl) LIMIT(limit int64) setStatement {
 }
 
 func (s *setStatementImpl) OFFSET(offset int64) setStatement {
+	s.setOperator.Offset.Count = Int(offset)
+	return s
+}
+
+func (s *setStatementImpl) OFFSET_e(offset IntegerExpression) setStatement {
 	s.setOperator.Offset.Count = offset
 	return s
 }
