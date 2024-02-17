@@ -4,7 +4,7 @@ go 1.11
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgconn v1.14.1
 	github.com/lib/pq v1.10.8
 	github.com/mattn/go-sqlite3 v1.14.17
