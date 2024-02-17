@@ -68,11 +68,13 @@ type ViewSQLBuilder = TableSQLBuilder
 
 // DefaultTableSQLBuilder returns default implementation for TableSQLBuilder
 func DefaultTableSQLBuilder(tableMetaData metadata.Table) TableSQLBuilder {
+	tableNameGoIdentifier := dbidentifier.ToGoIdentifier(tableMetaData.Name)
+
 	return TableSQLBuilder{
 		Path:         "/table",
 		FileName:     dbidentifier.ToGoFileName(tableMetaData.Name),
-		InstanceName: dbidentifier.ToGoIdentifier(tableMetaData.Name),
-		TypeName:     dbidentifier.ToGoIdentifier(tableMetaData.Name) + "Table",
+		InstanceName: tableNameGoIdentifier,
+		TypeName:     tableNameGoIdentifier + "Table",
 		DefaultAlias: "",
 		Column:       DefaultTableSQLBuilderColumn,
 	}
