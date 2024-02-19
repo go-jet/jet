@@ -35,6 +35,7 @@ WHERE actor.actor_id = 2;
 		WHERE(Actor.ActorID.EQ(Int(2)))
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(2))
+	require.Equal(t, query.Args(), []interface{}{int64(2)})
 
 	actor := model.Actor{}
 	err := query.Query(db, &actor)
@@ -144,6 +145,7 @@ LIMIT 30;
 	).LIMIT(30)
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(30))
+	require.Equal(t, query.Args(), []interface{}{int64(30)})
 
 	dest := []model.Payment{}
 
@@ -230,8 +232,9 @@ LIMIT 12;
 	//fmt.Println(query.DebugSql())
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
+	require.Equal(t, query.Args(), []interface{}{int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12)})
 
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(db, &dest)
 	require.NoError(t, err)
 }
@@ -756,6 +759,8 @@ FROM dvds.city
 WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
+
+	require.Equal(t, stmt.Args(), []interface{}{"London", "York"})
 
 	err := stmt.Query(db, &dest)
 
@@ -2899,6 +2904,7 @@ SELECT true,
      'raw',
      'date';
 `)
+	require.Empty(t, query.Args())
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
@@ -3747,6 +3753,7 @@ SELECT dvds.get_film_count(100, 120) AS "film_count";
 	stmt2 := SELECT(
 		Raw("dvds.get_film_count(#1, #2)", RawArgs{"#1": 100, "#2": 120}).AS("film_count"),
 	)
+	require.Equal(t, stmt2.Args(), []interface{}{100, 120})
 
 	err = stmt2.Query(db, &dest)
 	require.NoError(t, err)
@@ -3926,4 +3933,86 @@ var lastCustomer = model.Customer{
 	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
 	Active:     testutils.Int32Ptr(1),
+}
+
+func TestPreparedStatementSelect(t *testing.T) {
+	ctx := context.Background()
+
+	var dbPrepStmt PreparedStatement
+	var txPrepStmt PreparedStatement
+	var connPrepStmt PreparedStatement
+	var dbTxPrepStmt PreparedStatement
+	var rowsPrepStmt PreparedStatement
+
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+
+	conn, err := db.Conn(ctx)
+	require.NoError(t, err)
+	defer conn.Close()
+
+	var dest model.Actor
+
+	for i := 1; i < 20; i++ {
+		stmt := SELECT(Actor.AllColumns).
+			FROM(Actor).
+			WHERE(Actor.ActorID.EQ(Int32(int32(i))))
+
+		// db prep use case
+		err := dbPrepStmt.Prepare(ctx, db, stmt)
+		require.NoError(t, err)
+		err = dbPrepStmt.Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		testutils.AssertStatementSql(t, dbPrepStmt, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM dvds.actor
+WHERE actor.actor_id = $1::integer;
+`)
+
+		// tx prep use case
+		err = txPrepStmt.Prepare(ctx, tx, stmt)
+		require.NoError(t, err)
+		err = txPrepStmt.Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// conn prep use case
+		err = connPrepStmt.Prepare(ctx, conn, stmt)
+		require.NoError(t, err)
+		err = connPrepStmt.Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// database tx prep use case
+		err = dbTxPrepStmt.Prepare(ctx, db, stmt)
+		require.NoError(t, err)
+		err = dbTxPrepStmt.Stmt(tx).Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// rows prep use case
+		err = rowsPrepStmt.Prepare(ctx, db, stmt)
+		require.NoError(t, err)
+		rows, err := rowsPrepStmt.Rows(ctx)
+		require.NoError(t, err)
+		defer rows.Close()
+
+		for rows.Next() {
+			err := rows.Scan(&dest)
+			require.NoError(t, err)
+			require.NotEmpty(t, dest)
+		}
+	}
+
+	require.NoError(t, dbPrepStmt.Close())
+	require.NoError(t, txPrepStmt.Close())
+	require.NoError(t, connPrepStmt.Close())
+	require.NoError(t, dbTxPrepStmt.Close())
+	require.NoError(t, rowsPrepStmt.Close())
 }

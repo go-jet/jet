@@ -274,7 +274,7 @@ func extractTableAndColumnName(alias string) (tableName string, columnName strin
 }
 
 func serializeToDefaultDebugString(expr Serializer) string {
-	out := SQLBuilder{Dialect: defaultDialect, Debug: true}
+	out := SQLBuilder{Dialect: defaultDialect, Mode: Debug}
 	expr.serialize(SelectStatementType, &out)
 	return out.Buff.String()
 }

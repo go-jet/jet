@@ -12,20 +12,35 @@ import (
 // ErrNoRows is returned by Query when query result set is empty
 var ErrNoRows = errors.New("qrm: no rows in result set")
 
-// Query executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
+// Query executes Query Result Mapping (QRM) of `query` with a list of parametrized arguments `arg` over database connection `db`
 // using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
 // If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
 func Query(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
-
 	must.BeInitializedPtr(db, "jet: db is nil")
 	must.BeInitializedPtr(destPtr, "jet: destination is nil")
 	must.BeTypeKind(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
 
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	rows, err := db.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	return queryToSliceOrStruct(ctx, rows, destPtr)
+}
+
+func queryToSliceOrStruct(ctx context.Context, rows *sql.Rows, destPtr interface{}) (rowsProcessed int64, err error) {
+
 	destinationPtrType := reflect.TypeOf(destPtr)
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		rowsProcessed, err := queryToSlice(ctx, db, query, args, destPtr)
+		rowsProcessed, err := QueryRowsToSlice(ctx, rows, destPtr)
 		if err != nil {
 			return rowsProcessed, fmt.Errorf("jet: %w", err)
 		}
@@ -34,7 +49,7 @@ func Query(ctx context.Context, db Queryable, query string, args []interface{}, 
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		rowsProcessed, err := queryToSlice(ctx, db, query, args, tempSlicePtrValue.Interface())
+		rowsProcessed, err := QueryRowsToSlice(ctx, rows, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return rowsProcessed, fmt.Errorf("jet: %w", err)
@@ -61,10 +76,25 @@ func Query(ctx context.Context, db Queryable, query string, args []interface{}, 
 	}
 }
 
+func QueryPreparedStatement(ctx context.Context, stmt *sql.Stmt, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(stmt, "jet: prepared statement is nil")
+	must.BeInitializedPtr(destPtr, "jet: destination is nil")
+	must.BeTypeKind(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
+
+	rows, err := stmt.QueryContext(ctx, args...)
+
+	if err != nil {
+		return
+	}
+	defer rows.Close() // TODO:
+
+	return queryToSliceOrStruct(ctx, rows, destPtr)
+}
+
 // ScanOneRowToDest will scan one row into struct destination
 func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interface{}) error {
 	must.BeInitializedPtr(destPtr, "jet: destination is nil")
-	must.BeTypeKind(destPtr, reflect.Ptr, "jet: destination has to be a pointer to slice or pointer to struct")
+	must.BeTypeKind(destPtr, reflect.Ptr, "jet: destination has to be a pointer to struct")
 
 	if len(scanContext.row) == 0 {
 		return errors.New("empty row slice")
@@ -87,17 +117,10 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 	return nil
 }
 
-func queryToSlice(ctx context.Context, db Queryable, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {
+func QueryRowsToSlice(ctx context.Context, rows *sql.Rows, slicePtr interface{}) (rowsProcessed int64, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-
-	rows, err := db.QueryContext(ctx, query, args...)
-
-	if err != nil {
-		return
-	}
-	defer rows.Close()
 
 	scanContext, err := NewScanContext(rows)
 

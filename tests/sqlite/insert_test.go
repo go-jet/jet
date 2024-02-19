@@ -359,3 +359,92 @@ func TestInsertContextDeadlineExceeded(t *testing.T) {
 	_, err = stmt.ExecContext(ctx, db)
 	require.Error(t, err, "context deadline exceeded")
 }
+
+func TestPreparedStatementInsert(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("tx prep stmt", func(t *testing.T) {
+		var txPrepStmt PreparedStatement
+		defer txPrepStmt.Close()
+
+		tx, err := sampleDB.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		for i := 1; i < 20; i++ {
+			stmt := Link.INSERT(Link.MutableColumns).
+				MODEL(model.Link{
+					URL:  "http://www.google.com",
+					Name: "Google",
+				})
+
+			err = txPrepStmt.Prepare(ctx, tx, stmt)
+			require.NoError(t, err)
+			res, err := txPrepStmt.Exec(ctx)
+			require.NoError(t, err)
+			rowsAffected, err := res.RowsAffected()
+			require.NoError(t, err)
+			require.Equal(t, rowsAffected, int64(1))
+
+			testutils.AssertStatementSql(t, txPrepStmt, `
+INSERT INTO link (url, name, description)
+VALUES (?, ?, ?);
+`)
+		}
+	})
+
+	t.Run("db tx prep stmt", func(t *testing.T) {
+		var dbTxPrepStmt PreparedStatement
+		defer dbTxPrepStmt.Close()
+
+		tx, err := sampleDB.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		var dest model.Link
+
+		for i := 1; i < 20; i++ {
+			stmt := Link.INSERT(Link.MutableColumns).
+				MODEL(model.Link{
+					URL:  "http://www.google.com",
+					Name: "Google",
+				}).RETURNING(Link.AllColumns)
+
+			err = dbTxPrepStmt.Prepare(ctx, sampleDB, stmt)
+			require.NoError(t, err)
+			err = dbTxPrepStmt.Stmt(tx).Query(ctx, &dest)
+			require.NoError(t, err)
+			require.NotEmpty(t, dest)
+		}
+	})
+
+	t.Run("rows prep stmt", func(t *testing.T) {
+		var prepStmt PreparedStatement
+		prepStmt.Close()
+
+		tx, err := sampleDB.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		var dest model.Link
+
+		for i := 1; i < 20; i++ {
+			stmt := Link.INSERT(Link.MutableColumns).
+				MODEL(model.Link{
+					URL:  "http://www.google.com",
+					Name: "Google",
+				})
+
+			err = prepStmt.Prepare(ctx, tx, stmt)
+			require.NoError(t, err)
+			rows, err := prepStmt.Rows(ctx)
+			require.NoError(t, err)
+
+			for rows.Next() {
+				err := rows.Scan(&dest)
+				require.NoError(t, err)
+				require.NotEmpty(t, dest)
+			}
+		}
+	})
+}

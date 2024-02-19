@@ -1692,3 +1692,76 @@ FROM dvds.actor;
 	require.NoError(t, err)
 	require.Len(t, actors, 200)
 }
+
+func TestPreparedStatementSelect(t *testing.T) {
+	ctx := context.Background()
+
+	var dbPrepStmt PreparedStatement
+	var txPrepStmt PreparedStatement
+	var connPrepStmt PreparedStatement
+	var dbTxPrepStmt PreparedStatement
+	var rowsPrepStmt PreparedStatement
+
+	tx, err := db.Begin()
+	require.NoError(t, err)
+	defer tx.Rollback()
+
+	conn, err := db.Conn(ctx)
+	require.NoError(t, err)
+	defer conn.Close()
+
+	var dest model.Actor
+
+	for i := 1; i < 20; i++ {
+		stmt := SELECT(Actor.AllColumns).
+			FROM(Actor).
+			WHERE(Actor.ActorID.EQ(Int32(int32(i))))
+
+		// db prep use case
+		err := dbPrepStmt.Prepare(ctx, db, stmt)
+		require.NoError(t, err)
+		err = dbPrepStmt.Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// tx prep use case
+		err = txPrepStmt.Prepare(ctx, tx, stmt)
+		require.NoError(t, err)
+		err = txPrepStmt.Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// conn prep use case
+		err = connPrepStmt.Prepare(ctx, conn, stmt)
+		require.NoError(t, err)
+		err = connPrepStmt.Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// database tx prep use case
+		err = dbTxPrepStmt.Prepare(ctx, db, stmt)
+		require.NoError(t, err)
+		err = dbTxPrepStmt.Stmt(tx).Query(ctx, &dest)
+		require.NoError(t, err)
+		require.NotEmpty(t, dest)
+
+		// rows prep use case
+		err = rowsPrepStmt.Prepare(ctx, db, stmt)
+		require.NoError(t, err)
+		rows, err := rowsPrepStmt.Rows(ctx)
+		require.NoError(t, err)
+		defer rows.Close()
+
+		for rows.Next() {
+			err := rows.Scan(&dest)
+			require.NoError(t, err)
+			require.NotEmpty(t, dest)
+		}
+	}
+
+	require.NoError(t, dbPrepStmt.Close())
+	require.NoError(t, txPrepStmt.Close())
+	require.NoError(t, connPrepStmt.Close())
+	require.NoError(t, dbTxPrepStmt.Close())
+	require.NoError(t, rowsPrepStmt.Close())
+}
