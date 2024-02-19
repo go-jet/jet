@@ -6,7 +6,7 @@ import (
 
 // Column struct
 type Column struct {
-	Name         string
+	Name         string `sql:"primary_key"`
 	IsPrimaryKey bool
 	IsNullable   bool
 	IsGenerated  bool
