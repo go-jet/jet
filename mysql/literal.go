@@ -1,8 +1,10 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
+	"fmt"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // Keywords
@@ -54,6 +56,17 @@ var String = jet.String
 // UUID is a helper function to create string literal expression from uuid object
 // value can be any uuid type with a String method
 var UUID = jet.UUID
+
+// UUIDToBin takes ay object with a String method and calls StringUUIDToBin.
+func UUIDToBin(str fmt.Stringer) StringExpression {
+	return StringUUIDToBin(str.String())
+}
+
+// StringUUIDToBin is a helper function that calls "uuid_to_bin" function on the passed value.
+func StringUUIDToBin(str string) StringExpression {
+	fn := Func("uuid_to_bin", String(str))
+	return StringExp(fn)
+}
 
 // Date creates new date literal
 func Date(year int, month time.Month, day int) DateExpression {

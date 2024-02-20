@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func TestBool(t *testing.T) {
@@ -80,4 +82,12 @@ func TestDateTime(t *testing.T) {
 func TestTimestamp(t *testing.T) {
 	assertSerialize(t, Timestamp(2010, time.March, 30, 10, 15, 30), `TIMESTAMP(?)`, "2010-03-30 10:15:30")
 	assertSerialize(t, TimestampT(time.Now()), `TIMESTAMP(?)`)
+}
+
+func TestUUIDToBin(t *testing.T) {
+	assertSerialize(t, UUIDToBin(uuid.Nil), `uuid_to_bin(?)`, uuid.Nil.String())
+}
+
+func TestStringUUIDToBin(t *testing.T) {
+	assertSerialize(t, StringUUIDToBin(uuid.Nil.String()), `uuid_to_bin(?)`, uuid.Nil.String())
 }
