@@ -118,3 +118,50 @@ WHERE link.name IN ('Gmail', 'Outlook');
 		require.NoError(t, err)
 	})
 }
+
+func TestDeletePreparedStatement(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("tx prep stmt", func(t *testing.T) {
+		var txPrepStmt PreparedStatement
+		defer txPrepStmt.Close()
+
+		tx, err := db.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		for i := 200; i < 204; i++ {
+			stmt := Link.DELETE().
+				WHERE(Link.ID.EQ(Int64(int64(i))))
+
+			err = txPrepStmt.Prepare(ctx, tx, stmt)
+			require.NoError(t, err)
+			res, err := txPrepStmt.Exec(ctx)
+			require.NoError(t, err)
+			rowsAffected, err := res.RowsAffected()
+			require.NoError(t, err)
+			require.Equal(t, rowsAffected, int64(1))
+		}
+	})
+
+	t.Run("db tx prep stmt", func(t *testing.T) {
+		var dbTxPrepStmt PreparedStatement
+		defer dbTxPrepStmt.Close()
+
+		tx, err := db.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		for i := 200; i < 204; i++ {
+			stmt := Link.DELETE().
+				WHERE(Link.ID.EQ(Int64(int64(i))))
+
+			err = dbTxPrepStmt.Prepare(ctx, db, stmt)
+			require.NoError(t, err)
+			res, err := dbTxPrepStmt.Stmt(tx).Exec(ctx)
+			rowsAffected, err := res.RowsAffected()
+			require.NoError(t, err)
+			require.Equal(t, rowsAffected, int64(1))
+		}
+	})
+}

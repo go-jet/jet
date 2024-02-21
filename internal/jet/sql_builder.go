@@ -15,6 +15,16 @@ import (
 	"unicode"
 )
 
+// Mode is sql builder mode of operation
+type Mode int
+
+// Different sql builder modes of operation
+const (
+	Standard Mode = iota
+	Debug
+	ArgsOnly
+)
+
 // SQLBuilder generates output SQL
 type SQLBuilder struct {
 	Dialect Dialect
@@ -24,7 +34,7 @@ type SQLBuilder struct {
 	lastChar byte
 	ident    int
 
-	Debug bool
+	Mode Mode
 }
 
 const tabSize = 4
@@ -32,6 +42,10 @@ const defaultIdent = 5
 
 // IncreaseIdent adds ident or defaultIdent number of spaces to each new line
 func (s *SQLBuilder) IncreaseIdent(ident ...int) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	if len(ident) > 0 {
 		s.ident += ident[0]
 	} else {
@@ -41,6 +55,10 @@ func (s *SQLBuilder) IncreaseIdent(ident ...int) {
 
 // DecreaseIdent removes ident or defaultIdent number of spaces for each new line
 func (s *SQLBuilder) DecreaseIdent(ident ...int) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	toDecrease := defaultIdent
 
 	if len(ident) > 0 {
@@ -63,11 +81,19 @@ func (s *SQLBuilder) WriteProjections(statement StatementType, projections []Pro
 
 // NewLine adds new line to output SQL
 func (s *SQLBuilder) NewLine() {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	s.write([]byte{'\n'})
 	s.write(bytes.Repeat([]byte{' '}, s.ident))
 }
 
 func (s *SQLBuilder) write(data []byte) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	if len(data) == 0 {
 		return
 	}
@@ -90,17 +116,29 @@ func isPostSeparator(b byte) bool {
 
 // WriteAlias is used to add alias to output SQL
 func (s *SQLBuilder) WriteAlias(str string) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	aliasQuoteChar := string(s.Dialect.AliasQuoteChar())
 	s.WriteString(aliasQuoteChar + str + aliasQuoteChar)
 }
 
 // WriteString writes sting to output SQL
 func (s *SQLBuilder) WriteString(str string) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	s.write([]byte(str))
 }
 
 // WriteIdentifier adds identifier to output SQL
 func (s *SQLBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	if s.shouldQuote(name, alwaysQuote...) {
 		identQuoteChar := string(s.Dialect.IdentifierQuoteChar())
 		s.WriteString(identQuoteChar + name + identQuoteChar)
@@ -115,6 +153,10 @@ func (s *SQLBuilder) shouldQuote(name string, alwaysQuote ...bool) bool {
 
 // WriteByte writes byte to output SQL
 func (s *SQLBuilder) WriteByte(b byte) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	s.write([]byte{b})
 }
 
@@ -123,11 +165,15 @@ func (s *SQLBuilder) finalize() (string, []interface{}) {
 }
 
 func (s *SQLBuilder) insertConstantArgument(arg interface{}) {
+	if s.Mode == ArgsOnly {
+		return
+	}
+
 	s.WriteString(argToString(arg))
 }
 
 func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
-	if s.Debug {
+	if s.Mode == Debug {
 		s.insertConstantArgument(arg)
 		return
 	}
@@ -195,7 +241,7 @@ func (s *SQLBuilder) insertRawQuery(raw string, namedArg map[string]interface{})
 			toReplace = 1 // just one occurrence
 		}
 
-		if s.Debug {
+		if s.Mode == Debug {
 			placeholder = argToString(namedArgumentPos.Value)
 		}
 

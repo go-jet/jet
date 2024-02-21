@@ -71,7 +71,7 @@ func assertClauseSerializeErr(t *testing.T, clause Serializer, errString string)
 }
 
 func assertClauseDebugSerialize(t *testing.T, clause Serializer, query string, args ...interface{}) {
-	out := SQLBuilder{Dialect: defaultDialect, Debug: true}
+	out := SQLBuilder{Dialect: defaultDialect, Mode: Debug}
 	clause.serialize(SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())

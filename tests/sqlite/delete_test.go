@@ -81,3 +81,81 @@ func TestDeleteContextDeadlineExceeded(t *testing.T) {
 
 	requireLogged(t, deleteStmt)
 }
+
+func TestDeletePreparedStatement(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("tx prep stmt", func(t *testing.T) {
+		var txPrepStmt PreparedStatement
+		defer txPrepStmt.Close()
+
+		tx, err := sampleDB.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		for i := 20; i < 24; i++ {
+			stmt := Link.DELETE().
+				WHERE(Link.ID.EQ(Int64(int64(i))))
+
+			err = txPrepStmt.Prepare(ctx, tx, stmt)
+			require.NoError(t, err)
+
+			res, err := txPrepStmt.Exec(ctx)
+			require.NoError(t, err)
+			rowsAffected, err := res.RowsAffected()
+			require.NoError(t, err)
+			require.Equal(t, rowsAffected, int64(1))
+		}
+	})
+
+	t.Run("db tx prep stmt", func(t *testing.T) {
+		var dbTxPrepStmt PreparedStatement
+		defer dbTxPrepStmt.Close()
+
+		tx, err := sampleDB.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		var dest model.Link
+
+		for i := 20; i < 24; i++ {
+			stmt := Link.DELETE().
+				WHERE(Link.ID.EQ(Int64(int64(i)))).
+				RETURNING(Link.AllColumns)
+
+			err = dbTxPrepStmt.Prepare(ctx, sampleDB, stmt)
+			require.NoError(t, err)
+			err = dbTxPrepStmt.Stmt(tx).Query(ctx, &dest)
+			require.NoError(t, err)
+			require.NotEmpty(t, dest)
+		}
+	})
+
+	t.Run("rows prep stmt", func(t *testing.T) {
+		var prepStmt PreparedStatement
+		prepStmt.Close()
+
+		tx, err := sampleDB.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		var dest model.Link
+
+		for i := 20; i < 24; i++ {
+			stmt := Link.DELETE().
+				WHERE(Link.ID.EQ(Int64(int64(i)))).
+				RETURNING(Link.AllColumns)
+
+			err = prepStmt.Prepare(ctx, tx, stmt)
+			require.NoError(t, err)
+			rows, err := prepStmt.Rows(ctx)
+			require.NoError(t, err)
+
+			require.True(t, rows.Next())
+			err = rows.Scan(&dest)
+			require.NoError(t, err)
+			require.NotEmpty(t, dest)
+			require.NoError(t, rows.Close())
+		}
+	})
+}

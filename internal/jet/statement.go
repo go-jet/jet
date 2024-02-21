@@ -14,6 +14,8 @@ type Statement interface {
 	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument string representation.
 	// Do not use it in production. Use it only for debug purposes.
 	DebugSql() (query string)
+	// Args returns only list of arguments from the statement
+	Args() []interface{}
 	// Query executes statement over database connection/transaction db and stores row results in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
@@ -78,12 +80,20 @@ func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface
 }
 
 func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
-	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
+	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Mode: Debug}
 
 	s.parent.serialize(s.statementType, sqlBuilder, NoWrap)
 
 	query, _ = sqlBuilder.finalize()
 	return
+}
+
+func (s *serializerStatementInterfaceImpl) Args() []interface{} {
+	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Mode: ArgsOnly}
+
+	s.parent.serialize(s.statementType, sqlBuilder, NoWrap)
+
+	return sqlBuilder.Args
 }
 
 func (s *serializerStatementInterfaceImpl) Query(db qrm.Queryable, destination interface{}) error {

@@ -133,7 +133,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 }
 
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
-func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
+func AssertStatementSql(t *testing.T, query jet.PrintableStatement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args := query.Sql()
 	assertQueryString(t, queryStr, expectedQuery)
 
@@ -154,7 +154,7 @@ func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
 }
 
 // AssertDebugStatementSql check if statement Sql() is the same as expectedQuery
-func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
+func AssertDebugStatementSql(t *testing.T, query jet.PrintableStatement, expectedQuery string, expectedArgs ...interface{}) {
 	_, args := query.Sql()
 
 	if len(expectedArgs) > 0 {
@@ -181,7 +181,7 @@ func AssertSerialize(t *testing.T, dialect jet.Dialect, serializer jet.Serialize
 
 // AssertDebugSerialize checks if clause serialize produces expected debug query and args
 func AssertDebugSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
-	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
+	out := jet.SQLBuilder{Dialect: dialect, Mode: jet.Debug}
 	jet.Serialize(clause, jet.SelectStatementType, &out)
 
 	AssertDeepEqual(t, out.Buff.String(), query)

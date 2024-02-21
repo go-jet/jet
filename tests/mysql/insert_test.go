@@ -390,3 +390,61 @@ VALUES ('http://www.google.com', 'Google', NULL);
 		require.NoError(t, err)
 	})
 }
+
+func TestInsertPreparedStatement(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("tx prep stmt", func(t *testing.T) {
+		var txPrepStmt PreparedStatement
+		defer txPrepStmt.Close()
+
+		tx, err := db.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		for i := 1; i < 20; i++ {
+			stmt := Link.INSERT(Link.MutableColumns).
+				MODEL(model.Link{
+					URL:  "http://www.google.com",
+					Name: "Google",
+				})
+
+			err = txPrepStmt.Prepare(ctx, tx, stmt)
+			require.NoError(t, err)
+			res, err := txPrepStmt.Exec(ctx)
+			require.NoError(t, err)
+			rowsAffected, err := res.RowsAffected()
+			require.NoError(t, err)
+			require.Equal(t, rowsAffected, int64(1))
+
+			testutils.AssertStatementSql(t, txPrepStmt, `
+INSERT INTO test_sample.link (url, name, description)
+VALUES (?, ?, ?);
+`)
+		}
+	})
+
+	t.Run("db tx prep stmt", func(t *testing.T) {
+		var dbTxPrepStmt PreparedStatement
+		defer dbTxPrepStmt.Close()
+
+		tx, err := db.Begin()
+		require.NoError(t, err)
+		defer tx.Rollback()
+
+		for i := 1; i < 20; i++ {
+			stmt := Link.INSERT(Link.MutableColumns).
+				MODEL(model.Link{
+					URL:  "http://www.google.com",
+					Name: "Google",
+				})
+
+			err = dbTxPrepStmt.Prepare(ctx, db, stmt)
+			require.NoError(t, err)
+			res, err := dbTxPrepStmt.Stmt(tx).Exec(ctx)
+			require.NoError(t, err)
+			rowsAffected, err := res.RowsAffected()
+			require.Equal(t, rowsAffected, int64(1))
+		}
+	})
+}
