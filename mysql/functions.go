@@ -222,6 +222,12 @@ var SUBSTR = jet.SUBSTR
 // REGEXP_LIKE Returns 1 if the string expr matches the regular expression specified by the pattern pat, 0 otherwise.
 var REGEXP_LIKE = jet.REGEXP_LIKE
 
+// UUID_TO_BIN is a helper function that calls "uuid_to_bin" function on the passed value.
+func UUID_TO_BIN(str StringExpression) StringExpression {
+	fn := Func("uuid_to_bin", str)
+	return StringExp(fn)
+}
+
 //----------------- Date/Time Functions and Operators ------------//
 
 // EXTRACT function retrieves subfields such as year or hour from date/time values
