@@ -1,6 +1,6 @@
 module github.com/go-jet/jet/v2
 
-go 1.21.6
+go 1.18
 
 require (
 	github.com/go-sql-driver/mysql v1.7.1
@@ -12,12 +12,12 @@ require (
 
 require (
 	github.com/google/go-cmp v0.5.9
+	github.com/jackc/pgtype v1.14.0
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/pkg/profile v1.7.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.8.2
 	github.com/volatiletech/null/v8 v8.1.2
-	golang.org/x/sync v0.3.0
 	gopkg.in/guregu/null.v4 v4.0.0
 )
 
@@ -32,7 +32,6 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.2 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/jackc/pgtype v1.14.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/volatiletech/inflect v0.0.1 // indirect
 	github.com/volatiletech/randomize v0.0.1 // indirect
