@@ -8,8 +8,8 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: circleci/golang:1.16
-      - image: circleci/postgres:12
+      - image: cimg/go:1.21.6
+      - image: cimg/postgres:14.10
         environment:
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
@@ -33,8 +33,8 @@ jobs:
           MYSQL_USER: jet
           MYSQL_PASSWORD: jet
 
-      - image: cockroachdb/cockroach-unstable:v22.1.0-beta.4
-        command: ['start-single-node', '--insecure']
+      - image: cockroachdb/cockroach-unstable:v23.1.0-rc.2
+        command: ['start-single-node', '--accept-sql-without-tls']
         environment:
           COCKROACH_USER: jet
           COCKROACH_PASSWORD: jet

@@ -548,11 +548,12 @@ func UseSchema(schema string) {
 `
 
 func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
-	skipForCockroachDB(t)
+	skipForCockroachDB(t) // because of rowid column
 
 	enumDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/enum/")
 	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
 	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")
+	viewDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/view/")
 
 	testutils.AssertFileNamesEqual(t, enumDir, "mood.go", "level.go")
 	testutils.AssertFileContent(t, enumDir+"/mood.go", moodEnumContent)
@@ -560,15 +561,17 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 
 	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go",
-		"components.go", "vulnerabilities.go")
-
+		"components.go", "vulnerabilities.go", "all_types_materialized_view.go", "sample_ranges.go")
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
 	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go",
-		"components.go", "vulnerabilities.go")
-
+		"components.go", "vulnerabilities.go", "sample_ranges.go")
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
+	testutils.AssertFileContent(t, tableDir+"/sample_ranges.go", sampleRangeTableContent)
+
+	testutils.AssertFileNamesEqual(t, viewDir, "all_types_materialized_view.go", "all_types_view.go",
+		"view_use_schema.go")
 }
 
 var moodEnumContent = `
@@ -698,6 +701,8 @@ type AllTypes struct {
 	JsonbArray           string
 	TextMultiDimArrayPtr *string
 	TextMultiDimArray    string
+	MoodPtr              *Mood
+	Mood                 Mood
 }
 `
 
@@ -782,6 +787,8 @@ type allTypesTable struct {
 	JsonbArray           postgres.ColumnString
 	TextMultiDimArrayPtr postgres.ColumnString
 	TextMultiDimArray    postgres.ColumnString
+	MoodPtr              postgres.ColumnString
+	Mood                 postgres.ColumnString
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
@@ -883,8 +890,10 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		JsonbArrayColumn           = postgres.StringColumn("jsonb_array")
 		TextMultiDimArrayPtrColumn = postgres.StringColumn("text_multi_dim_array_ptr")
 		TextMultiDimArrayColumn    = postgres.StringColumn("text_multi_dim_array")
-		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
-		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn}
+		MoodPtrColumn              = postgres.StringColumn("mood_ptr")
+		MoodColumn                 = postgres.StringColumn("mood")
+		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
+		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
 	)
 
 	return allTypesTable{
@@ -952,6 +961,101 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		JsonbArray:           JsonbArrayColumn,
 		TextMultiDimArrayPtr: TextMultiDimArrayPtrColumn,
 		TextMultiDimArray:    TextMultiDimArrayColumn,
+		MoodPtr:              MoodPtrColumn,
+		Mood:                 MoodColumn,
+
+		AllColumns:     allColumns,
+		MutableColumns: mutableColumns,
+	}
+}
+`
+
+var sampleRangeTableContent = `
+//
+// Code generated by go-jet DO NOT EDIT.
+//
+// WARNING: Changes to this file may cause incorrect behavior
+// and will be lost if the code is regenerated
+//
+
+package table
+
+import (
+	"github.com/go-jet/jet/v2/postgres"
+)
+
+var SampleRanges = newSampleRangesTable("test_sample", "sample_ranges", "")
+
+type sampleRangesTable struct {
+	postgres.Table
+
+	// Columns
+	DateRange       postgres.ColumnDateRange
+	TimestampRange  postgres.ColumnTimestampRange
+	TimestampzRange postgres.ColumnTimestampzRange
+	Int4Range       postgres.ColumnInt4Range
+	Int8Range       postgres.ColumnInt8Range
+	NumRange        postgres.ColumnNumericRange
+
+	AllColumns     postgres.ColumnList
+	MutableColumns postgres.ColumnList
+}
+
+type SampleRangesTable struct {
+	sampleRangesTable
+
+	EXCLUDED sampleRangesTable
+}
+
+// AS creates new SampleRangesTable with assigned alias
+func (a SampleRangesTable) AS(alias string) *SampleRangesTable {
+	return newSampleRangesTable(a.SchemaName(), a.TableName(), alias)
+}
+
+// Schema creates new SampleRangesTable with assigned schema name
+func (a SampleRangesTable) FromSchema(schemaName string) *SampleRangesTable {
+	return newSampleRangesTable(schemaName, a.TableName(), a.Alias())
+}
+
+// WithPrefix creates new SampleRangesTable with assigned table prefix
+func (a SampleRangesTable) WithPrefix(prefix string) *SampleRangesTable {
+	return newSampleRangesTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
+}
+
+// WithSuffix creates new SampleRangesTable with assigned table suffix
+func (a SampleRangesTable) WithSuffix(suffix string) *SampleRangesTable {
+	return newSampleRangesTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
+}
+
+func newSampleRangesTable(schemaName, tableName, alias string) *SampleRangesTable {
+	return &SampleRangesTable{
+		sampleRangesTable: newSampleRangesTableImpl(schemaName, tableName, alias),
+		EXCLUDED:          newSampleRangesTableImpl("", "excluded", ""),
+	}
+}
+
+func newSampleRangesTableImpl(schemaName, tableName, alias string) sampleRangesTable {
+	var (
+		DateRangeColumn       = postgres.DateRangeColumn("date_range")
+		TimestampRangeColumn  = postgres.TimestampRangeColumn("timestamp_range")
+		TimestampzRangeColumn = postgres.TimestampzRangeColumn("timestampz_range")
+		Int4RangeColumn       = postgres.Int4RangeColumn("int4_range")
+		Int8RangeColumn       = postgres.Int8RangeColumn("int8_range")
+		NumRangeColumn        = postgres.NumericRangeColumn("num_range")
+		allColumns            = postgres.ColumnList{DateRangeColumn, TimestampRangeColumn, TimestampzRangeColumn, Int4RangeColumn, Int8RangeColumn, NumRangeColumn}
+		mutableColumns        = postgres.ColumnList{DateRangeColumn, TimestampRangeColumn, TimestampzRangeColumn, Int4RangeColumn, Int8RangeColumn, NumRangeColumn}
+	)
+
+	return sampleRangesTable{
+		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
+
+		//Columns
+		DateRange:       DateRangeColumn,
+		TimestampRange:  TimestampRangeColumn,
+		TimestampzRange: TimestampzRangeColumn,
+		Int4Range:       Int4RangeColumn,
+		Int8Range:       Int8RangeColumn,
+		NumRange:        NumRangeColumn,
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,

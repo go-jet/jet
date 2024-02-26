@@ -69,6 +69,16 @@ func GtEq(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, ">=")
 }
 
+// Contains returns a representation of "a @> b"
+func Contains(lhs Expression, rhs Expression) BoolExpression {
+	return newBinaryBoolOperatorExpression(lhs, rhs, "@>")
+}
+
+// Overlap returns a representation of "a && b"
+func Overlap(lhs, rhs Expression) BoolExpression {
+	return newBinaryBoolOperatorExpression(lhs, rhs, "&&")
+}
+
 // Add notEq returns a representation of "a + b"
 func Add(lhs, rhs Serializer) Expression {
 	return NewBinaryOperatorExpression(lhs, rhs, "+")

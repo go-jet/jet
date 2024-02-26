@@ -105,25 +105,25 @@ Done
 ```
 Procedure is similar for MySQL, CockroachDB, MariaDB and SQLite. For example:
 ```sh
-jet -source=mysql -dsn="user:pass@tcp(localhost:3306)/dbname" -path=./gen
+jet -source=mysql -dsn="user:pass@tcp(localhost:3306)/dbname" -path=./.gen
 jet -dsn=postgres://user:pass@localhost:26257/jetdb?sslmode=disable -schema=dvds -path=./.gen  #cockroachdb
-jet -dsn="mariadb://user:pass@tcp(localhost:3306)/dvds" -path=./gen              # source flag can be omitted if data source appears in dsn
-jet -source=sqlite -dsn="/path/to/sqlite/database/file" -schema=dvds -path=./gen
-jet -dsn="file:///path/to/sqlite/database/file" -schema=dvds -path=./gen         # sqlite database assumed for 'file' data sources
+jet -dsn="mariadb://user:pass@tcp(localhost:3306)/dvds" -path=./.gen              # source flag can be omitted if data source appears in dsn
+jet -source=sqlite -dsn="/path/to/sqlite/database/file" -schema=dvds -path=./.gen
+jet -dsn="file:///path/to/sqlite/database/file" -schema=dvds -path=./.gen         # sqlite database assumed for 'file' data sources
 ```
 _*User has to have a permission to read information schema tables._
 
 As command output suggest, Jet will:
 - connect to postgres database and retrieve information about the _tables_, _views_ and _enums_ of `dvds` schema
-- delete everything in schema destination folder -  `./gen/jetdb/dvds`,   
+- delete everything in schema destination folder -  `./.gen/jetdb/dvds`,   
 - and finally generate SQL Builder and Model types for each schema table, view and enum.  
 
 
 Generated files folder structure will look like this:
 ```sh 
-|-- gen                               # -path
-|   `-- jetdb                         # database name
-|       `-- dvds                      # schema name
+|-- .gen                              # path
+|   -- jetdb                          # database name
+|       -- dvds                       # schema name
 |           |-- enum                  # sql builder package for enums
 |           |   |-- mpaa_rating.go
 |           |-- table                 # sql builder package for tables
@@ -131,7 +131,7 @@ Generated files folder structure will look like this:
 |               |-- address.go
 |               |-- category.go
 |               ...
-|           |-- view                 # sql builder package for views
+|           |-- view                  # sql builder package for views
 |               |-- actor_info.go
 |               |-- film_list.go
 |               ...
@@ -156,7 +156,7 @@ import (
 	. "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
 	. "github.com/go-jet/jet/v2/postgres"
 
-	"github.com/go-jet/jet/v2/examples/quick-start/gen/jetdb/dvds/model"
+	"github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/model"
 )
 ```
 Let's say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 
@@ -530,8 +530,8 @@ Automatic scan to arbitrary structure removes a lot of headache and boilerplate 
 
 ##### Speed of execution
 
-While ORM libraries can introduce significant performance penalties due to number of round-trips to the database, 
-Jet will always perform better as developers can write complex query and retrieve result with a single database call. 
+While ORM libraries can introduce significant performance penalties due to number of round-trips to the database(N+1 query problem), 
+`jet` will always perform better as developers can write complex query and retrieve result with a single database call. 
 Thus handler time lost on latency between server and database can be constant. Handler execution will be proportional 
 only to the query complexity and the number of rows returned from database. 
 
@@ -579,5 +579,5 @@ To run the tests, additional dependencies are required:
 
 ## License
 
-Copyright 2019-2023 Goran Bjelanovic  
+Copyright 2019-2024 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.

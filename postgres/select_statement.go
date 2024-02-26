@@ -53,6 +53,9 @@ type SelectStatement interface {
 	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
+	// OFFSET_e can be used when an integer expression is needed as offset, otherwise OFFSET can be used
+	OFFSET_e(offset IntegerExpression) SelectStatement
+	FETCH_FIRST(count IntegerExpression) fetchExpand
 	FOR(lock RowLock) SelectStatement
 
 	UNION(rhs SelectStatement) setStatement
@@ -72,16 +75,24 @@ func SELECT(projection Projection, projections ...Projection) SelectStatement {
 
 func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
 	newSelect := &selectStatementImpl{}
-	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
-		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.Window, &newSelect.OrderBy,
-		&newSelect.Limit, &newSelect.Offset, &newSelect.For)
+	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect,
+		&newSelect.Select,
+		&newSelect.From,
+		&newSelect.Where,
+		&newSelect.GroupBy,
+		&newSelect.Having,
+		&newSelect.Window,
+		&newSelect.OrderBy,
+		&newSelect.Limit,
+		&newSelect.Offset,
+		&newSelect.Fetch,
+		&newSelect.For)
 
 	newSelect.Select.ProjectionList = projections
 	if table != nil {
 		newSelect.From.Tables = []jet.Serializer{table}
 	}
 	newSelect.Limit.Count = -1
-	newSelect.Offset.Count = -1
 
 	newSelect.setOperatorsImpl.parent = newSelect
 
@@ -101,6 +112,7 @@ type selectStatementImpl struct {
 	OrderBy jet.ClauseOrderBy
 	Limit   jet.ClauseLimit
 	Offset  jet.ClauseOffset
+	Fetch   jet.ClauseFetch
 	For     jet.ClauseFor
 }
 
@@ -146,8 +158,21 @@ func (s *selectStatementImpl) LIMIT(limit int64) SelectStatement {
 }
 
 func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
+	s.Offset.Count = Int(offset)
+	return s
+}
+
+func (s *selectStatementImpl) OFFSET_e(offset IntegerExpression) SelectStatement {
 	s.Offset.Count = offset
 	return s
+}
+
+func (s *selectStatementImpl) FETCH_FIRST(count IntegerExpression) fetchExpand {
+	s.Fetch.Count = count
+
+	return fetchExpand{
+		selectStatement: s,
+	}
 }
 
 func (s *selectStatementImpl) FOR(lock RowLock) SelectStatement {
@@ -187,4 +212,20 @@ func readableTablesToSerializerList(tables []ReadableTable) []jet.Serializer {
 		ret = append(ret, table)
 	}
 	return ret
+}
+
+type fetchExpand struct {
+	selectStatement *selectStatementImpl
+}
+
+func (f fetchExpand) ROWS_ONLY() SelectStatement {
+	f.selectStatement.Fetch.WithTies = false
+
+	return f.selectStatement
+}
+
+func (f fetchExpand) ROWS_WITH_TIES() SelectStatement {
+	f.selectStatement.Fetch.WithTies = true
+
+	return f.selectStatement
 }

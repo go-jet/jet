@@ -64,14 +64,24 @@ func (e *ExpressionInterfaceImpl) AS(alias string) Projection {
 	return newAlias(e.Parent, alias)
 }
 
-// ASC expression will be used to sort query result in ascending order
+// ASC expression will be used to sort a query result in ascending order
 func (e *ExpressionInterfaceImpl) ASC() OrderByClause {
-	return newOrderByClause(e.Parent, true)
+	return newOrderByAscending(e.Parent, true)
 }
 
-// DESC expression will be used to sort query result in descending order
+// DESC expression will be used to sort a query result in descending order
 func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
-	return newOrderByClause(e.Parent, false)
+	return newOrderByAscending(e.Parent, false)
+}
+
+// NULLS_FIRST specifies sort where null values appear before all non-null values
+func (e *ExpressionInterfaceImpl) NULLS_FIRST() OrderByClause {
+	return newOrderByNullsFirst(e.Parent, true)
+}
+
+// NULLS_LAST specifies sort where null values appear after all non-null values
+func (e *ExpressionInterfaceImpl) NULLS_LAST() OrderByClause {
+	return newOrderByNullsFirst(e.Parent, false)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SQLBuilder) {

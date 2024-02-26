@@ -24,7 +24,7 @@ import (
 	"github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 )
 
-var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName}}", "{{.Name}}", "")
+var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName}}", "{{.Name}}", "{{tableTemplate.DefaultAlias}}")
 
 type {{structImplName}} struct {
 	{{dialect.PackageName}}.Table

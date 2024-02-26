@@ -202,3 +202,14 @@ func TestTO_ASCII(t *testing.T) {
 func TestFunc(t *testing.T) {
 	assertClauseSerialize(t, Func("FOO", String("test"), NULL, MAX(Int(1))), "FOO($1, NULL, MAX($2))", "test", int64(1))
 }
+
+func Test_rangePointCaster(t *testing.T) {
+	mainRange := Int8Range(Int8(10), Int8(12))
+	exp := NewFunc("UPPER", []Expression{mainRange}, nil)
+
+	got := rangeTypeCaster(mainRange, exp)
+	_, ok := got.(IntegerExpression)
+	if !ok {
+		t.Errorf("expecting to get IntegerExpression but got %v", got)
+	}
+}

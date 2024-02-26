@@ -17,29 +17,50 @@ import (
 	"github.com/go-jet/jet/v2/tests/testdata/results/common"
 )
 
+var AllTypesAllColumns = AllTypes.AllColumns.
+	Except(IntegerColumn("rowid")) // cockroachDB: exclude rowid column
+
 func TestAllTypesSelect(t *testing.T) {
 	var dest []model.AllTypes
 
-	err := AllTypes.SELECT(
-		AllTypesAllColumns,
-	).LIMIT(2).
+	err := AllTypes.SELECT(AllTypesAllColumns).
+		LIMIT(2).
 		Query(db, &dest)
-	require.NoError(t, err)
 
+	require.NoError(t, err)
 	testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
 	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
 	type AllTypesView model.AllTypes
-
 	var dest []AllTypesView
 
-	err := view.AllTypesView.SELECT(view.AllTypesView.AllColumns).Query(db, &dest)
-	require.NoError(t, err)
+	err := SELECT(view.AllTypesView.AllColumns).
+		FROM(view.AllTypesView).
+		Query(db, &dest)
 
+	require.NoError(t, err)
 	testutils.AssertDeepEqual(t, dest[0], AllTypesView(allTypesRow0))
 	testutils.AssertDeepEqual(t, dest[1], AllTypesView(allTypesRow1))
+}
+
+func TestMaterializedViewAllTypes(t *testing.T) {
+	stmt := SELECT(
+		view.AllTypesMaterializedView.AllColumns.
+			Except(IntegerColumn("rowid")), // cockroachDB: exclude rowid column
+	).FROM(
+		view.AllTypesMaterializedView,
+	)
+
+	type AllTypesMaterializedView model.AllTypes
+	var dest []AllTypesMaterializedView
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	testutils.AssertDeepEqual(t, dest[0], AllTypesMaterializedView(allTypesRow0))
+	testutils.AssertDeepEqual(t, dest[1], AllTypesMaterializedView(allTypesRow1))
 }
 
 func TestAllTypesInsertModel(t *testing.T) {
@@ -63,8 +84,6 @@ func TestAllTypesInsertModel(t *testing.T) {
 		testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 	})
 }
-
-var AllTypesAllColumns = AllTypes.AllColumns.Except(IntegerColumn("rowid"))
 
 func TestAllTypesInsertQuery(t *testing.T) {
 	query := AllTypes.INSERT(AllTypesAllColumns).
@@ -230,7 +249,9 @@ SELECT "allTypesSubQuery"."all_types.small_int_ptr" AS "all_types.small_int_ptr"
      "allTypesSubQuery"."all_types.text_array" AS "all_types.text_array",
      "allTypesSubQuery"."all_types.jsonb_array" AS "all_types.jsonb_array",
      "allTypesSubQuery"."all_types.text_multi_dim_array_ptr" AS "all_types.text_multi_dim_array_ptr",
-     "allTypesSubQuery"."all_types.text_multi_dim_array" AS "all_types.text_multi_dim_array"
+     "allTypesSubQuery"."all_types.text_multi_dim_array" AS "all_types.text_multi_dim_array",
+     "allTypesSubQuery"."all_types.mood_ptr" AS "all_types.mood_ptr",
+     "allTypesSubQuery"."all_types.mood" AS "all_types.mood"
 FROM (
           SELECT all_types.small_int_ptr AS "all_types.small_int_ptr",
                all_types.small_int AS "all_types.small_int",
@@ -292,7 +313,9 @@ FROM (
                all_types.text_array AS "all_types.text_array",
                all_types.jsonb_array AS "all_types.jsonb_array",
                all_types.text_multi_dim_array_ptr AS "all_types.text_multi_dim_array_ptr",
-               all_types.text_multi_dim_array AS "all_types.text_multi_dim_array"
+               all_types.text_multi_dim_array AS "all_types.text_multi_dim_array",
+               all_types.mood_ptr AS "all_types.mood_ptr",
+               all_types.mood AS "all_types.mood"
           FROM test_sample.all_types
      ) AS "allTypesSubQuery"
 LIMIT 2;
@@ -1279,6 +1302,8 @@ RETURNING all_types.json AS "all_types.json";
 	})
 }
 
+var moodSad = model.Mood_Sad
+
 var allTypesRow0 = model.AllTypes{
 	SmallIntPtr:        testutils.Int16Ptr(14),
 	SmallInt:           14,
@@ -1343,6 +1368,8 @@ var allTypesRow0 = model.AllTypes{
 	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
 	TextMultiDimArrayPtr: testutils.StringPtr("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
+	MoodPtr:              &moodSad,
+	Mood:                 model.Mood_Happy,
 }
 
 var allTypesRow1 = model.AllTypes{
@@ -1409,6 +1436,8 @@ var allTypesRow1 = model.AllTypes{
 	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
 	TextMultiDimArrayPtr: nil,
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
+	MoodPtr:              nil,
+	Mood:                 model.Mood_Ok,
 }
 
 func TestAliasedDuplicateSliceSubType(t *testing.T) {

@@ -267,6 +267,18 @@ var TO_HEX = jet.TO_HEX
 
 //----------Data Type Formatting Functions ----------------------//
 
+// LOWER_BOUND returns range expressions lower bound
+func LOWER_BOUND[T Expression](expression jet.Range[T]) T {
+	return jet.LOWER_BOUND[T](expression)
+}
+
+// UPPER_BOUND returns range expressions upper bound
+func UPPER_BOUND[T Expression](expression jet.Range[T]) T {
+	return jet.UPPER_BOUND[T](expression)
+}
+
+//----------Data Type Formatting Functions ----------------------//
+
 // TO_CHAR converts expression to string with format
 var TO_CHAR = jet.TO_CHAR
 
@@ -421,3 +433,18 @@ var CUBE = jet.CUBE
 // It can be also used with multiple parameters to check if a set of columns is included in the current grouping set. The result
 // of the GROUPING function would then be an integer bit mask having 1’s for the arguments which have GROUPING(argument) as 1.
 var GROUPING = jet.GROUPING
+
+var (
+	// DATE_RANGE constructor function to create a date range
+	DATE_RANGE = jet.DateRange
+	// NUM_Range constructor function to create a numeric range
+	NUM_Range = jet.NumRange
+	// TIMESTAMP_RANGE constructor function to create a timestamp range
+	TIMESTAMP_RANGE = jet.TimestampRange
+	// TIMESTAMPTZ_RANGE constructor function to create a timestampz range
+	TIMESTAMPTZ_RANGE = jet.TimestampzRange
+	// INT4_RANGE constructor function to create a int4 range
+	INT4_RANGE = jet.Int4Range
+	// INT8_RANGE constructor function to create a int8 range
+	INT8_RANGE = jet.Int8Range
+)

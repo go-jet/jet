@@ -468,6 +468,33 @@ func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType
 	return newBoolFunc("REGEXP_LIKE", stringExp, pattern)
 }
 
+//----------Range Type Functions ----------------------//
+
+// LOWER_BOUND returns range expressions lower bound
+func LOWER_BOUND[T Expression](rangeExpression Range[T]) T {
+	return rangeTypeCaster[T](rangeExpression, NewFunc("LOWER", []Expression{rangeExpression}, nil))
+}
+
+// UPPER_BOUND returns range expressions upper bound
+func UPPER_BOUND[T Expression](rangeExpression Range[T]) T {
+	return rangeTypeCaster[T](rangeExpression, NewFunc("UPPER", []Expression{rangeExpression}, nil))
+}
+
+func rangeTypeCaster[T Expression](rangeExpression Range[T], exp Expression) T {
+	var i Expression
+	switch rangeExpression.(type) {
+	case Range[DateExpression]:
+		i = DateExp(exp)
+	case Range[IntegerExpression]:
+		i = IntExp(exp)
+	case Range[TimestampzExpression]:
+		i = TimestampzExp(exp)
+	case Range[TimestampExpression]:
+		i = TimestampExp(exp)
+	}
+	return i.(T)
+}
+
 //----------Data Type Formatting Functions ----------------------//
 
 // TO_CHAR converts expression to string with format
@@ -842,4 +869,36 @@ func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 // Func can be used to call custom or unsupported database functions.
 func Func(name string, expressions ...Expression) Expression {
 	return NewFunc(name, expressions, nil)
+}
+
+func NumRange(lowNum, highNum NumericExpression, bounds ...StringExpression) Range[NumericExpression] {
+	return RangeExp[NumericExpression](NewFunc("numrange", rangeFuncParamCombiner[NumericExpression](lowNum, highNum, bounds...), nil))
+}
+
+func Int4Range(lowNum, highNum IntegerExpression, bounds ...StringExpression) Range[IntegerExpression] {
+	return RangeExp[IntegerExpression](NewFunc("int4range", rangeFuncParamCombiner[IntegerExpression](lowNum, highNum, bounds...), nil))
+}
+
+func Int8Range(lowNum, highNum IntegerExpression, bounds ...StringExpression) Range[IntegerExpression] {
+	return RangeExp[IntegerExpression](NewFunc("int8range", rangeFuncParamCombiner[IntegerExpression](lowNum, highNum, bounds...), nil))
+}
+
+func TimestampRange(lowTs, highTs TimestampExpression, bounds ...StringExpression) Range[TimestampExpression] {
+	return RangeExp[TimestampExpression](NewFunc("tsrange", rangeFuncParamCombiner[TimestampExpression](lowTs, highTs, bounds...), nil))
+}
+
+func TimestampzRange(lowTs, highTs TimestampzExpression, bounds ...StringExpression) Range[TimestampzExpression] {
+	return RangeExp[TimestampzExpression](NewFunc("tstzrange", rangeFuncParamCombiner[TimestampzExpression](lowTs, highTs, bounds...), nil))
+}
+
+func DateRange(lowTs, highTs DateExpression, bounds ...StringExpression) Range[DateExpression] {
+	return RangeExp[DateExpression](NewFunc("daterange", rangeFuncParamCombiner[DateExpression](lowTs, highTs, bounds...), nil))
+}
+
+func rangeFuncParamCombiner[T Expression](low, high T, bounds ...StringExpression) []Expression {
+	exp := []Expression{low, high}
+	if len(bounds) != 0 {
+		exp = append(exp, bounds[0])
+	}
+	return exp
 }

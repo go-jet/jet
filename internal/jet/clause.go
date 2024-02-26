@@ -222,15 +222,40 @@ func (l *ClauseLimit) Serialize(statementType StatementType, out *SQLBuilder, op
 
 // ClauseOffset struct
 type ClauseOffset struct {
-	Count int64
+	Count IntegerExpression
 }
 
 // Serialize serializes clause into SQLBuilder
 func (o *ClauseOffset) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if o.Count >= 0 {
-		out.NewLine()
-		out.WriteString("OFFSET")
-		out.insertParametrizedArgument(o.Count)
+	if is.Nil(o.Count) {
+		return
+	}
+
+	out.NewLine()
+	out.WriteString("OFFSET")
+	o.Count.serialize(statementType, out, options...)
+}
+
+// ClauseFetch struct
+type ClauseFetch struct {
+	Count    IntegerExpression
+	WithTies bool
+}
+
+// Serialize serializes ClauseFetch into sql builder output
+func (o *ClauseFetch) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if is.Nil(o.Count) {
+		return
+	}
+
+	out.NewLine()
+	out.WriteString("FETCH FIRST")
+	o.Count.serialize(statementType, out, options...)
+
+	if o.WithTies {
+		out.WriteString("ROWS WITH TIES")
+	} else {
+		out.WriteString("ROWS ONLY")
 	}
 }
 

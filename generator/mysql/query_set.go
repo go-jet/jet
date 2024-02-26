@@ -15,58 +15,46 @@ type mySqlQuerySet struct{}
 
 func (m mySqlQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name"
-FROM INFORMATION_SCHEMA.tables
-WHERE table_schema = ? and table_type = ?
-ORDER BY table_name;
-`
+SELECT
+		t.table_name as "table.name",
+		col.COLUMN_NAME AS "column.Name",
+		col.IS_NULLABLE = "YES" AS "column.IsNullable",
+		col.COLUMN_COMMENT AS "column.Comment",
+		COALESCE(pk.IsPrimaryKey, 0) AS "column.IsPrimaryKey",
+		IF (col.COLUMN_TYPE = 'tinyint(1)',
+				'boolean',
+				IF (col.DATA_TYPE = 'enum',
+						CONCAT(col.TABLE_NAME, '_', col.COLUMN_NAME),
+						col.DATA_TYPE)
+		) AS "dataType.Name",
+		IF (col.DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind",
+		col.COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned"
+FROM INFORMATION_SCHEMA.tables AS t
+INNER JOIN
+		information_schema.columns AS col
+		ON t.table_schema = col.table_schema AND t.table_name = col.table_name
+LEFT JOIN (
+		SELECT k.column_name, 1 AS IsPrimaryKey, k.table_name
+		FROM information_schema.table_constraints t
+		JOIN information_schema.key_column_usage k USING(constraint_name, table_schema, table_name)
+		WHERE t.table_schema =  ?
+			AND t.constraint_type = 'PRIMARY KEY'
+) AS pk ON col.COLUMN_NAME = pk.column_name AND col.table_name = pk.table_name 
+WHERE t.table_schema = ?
+	AND t.table_type = ?
+ORDER BY
+		t.table_name,
+		col.ordinal_position;
+	`
+
 	var tables []metadata.Table
 
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableType}, &tables)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, schemaName, tableType}, &tables)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query %s metadata result: %w", tableType, err)
-	}
-
-	for i := range tables {
-		tables[i].Columns, err = m.GetTableColumnsMetaData(db, schemaName, tables[i].Name)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get '%s' table columns metadata: %w", tables[i].Name, err)
-		}
+		return nil, fmt.Errorf("failed to query column meta data: %w", err)
 	}
 
 	return tables, nil
-}
-
-func (m mySqlQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
-	query := `
-SELECT COLUMN_NAME AS "column.Name", 
-	IS_NULLABLE = "YES" AS "column.IsNullable",
-	columns.COLUMN_COMMENT as "column.Comment",
-	(EXISTS(
-		SELECT 1
-		FROM information_schema.table_constraints t
-			JOIN information_schema.key_column_usage k USING(constraint_name,table_schema,table_name)
-		WHERE table_schema = ? AND table_name = ? AND t.constraint_type='PRIMARY KEY' AND k.column_name = columns.column_name
-	)) AS "column.IsPrimaryKey",
-	IF (COLUMN_TYPE = 'tinyint(1)', 
-			'boolean', 
-			IF (DATA_TYPE='enum', 
-					CONCAT(TABLE_NAME, '_', COLUMN_NAME), 
-					DATA_TYPE)
-	) AS "dataType.Name", 
-	IF (DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind", 
-	COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned"
-FROM information_schema.columns
-WHERE table_schema = ? AND table_name = ?
-ORDER BY ordinal_position;
-`
-	var columns []metadata.Column
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, schemaName, tableName}, &columns)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query %s column meta data: %w", tableName, err)
-	}
-
-	return columns, nil
 }
 
 func (m mySqlQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {

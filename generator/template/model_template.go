@@ -5,6 +5,7 @@ import (
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
 	"path"
 	"reflect"
 	"strings"
@@ -320,6 +321,18 @@ func toGoType(column metadata.Column) interface{} {
 		return float64(0.0)
 	case "uuid":
 		return uuid.UUID{}
+	case "daterange":
+		return pgtype.Daterange{}
+	case "tsrange":
+		return pgtype.Tsrange{}
+	case "tstzrange":
+		return pgtype.Tstzrange{}
+	case "int4range":
+		return pgtype.Int4range{}
+	case "int8range":
+		return pgtype.Int8range{}
+	case "numrange":
+		return pgtype.Numrange{}
 	default:
 		fmt.Println("- [Model      ] Unsupported sql column '" + column.Name + " " + column.DataType.Name + "', using string instead.")
 		return ""

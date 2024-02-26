@@ -12,6 +12,8 @@ import (
 	mysqldr "github.com/go-sql-driver/mysql"
 )
 
+const mysqlMaxConns = 10
+
 // DBConnection contains MySQL connection details
 type DBConnection struct {
 	Host     string
@@ -82,6 +84,9 @@ func openConnection(connectionString string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open mysql connection: %w", err)
 	}
+
+	db.SetMaxOpenConns(mysqlMaxConns)
+	db.SetMaxIdleConns(mysqlMaxConns)
 
 	err = db.Ping()
 	if err != nil {

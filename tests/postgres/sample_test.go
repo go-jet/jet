@@ -120,9 +120,15 @@ RETURNING floats.decimal_ptr AS "floats.decimal_ptr",
 }
 
 func TestUUIDComplex(t *testing.T) {
-	query := Person.INNER_JOIN(PersonPhone, PersonPhone.PersonID.EQ(Person.PersonID)).
-		SELECT(Person.AllColumns, PersonPhone.AllColumns).
-		ORDER_BY(Person.PersonID.ASC(), PersonPhone.PhoneID.ASC())
+	query := SELECT(
+		Person.AllColumns,
+		PersonPhone.AllColumns,
+	).FROM(
+		Person.INNER_JOIN(PersonPhone, PersonPhone.PersonID.EQ(Person.PersonID)),
+	).ORDER_BY(
+		Person.PersonID.ASC(),
+		PersonPhone.PhoneID.ASC(),
+	)
 
 	t.Run("slice of structs", func(t *testing.T) {
 

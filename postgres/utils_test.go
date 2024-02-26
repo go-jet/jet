@@ -17,6 +17,7 @@ var table1ColTimestampz = TimestampzColumn("col_timestampz")
 var table1ColBool = BoolColumn("col_bool")
 var table1ColDate = DateColumn("col_date")
 var table1ColInterval = IntervalColumn("col_interval")
+var table1ColRange = Int8RangeColumn("col_range")
 
 var table1 = NewTable(
 	"db",
@@ -32,6 +33,7 @@ var table1 = NewTable(
 	table1ColTimestamp,
 	table1ColTimestampz,
 	table1ColInterval,
+	table1ColRange,
 )
 
 var table2Col3 = IntegerColumn("col3")
@@ -46,8 +48,9 @@ var table2ColTimestamp = TimestampColumn("col_timestamp")
 var table2ColTimestampz = TimestampzColumn("col_timestampz")
 var table2ColDate = DateColumn("col_date")
 var table2ColInterval = IntervalColumn("col_interval")
+var table2ColRange = Int8RangeColumn("col_range")
 
-var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz, table2ColInterval)
+var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz, table2ColInterval, table2ColRange)
 
 var table3Col1 = IntegerColumn("col1")
 var table3ColInt = IntegerColumn("col_int")

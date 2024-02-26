@@ -358,3 +358,44 @@ func DateColumn(name string) ColumnDate {
 	dateColumn.ColumnExpressionImpl = NewColumnImpl(name, "", dateColumn)
 	return dateColumn
 }
+
+//------------------------------------------------------//
+
+// ColumnRange is interface for range columns which can be int range, string range
+// timestamp range or date range.
+type ColumnRange[T Expression] interface {
+	Range[T]
+	Column
+
+	From(subQuery SelectTable) ColumnRange[T]
+	SET(rangeExp Range[T]) ColumnAssigment
+}
+
+type rangeColumnImpl[T Expression] struct {
+	rangeInterfaceImpl[T]
+	ColumnExpressionImpl
+}
+
+func (i *rangeColumnImpl[T]) From(subQuery SelectTable) ColumnRange[T] {
+	newRangeColumn := RangeColumn[T](i.name)
+	newRangeColumn.setTableName(i.tableName)
+	newRangeColumn.setSubQuery(subQuery)
+
+	return newRangeColumn
+}
+
+func (i *rangeColumnImpl[T]) SET(rangeExp Range[T]) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: rangeExp,
+	}
+}
+
+// RangeColumn creates named range column.
+func RangeColumn[T Expression](name string) ColumnRange[T] {
+	rangeColumn := &rangeColumnImpl[T]{}
+	rangeColumn.rangeInterfaceImpl.parent = rangeColumn
+	rangeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", rangeColumn)
+
+	return rangeColumn
+}

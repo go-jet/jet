@@ -183,8 +183,8 @@ RETURNING link.id AS "link.id",
 		BinaryOperator: 31,
 		CastOperator:   "20",
 		LikeOperator:   false,
-		// IsNull:         true, //TODO: uncomment when sqlite driver updates to sqlite version > 3.40.1
-		CaseOperator: "unknown",
+		IsNull:         true,
+		CaseOperator:   "unknown",
 	})
 	requireLogged(t, stmt)
 }

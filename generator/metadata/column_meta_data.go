@@ -6,7 +6,7 @@ import (
 
 // Column struct
 type Column struct {
-	Name         string
+	Name         string `sql:"primary_key"`
 	IsPrimaryKey bool
 	IsNullable   bool
 	IsGenerated  bool
@@ -33,6 +33,7 @@ const (
 	EnumType        DataTypeKind = "enum"
 	UserDefinedType DataTypeKind = "user-defined"
 	ArrayType       DataTypeKind = "array"
+	RangeType       DataTypeKind = "range"
 )
 
 // DataType contains information about column data type
