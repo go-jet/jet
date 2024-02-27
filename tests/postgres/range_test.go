@@ -204,6 +204,7 @@ WHERE sample_ranges.date_range @> $36::date;
 }
 
 func TestRangeSelectColumnsFromSubQuery(t *testing.T) {
+	skipForCockroachDB(t)
 
 	subQuery := SELECT(
 		SampleRanges.AllColumns,
