@@ -1694,6 +1694,7 @@ FROM dvds.actor;
 }
 
 func TestUUIDFunctions(t *testing.T) {
+	skipForMariaDB(t)
 
 	stmt := SELECT(
 		UUID_TO_BIN(String("4255e382-1c10-4ac0-ba5b-039ca7a8525f")).AS("bin"),
