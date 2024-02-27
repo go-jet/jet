@@ -1692,3 +1692,26 @@ FROM dvds.actor;
 	require.NoError(t, err)
 	require.Len(t, actors, 200)
 }
+
+func TestUUIDFunctions(t *testing.T) {
+
+	stmt := SELECT(
+		UUID_TO_BIN(String("4255e382-1c10-4ac0-ba5b-039ca7a8525f")).AS("bin"),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT uuid_to_bin('4255e382-1c10-4ac0-ba5b-039ca7a8525f') AS "bin";
+`)
+
+	var dest struct {
+		Bin []byte
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"Bin": "QlXjghwQSsC6WwOcp6hSXw=="
+}
+`)
+}
