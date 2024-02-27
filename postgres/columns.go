@@ -89,17 +89,17 @@ type ColumnTimestampzRange = jet.ColumnRange[TimestampzExpression]
 // TimestampzRangeColumn creates named range with range column
 var TimestampzRangeColumn = jet.RangeColumn[TimestampzExpression]
 
-// ColumnInt4Range is interface of SQL int range column
-type ColumnInt4Range = jet.ColumnRange[IntegerExpression]
+// ColumnInt4Range is interface of SQL int4 range column
+type ColumnInt4Range jet.ColumnRange[jet.Int4Expression]
 
 // Int4RangeColumn creates named range with range column
-var Int4RangeColumn = jet.RangeColumn[IntegerExpression]
+var Int4RangeColumn = jet.RangeColumn[jet.Int4Expression]
 
-// ColumnInt8Range is interface of SQL int range column
-type ColumnInt8Range = jet.ColumnRange[IntegerExpression]
+// ColumnInt8Range is interface of SQL int8 range column
+type ColumnInt8Range jet.ColumnRange[jet.Int8Expression]
 
 // Int8RangeColumn creates named range with range column
-var Int8RangeColumn = jet.RangeColumn[IntegerExpression]
+var Int8RangeColumn = jet.RangeColumn[jet.Int8Expression]
 
 //------------------------------------------------------//
 

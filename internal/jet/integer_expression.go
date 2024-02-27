@@ -31,6 +31,12 @@ type IntegerExpression interface {
 	BIT_SHIFT_RIGHT(shift IntegerExpression) IntegerExpression
 }
 
+// additional integer expression subtypes, used in range expressions.
+type (
+	Int4Expression IntegerExpression
+	Int8Expression IntegerExpression
+)
+
 type integerInterfaceImpl struct {
 	numericExpressionImpl
 	parent IntegerExpression

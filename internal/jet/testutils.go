@@ -25,7 +25,7 @@ var (
 	table1ColTimestampz = TimestampzColumn("col_timestampz")
 	table1ColBool       = BoolColumn("col_bool")
 	table1ColDate       = DateColumn("col_date")
-	table1ColRange      = RangeColumn[IntegerExpression]("col_range")
+	table1ColRange      = RangeColumn[Int8Expression]("col_range")
 )
 var table1 = NewTable("db", "table1", "", table1Col1, table1ColInt, table1ColFloat, table1Col3, table1ColTime, table1ColTimez, table1ColBool, table1ColDate, table1ColRange, table1ColTimestamp, table1ColTimestampz)
 
@@ -41,7 +41,7 @@ var (
 	table2ColTimestamp  = TimestampColumn("col_timestamp")
 	table2ColTimestampz = TimestampzColumn("col_timestampz")
 	table2ColDate       = DateColumn("col_date")
-	table2ColRange      = RangeColumn[IntegerExpression]("col_range")
+	table2ColRange      = RangeColumn[Int8Expression]("col_range")
 )
 var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColRange, table2ColTimestamp, table2ColTimestampz)
 

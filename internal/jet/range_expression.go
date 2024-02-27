@@ -18,10 +18,18 @@ type Range[T Expression] interface {
 	UNION(rhs Range[T]) Range[T]
 	INTERSECTION(rhs Range[T]) Range[T]
 	DIFFERENCE(rhs Range[T]) Range[T]
+
+	UPPER_BOUND() T
+	LOWER_BOUND() T
+	IS_EMPTY() BoolExpression
+	LOWER_INC() BoolExpression
+	UPPER_INC() BoolExpression
+	LOWER_INF() BoolExpression
+	UPPER_INF() BoolExpression
 }
 
 type rangeInterfaceImpl[T Expression] struct {
-	parent Expression
+	parent Range[T]
 }
 
 func (r *rangeInterfaceImpl[T]) EQ(rhs Range[T]) BoolExpression {
@@ -74,6 +82,34 @@ func (r *rangeInterfaceImpl[T]) DIFFERENCE(rhs Range[T]) Range[T] {
 	return RangeExp[T](Sub(r.parent, rhs))
 }
 
+func (r *rangeInterfaceImpl[T]) UPPER_BOUND() T {
+	return UPPER_BOUND(r.parent)
+}
+
+func (r *rangeInterfaceImpl[T]) LOWER_BOUND() T {
+	return LOWER_BOUND(r.parent)
+}
+
+func (r *rangeInterfaceImpl[T]) IS_EMPTY() BoolExpression {
+	return IS_EMPTY(r.parent)
+}
+
+func (r *rangeInterfaceImpl[T]) LOWER_INC() BoolExpression {
+	return LOWER_INC(r.parent)
+}
+
+func (r *rangeInterfaceImpl[T]) UPPER_INC() BoolExpression {
+	return UPPER_INC(r.parent)
+}
+
+func (r *rangeInterfaceImpl[T]) LOWER_INF() BoolExpression {
+	return LOWER_INF(r.parent)
+}
+
+func (r *rangeInterfaceImpl[T]) UPPER_INF() BoolExpression {
+	return UPPER_INF(r.parent)
+}
+
 //---------------------------------------------------//
 
 type rangeExpressionWrapper[T Expression] struct {
@@ -93,3 +129,13 @@ func newRangeExpressionWrap[T Expression](expression Expression) Range[T] {
 func RangeExp[T Expression](expression Expression) Range[T] {
 	return newRangeExpressionWrap[T](expression)
 }
+
+// different range expression wrappers
+var (
+	Int4RangeExp = RangeExp[Int4Expression]
+	Int8RangeExp = RangeExp[Int8Expression]
+	NumRangeExp  = RangeExp[NumericExpression]
+	DateRangeExp = RangeExp[DateExpression]
+	TsRangeExp   = RangeExp[TimestampExpression]
+	TstzRangeExp = RangeExp[TimestampzExpression]
+)

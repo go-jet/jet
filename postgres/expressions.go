@@ -102,9 +102,14 @@ var TimestampzExp = jet.TimestampzExp
 // RangeExp is range expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as range expression.
 // Does not add sql cast to generated sql builder output.
-func RangeExp[T Expression](expression T) jet.Range[T] {
-	return jet.RangeExp[T](expression)
-}
+var (
+	Int4RangeExp = jet.Int4RangeExp
+	Int8RangeExp = jet.Int8RangeExp
+	NumRangeExp  = jet.NumRangeExp
+	DateRangeExp = jet.DateRangeExp
+	TsRangeExp   = jet.TsRangeExp
+	TstzRangeExp = jet.TstzRangeExp
+)
 
 // RawArgs is type used to pass optional arguments to Raw method
 type RawArgs = map[string]interface{}
@@ -125,8 +130,8 @@ var (
 	RawTimestampz      = jet.RawTimestampz
 	RawDate            = jet.RawDate
 	RawNumRange        = jet.RawRange[jet.NumericExpression]
-	RawInt4Range       = jet.RawRange[jet.IntegerExpression]
-	RawInt8Range       = jet.RawRange[jet.IntegerExpression]
+	RawInt4Range       = jet.RawRange[jet.Int4Expression]
+	RawInt8Range       = jet.RawRange[jet.Int8Expression]
 	RawTimestampRange  = jet.RawRange[jet.TimestampExpression]
 	RawTimestampzRange = jet.RawRange[jet.TimestampzExpression]
 	RawDateRange       = jet.RawRange[jet.DateExpression]

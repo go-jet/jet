@@ -434,15 +434,16 @@ var CUBE = jet.CUBE
 // of the GROUPING function would then be an integer bit mask having 1’s for the arguments which have GROUPING(argument) as 1.
 var GROUPING = jet.GROUPING
 
+// range constructor functions
 var (
 	// DATE_RANGE constructor function to create a date range
 	DATE_RANGE = jet.DateRange
-	// NUM_Range constructor function to create a numeric range
-	NUM_Range = jet.NumRange
-	// TIMESTAMP_RANGE constructor function to create a timestamp range
-	TIMESTAMP_RANGE = jet.TimestampRange
-	// TIMESTAMPTZ_RANGE constructor function to create a timestampz range
-	TIMESTAMPTZ_RANGE = jet.TimestampzRange
+	// NUM_RANGE constructor function to create a numeric range
+	NUM_RANGE = jet.NumRange
+	// TS_RANGE constructor function to create a timestamp range
+	TS_RANGE = jet.TsRange
+	// TSTZ_RANGE constructor function to create a timestampz range
+	TSTZ_RANGE = jet.TstzRange
 	// INT4_RANGE constructor function to create a int4 range
 	INT4_RANGE = jet.Int4Range
 	// INT8_RANGE constructor function to create a int8 range
