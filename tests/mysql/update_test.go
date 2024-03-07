@@ -2,7 +2,7 @@ package mysql
 
 import (
 	"context"
-	"database/sql"
+	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
 
@@ -28,7 +28,7 @@ WHERE link.name = 'Bing';
 			WHERE(Link.Name.EQ(String("Bing")))
 
 		testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "http://bong.com", "Bing")
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			testutils.AssertExec(t, query, tx)
 			requireLogged(t, query)
 
@@ -59,7 +59,7 @@ WHERE link.name = 'Bing';
 			WHERE(Link.Name.EQ(String("Bing")))
 
 		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "Bong", "http://bong.com", "Bing")
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			testutils.AssertExec(t, stmt, tx)
 			requireLogged(t, stmt)
 
@@ -280,7 +280,7 @@ SET id = 501,
 WHERE link.name = 'Bing';
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 	})

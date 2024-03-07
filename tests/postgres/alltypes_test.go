@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"database/sql"
+	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
 
@@ -71,7 +71,7 @@ func TestAllTypesInsertModel(t *testing.T) {
 		MODEL(&allTypesRow1).
 		RETURNING(AllTypes.AllColumns)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.AllTypes
 		err := query.Query(tx, &dest)
 		require.NoError(t, err)
@@ -94,7 +94,7 @@ func TestAllTypesInsertQuery(t *testing.T) {
 		).
 		RETURNING(AllTypesAllColumns)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.AllTypes
 		err := query.Query(tx, &dest)
 
@@ -1293,7 +1293,7 @@ WHERE all_types.small_int = 14
 RETURNING all_types.json AS "all_types.json";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var res model.AllTypes
 
 		err := stmt.Query(tx, &res)

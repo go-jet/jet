@@ -22,8 +22,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
-var sampleDB *sql.DB
+var db *sqlite.DB
+var sampleDB *sqlite.DB
 var testRoot string
 
 func TestMain(m *testing.M) {
@@ -32,21 +32,30 @@ func TestMain(m *testing.M) {
 
 	setTestRoot()
 
-	var err error
-	db, err = sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
+	sqlDB, err := sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
 	throw.OnError(err)
+	db = sqlite.NewDB(sqlDB).WithStatementsCaching(true)
 	defer db.Close()
 
 	_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
 	throw.OnError(err)
 
-	sampleDB, err = sql.Open("sqlite3", dbconfig.TestSampleDBPath)
+	sqlSampleDB, err := sql.Open("sqlite3", dbconfig.TestSampleDBPath)
 	throw.OnError(err)
+	sampleDB = sqlite.NewDB(sqlSampleDB).WithStatementsCaching(true)
+	defer sampleDB.Close()
 
-	ret := m.Run()
+	for i := 0; i < 2; i++ {
+		ret := m.Run()
+		if ret != 0 {
+			os.Exit(ret)
+		}
+	}
 
-	if ret != 0 {
-		os.Exit(ret)
+	err = sampleDB.Clear()
+
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -103,13 +112,13 @@ func requireLogged(t *testing.T, statement sqlite.Statement) {
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
 
-func beginSampleDBTx(t *testing.T) *sql.Tx {
-	tx, err := sampleDB.Begin()
+func beginSampleDBTx(t *testing.T) *sqlite.Tx {
+	tx, err := sampleDB.BeginTx(context.Background(), nil)
 	require.NoError(t, err)
 	return tx
 }
 
-func beginDBTx(t *testing.T) *sql.Tx {
+func beginDBTx(t *testing.T) *sqlite.Tx {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	return tx

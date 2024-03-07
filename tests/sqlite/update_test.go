@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"github.com/go-jet/jet/v2/qrm"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/table"
 	"testing"
@@ -215,7 +216,7 @@ WHERE link.id = 20;
 
 	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int32(20))
 
-	testutils.AssertExec(t, stmt, tx)
+	testutils.AssertExec(t, stmt, tx, 1)
 	requireLogged(t, stmt)
 }
 
@@ -271,8 +272,6 @@ func TestUpdateWithInvalidModelData(t *testing.T) {
 }
 
 func TestUpdateContextDeadlineExceeded(t *testing.T) {
-	tx := beginSampleDBTx(t)
-	defer tx.Rollback()
 
 	updateStmt := Link.UPDATE(Link.Name, Link.URL).
 		SET("Bong", "http://bong.com").
@@ -283,12 +282,16 @@ func TestUpdateContextDeadlineExceeded(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	dest := []model.Link{}
-	err := updateStmt.QueryContext(ctx, tx, &dest)
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		var dest []model.Link
+		err := updateStmt.QueryContext(ctx, tx, &dest)
+		require.Error(t, err, "context deadline exceeded")
+	})
 
-	_, err = updateStmt.ExecContext(ctx, tx)
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		_, err := updateStmt.ExecContext(ctx, tx)
+		require.Error(t, err, "context deadline exceeded")
+	})
 }
 
 func TestUpdateFrom(t *testing.T) {

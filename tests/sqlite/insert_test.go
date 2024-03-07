@@ -2,7 +2,7 @@ package sqlite
 
 import (
 	"context"
-	"database/sql"
+	"github.com/go-jet/jet/v2/qrm"
 	"math/rand"
 
 	"testing"
@@ -30,7 +30,7 @@ VALUES (?, ?, ?, ?),
 		101, "http://www.google.com", "Google", "Search engine",
 		102, "http://www.yahoo.com", "Yahoo", nil)
 
-	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		testutils.AssertExec(t, insertQuery, tx)
 		requireLogged(t, insertQuery)
 
@@ -75,7 +75,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', NULL);
 `,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", nil)
 
-	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 		requireLogged(t, stmt)
@@ -108,7 +108,7 @@ INSERT INTO link (url, name)
 VALUES ('http://www.duckduckgo.com', 'Duck Duck go');
 `, "http://www.duckduckgo.com", "Duck Duck go")
 
-	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 	})
@@ -130,7 +130,7 @@ INSERT INTO link
 VALUES (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
 `, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
-	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 	})
@@ -219,7 +219,7 @@ WHERE link.id = 24;
 		)
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(24))
-	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 
@@ -248,7 +248,7 @@ RETURNING link.id AS "link.id",
           link.description AS "link.description";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		var link model.Link
 		err := stmt.Query(tx, &link)
 		require.NoError(t, err)
@@ -353,9 +353,15 @@ func TestInsertContextDeadlineExceeded(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	var dest []model.Link
-	err := stmt.QueryContext(ctx, sampleDB, &dest)
-	require.Error(t, err, "context deadline exceeded")
 
-	_, err = stmt.ExecContext(ctx, db)
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
+		err := stmt.QueryContext(ctx, tx, &dest)
+		require.Error(t, err, "context deadline exceeded")
+	})
+
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
+		_, err := stmt.ExecContext(ctx, tx)
+		require.Error(t, err, "context deadline exceeded")
+	})
+
 }

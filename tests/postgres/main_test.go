@@ -22,7 +22,7 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-var db *sql.DB
+var db *postgres.DB
 var testRoot string
 
 var source string
@@ -60,18 +60,25 @@ func TestMain(m *testing.M) {
 				connectionString = dbconfig.CockroachConnectString
 			}
 
-			var err error
-			db, err = sql.Open(driverName, connectionString)
+			sqlDB, err := sql.Open(driverName, connectionString)
 			if err != nil {
 				fmt.Println(err.Error())
 				panic("Failed to connect to test db")
 			}
+			db = postgres.NewDB(sqlDB).WithStatementsCaching(true)
 			defer db.Close()
 
-			ret := m.Run()
+			for i := 0; i < 2; i++ {
+				ret := m.Run()
+				if ret != 0 {
+					os.Exit(ret)
+				}
+			}
 
-			if ret != 0 {
-				os.Exit(ret)
+			err = db.Clear()
+
+			if err != nil {
+				os.Exit(-2)
 			}
 		}()
 	}

@@ -986,14 +986,14 @@ WHERE artists.''ArtistId'' = 11;
 }
 
 func TestRowsScan(t *testing.T) {
-	stmt :=
-		SELECT(
-			Inventory.AllColumns,
-		).FROM(
-			Inventory,
-		).ORDER_BY(
-			Inventory.InventoryID.ASC(),
-		)
+
+	stmt := SELECT(
+		Inventory.AllColumns,
+	).FROM(
+		Inventory,
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
 
 	rows, err := stmt.Rows(context.Background(), db)
 	require.NoError(t, err)

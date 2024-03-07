@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
 
@@ -60,8 +61,6 @@ LIMIT 1;
 }
 
 func TestDeleteContextDeadlineExceeded(t *testing.T) {
-	tx := beginSampleDBTx(t)
-	defer tx.Rollback()
 
 	deleteStmt := Link.
 		DELETE().
@@ -72,12 +71,16 @@ func TestDeleteContextDeadlineExceeded(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	dest := []model.Link{}
-	err := deleteStmt.QueryContext(ctx, tx, &dest)
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
+		var dest []model.Link
+		err := deleteStmt.QueryContext(ctx, tx, &dest)
+		require.Error(t, err, "context deadline exceeded")
+	})
 
-	_, err = deleteStmt.ExecContext(ctx, tx)
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
+		_, err := deleteStmt.ExecContext(ctx, tx)
+		require.Error(t, err, "context deadline exceeded")
+	})
 
 	requireLogged(t, deleteStmt)
 }

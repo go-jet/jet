@@ -14,10 +14,14 @@ func TestLockRead(t *testing.T) {
 	testutils.AssertStatementSql(t, query, `
 LOCK TABLES dvds.customer READ;
 `)
-
-	_, err := query.Exec(db)
+	tx, err := db.DB.Begin() // can't prepare LOCK statement
 	require.NoError(t, err)
-	requireLogged(t, query)
+	defer func() {
+		err := tx.Rollback()
+		require.NoError(t, err)
+	}()
+
+	testutils.AssertExec(t, query, tx)
 }
 
 func TestLockWrite(t *testing.T) {
@@ -27,9 +31,14 @@ func TestLockWrite(t *testing.T) {
 LOCK TABLES dvds.customer WRITE;
 `)
 
-	_, err := query.Exec(db)
+	tx, err := db.DB.Begin() // can't prepare LOCK statement
 	require.NoError(t, err)
-	requireLogged(t, query)
+	defer func() {
+		err := tx.Rollback()
+		require.NoError(t, err)
+	}()
+
+	testutils.AssertExec(t, query, tx)
 }
 
 func TestUnlockTables(t *testing.T) {
@@ -39,7 +48,12 @@ func TestUnlockTables(t *testing.T) {
 UNLOCK TABLES;
 `)
 
-	_, err := query.Exec(db)
+	tx, err := db.DB.Begin() // can't prepare LOCK statement
 	require.NoError(t, err)
-	requireLogged(t, query)
+	defer func() {
+		err := tx.Rollback()
+		require.NoError(t, err)
+	}()
+
+	testutils.AssertExec(t, query, tx)
 }

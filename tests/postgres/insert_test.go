@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/stretchr/testify/require"
@@ -34,7 +34,7 @@ RETURNING link.id AS "link.id",
 		101, "http://www.google.com", "Google",
 		102, "http://www.yahoo.com", "Yahoo", nil)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var insertedLinks []model.Link
 
 		err := insertQuery.Query(tx, &insertedLinks)
@@ -335,7 +335,7 @@ RETURNING link.id AS "link.id",
           link.description AS "link.description";
 `, int64(0))
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.Link
 
 		err := query.Query(tx, &dest)
@@ -362,7 +362,7 @@ func TestInsertWithQueryContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		dest := []model.Link{}
 		err := stmt.QueryContext(ctx, tx, &dest)
 
@@ -379,7 +379,7 @@ func TestInsertWithExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		testutils.AssertExecContextErr(ctx, t, stmt, tx, "context deadline exceeded")
 	})
 }

@@ -18,7 +18,7 @@ import (
 	"testing"
 )
 
-var db *sql.DB
+var db *jetmysql.DB
 
 var source string
 
@@ -37,15 +37,20 @@ func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
 	var err error
-	db, err = sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
+	sqlDB, err := sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
 	if err != nil {
 		panic("Failed to connect to test db" + err.Error())
 	}
+
+	db = jetmysql.NewDB(sqlDB).WithStatementsCaching(true)
 	defer db.Close()
 
-	ret := m.Run()
-
-	os.Exit(ret)
+	for i := 0; i < 2; i++ {
+		ret := m.Run()
+		if ret != 0 {
+			os.Exit(ret)
+		}
+	}
 }
 
 var loggedSQL string

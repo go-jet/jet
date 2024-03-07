@@ -1,7 +1,7 @@
 package postgres
 
 import (
-	"database/sql"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
 	"testing"
 
@@ -512,7 +512,7 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 	})
 
 	t.Run("should insert without generated columns", func(t *testing.T) {
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			insertQuery := People.INSERT(
 				People.MutableColumns,
 			).MODEL(

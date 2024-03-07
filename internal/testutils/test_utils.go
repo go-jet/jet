@@ -3,10 +3,10 @@ package testutils
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
+	jet2 "github.com/go-jet/jet/v2/internal/jet/db"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
@@ -28,7 +28,7 @@ var UnixTimeComparer = cmp.Comparer(func(t1, t2 time.Time) bool {
 })
 
 // AssertExecAndRollback will execute and rollback statement in sql transaction
-func AssertExecAndRollback(t *testing.T, stmt jet.Statement, db *sql.DB, rowsAffected ...int64) {
+func AssertExecAndRollback(t *testing.T, stmt jet.Statement, db *jet2.DB, rowsAffected ...int64) {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	defer func() {
@@ -53,7 +53,7 @@ func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int
 }
 
 // ExecuteInTxAndRollback will execute function in sql transaction and then rollback transaction
-func ExecuteInTxAndRollback(t *testing.T, db *sql.DB, f func(tx *sql.Tx)) {
+func ExecuteInTxAndRollback(t *testing.T, db *jet2.DB, f func(tx qrm.DB)) {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	defer func() {
@@ -133,7 +133,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 }
 
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
-func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
+func AssertStatementSql(t *testing.T, query jet.PrintableStatement, expectedQuery string, expectedArgs ...interface{}) {
 	queryStr, args := query.Sql()
 	assertQueryString(t, queryStr, expectedQuery)
 
@@ -154,7 +154,7 @@ func AssertStatementSqlErr(t *testing.T, stmt jet.Statement, errorStr string) {
 }
 
 // AssertDebugStatementSql check if statement Sql() is the same as expectedQuery
-func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
+func AssertDebugStatementSql(t *testing.T, query jet.PrintableStatement, expectedQuery string, expectedArgs ...interface{}) {
 	_, args := query.Sql()
 
 	if len(expectedArgs) > 0 {
