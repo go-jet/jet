@@ -8,7 +8,8 @@ func TestOnConflict(t *testing.T) {
 
 	onConflict := &onConflictClause{}
 	onConflict.DO_NOTHING()
-	assertClauseSerialize(t, onConflict, "")
+	assertClauseSerialize(t, onConflict, `
+ON CONFLICT DO NOTHING`)
 
 	onConflict = &onConflictClause{indexExpressions: ColumnList{table1ColBool}}
 	onConflict.DO_NOTHING()
