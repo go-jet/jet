@@ -3,7 +3,7 @@ module github.com/go-jet/jet/v2
 go 1.18
 
 require (
-	github.com/go-sql-driver/mysql v1.7.1
+	github.com/go-sql-driver/mysql v1.8.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/lib/pq v1.10.9
@@ -12,8 +12,8 @@ require (
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/jackc/pgtype v1.14.0
-	github.com/jackc/pgx/v4 v4.18.1
+	github.com/jackc/pgtype v1.14.3
+	github.com/jackc/pgx/v4 v4.18.3
 	github.com/pkg/profile v1.7.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.9.0
@@ -22,6 +22,7 @@ require (
 )
 
 require (
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/felixge/fgprof v0.9.3 // indirect
 	github.com/friendsofgo/errors v0.9.2 // indirect
