@@ -12,8 +12,8 @@ require (
 
 require (
 	github.com/google/go-cmp v0.6.0
-	github.com/jackc/pgtype v1.14.0
-	github.com/jackc/pgx/v4 v4.18.1
+	github.com/jackc/pgtype v1.14.3
+	github.com/jackc/pgx/v4 v4.18.2
 	github.com/pkg/profile v1.7.0
 	github.com/shopspring/decimal v1.3.1
 	github.com/stretchr/testify v1.9.0
