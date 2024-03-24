@@ -270,6 +270,24 @@ func TestInsertOnConflict(t *testing.T) {
 		stmt := Link.INSERT(Link.AllColumns).
 			MODEL(link).
 			MODEL(link).
+			ON_CONFLICT().DO_NOTHING()
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO link (id, url, name, description)
+VALUES (?, ?, ?, ?),
+       (?, ?, ?, ?)
+ON CONFLICT DO NOTHING;
+`)
+		testutils.AssertExecAndRollback(t, stmt, sampleDB, 1)
+		requireLogged(t, stmt)
+	})
+
+	t.Run("do nothing with index", func(t *testing.T) {
+		link := model.Link{ID: rand.Int31()}
+
+		stmt := Link.INSERT(Link.AllColumns).
+			MODEL(link).
+			MODEL(link).
 			ON_CONFLICT(Link.ID).DO_NOTHING()
 
 		testutils.AssertStatementSql(t, stmt, `
@@ -339,6 +357,21 @@ ON CONFLICT (id) WHERE (id * 2) > 10 DO UPDATE
 `)
 
 		testutils.AssertExecAndRollback(t, stmt, sampleDB)
+		requireLogged(t, stmt)
+	})
+
+	t.Run("nil action removes ON CONFLICT clause", func(t *testing.T) {
+		link := model.Link{ID: rand.Int31()}
+
+		stmt := Link.INSERT(Link.AllColumns).
+			MODEL(link).
+			ON_CONFLICT().DO_UPDATE(nil)
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO link (id, url, name, description)
+VALUES (?, ?, ?, ?);
+`)
+		testutils.AssertExecAndRollback(t, stmt, sampleDB, 1)
 		requireLogged(t, stmt)
 	})
 }

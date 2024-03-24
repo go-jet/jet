@@ -90,6 +90,24 @@ func TestInsertOnConflict(t *testing.T) {
 		stmt := Employee.INSERT(Employee.AllColumns).
 			MODEL(employee).
 			MODEL(employee).
+			ON_CONFLICT().DO_NOTHING()
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
+VALUES ($1, $2, $3, $4, $5),
+       ($6, $7, $8, $9, $10)
+ON CONFLICT DO NOTHING;
+`)
+		testutils.AssertExecAndRollback(t, stmt, db, 1)
+		requireLogged(t, stmt)
+	})
+
+	t.Run("do nothing with index", func(t *testing.T) {
+		employee := model.Employee{EmployeeID: rand.Int31()}
+
+		stmt := Employee.INSERT(Employee.AllColumns).
+			MODEL(employee).
+			MODEL(employee).
 			ON_CONFLICT(Employee.EmployeeID).DO_NOTHING()
 
 		testutils.AssertStatementSql(t, stmt, `
@@ -206,6 +224,21 @@ ON CONFLICT (id) WHERE (id * 2) > 10 DO UPDATE
 `)
 
 		testutils.AssertExecAndRollback(t, stmt, db, 1)
+	})
+
+	t.Run("nil action removes ON CONFLICT clause", func(t *testing.T) {
+		employee := model.Employee{EmployeeID: rand.Int31()}
+
+		stmt := Employee.INSERT(Employee.AllColumns).
+			MODEL(employee).
+			ON_CONFLICT().DO_UPDATE(nil)
+
+		testutils.AssertStatementSql(t, stmt, `
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
+VALUES ($1, $2, $3, $4, $5);
+`)
+		testutils.AssertExecAndRollback(t, stmt, db, 1)
+		requireLogged(t, stmt)
 	})
 }
 
