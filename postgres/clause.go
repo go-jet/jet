@@ -44,7 +44,7 @@ func (o *onConflictClause) DO_UPDATE(action conflictAction) InsertStatement {
 }
 
 func (o *onConflictClause) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-	if len(o.indexExpressions) == 0 && o.constraint == "" {
+	if len(o.indexExpressions) == 0 && o.constraint == "" && o.do != jet.Keyword("DO NOTHING") {
 		return
 	}
 
