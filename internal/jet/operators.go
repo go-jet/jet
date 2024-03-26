@@ -188,3 +188,7 @@ func (c *caseOperatorImpl) serialize(statement StatementType, out *SQLBuilder, o
 func DISTINCT(expr Expression) Expression {
 	return newPrefixOperatorExpression(expr, "DISTINCT")
 }
+
+func BinaryOperator(lhs Expression, rhs Expression, operator string) Expression {
+	return NewBinaryOperatorExpression(lhs, rhs, operator)
+}
