@@ -93,3 +93,6 @@ var Func = jet.Func
 
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue
+
+// BinaryOperator can be used to use custom or unsupported operators that take two operands.
+var BinaryOperator = jet.BinaryOperator
