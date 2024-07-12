@@ -35,7 +35,7 @@ func GROUPING(expressions ...Expression) IntegerExpression {
 // WITH_ROLLUP operator is used with the GROUP BY clause to generate all prefixes of a group of columns including the empty list.
 // It creates extra rows in the result set that represent the subtotal values for each combination of columns.
 func WITH_ROLLUP(expressions ...Expression) GroupByClause {
-	return newCustomExpression(
+	return NewCustomExpression(
 		parametersSerializer(expressions), Token("WITH ROLLUP"),
 	)
 }
