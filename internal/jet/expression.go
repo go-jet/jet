@@ -278,7 +278,7 @@ type customExpression struct {
 	parts []Serializer
 }
 
-func NewCustomExpression(parts ...Serializer) Expression {
+func CustomExpression(parts ...Serializer) Expression {
 	ret := customExpression{
 		parts: parts,
 	}
