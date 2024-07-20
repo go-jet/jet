@@ -45,6 +45,10 @@ func (pl ProjectionList) As(tableAlias string) ProjectionList {
 			newProjectionList = append(newProjectionList, p.As(tableAlias))
 		case ColumnExpression:
 			newProjectionList = append(newProjectionList, newAlias(p, tableAlias+"."+p.Name()))
+		case ColumnList:
+			for _, c := range p {
+				newProjectionList = append(newProjectionList, newAlias(c, tableAlias+"."+c.Name()))
+			}
 		case *alias:
 			newAlias := *p
 			_, columnName := extractTableAndColumnName(newAlias.alias)
