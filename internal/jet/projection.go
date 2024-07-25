@@ -31,11 +31,15 @@ func (pl ProjectionList) serializeForProjection(statement StatementType, out *SQ
 }
 
 // As will create new projection list where each column is wrapped with a new table alias.
-// tableAlias should be in the form 'name' or 'name.*'.
+// tableAlias should be in the form 'name' or 'name.*', or it can be an empty string, which will remove existing table alias.
 // For instance: If projection list has a column 'Artist.Name', and tableAlias is 'Musician.*', returned projection list will
-// have a column wrapped in alias 'Musician.Name'.
+// have a column wrapped in alias 'Musician.Name'. If tableAlias is empty string, it removes existing table alias ('Artist.Name' becomes 'Name').
 func (pl ProjectionList) As(tableAlias string) ProjectionList {
-	tableAlias = strings.TrimRight(tableAlias, ".*")
+	tableAliasWithDot := ""
+	if tableAlias != "" {
+		tableAlias = strings.TrimRight(tableAlias, ".*")
+		tableAliasWithDot = tableAlias + "."
+	}
 
 	newProjectionList := ProjectionList{}
 
@@ -43,16 +47,14 @@ func (pl ProjectionList) As(tableAlias string) ProjectionList {
 		switch p := projection.(type) {
 		case ProjectionList:
 			newProjectionList = append(newProjectionList, p.As(tableAlias))
-		case ColumnExpression:
-			newProjectionList = append(newProjectionList, newAlias(p, tableAlias+"."+p.Name()))
 		case ColumnList:
-			for _, c := range p {
-				newProjectionList = append(newProjectionList, newAlias(c, tableAlias+"."+c.Name()))
-			}
+			newProjectionList = append(newProjectionList, p.As(tableAlias))
+		case ColumnExpression:
+			newProjectionList = append(newProjectionList, newAlias(p, tableAliasWithDot+p.Name()))
 		case *alias:
 			newAlias := *p
 			_, columnName := extractTableAndColumnName(newAlias.alias)
-			newAlias.alias = tableAlias + "." + columnName
+			newAlias.alias = tableAliasWithDot + columnName
 			newProjectionList = append(newProjectionList, &newAlias)
 		}
 	}

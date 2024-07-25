@@ -1,5 +1,7 @@
 package jet
 
+import "strings"
+
 // ColumnList is a helper type to support list of columns as single projection
 type ColumnList []ColumnExpression
 
@@ -36,6 +38,21 @@ func (cl ColumnList) Except(excludedColumns ...Column) ColumnList {
 		ret = append(ret, column)
 	}
 
+	return ret
+}
+
+// As will create new projection list where each column is wrapped with a new table alias.
+// tableAlias should be in the form 'name' or 'name.*', or it can also be an empty string.
+// For instance: If projection list has a column 'Artist.Name', and tableAlias is 'Musician.*', returned projection list will
+// have a column wrapped in alias 'Musician.Name'. If tableAlias is empty string, it removes existing table alias ('Artist.Name' becomes 'Name').
+func (cl ColumnList) As(tableAlias string) ProjectionList {
+	if tableAlias > "" {
+		tableAlias = strings.TrimRight(tableAlias, ".*") + "."
+	}
+	ret := make(ProjectionList, 0, len(cl))
+	for _, c := range cl {
+		ret = append(ret, c.AS(tableAlias+c.Name()))
+	}
 	return ret
 }
 
