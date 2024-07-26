@@ -3,7 +3,7 @@ module github.com/go-jet/jet/v2
 go 1.18
 
 require (
-	github.com/go-sql-driver/mysql v1.8.0
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/lib/pq v1.10.9
