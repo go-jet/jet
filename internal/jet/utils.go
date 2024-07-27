@@ -1,10 +1,11 @@
 package jet
 
 import (
-	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
-	"github.com/go-jet/jet/v2/internal/utils/must"
 	"reflect"
 	"strings"
+
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
+	"github.com/go-jet/jet/v2/internal/utils/must"
 )
 
 // SerializeClauseList func
@@ -277,4 +278,16 @@ func serializeToDefaultDebugString(expr Serializer) string {
 	out := SQLBuilder{Dialect: defaultDialect, Debug: true}
 	expr.serialize(SelectStatementType, &out)
 	return out.Buff.String()
+}
+
+// joinAlias examples:
+//
+//	joinAlias("foo", "bar") // "foo.bar"
+//	joinAlias("foo.*", "bar") // "foo.bar"
+//	joinAlias("", "bar") // "bar"
+func joinAlias(tableAlias, columnAlias string) string {
+	if tableAlias == "" {
+		return columnAlias
+	}
+	return strings.TrimRight(tableAlias, ".*") + "." + columnAlias
 }

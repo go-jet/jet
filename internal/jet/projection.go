@@ -1,7 +1,5 @@
 package jet
 
-import "strings"
-
 // Projection is interface for all projection types. Types that can be part of, for instance SELECT clause.
 type Projection interface {
 	serializeForProjection(statement StatementType, out *SQLBuilder)
@@ -31,24 +29,24 @@ func (pl ProjectionList) serializeForProjection(statement StatementType, out *SQ
 }
 
 // As will create new projection list where each column is wrapped with a new table alias.
-// tableAlias should be in the form 'name' or 'name.*'.
+// tableAlias should be in the form 'name' or 'name.*', or it can be an empty string, which will remove existing table alias.
 // For instance: If projection list has a column 'Artist.Name', and tableAlias is 'Musician.*', returned projection list will
-// have a column wrapped in alias 'Musician.Name'.
+// have a column wrapped in alias 'Musician.Name'. If tableAlias is empty string, it removes existing table alias ('Artist.Name' becomes 'Name').
 func (pl ProjectionList) As(tableAlias string) ProjectionList {
-	tableAlias = strings.TrimRight(tableAlias, ".*")
-
 	newProjectionList := ProjectionList{}
 
 	for _, projection := range pl {
 		switch p := projection.(type) {
 		case ProjectionList:
 			newProjectionList = append(newProjectionList, p.As(tableAlias))
+		case ColumnList:
+			newProjectionList = append(newProjectionList, p.As(tableAlias))
 		case ColumnExpression:
-			newProjectionList = append(newProjectionList, newAlias(p, tableAlias+"."+p.Name()))
+			newProjectionList = append(newProjectionList, newAlias(p, joinAlias(tableAlias, p.Name())))
 		case *alias:
 			newAlias := *p
 			_, columnName := extractTableAndColumnName(newAlias.alias)
-			newAlias.alias = tableAlias + "." + columnName
+			newAlias.alias = joinAlias(tableAlias, columnName)
 			newProjectionList = append(newProjectionList, &newAlias)
 		}
 	}
