@@ -341,14 +341,14 @@ RETURNING sample_ranges.date_range AS "sample_ranges.date_range",
 				SampleRanges.Int8Range.SET(INT8_RANGE(Int64(-1200), Int64(7800))),
 			).
 			WHERE(
-				SampleRanges.TimestampzRange.LOWER_BOUND().GT(NOW()),
+				SampleRanges.TimestampzRange.LOWER_BOUND().GT(Timestampz(2024, 2, 27, 0, 0, 0, 0, "UTC")),
 			)
 
 		testutils.AssertDebugStatementSql(t, stmt, `
 UPDATE test_sample.sample_ranges
 SET int4_range = int4range(-12::integer, 78::integer),
     int8_range = int8range(-1200::bigint, 7800::bigint)
-WHERE LOWER(sample_ranges.timestampz_range) > NOW();
+WHERE LOWER(sample_ranges.timestampz_range) > '2024-02-27 00:00:00 UTC'::timestamp with time zone;
 `)
 
 		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {

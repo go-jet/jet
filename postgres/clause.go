@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"github.com/go-jet/jet/v2/internal/jet"
+	"github.com/go-jet/jet/v2/internal/utils/is"
 )
 
 type onConflict interface {
@@ -44,7 +45,7 @@ func (o *onConflictClause) DO_UPDATE(action conflictAction) InsertStatement {
 }
 
 func (o *onConflictClause) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-	if len(o.indexExpressions) == 0 && o.constraint == "" {
+	if is.Nil(o.do) {
 		return
 	}
 

@@ -111,6 +111,12 @@ var (
 	TstzRangeExp = jet.TstzRangeExp
 )
 
+// CustomExpression is used to define custom expressions.
+var CustomExpression = jet.CustomExpression
+
+// Token is used to define custom token in a custom expression.
+type Token = jet.Token
+
 // RawArgs is type used to pass optional arguments to Raw method
 type RawArgs = map[string]interface{}
 
@@ -142,3 +148,6 @@ var Func = jet.Func
 
 // NewEnumValue creates new named enum value
 var NewEnumValue = jet.NewEnumValue
+
+// BinaryOperator can be used to use custom or unsupported operators that take two operands.
+var BinaryOperator = jet.BinaryOperator
