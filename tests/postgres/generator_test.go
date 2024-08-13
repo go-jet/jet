@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,11 +11,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/postgres"
+	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-
+	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
+	"github.com/go-jet/jet/v2/tests/dbconfig"
+	"github.com/go-jet/jet/v2/tests/internal/utils/file"
 )
 
 func dsn(host string, port int, dbName, user, password string) string {
@@ -206,6 +208,36 @@ func TestGenerator(t *testing.T) {
 
 	err := os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
+}
+
+func TestGenerator_TableMetadata(t *testing.T) {
+	var schema metadata.Schema
+	err := postgres.GenerateDSN(defaultDSN(), "dvds", genTestDir2,
+		template.Default(postgres2.Dialect).UseSchema(func(m metadata.Schema) template.Schema {
+			schema = m
+			return template.DefaultSchema(m)
+		}))
+	require.NoError(t, err)
+
+	// Spot check the actor table and assert that the emitted
+	// properties are as expected.
+	var got metadata.Table
+	for _, table := range schema.TablesMetaData {
+		if table.Name == "actor" {
+			got = table
+		}
+	}
+
+	want := metadata.Table{
+		Name: "actor",
+		Columns: []metadata.Column{
+			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "int4", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "timestamp", Kind: "base", IsUnsigned: false}, Comment: ""},
+		},
+	}
+	require.Equal(t, want, got)
 }
 
 func TestGeneratorSpecialCharacters(t *testing.T) {

@@ -8,8 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	sqlite2 "github.com/go-jet/jet/v2/sqlite"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 )
@@ -56,6 +59,36 @@ func TestGenerator(t *testing.T) {
 
 	err := os.RemoveAll(genDestDir)
 	require.NoError(t, err)
+}
+
+func TestGenerator_TableMetadata(t *testing.T) {
+	var schema metadata.Schema
+	err := sqlite.GenerateDSN(testDatabaseFilePath, genDestDir,
+		template.Default(sqlite2.Dialect).UseSchema(func(m metadata.Schema) template.Schema {
+			schema = m
+			return template.DefaultSchema(m)
+		}))
+	require.NoError(t, err)
+
+	// Spot check the actor table and assert that the emitted
+	// properties are as expected.
+	var got metadata.Table
+	for _, table := range schema.TablesMetaData {
+		if table.Name == "actor" {
+			got = table
+		}
+	}
+
+	want := metadata.Table{
+		Name: "actor",
+		Columns: []metadata.Column{
+			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "INTEGER", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "VARCHAR", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "VARCHAR", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "TIMESTAMP", Kind: "base", IsUnsigned: false}, Comment: ""},
+		},
+	}
+	require.Equal(t, want, got)
 }
 
 func TestCmdGenerator(t *testing.T) {

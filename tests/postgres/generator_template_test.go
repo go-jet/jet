@@ -3,6 +3,9 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"path"
+	"testing"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/template"
@@ -13,8 +16,6 @@ import (
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"github.com/stretchr/testify/require"
-	"path"
-	"testing"
 )
 
 const tempTestDir = "./.tempTestDir"

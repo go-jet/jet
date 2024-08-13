@@ -10,6 +10,7 @@ type Column struct {
 	IsPrimaryKey bool
 	IsNullable   bool
 	IsGenerated  bool
+	HasDefault   bool
 	DataType     DataType
 	Comment      string
 }
