@@ -64,6 +64,7 @@ select
     ) as "column.IsPrimaryKey",
     not attr.attnotnull as "column.isNullable",
     attr.attgenerated = 's' as "column.isGenerated",
+    attr.atthasdef as "column.hasDefault",
     (case tp.typtype 
         when 'b' then 'base'
         when 'd' then 'base'

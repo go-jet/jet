@@ -8,8 +8,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/mysql"
+	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	mysql2 "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 )
 
@@ -36,6 +39,39 @@ func TestGenerator(t *testing.T) {
 	}
 
 	err := os.RemoveAll(genTestDirRoot)
+	require.NoError(t, err)
+}
+
+func TestGenerator_TableMetadata(t *testing.T) {
+	var schema metadata.Schema
+	err := mysql.Generate(genTestDir3, dbConnection("dvds"),
+		template.Default(mysql2.Dialect).UseSchema(func(m metadata.Schema) template.Schema {
+			schema = m
+			return template.DefaultSchema(m)
+		}))
+	require.NoError(t, err)
+
+	// Spot check the actor table and assert that the emitted
+	// properties are as expected.
+	var got metadata.Table
+	for _, table := range schema.TablesMetaData {
+		if table.Name == "actor" {
+			got = table
+		}
+	}
+
+	want := metadata.Table{
+		Name: "actor",
+		Columns: []metadata.Column{
+			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "smallint", Kind: "base", IsUnsigned: true}, Comment: ""},
+			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "timestamp", Kind: "base", IsUnsigned: false}, Comment: ""},
+		},
+	}
+	require.Equal(t, want, got)
+
+	err = os.RemoveAll(genTestDirRoot)
 	require.NoError(t, err)
 }
 
