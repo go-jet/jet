@@ -65,11 +65,12 @@ select
     not attr.attnotnull as "column.isNullable",
     attr.attgenerated = 's' as "column.isGenerated",
     attr.atthasdef as "column.hasDefault",
-    (case tp.typtype 
-        when 'b' then 'base'
-        when 'd' then 'base'
-        when 'e' then 'enum'
-        when 'r' then 'range'
+    (case
+        when tp.typtype = 'b' AND tp.typcategory <> 'A' then 'base'
+		when tp.typtype = 'b' AND tp.typcategory = 'A' then 'array'
+        when tp.typtype = 'd' then 'base'
+        when tp.typtype = 'e' then 'enum'
+        when tp.typtype = 'r' then 'range'
      end) as "dataType.Kind",
     (case when tp.typtype = 'd' then (select pg_type.typname from pg_catalog.pg_type where pg_type.oid = tp.typbasetype)
           when tp.typcategory = 'A' then pg_catalog.format_type(attr.atttypid, attr.atttypmod)
