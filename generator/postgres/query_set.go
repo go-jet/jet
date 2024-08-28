@@ -67,7 +67,7 @@ select
     attr.atthasdef as "column.hasDefault",
     (case
         when tp.typtype = 'b' AND tp.typcategory <> 'A' then 'base'
-		when tp.typtype = 'b' AND tp.typcategory = 'A' then 'array'
+        when tp.typtype = 'b' AND tp.typcategory = 'A' then 'array'
         when tp.typtype = 'd' then 'base'
         when tp.typtype = 'e' then 'enum'
         when tp.typtype = 'r' then 'range'
