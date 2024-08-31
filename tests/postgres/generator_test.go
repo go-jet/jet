@@ -222,9 +222,17 @@ func TestGenerator_TableMetadata(t *testing.T) {
 	// Spot check the actor table and assert that the emitted
 	// properties are as expected.
 	var got metadata.Table
+	var specialFeatures metadata.Column
 	for _, table := range schema.TablesMetaData {
 		if table.Name == "actor" {
 			got = table
+		}
+		if table.Name == "film" {
+			for _, column := range table.Columns {
+				if column.Name == "special_features" {
+					specialFeatures = column
+				}
+			}
 		}
 	}
 
@@ -238,6 +246,7 @@ func TestGenerator_TableMetadata(t *testing.T) {
 		},
 	}
 	require.Equal(t, want, got)
+	require.Equal(t, metadata.ArrayType, specialFeatures.DataType.Kind)
 }
 
 func TestGeneratorSpecialCharacters(t *testing.T) {
