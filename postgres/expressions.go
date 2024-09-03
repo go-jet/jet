@@ -9,6 +9,8 @@ type Expression = jet.Expression
 // BoolExpression interface
 type BoolExpression = jet.BoolExpression
 
+type StringArrayExpression = jet.ArrayExpression[StringExpression]
+
 // StringExpression interface
 type StringExpression = jet.StringExpression
 

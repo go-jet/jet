@@ -7,6 +7,10 @@ import (
 // Column is common column interface for all types of columns.
 type Column = jet.ColumnExpression
 
+type ColumnStringArray jet.ColumnArray[StringExpression]
+
+var StringArrayColumn = jet.ArrayColumn[StringExpression]
+
 // ColumnList function returns list of columns that be used as projection or column list for UPDATE and INSERT statement.
 type ColumnList = jet.ColumnList
 

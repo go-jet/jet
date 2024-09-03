@@ -75,6 +75,10 @@ func String(value string) StringExpression {
 	return CAST(jet.String(value)).AS_TEXT()
 }
 
+func StringArray(elements []string) StringArrayExpression {
+	return jet.StringArray(elements)
+}
+
 // Text is a parameter constructor for the PostgreSQL text type. This constructor also adds an
 // explicit placeholder type cast to text in the generated query, such as `$3::text`.
 // Example usage:
