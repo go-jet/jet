@@ -9,16 +9,23 @@ type Expression = jet.Expression
 // BoolExpression interface
 type BoolExpression = jet.BoolExpression
 
-type StringArrayExpression = jet.ArrayExpression[StringExpression]
+// BoolArrayExpression interface
+type BoolArrayExpression = jet.ArrayExpression[BoolExpression]
 
 // StringExpression interface
 type StringExpression = jet.StringExpression
+
+// StringArrayExpression interface
+type StringArrayExpression = jet.ArrayExpression[StringExpression]
 
 // NumericExpression interface
 type NumericExpression = jet.NumericExpression
 
 // IntegerExpression interface
 type IntegerExpression = jet.IntegerExpression
+
+// IntegerArrayExpression interface
+type IntegerArrayExpression = jet.ArrayExpression[IntegerExpression]
 
 // FloatExpression is interface
 type FloatExpression = jet.FloatExpression

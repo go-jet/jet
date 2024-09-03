@@ -11,6 +11,11 @@ func Bool(value bool) BoolExpression {
 	return CAST(jet.Bool(value)).AS_BOOL()
 }
 
+// BoolArray creates new bool array literal expression
+func BoolArray(elements []bool) BoolArrayExpression {
+	return jet.BoolArray(elements)
+}
+
 // Int is constructor for 64 bit signed integer expressions literals.
 var Int = jet.Int
 
@@ -65,6 +70,7 @@ func Double(value float64) FloatExpression {
 // Decimal creates new float literal expression
 var Decimal = jet.Decimal
 
+// String creates new string literal expression
 // String is a parameter constructor for the PostgreSQL text type. Using the `Text` constructor is
 // generally preferable.
 //
@@ -75,6 +81,7 @@ func String(value string) StringExpression {
 	return CAST(jet.String(value)).AS_TEXT()
 }
 
+// StringArray creates new string array literal expression
 func StringArray(elements []string) StringArrayExpression {
 	return jet.StringArray(elements)
 }

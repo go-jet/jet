@@ -7,14 +7,6 @@ import (
 // Column is common column interface for all types of columns.
 type Column = jet.ColumnExpression
 
-// ColumnArray is the generic interface for array types.
-type ColumnArray[E Expression] jet.ColumnArray[E]
-
-// ArrayColumn creates a named array column.
-func ArrayColumn[E Expression](name string) ColumnArray[E] {
-	return jet.ArrayColumn[E](name)
-}
-
 // ColumnList function returns list of columns that be used as projection or column list for UPDATE and INSERT statement.
 type ColumnList = jet.ColumnList
 
@@ -108,6 +100,24 @@ type ColumnInt8Range jet.ColumnRange[jet.Int8Expression]
 
 // Int8RangeColumn creates named range with range column
 var Int8RangeColumn = jet.RangeColumn[jet.Int8Expression]
+
+// ColumnStringArray is interface of column
+type ColumnStringArray jet.ColumnArray[jet.StringExpression]
+
+// StringArrayColumn creates named string array column
+var StringArrayColumn = jet.ArrayColumn[jet.StringExpression]
+
+// ColumnIntegerArray is interface of column
+type ColumnIntegerArray jet.ColumnArray[jet.IntegerExpression]
+
+// IntegerArrayColumn creates named integer array column
+var IntegerArrayColumn = jet.ArrayColumn[jet.IntegerExpression]
+
+// ColumnBoolArray is interface of column
+type ColumnBoolArray jet.ColumnArray[jet.BoolExpression]
+
+// BoolArrayColumn creates named bool array column
+var BoolArrayColumn = jet.ArrayColumn[jet.BoolExpression]
 
 //------------------------------------------------------//
 
