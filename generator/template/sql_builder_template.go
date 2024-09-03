@@ -156,11 +156,36 @@ func DefaultTableSQLBuilderColumn(columnMetaData metadata.Column) TableSQLBuilde
 // getSqlBuilderColumnType returns type of jet sql builder column
 func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	if columnMetaData.DataType.Kind != metadata.BaseType &&
-		columnMetaData.DataType.Kind != metadata.RangeType {
+		columnMetaData.DataType.Kind != metadata.RangeType &&
+		columnMetaData.DataType.Kind != metadata.ArrayType {
 		return "String"
 	}
 
 	typeName := columnMetaData.DataType.Name
+	columnName := columnMetaData.Name
+
+	if columnMetaData.DataType.Kind == metadata.ArrayType {
+		c := sqlToColumnType(strings.TrimSuffix(typeName, "[]"))
+
+		// These are the supported array types
+		if slices.Index([]string{"Bool", "String", "Integer"}, c) == -1 {
+			fmt.Println("- [SQL Builder] Unsupported sql column '" + columnName + " " + typeName + "', using StringArrayColumn instead.")
+			return "StringArray"
+		}
+
+		return c + "Array"
+	}
+
+	columnType := sqlToColumnType(typeName)
+	if columnType == "" {
+		fmt.Println("- [SQL Builder] Unsupported sql column '" + columnName + " " + typeName + "', using StringColumn instead.")
+		return "String"
+	}
+
+	return columnType
+}
+
+func sqlToColumnType(typeName string) string {
 	switch strings.ToLower(typeName) {
 	case "boolean", "bool":
 		return "Bool"
@@ -204,8 +229,7 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	case "text[]":
 		return "StringArray"
 	default:
-		fmt.Println("- [SQL Builder] Unsupported sql column '" + columnMetaData.Name + " " + typeName + "', using StringColumn instead.")
-		return "String"
+		return ""
 	}
 }
 
