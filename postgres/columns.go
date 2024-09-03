@@ -7,9 +7,13 @@ import (
 // Column is common column interface for all types of columns.
 type Column = jet.ColumnExpression
 
-type ColumnStringArray jet.ColumnArray[StringExpression]
+// ColumnArray is the generic interface for array types.
+type ColumnArray[E Expression] jet.ColumnArray[E]
 
-var StringArrayColumn = jet.ArrayColumn[StringExpression]
+// ArrayColumn creates a named array column.
+func ArrayColumn[E Expression](name string) ColumnArray[E] {
+	return jet.ArrayColumn[E](name)
+}
 
 // ColumnList function returns list of columns that be used as projection or column list for UPDATE and INSERT statement.
 type ColumnList = jet.ColumnList
