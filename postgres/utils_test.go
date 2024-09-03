@@ -18,7 +18,8 @@ var table1ColBool = BoolColumn("col_bool")
 var table1ColDate = DateColumn("col_date")
 var table1ColInterval = IntervalColumn("col_interval")
 var table1ColRange = Int8RangeColumn("col_range")
-var table1ColStringArray = StringArrayColumn("col_string_array")
+var table1ColStringArray = ArrayColumn[StringExpression]("col_string_array")
+var table1ColIntArray = ArrayColumn[IntegerExpression]("col_int_array")
 
 var table1 = NewTable(
 	"db",
@@ -36,6 +37,7 @@ var table1 = NewTable(
 	table1ColInterval,
 	table1ColRange,
 	table1ColStringArray,
+	table1ColIntArray,
 )
 
 var table2Col3 = IntegerColumn("col3")
@@ -51,9 +53,10 @@ var table2ColTimestampz = TimestampzColumn("col_timestampz")
 var table2ColDate = DateColumn("col_date")
 var table2ColInterval = IntervalColumn("col_interval")
 var table2ColRange = Int8RangeColumn("col_range")
-var table2ColStringArray = StringArrayColumn("col_string_array")
+var table2ColStringArray = ArrayColumn[StringExpression]("col_string_array")
+var table2ColIntArray = ArrayColumn[IntegerExpression]("col_int_array")
 
-var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz, table2ColInterval, table2ColRange, table2ColStringArray)
+var table2 = NewTable("db", "table2", "", table2Col3, table2Col4, table2ColInt, table2ColFloat, table2ColStr, table2ColBool, table2ColTime, table2ColTimez, table2ColDate, table2ColTimestamp, table2ColTimestampz, table2ColInterval, table2ColRange, table2ColStringArray, table2ColIntArray)
 
 var table3Col1 = IntegerColumn("col1")
 var table3ColInt = IntegerColumn("col_int")

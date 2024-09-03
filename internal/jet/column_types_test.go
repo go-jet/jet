@@ -9,16 +9,40 @@ var subQuery = &selectTableImpl{
 	alias: "sub_query",
 }
 
-func TestNewArrayColumn(t *testing.T) {
-	arrayColumn := ArrayColumn[StringExpression]("colArray").From(subQuery)
-	assertClauseSerialize(t, arrayColumn, `sub_query."colArray"`)
-	assertClauseSerialize(t, arrayColumn.EQ(StringArray([]string{"X"})), `(sub_query."colArray" = $1)`, pq.StringArray{"X"})
-	assertProjectionSerialize(t, arrayColumn, `sub_query."colArray" AS "colArray"`)
+func TestNewArrayColumnString(t *testing.T) {
+	stringArrayColumn := ArrayColumn[StringExpression]("colArray").From(subQuery)
+	assertClauseSerialize(t, stringArrayColumn, `sub_query."colArray"`)
+	assertClauseSerialize(t, stringArrayColumn.EQ(StringArray([]string{"X"})), `(sub_query."colArray" = $1)`, pq.StringArray{"X"})
+	assertProjectionSerialize(t, stringArrayColumn, `sub_query."colArray" AS "colArray"`)
 
-	arrayColumn2 := table1ColArray.From(subQuery)
+	arrayColumn2 := table1ColStringArray.From(subQuery)
 	assertClauseSerialize(t, arrayColumn2, `sub_query."table1.col_array_string"`)
 	assertClauseSerialize(t, arrayColumn2.EQ(StringArray([]string{"X"})), `(sub_query."table1.col_array_string" = $1)`, pq.StringArray{"X"})
 	assertProjectionSerialize(t, arrayColumn2, `sub_query."table1.col_array_string" AS "table1.col_array_string"`)
+}
+
+func TestNewArrayColumnBool(t *testing.T) {
+	boolArrayColumn := ArrayColumn[BoolExpression]("colArrayBool").From(subQuery)
+	assertClauseSerialize(t, boolArrayColumn, `sub_query."colArrayBool"`)
+	assertClauseSerialize(t, boolArrayColumn.EQ(BoolArray([]bool{true})), `(sub_query."colArrayBool" = $1)`, pq.BoolArray{true})
+	assertProjectionSerialize(t, boolArrayColumn, `sub_query."colArrayBool" AS "colArrayBool"`)
+
+	arrayColumn2 := table1ColBoolArray.From(subQuery)
+	assertClauseSerialize(t, arrayColumn2, `sub_query."table1.col_array_bool"`)
+	assertClauseSerialize(t, arrayColumn2.EQ(BoolArray([]bool{true})), `(sub_query."table1.col_array_bool" = $1)`, pq.BoolArray{true})
+	assertProjectionSerialize(t, arrayColumn2, `sub_query."table1.col_array_bool" AS "table1.col_array_bool"`)
+}
+
+func TestNewArrayColumnInteger(t *testing.T) {
+	intArrayColumn := ArrayColumn[IntegerExpression]("colArrayInt").From(subQuery)
+	assertClauseSerialize(t, intArrayColumn, `sub_query."colArrayInt"`)
+	assertClauseSerialize(t, intArrayColumn.EQ(Int32Array([]int32{42})), `(sub_query."colArrayInt" = $1)`, pq.Int32Array{42})
+	assertProjectionSerialize(t, intArrayColumn, `sub_query."colArrayInt" AS "colArrayInt"`)
+
+	arrayColumn2 := table1ColIntArray.From(subQuery)
+	assertClauseSerialize(t, arrayColumn2, `sub_query."table1.col_array_int"`)
+	assertClauseSerialize(t, arrayColumn2.EQ(Int32Array([]int32{42})), `(sub_query."table1.col_array_int" = $1)`, pq.Int32Array{42})
+	assertProjectionSerialize(t, arrayColumn2, `sub_query."table1.col_array_int" AS "table1.col_array_int"`)
 }
 
 func TestNewBoolColumn(t *testing.T) {
