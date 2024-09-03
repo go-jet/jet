@@ -42,4 +42,5 @@ type DataType struct {
 	Name       string
 	Kind       DataTypeKind
 	IsUnsigned bool
+	Dimensions int // The number of array dimensions
 }

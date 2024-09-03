@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"github.com/lib/pq"
 	"testing"
 	"time"
 
@@ -1837,7 +1838,7 @@ ORDER BY film.film_id ASC;
 		Rating:          &gRating,
 		RentalDuration:  3,
 		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-		SpecialFeatures: testutils.StringPtr("{Trailers,\"Deleted Scenes\"}"),
+		SpecialFeatures: &pq.StringArray{"Trailers", "Deleted Scenes"},
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
 }
@@ -2793,7 +2794,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	//jsonSave("./testdata/quick-start-dest.json", dest)
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-dest.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
 
 	var dest2 []struct {
@@ -2806,7 +2807,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	err = stmt.Query(db, &dest2)
 	require.NoError(t, err)
 
-	//jsonSave("./testdata/quick-start-dest2.json", dest2)
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-dest2.json")
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
@@ -3382,7 +3383,10 @@ func TestRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 20.99,
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"SpecialFeatures": [
+			"Deleted Scenes",
+			"Behind the Scenes"
+		],
 		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 		"Actors": [
 			{
@@ -3406,7 +3410,10 @@ func TestRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 9.99,
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"SpecialFeatures": [
+			"Trailers",
+			"Deleted Scenes"
+		],
 		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
 		"Actors": [
 			{
@@ -3454,7 +3461,10 @@ func TestRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 20.99,
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"SpecialFeatures": [
+			"Deleted Scenes",
+			"Behind the Scenes"
+		],
 		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 		"Actors": null
 	},
@@ -3470,7 +3480,10 @@ func TestRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 9.99,
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"SpecialFeatures": [
+			"Trailers",
+			"Deleted Scenes"
+		],
 		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
 		"Actors": null
 	}

@@ -65,6 +65,7 @@ select
     not attr.attnotnull as "column.isNullable",
     attr.attgenerated = 's' as "column.isGenerated",
     attr.atthasdef as "column.hasDefault",
+    attr.attndims as "dataType.dimensions",
     (case
         when tp.typtype = 'b' AND tp.typcategory <> 'A' then 'base'
         when tp.typtype = 'b' AND tp.typcategory = 'A' then 'array'

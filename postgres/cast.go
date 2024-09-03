@@ -45,6 +45,10 @@ type cast interface {
 	AS_INTERVAL() IntervalExpression
 }
 
+type castArray interface {
+	AS_STRING() jet.ArrayExpression[StringExpression]
+}
+
 type castImpl struct {
 	jet.Cast
 }

@@ -22,6 +22,15 @@ func BIT_NOT(expr IntegerExpression) IntegerExpression {
 	return newPrefixIntegerOperatorExpression(expr, "~")
 }
 
+// ----------- Array operators -------------- //
+func Any(lhs Expression, op BinaryBoolOp, rhs Expression) BoolExpression {
+	return op(lhs, Func("ANY", rhs))
+}
+
+func All(lhs Expression, op BinaryBoolOp, rhs Expression) BoolExpression {
+	return op(lhs, Func("ALL", rhs))
+}
+
 //----------- Comparison operators ---------------//
 
 // EXISTS checks for existence of the rows in subQuery
@@ -72,6 +81,11 @@ func GtEq(lhs, rhs Expression) BoolExpression {
 // Contains returns a representation of "a @> b"
 func Contains(lhs Expression, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "@>")
+}
+
+// IsContainedBy returns a representation of "a <@ b"
+func IsContainedBy(lhs Expression, rhs Expression) BoolExpression {
+	return newBinaryBoolOperatorExpression(lhs, rhs, "<@")
 }
 
 // Overlap returns a representation of "a && b"

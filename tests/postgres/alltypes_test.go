@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"github.com/lib/pq"
 	"testing"
 	"time"
 
@@ -1361,11 +1362,11 @@ var allTypesRow0 = model.AllTypes{
 	JSON:                 `{"a": 1, "b": 3}`,
 	JsonbPtr:             testutils.StringPtr(`{"a": 1, "b": 3}`),
 	Jsonb:                `{"a": 1, "b": 3}`,
-	IntegerArrayPtr:      testutils.StringPtr("{1,2,3}"),
-	IntegerArray:         "{1,2,3}",
-	TextArrayPtr:         testutils.StringPtr("{breakfast,consulting}"),
-	TextArray:            "{breakfast,consulting}",
-	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
+	IntegerArrayPtr:      &pq.Int32Array{1, 2, 3},
+	IntegerArray:         pq.Int32Array{1, 2, 3},
+	TextArrayPtr:         &pq.StringArray{"breakfast", "consulting"},
+	TextArray:            pq.StringArray{"breakfast", "consulting"},
+	JsonbArray:           pq.StringArray{`{"a": 1, "b": 2}`, `{"a": 3, "b": 4}`},
 	TextMultiDimArrayPtr: testutils.StringPtr("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 	MoodPtr:              &moodSad,
@@ -1430,10 +1431,10 @@ var allTypesRow1 = model.AllTypes{
 	JsonbPtr:             nil,
 	Jsonb:                `{"a": 1, "b": 3}`,
 	IntegerArrayPtr:      nil,
-	IntegerArray:         "{1,2,3}",
+	IntegerArray:         pq.Int32Array{1, 2, 3},
 	TextArrayPtr:         nil,
-	TextArray:            "{breakfast,consulting}",
-	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
+	TextArray:            pq.StringArray{"breakfast", "consulting"},
+	JsonbArray:           pq.StringArray{`{"a": 1, "b": 2}`, `{"a": 3, "b": 4}`},
 	TextMultiDimArrayPtr: nil,
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 	MoodPtr:              nil,
