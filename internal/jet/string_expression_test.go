@@ -76,6 +76,14 @@ func TestStringNOT_REGEXP_LIKE(t *testing.T) {
 	assertClauseSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), true), "(table3.col2 NOT REGEXP $1)", "JOHN")
 }
 
+func TestStringANY_EQ(t *testing.T) {
+	assertClauseSerialize(t, table2ColStr.ANY_EQ(table1ColArray), "(table2.col_str = ANY(table1.col_array_string))")
+}
+
+func TestStringALL_EQ(t *testing.T) {
+	assertClauseSerialize(t, table2ColStr.ALL_EQ(table1ColArray), "(table2.col_str = ALL(table1.col_array_string))")
+}
+
 func TestStringExp(t *testing.T) {
 	assertClauseSerialize(t, StringExp(table2ColFloat), "table2.col_float")
 	assertClauseSerialize(t, StringExp(table2ColFloat).NOT_LIKE(String("abc")), "(table2.col_float NOT LIKE $1)", "abc")

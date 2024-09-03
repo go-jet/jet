@@ -2,6 +2,7 @@ package jet
 
 import (
 	"fmt"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -158,6 +159,20 @@ func Decimal(value string) FloatExpression {
 	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
 
 	return &floatLiteral
+}
+
+// ---------------------------------------------------//
+type stringArrayLiteral struct {
+	arrayInterfaceImpl[StringExpression]
+	literalExpressionImpl
+}
+
+func StringArray(values []string) ArrayExpression[StringExpression] {
+	l := stringArrayLiteral{}
+	l.literalExpressionImpl = *literal(pq.StringArray(values))
+	l.arrayInterfaceImpl.parent = &l
+
+	return &l
 }
 
 // ---------------------------------------------------//

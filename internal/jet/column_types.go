@@ -121,6 +121,46 @@ func IntegerColumn(name string) ColumnInteger {
 
 //------------------------------------------------------//
 
+type ColumnArray[E Expression] interface {
+	ArrayExpression[E]
+	Column
+
+	From(subQuery SelectTable) ColumnArray[E]
+	SET(stringExp ArrayExpression[E]) ColumnAssigment
+}
+
+type arrayColumnImpl[E Expression] struct {
+	arrayInterfaceImpl[E]
+
+	ColumnExpressionImpl
+}
+
+func (a arrayColumnImpl[E]) From(subQuery SelectTable) ColumnArray[E] {
+	newArrayColumn := ArrayColumn[E](a.name)
+	newArrayColumn.setTableName(a.tableName)
+	newArrayColumn.setSubQuery(subQuery)
+
+	return newArrayColumn
+}
+
+func (a *arrayColumnImpl[E]) SET(stringExp ArrayExpression[E]) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     a,
+		expression: stringExp,
+	}
+}
+
+// StringColumn creates named string column.
+func ArrayColumn[E Expression](name string) ColumnArray[E] {
+	arrayColumn := &arrayColumnImpl[E]{}
+	arrayColumn.arrayInterfaceImpl.parent = arrayColumn
+	arrayColumn.ColumnExpressionImpl = NewColumnImpl(name, "", arrayColumn)
+
+	return arrayColumn
+}
+
+//------------------------------------------------------//
+
 // ColumnString is interface for SQL text, character, character varying
 // bytea, uuid columns and enums types.
 type ColumnString interface {

@@ -1,11 +1,24 @@
 package jet
 
 import (
+	"github.com/lib/pq"
 	"testing"
 )
 
 var subQuery = &selectTableImpl{
 	alias: "sub_query",
+}
+
+func TestNewArrayColumn(t *testing.T) {
+	arrayColumn := ArrayColumn[StringExpression]("colArray").From(subQuery)
+	assertClauseSerialize(t, arrayColumn, `sub_query."colArray"`)
+	assertClauseSerialize(t, arrayColumn.EQ(StringArray([]string{"X"})), `(sub_query."colArray" = $1)`, pq.StringArray{"X"})
+	assertProjectionSerialize(t, arrayColumn, `sub_query."colArray" AS "colArray"`)
+
+	arrayColumn2 := table1ColArray.From(subQuery)
+	assertClauseSerialize(t, arrayColumn2, `sub_query."table1.col_array_string"`)
+	assertClauseSerialize(t, arrayColumn2.EQ(StringArray([]string{"X"})), `(sub_query."table1.col_array_string" = $1)`, pq.StringArray{"X"})
+	assertProjectionSerialize(t, arrayColumn2, `sub_query."table1.col_array_string" AS "table1.col_array_string"`)
 }
 
 func TestNewBoolColumn(t *testing.T) {
