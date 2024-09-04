@@ -3,7 +3,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"github.com/lib/pq"
 	"io/ioutil"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
