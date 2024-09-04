@@ -836,6 +836,7 @@ package model
 
 import (
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -894,11 +895,11 @@ type AllTypes struct {
 	JSON                 string
 	JsonbPtr             *string
 	Jsonb                string
-	IntegerArrayPtr      *string
-	IntegerArray         string
-	TextArrayPtr         *string
-	TextArray            string
-	JsonbArray           string
+	IntegerArrayPtr      *pq.Int32Array
+	IntegerArray         pq.Int32Array
+	TextArrayPtr         *pq.StringArray
+	TextArray            pq.StringArray
+	JsonbArray           pq.StringArray
 	TextMultiDimArrayPtr *string
 	TextMultiDimArray    string
 	MoodPtr              *Mood
@@ -999,11 +1000,11 @@ type allTypesTable struct {
 	JSON                 postgres.ColumnString
 	JsonbPtr             postgres.ColumnString
 	Jsonb                postgres.ColumnString
-	IntegerArrayPtr      postgres.ColumnString
-	IntegerArray         postgres.ColumnString
-	TextArrayPtr         postgres.ColumnString
-	TextArray            postgres.ColumnString
-	JsonbArray           postgres.ColumnString
+	IntegerArrayPtr      postgres.ColumnIntegerArray
+	IntegerArray         postgres.ColumnIntegerArray
+	TextArrayPtr         postgres.ColumnStringArray
+	TextArray            postgres.ColumnStringArray
+	JsonbArray           postgres.ColumnStringArray
 	TextMultiDimArrayPtr postgres.ColumnString
 	TextMultiDimArray    postgres.ColumnString
 	MoodPtr              postgres.ColumnString
@@ -1102,11 +1103,11 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		JSONColumn                 = postgres.StringColumn("json")
 		JsonbPtrColumn             = postgres.StringColumn("jsonb_ptr")
 		JsonbColumn                = postgres.StringColumn("jsonb")
-		IntegerArrayPtrColumn      = postgres.StringColumn("integer_array_ptr")
-		IntegerArrayColumn         = postgres.StringColumn("integer_array")
-		TextArrayPtrColumn         = postgres.StringColumn("text_array_ptr")
-		TextArrayColumn            = postgres.StringColumn("text_array")
-		JsonbArrayColumn           = postgres.StringColumn("jsonb_array")
+		IntegerArrayPtrColumn      = postgres.IntegerArrayColumn("integer_array_ptr")
+		IntegerArrayColumn         = postgres.IntegerArrayColumn("integer_array")
+		TextArrayPtrColumn         = postgres.StringArrayColumn("text_array_ptr")
+		TextArrayColumn            = postgres.StringArrayColumn("text_array")
+		JsonbArrayColumn           = postgres.StringArrayColumn("jsonb_array")
 		TextMultiDimArrayPtrColumn = postgres.StringColumn("text_multi_dim_array_ptr")
 		TextMultiDimArrayColumn    = postgres.StringColumn("text_multi_dim_array")
 		MoodPtrColumn              = postgres.StringColumn("mood_ptr")

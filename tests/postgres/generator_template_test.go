@@ -446,7 +446,7 @@ func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 	require.Contains(t, data, "\"database/sql\"")
 	require.Contains(t, data, "Description     sql.NullString")
 	require.Contains(t, data, "ReleaseYear     sql.NullInt32")
-	require.Contains(t, data, "SpecialFeatures sql.NullString")
+	require.Contains(t, data, "SpecialFeatures *pq.StringArray")
 }
 
 func TestGeneratorTemplate_SQLBuilder_ChangeColumnTypes(t *testing.T) {
