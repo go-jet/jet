@@ -271,6 +271,11 @@ func getGoType(column metadata.Column) interface{} {
 
 // toGoType returns model type for column info.
 func toGoType(column metadata.Column) interface{} {
+	// We don't support multi-dimensional arrays
+	if column.DataType.Dimensions > 1 {
+		return ""
+	}
+
 	switch strings.ToLower(column.DataType.Name) {
 	case "user-defined", "enum":
 		return ""
@@ -338,11 +343,11 @@ func toGoType(column metadata.Column) interface{} {
 		return pgtype.Numrange{}
 	case "bool[]":
 		return pq.BoolArray{}
-	case "int32[]":
+	case "integer[]", "int4[]":
 		return pq.Int32Array{}
-	case "int64[]":
+	case "bigint[]":
 		return pq.Int64Array{}
-	case "text[]":
+	case "text[]", "jsonb[]", "json[]":
 		return pq.StringArray{}
 	default:
 		fmt.Println("- [Model      ] Unsupported sql column '" + column.Name + " " + column.DataType.Name + "', using string instead.")
