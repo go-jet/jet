@@ -163,49 +163,20 @@ func Decimal(value string) FloatExpression {
 
 // ---------------------------------------------------//
 
-type boolArrayLiteral struct {
-	arrayInterfaceImpl[BoolExpression]
-	literalExpressionImpl
-}
-
 func BoolArray(values []bool) Array[BoolExpression] {
-	l := boolArrayLiteral{}
-	l.literalExpressionImpl = *literal(pq.BoolArray(values))
-	l.arrayInterfaceImpl.parent = &l
-
-	return &l
-}
-
-type integerArrayLiteral struct {
-	arrayInterfaceImpl[IntegerExpression]
-	literalExpressionImpl
+	return ArrayExp[BoolExpression](literal(pq.BoolArray(values)))
 }
 
 func Int64Array(values []int64) Array[IntegerExpression] {
-	l := integerArrayLiteral{}
-	l.literalExpressionImpl = *literal(pq.Int64Array(values))
-	l.arrayInterfaceImpl.parent = &l
-	return &l
+	return ArrayExp[IntegerExpression](literal(pq.Int64Array(values)))
 }
 
 func Int32Array(values []int32) Array[IntegerExpression] {
-	l := integerArrayLiteral{}
-	l.literalExpressionImpl = *literal(pq.Int32Array(values))
-	l.arrayInterfaceImpl.parent = &l
-	return &l
-}
-
-type stringArrayLiteral struct {
-	arrayInterfaceImpl[StringExpression]
-	literalExpressionImpl
+	return ArrayExp[IntegerExpression](literal(pq.Int32Array(values)))
 }
 
 func StringArray(values []string) Array[StringExpression] {
-	l := stringArrayLiteral{}
-	l.literalExpressionImpl = *literal(pq.StringArray(values))
-	l.arrayInterfaceImpl.parent = &l
-
-	return &l
+	return ArrayExp[StringExpression](literal(pq.StringArray(values)))
 }
 
 // ---------------------------------------------------//
