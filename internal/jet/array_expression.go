@@ -17,7 +17,7 @@ type Array[E Expression] interface {
 	CONCAT(rhs Array[E]) Array[E]
 	CONCAT_ELEMENT(E) Array[E]
 
-	AT(expression IntegerExpression) Expression
+	AT(expression IntegerExpression) E
 }
 
 type arrayInterfaceImpl[E Expression] struct {
@@ -70,8 +70,22 @@ func (a arrayInterfaceImpl[E]) CONCAT_ELEMENT(rhs E) Array[E] {
 	return ArrayExp[E](NewBinaryOperatorExpression(a.parent, rhs, "||"))
 }
 
-func (a arrayInterfaceImpl[E]) AT(expression IntegerExpression) Expression {
-	return arraySubscriptExpr(a.parent, expression)
+func (a arrayInterfaceImpl[E]) AT(expression IntegerExpression) E {
+	return arrayElementTypeCaster[E](a.parent, arraySubscriptExpr(a.parent, expression))
+}
+
+func arrayElementTypeCaster[E Expression](arrayExp Array[E], exp Expression) E {
+	var i Expression
+	switch arrayExp.(type) {
+	case Array[StringExpression]:
+		i = StringExp(exp)
+	case Array[IntegerExpression]:
+		i = IntExp(exp)
+	case Array[BoolExpression]:
+		i = BoolExp(exp)
+	}
+
+	return i.(E)
 }
 
 type arrayExpressionWrapper[E Expression] struct {
