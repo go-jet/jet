@@ -316,7 +316,6 @@ func (s *complexExpression) serialize(statement StatementType, out *SQLBuilder, 
 	}
 }
 
-
 type arraySubscriptExpression struct {
 	ExpressionInterfaceImpl
 	array     Expression
@@ -337,10 +336,7 @@ func (a arraySubscriptExpression) serialize(statement StatementType, out *SQLBui
 }
 
 func arraySubscriptExpr(array Expression, subscript IntegerExpression) Expression {
-	arraySubscriptExpression := &arraySubscriptExpression{array: array, subscript: subscript}
-	arraySubscriptExpression.ExpressionInterfaceImpl.Parent = arraySubscriptExpression
-
-	return arraySubscriptExpression
+	return CustomExpression(array, Token("["), subscript, Token("]"))
 }
 
 func wrap(expressions ...Expression) Expression {

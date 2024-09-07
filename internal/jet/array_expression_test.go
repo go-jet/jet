@@ -50,10 +50,10 @@ func TestArrayExpressionCONCAT(t *testing.T) {
 }
 
 func TestArrayExpressionCONCAT_ELEMENT(t *testing.T) {
-	assertClauseSerialize(t, table1ColStringArray.CONCAT_ELEMENT(StringExp(table2ColArray.AT(Int(1)))), "(table1.col_array_string || (table2.col_array_string[$1]))", int64(1))
+	assertClauseSerialize(t, table1ColStringArray.CONCAT_ELEMENT(StringExp(table2ColArray.AT(Int(1)))), "(table1.col_array_string || table2.col_array_string[$1])", int64(1))
 	assertClauseSerialize(t, table1ColStringArray.CONCAT_ELEMENT(String("x")), "(table1.col_array_string || $1)", "x")
 }
 
 func TestArrayExpressionAT(t *testing.T) {
-	assertClauseSerialize(t, table1ColStringArray.AT(Int(1)), "(table1.col_array_string[$1])", int64(1))
+	assertClauseSerialize(t, table1ColStringArray.AT(Int(1)), "table1.col_array_string[$1]", int64(1))
 }
