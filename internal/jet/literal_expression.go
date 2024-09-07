@@ -208,19 +208,6 @@ func StringArray(values []string) Array[StringExpression] {
 	return &l
 }
 
-type unsafeArrayLiteral[E Expression] struct {
-	arrayInterfaceImpl[E]
-	literalExpressionImpl
-}
-
-func UnsafeArray[E LiteralExpression](values []interface{}) Array[E] {
-	l := unsafeArrayLiteral[E]{}
-	l.literalExpressionImpl = *literal(pq.Array(values))
-	l.arrayInterfaceImpl.parent = &l
-
-	return &l
-}
-
 // ---------------------------------------------------//
 type stringLiteral struct {
 	stringInterfaceImpl
