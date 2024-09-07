@@ -164,30 +164,44 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	typeName := columnMetaData.DataType.Name
 	columnName := columnMetaData.Name
 
+	var columnType string
+
 	if columnMetaData.DataType.Kind == metadata.ArrayType {
 		if columnMetaData.DataType.Dimensions > 1 {
 			fmt.Println("- [SQL Builder] Unsupported sql array with multiple dimensions column '" + columnName + " " + typeName + "', using StringColumn instead.")
 			return "String"
 		}
 
-		c := sqlToColumnType(strings.TrimSuffix(typeName, "[]"))
-
-		// These are the supported array types
-		if slices.Index([]string{"Bool", "String", "Integer"}, c) == -1 {
-			fmt.Println("- [SQL Builder] Unsupported sql array column '" + columnName + " " + typeName + "', using StringColumn instead.")
-			return "String"
-		}
-
-		return c + "Array"
+		columnType = sqlArrayToColumnType(strings.TrimSuffix(typeName, "[]"))
+	} else {
+		columnType = sqlToColumnType(typeName)
 	}
 
-	columnType := sqlToColumnType(typeName)
 	if columnType == "" {
 		fmt.Println("- [SQL Builder] Unsupported sql column '" + columnName + " " + typeName + "', using StringColumn instead.")
 		return "String"
 	}
 
 	return columnType
+}
+
+// sqlArrayToColumnType maps the type of an SQL array column type to a go jet sql builder column. Note that you don't
+// pass the brackets `[]`, signifying an SQL array type, into this function
+func sqlArrayToColumnType(typeName string) string {
+	switch strings.ToLower(typeName) {
+	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
+		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
+		"char", "varchar", "nvarchar", "binary", "varbinary", "bpchar", "varbit",
+		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
+		return "StringArray"
+	case "smallint", "integer", "bigint", "int2", "int4", "int8",
+		"tinyint", "mediumint", "int", "year": //MySQL
+		return "IntegerArray"
+	case "boolean", "bool":
+		return "BoolArray"
+	default:
+		return ""
+	}
 }
 
 func sqlToColumnType(typeName string) string {
@@ -231,8 +245,6 @@ func sqlToColumnType(typeName string) string {
 		return "Int8Range"
 	case "numrange":
 		return "NumericRange"
-	case "text[]":
-		return "StringArray"
 	default:
 		return ""
 	}
