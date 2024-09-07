@@ -168,7 +168,7 @@ type boolArrayLiteral struct {
 	literalExpressionImpl
 }
 
-func BoolArray(values []bool) ArrayExpression[BoolExpression] {
+func BoolArray(values []bool) Array[BoolExpression] {
 	l := boolArrayLiteral{}
 	l.literalExpressionImpl = *literal(pq.BoolArray(values))
 	l.arrayInterfaceImpl.parent = &l
@@ -181,14 +181,14 @@ type integerArrayLiteral struct {
 	literalExpressionImpl
 }
 
-func Int64Array(values []int64) ArrayExpression[IntegerExpression] {
+func Int64Array(values []int64) Array[IntegerExpression] {
 	l := integerArrayLiteral{}
 	l.literalExpressionImpl = *literal(pq.Int64Array(values))
 	l.arrayInterfaceImpl.parent = &l
 	return &l
 }
 
-func Int32Array(values []int32) ArrayExpression[IntegerExpression] {
+func Int32Array(values []int32) Array[IntegerExpression] {
 	l := integerArrayLiteral{}
 	l.literalExpressionImpl = *literal(pq.Int32Array(values))
 	l.arrayInterfaceImpl.parent = &l
@@ -200,7 +200,7 @@ type stringArrayLiteral struct {
 	literalExpressionImpl
 }
 
-func StringArray(values []string) ArrayExpression[StringExpression] {
+func StringArray(values []string) Array[StringExpression] {
 	l := stringArrayLiteral{}
 	l.literalExpressionImpl = *literal(pq.StringArray(values))
 	l.arrayInterfaceImpl.parent = &l
@@ -213,7 +213,7 @@ type unsafeArrayLiteral[E Expression] struct {
 	literalExpressionImpl
 }
 
-func UnsafeArray[E LiteralExpression](values []interface{}) ArrayExpression[E] {
+func UnsafeArray[E LiteralExpression](values []interface{}) Array[E] {
 	l := unsafeArrayLiteral[E]{}
 	l.literalExpressionImpl = *literal(pq.Array(values))
 	l.arrayInterfaceImpl.parent = &l

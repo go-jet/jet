@@ -1,72 +1,72 @@
 package jet
 
-// ArrayExpression interface
-type ArrayExpression[E Expression] interface {
+// Array interface
+type Array[E Expression] interface {
 	Expression
 
-	EQ(rhs ArrayExpression[E]) BoolExpression
-	NOT_EQ(rhs ArrayExpression[E]) BoolExpression
-	LT(rhs ArrayExpression[E]) BoolExpression
-	GT(rhs ArrayExpression[E]) BoolExpression
-	LT_EQ(rhs ArrayExpression[E]) BoolExpression
-	GT_EQ(rhs ArrayExpression[E]) BoolExpression
+	EQ(rhs Array[E]) BoolExpression
+	NOT_EQ(rhs Array[E]) BoolExpression
+	LT(rhs Array[E]) BoolExpression
+	GT(rhs Array[E]) BoolExpression
+	LT_EQ(rhs Array[E]) BoolExpression
+	GT_EQ(rhs Array[E]) BoolExpression
 
-	CONTAINS(rhs ArrayExpression[E]) BoolExpression
-	IS_CONTAINED_BY(rhs ArrayExpression[E]) BoolExpression
-	OVERLAP(rhs ArrayExpression[E]) BoolExpression
-	CONCAT(rhs ArrayExpression[E]) ArrayExpression[E]
-	CONCAT_ELEMENT(E) ArrayExpression[E]
+	CONTAINS(rhs Array[E]) BoolExpression
+	IS_CONTAINED_BY(rhs Array[E]) BoolExpression
+	OVERLAP(rhs Array[E]) BoolExpression
+	CONCAT(rhs Array[E]) Array[E]
+	CONCAT_ELEMENT(E) Array[E]
 
 	AT(expression IntegerExpression) Expression
 }
 
 type arrayInterfaceImpl[E Expression] struct {
-	parent ArrayExpression[E]
+	parent Array[E]
 }
 
 type BinaryBoolOp func(Expression, Expression) BoolExpression
 
-func (a arrayInterfaceImpl[E]) EQ(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) EQ(rhs Array[E]) BoolExpression {
 	return Eq(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) NOT_EQ(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) NOT_EQ(rhs Array[E]) BoolExpression {
 	return NotEq(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) LT(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) LT(rhs Array[E]) BoolExpression {
 	return Lt(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) GT(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) GT(rhs Array[E]) BoolExpression {
 	return Gt(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) LT_EQ(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) LT_EQ(rhs Array[E]) BoolExpression {
 	return LtEq(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) GT_EQ(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) GT_EQ(rhs Array[E]) BoolExpression {
 	return GtEq(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) CONTAINS(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) CONTAINS(rhs Array[E]) BoolExpression {
 	return Contains(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) IS_CONTAINED_BY(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) IS_CONTAINED_BY(rhs Array[E]) BoolExpression {
 	return IsContainedBy(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) OVERLAP(rhs ArrayExpression[E]) BoolExpression {
+func (a arrayInterfaceImpl[E]) OVERLAP(rhs Array[E]) BoolExpression {
 	return Overlap(a.parent, rhs)
 }
 
-func (a arrayInterfaceImpl[E]) CONCAT(rhs ArrayExpression[E]) ArrayExpression[E] {
+func (a arrayInterfaceImpl[E]) CONCAT(rhs Array[E]) Array[E] {
 	return ArrayExp[E](NewBinaryOperatorExpression(a.parent, rhs, "||"))
 }
 
-func (a arrayInterfaceImpl[E]) CONCAT_ELEMENT(rhs E) ArrayExpression[E] {
+func (a arrayInterfaceImpl[E]) CONCAT_ELEMENT(rhs E) Array[E] {
 	return ArrayExp[E](NewBinaryOperatorExpression(a.parent, rhs, "||"))
 }
 
@@ -79,7 +79,7 @@ type arrayExpressionWrapper[E Expression] struct {
 	Expression
 }
 
-func newArrayExpressionWrap[E Expression](expression Expression) ArrayExpression[E] {
+func newArrayExpressionWrap[E Expression](expression Expression) Array[E] {
 	arrayExpressionWrapper := arrayExpressionWrapper[E]{Expression: expression}
 	arrayExpressionWrapper.arrayInterfaceImpl.parent = &arrayExpressionWrapper
 	return &arrayExpressionWrapper
@@ -88,6 +88,6 @@ func newArrayExpressionWrap[E Expression](expression Expression) ArrayExpression
 // ArrayExp is array expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as array expression.
 // Does not add sql cast to generated sql builder output.
-func ArrayExp[E Expression](expression Expression) ArrayExpression[E] {
+func ArrayExp[E Expression](expression Expression) Array[E] {
 	return newArrayExpressionWrap[E](expression)
 }

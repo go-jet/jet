@@ -122,11 +122,11 @@ func IntegerColumn(name string) ColumnInteger {
 //------------------------------------------------------//
 
 type ColumnArray[E Expression] interface {
-	ArrayExpression[E]
+	Array[E]
 	Column
 
 	From(subQuery SelectTable) ColumnArray[E]
-	SET(stringExp ArrayExpression[E]) ColumnAssigment
+	SET(stringExp Array[E]) ColumnAssigment
 }
 
 type arrayColumnImpl[E Expression] struct {
@@ -143,7 +143,7 @@ func (a arrayColumnImpl[E]) From(subQuery SelectTable) ColumnArray[E] {
 	return newArrayColumn
 }
 
-func (a *arrayColumnImpl[E]) SET(stringExp ArrayExpression[E]) ColumnAssigment {
+func (a *arrayColumnImpl[E]) SET(stringExp Array[E]) ColumnAssigment {
 	return columnAssigmentImpl{
 		column:     a,
 		expression: stringExp,
