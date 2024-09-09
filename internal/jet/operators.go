@@ -22,15 +22,6 @@ func BIT_NOT(expr IntegerExpression) IntegerExpression {
 	return newPrefixIntegerOperatorExpression(expr, "~")
 }
 
-// ----------- Array operators -------------- //
-func Any(lhs Expression, op BinaryBoolOp, rhs Expression) BoolExpression {
-	return op(lhs, Func("ANY", rhs))
-}
-
-func All(lhs Expression, op BinaryBoolOp, rhs Expression) BoolExpression {
-	return op(lhs, Func("ALL", rhs))
-}
-
 //----------- Comparison operators ---------------//
 
 // EXISTS checks for existence of the rows in subQuery

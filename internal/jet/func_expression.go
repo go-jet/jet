@@ -646,6 +646,32 @@ func LEAST(value Expression, values ...Expression) Expression {
 	return NewFunc("LEAST", allValues, nil)
 }
 
+// -------------------- Array Expressions Functions ------------------//
+
+// ANY should be used in combination with a boolean operator. The result of ANY is "true" if any true result is obtained
+func ANY[E Expression](arr Array[E]) E {
+	return arrayElementTypeCaster(arr, Func("ANY", arr))
+}
+
+// ALL should be used in combination with a boolean operator. TThe result of ALL is “true” if all comparisons yield true
+func ALL[E Expression](arr Array[E]) E {
+	return arrayElementTypeCaster(arr, Func("ALL", arr))
+}
+
+func arrayElementTypeCaster[E Expression](arrayExp Array[E], exp Expression) E {
+	var i Expression
+	switch arrayExp.(type) {
+	case Array[StringExpression]:
+		i = StringExp(exp)
+	case Array[IntegerExpression]:
+		i = IntExp(exp)
+	case Array[BoolExpression]:
+		i = BoolExp(exp)
+	}
+
+	return i.(E)
+}
+
 //--------------------------------------------------------------------//
 
 type funcExpressionImpl struct {

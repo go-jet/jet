@@ -74,20 +74,6 @@ func (a arrayInterfaceImpl[E]) AT(expression IntegerExpression) E {
 	return arrayElementTypeCaster[E](a.parent, arraySubscriptExpr(a.parent, expression))
 }
 
-func arrayElementTypeCaster[E Expression](arrayExp Array[E], exp Expression) E {
-	var i Expression
-	switch arrayExp.(type) {
-	case Array[StringExpression]:
-		i = StringExp(exp)
-	case Array[IntegerExpression]:
-		i = IntExp(exp)
-	case Array[BoolExpression]:
-		i = BoolExp(exp)
-	}
-
-	return i.(E)
-}
-
 type arrayExpressionWrapper[E Expression] struct {
 	arrayInterfaceImpl[E]
 	Expression
