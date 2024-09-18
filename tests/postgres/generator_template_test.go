@@ -171,6 +171,7 @@ func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 
 	mpaaRating := file2.Exists(t, defaultModelPath, "mpaa_rating_enum.go")
 	require.Contains(t, mpaaRating, "type MpaaRatingEnum string")
+	require.Contains(t, mpaaRating, "MpaaRatingEnum_AllValues")
 }
 
 func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
