@@ -16,7 +16,7 @@ jobs:
           POSTGRES_DB: jetdb
           PGPORT: 50901
 
-      - image: circleci/mysql:8.0
+      - image: cimg/mysql:8.0
         command: [ --default-authentication-plugin=mysql_native_password ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
@@ -25,7 +25,7 @@ jobs:
           MYSQL_PASSWORD: jet
           MYSQL_TCP_PORT: 50902
 
-      - image: circleci/mariadb:10.3
+      - image: cimg/mariadb:10.3
         command: [ '--default-authentication-plugin=mysql_native_password', '--port=50903' ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
