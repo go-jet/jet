@@ -341,12 +341,14 @@ func toGoType(column metadata.Column) interface{} {
 		return pgtype.Int8range{}
 	case "numrange":
 		return pgtype.Numrange{}
-	case "bool[]":
+	case "bool[]", "boolean[]":
 		return pq.BoolArray{}
 	case "integer[]", "int4[]":
 		return pq.Int32Array{}
-	case "bigint[]":
+	case "bigint[]", "int8[]":
 		return pq.Int64Array{}
+	case "bytea[]":
+		return pq.ByteaArray{}
 	case "text[]", "jsonb[]", "json[]":
 		return pq.StringArray{}
 	default:
