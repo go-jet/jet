@@ -102,22 +102,22 @@ type ColumnInt8Range jet.ColumnRange[jet.Int8Expression]
 var Int8RangeColumn = jet.RangeColumn[jet.Int8Expression]
 
 // ColumnStringArray is interface of column
-type ColumnStringArray jet.ColumnArray[jet.StringExpression]
+type ColumnStringArray jet.ColumnArray[StringExpression]
 
 // StringArrayColumn creates named string array column
-var StringArrayColumn = jet.ArrayColumn[jet.StringExpression]
+var StringArrayColumn = jet.ArrayColumn[StringExpression]
 
 // ColumnIntegerArray is interface of column
-type ColumnIntegerArray jet.ColumnArray[jet.IntegerExpression]
+type ColumnIntegerArray jet.ColumnArray[IntegerExpression]
 
 // IntegerArrayColumn creates named integer array column
-var IntegerArrayColumn = jet.ArrayColumn[jet.IntegerExpression]
+var IntegerArrayColumn = jet.ArrayColumn[IntegerExpression]
 
 // ColumnBoolArray is interface of column
-type ColumnBoolArray jet.ColumnArray[jet.BoolExpression]
+type ColumnBoolArray jet.ColumnArray[BoolExpression]
 
 // BoolArrayColumn creates named bool array column
-var BoolArrayColumn = jet.ArrayColumn[jet.BoolExpression]
+var BoolArrayColumn = jet.ArrayColumn[BoolExpression]
 
 //------------------------------------------------------//
 
