@@ -955,7 +955,6 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 	type MyFloat32 float32
 	type MyFloat64 float64
 	type MyString string
-	type MyStringArray pq.StringArray
 	type MyTime = time.Time
 
 	type film struct {
@@ -970,13 +969,13 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 		ReplacementCost MyFloat64
 		Rating          *model.MpaaRating
 		LastUpdate      MyTime
-		SpecialFeatures MyStringArray
+		SpecialFeatures pq.StringArray
 		Fulltext        MyString
 	}
 
 	// We'll skip special features, because it's a slice and it does not implement sql.Scanner
 	stmt := SELECT(
-		Film.AllColumns.Except(Film.SpecialFeatures),
+		Film.AllColumns,
 	).FROM(
 		Film,
 	).ORDER_BY(
