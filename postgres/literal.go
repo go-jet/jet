@@ -34,9 +34,19 @@ func Int32(value int32) IntegerExpression {
 	return CAST(jet.Int32(value)).AS_INTEGER()
 }
 
+// Int32Array creates new 32 bit signed integer literal expression
+func Int32Array(elements []int32) IntegerArrayExpression {
+	return jet.Int32Array(elements)
+}
+
 // Int64 is constructor for 64 bit signed integer expressions literals.
 func Int64(value int64) IntegerExpression {
 	return CAST(jet.Int(value)).AS_BIGINT()
+}
+
+// Int64Array creates new 64 bit signed integer literal expression
+func Int64Array(elements []int64) IntegerArrayExpression {
+	return jet.Int64Array(elements)
 }
 
 // Uint8 is constructor for 8 bit unsigned integer expressions literals.
