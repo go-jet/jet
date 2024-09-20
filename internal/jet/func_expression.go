@@ -658,6 +658,39 @@ func ALL[E Expression](arr Array[E]) E {
 	return arrayElementTypeCaster(arr, Func("ALL", arr))
 }
 
+func ARRAY_APPEND[E Expression](arr Array[E], el E) Array[E] {
+	return arrayTypeCaster[E](arr, Func("array_append", arr, el))
+}
+
+func ARRAY_CAT[E Expression](arr1, arr2 Array[E]) Array[E] {
+	return arrayTypeCaster[E](arr1, Func("array_cat", arr1, arr2))
+}
+
+func ARRAY_PREPEND[E Expression](el E, arr Array[E]) Array[E] {
+	return ArrayExp[E](Func("array_prepend", el, arr))
+}
+
+func ARRAY_LENGTH[E Expression](arr Array[E], el IntegerExpression) IntegerExpression {
+	return IntExp(Func("array_length", arr, el))
+}
+
+func arrayTypeCaster[E Expression](arrayExp Expression, exp Expression) Array[E] {
+	var i Expression
+	switch arrayExp.(type) {
+	case Array[StringExpression]:
+		i = ArrayExp[StringExpression](exp)
+	case Array[Int4Expression]:
+		i = ArrayExp[Int4Expression](exp)
+	case Array[Int8Expression]:
+		i = ArrayExp[Int8Expression](exp)
+	case Array[IntegerExpression]:
+		i = ArrayExp[IntegerExpression](exp)
+	case Array[BoolExpression]:
+		i = ArrayExp[BoolExpression](exp)
+	}
+	return i.(Array[E])
+}
+
 func arrayElementTypeCaster[E Expression](arrayExp Array[E], exp Expression) E {
 	var i Expression
 	switch arrayExp.(type) {
@@ -670,6 +703,17 @@ func arrayElementTypeCaster[E Expression](arrayExp Array[E], exp Expression) E {
 	}
 
 	return i.(E)
+}
+
+func ARRAY[E Expression](elems ...E) Array[E] {
+	var args = make([]Serializer, len(elems))
+	for i, each := range elems {
+		args[i] = each
+	}
+	return ArrayExp[E](CustomExpression(Token("ARRAY["), ListSerializer{
+		Serializers: args,
+		Separator:   ",",
+	}, Token("]")))
 }
 
 //--------------------------------------------------------------------//
