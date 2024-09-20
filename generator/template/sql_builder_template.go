@@ -165,6 +165,7 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	columnName := columnMetaData.Name
 
 	var columnType string
+	var supported bool
 
 	if columnMetaData.DataType.Kind == metadata.ArrayType {
 		if columnMetaData.DataType.Dimensions > 1 {
@@ -172,13 +173,13 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 			return "String"
 		}
 
-		columnType = sqlArrayToColumnType(strings.TrimSuffix(typeName, "[]"))
+		columnType, supported = sqlArrayToColumnType(strings.TrimSuffix(typeName, "[]"))
 	} else {
-		columnType = sqlToColumnType(typeName)
+		columnType, supported = sqlToColumnType(typeName)
 	}
 
-	if columnType == "" {
-		fmt.Println("- [SQL Builder] Unsupported sql column '" + columnName + " " + typeName + "', using StringColumn instead.")
+	if !supported {
+		fmt.Printf("- [SQL Builder] Unsupported SQL column '" + columnName + " " + typeName + "', using StringColumn instead.\n")
 		return "String"
 	}
 
@@ -186,67 +187,70 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 }
 
 // sqlArrayToColumnType maps the type of an SQL array column type to a go jet sql builder column. Note that you don't
-// pass the brackets `[]`, signifying an SQL array type, into this function
-func sqlArrayToColumnType(typeName string) string {
+// pass the brackets `[]`, signifying an SQL array type, into this function. The second return value returns whether the
+// given type is supported
+func sqlArrayToColumnType(typeName string) (string, bool) {
 	switch strings.ToLower(typeName) {
 	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "nvarchar", "binary", "varbinary", "bpchar", "varbit",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
-		return "StringArray"
+		return "StringArray", true
 	case "smallint", "integer", "bigint", "int2", "int4", "int8",
 		"tinyint", "mediumint", "int", "year": //MySQL
-		return "IntegerArray"
+		return "IntegerArray", true
 	case "boolean", "bool":
-		return "BoolArray"
+		return "BoolArray", true
 	default:
-		return ""
+		return "", false
 	}
 }
 
-func sqlToColumnType(typeName string) string {
+// sqlToColumnType maps the type of a SQL column type to a go jet sql builder column. The second return value returns
+// whether the given type is supported.
+func sqlToColumnType(typeName string) (string, bool) {
 	switch strings.ToLower(typeName) {
 	case "boolean", "bool":
-		return "Bool"
+		return "Bool", true
 	case "smallint", "integer", "bigint", "int2", "int4", "int8",
 		"tinyint", "mediumint", "int", "year": //MySQL
-		return "Integer"
+		return "Integer", true
 	case "date":
-		return "Date"
+		return "Date", true
 	case "timestamp without time zone",
 		"timestamp", "datetime": //MySQL:
-		return "Timestamp"
+		return "Timestamp", true
 	case "timestamp with time zone", "timestamptz":
-		return "Timestampz"
+		return "Timestampz", true
 	case "time without time zone",
 		"time": //MySQL
-		return "Time"
+		return "Time", true
 	case "time with time zone", "timetz":
-		return "Timez"
+		return "Timez", true
 	case "interval":
-		return "Interval"
+		return "Interval", true
 	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "nvarchar", "binary", "varbinary", "bpchar", "varbit",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
-		return "String"
+		return "String", true
 	case "real", "numeric", "decimal", "double precision", "float", "float4", "float8",
 		"double": // MySQL
-		return "Float"
+		return "Float", true
 	case "daterange":
-		return "DateRange"
+		return "DateRange", true
 	case "tsrange":
-		return "TimestampRange"
+		return "TimestampRange", true
 	case "tstzrange":
-		return "TimestampzRange"
+		return "TimestampzRange", true
 	case "int4range":
-		return "Int4Range"
+		return "Int4Range", true
 	case "int8range":
-		return "Int8Range"
+		return "Int8Range", true
 	case "numrange":
-		return "NumericRange"
+		return "NumericRange", true
 	default:
-		return ""
+		return "", false
 	}
 }
 
