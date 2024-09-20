@@ -77,11 +77,11 @@ func TestStringNOT_REGEXP_LIKE(t *testing.T) {
 }
 
 func TestStringANY_EQ(t *testing.T) {
-	assertClauseSerialize(t, table2ColStr.EQ(ANY(table1ColStringArray)), "(table2.col_str = ANY(table1.col_array_string))")
+	assertClauseSerialize(t, table2ColStr.EQ(ANY[StringExpression](table1ColStringArray)), "(table2.col_str = ANY(table1.col_array_string))")
 }
 
 func TestStringALL_EQ(t *testing.T) {
-	assertClauseSerialize(t, table2ColStr.EQ(ALL(table1ColStringArray)), "(table2.col_str = ALL(table1.col_array_string))")
+	assertClauseSerialize(t, table2ColStr.EQ(ALL[StringExpression](table1ColStringArray)), "(table2.col_str = ALL(table1.col_array_string))")
 }
 
 func TestStringExp(t *testing.T) {

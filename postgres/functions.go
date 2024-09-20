@@ -267,7 +267,7 @@ var TO_ASCII = jet.TO_ASCII
 // TO_HEX converts number to its equivalent hexadecimal representation
 var TO_HEX = jet.TO_HEX
 
-//----------Data Type Formatting Functions ----------------------//
+//---------- Range Functions ----------------------//
 
 // LOWER_BOUND returns range expressions lower bound
 func LOWER_BOUND[T Expression](expression jet.Range[T]) T {
@@ -279,7 +279,40 @@ func UPPER_BOUND[T Expression](expression jet.Range[T]) T {
 	return jet.UPPER_BOUND[T](expression)
 }
 
-//----------Data Type Formatting Functions ----------------------//
+// ---------- Array Functions ----------------------//
+
+// ANY should be used in combination with a boolean operator. The result of ANY is "true" if any true result is obtained
+func ANY[T Expression](expression jet.Array[T]) T {
+	return jet.ANY[T](expression)
+}
+
+// ALL should be used in combination with a boolean operator. TThe result of ALL is “true” if all comparisons yield true
+func ALL[T Expression](expression jet.Array[T]) T {
+	return jet.ALL[T](expression)
+}
+
+func ARRAY_APPEND[T Expression](arr jet.Array[T], el T) jet.Array[T] {
+	return jet.ARRAY_APPEND(arr, el)
+}
+
+func ARRAY_CAT[T Expression](arr1, arr2 jet.Array[T]) jet.Array[T] {
+	return jet.ARRAY_CAT(arr1, arr2)
+}
+
+func ARRAY_LENGTH[T Expression](expression jet.Array[T], dim IntegerExpression) IntegerExpression {
+	return jet.ARRAY_LENGTH(expression, dim)
+}
+
+func ARRAY_PREPEND[T Expression](el T, arr jet.Array[T]) jet.Array[T] {
+	return jet.ARRAY_PREPEND(el, arr)
+}
+
+// ARRAY constructor
+func ARRAY[T Expression](elems ...T) jet.Array[T] {
+	return jet.ARRAY[T](elems...)
+}
+
+//---------- Data Type Formatting Functions ----------------------//
 
 // TO_CHAR converts expression to string with format
 var TO_CHAR = jet.TO_CHAR
