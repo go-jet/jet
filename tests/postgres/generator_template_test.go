@@ -171,7 +171,7 @@ func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 
 	mpaaRating := file2.Exists(t, defaultModelPath, "mpaa_rating_enum.go")
 	require.Contains(t, mpaaRating, "type MpaaRatingEnum string")
-	require.Contains(t, mpaaRating, "MpaaRatingEnum_AllValues")
+	require.Contains(t, mpaaRating, "MpaaRatingEnumAllValues")
 }
 
 func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
@@ -269,7 +269,6 @@ func UseSchema(schema string) {
 	FilmList = FilmList.FromSchema(schema)
 }
 `)
-
 }
 
 func TestGeneratorTemplate_SQLBuilder_ChangeTypeAndFileName(t *testing.T) {
@@ -367,7 +366,6 @@ func TestGeneratorTemplate_SQLBuilder_DefaultAlias(t *testing.T) {
 }
 
 func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
-
 	err := postgres.Generate(
 		tempTestDir,
 		dbConnection,
