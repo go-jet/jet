@@ -156,7 +156,7 @@ const (
 {{- end}}
 )
 
-var {{$enumTemplate.TypeName}}_AllValues = []{{$enumTemplate.TypeName}} {
+var {{$enumTemplate.TypeName}}AllValues = []{{$enumTemplate.TypeName}} {
 {{- range $_, $value := .Values}}
 	{{valueName $value}},
 {{- end}}
