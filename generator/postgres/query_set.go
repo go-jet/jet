@@ -57,6 +57,7 @@ func getColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]meta
 	query := `
 select  
     attr.attname as "column.Name",
+	dsc.description as "column.Comment",
     exists(
         select 1
         from pg_catalog.pg_index indx
@@ -81,6 +82,7 @@ from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
      join pg_catalog.pg_type as tp on tp.oid = attr.atttypid
+	 left join pg_catalog.pg_description as dsc on dsc.objoid = attr.attrelid and dsc.objsubid = attr.attnum 
 where 
     ns.nspname = $1 and
     cls.relname = $2 and 
