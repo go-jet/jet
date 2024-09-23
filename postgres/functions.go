@@ -332,7 +332,8 @@ var LOCALTIMESTAMP = jet.LOCALTIMESTAMP
 // NOW returns current date and time
 var NOW = jet.NOW
 
-// DATE_TRUNC returns the truncated date and time using optional time zone
+// DATE_TRUNC returns the truncated date and time using optional time zone.
+// Use TimestampzExp if you need timestamp with time zone and IntervalExp if you need interval.
 func DATE_TRUNC(field unit, source Expression, timezone ...string) TimestampExpression {
 	if len(timezone) > 0 {
 		return jet.NewTimestampFunc("DATE_TRUNC", jet.FixedLiteral(unitToString(field)), source, jet.FixedLiteral(timezone[0]))
