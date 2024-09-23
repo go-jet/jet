@@ -156,6 +156,12 @@ const (
 {{- end}}
 )
 
+var {{$enumTemplate.TypeName}}AllValues = []{{$enumTemplate.TypeName}} {
+{{- range $_, $value := .Values}}
+	{{valueName $value}},
+{{- end}}
+}
+
 func (e *{{$enumTemplate.TypeName}}) Scan(value interface{}) error {
 	var enumValue string
 	switch val := value.(type) {
