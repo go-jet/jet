@@ -26,6 +26,7 @@ import (
 
 var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName}}", "{{.Name}}", "{{tableTemplate.DefaultAlias}}")
 
+{{if .Comment }} // {{.GoLangComment}} {{end}}
 type {{structImplName}} struct {
 	{{dialect.PackageName}}.Table
 	
@@ -119,6 +120,7 @@ import (
 {{end}}
 
 {{$modelTableTemplate := tableTemplate}}
+{{if .Comment }} // {{.GoLangComment}} {{end}}
 type {{$modelTableTemplate.TypeName}} struct {
 {{- range .Columns}}
 {{- $field := structField .}}
@@ -132,6 +134,7 @@ var enumSQLBuilderTemplate = `package {{package}}
 
 import "github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 
+{{if .Comment }} // {{.GoLangComment}} {{end}}
 var {{enumTemplate.InstanceName}} = &struct {
 {{- range $index, $value := .Values}}
 	{{enumValueName $value}} {{dialect.PackageName}}.StringExpression
@@ -148,6 +151,7 @@ var enumModelTemplate = `package {{package}}
 
 import "errors"
 
+{{if .Comment }} // {{.GoLangComment}} {{end}}
 type {{$enumTemplate.TypeName}} string
 
 const (

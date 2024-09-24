@@ -14,7 +14,7 @@ type postgresQuerySet struct{}
 
 func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name" 
+SELECT table_name as "table.name", obj_description((table_schema||'.'||quote_ident(table_name))::regclass) as "table.comment"
 FROM information_schema.tables
 WHERE table_schema = $1 and table_type = $2
 ORDER BY table_name;
