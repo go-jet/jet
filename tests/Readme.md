@@ -22,8 +22,3 @@ Then we can run the tests the usual way:
 ```shell
 go test -v ./...
 ```
-
-To removes test containers, volumes, and images:
-```shell
-make cleanup
-```

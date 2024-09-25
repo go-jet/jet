@@ -17,7 +17,6 @@ import (
 	"github.com/go-jet/jet/v2/internal/testutils"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
 	"github.com/go-jet/jet/v2/tests/internal/utils/file"
 )
 
@@ -33,11 +32,11 @@ func dsn(host string, port int, dbName, user, password string) string {
 
 func defaultDSN() string {
 	return dsn(
-		dbconfig.PgHost,
-		dbconfig.PgPort,
-		dbconfig.PgDBName,
-		dbconfig.PgUser,
-		dbconfig.PgPassword,
+		PgHost,
+		PgPort,
+		PgDBName,
+		PgUser,
+		PgPassword,
 	)
 }
 
@@ -72,12 +71,24 @@ func TestGeneratedModel(t *testing.T) {
 
 const genTestDir2 = "./.gentestdata2"
 
+func getEnvironmentPort() string {
+	var port string
+	if sourceIsCockroachDB() {
+		port = strconv.Itoa(CockroachPort)
+	} else {
+		port = strconv.Itoa(PgPort)
+	}
+	return port
+
+}
+
 func TestCmdGenerator(t *testing.T) {
+	skipForCockroachDB(t)
 	err := os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
 
 	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost",
-		"-port="+strconv.Itoa(dbconfig.PgPort),
+		"-port="+strconv.Itoa(PgPort),
 		"-user=jet",
 		"-password=jet",
 		"-schema=dvds",
@@ -109,6 +120,7 @@ func TestCmdGenerator(t *testing.T) {
 }
 
 func TestGeneratorIgnoreTables(t *testing.T) {
+	skipForCockroachDB(t)
 	tests := []struct {
 		name string
 		args []string
@@ -129,7 +141,7 @@ func TestGeneratorIgnoreTables(t *testing.T) {
 			args: []string{
 				"-source=PostgreSQL",
 				"-host=localhost",
-				"-port=" + strconv.Itoa(dbconfig.PgPort),
+				"-port=" + getEnvironmentPort(),
 				"-user=jet",
 				"-password=jet",
 				"-dbname=jetdb",
@@ -180,17 +192,18 @@ func TestGeneratorIgnoreTables(t *testing.T) {
 }
 
 func TestGenerator(t *testing.T) {
+	skipForCockroachDB(t)
 
 	for i := 0; i < 3; i++ {
 		err := postgres.Generate(genTestDir2, postgres.DBConnection{
-			Host:     dbconfig.PgHost,
-			Port:     dbconfig.PgPort,
-			User:     dbconfig.PgUser,
-			Password: dbconfig.PgPassword,
+			Host:     PgHost,
+			Port:     PgPort,
+			User:     PgUser,
+			Password: PgPassword,
 			SslMode:  "disable",
 			Params:   "",
 
-			DBName:     dbconfig.PgDBName,
+			DBName:     PgDBName,
 			SchemaName: "dvds",
 		})
 
@@ -211,6 +224,7 @@ func TestGenerator(t *testing.T) {
 }
 
 func TestGenerator_TableMetadata(t *testing.T) {
+	skipForCockroachDB(t)
 	var schema metadata.Schema
 	err := postgres.GenerateDSN(defaultDSN(), "dvds", genTestDir2,
 		template.Default(postgres2.Dialect).UseSchema(func(m metadata.Schema) template.Schema {
@@ -252,8 +266,8 @@ func TestGenerator_TableMetadata(t *testing.T) {
 func TestGeneratorSpecialCharacters(t *testing.T) {
 	t.SkipNow()
 	err := postgres.Generate(genTestDir2, postgres.DBConnection{
-		Host:     dbconfig.PgHost,
-		Port:     dbconfig.PgPort,
+		Host:     PgHost,
+		Port:     PgPort,
 		User:     "!@#$%^&* () {}[];+-",
 		Password: "!@#$%^&* () {}[];+-",
 		SslMode:  "disable",
@@ -269,9 +283,9 @@ func TestGeneratorSpecialCharacters(t *testing.T) {
 func TestGenerateErrorCases(t *testing.T) {
 	err := postgres.GenerateDSN("!@#$%&*", "", "")
 	require.ErrorContains(t, err, "failed to parse as DSN")
-	err = postgres.GenerateDSN(dsn(dbconfig.PgHost, -1, "!@!#", "", ""), "", "")
+	err = postgres.GenerateDSN(dsn(PgHost, -1, "!@!#", "", ""), "", "")
 	require.ErrorContains(t, err, "invalid port")
-	err = postgres.GenerateDSN(dsn(dbconfig.PgHost, dbconfig.PgPort, "!@!#", "", ""), "", "")
+	err = postgres.GenerateDSN(dsn(PgHost, PgPort, "!@!#", "", ""), "", "")
 	require.ErrorContains(t, err, "failed to open db connection")
 	//err = postgres.GenerateDSN(dsn(dbconfig.PgHost, dbconfig.PgPort, dbconfig.PgDBName, "", ""), "", "")
 	//require.ErrorContains(t, err, "password authentication failed")

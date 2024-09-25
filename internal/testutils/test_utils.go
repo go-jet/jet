@@ -109,7 +109,7 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 	jsonText, _ := json.MarshalIndent(v, "", "\t")
 
 	filePath := getFullPath(testRelativePath)
-	err := ioutil.WriteFile(filePath, jsonText, 0644)
+	err := os.WriteFile(filePath, jsonText, 0644)
 
 	throw.OnError(err)
 }

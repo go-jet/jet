@@ -9,13 +9,18 @@ import (
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
+	"github.com/go-jet/jet/v2/tests/internal/utils/containers"
+	dbTools "github.com/go-jet/jet/v2/tests/internal/utils/db"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"io/ioutil"
+	mysqlTest "github.com/go-jet/jet/v2/tests/mysql"
+	sqlite2 "github.com/go-jet/jet/v2/tests/sqlite"
+	"log/slog"
 	"os"
-	"os/exec"
+	"path"
 	"strings"
+	"time"
 
-	"github.com/go-jet/jet/v2/tests/dbconfig"
+	pgTest "github.com/go-jet/jet/v2/tests/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/jackc/pgx/v4/stdlib"
 
@@ -39,39 +44,71 @@ const (
 	Cockroach = "cockroach"
 )
 
+// timeMethod records duration to execute oper function
+func timeMethod(msg string, oper func() error) error {
+	start := time.Now()
+	err := oper()
+	slog.Info(msg, slog.Any("Duration", time.Since(start)))
+	return err
+
+}
+
 func main() {
 	var err error
 
 	switch strings.ToLower(testSuite) {
 	case Postgres:
-		err = initPostgresDB(Postgres, dbconfig.PostgresConnectString)
+		err = timeMethod("postgres Schema Generation complete", func() error {
+			return initPostgresDB(Postgres)
+		})
 	case Cockroach:
-		err = initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
+		err = timeMethod("couchDB Schema Generation complete", func() error {
+			return initPostgresDB(Cockroach)
+		})
 	case MySql:
-		err = initMySQLDB(false)
+		err = timeMethod("Mysql Schema Generation complete", func() error {
+			return initMySQLDB(MySql)
+		})
 	case MariaDB:
-		err = initMySQLDB(true)
+		err = timeMethod("MariaDB Schema Generation complete", func() error {
+			return initMySQLDB(MariaDB)
+		})
 	case Sqlite:
-		err = initSQLiteDB()
+		err = timeMethod("Sqlite Schema Generation complete", func() error {
+			return initSQLiteDB()
+		})
 	case "all":
-		err = initPostgresDB(Cockroach, dbconfig.CockroachConnectString)
-		if err != nil {
-			break
-		}
-		err = initPostgresDB(Postgres, dbconfig.PostgresConnectString)
-		if err != nil {
-			break
-		}
-		err = initMySQLDB(false)
+		err = timeMethod("couchDB Schema Generation complete", func() error {
+			return initPostgresDB(Cockroach)
+		})
 		if err != nil {
 			break
 		}
 
-		err = initMySQLDB(true)
+		err = timeMethod("postgres Schema Generation complete", func() error {
+			return initPostgresDB(Postgres)
+		})
 		if err != nil {
 			break
 		}
-		err = initSQLiteDB()
+
+		err = timeMethod("Mysql Schema Generation complete", func() error {
+			return initMySQLDB(MySql)
+		})
+		if err != nil {
+			break
+		}
+
+		err = timeMethod("MariaDB Schema Generation complete", func() error {
+			return initMySQLDB(MariaDB)
+		})
+		if err != nil {
+			break
+		}
+
+		err = timeMethod("Sqlite Schema Generation complete", func() error {
+			return initSQLiteDB()
+		})
 	default:
 		panic("invalid testsuite flag. Test suite name (postgres, mysql, mariadb, cockroach, sqlite or all)")
 	}
@@ -83,15 +120,15 @@ func main() {
 }
 
 func initSQLiteDB() error {
-	err := sqlite.GenerateDSN(dbconfig.SakilaDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/sakila"))
+	err := sqlite.GenerateDSN(sqlite2.SakilaDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/sakila"))
 	if err != nil {
 		return fmt.Errorf("failed to generate sqlite sakila database types: %w", err)
 	}
-	err = sqlite.GenerateDSN(dbconfig.ChinookDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/chinook"))
+	err = sqlite.GenerateDSN(sqlite2.ChinookDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/chinook"))
 	if err != nil {
 		return fmt.Errorf("failed to generate sqlite chinook database types: %w", err)
 	}
-	err = sqlite.GenerateDSN(dbconfig.TestSampleDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/test_sample"))
+	err = sqlite.GenerateDSN(sqlite2.TestSampleDBPath, repo.GetTestsFilePath("./.gentestdata/sqlite/test_sample"))
 	if err != nil {
 		return fmt.Errorf("failed to generate sqlite test_sample database types: %w", err)
 	}
@@ -99,7 +136,26 @@ func initSQLiteDB() error {
 	return nil
 }
 
-func initMySQLDB(isMariaDB bool) error {
+func initMySQLDB(dbType string) error {
+	repoDir := repo.GetTestsDirPath()
+	var (
+		host     string
+		port     int
+		cancelFn context.CancelFunc
+	)
+
+	if dbType == MySql {
+		host, port, cancelFn = containers.SetupWithMySQL(repoDir)
+		mysqlTest.MySQLPort = port
+		mysqlTest.MySqLHost = host
+	} else {
+		host, port, cancelFn = containers.SetupWithMariaDB(repoDir)
+		mysqlTest.MariaDBPort = port
+		mysqlTest.MariaDBHost = host
+	}
+	if cancelFn != nil {
+		defer cancelFn()
+	}
 
 	mySQLDBs := []string{
 		"dvds",
@@ -108,34 +164,19 @@ func initMySQLDB(isMariaDB bool) error {
 	}
 
 	for _, dbName := range mySQLDBs {
-		host := dbconfig.MySqLHost
-		port := dbconfig.MySQLPort
-		user := dbconfig.MySQLUser
-		pass := dbconfig.MySQLPassword
+		host := mysqlTest.MySqLHost
+		port := mysqlTest.MySQLPort
+		user := mysqlTest.MySQLUser
+		pass := mysqlTest.MySQLPassword
 
-		if isMariaDB {
-			host = dbconfig.MariaDBHost
-			port = dbconfig.MariaDBPort
-			user = dbconfig.MariaDBUser
-			pass = dbconfig.MariaDBPassword
+		if dbType == MariaDB {
+			host = mysqlTest.MariaDBHost
+			port = mysqlTest.MariaDBPort
+			user = mysqlTest.MariaDBUser
+			pass = mysqlTest.MariaDBPassword
 		}
 
-		cmdLine := fmt.Sprintf("mysql -h %s -P %d -u %s -p%s %s < %s", host, port, user, pass, dbName,
-			"./testdata/init/mysql/"+dbName+".sql")
-
-		fmt.Println(cmdLine)
-
-		cmd := exec.Command("sh", "-c", cmdLine)
-
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-
-		err := cmd.Run()
-		if err != nil {
-			return fmt.Errorf("failed to initialize mysql database %s: %w", dbName, err)
-		}
-
-		err = mysql.Generate("./.gentestdata/mysql", mysql.DBConnection{
+		err := mysql.Generate(path.Join(repoDir, "./.gentestdata/mysql"), mysql.DBConnection{
 			Host:     host,
 			Port:     port,
 			User:     user,
@@ -151,7 +192,24 @@ func initMySQLDB(isMariaDB bool) error {
 	return nil
 }
 
-func initPostgresDB(dbType string, connectionString string) error {
+func initPostgresDB(dbType string) error {
+	repoDir := repo.GetTestsDirPath()
+	var (
+		connectionString string
+		host             string
+		port             int
+		cancelFn         context.CancelFunc
+	)
+
+	if dbType == Postgres {
+		host, port, cancelFn = containers.SetupWithPostgres(repoDir)
+	} else {
+		host, port, cancelFn = containers.SetupWithCockroach(repoDir)
+	}
+	connectionString = pgTest.PgConnectionString(host, port, pgTest.PgUser, pgTest.PgPassword, pgTest.PgDBName)
+	if cancelFn != nil {
+		defer cancelFn()
+	}
 	db, err := sql.Open("postgres", connectionString)
 	if err != nil {
 		return fmt.Errorf("failed to open '%s' db connection '%s': %w", dbType, connectionString, err)
@@ -169,55 +227,15 @@ func initPostgresDB(dbType string, connectionString string) error {
 	for _, schemaName := range schemaNames {
 		fmt.Println("\nInitializing", schemaName, "schema...")
 
-		err = execFile(db, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName))
+		err = dbTools.ExecFile(db, path.Join(repoDir, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName)))
 		if err != nil {
 			return fmt.Errorf("failed to execute sql file: %w", err)
 		}
 
-		err = postgres.GenerateDSN(connectionString, schemaName, "./.gentestdata")
+		err = postgres.GenerateDSN(connectionString, schemaName, path.Join(repoDir, "./.gentestdata"))
 		if err != nil {
 			return fmt.Errorf("failed to generate jet types: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func execFile(db *sql.DB, sqlFilePath string) error {
-	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to read sql file - %s: %w", sqlFilePath, err)
-	}
-
-	err = execInTx(db, func(tx *sql.Tx) error {
-		_, err := tx.Exec(string(testSampleSql))
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("failed to execute sql file - %s: %w", sqlFilePath, err)
-	}
-
-	return nil
-}
-
-func execInTx(db *sql.DB, f func(tx *sql.Tx) error) error {
-	tx, err := db.BeginTx(context.Background(), &sql.TxOptions{
-		Isolation: sql.LevelReadUncommitted, // to speed up initialization of test database
-	})
-	if err != nil {
-		return fmt.Errorf("failed to start transaction: %w", err)
-	}
-
-	err = f(tx)
-
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return fmt.Errorf("failed to commit transaction")
 	}
 
 	return nil

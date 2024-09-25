@@ -1,0 +1,129 @@
+name: Go
+
+on:
+  workflow_call:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  TEST_RESULTS: /tmp/test-results # path to where test results will be saved
+  TEST_SKIP_COMMENTS: "1"
+  GO_VERSION: "1.22.5"
+
+
+jobs:
+  initialize_data:
+    name: Initialize Test Data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Verify go version
+        run: go version
+      - name: Init database
+        run: |
+          cd tests
+          go run ./init/init.go -testsuite all
+      - uses: actions/upload-artifact@v4
+        with:
+          name: testData
+          include-hidden-files: true
+          path:  ${{ github.workspace }}/tests/.gentestdata/
+  standard_tests:
+    name: Run Standard Tests
+    needs: initialize_data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: testData
+          path: ./tests/.gentestdata
+      # to create test results report
+      - name: Install go-junit-report
+        run: go install github.com/jstemmer/go-junit-report/v2@latest
+      - name: locate binary
+        run: which go-junit-report
+      - name: Install jet
+        run: go install ./cmd/jet
+      - name: Setup Test Report Dir
+        run: mkdir -p ${{ env.TEST_RESULTS }}
+      # this will run all tests and exclude test files from code coverage report
+      - name: Run Tests
+        run: |
+          go test -v ./... \
+            -covermode=atomic \
+            -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... \
+            -coverprofile=cover.out 2>&1 | go-junit-report > ${{ env.TEST_RESULTS }}/results.xml
+      - name: Archive code coverage results
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-coverage-report
+          path: ${{ env.TEST_RESULTS }}/results.xml
+      - name: Store cover.out
+        uses: actions/upload-artifact@v4
+        with:
+          name: cover.out
+          path: cover.out
+      - name: Store test-results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: /tmp/test-results
+  cockroach_test:
+    name: Cockroach Test
+    needs: initialize_data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: testData
+          path: ./tests/.gentestdata
+      - name: Install jet
+        run: go install ./cmd/jet
+      - name: Run cockroach DB
+        run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/
+  maria_test:
+    name: MariaDB Test
+    needs: initialize_data
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: testData
+          path: ./tests/.gentestdata
+      - name: Install jet
+        run: go install ./cmd/jet
+      - name: Run MariaDB tests
+        run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/

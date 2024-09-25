@@ -4,33 +4,28 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"math/rand"
-	"os"
-	"runtime"
-	"testing"
-	"time"
-
-	"github.com/jackc/pgx/v4/stdlib"
-
 	"github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
+	"github.com/go-jet/jet/v2/tests/internal/utils/containers"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
+	"github.com/jackc/pgx/v4/stdlib"
 	_ "github.com/lib/pq"
 	"github.com/pkg/profile"
 	"github.com/stretchr/testify/require"
+	"os"
+	"runtime"
+	"testing"
 
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-var db *sql.DB
-var testRoot string
-
-var source string
-
-const CockroachDB = "COCKROACH_DB"
+var (
+	db       *sql.DB
+	testRoot string
+	source   string
+)
 
 func init() {
-	source = os.Getenv("PG_SOURCE")
+	source = os.Getenv(PgSourceEnvKey)
 }
 
 func sourceIsCockroachDB() bool {
@@ -44,20 +39,38 @@ func skipForCockroachDB(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
+	var (
+		host   string
+		port   int
+		cancel context.CancelFunc
+	)
 
 	setTestRoot()
+	if sourceIsCockroachDB() {
+		host, port, cancel = containers.SetupWithCockroach(testRoot)
+	} else {
+		host, port, cancel = containers.SetupWithPostgres(testRoot)
+	}
+
+	if cancel != nil {
+		defer cancel()
+	}
 
 	for _, driverName := range []string{"pgx", "postgres"} {
 		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
 
 		func() {
+			var connectionString string
 
-			connectionString := dbconfig.PostgresConnectString
-
-			if sourceIsCockroachDB() {
-				connectionString = dbconfig.CockroachConnectString
+			if !sourceIsCockroachDB() {
+				PgHost = host
+				PgPort = port
+				connectionString = PgConnectionString(host, port, PgUser, PgPassword, PgDBName)
+			} else {
+				CockroachHost = host
+				CockroachPort = port
+				connectionString = PgConnectionString(host, port, CockroachUser, CockroachPassword, CockroachDBName)
 			}
 
 			var err error
