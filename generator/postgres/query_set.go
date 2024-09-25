@@ -103,6 +103,7 @@ order by
 func (p postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
 	query := `
 SELECT t.typname as "enum.name",  
+	   obj_description(t.oid) as "enum.comment",
        e.enumlabel as "values"
 FROM pg_catalog.pg_type t 
    JOIN pg_catalog.pg_enum e on t.oid = e.enumtypid  
