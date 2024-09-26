@@ -26,13 +26,14 @@ import (
 
 var {{tableTemplate.InstanceName}} = new{{tableTemplate.TypeName}}("{{schemaName}}", "{{.Name}}", "{{tableTemplate.DefaultAlias}}")
 
+{{golangComment .Comment}}
 type {{structImplName}} struct {
 	{{dialect.PackageName}}.Table
 	
 	// Columns
 {{- range $i, $c := .Columns}}
 {{- $field := columnField $c}}
-	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{- if $c.Comment }} // {{$c.GoLangComment}} {{end}}
+	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{golangComment .Comment}}
 {{- end}}
 
 	AllColumns     {{dialect.PackageName}}.ColumnList
@@ -119,10 +120,11 @@ import (
 {{end}}
 
 {{$modelTableTemplate := tableTemplate}}
+{{golangComment .Comment}}
 type {{$modelTableTemplate.TypeName}} struct {
 {{- range .Columns}}
 {{- $field := structField .}}
-	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + ` {{- if .Comment }} // {{.GoLangComment}} {{end}}
+	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + ` {{golangComment .Comment}}
 {{- end}}
 }
 
@@ -132,6 +134,7 @@ var enumSQLBuilderTemplate = `package {{package}}
 
 import "github.com/go-jet/jet/v2/{{dialect.PackageName}}"
 
+{{golangComment .Comment}}
 var {{enumTemplate.InstanceName}} = &struct {
 {{- range $index, $value := .Values}}
 	{{enumValueName $value}} {{dialect.PackageName}}.StringExpression
@@ -148,6 +151,7 @@ var enumModelTemplate = `package {{package}}
 
 import "errors"
 
+{{golangComment .Comment}}
 type {{$enumTemplate.TypeName}} string
 
 const (

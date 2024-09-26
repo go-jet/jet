@@ -3,6 +3,7 @@ package metadata
 // Table metadata struct
 type Table struct {
 	Name    string `sql:"primary_key"`
+	Comment string
 	Columns []Column
 }
 
