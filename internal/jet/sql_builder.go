@@ -7,6 +7,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
 	"github.com/go-jet/jet/v2/internal/utils/is"
 	"github.com/google/uuid"
+	pq2 "github.com/lib/pq"
 	"reflect"
 	"sort"
 	"strconv"
@@ -81,11 +82,11 @@ func (s *SQLBuilder) write(data []byte) {
 }
 
 func isPreSeparator(b byte) bool {
-	return b == ' ' || b == '.' || b == ',' || b == '(' || b == '\n' || b == ':'
+	return b == ' ' || b == '.' || b == ',' || b == '(' || b == '\n' || b == ':' || b == '['
 }
 
 func isPostSeparator(b byte) bool {
-	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
+	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':' || b == '[' || b == ']'
 }
 
 // WriteAlias is used to add alias to output SQL
@@ -226,6 +227,8 @@ func argToString(value interface{}) string {
 
 	case string:
 		return stringQuote(bindVal)
+	case []string:
+		return stringArrayQuote(bindVal)
 	case []byte:
 		return stringQuote(string(bindVal))
 	case uuid.UUID:
@@ -251,6 +254,13 @@ func argToString(value interface{}) string {
 
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
+}
+
+func stringArrayQuote(val []string) string {
+	// We'll rely on the internals of pq2.StringArray here. We know it will never return an error, and the returned
+	// value is a string
+	dv, _ := pq2.StringArray(val).Value()
+	return dv.(string)
 }
 
 func integerTypesToString(value interface{}) string {
@@ -300,4 +310,8 @@ func shouldQuoteIdentifier(identifier string) bool {
 
 func stringQuote(value string) string {
 	return `'` + strings.Replace(value, "'", "''", -1) + `'`
+}
+
+func stringDoubleQuote(value string) string {
+	return `"` + strings.Replace(value, `"`, `""`, -1) + `"`
 }

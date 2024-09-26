@@ -175,27 +175,30 @@ RETURNING table1.col1 AS "table1.col1",
 }
 
 func TestInsert_ON_CONFLICT_ON_CONSTRAINT(t *testing.T) {
-	stmt := table1.INSERT(table1Col1, table1ColBool).
-		VALUES("one", "two").
-		VALUES("1", "2").
+	stmt := table1.INSERT(table1Col1, table1ColBool, table1ColStringArray).
+		VALUES("one", "two", "three").
+		VALUES("1", "2", "3").
 		ON_CONFLICT().ON_CONSTRAINT("idk_primary_key").DO_UPDATE(
 		SET(table1ColBool.SET(Bool(false)),
 			table2ColInt.SET(Int(1)),
-			ColumnList{table1Col1, table1ColBool}.SET(jet.ROW(Int(2), String("two"))),
+			table1ColStringArray.SET(StringArray([]string{"one"})),
+			ColumnList{table1Col1, table1ColBool, table1ColStringArray}.SET(jet.ROW(Int(2), String("two"), StringArray([]string{"two"}))),
 		).WHERE(table1Col1.GT(Int(2))),
 	).
-		RETURNING(table1Col1, table1ColBool)
+		RETURNING(table1Col1, table1ColBool, table1ColStringArray)
 
 	assertDebugStatementSql(t, stmt, `
-INSERT INTO db.table1 (col1, col_bool)
-VALUES ('one', 'two'),
-       ('1', '2')
+INSERT INTO db.table1 (col1, col_bool, col_string_array)
+VALUES ('one', 'two', 'three'),
+       ('1', '2', '3')
 ON CONFLICT ON CONSTRAINT idk_primary_key DO UPDATE
        SET col_bool = FALSE::boolean,
            col_int = 1,
-           (col1, col_bool) = ROW(2, 'two'::text)
+           col_string_array = '{"one"}',
+           (col1, col_bool, col_string_array) = ROW(2, 'two'::text, '{"two"}')
        WHERE table1.col1 > 2
 RETURNING table1.col1 AS "table1.col1",
-          table1.col_bool AS "table1.col_bool";
+          table1.col_bool AS "table1.col_bool",
+          table1.col_string_array AS "table1.col_string_array";
 `)
 }

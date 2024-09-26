@@ -74,6 +74,11 @@ func Contains(lhs Expression, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "@>")
 }
 
+// IsContainedBy returns a representation of "a <@ b"
+func IsContainedBy(lhs Expression, rhs Expression) BoolExpression {
+	return newBinaryBoolOperatorExpression(lhs, rhs, "<@")
+}
+
 // Overlap returns a representation of "a && b"
 func Overlap(lhs, rhs Expression) BoolExpression {
 	return newBinaryBoolOperatorExpression(lhs, rhs, "&&")

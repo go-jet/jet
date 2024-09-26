@@ -145,53 +145,101 @@ func DefaultTableSQLBuilderColumn(columnMetaData metadata.Column) TableSQLBuilde
 // getSqlBuilderColumnType returns type of jet sql builder column
 func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 	if columnMetaData.DataType.Kind != metadata.BaseType &&
-		columnMetaData.DataType.Kind != metadata.RangeType {
+		columnMetaData.DataType.Kind != metadata.RangeType &&
+		columnMetaData.DataType.Kind != metadata.ArrayType {
 		return "String"
 	}
 
-	switch strings.ToLower(columnMetaData.DataType.Name) {
-	case "boolean", "bool":
-		return "Bool"
-	case "smallint", "integer", "bigint", "int2", "int4", "int8",
-		"tinyint", "mediumint", "int", "year": //MySQL
-		return "Integer"
-	case "date":
-		return "Date"
-	case "timestamp without time zone",
-		"timestamp", "datetime": //MySQL:
-		return "Timestamp"
-	case "timestamp with time zone", "timestamptz":
-		return "Timestampz"
-	case "time without time zone",
-		"time": //MySQL
-		return "Time"
-	case "time with time zone", "timetz":
-		return "Timez"
-	case "interval":
-		return "Interval"
+	typeName := columnMetaData.DataType.Name
+	columnName := columnMetaData.Name
+
+	var columnType string
+	var supported bool
+
+	if columnMetaData.DataType.Kind == metadata.ArrayType {
+		if columnMetaData.DataType.Dimensions > 1 {
+			fmt.Println("- [SQL Builder] Unsupported sql array with multiple dimensions column '" + columnName + " " + typeName + "', using StringColumn instead.")
+			return "String"
+		}
+
+		columnType, supported = sqlArrayToColumnType(strings.TrimSuffix(typeName, "[]"))
+	} else {
+		columnType, supported = sqlToColumnType(typeName)
+	}
+
+	if !supported {
+		fmt.Printf("- [SQL Builder] Unsupported SQL column '" + columnName + " " + typeName + "', using StringColumn instead.\n")
+		return "String"
+	}
+
+	return columnType
+}
+
+// sqlArrayToColumnType maps the type of an SQL array column type to a go jet sql builder column. Note that you don't
+// pass the brackets `[]`, signifying an SQL array type, into this function. The second return value returns whether the
+// given type is supported
+func sqlArrayToColumnType(typeName string) (string, bool) {
+	switch strings.ToLower(typeName) {
 	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "nvarchar", "binary", "varbinary", "bpchar", "varbit",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
-		return "String"
+		return "StringArray", true
+	case "smallint", "integer", "bigint", "int2", "int4", "int8",
+		"tinyint", "mediumint", "int", "year": //MySQL
+		return "IntegerArray", true
+	case "boolean", "bool":
+		return "BoolArray", true
+	default:
+		return "", false
+	}
+}
+
+// sqlToColumnType maps the type of a SQL column type to a go jet sql builder column. The second return value returns
+// whether the given type is supported.
+func sqlToColumnType(typeName string) (string, bool) {
+	switch strings.ToLower(typeName) {
+	case "boolean", "bool":
+		return "Bool", true
+	case "smallint", "integer", "bigint", "int2", "int4", "int8",
+		"tinyint", "mediumint", "int", "year": //MySQL
+		return "Integer", true
+	case "date":
+		return "Date", true
+	case "timestamp without time zone",
+		"timestamp", "datetime": //MySQL:
+		return "Timestamp", true
+	case "timestamp with time zone", "timestamptz":
+		return "Timestampz", true
+	case "time without time zone",
+		"time": //MySQL
+		return "Time", true
+	case "time with time zone", "timetz":
+		return "Timez", true
+	case "interval":
+		return "Interval", true
+	case "user-defined", "enum", "text", "character", "character varying", "bytea", "uuid",
+		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
+		"char", "varchar", "nvarchar", "binary", "varbinary", "bpchar", "varbit",
+		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
+		return "String", true
 	case "real", "numeric", "decimal", "double precision", "float", "float4", "float8",
 		"double": // MySQL
-		return "Float"
+		return "Float", true
 	case "daterange":
-		return "DateRange"
+		return "DateRange", true
 	case "tsrange":
-		return "TimestampRange"
+		return "TimestampRange", true
 	case "tstzrange":
-		return "TimestampzRange"
+		return "TimestampzRange", true
 	case "int4range":
-		return "Int4Range"
+		return "Int4Range", true
 	case "int8range":
-		return "Int8Range"
+		return "Int8Range", true
 	case "numrange":
-		return "NumericRange"
+		return "NumericRange", true
 	default:
-		fmt.Println("- [SQL Builder] Unsupported sql column '" + columnMetaData.Name + " " + columnMetaData.DataType.Name + "', using StringColumn instead.")
-		return "String"
+		return "", false
 	}
 }
 
