@@ -14,7 +14,7 @@ type postgresQuerySet struct{}
 
 func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name", obj_description((table_schema||'.'||quote_ident(table_name))::regclass) as "table.comment"
+SELECT table_name as "table.name", obj_description((quote_ident(table_schema)||'.'||quote_ident(table_name))::regclass) as "table.comment"
 FROM information_schema.tables
 WHERE table_schema = $1 and table_type = $2
 ORDER BY table_name;
@@ -57,7 +57,7 @@ func getColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]meta
 	query := `
 select  
     attr.attname as "column.Name",
-	dsc.description as "column.Comment",
+    col_description(attr.attrelid, attr.attnum) as "column.Comment",
     exists(
         select 1
         from pg_catalog.pg_index indx
@@ -82,7 +82,6 @@ from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
      join pg_catalog.pg_type as tp on tp.oid = attr.atttypid
-	 left join pg_catalog.pg_description as dsc on dsc.objoid = attr.attrelid and dsc.objsubid = attr.attnum 
 where 
     ns.nspname = $1 and
     cls.relname = $2 and 
