@@ -1,7 +1,5 @@
 package metadata
 
-import "regexp"
-
 // Table metadata struct
 type Table struct {
 	Name    string `sql:"primary_key"`
@@ -22,14 +20,4 @@ func (t Table) MutableColumns() []Column {
 	}
 
 	return ret
-}
-
-// GoLangComment returns table comment without ascii control characters
-func (t Table) GoLangComment() string {
-	if t.Comment == "" {
-		return ""
-	}
-
-	// remove ascii control characters from string
-	return regexp.MustCompile(`[[:cntrl:]]+`).ReplaceAllString(t.Comment, "")
 }
