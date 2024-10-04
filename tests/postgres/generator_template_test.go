@@ -13,7 +13,6 @@ import (
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"github.com/stretchr/testify/require"
 )
@@ -29,19 +28,31 @@ var defaultEnumSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/enum")
 var defaultActorSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/table", "actor.go")
 
 var dbConnection = postgres.DBConnection{
-	Host:       dbconfig.PgHost,
-	Port:       dbconfig.PgPort,
-	User:       dbconfig.PgUser,
-	Password:   dbconfig.PgPassword,
-	DBName:     dbconfig.PgDBName,
+	Host:       PgHost,
+	Port:       PgPort,
+	User:       PgUser,
+	Password:   PgPassword,
+	DBName:     PgDBName,
 	SchemaName: "dvds",
 	SslMode:    "disable",
+}
+
+func getDbConnection() postgres.DBConnection {
+	if sourceIsCockroachDB() {
+		dbConnection.Host = CockroachHost
+		dbConnection.Port = CockroachPort
+	} else {
+		dbConnection.Host = PgHost
+		dbConnection.Port = PgPort
+	}
+
+	return dbConnection
 }
 
 func TestGeneratorTemplate_Schema_ChangePath(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).UsePath("new/schema/path")
@@ -59,7 +70,7 @@ func TestGeneratorTemplate_Schema_ChangePath(t *testing.T) {
 func TestGeneratorTemplate_Model_SkipGeneration(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -77,7 +88,7 @@ func TestGeneratorTemplate_Model_SkipGeneration(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_SkipGeneration(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -99,7 +110,7 @@ func TestGeneratorTemplate_Model_ChangePath(t *testing.T) {
 
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -117,7 +128,7 @@ func TestGeneratorTemplate_SQLBuilder_ChangePath(t *testing.T) {
 
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -138,7 +149,7 @@ func TestGeneratorTemplate_SQLBuilder_ChangePath(t *testing.T) {
 func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -177,7 +188,7 @@ func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -205,7 +216,7 @@ func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_SkipTableAndEnum(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -274,7 +285,7 @@ func UseSchema(schema string) {
 func TestGeneratorTemplate_SQLBuilder_ChangeTypeAndFileName(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -345,7 +356,7 @@ func UseSchema(schema string) {
 func TestGeneratorTemplate_SQLBuilder_DefaultAlias(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -368,7 +379,7 @@ func TestGeneratorTemplate_SQLBuilder_DefaultAlias(t *testing.T) {
 func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -409,7 +420,7 @@ func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
 func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -452,7 +463,7 @@ func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 func TestGeneratorTemplate_SQLBuilder_ChangeColumnTypes(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -482,7 +493,7 @@ func TestGeneratorTemplate_SQLBuilder_ChangeColumnTypes(t *testing.T) {
 func TestRenameEnumValueName(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
@@ -536,7 +547,7 @@ var MpaaRating = &struct {
 func TestGeneratorTemplate_Model_SqlBuilder_RenameStructFieldNames(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
-		dbConnection,
+		getDbConnection(),
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).

@@ -9,7 +9,6 @@ import (
 	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"github.com/stretchr/testify/require"
 	"path"
@@ -28,19 +27,19 @@ var defaultActorSQLBuilderFilePath = path.Join(tempTestDir, "dvds/table", "actor
 func dbConnection(dbName string) mysql2.DBConnection {
 	if sourceIsMariaDB() {
 		return mysql2.DBConnection{
-			Host:     dbconfig.MariaDBHost,
-			Port:     dbconfig.MariaDBPort,
-			User:     dbconfig.MariaDBUser,
-			Password: dbconfig.MariaDBPassword,
+			Host:     MariaDBHost,
+			Port:     MariaDBPort,
+			User:     MariaDBUser,
+			Password: MariaDBPassword,
 			DBName:   dbName,
 		}
 	}
 
 	return mysql2.DBConnection{
-		Host:     dbconfig.MySqLHost,
-		Port:     dbconfig.MySQLPort,
-		User:     dbconfig.MySQLUser,
-		Password: dbconfig.MySQLPassword,
+		Host:     MySqLHost,
+		Port:     MySQLPort,
+		User:     MySQLUser,
+		Password: MySQLPassword,
 		DBName:   dbName,
 	}
 }

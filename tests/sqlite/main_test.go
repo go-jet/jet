@@ -7,7 +7,6 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/sqlite"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"os"
@@ -33,14 +32,14 @@ func TestMain(m *testing.M) {
 	setTestRoot()
 
 	var err error
-	db, err = sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
+	db, err = sql.Open("sqlite3", "file:"+SakilaDBPath)
 	throw.OnError(err)
 	defer db.Close()
 
-	_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
+	_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", ChinookDBPath))
 	throw.OnError(err)
 
-	sampleDB, err = sql.Open("sqlite3", dbconfig.TestSampleDBPath)
+	sampleDB, err = sql.Open("sqlite3", TestSampleDBPath)
 	throw.OnError(err)
 
 	ret := m.Run()

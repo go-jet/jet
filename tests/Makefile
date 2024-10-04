@@ -1,6 +1,6 @@
 
 
-setup: checkout-testdata docker-compose-up
+setup: checkout-testdata
 
 # checkout-testdata will checkout testdata from separate repository into git submodule.
 checkout-testdata:
@@ -8,17 +8,8 @@ checkout-testdata:
 	git submodule update
 	cd ./testdata && git fetch && git checkout master && git pull
 
-# docker-compose-up will download docker image for each of the databases listed in docker-compose.yaml file, and then it will initialize
-# database with testdata retrieved in previous step.
-# On the first run this action might take couple of minutes. Docker temp data are stored in .docker directory.
-docker-compose-up:
-	docker-compose up
-
 init-all:
 	go run ./init/init.go -testsuite all
-
-init-postgres:
-	go run ./init/init.go -testsuite postgres
 
 init-mysql:
 	go run ./init/init.go -testsuite mysql
