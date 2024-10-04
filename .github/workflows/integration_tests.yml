@@ -57,6 +57,8 @@ jobs:
       # to create test results report
       - name: Install go-junit-report
         run: go install github.com/jstemmer/go-junit-report/v2@latest
+      - name: Install GoTest
+        run: go install gotest.tools/gotestsum@latest
       - name: locate binary
         run: which go-junit-report
       - name: Install jet
@@ -70,6 +72,8 @@ jobs:
             -covermode=atomic \
             -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... \
             -coverprofile=cover.out 2>&1 | go-junit-report > ${{ env.TEST_RESULTS }}/results.xml
+      - name: Run pretty version of tests again for better clarity
+        run: gotestsum --junitfile report_testsum.xml --format testname
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
