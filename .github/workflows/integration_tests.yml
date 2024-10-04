@@ -9,7 +9,7 @@ on:
 
 env:
   TEST_RESULTS: /tmp/test-results # path to where test results will be saved
-  TEST_SKIP_COMMENTS: "1"
+  TEST_SKIP_COMMENTS: "0"
   GO_VERSION: "1.22.5"
 
 
