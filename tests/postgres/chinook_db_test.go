@@ -455,7 +455,7 @@ FROM (
 	require.Len(t, dest, 275)
 	require.Equal(t, dest[0].Artist1.Artist, model.Artist{
 		ArtistId: 1,
-		Name:     testutils.StringPtr("AC/DC"),
+		Name:     testutils.PtrOf("AC/DC"),
 	})
 	require.Equal(t, dest[0].Artist1.CustomColumn1, "custom_column_1")
 	require.Equal(t, dest[0].Artist1.CustomColumn2, "custom_column_2")

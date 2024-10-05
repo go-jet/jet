@@ -54,7 +54,7 @@ WHERE people.people_id = ?;
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: testutils.Float64Ptr(190),
+					PeopleHeightCm: testutils.PtrOf(190.0),
 				},
 			).RETURNING(
 				People.AllColumns,

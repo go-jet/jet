@@ -846,15 +846,15 @@ func TestSimpleView(t *testing.T) {
 
 	require.Equal(t, len(dest), 10)
 	require.Equal(t, dest[2], model.CustomerList{
-		ID:      testutils.Int32Ptr(3),
-		Name:    testutils.StringPtr("LINDA WILLIAMS"),
-		Address: testutils.StringPtr("692 Joliet Street"),
-		ZipCode: testutils.StringPtr("83579"),
-		Phone:   testutils.StringPtr(" "),
-		City:    testutils.StringPtr("Athenai"),
-		Country: testutils.StringPtr("Greece"),
-		Notes:   testutils.StringPtr("active"),
-		Sid:     testutils.Int32Ptr(1),
+		ID:      testutils.PtrOf(int32(3)),
+		Name:    testutils.PtrOf("LINDA WILLIAMS"),
+		Address: testutils.PtrOf("692 Joliet Street"),
+		ZipCode: testutils.PtrOf("83579"),
+		Phone:   testutils.PtrOf(" "),
+		City:    testutils.PtrOf("Athenai"),
+		Country: testutils.PtrOf("Greece"),
+		Notes:   testutils.PtrOf("active"),
+		Sid:     testutils.PtrOf(int32(1)),
 	})
 }
 

@@ -7,6 +7,7 @@ import (
 	. "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
+
 	"github.com/stretchr/testify/require"
 	"math/rand"
 	"testing"
@@ -300,7 +301,7 @@ func TestInsertOnDuplicateKeyUpdateNEW(t *testing.T) {
 				ID:          randId,
 				URL:         "https://www.yahoo.com",
 				Name:        "Yahoo",
-				Description: testutils.StringPtr("web portal and search engine"),
+				Description: testutils.PtrOf("web portal and search engine"),
 			},
 		}).AS_NEW().
 		ON_DUPLICATE_KEY_UPDATE(
@@ -337,7 +338,7 @@ ON DUPLICATE KEY UPDATE id = (link.id + ?),
 			ID:          randId + 11,
 			URL:         "https://www.yahoo.com",
 			Name:        "Yahoo",
-			Description: testutils.StringPtr("web portal and search engine"),
+			Description: testutils.PtrOf("web portal and search engine"),
 		})
 	})
 }

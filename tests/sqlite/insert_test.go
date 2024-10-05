@@ -49,7 +49,7 @@ VALUES (?, ?, ?, ?),
 			ID:          101,
 			URL:         "http://www.google.com",
 			Name:        "Google",
-			Description: testutils.StringPtr("Search engine"),
+			Description: testutils.PtrOf("Search engine"),
 		})
 		testutils.AssertDeepEqual(t, insertedLinks[2], model.Link{
 			ID:   102,

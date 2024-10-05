@@ -10,7 +10,6 @@ import (
 	"github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -184,7 +183,7 @@ func initPostgresDB(dbType string, connectionString string) error {
 }
 
 func execFile(db *sql.DB, sqlFilePath string) error {
-	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
+	testSampleSql, err := os.ReadFile(sqlFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to read sql file - %s: %w", sqlFilePath, err)
 	}

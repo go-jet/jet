@@ -63,15 +63,15 @@ func TestExactDecimals(t *testing.T) {
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
 					Numeric:    0.1,
-					NumericPtr: testutils.Float64Ptr(0.1),
+					NumericPtr: testutils.PtrOf(0.1),
 					Decimal:    0.1,
-					DecimalPtr: testutils.Float64Ptr(0.1),
+					DecimalPtr: testutils.PtrOf(0.1),
 
 					// not overwritten
 					Real:      0.4,
-					RealPtr:   testutils.Float32Ptr(0.44),
+					RealPtr:   testutils.PtrOf(float32(0.44)),
 					Double:    0.3,
-					DoublePtr: testutils.Float64Ptr(0.33),
+					DoublePtr: testutils.PtrOf(0.33),
 				},
 				Numeric:    decimal.RequireFromString("0.1234567890123456789"),
 				NumericPtr: decimal.RequireFromString("1.1111111111111111111"),
@@ -378,7 +378,7 @@ ORDER BY employee.employee_id;
 		FirstName:      "Salley",
 		LastName:       "Lester",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      testutils.Int32Ptr(3),
+		ManagerID:      testutils.PtrOf(int32(3)),
 	})
 }
 
@@ -420,7 +420,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColumnName5: "Doe",
 		WeirdColumnName6: "Doe",
 		WeirdColumnName7: "Doe",
-		Weirdcolumnname8: testutils.StringPtr("Doe"),
+		Weirdcolumnname8: testutils.PtrOf("Doe"),
 		WeirdColName9:    "Doe",
 		WeirdColuName10:  "Doe",
 		WeirdColuName11:  "Doe",
@@ -518,7 +518,7 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: testutils.Float64Ptr(120),
+					PeopleHeightCm: testutils.PtrOf(120.0),
 				},
 			).RETURNING(
 				People.MutableColumns,

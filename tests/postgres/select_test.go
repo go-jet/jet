@@ -1828,16 +1828,16 @@ ORDER BY film.film_id ASC;
 	testutils.AssertDeepEqual(t, maxRentalRateFilms[0], model.Film{
 		FilmID:          2,
 		Title:           "Ace Goldfinger",
-		Description:     testutils.StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
-		ReleaseYear:     testutils.Int32Ptr(2006),
+		Description:     testutils.PtrOf("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
+		ReleaseYear:     testutils.PtrOf(int32(2006)),
 		LanguageID:      1,
 		RentalRate:      4.99,
-		Length:          testutils.Int16Ptr(48),
+		Length:          testutils.PtrOf(int16(48)),
 		ReplacementCost: 12.99,
 		Rating:          &gRating,
 		RentalDuration:  3,
 		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-		SpecialFeatures: testutils.StringPtr("{Trailers,\"Deleted Scenes\"}"),
+		SpecialFeatures: testutils.PtrOf("{Trailers,\"Deleted Scenes\"}"),
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
 }
@@ -2286,11 +2286,11 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 		FirstName:  "Brian",
 		LastName:   "Wyman",
 		AddressID:  323,
-		Email:      testutils.StringPtr("brian.wyman@sakilacustomer.org"),
+		Email:      testutils.PtrOf("brian.wyman@sakilacustomer.org"),
 		Activebool: true,
 		CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 		LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
-		Active:     testutils.Int32Ptr(1),
+		Active:     testutils.PtrOf(int32(1)),
 	})
 
 	require.Equal(t, customersWithAmounts[0].AmountSum, 27.93)
@@ -3133,8 +3133,8 @@ func TestDynamicCondition(t *testing.T) {
 		Active     *bool
 	}
 
-	request.CustomerID = testutils.Int64Ptr(1)
-	request.Active = testutils.BoolPtr(true)
+	request.CustomerID = testutils.PtrOf(int64(1))
+	request.Active = testutils.PtrOf(true)
 
 	// ...
 
@@ -3894,12 +3894,12 @@ var customer0 = model.Customer{
 	StoreID:    1,
 	FirstName:  "Mary",
 	LastName:   "Smith",
-	Email:      testutils.StringPtr("mary.smith@sakilacustomer.org"),
+	Email:      testutils.PtrOf("mary.smith@sakilacustomer.org"),
 	AddressID:  5,
 	Activebool: true,
 	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
-	Active:     testutils.Int32Ptr(1),
+	Active:     testutils.PtrOf(int32(1)),
 }
 
 var customer1 = model.Customer{
@@ -3907,12 +3907,12 @@ var customer1 = model.Customer{
 	StoreID:    1,
 	FirstName:  "Patricia",
 	LastName:   "Johnson",
-	Email:      testutils.StringPtr("patricia.johnson@sakilacustomer.org"),
+	Email:      testutils.PtrOf("patricia.johnson@sakilacustomer.org"),
 	AddressID:  6,
 	Activebool: true,
 	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
-	Active:     testutils.Int32Ptr(1),
+	Active:     testutils.PtrOf(int32(1)),
 }
 
 var lastCustomer = model.Customer{
@@ -3920,10 +3920,10 @@ var lastCustomer = model.Customer{
 	StoreID:    2,
 	FirstName:  "Austin",
 	LastName:   "Cintron",
-	Email:      testutils.StringPtr("austin.cintron@sakilacustomer.org"),
+	Email:      testutils.PtrOf("austin.cintron@sakilacustomer.org"),
 	AddressID:  605,
 	Activebool: true,
 	CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
 	LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
-	Active:     testutils.Int32Ptr(1),
+	Active:     testutils.PtrOf(int32(1)),
 }
