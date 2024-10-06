@@ -83,10 +83,10 @@ SELECT orders.ship_region AS "orders.ship_region",
      SUM(order_details.quantity) AS "product_sales"
 FROM northwind.orders
      INNER JOIN northwind.order_details ON (orders.order_id = order_details.order_id)
-WHERE orders.ship_region IN (
+WHERE orders.ship_region IN ((
            SELECT top_region."orders.ship_region" AS "orders.ship_region"
            FROM top_region
-      )
+      ))
 GROUP BY orders.ship_region, order_details.product_id
 ORDER BY SUM(order_details.quantity) DESC;
 `)
@@ -157,19 +157,19 @@ func TestWithStatementDeleteAndInsert(t *testing.T) {
 	testutils.AssertStatementSql(t, stmt, `
 WITH remove_discontinued_orders AS (
      DELETE FROM northwind.order_details
-     WHERE order_details.product_id IN (
+     WHERE order_details.product_id IN ((
                 SELECT products.product_id AS "products.product_id"
                 FROM northwind.products
                 WHERE products.discontinued = $1
-           )
+           ))
      RETURNING order_details.product_id AS "order_details.product_id"
 ),update_discontinued_price AS (
      UPDATE northwind.products
      SET unit_price = $2
-     WHERE products.product_id IN (
+     WHERE products.product_id IN ((
                 SELECT remove_discontinued_orders."order_details.product_id" AS "order_details.product_id"
                 FROM remove_discontinued_orders
-           )
+           ))
      RETURNING products.product_id AS "products.product_id",
                products.product_name AS "products.product_name",
                products.supplier_id AS "products.supplier_id",

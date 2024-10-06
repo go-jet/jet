@@ -153,10 +153,10 @@ WITH payments_to_update AS (
 )
 UPDATE payment
 SET amount = 0
-WHERE payment.payment_id IN (
+WHERE payment.payment_id IN ((
            SELECT payments_to_update.''payment.payment_id'' AS "payment.payment_id"
            FROM payments_to_update
-      );
+      ));
 `, "''", "`", -1))
 
 	tx := beginDBTx(t)
@@ -205,10 +205,10 @@ WITH payments_to_delete AS (
      WHERE payment.amount < 0.5
 )
 DELETE FROM payment
-WHERE payment.payment_id IN (
+WHERE payment.payment_id IN ((
            SELECT payments_to_delete.''payment.payment_id'' AS "payment.payment_id"
            FROM payments_to_delete
-      );
+      ));
 `, "''", "`", -1))
 
 	tx := beginDBTx(t)

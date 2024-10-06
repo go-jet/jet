@@ -374,32 +374,6 @@ func (n *starLiteral) serialize(statement StatementType, out *SQLBuilder, option
 
 //---------------------------------------------------//
 
-type wrap struct {
-	ExpressionInterfaceImpl
-	expressions []Expression
-}
-
-func (n *wrap) serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.WriteString("(")
-
-	if len(n.expressions) == 1 {
-		options = append(options, NoWrap, Ident)
-	}
-	serializeExpressionList(statementType, n.expressions, ", ", out, options...)
-
-	out.WriteString(")")
-}
-
-// WRAP wraps list of expressions with brackets - ( expression1, expression2, ... )
-func WRAP(expression ...Expression) Expression {
-	wrap := &wrap{expressions: expression}
-	wrap.ExpressionInterfaceImpl.Parent = wrap
-
-	return wrap
-}
-
-//---------------------------------------------------//
-
 type rawExpression struct {
 	ExpressionInterfaceImpl
 
