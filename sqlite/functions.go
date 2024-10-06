@@ -15,10 +15,8 @@ var (
 	OR = jet.OR
 )
 
-// ROW is construct one table row from list of expressions.
-func ROW(expressions ...Expression) Expression {
-	return jet.NewFunc("", expressions, nil)
-}
+// ROW is construct one row from a list of expressions.
+var ROW = jet.WRAP
 
 // ------------------ Mathematical functions ---------------//
 

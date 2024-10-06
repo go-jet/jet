@@ -347,24 +347,24 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
 	).LIMIT(2)
 
-	//fmt.Println(query.Sql())
+	//	fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT all_types.integer IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN ($1::smallint, $2::smallint)) AS "result.in",
-     (all_types.small_int_ptr IN (
+     (all_types.small_int_ptr IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.in_select",
+     ))) AS "result.in_select",
      (CURRENT_USER) AS "result.raw",
      ($3 + COALESCE(all_types.small_int_ptr, 0) + $4) AS "result.raw_arg",
      ($5 + all_types.integer + $6 + $5 + $7 + $8) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN ($9, $10::smallint, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN (
+     (all_types.small_int_ptr NOT IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.not_in_select"
+     ))) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT $11;
 `, int8(11), int8(22), 78, 56, 11, 22, 33, 44, int64(11), int16(22), int64(2))
@@ -1105,6 +1105,46 @@ SELECT EXTRACT(CENTURY FROM all_types.timestampz),
      EXTRACT(WEEK FROM all_types.timestampz),
      EXTRACT(YEAR FROM all_types.timestampz)
 FROM test_sample.all_types;
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
+}
+
+func TestRowExpression(t *testing.T) {
+	now := time.Now()
+	nowAddHour := time.Now().Add(time.Hour)
+
+	stmt := SELECT(
+		ROW(Int32(1), Float32(11.22), String("john")).AS("row"),
+		WRAP(Int64(1), Float64(11.22), String("john")).AS("wrap"),
+
+		ROW(Bool(false), DateT(now)).EQ(ROW(Bool(true), DateT(now))),
+		WRAP(Bool(false), DateT(now)).NOT_EQ(WRAP(Bool(true), DateT(now))),
+
+		ROW(TimeT(nowAddHour)).IS_DISTINCT_FROM(RowExp(Raw("row(NOW()::time)"))),
+		ROW().IS_NOT_DISTINCT_FROM(ROW()),
+
+		ROW(TimestampT(now), TimestampzT(nowAddHour)).GT(WRAP(TimestampT(now), TimestampzT(now))),
+		ROW(TimestampzT(nowAddHour)).GT_EQ(ROW(TimestampzT(now))),
+		WRAP(TimestampT(now), TimestampzT(nowAddHour)).LT(ROW(TimestampT(now), TimestampzT(now))),
+		ROW(TimestampzT(nowAddHour)).LT_EQ(ROW(TimestampzT(now))),
+	)
+
+	//fmt.Println(stmt.Sql())
+	//fmt.Println(stmt.DebugSql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT ROW($1::integer, $2::real, $3::text) AS "row",
+     ($4::bigint, $5::double precision, $6::text) AS "wrap",
+     ROW($7::boolean, $8::date) = ROW($9::boolean, $10::date),
+     ($11::boolean, $12::date) != ($13::boolean, $14::date),
+     ROW($15::time without time zone) IS DISTINCT FROM (row(NOW()::time)),
+     ROW() IS NOT DISTINCT FROM ROW(),
+     ROW($16::timestamp without time zone, $17::timestamp with time zone) > ($18::timestamp without time zone, $19::timestamp with time zone),
+     ROW($20::timestamp with time zone) >= ROW($21::timestamp with time zone),
+     ($22::timestamp without time zone, $23::timestamp with time zone) < ROW($24::timestamp without time zone, $25::timestamp with time zone),
+     ROW($26::timestamp with time zone) <= ROW($27::timestamp with time zone);
 `)
 
 	err := stmt.Query(db, &struct{}{})

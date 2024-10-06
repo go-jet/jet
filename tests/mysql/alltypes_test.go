@@ -97,18 +97,18 @@ func TestExpressionOperators(t *testing.T) {
 SELECT all_types.'integer' IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
-     (all_types.small_int_ptr IN (
+     (all_types.small_int_ptr IN ((
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.in_select",
+     ))) AS "result.in_select",
      (CURRENT_USER()) AS "result.raw",
      (? + COALESCE(all_types.small_int_ptr, 0) + ?) AS "result.raw_arg",
      (? + all_types.integer + ? + ? + ? + ?) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN (?, ?, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN (
+     (all_types.small_int_ptr NOT IN ((
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.not_in_select"
+     ))) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT ?;
 `, "'", "`", -1), int64(11), int64(22), 78, 56, 11, 22, 11, 33, 44, int64(11), int64(22), int64(2))
@@ -1403,4 +1403,35 @@ VALUES ('91.23', '45.67', '12.35', '56.79', 0.2, 0.22, 0.3, 0.33, 0.4, 0.44);
 		require.Equal(t, 91.23, result.Floats.Decimal)
 		require.Equal(t, 45.67, *result.Floats.DecimalPtr)
 	})
+}
+
+func TestRowExpression(t *testing.T) {
+	now := time.Now()
+	nowAddHour := time.Now().Add(time.Hour)
+
+	stmt := SELECT(
+		ROW(Bool(false), DateT(now)).EQ(ROW(Bool(true), DateT(now))),
+		ROW(Bool(false), DateT(now)).NOT_EQ(ROW(Bool(true), DateT(now))),
+		ROW(TimestampT(nowAddHour), String("txt")).IS_DISTINCT_FROM(RowExp(Raw("row(NOW(), 'png')"))),
+		ROW(TimestampT(now), DateTimeT(nowAddHour)).GT(ROW(TimestampT(now), DateTimeT(now))),
+		ROW(DateTimeT(nowAddHour), Int(1)).GT_EQ(ROW(DateTimeT(now), Int(2))),
+		ROW(TimestampT(now), DateTimeT(nowAddHour)).LT(ROW(TimestampT(now), DateTimeT(now))),
+		ROW(DateTimeT(nowAddHour), Float(1.22)).LT_EQ(ROW(DateTimeT(now), Float(2.33))),
+	)
+
+	//fmt.Println(stmt.Sql())
+	//fmt.Println(stmt.DebugSql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT ROW(?, CAST(? AS DATE)) = ROW(?, CAST(? AS DATE)),
+     ROW(?, CAST(? AS DATE)) != ROW(?, CAST(? AS DATE)),
+     NOT(ROW(TIMESTAMP(?), ?) <=> (row(NOW(), 'png'))),
+     ROW(TIMESTAMP(?), CAST(? AS DATETIME)) > ROW(TIMESTAMP(?), CAST(? AS DATETIME)),
+     ROW(CAST(? AS DATETIME), ?) >= ROW(CAST(? AS DATETIME), ?),
+     ROW(TIMESTAMP(?), CAST(? AS DATETIME)) < ROW(TIMESTAMP(?), CAST(? AS DATETIME)),
+     ROW(CAST(? AS DATETIME), ?) <= ROW(CAST(? AS DATETIME), ?);
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
 }

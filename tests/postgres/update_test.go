@@ -344,7 +344,10 @@ func TestUpdateExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.AssertExecContextErr(ctx, t, updateStmt, db, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		_, err := updateStmt.ExecContext(ctx, tx)
+		require.Error(t, err, "context deadline exceeded")
+	})
 }
 
 func TestUpdateFrom(t *testing.T) {
