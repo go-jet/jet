@@ -292,11 +292,6 @@ func printDiff(actual, expected interface{}, options ...cmp.Option) {
 	fmt.Println(expected)
 }
 
-// PtrOf returns the address of any given parameter
-func PtrOf[T any](value T) *T {
-	return &value
-}
-
 // UUIDPtr returns address of uuid.UUID
 func UUIDPtr(u string) *uuid.UUID {
 	newUUID := uuid.MustParse(u)

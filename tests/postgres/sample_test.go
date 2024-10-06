@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"database/sql"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/google/uuid"
 	"testing"
 
@@ -63,15 +64,15 @@ func TestExactDecimals(t *testing.T) {
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
 					Numeric:    0.1,
-					NumericPtr: testutils.PtrOf(0.1),
+					NumericPtr: ptr.Of(0.1),
 					Decimal:    0.1,
-					DecimalPtr: testutils.PtrOf(0.1),
+					DecimalPtr: ptr.Of(0.1),
 
 					// not overwritten
 					Real:      0.4,
-					RealPtr:   testutils.PtrOf(float32(0.44)),
+					RealPtr:   ptr.Of(float32(0.44)),
 					Double:    0.3,
-					DoublePtr: testutils.PtrOf(0.33),
+					DoublePtr: ptr.Of(0.33),
 				},
 				Numeric:    decimal.RequireFromString("0.1234567890123456789"),
 				NumericPtr: decimal.RequireFromString("1.1111111111111111111"),
@@ -378,7 +379,7 @@ ORDER BY employee.employee_id;
 		FirstName:      "Salley",
 		LastName:       "Lester",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      testutils.PtrOf(int32(3)),
+		ManagerID:      ptr.Of(int32(3)),
 	})
 }
 
@@ -420,7 +421,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColumnName5: "Doe",
 		WeirdColumnName6: "Doe",
 		WeirdColumnName7: "Doe",
-		Weirdcolumnname8: testutils.PtrOf("Doe"),
+		Weirdcolumnname8: ptr.Of("Doe"),
 		WeirdColName9:    "Doe",
 		WeirdColuName10:  "Doe",
 		WeirdColuName11:  "Doe",
@@ -518,7 +519,7 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: testutils.PtrOf(120.0),
+					PeopleHeightCm: ptr.Of(120.0),
 				},
 			).RETURNING(
 				People.MutableColumns,

@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/chinook/model"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/chinook/table"
 	"strings"
@@ -846,15 +847,15 @@ func TestSimpleView(t *testing.T) {
 
 	require.Equal(t, len(dest), 10)
 	require.Equal(t, dest[2], model.CustomerList{
-		ID:      testutils.PtrOf(int32(3)),
-		Name:    testutils.PtrOf("LINDA WILLIAMS"),
-		Address: testutils.PtrOf("692 Joliet Street"),
-		ZipCode: testutils.PtrOf("83579"),
-		Phone:   testutils.PtrOf(" "),
-		City:    testutils.PtrOf("Athenai"),
-		Country: testutils.PtrOf("Greece"),
-		Notes:   testutils.PtrOf("active"),
-		Sid:     testutils.PtrOf(int32(1)),
+		ID:      ptr.Of(int32(3)),
+		Name:    ptr.Of("LINDA WILLIAMS"),
+		Address: ptr.Of("692 Joliet Street"),
+		ZipCode: ptr.Of("83579"),
+		Phone:   ptr.Of(" "),
+		City:    ptr.Of("Athenai"),
+		Country: ptr.Of("Greece"),
+		Notes:   ptr.Of("active"),
+		Sid:     ptr.Of(int32(1)),
 	})
 }
 

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -54,7 +55,7 @@ WHERE people.people_id = ?;
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: testutils.PtrOf(190.0),
+					PeopleHeightCm: ptr.Of(190.0),
 				},
 			).RETURNING(
 				People.AllColumns,
