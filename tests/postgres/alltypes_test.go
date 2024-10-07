@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -929,6 +930,43 @@ func TestTimeExpression(t *testing.T) {
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
+}
+
+func TestIntervalUpsert(t *testing.T) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		stmt := SELECT(Employee.AllColumns).FROM(Employee).
+			WHERE(Employee.EmployeeID.EQ(Int(1)))
+
+		//Validate initial dataset
+		var windy model.Employee
+		err := stmt.Query(tx, &windy)
+		assert.Equal(t, windy.EmployeeID, int32(1))
+		assert.Equal(t, windy.FirstName, "Windy")
+		assert.Equal(t, windy.LastName, "Hays")
+		assert.Equal(t, *windy.PtoAccrual, "22:00:00")
+		assert.Nil(t, err)
+		windy.PtoAccrual = ptr.Of("3h")
+		//Update data
+		updateStmt := Employee.UPDATE(Employee.PtoAccrual).SET(
+			Employee.PtoAccrual.SET(INTERVAL(3, HOUR)),
+		).WHERE(Employee.EmployeeID.EQ(Int(1))).RETURNING(Employee.AllColumns)
+
+		err = updateStmt.Query(tx, &windy)
+		err = stmt.Query(tx, &windy)
+		assert.Nil(t, err)
+		assert.Equal(t, *windy.PtoAccrual, "03:00:00")
+		//Upsert dataset with a different value
+		windy.PtoAccrual = ptr.Of("5h")
+		insertStmt := Employee.INSERT(Employee.AllColumns).
+			MODEL(&windy).
+			ON_CONFLICT(Employee.EmployeeID).
+			DO_UPDATE(SET(
+				Employee.PtoAccrual.SET(Employee.EXCLUDED.PtoAccrual),
+			)).RETURNING(Employee.AllColumns)
+		err = insertStmt.Query(tx, &windy)
+		assert.Nil(t, err)
+		assert.Equal(t, *windy.PtoAccrual, "05:00:00")
+	})
 }
 
 func TestInterval(t *testing.T) {
