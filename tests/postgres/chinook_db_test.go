@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/table"
@@ -455,7 +456,7 @@ FROM (
 	require.Len(t, dest, 275)
 	require.Equal(t, dest[0].Artist1.Artist, model.Artist{
 		ArtistId: 1,
-		Name:     testutils.StringPtr("AC/DC"),
+		Name:     ptr.Of("AC/DC"),
 	})
 	require.Equal(t, dest[0].Artist1.CustomColumn1, "custom_column_1")
 	require.Equal(t, dest[0].Artist1.CustomColumn2, "custom_column_2")

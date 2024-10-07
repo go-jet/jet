@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/sqlite"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/test_sample/table"
@@ -153,43 +154,43 @@ func TestAllTypesInsert(t *testing.T) {
 
 var toInsert = model.AllTypes{
 	Boolean:      false,
-	BooleanPtr:   testutils.BoolPtr(true),
+	BooleanPtr:   ptr.Of(true),
 	TinyInt:      1,
 	SmallInt:     3,
 	MediumInt:    5,
 	Integer:      7,
 	BigInt:       9,
-	TinyIntPtr:   testutils.Int8Ptr(11),
-	SmallIntPtr:  testutils.Int16Ptr(33),
-	MediumIntPtr: testutils.Int32Ptr(55),
-	IntegerPtr:   testutils.Int32Ptr(77),
-	BigIntPtr:    testutils.Int64Ptr(99),
+	TinyIntPtr:   ptr.Of(int8(11)),
+	SmallIntPtr:  ptr.Of(int16(33)),
+	MediumIntPtr: ptr.Of(int32(55)),
+	IntegerPtr:   ptr.Of(int32(77)),
+	BigIntPtr:    ptr.Of(int64(99)),
 	Decimal:      11.22,
-	DecimalPtr:   testutils.Float64Ptr(33.44),
+	DecimalPtr:   ptr.Of(33.44),
 	Numeric:      55.66,
-	NumericPtr:   testutils.Float64Ptr(77.88),
+	NumericPtr:   ptr.Of(77.88),
 	Float:        99.00,
-	FloatPtr:     testutils.Float64Ptr(11.22),
+	FloatPtr:     ptr.Of(11.22),
 	Double:       33.44,
-	DoublePtr:    testutils.Float64Ptr(55.66),
+	DoublePtr:    ptr.Of(55.66),
 	Real:         77.88,
-	RealPtr:      testutils.Float32Ptr(99.00),
+	RealPtr:      ptr.Of(float32(99.00)),
 	Time:         time.Date(1, 1, 1, 1, 1, 1, 10, time.UTC),
-	TimePtr:      testutils.TimePtr(time.Date(2, 2, 2, 2, 2, 2, 200, time.UTC)),
+	TimePtr:      ptr.Of(time.Date(2, 2, 2, 2, 2, 2, 200, time.UTC)),
 	Date:         time.Now(),
-	DatePtr:      testutils.TimePtr(time.Now()),
+	DatePtr:      ptr.Of(time.Now()),
 	DateTime:     time.Now(),
-	DateTimePtr:  testutils.TimePtr(time.Now()),
+	DateTimePtr:  ptr.Of(time.Now()),
 	Timestamp:    time.Now(),
-	TimestampPtr: testutils.TimePtr(time.Now()),
+	TimestampPtr: ptr.Of(time.Now()),
 	Char:         "abcd",
-	CharPtr:      testutils.StringPtr("absd"),
+	CharPtr:      ptr.Of("absd"),
 	VarChar:      "abcd",
-	VarCharPtr:   testutils.StringPtr("absd"),
+	VarCharPtr:   ptr.Of("absd"),
 	Blob:         []byte("large file"),
-	BlobPtr:      testutils.ByteArrayPtr([]byte("very large file")),
+	BlobPtr:      ptr.Of([]byte("very large file")),
 	Text:         "some text",
-	TextPtr:      testutils.StringPtr("text"),
+	TextPtr:      ptr.Of("text"),
 }
 
 func TestUUID(t *testing.T) {
@@ -659,7 +660,7 @@ func TestExactDecimals(t *testing.T) {
 
 					// not overwritten
 					Numeric:    "6.7",
-					NumericPtr: testutils.StringPtr("7.7"),
+					NumericPtr: ptr.Of("7.7"),
 				},
 				Decimal:    decimal.RequireFromString("91.23"),
 				DecimalPtr: decimal.RequireFromString("45.67"),

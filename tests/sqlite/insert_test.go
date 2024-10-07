@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"math/rand"
 
 	"testing"
@@ -49,7 +50,7 @@ VALUES (?, ?, ?, ?),
 			ID:          101,
 			URL:         "http://www.google.com",
 			Name:        "Google",
-			Description: testutils.StringPtr("Search engine"),
+			Description: ptr.Of("Search engine"),
 		})
 		testutils.AssertDeepEqual(t, insertedLinks[2], model.Link{
 			ID:   102,
