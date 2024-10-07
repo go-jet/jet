@@ -6,7 +6,7 @@ setup: checkout-testdata docker-compose-up
 checkout-testdata:
 	git submodule init
 	git submodule update
-	cd ./testdata && git fetch && git checkout master && git pull
+# cd ./testdata && git fetch && git checkout master && git pull
 
 # docker-compose-up will download docker image for each of the databases listed in docker-compose.yaml file, and then it will initialize
 # database with testdata retrieved in previous step.
