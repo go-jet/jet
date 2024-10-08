@@ -103,11 +103,12 @@ func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 }
 
 // SaveJSONFile saves v as json at testRelativePath
+// nolint:unused
 func SaveJSONFile(v interface{}, testRelativePath string) {
 	jsonText, _ := json.MarshalIndent(v, "", "\t")
 
 	filePath := getFullPath(testRelativePath)
-	err := os.WriteFile(filePath, jsonText, 0644)
+	err := os.WriteFile(filePath, jsonText, 0600)
 
 	throw.OnError(err)
 }
@@ -116,7 +117,7 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 
 	filePath := getFullPath(testRelativePath)
-	fileJSONData, err := os.ReadFile(filePath)
+	fileJSONData, err := os.ReadFile(filePath) // #nosec G304
 	require.NoError(t, err)
 
 	if runtime.GOOS == "windows" {
@@ -243,7 +244,7 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 
 // AssertFileContent check if file content at filePath contains expectedContent text.
 func AssertFileContent(t *testing.T, filePath string, expectedContent string) {
-	enumFileData, err := os.ReadFile(filePath)
+	enumFileData, err := os.ReadFile(filePath) // #nosec G304
 
 	require.NoError(t, err)
 

@@ -8,29 +8,20 @@ import (
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/sqlite"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
-	"math/rand"
-	"os"
-	"os/exec"
-	"runtime"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/pkg/profile"
+	"github.com/stretchr/testify/require"
+	"os"
+	"runtime"
+	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 )
 
 var db *sql.DB
 var sampleDB *sql.DB
-var testRoot string
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
-
-	setTestRoot()
 
 	var err error
 	db, err = sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
@@ -48,16 +39,6 @@ func TestMain(m *testing.M) {
 	if ret != 0 {
 		os.Exit(ret)
 	}
-}
-
-func setTestRoot() {
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	byteArr, err := cmd.Output()
-	if err != nil {
-		panic(err)
-	}
-
-	testRoot = strings.TrimSpace(string(byteArr)) + "/tests/"
 }
 
 var loggedSQL string
