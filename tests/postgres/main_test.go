@@ -5,13 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"math/rand"
+	"github.com/jackc/pgx/v4/stdlib"
 	"os"
 	"runtime"
 	"testing"
-	"time"
-
-	"github.com/jackc/pgx/v4/stdlib"
 
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
@@ -44,7 +41,6 @@ func skipForCockroachDB(t *testing.T) {
 }
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
 	setTestRoot()
