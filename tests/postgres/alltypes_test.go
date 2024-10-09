@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
 	"log/slog"
@@ -935,7 +934,10 @@ func TestTimeExpression(t *testing.T) {
 }
 
 func TestIntervalSetFunctionality(t *testing.T) {
-	updateQuery := `
+
+	t.Run("updateQueryIntervalTest", func(t *testing.T) {
+		slog.Info("Running test", slog.Any("test", t.Name()))
+		expectedQuery := `
 UPDATE test_sample.employee
 SET pto_accrual = INTERVAL '3 HOUR'
 WHERE employee.employee_id = $1
@@ -946,7 +948,23 @@ RETURNING employee.employee_id AS "employee.employee_id",
           employee.manager_id AS "employee.manager_id",
           employee.pto_accrual AS "employee.pto_accrual";
 `
-	insertQuery := `
+		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+			var windy model.Employee
+			windy.PtoAccrual = ptr.Of("3h")
+			stmt := Employee.UPDATE(Employee.PtoAccrual).SET(
+				Employee.PtoAccrual.SET(INTERVAL(3, HOUR)),
+			).WHERE(Employee.EmployeeID.EQ(Int(1))).RETURNING(Employee.AllColumns)
+
+			testutils.AssertStatementSql(t, stmt, expectedQuery)
+			err := stmt.Query(tx, &windy)
+			assert.Nil(t, err)
+			assert.Equal(t, *windy.PtoAccrual, "03:00:00")
+
+		})
+	})
+
+	t.Run("upsertQueryIntervalTest", func(t *testing.T) {
+		expectedQuery := `
 INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id, pto_accrual)
 VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (employee_id) DO UPDATE
@@ -958,55 +976,23 @@ RETURNING employee.employee_id AS "employee.employee_id",
           employee.manager_id AS "employee.manager_id",
           employee.pto_accrual AS "employee.pto_accrual";
 `
-
-	testCases := []struct {
-		expectedQuery    string
-		name             string
-		duration         string
-		expectedInterval string
-		statement        func(employee *model.Employee) jet.Statement
-	}{
-		{
-			name:             "updateQuery",
-			expectedQuery:    updateQuery,
-			duration:         "3h",
-			expectedInterval: "03:00:00",
-			statement: func(employee *model.Employee) jet.Statement {
-				return Employee.UPDATE(Employee.PtoAccrual).SET(
-					Employee.PtoAccrual.SET(INTERVAL(3, HOUR)),
-				).WHERE(Employee.EmployeeID.EQ(Int(1))).RETURNING(Employee.AllColumns)
-			},
-		},
-		{
-			expectedQuery:    insertQuery,
-			name:             "insertQuery",
-			duration:         "5h",
-			expectedInterval: "05:00:00",
-			statement: func(employee *model.Employee) jet.Statement {
-				return Employee.INSERT(Employee.AllColumns).
-					MODEL(employee).
-					ON_CONFLICT(Employee.EmployeeID).
-					DO_UPDATE(SET(
-						Employee.PtoAccrual.SET(Employee.EXCLUDED.PtoAccrual),
-					)).RETURNING(Employee.AllColumns)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		slog.Info("Running test", slog.Any("test", tc.name))
 		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
-			var windy model.Employee
-			windy.PtoAccrual = ptr.Of(tc.duration)
-			stmt := tc.statement(&windy)
+			var employee model.Employee
+			employee.PtoAccrual = ptr.Of("5h")
+			stmt := Employee.INSERT(Employee.AllColumns).
+				MODEL(employee).
+				ON_CONFLICT(Employee.EmployeeID).
+				DO_UPDATE(SET(
+					Employee.PtoAccrual.SET(Employee.EXCLUDED.PtoAccrual),
+				)).RETURNING(Employee.AllColumns)
 
-			testutils.AssertStatementSql(t, stmt, tc.expectedQuery)
-			err := stmt.Query(tx, &windy)
+			testutils.AssertStatementSql(t, stmt, expectedQuery)
+			err := stmt.Query(tx, &employee)
 			assert.Nil(t, err)
-			assert.Equal(t, *windy.PtoAccrual, tc.expectedInterval)
+			assert.Equal(t, *employee.PtoAccrual, "05:00:00")
 
 		})
-	}
+	})
 }
 
 func TestInterval(t *testing.T) {
