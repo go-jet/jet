@@ -331,11 +331,13 @@ SELECT employee.employee_id AS "employee.employee_id",
      employee.last_name AS "employee.last_name",
      employee.employment_date AS "employee.employment_date",
      employee.manager_id AS "employee.manager_id",
+     employee.pto_accrual AS "employee.pto_accrual",
      manager.employee_id AS "manager.employee_id",
      manager.first_name AS "manager.first_name",
      manager.last_name AS "manager.last_name",
      manager.employment_date AS "manager.employment_date",
-     manager.manager_id AS "manager.manager_id"
+     manager.manager_id AS "manager.manager_id",
+     manager.pto_accrual AS "manager.pto_accrual"
 FROM test_sample.employee
      LEFT JOIN test_sample.employee AS manager ON (manager.employee_id = employee.manager_id)
 ORDER BY employee.employee_id;
@@ -370,6 +372,7 @@ ORDER BY employee.employee_id;
 		LastName:       "Hays",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
 		ManagerID:      nil,
+		PtoAccrual:     ptr.Of("22:00:00"),
 	})
 
 	require.True(t, dest[0].Manager == nil)
