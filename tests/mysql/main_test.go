@@ -6,12 +6,9 @@ import (
 	jetmysql "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
-	"math/rand"
-	"runtime"
-	"time"
-
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/stretchr/testify/require"
+	"runtime"
 
 	"github.com/pkg/profile"
 	"os"
@@ -33,7 +30,6 @@ func sourceIsMariaDB() bool {
 }
 
 func TestMain(m *testing.M) {
-	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
 	var err error

@@ -1,0 +1,48 @@
+name: Code Scanners
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+env:
+  GO_VERSION: 1.22.0
+
+
+permissions:
+  contents: read
+  # Optional: allow read access to pull request. Use with `only-new-issues` option.
+  # pull-requests: read
+
+
+jobs:
+  security_scanning:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.0
+          cache: true
+      - name: Setup Tools
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - name: Running Scan
+        run: gosec --exclude=G402,G304  ./... 
+  lint_scanner:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.0
+          cache: true
+      - name: Setup Tools
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - name: Running Scan
+        run:  golangci-lint run --timeout=30m  ./...
