@@ -8,7 +8,7 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: cimg/go:1.22.2
+      - image: cimg/go:1.22.8
       - image: cimg/postgres:14.10
         environment:
           POSTGRES_USER: jet
@@ -134,7 +134,7 @@ jobs:
 
       - run:
           name: Running tests
-          command:  gotestsum --junitfile report.xml --format testname   -- -coverprofile=cover.out  -covermode=atomic -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... ./...
+          command:  gotestsum --junitfile $TEST_RESULTS/report.xml --format testname   -- -coverprofile=cover.out  -covermode=atomic -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... ./...
 
       # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
