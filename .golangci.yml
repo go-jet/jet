@@ -1,0 +1,19 @@
+run:
+  # The default concurrency value is the number of available CPU.
+  concurrency: 4
+  # Timeout for analysis, e.g. 30s, 5m.
+  # Default: 1m
+  timeout: 30m
+  # Exit code when at least one issue was found.
+  # Default: 1
+  issues-exit-code: 2
+  # Include test files or not.
+  # Default: true
+  tests: false
+
+issues:
+  exclude-dirs:
+    - tests
+  exclude-files:
+    - "_test.go"
+    - "testutils.go"
