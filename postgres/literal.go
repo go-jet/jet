@@ -57,6 +57,16 @@ func Uint64(value uint64) IntegerExpression {
 // Float creates new float literal expression
 var Float = jet.Float
 
+// Float32 is constructor for 32 bit float literals
+func Float32(value float32) FloatExpression {
+	return CAST(jet.Literal(value)).AS_REAL()
+}
+
+// Float64 is constructor for 64 bit float literals
+func Float64(value float64) FloatExpression {
+	return CAST(jet.Literal(value)).AS_DOUBLE()
+}
+
 // Decimal creates new float literal expression
 var Decimal = jet.Decimal
 

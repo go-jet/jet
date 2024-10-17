@@ -64,7 +64,7 @@ type CommonTableExpression struct {
 // CTE creates new named CommonTableExpression
 func CTE(name string, columns ...ColumnExpression) CommonTableExpression {
 	cte := CommonTableExpression{
-		selectTableImpl: NewSelectTable(nil, name),
+		selectTableImpl: NewSelectTable(nil, name, columns),
 		Columns:         columns,
 	}
 
@@ -98,13 +98,4 @@ func (c CommonTableExpression) serialize(statement StatementType, out *SQLBuilde
 	} else { // serialize CTE in FROM clause
 		out.WriteIdentifier(c.alias)
 	}
-}
-
-// AllColumns returns list of all projections in the CTE
-func (c CommonTableExpression) AllColumns() ProjectionList {
-	if len(c.Columns) > 0 {
-		return ColumnListToProjectionList(c.Columns)
-	}
-
-	return c.selectTableImpl.AllColumns()
 }

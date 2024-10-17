@@ -15,9 +15,9 @@ var (
 	OR = jet.OR
 )
 
-// ROW is construct one table row from list of expressions.
-func ROW(expressions ...Expression) Expression {
-	return jet.NewFunc("", expressions, nil)
+// ROW function is used to create a tuple value that consists of a set of expressions or column values.
+func ROW(expressions ...Expression) RowExpression {
+	return jet.WRAP(Dialect, expressions...)
 }
 
 // ------------------ Mathematical functions ---------------//

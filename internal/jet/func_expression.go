@@ -12,11 +12,6 @@ func OR(expressions ...BoolExpression) BoolExpression {
 	return newBoolExpressionListOperator("OR", expressions...)
 }
 
-// ROW function is used to create a tuple value that consists of a set of expressions or column values.
-func ROW(expressions ...Expression) Expression {
-	return NewFunc("ROW", expressions, nil)
-}
-
 // ------------------ Mathematical functions ---------------//
 
 // ABSf calculates absolute value from float expression
@@ -711,7 +706,7 @@ func (p parametersSerializer) serialize(statement StatementType, out *SQLBuilder
 		if _, isStatement := expression.(Statement); isStatement {
 			expression.serialize(statement, out, options...)
 		} else {
-			skipWrap(expression).serialize(statement, out, options...)
+			expression.serialize(statement, out, append(options, NoWrap, Ident)...)
 		}
 	}
 }

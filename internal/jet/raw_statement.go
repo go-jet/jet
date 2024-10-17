@@ -8,7 +8,7 @@ type rawStatementImpl struct {
 }
 
 // RawStatement creates new sql statements from raw query and optional map of named arguments
-func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]interface{}) Statement {
+func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]interface{}) SerializerStatement {
 	newRawStatement := rawStatementImpl{
 		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
 			dialect:       dialect,

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
@@ -28,6 +29,9 @@ func newDialect() jet.Dialect {
 		},
 		ReservedWords:    reservedWords,
 		SerializeOrderBy: serializeOrderBy,
+		ValuesDefaultColumnName: func(index int) string {
+			return fmt.Sprintf("column_%d", index)
+		},
 	}
 
 	return jet.NewDialect(mySQLDialectParams)

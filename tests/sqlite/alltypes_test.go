@@ -234,18 +234,18 @@ func TestExpressionOperators(t *testing.T) {
 SELECT all_types.integer IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
-     (all_types.small_int_ptr IN (
+     (all_types.small_int_ptr IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM all_types
-     )) AS "result.in_select",
+     ))) AS "result.in_select",
      (length(121232459)) AS "result.raw",
      (? + COALESCE(all_types.small_int_ptr, 0) + ?) AS "result.raw_arg",
      (? + all_types.integer + ? + ? + ? + ?) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN (?, ?, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN (
+     (all_types.small_int_ptr NOT IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM all_types
-     )) AS "result.not_in_select"
+     ))) AS "result.not_in_select"
 FROM all_types
 LIMIT ?;
 `, "'", "`", -1), int64(11), int64(22), 78, 56, 11, 22, 11, 33, 44, int64(11), int64(22), int64(2))
@@ -899,4 +899,37 @@ func TestDateTimeExpressions(t *testing.T) {
 	require.True(t, dest.DateTime4.After(time.Now().Add(-1*time.Minute)))
 	require.Equal(t, dest.JulianDay, 2.4551543576232754e+06)
 	require.Equal(t, dest.StrfTime, "20:34")
+}
+
+func TestRowExpression(t *testing.T) {
+	date := Date(2000, 9, 9)
+	time := Time(11, 22, 11)
+	dateTime := DateTime(2008, 11, 22, 10, 12, 40)
+	dateTime2 := DateTime(2011, 1, 2, 5, 12, 40)
+
+	stmt := SELECT(
+		ROW(Bool(false), date).EQ(ROW(Bool(true), date)),
+		ROW(Bool(false), time).NOT_EQ(ROW(Bool(true), time)),
+		ROW(time).IS_DISTINCT_FROM(RowExp(Raw("(time('now'))"))),
+		ROW(dateTime, dateTime2).GT(ROW(dateTime, dateTime2)),
+		ROW(dateTime2).GT_EQ(ROW(dateTime)),
+		ROW(dateTime, dateTime2).LT(ROW(dateTime, dateTime2)),
+		ROW(dateTime2).LT_EQ(ROW(dateTime2)),
+	)
+
+	//fmt.Println(stmt.Sql())
+	//fmt.Println(stmt.DebugSql())
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT (FALSE, DATE('2000-09-09')) = (TRUE, DATE('2000-09-09')),
+     (FALSE, TIME('11:22:11')) != (TRUE, TIME('11:22:11')),
+     (TIME('11:22:11')) IS NOT ((time('now'))),
+     (DATETIME('2008-11-22 10:12:40'), DATETIME('2011-01-02 05:12:40')) > (DATETIME('2008-11-22 10:12:40'), DATETIME('2011-01-02 05:12:40')),
+     (DATETIME('2011-01-02 05:12:40')) >= (DATETIME('2008-11-22 10:12:40')),
+     (DATETIME('2008-11-22 10:12:40'), DATETIME('2011-01-02 05:12:40')) < (DATETIME('2008-11-22 10:12:40'), DATETIME('2011-01-02 05:12:40')),
+     (DATETIME('2011-01-02 05:12:40')) <= (DATETIME('2011-01-02 05:12:40'));
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
 }

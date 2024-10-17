@@ -51,12 +51,12 @@ func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
 
 // IN checks if this expressions matches any in expressions list
 func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "IN")
+	return newBinaryBoolOperatorExpression(e.Parent, wrap(expressions...), "IN")
 }
 
 // NOT_IN checks if this expressions is different of all expressions in expressions list
 func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "NOT IN")
+	return newBinaryBoolOperatorExpression(e.Parent, wrap(expressions...), "NOT IN")
 }
 
 // AS the temporary alias name to assign to the expression
@@ -316,15 +316,6 @@ func (s *complexExpression) serialize(statement StatementType, out *SQLBuilder, 
 	}
 }
 
-type skipParenthesisWrap struct {
-	Expression
-}
-
-func skipWrap(expression Expression) Expression {
-	return &skipParenthesisWrap{expression}
-}
-
-// since the expression is a function parameter, there is no need to wrap it in parentheses
-func (s *skipParenthesisWrap) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	s.Expression.serialize(statement, out, append(options, NoWrap)...)
+func wrap(expressions ...Expression) Expression {
+	return NewFunc("", expressions, nil)
 }

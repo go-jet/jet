@@ -14,7 +14,9 @@ var (
 )
 
 // ROW function is used to create a tuple value that consists of a set of expressions or column values.
-var ROW = jet.ROW
+func ROW(expressions ...Expression) RowExpression {
+	return jet.ROW(Dialect, expressions...)
+}
 
 // ------------------ Mathematical functions ---------------//
 
@@ -425,10 +427,12 @@ func castFloatLiteral(fraction FloatExpression) FloatExpression {
 //	),
 var GROUPING_SETS = jet.GROUPING_SETS
 
-// WRAP wraps list of expressions with brackets - ( expression1, expression2, ... )
-// The construct (a, b) is normally recognized in expressions as a row constructor. WRAP and ROW method behave exactly the same,
-// except when used in GROUPING_SETS. For top level GROUPING SETS expression lists WRAP has to be used.
-var WRAP = jet.WRAP
+// WRAP surrounds a list of expressions or columns with parentheses, producing new row: (expression1, expression2, ...)
+// The construct (a, b) is normally recognized in expressions as a row constructor. WRAP and ROW methods behave exactly the same,
+// except when used in GROUPING_SETS and VALUES. In these contexts, WRAP must be used instead of ROW.
+func WRAP(expressions ...Expression) RowExpression {
+	return jet.WRAP(Dialect, expressions...)
+}
 
 // ROLLUP operator is used with the GROUP BY clause to generate all prefixes of a group of columns including the empty list.
 // It creates extra rows in the result set that represent the subtotal values for each combination of columns.

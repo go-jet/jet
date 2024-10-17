@@ -13,9 +13,9 @@ type selectTableImpl struct {
 	readableTableInterfaceImpl
 }
 
-func newSelectTable(selectStmt jet.SerializerHasProjections, alias string) SelectTable {
+func newSelectTable(selectStmt jet.SerializerHasProjections, alias string, columnAliases []jet.ColumnExpression) SelectTable {
 	subQuery := &selectTableImpl{
-		SelectTable: jet.NewSelectTable(selectStmt, alias),
+		SelectTable: jet.NewSelectTable(selectStmt, alias, columnAliases),
 	}
 
 	subQuery.readableTableInterfaceImpl.parent = subQuery
