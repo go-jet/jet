@@ -15,8 +15,10 @@ var (
 	OR = jet.OR
 )
 
-// ROW is construct one row from a list of expressions.
-var ROW = jet.WRAP
+// ROW function is used to create a tuple value that consists of a set of expressions or column values.
+func ROW(expressions ...Expression) RowExpression {
+	return jet.WRAP(Dialect, expressions...)
+}
 
 // ------------------ Mathematical functions ---------------//
 

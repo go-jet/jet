@@ -39,7 +39,7 @@ AVG(table1.col_int) AS "avg",
 table2.col3 AS "col3",
 table2.col4 AS "col4"`)
 
-	subQueryProjections := projectionList.fromImpl(NewSelectTable(nil, "subQuery"))
+	subQueryProjections := projectionList.fromImpl(NewSelectTable(nil, "subQuery", nil))
 
 	assertProjectionSerialize(t, subQueryProjections,
 		`"subQuery"."table1.col3" AS "table1.col3",

@@ -12,7 +12,9 @@ var (
 )
 
 // ROW function is used to create a tuple value that consists of a set of expressions or column values.
-var ROW = jet.ROW
+func ROW(expressions ...Expression) RowExpression {
+	return jet.ROW(Dialect, expressions...)
+}
 
 // ------------------ Mathematical functions ---------------//
 

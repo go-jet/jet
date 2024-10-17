@@ -283,7 +283,7 @@ func TestUpdateContextDeadlineExceeded(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	dest := []model.Link{}
+	var dest []model.Link
 	err := updateStmt.QueryContext(ctx, tx, &dest)
 	require.Error(t, err, "context deadline exceeded")
 

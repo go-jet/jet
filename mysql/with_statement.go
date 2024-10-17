@@ -6,7 +6,7 @@ import "github.com/go-jet/jet/v2/internal/jet"
 type CommonTableExpression interface {
 	SelectTable
 
-	AS(statement jet.SerializerStatement) CommonTableExpression
+	AS(statement jet.SerializerHasProjections) CommonTableExpression
 	// ALIAS is used to create another alias of the CTE, if a CTE needs to appear multiple times in the main query.
 	ALIAS(alias string) SelectTable
 
@@ -41,7 +41,7 @@ func CTE(name string, columns ...jet.ColumnExpression) CommonTableExpression {
 }
 
 // AS is used to define a CTE query
-func (c *commonTableExpression) AS(statement jet.SerializerStatement) CommonTableExpression {
+func (c *commonTableExpression) AS(statement jet.SerializerHasProjections) CommonTableExpression {
 	c.CommonTableExpression.Statement = statement
 	return c
 }
@@ -52,7 +52,7 @@ func (c *commonTableExpression) internalCTE() *jet.CommonTableExpression {
 
 // ALIAS is used to create another alias of the CTE, if a CTE needs to appear multiple times in the main query.
 func (c *commonTableExpression) ALIAS(name string) SelectTable {
-	return newSelectTable(c, name)
+	return newSelectTable(c, name, nil)
 }
 
 func toInternalCTE(ctes []CommonTableExpression) []*jet.CommonTableExpression {

@@ -56,9 +56,9 @@ func (p *orderSetAggregateFuncExpression) serialize(statement StatementType, out
 	out.WriteString(p.name)
 
 	if p.fraction != nil {
-		WRAP(p.fraction).serialize(statement, out, FallTrough(options)...)
+		wrap(p.fraction).serialize(statement, out, FallTrough(options)...)
 	} else {
-		WRAP().serialize(statement, out, FallTrough(options)...)
+		wrap().serialize(statement, out, FallTrough(options)...)
 	}
 	out.WriteString("WITHIN GROUP")
 	p.orderBy.serialize(statement, out)

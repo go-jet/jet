@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"strconv"
 )
@@ -25,6 +26,9 @@ func newDialect() jet.Dialect {
 			return "$" + strconv.Itoa(ord)
 		},
 		ReservedWords: reservedWords,
+		ValuesDefaultColumnName: func(index int) string {
+			return fmt.Sprintf("column%d", index+1)
+		},
 	}
 
 	return jet.NewDialect(dialectParams)

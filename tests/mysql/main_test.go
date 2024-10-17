@@ -92,3 +92,9 @@ func skipForMariaDB(t *testing.T) {
 		t.SkipNow()
 	}
 }
+
+func onlyMariaDB(t *testing.T) {
+	if !sourceIsMariaDB() {
+		t.SkipNow()
+	}
+}

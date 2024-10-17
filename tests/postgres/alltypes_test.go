@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
-	"log/slog"
+
 	"testing"
 	"time"
 
@@ -347,8 +347,6 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
 	).LIMIT(2)
 
-	//	fmt.Println(query.Sql())
-
 	testutils.AssertStatementSql(t, query, `
 SELECT all_types.integer IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
@@ -376,9 +374,6 @@ LIMIT $11;
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
-
-	//testutils.PrintJson(dest)
-
 	testutils.AssertJSON(t, dest, `
 [
 	{
@@ -936,7 +931,7 @@ func TestTimeExpression(t *testing.T) {
 func TestIntervalSetFunctionality(t *testing.T) {
 
 	t.Run("updateQueryIntervalTest", func(t *testing.T) {
-		slog.Info("Running test", slog.Any("test", t.Name()))
+
 		expectedQuery := `
 UPDATE test_sample.employee
 SET pto_accrual = INTERVAL '3 HOUR'
