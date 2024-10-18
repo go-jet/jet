@@ -21,3 +21,16 @@ func TestDATE_TRUNC(t *testing.T) {
 		"DATE_TRUNC('DAY', NOW() + INTERVAL '1 HOUR', 'Australia/Sydney')",
 	)
 }
+
+func TestGENERATE_SERIES(t *testing.T) {
+	assertSerialize(
+		t,
+		GENERATE_SERIES(NOW(), NOW().ADD(INTERVAL(10, DAY))),
+		"GENERATE_SERIES(NOW(), NOW() + INTERVAL '10 DAY')",
+	)
+	assertSerialize(
+		t,
+		GENERATE_SERIES(NOW(), NOW().ADD(INTERVAL(10, DAY)), INTERVAL(2, DAY)),
+		"GENERATE_SERIES(NOW(), NOW() + INTERVAL '10 DAY', INTERVAL '2 DAY')",
+	)
+}
