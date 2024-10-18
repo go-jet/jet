@@ -426,8 +426,8 @@ GROUP BY payment.customer_id;
 	"PaymentDate": "0001-01-01T00:00:00Z",
 	"LastUpdate": "0001-01-01T00:00:00Z",
 	"Count": 8,
-	"Sum": 38.92000000000001,
-	"Avg": 4.865000000000001,
+	"Sum": 38.92,
+	"Avg": 4.865,
 	"FirstPaymentDate": "2005-05-25T11:30:37Z",
 	"LastPaymentDate": "2005-08-22T20:03:46Z"
 }
