@@ -1,8 +1,8 @@
 package sqlite
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
@@ -293,7 +293,7 @@ RETURNING payment.payment_id AS "payment.payment_id",
           payment.last_update AS "payment.last_update";
 `, "''", "`"))
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var payments []model.Payment
 
 		err := stmt.Query(tx, &payments)

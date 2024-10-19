@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
 
@@ -944,7 +943,7 @@ RETURNING employee.employee_id AS "employee.employee_id",
           employee.manager_id AS "employee.manager_id",
           employee.pto_accrual AS "employee.pto_accrual";
 `
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			var windy model.Employee
 			windy.PtoAccrual = ptr.Of("3h")
 			stmt := Employee.UPDATE(Employee.PtoAccrual).SET(
@@ -972,7 +971,7 @@ RETURNING employee.employee_id AS "employee.employee_id",
           employee.manager_id AS "employee.manager_id",
           employee.pto_accrual AS "employee.pto_accrual";
 `
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			var employee model.Employee
 			employee.PtoAccrual = ptr.Of("5h")
 			stmt := Employee.INSERT(Employee.AllColumns).

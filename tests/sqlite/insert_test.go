@@ -2,9 +2,8 @@ package sqlite
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/qrm"
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/go-jet/jet/v2/qrm"
 	"math/rand"
 
 	"testing"
