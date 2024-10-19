@@ -4,10 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/semantic"
 	"github.com/go-jet/jet/v2/qrm"
-	"strings"
 )
 
 // sqliteQuerySet is dialect query set for SQLite
@@ -74,11 +75,12 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 	}
 
 	var columnInfos []struct {
-		Name    string
-		Type    string
-		NotNull int32
-		Pk      int32
-		Hidden  int32
+		Name      string
+		Type      string
+		NotNull   int32
+		DfltValue string
+		Pk        int32
+		Hidden    int32
 	}
 
 	_, err = qrm.Query(context.Background(), db, tableInfoQuery, []interface{}{tableName}, &columnInfos)
@@ -91,12 +93,14 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 	for _, columnInfo := range columnInfos {
 		columnType := strings.TrimSuffix(getColumnType(columnInfo.Type), " GENERATED ALWAYS")
 		isGenerated := columnInfo.Hidden == 2 || columnInfo.Hidden == 3 // stored or virtual column
+		hasDefault := columnInfo.DfltValue != ""
 
 		columns = append(columns, metadata.Column{
 			Name:         columnInfo.Name,
 			IsPrimaryKey: columnInfo.Pk != 0,
 			IsNullable:   columnInfo.NotNull != 1,
 			IsGenerated:  isGenerated,
+			HasDefault:   hasDefault,
 			DataType: metadata.DataType{
 				Name:       columnType,
 				Kind:       metadata.BaseType,

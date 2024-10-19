@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
@@ -23,6 +24,9 @@ func newDialect() jet.Dialect {
 			return "?"
 		},
 		ReservedWords: reservedWords2,
+		ValuesDefaultColumnName: func(index int) string {
+			return fmt.Sprintf("column%d", index+1)
+		},
 	}
 
 	return jet.NewDialect(mySQLDialectParams)

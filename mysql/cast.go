@@ -6,23 +6,27 @@ import (
 )
 
 type cast interface {
-	// Cast expressions as castType type
+	// AS casts expressions as castType type
 	AS(castType string) Expression
-	// Cast expression as char with optional length
+	// AS_CHAR casts expression as char with optional length
 	AS_CHAR(length ...int) StringExpression
-	// Cast expression AS date type
+	// AS_DATE casts expression AS date type
 	AS_DATE() DateExpression
-	// Cast expression AS numeric type, using precision and optionally scale
+	// AS_FLOAT casts expressions as float type
+	AS_FLOAT() FloatExpression
+	// AS_DOUBLE casts expressions as double type
+	AS_DOUBLE() FloatExpression
+	// AS_DECIMAL casts expression AS numeric type
 	AS_DECIMAL() FloatExpression
-	// Cast expression AS time type
+	// AS_TIME casts expression AS time type
 	AS_TIME() TimeExpression
-	// Cast expression as datetime type
+	// AS_DATETIME casts expression as datetime type
 	AS_DATETIME() DateTimeExpression
-	// Cast expressions as signed integer type
+	// AS_SIGNED casts expressions as signed integer type
 	AS_SIGNED() IntegerExpression
-	// Cast expression as unsigned integer type
+	// AS_UNSIGNED casts expression as unsigned integer type
 	AS_UNSIGNED() IntegerExpression
-	// Cast expression as binary type
+	// AS_BINARY casts expression as binary type
 	AS_BINARY() StringExpression
 }
 
@@ -71,6 +75,14 @@ func (c *castImpl) AS_CHAR(length ...int) StringExpression {
 // AS_DATE casts expression AS DATE type
 func (c *castImpl) AS_DATE() DateExpression {
 	return DateExp(c.AS("DATE"))
+}
+
+func (c *castImpl) AS_FLOAT() FloatExpression {
+	return FloatExp(c.AS("FLOAT"))
+}
+
+func (c *castImpl) AS_DOUBLE() FloatExpression {
+	return FloatExp(c.AS("DOUBLE"))
 }
 
 // AS_DECIMAL casts expression AS DECIMAL type

@@ -54,7 +54,12 @@ type orderSetAggregateFuncExpression struct {
 
 func (p *orderSetAggregateFuncExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(p.name)
-	WRAP(p.fraction).serialize(statement, out, FallTrough(options)...)
+
+	if p.fraction != nil {
+		wrap(p.fraction).serialize(statement, out, FallTrough(options)...)
+	} else {
+		wrap().serialize(statement, out, FallTrough(options)...)
+	}
 	out.WriteString("WITHIN GROUP")
 	p.orderBy.serialize(statement, out)
 }

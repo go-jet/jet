@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	_ "github.com/lib/pq"
 
@@ -90,7 +90,7 @@ func main() {
 func jsonSave(path string, v interface{}) {
 	jsonText, _ := json.MarshalIndent(v, "", "\t")
 
-	err := ioutil.WriteFile(path, jsonText, 0644)
+	err := os.WriteFile(path, jsonText, 0600)
 
 	panicOnError(err)
 }

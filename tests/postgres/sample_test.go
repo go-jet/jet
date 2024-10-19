@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/google/uuid"
 	"testing"
 
@@ -63,15 +64,15 @@ func TestExactDecimals(t *testing.T) {
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
 					Numeric:    0.1,
-					NumericPtr: testutils.Float64Ptr(0.1),
+					NumericPtr: ptr.Of(0.1),
 					Decimal:    0.1,
-					DecimalPtr: testutils.Float64Ptr(0.1),
+					DecimalPtr: ptr.Of(0.1),
 
 					// not overwritten
 					Real:      0.4,
-					RealPtr:   testutils.Float32Ptr(0.44),
+					RealPtr:   ptr.Of(float32(0.44)),
 					Double:    0.3,
-					DoublePtr: testutils.Float64Ptr(0.33),
+					DoublePtr: ptr.Of(0.33),
 				},
 				Numeric:    decimal.RequireFromString("0.1234567890123456789"),
 				NumericPtr: decimal.RequireFromString("1.1111111111111111111"),
@@ -330,11 +331,13 @@ SELECT employee.employee_id AS "employee.employee_id",
      employee.last_name AS "employee.last_name",
      employee.employment_date AS "employee.employment_date",
      employee.manager_id AS "employee.manager_id",
+     employee.pto_accrual AS "employee.pto_accrual",
      manager.employee_id AS "manager.employee_id",
      manager.first_name AS "manager.first_name",
      manager.last_name AS "manager.last_name",
      manager.employment_date AS "manager.employment_date",
-     manager.manager_id AS "manager.manager_id"
+     manager.manager_id AS "manager.manager_id",
+     manager.pto_accrual AS "manager.pto_accrual"
 FROM test_sample.employee
      LEFT JOIN test_sample.employee AS manager ON (manager.employee_id = employee.manager_id)
 ORDER BY employee.employee_id;
@@ -369,6 +372,7 @@ ORDER BY employee.employee_id;
 		LastName:       "Hays",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06.1 +0100 CET", 1),
 		ManagerID:      nil,
+		PtoAccrual:     ptr.Of("22:00:00"),
 	})
 
 	require.True(t, dest[0].Manager == nil)
@@ -378,7 +382,7 @@ ORDER BY employee.employee_id;
 		FirstName:      "Salley",
 		LastName:       "Lester",
 		EmploymentDate: testutils.TimestampWithTimeZone("1999-01-08 04:05:06 +0100 CET", 1),
-		ManagerID:      testutils.Int32Ptr(3),
+		ManagerID:      ptr.Of(int32(3)),
 	})
 }
 
@@ -420,7 +424,7 @@ FROM test_sample."WEIRD NAMES TABLE";
 		WeirdColumnName5: "Doe",
 		WeirdColumnName6: "Doe",
 		WeirdColumnName7: "Doe",
-		Weirdcolumnname8: testutils.StringPtr("Doe"),
+		Weirdcolumnname8: ptr.Of("Doe"),
 		WeirdColName9:    "Doe",
 		WeirdColuName10:  "Doe",
 		WeirdColuName11:  "Doe",
@@ -518,7 +522,7 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: testutils.Float64Ptr(120),
+					PeopleHeightCm: ptr.Of(120.0),
 				},
 			).RETURNING(
 				People.MutableColumns,

@@ -86,7 +86,7 @@ func (s *setStatementImpl) OFFSET(offset int64) setStatement {
 }
 
 func (s *setStatementImpl) AsTable(alias string) SelectTable {
-	return newSelectTable(s, alias)
+	return newSelectTable(s, alias, nil)
 }
 
 const (

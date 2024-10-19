@@ -11,6 +11,13 @@ type columnAssigmentImpl struct {
 	expression Expression
 }
 
+func NewColumnAssignment(serializer ColumnSerializer, expression Expression) ColumnAssigment {
+	return &columnAssigmentImpl{
+		column:     serializer,
+		expression: expression,
+	}
+}
+
 func (a columnAssigmentImpl) isColumnAssigment() {}
 
 func (a columnAssigmentImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {

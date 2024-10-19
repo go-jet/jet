@@ -33,6 +33,9 @@ type DateTimeExpression = jet.TimestampExpression
 // TimestampExpression interface
 type TimestampExpression = jet.TimestampExpression
 
+// RowExpression interface
+type RowExpression = jet.RowExpression
+
 // BoolExp is bool expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as bool expression.
 // Does not add sql cast to generated sql builder output.
@@ -72,6 +75,11 @@ var DateTimeExp = jet.TimestampExp
 // Allows go compiler to see any expression as timestamp expression.
 // Does not add sql cast to generated sql builder output.
 var TimestampExp = jet.TimestampExp
+
+// RowExp serves as a wrapper for an arbitrary expression, treating it as a row expression.
+// This enables the Go compiler to interpret any expression as a row expression
+// Note: This does not modify the generated SQL builder output by adding a SQL CAST operation.
+var RowExp = jet.RowExp
 
 // CustomExpression is used to define custom expressions.
 var CustomExpression = jet.CustomExpression

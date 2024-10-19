@@ -3,6 +3,9 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"path"
+	"testing"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/template"
@@ -13,8 +16,6 @@ import (
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"github.com/stretchr/testify/require"
-	"path"
-	"testing"
 )
 
 const tempTestDir = "./.tempTestDir"
@@ -170,6 +171,7 @@ func TestGeneratorTemplate_Model_RenameFilesAndTypes(t *testing.T) {
 
 	mpaaRating := file2.Exists(t, defaultModelPath, "mpaa_rating_enum.go")
 	require.Contains(t, mpaaRating, "type MpaaRatingEnum string")
+	require.Contains(t, mpaaRating, "MpaaRatingEnumAllValues")
 }
 
 func TestGeneratorTemplate_Model_SkipTableAndEnum(t *testing.T) {
@@ -267,7 +269,6 @@ func UseSchema(schema string) {
 	FilmList = FilmList.FromSchema(schema)
 }
 `)
-
 }
 
 func TestGeneratorTemplate_SQLBuilder_ChangeTypeAndFileName(t *testing.T) {
@@ -365,7 +366,6 @@ func TestGeneratorTemplate_SQLBuilder_DefaultAlias(t *testing.T) {
 }
 
 func TestGeneratorTemplate_Model_AddTags(t *testing.T) {
-
 	err := postgres.Generate(
 		tempTestDir,
 		dbConnection,

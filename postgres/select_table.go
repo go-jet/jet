@@ -2,7 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
-// SelectTable is interface for postgres sub-queries
+// SelectTable is interface for postgres temporary tables like sub-queries, VALUES, CTEs etc...
 type SelectTable interface {
 	readableTable
 	jet.SelectTable
@@ -13,9 +13,9 @@ type selectTableImpl struct {
 	readableTableInterfaceImpl
 }
 
-func newSelectTable(selectStmt jet.SerializerHasProjections, alias string) SelectTable {
+func newSelectTable(serializerWithProjections jet.SerializerHasProjections, alias string, columnAliases []jet.ColumnExpression) SelectTable {
 	subQuery := &selectTableImpl{
-		SelectTable: jet.NewSelectTable(selectStmt, alias),
+		SelectTable: jet.NewSelectTable(serializerWithProjections, alias, columnAliases),
 	}
 
 	subQuery.readableTableInterfaceImpl.parent = subQuery

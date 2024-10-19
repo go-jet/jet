@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -62,7 +63,17 @@ func TestNullUInt64(t *testing.T) {
 	value, _ := nullUInt64.Value()
 	require.Equal(t, value, uint64(11))
 
+	require.NoError(t, nullUInt64.Scan(uint64(11)))
+	require.Equal(t, nullUInt64.Valid, true)
+	value, _ = nullUInt64.Value()
+	require.Equal(t, value, uint64(11))
+
 	require.NoError(t, nullUInt64.Scan(int32(32)))
+	require.Equal(t, nullUInt64.Valid, true)
+	value, _ = nullUInt64.Value()
+	require.Equal(t, value, uint64(32))
+
+	require.NoError(t, nullUInt64.Scan(uint32(32)))
 	require.Equal(t, nullUInt64.Valid, true)
 	value, _ = nullUInt64.Value()
 	require.Equal(t, value, uint64(32))
@@ -88,4 +99,29 @@ func TestNullUInt64(t *testing.T) {
 	require.Equal(t, value, uint64(30))
 
 	require.Error(t, nullUInt64.Scan("text"), "can't scan int32 from text")
+
+	//Validate negative use cases
+	err := nullUInt64.Scan(int64(-5))
+	assert.NotNil(t, err)
+	assert.Error(t, err, castOverFlowError)
+
+	//Validate negative use cases
+	err = nullUInt64.Scan(-5)
+	assert.NotNil(t, err)
+	assert.Error(t, err, castOverFlowError)
+
+	//Validate negative use cases
+	err = nullUInt64.Scan(int32(-5))
+	assert.NotNil(t, err)
+	assert.Error(t, err, castOverFlowError)
+
+	//Validate negative use cases
+	err = nullUInt64.Scan(int16(-5))
+	assert.NotNil(t, err)
+	assert.Error(t, err, castOverFlowError)
+
+	//Validate negative use cases
+	err = nullUInt64.Scan(int8(-5))
+	assert.NotNil(t, err)
+	assert.Error(t, err, castOverFlowError)
 }

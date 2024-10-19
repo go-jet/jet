@@ -140,6 +140,7 @@ func processEnumSQLBuilder(dirPath string, dialect jet.Dialect, enumsMetaData []
 				"enumValueName": func(enumValue string) string {
 					return enumTemplate.ValueName(enumValue)
 				},
+				"golangComment": formatGolangComment,
 			})
 		if err != nil {
 			return fmt.Errorf("failed to generete enum type %s: %w", enumTemplate.FileName, err)
@@ -215,6 +216,7 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 				"insertedRowAlias": func() string {
 					return insertedRowAlias(dialect)
 				},
+				"golangComment": formatGolangComment,
 			})
 		if err != nil {
 			return fmt.Errorf("failed to generate table sql builder type %s: %w", tableSQLBuilder.TypeName, err)
@@ -307,6 +309,7 @@ func processTableModels(fileTypes, modelDirPath string, tablesMetaData []metadat
 				"structField": func(columnMetaData metadata.Column) TableModelField {
 					return tableTemplate.Field(columnMetaData)
 				},
+				"golangComment": formatGolangComment,
 			})
 		if err != nil {
 			return fmt.Errorf("failed to generate model type '%s': %w", tableMetaData.Name, err)
@@ -347,6 +350,7 @@ func processEnumModels(modelDir string, enumsMetaData []metadata.Enum, modelTemp
 				"valueName": func(value string) string {
 					return enumTemplate.ValueName(value)
 				},
+				"golangComment": formatGolangComment,
 			})
 
 		if err != nil {

@@ -93,9 +93,9 @@ func TestInsertOnConflict(t *testing.T) {
 			ON_CONFLICT().DO_NOTHING()
 
 		testutils.AssertStatementSql(t, stmt, `
-INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
-VALUES ($1, $2, $3, $4, $5),
-       ($6, $7, $8, $9, $10)
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id, pto_accrual)
+VALUES ($1, $2, $3, $4, $5, $6),
+       ($7, $8, $9, $10, $11, $12)
 ON CONFLICT DO NOTHING;
 `)
 		testutils.AssertExecAndRollback(t, stmt, db, 1)
@@ -111,9 +111,9 @@ ON CONFLICT DO NOTHING;
 			ON_CONFLICT(Employee.EmployeeID).DO_NOTHING()
 
 		testutils.AssertStatementSql(t, stmt, `
-INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
-VALUES ($1, $2, $3, $4, $5),
-       ($6, $7, $8, $9, $10)
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id, pto_accrual)
+VALUES ($1, $2, $3, $4, $5, $6),
+       ($7, $8, $9, $10, $11, $12)
 ON CONFLICT (employee_id) DO NOTHING;
 `)
 		testutils.AssertExecAndRollback(t, stmt, db, 1)
@@ -130,9 +130,9 @@ ON CONFLICT (employee_id) DO NOTHING;
 			ON_CONFLICT().ON_CONSTRAINT("employee_pkey").DO_NOTHING()
 
 		testutils.AssertStatementSql(t, stmt, `
-INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
-VALUES ($1, $2, $3, $4, $5),
-       ($6, $7, $8, $9, $10)
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id, pto_accrual)
+VALUES ($1, $2, $3, $4, $5, $6),
+       ($7, $8, $9, $10, $11, $12)
 ON CONFLICT ON CONSTRAINT employee_pkey DO NOTHING;
 `)
 		testutils.AssertExecAndRollback(t, stmt, db, 1)
@@ -234,8 +234,8 @@ ON CONFLICT (id) WHERE (id * 2) > 10 DO UPDATE
 			ON_CONFLICT().DO_UPDATE(nil)
 
 		testutils.AssertStatementSql(t, stmt, `
-INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id)
-VALUES ($1, $2, $3, $4, $5);
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id, pto_accrual)
+VALUES ($1, $2, $3, $4, $5, $6);
 `)
 		testutils.AssertExecAndRollback(t, stmt, db, 1)
 		requireLogged(t, stmt)

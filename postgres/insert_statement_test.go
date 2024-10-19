@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
@@ -151,12 +150,13 @@ func TestInsert_ON_CONFLICT(t *testing.T) {
 		VALUES("one", "two").
 		VALUES("1", "2").
 		VALUES("theta", "beta").
-		ON_CONFLICT(table1ColBool).WHERE(table1ColBool.IS_NOT_FALSE()).DO_UPDATE(
-		SET(table1ColBool.SET(Bool(true)),
-			table2ColInt.SET(Int(1)),
-			ColumnList{table1Col1, table1ColBool}.SET(ROW(Int(2), String("two"))),
-		).WHERE(table1Col1.GT(Int(2))),
-	).
+		ON_CONFLICT(table1ColBool).WHERE(table1ColBool.IS_NOT_FALSE()).
+		DO_UPDATE(
+			SET(table1ColBool.SET(Bool(true)),
+				table2ColInt.SET(Int(1)),
+				ColumnList{table1Col1, table1ColBool}.SET(ROW(Int(2), String("two"))),
+			).WHERE(table1Col1.GT(Int(2))),
+		).
 		RETURNING(table1Col1, table1ColBool)
 
 	assertDebugStatementSql(t, stmt, `
@@ -178,12 +178,12 @@ func TestInsert_ON_CONFLICT_ON_CONSTRAINT(t *testing.T) {
 	stmt := table1.INSERT(table1Col1, table1ColBool).
 		VALUES("one", "two").
 		VALUES("1", "2").
-		ON_CONFLICT().ON_CONSTRAINT("idk_primary_key").DO_UPDATE(
-		SET(table1ColBool.SET(Bool(false)),
-			table2ColInt.SET(Int(1)),
-			ColumnList{table1Col1, table1ColBool}.SET(jet.ROW(Int(2), String("two"))),
-		).WHERE(table1Col1.GT(Int(2))),
-	).
+		ON_CONFLICT().ON_CONSTRAINT("idk_primary_key").
+		DO_UPDATE(
+			SET(table1ColBool.SET(Bool(false)),
+				table2ColInt.SET(Int(1)),
+				ColumnList{table1Col1, table1ColBool}.SET(ROW(Int(2), String("two"))),
+			).WHERE(table1Col1.GT(Int(2)))).
 		RETURNING(table1Col1, table1ColBool)
 
 	assertDebugStatementSql(t, stmt, `

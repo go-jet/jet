@@ -180,7 +180,7 @@ func duration(f func()) time.Duration {
 
 	f()
 
-	return time.Now().Sub(start)
+	return time.Since(start)
 }
 
 // ExpressionStatement interfacess

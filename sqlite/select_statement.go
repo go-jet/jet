@@ -155,7 +155,7 @@ func (s *selectStatementImpl) LOCK_IN_SHARE_MODE() SelectStatement {
 }
 
 func (s *selectStatementImpl) AsTable(alias string) SelectTable {
-	return newSelectTable(s, alias)
+	return newSelectTable(s, alias, nil)
 }
 
 //-----------------------------------------------------

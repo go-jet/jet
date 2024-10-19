@@ -1,6 +1,10 @@
 package postgres
 
 import (
+	"database/sql"
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
@@ -344,24 +348,22 @@ func TestExpressionOperators(t *testing.T) {
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
 	).LIMIT(2)
 
-	//fmt.Println(query.Sql())
-
 	testutils.AssertStatementSql(t, query, `
 SELECT all_types.integer IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN ($1::smallint, $2::smallint)) AS "result.in",
-     (all_types.small_int_ptr IN (
+     (all_types.small_int_ptr IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.in_select",
+     ))) AS "result.in_select",
      (CURRENT_USER) AS "result.raw",
      ($3 + COALESCE(all_types.small_int_ptr, 0) + $4) AS "result.raw_arg",
      ($5 + all_types.integer + $6 + $5 + $7 + $8) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN ($9, $10::smallint, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN (
+     (all_types.small_int_ptr NOT IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.not_in_select"
+     ))) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT $11;
 `, int8(11), int8(22), 78, 56, 11, 22, 33, 44, int64(11), int16(22), int64(2))
@@ -373,9 +375,6 @@ LIMIT $11;
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
-
-	//testutils.PrintJson(dest)
-
 	testutils.AssertJSON(t, dest, `
 [
 	{
@@ -930,6 +929,68 @@ func TestTimeExpression(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestIntervalSetFunctionality(t *testing.T) {
+
+	t.Run("updateQueryIntervalTest", func(t *testing.T) {
+
+		expectedQuery := `
+UPDATE test_sample.employee
+SET pto_accrual = INTERVAL '3 HOUR'
+WHERE employee.employee_id = $1
+RETURNING employee.employee_id AS "employee.employee_id",
+          employee.first_name AS "employee.first_name",
+          employee.last_name AS "employee.last_name",
+          employee.employment_date AS "employee.employment_date",
+          employee.manager_id AS "employee.manager_id",
+          employee.pto_accrual AS "employee.pto_accrual";
+`
+		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+			var windy model.Employee
+			windy.PtoAccrual = ptr.Of("3h")
+			stmt := Employee.UPDATE(Employee.PtoAccrual).SET(
+				Employee.PtoAccrual.SET(INTERVAL(3, HOUR)),
+			).WHERE(Employee.EmployeeID.EQ(Int(1))).RETURNING(Employee.AllColumns)
+
+			testutils.AssertStatementSql(t, stmt, expectedQuery)
+			err := stmt.Query(tx, &windy)
+			assert.Nil(t, err)
+			assert.Equal(t, *windy.PtoAccrual, "03:00:00")
+
+		})
+	})
+
+	t.Run("upsertQueryIntervalTest", func(t *testing.T) {
+		expectedQuery := `
+INSERT INTO test_sample.employee (employee_id, first_name, last_name, employment_date, manager_id, pto_accrual)
+VALUES ($1, $2, $3, $4, $5, $6)
+ON CONFLICT (employee_id) DO UPDATE
+       SET pto_accrual = excluded.pto_accrual
+RETURNING employee.employee_id AS "employee.employee_id",
+          employee.first_name AS "employee.first_name",
+          employee.last_name AS "employee.last_name",
+          employee.employment_date AS "employee.employment_date",
+          employee.manager_id AS "employee.manager_id",
+          employee.pto_accrual AS "employee.pto_accrual";
+`
+		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+			var employee model.Employee
+			employee.PtoAccrual = ptr.Of("5h")
+			stmt := Employee.INSERT(Employee.AllColumns).
+				MODEL(employee).
+				ON_CONFLICT(Employee.EmployeeID).
+				DO_UPDATE(SET(
+					Employee.PtoAccrual.SET(Employee.EXCLUDED.PtoAccrual),
+				)).RETURNING(Employee.AllColumns)
+
+			testutils.AssertStatementSql(t, stmt, expectedQuery)
+			err := stmt.Query(tx, &employee)
+			assert.Nil(t, err)
+			assert.Equal(t, *employee.PtoAccrual, "05:00:00")
+
+		})
+	})
+}
+
 func TestInterval(t *testing.T) {
 	skipForCockroachDB(t)
 
@@ -1040,6 +1101,46 @@ SELECT EXTRACT(CENTURY FROM all_types.timestampz),
      EXTRACT(WEEK FROM all_types.timestampz),
      EXTRACT(YEAR FROM all_types.timestampz)
 FROM test_sample.all_types;
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
+}
+
+func TestRowExpression(t *testing.T) {
+	now := time.Now()
+	nowAddHour := time.Now().Add(time.Hour)
+
+	stmt := SELECT(
+		ROW(Int32(1), Float32(11.22), String("john")).AS("row"),
+		WRAP(Int64(1), Float64(11.22), String("john")).AS("wrap"),
+
+		ROW(Bool(false), DateT(now)).EQ(ROW(Bool(true), DateT(now))),
+		WRAP(Bool(false), DateT(now)).NOT_EQ(WRAP(Bool(true), DateT(now))),
+
+		ROW(TimeT(nowAddHour)).IS_DISTINCT_FROM(RowExp(Raw("row(NOW()::time)"))),
+		ROW().IS_NOT_DISTINCT_FROM(ROW()),
+
+		ROW(TimestampT(now), TimestampzT(nowAddHour)).GT(WRAP(TimestampT(now), TimestampzT(now))),
+		ROW(TimestampzT(nowAddHour)).GT_EQ(ROW(TimestampzT(now))),
+		WRAP(TimestampT(now), TimestampzT(nowAddHour)).LT(ROW(TimestampT(now), TimestampzT(now))),
+		ROW(TimestampzT(nowAddHour)).LT_EQ(ROW(TimestampzT(now))),
+	)
+
+	//fmt.Println(stmt.Sql())
+	//fmt.Println(stmt.DebugSql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT ROW($1::integer, $2::real, $3::text) AS "row",
+     ($4::bigint, $5::double precision, $6::text) AS "wrap",
+     ROW($7::boolean, $8::date) = ROW($9::boolean, $10::date),
+     ($11::boolean, $12::date) != ($13::boolean, $14::date),
+     ROW($15::time without time zone) IS DISTINCT FROM (row(NOW()::time)),
+     ROW() IS NOT DISTINCT FROM ROW(),
+     ROW($16::timestamp without time zone, $17::timestamp with time zone) > ($18::timestamp without time zone, $19::timestamp with time zone),
+     ROW($20::timestamp with time zone) >= ROW($21::timestamp with time zone),
+     ($22::timestamp without time zone, $23::timestamp with time zone) < ROW($24::timestamp without time zone, $25::timestamp with time zone),
+     ROW($26::timestamp with time zone) <= ROW($27::timestamp with time zone);
 `)
 
 	err := stmt.Query(db, &struct{}{})
@@ -1305,32 +1406,32 @@ RETURNING all_types.json AS "all_types.json";
 var moodSad = model.Mood_Sad
 
 var allTypesRow0 = model.AllTypes{
-	SmallIntPtr:        testutils.Int16Ptr(14),
+	SmallIntPtr:        ptr.Of(int16(14)),
 	SmallInt:           14,
-	IntegerPtr:         testutils.Int32Ptr(300),
+	IntegerPtr:         ptr.Of(int32(300)),
 	Integer:            300,
-	BigIntPtr:          testutils.Int64Ptr(50000),
+	BigIntPtr:          ptr.Of(int64(50000)),
 	BigInt:             5000,
-	DecimalPtr:         testutils.Float64Ptr(1.11),
+	DecimalPtr:         ptr.Of(1.11),
 	Decimal:            1.11,
-	NumericPtr:         testutils.Float64Ptr(2.22),
+	NumericPtr:         ptr.Of(2.22),
 	Numeric:            2.22,
-	RealPtr:            testutils.Float32Ptr(5.55),
+	RealPtr:            ptr.Of(float32(5.55)),
 	Real:               5.55,
-	DoublePrecisionPtr: testutils.Float64Ptr(11111111.22),
+	DoublePrecisionPtr: ptr.Of(11111111.22),
 	DoublePrecision:    11111111.22,
 	Smallserial:        1,
 	Serial:             1,
 	Bigserial:          1,
 	//MoneyPtr: nil,
 	//Money:
-	VarCharPtr:           testutils.StringPtr("ABBA"),
+	VarCharPtr:           ptr.Of("ABBA"),
 	VarChar:              "ABBA",
-	CharPtr:              testutils.StringPtr("JOHN                                                                            "),
+	CharPtr:              ptr.Of("JOHN                                                                            "),
 	Char:                 "JOHN                                                                            ",
-	TextPtr:              testutils.StringPtr("Some text"),
+	TextPtr:              ptr.Of("Some text"),
 	Text:                 "Some text",
-	ByteaPtr:             testutils.ByteArrayPtr([]byte("bytea")),
+	ByteaPtr:             ptr.Of([]byte("bytea")),
 	Bytea:                []byte("bytea"),
 	TimestampzPtr:        testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
 	Timestampz:           *testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0),
@@ -1342,31 +1443,31 @@ var allTypesRow0 = model.AllTypes{
 	Timez:                *testutils.TimeWithTimeZone("04:05:06 -0800"),
 	TimePtr:              testutils.TimeWithoutTimeZone("04:05:06"),
 	Time:                 *testutils.TimeWithoutTimeZone("04:05:06"),
-	IntervalPtr:          testutils.StringPtr("3 days 04:05:06"),
+	IntervalPtr:          ptr.Of("3 days 04:05:06"),
 	Interval:             "3 days 04:05:06",
-	BooleanPtr:           testutils.BoolPtr(true),
+	BooleanPtr:           ptr.Of(true),
 	Boolean:              false,
-	PointPtr:             testutils.StringPtr("(2,3)"),
-	BitPtr:               testutils.StringPtr("101"),
+	PointPtr:             ptr.Of("(2,3)"),
+	BitPtr:               ptr.Of("101"),
 	Bit:                  "101",
-	BitVaryingPtr:        testutils.StringPtr("101111"),
+	BitVaryingPtr:        ptr.Of("101111"),
 	BitVarying:           "101111",
-	TsvectorPtr:          testutils.StringPtr("'supernova':1"),
+	TsvectorPtr:          ptr.Of("'supernova':1"),
 	Tsvector:             "'supernova':1",
 	UUIDPtr:              testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
 	UUID:                 uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"),
-	XMLPtr:               testutils.StringPtr("<Sub>abc</Sub>"),
+	XMLPtr:               ptr.Of("<Sub>abc</Sub>"),
 	XML:                  "<Sub>abc</Sub>",
-	JSONPtr:              testutils.StringPtr(`{"a": 1, "b": 3}`),
+	JSONPtr:              ptr.Of(`{"a": 1, "b": 3}`),
 	JSON:                 `{"a": 1, "b": 3}`,
-	JsonbPtr:             testutils.StringPtr(`{"a": 1, "b": 3}`),
+	JsonbPtr:             ptr.Of(`{"a": 1, "b": 3}`),
 	Jsonb:                `{"a": 1, "b": 3}`,
-	IntegerArrayPtr:      testutils.StringPtr("{1,2,3}"),
+	IntegerArrayPtr:      ptr.Of("{1,2,3}"),
 	IntegerArray:         "{1,2,3}",
-	TextArrayPtr:         testutils.StringPtr("{breakfast,consulting}"),
+	TextArrayPtr:         ptr.Of("{breakfast,consulting}"),
 	TextArray:            "{breakfast,consulting}",
 	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
-	TextMultiDimArrayPtr: testutils.StringPtr("{{meeting,lunch},{training,presentation}}"),
+	TextMultiDimArrayPtr: ptr.Of("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 	MoodPtr:              &moodSad,
 	Mood:                 model.Mood_Happy,

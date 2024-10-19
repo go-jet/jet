@@ -1,6 +1,7 @@
 package filesys
 
 import (
+	"errors"
 	"fmt"
 	"go/format"
 	"os"
@@ -16,7 +17,7 @@ func FormatAndSaveGoFile(dirPath, fileName string, text []byte) error {
 		newGoFilePath += ".go"
 	}
 
-	file, err := os.Create(newGoFilePath)
+	file, err := os.Create(newGoFilePath) // #nosec 304
 
 	if err != nil {
 		return err
@@ -28,7 +29,10 @@ func FormatAndSaveGoFile(dirPath, fileName string, text []byte) error {
 
 	// if there is a format error we will write unformulated text for debug purposes
 	if err != nil {
-		file.Write(text)
+		_, writeErr := file.Write(text)
+		if writeErr != nil {
+			return errors.Join(writeErr, fmt.Errorf("failed to format '%s', check '%s' for syntax errors: %w", fileName, newGoFilePath, err))
+		}
 		return fmt.Errorf("failed to format '%s', check '%s' for syntax errors: %w", fileName, newGoFilePath, err)
 	}
 
@@ -43,7 +47,7 @@ func FormatAndSaveGoFile(dirPath, fileName string, text []byte) error {
 // EnsureDirPathExist ensures dir path exists. If path does not exist, creates new path.
 func EnsureDirPathExist(dirPath string) error {
 	if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-		err := os.MkdirAll(dirPath, os.ModePerm)
+		err := os.MkdirAll(dirPath, 0o750)
 
 		if err != nil {
 			return fmt.Errorf("can't create directory - %s: %w", dirPath, err)

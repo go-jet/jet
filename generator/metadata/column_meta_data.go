@@ -1,27 +1,14 @@
 package metadata
 
-import (
-	"regexp"
-)
-
 // Column struct
 type Column struct {
 	Name         string `sql:"primary_key"`
 	IsPrimaryKey bool
 	IsNullable   bool
 	IsGenerated  bool
+	HasDefault   bool
 	DataType     DataType
 	Comment      string
-}
-
-// GoLangComment returns column comment without ascii control characters
-func (c Column) GoLangComment() string {
-	if c.Comment == "" {
-		return ""
-	}
-
-	// remove ascii control characters from string
-	return regexp.MustCompile(`[[:cntrl:]]+`).ReplaceAllString(c.Comment, "")
 }
 
 // DataTypeKind is database type kind(base, enum, user-defined, array)

@@ -36,6 +36,9 @@ type TimestampExpression = jet.TimestampExpression
 // TimestampzExpression interface
 type TimestampzExpression = jet.TimestampzExpression
 
+// RowExpression interface
+type RowExpression = jet.RowExpression
+
 // DateRange Expression interface
 type DateRange = jet.Range[DateExpression]
 
@@ -98,6 +101,11 @@ var TimestampExp = jet.TimestampExp
 // Allows go compiler to see any expression as timestamp with time zone expression.
 // Does not add sql cast to generated sql builder output.
 var TimestampzExp = jet.TimestampzExp
+
+// RowExp serves as a wrapper for an arbitrary expression, treating it as a row expression.
+// This enables the Go compiler to interpret any expression as a row expression
+// Note: This does not modify the generated SQL builder output by adding a SQL CAST operation.
+var RowExp = jet.RowExp
 
 // RangeExp is range expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as range expression.

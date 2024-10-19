@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/mysql"
@@ -10,7 +11,6 @@ import (
 	"github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -125,7 +125,7 @@ func initMySQLDB(isMariaDB bool) error {
 
 		fmt.Println(cmdLine)
 
-		cmd := exec.Command("sh", "-c", cmdLine)
+		cmd := exec.Command("sh", "-c", cmdLine) // #nosec G204
 
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
@@ -184,7 +184,7 @@ func initPostgresDB(dbType string, connectionString string) error {
 }
 
 func execFile(db *sql.DB, sqlFilePath string) error {
-	testSampleSql, err := ioutil.ReadFile(sqlFilePath)
+	testSampleSql, err := os.ReadFile(sqlFilePath) // #nosec G304
 	if err != nil {
 		return fmt.Errorf("failed to read sql file - %s: %w", sqlFilePath, err)
 	}
@@ -211,7 +211,10 @@ func execInTx(db *sql.DB, f func(tx *sql.Tx) error) error {
 	err = f(tx)
 
 	if err != nil {
-		tx.Rollback()
+		rollBackError := tx.Rollback()
+		if rollBackError != nil {
+			return errors.Join(rollBackError, err)
+		}
 		return err
 	}
 

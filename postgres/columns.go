@@ -109,11 +109,18 @@ type ColumnInterval interface {
 	jet.Column
 
 	From(subQuery SelectTable) ColumnInterval
+	SET(intervalExp IntervalExpression) ColumnAssigment
 }
+
+//------------------------------------------------------//
 
 type intervalColumnImpl struct {
 	jet.ColumnExpressionImpl
 	intervalInterfaceImpl
+}
+
+func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssigment {
+	return jet.NewColumnAssignment(i, intervalExp)
 }
 
 func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {

@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"strings"
@@ -96,18 +97,18 @@ func TestExpressionOperators(t *testing.T) {
 SELECT all_types.'integer' IS NULL AS "result.is_null",
      all_types.date_ptr IS NOT NULL AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
-     (all_types.small_int_ptr IN (
+     (all_types.small_int_ptr IN ((
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.in_select",
+     ))) AS "result.in_select",
      (CURRENT_USER()) AS "result.raw",
      (? + COALESCE(all_types.small_int_ptr, 0) + ?) AS "result.raw_arg",
      (? + all_types.integer + ? + ? + ? + ?) AS "result.raw_arg2",
      (all_types.small_int_ptr NOT IN (?, ?, NULL)) AS "result.not_in",
-     (all_types.small_int_ptr NOT IN (
+     (all_types.small_int_ptr NOT IN ((
           SELECT all_types.'integer' AS "all_types.integer"
           FROM test_sample.all_types
-     )) AS "result.not_in_select"
+     ))) AS "result.not_in_select"
 FROM test_sample.all_types
 LIMIT ?;
 `, "'", "`", -1), int64(11), int64(22), 78, 56, 11, 22, 11, 33, 44, int64(11), int64(22), int64(2))
@@ -1067,7 +1068,7 @@ func TestAllTypesInsertOnDuplicateKeyUpdate(t *testing.T) {
 
 var toInsert = model.AllTypes{
 	Boolean:       false,
-	BooleanPtr:    testutils.BoolPtr(true),
+	BooleanPtr:    ptr.Of(true),
 	TinyInt:       1,
 	UTinyInt:      2,
 	SmallInt:      3,
@@ -1078,53 +1079,53 @@ var toInsert = model.AllTypes{
 	UInteger:      8,
 	BigInt:        9,
 	UBigInt:       1122334455,
-	TinyIntPtr:    testutils.Int8Ptr(11),
-	UTinyIntPtr:   testutils.UInt8Ptr(22),
-	SmallIntPtr:   testutils.Int16Ptr(33),
-	USmallIntPtr:  testutils.UInt16Ptr(44),
-	MediumIntPtr:  testutils.Int32Ptr(55),
-	UMediumIntPtr: testutils.UInt32Ptr(66),
-	IntegerPtr:    testutils.Int32Ptr(77),
-	UIntegerPtr:   testutils.UInt32Ptr(88),
-	BigIntPtr:     testutils.Int64Ptr(99),
-	UBigIntPtr:    testutils.UInt64Ptr(111),
+	TinyIntPtr:    ptr.Of(int8(11)),
+	UTinyIntPtr:   ptr.Of(uint8(22)),
+	SmallIntPtr:   ptr.Of(int16(33)),
+	USmallIntPtr:  ptr.Of(uint16(44)),
+	MediumIntPtr:  ptr.Of(int32(55)),
+	UMediumIntPtr: ptr.Of(uint32(66)),
+	IntegerPtr:    ptr.Of(int32(77)),
+	UIntegerPtr:   ptr.Of(uint32(88)),
+	BigIntPtr:     ptr.Of(int64(99)),
+	UBigIntPtr:    ptr.Of(uint64(111)),
 	Decimal:       11.22,
-	DecimalPtr:    testutils.Float64Ptr(33.44),
+	DecimalPtr:    ptr.Of(33.44),
 	Numeric:       55.66,
-	NumericPtr:    testutils.Float64Ptr(77.88),
+	NumericPtr:    ptr.Of(77.88),
 	Float:         99.00,
-	FloatPtr:      testutils.Float64Ptr(11.22),
+	FloatPtr:      ptr.Of(11.22),
 	Double:        33.44,
-	DoublePtr:     testutils.Float64Ptr(55.66),
+	DoublePtr:     ptr.Of(55.66),
 	Real:          77.88,
-	RealPtr:       testutils.Float64Ptr(99.00),
+	RealPtr:       ptr.Of(99.00),
 	Bit:           "1",
-	BitPtr:        testutils.StringPtr("0"),
+	BitPtr:        ptr.Of("0"),
 	Time:          time.Date(1, 1, 1, 10, 11, 12, 100, &time.Location{}),
-	TimePtr:       testutils.TimePtr(time.Date(1, 1, 1, 10, 11, 12, 100, time.UTC)),
+	TimePtr:       ptr.Of(time.Date(1, 1, 1, 10, 11, 12, 100, time.UTC)),
 	Date:          time.Now(),
-	DatePtr:       testutils.TimePtr(time.Now()),
+	DatePtr:       ptr.Of(time.Now()),
 	DateTime:      time.Now(),
-	DateTimePtr:   testutils.TimePtr(time.Now()),
+	DateTimePtr:   ptr.Of(time.Now()),
 	Timestamp:     time.Now(),
 	//TimestampPtr:  testutils.TimePtr(time.Now()), // TODO: build fails for MariaDB
 	Year:         2000,
-	YearPtr:      testutils.Int16Ptr(2001),
+	YearPtr:      ptr.Of(int16(2001)),
 	Char:         "abcd",
-	CharPtr:      testutils.StringPtr("absd"),
+	CharPtr:      ptr.Of("absd"),
 	VarChar:      "abcd",
-	VarCharPtr:   testutils.StringPtr("absd"),
+	VarCharPtr:   ptr.Of("absd"),
 	Binary:       []byte("1010"),
-	BinaryPtr:    testutils.ByteArrayPtr([]byte("100001")),
+	BinaryPtr:    ptr.Of([]byte("100001")),
 	VarBinary:    []byte("1010"),
-	VarBinaryPtr: testutils.ByteArrayPtr([]byte("100001")),
+	VarBinaryPtr: ptr.Of([]byte("100001")),
 	Blob:         []byte("large file"),
-	BlobPtr:      testutils.ByteArrayPtr([]byte("very large file")),
+	BlobPtr:      ptr.Of([]byte("very large file")),
 	Text:         "some text",
-	TextPtr:      testutils.StringPtr("text"),
+	TextPtr:      ptr.Of("text"),
 	Enum:         model.AllTypesEnum_Value1,
 	JSON:         "{}",
-	JSONPtr:      testutils.StringPtr(`{"a": 1}`),
+	JSONPtr:      ptr.Of(`{"a": 1}`),
 }
 
 var allTypesJson = `
@@ -1358,17 +1359,17 @@ func TestExactDecimals(t *testing.T) {
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
 					Numeric:    0.1,
-					NumericPtr: testutils.Float64Ptr(0.1),
+					NumericPtr: ptr.Of(0.1),
 					Decimal:    0.1,
-					DecimalPtr: testutils.Float64Ptr(0.1),
+					DecimalPtr: ptr.Of(0.1),
 
 					// not overwritten
 					Float:     0.2,
-					FloatPtr:  testutils.Float64Ptr(0.22),
+					FloatPtr:  ptr.Of(0.22),
 					Double:    0.3,
-					DoublePtr: testutils.Float64Ptr(0.33),
+					DoublePtr: ptr.Of(0.33),
 					Real:      0.4,
-					RealPtr:   testutils.Float64Ptr(0.44),
+					RealPtr:   ptr.Of(0.44),
 				},
 				Numeric:    decimal.RequireFromString("12.35"),
 				NumericPtr: decimal.RequireFromString("56.79"),
@@ -1402,4 +1403,35 @@ VALUES ('91.23', '45.67', '12.35', '56.79', 0.2, 0.22, 0.3, 0.33, 0.4, 0.44);
 		require.Equal(t, 91.23, result.Floats.Decimal)
 		require.Equal(t, 45.67, *result.Floats.DecimalPtr)
 	})
+}
+
+func TestRowExpression(t *testing.T) {
+	now := time.Now()
+	nowAddHour := time.Now().Add(time.Hour)
+
+	stmt := SELECT(
+		ROW(Bool(false), DateT(now)).EQ(ROW(Bool(true), DateT(now))),
+		ROW(Bool(false), DateT(now)).NOT_EQ(ROW(Bool(true), DateT(now))),
+		ROW(TimestampT(nowAddHour), String("txt")).IS_DISTINCT_FROM(RowExp(Raw("row(NOW(), 'png')"))),
+		ROW(TimestampT(now), DateTimeT(nowAddHour)).GT(ROW(TimestampT(now), DateTimeT(now))),
+		ROW(DateTimeT(nowAddHour), Int(1)).GT_EQ(ROW(DateTimeT(now), Int(2))),
+		ROW(TimestampT(now), DateTimeT(nowAddHour)).LT(ROW(TimestampT(now), DateTimeT(now))),
+		ROW(DateTimeT(nowAddHour), Float(1.22)).LT_EQ(ROW(DateTimeT(now), Float(2.33))),
+	)
+
+	//fmt.Println(stmt.Sql())
+	//fmt.Println(stmt.DebugSql())
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT ROW(?, CAST(? AS DATE)) = ROW(?, CAST(? AS DATE)),
+     ROW(?, CAST(? AS DATE)) != ROW(?, CAST(? AS DATE)),
+     NOT(ROW(TIMESTAMP(?), ?) <=> (row(NOW(), 'png'))),
+     ROW(TIMESTAMP(?), CAST(? AS DATETIME)) > ROW(TIMESTAMP(?), CAST(? AS DATETIME)),
+     ROW(CAST(? AS DATETIME), ?) >= ROW(CAST(? AS DATETIME), ?),
+     ROW(TIMESTAMP(?), CAST(? AS DATETIME)) < ROW(TIMESTAMP(?), CAST(? AS DATETIME)),
+     ROW(CAST(? AS DATETIME), ?) <= ROW(CAST(? AS DATETIME), ?);
+`)
+
+	err := stmt.Query(db, &struct{}{})
+	require.NoError(t, err)
 }
