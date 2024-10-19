@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
-	jet2 "github.com/go-jet/jet/v2/internal/jet/db"
 	"github.com/go-jet/jet/v2/internal/utils/throw"
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ var UnixTimeComparer = cmp.Comparer(func(t1, t2 time.Time) bool {
 })
 
 // AssertExecAndRollback will execute and rollback statement in sql transaction
-func AssertExecAndRollback(t *testing.T, stmt jet.Statement, db *jet2.DB, rowsAffected ...int64) {
+func AssertExecAndRollback(t *testing.T, stmt jet.Statement, db *stmtcache.DB, rowsAffected ...int64) {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	defer func() {
@@ -50,8 +50,21 @@ func AssertExec(t *testing.T, stmt jet.Statement, db qrm.DB, rowsAffected ...int
 	}
 }
 
+// AssertExecContext assert statement execution for successful execution and number of rows affected
+func AssertExecContext(t *testing.T, stmt jet.Statement, ctx context.Context, db qrm.DB, rowsAffected ...int64) {
+	res, err := stmt.ExecContext(ctx, db)
+
+	require.NoError(t, err)
+	rows, err := res.RowsAffected()
+	require.NoError(t, err)
+
+	if len(rowsAffected) > 0 {
+		require.Equal(t, rowsAffected[0], rows)
+	}
+}
+
 // ExecuteInTxAndRollback will execute function in sql transaction and then rollback transaction
-func ExecuteInTxAndRollback(t *testing.T, db *jet2.DB, f func(tx qrm.DB)) {
+func ExecuteInTxAndRollback(t *testing.T, db *stmtcache.DB, f func(tx qrm.DB)) {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	defer func() {

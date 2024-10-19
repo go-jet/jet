@@ -1,39 +1,54 @@
-package db
+package stmtcache
 
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sync"
 )
 
-// DB is a wrapper around sql.DB, adding prepared statement caching capability.
+// DB is a wrapper for sql.DB, providing an additional layer for caching prepared statements
+// to optimize database interactions and improve performance.
 type DB struct {
 	*sql.DB
 
-	statementsCaching bool
+	cachingEnabled bool
 
 	lock       sync.RWMutex
 	statements map[string]*sql.Stmt
 }
 
-// NewDB creates new DB wrapper with statements caching disabled
-func NewDB(db *sql.DB) *DB {
+// New creates new DB wrapper with statements caching enabled
+func New(db *sql.DB) *DB {
 	return &DB{
-		DB:                db,
-		statementsCaching: false,
-		statements:        make(map[string]*sql.Stmt),
+		DB:             db,
+		cachingEnabled: true,
+		statements:     make(map[string]*sql.Stmt),
 	}
 }
 
-// WithStatementsCaching returns *DB wrapper with prepared statements caching enabled or disabled. This method should be
+// SetCaching returns *DB wrapper with prepared statements caching enabled or disabled. This method should be
 // called only once. It is not concurrency-safe.
-func (d *DB) WithStatementsCaching(enabled bool) *DB {
-	d.statementsCaching = enabled
+func (d *DB) SetCaching(enabled bool) *DB {
+	d.cachingEnabled = enabled
 	return d
 }
 
-// Begin starts sql transaction and returns wrapped Tx object.
+// CachingEnabled returns true if statements caching is enabled
+func (d *DB) CachingEnabled() bool {
+	return d.cachingEnabled
+}
+
+// CacheSize returns the current number of prepared statements stored in the cache.
+func (d *DB) CacheSize() int {
+	d.lock.RLock()
+	ret := len(d.statements)
+	d.lock.RUnlock()
+	return ret
+}
+
+// Begin starts a new SQL transaction and returns a Tx object with statement caching capabilities.
 func (d *DB) Begin() (*Tx, error) {
 	tx, err := d.DB.Begin()
 
@@ -48,7 +63,7 @@ func (d *DB) Begin() (*Tx, error) {
 	}, nil
 }
 
-// BeginTx starts sql transaction and returns wrapped Tx object.
+// BeginTx starts a new SQL transaction and returns a Tx object with statement caching capabilities.
 func (d *DB) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) {
 	tx, err := d.DB.BeginTx(ctx, opts)
 
@@ -73,7 +88,7 @@ func (d *DB) Exec(query string, args ...interface{}) (sql.Result, error) {
 // first call PrepareContext to retrieve a prepared statement, and then execute a query using a prepared statement.
 // If statement caching is disabled, this method delegates the call to the *sql.DB ExecContext method.
 func (d *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
-	if !d.statementsCaching {
+	if !d.cachingEnabled {
 		return d.DB.ExecContext(ctx, query, args...)
 	}
 
@@ -95,7 +110,7 @@ func (d *DB) Query(query string, args ...interface{}) (*sql.Rows, error) {
 // first call PrepareContext to retrieve a prepared statement, and then execute a query using a prepared statement.
 // If statement caching is disabled, this method delegates the call to the *sql.DB QueryContext method.
 func (d *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error) {
-	if !d.statementsCaching {
+	if !d.cachingEnabled {
 		return d.DB.QueryContext(ctx, query, args...)
 	}
 
@@ -122,7 +137,7 @@ func (d *DB) Prepare(query string) (*sql.Stmt, error) {
 // There's no need to manually close the returned statement; it operates within the transaction scope and will be closed
 // automatically upon the completion of the transaction, whether it's committed or rolled back.
 func (d *DB) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
-	if !d.statementsCaching {
+	if !d.cachingEnabled {
 		return d.DB.PrepareContext(ctx, query)
 	}
 
@@ -157,8 +172,8 @@ func (d *DB) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error
 	return prepStmt, nil
 }
 
-// Clear will close all cached prepared statements
-func (d *DB) Clear() error {
+// ClearCache will close all cached prepared statements and clear statements cache map
+func (d *DB) ClearCache() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
@@ -168,15 +183,23 @@ func (d *DB) Clear() error {
 		closeErr := statement.Close()
 
 		if closeErr != nil {
-			err = closeErr
+			err = errors.Join(err, closeErr)
 		}
 	}
 
 	d.statements = make(map[string]*sql.Stmt)
 
 	if err != nil {
-		return fmt.Errorf("some of the prepared statements failed to close, last err: %w", err)
+		return errors.Join(errors.New("jet: some of the prepared statements failed to close"), err)
 	}
 
 	return nil
+}
+
+// Close will clear the statements cache and close the underlying db connection
+func (d *DB) Close() error {
+	clearErr := d.ClearCache()
+	closeErr := d.DB.Close()
+
+	return errors.Join(clearErr, closeErr)
 }

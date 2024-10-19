@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
 	"testing"
 

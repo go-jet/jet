@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"github.com/jackc/pgx/v4/stdlib"
 	"os"
@@ -19,15 +20,17 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-var db *postgres.DB
+var db *stmtcache.DB
 var testRoot string
 
 var source string
+var withStatementCaching bool
 
 const CockroachDB = "COCKROACH_DB"
 
 func init() {
 	source = os.Getenv("PG_SOURCE")
+	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
 }
 
 func sourceIsCockroachDB() bool {
@@ -45,39 +48,50 @@ func TestMain(m *testing.M) {
 
 	setTestRoot()
 
-	for _, driverName := range []string{"pgx", "postgres"} {
-		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
+	for _, driverName := range []string{"postgres", "pgx"} {
+
+		fmt.Printf("\nRunning postgres tests for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
 
 		func() {
-
-			connectionString := dbconfig.PostgresConnectString
-
-			if sourceIsCockroachDB() {
-				connectionString = dbconfig.CockroachConnectString
-			}
-
-			sqlDB, err := sql.Open(driverName, connectionString)
+			sqlDB, err := sql.Open(driverName, getConnectionString())
 			if err != nil {
 				fmt.Println(err.Error())
 				panic("Failed to connect to test db")
 			}
-			db = postgres.NewDB(sqlDB).WithStatementsCaching(true)
-			defer db.Close()
+			db = stmtcache.New(sqlDB).SetCaching(withStatementCaching)
+			defer func(db *stmtcache.DB) {
+				err := db.Close()
+				if err != nil {
+					fmt.Printf("ERROR: Failed to close db connection, %v", err)
+				}
+			}(db)
 
-			for i := 0; i < 2; i++ {
+			for i := 0; i < runCount(withStatementCaching); i++ {
 				ret := m.Run()
 				if ret != 0 {
+					fmt.Printf("\nFAIL: Running postgres tests failed for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
 					os.Exit(ret)
 				}
 			}
-
-			err = db.Clear()
-
-			if err != nil {
-				os.Exit(-2)
-			}
 		}()
 	}
+
+}
+
+func runCount(stmtCaching bool) int {
+	if stmtCaching {
+		return 2
+	}
+
+	return 1
+}
+
+func getConnectionString() string {
+	if sourceIsCockroachDB() {
+		return dbconfig.CockroachConnectString
+	}
+
+	return dbconfig.PostgresConnectString
 }
 
 func setTestRoot() {
