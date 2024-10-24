@@ -34,6 +34,11 @@ func (d *DB) WithStatementsCaching(enabled bool) *DB {
 	return d
 }
 
+// StatementsCachingEnabled returns true if statements caching is enabled
+func (d *DB) StatementsCachingEnabled() bool {
+	return d.statementsCaching
+}
+
 // Begin starts sql transaction and returns wrapped Tx object.
 func (d *DB) Begin() (*Tx, error) {
 	tx, err := d.DB.Begin()
