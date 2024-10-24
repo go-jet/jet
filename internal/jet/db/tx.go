@@ -74,7 +74,7 @@ func (t *Tx) Prepare(query string) (*sql.Stmt, error) {
 // automatically upon the completion of the transaction, whether it's committed or rolled back.
 func (t *Tx) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error) {
 	if !t.db.statementsCaching {
-		return t.PrepareContext(ctx, query)
+		return t.Tx.PrepareContext(ctx, query)
 	}
 
 	prepStmt, ok := t.statements[query]

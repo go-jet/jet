@@ -3,6 +3,7 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	jetmysql "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
@@ -18,11 +19,13 @@ import (
 var db *jetmysql.DB
 
 var source string
+var skipStatementsCaching bool
 
 const MariaDB = "MariaDB"
 
 func init() {
 	source = os.Getenv("MY_SQL_SOURCE")
+	skipStatementsCaching = os.Getenv("JET_TESTS_NO_STMT_CACHE") == "true"
 }
 
 func sourceIsMariaDB() bool {
@@ -32,20 +35,29 @@ func sourceIsMariaDB() bool {
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
-	var err error
-	sqlDB, err := sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
-	if err != nil {
-		panic("Failed to connect to test db" + err.Error())
-	}
+	for _, cachingEnabled := range []bool{false, true} {
 
-	db = jetmysql.NewDB(sqlDB).WithStatementsCaching(true)
-	defer db.Close()
-
-	for i := 0; i < 2; i++ {
-		ret := m.Run()
-		if ret != 0 {
-			os.Exit(ret)
+		if cachingEnabled && skipStatementsCaching {
+			continue //skipped by global env variable
 		}
+
+		func() {
+			fmt.Printf("\nRunning mysql tests caching enabled: %t \n", cachingEnabled)
+
+			var err error
+			sqlDB, err := sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
+			if err != nil {
+				panic("Failed to connect to test db" + err.Error())
+			}
+
+			db = jetmysql.NewDB(sqlDB).WithStatementsCaching(cachingEnabled)
+			defer db.Close()
+
+			ret := m.Run()
+			if ret != 0 {
+				os.Exit(ret)
+			}
+		}()
 	}
 }
 

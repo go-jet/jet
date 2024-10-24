@@ -23,11 +23,13 @@ var db *postgres.DB
 var testRoot string
 
 var source string
+var skipStatementsCaching bool
 
 const CockroachDB = "COCKROACH_DB"
 
 func init() {
 	source = os.Getenv("PG_SOURCE")
+	skipStatementsCaching = os.Getenv("JET_TESTS_NO_STMT_CACHE") == "true"
 }
 
 func sourceIsCockroachDB() bool {
@@ -45,39 +47,39 @@ func TestMain(m *testing.M) {
 
 	setTestRoot()
 
-	for _, driverName := range []string{"pgx", "postgres"} {
-		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
+	for _, cachingEnabled := range []bool{false, true} {
 
-		func() {
+		if cachingEnabled && skipStatementsCaching {
+			continue //skipped by global env variable
+		}
 
-			connectionString := dbconfig.PostgresConnectString
+		for _, driverName := range []string{"pgx", "postgres"} {
 
-			if sourceIsCockroachDB() {
-				connectionString = dbconfig.CockroachConnectString
-			}
+			fmt.Printf("\nRunning postgres tests for driver: %s, caching enabled: %t \n", driverName, cachingEnabled)
 
-			sqlDB, err := sql.Open(driverName, connectionString)
-			if err != nil {
-				fmt.Println(err.Error())
-				panic("Failed to connect to test db")
-			}
-			db = postgres.NewDB(sqlDB).WithStatementsCaching(true)
-			defer db.Close()
+			func() {
+				connectionString := dbconfig.PostgresConnectString
 
-			for i := 0; i < 2; i++ {
+				if sourceIsCockroachDB() {
+					connectionString = dbconfig.CockroachConnectString
+				}
+
+				sqlDB, err := sql.Open(driverName, connectionString)
+				if err != nil {
+					fmt.Println(err.Error())
+					panic("Failed to connect to test db")
+				}
+				db = postgres.NewDB(sqlDB).WithStatementsCaching(cachingEnabled)
+				defer db.Close()
+
 				ret := m.Run()
 				if ret != 0 {
 					os.Exit(ret)
 				}
-			}
-
-			err = db.Clear()
-
-			if err != nil {
-				os.Exit(-2)
-			}
-		}()
+			}()
+		}
 	}
+
 }
 
 func setTestRoot() {

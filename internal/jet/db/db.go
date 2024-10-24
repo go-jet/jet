@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -157,8 +158,8 @@ func (d *DB) PrepareContext(ctx context.Context, query string) (*sql.Stmt, error
 	return prepStmt, nil
 }
 
-// Clear will close all cached prepared statements
-func (d *DB) Clear() error {
+// ClearStatementsCache will close all cached prepared statements and clear statements cache
+func (d *DB) ClearStatementsCache() error {
 	d.lock.Lock()
 	defer d.lock.Unlock()
 
@@ -168,15 +169,23 @@ func (d *DB) Clear() error {
 		closeErr := statement.Close()
 
 		if closeErr != nil {
-			err = closeErr
+			err = errors.Join(err, closeErr)
 		}
 	}
 
 	d.statements = make(map[string]*sql.Stmt)
 
 	if err != nil {
-		return fmt.Errorf("some of the prepared statements failed to close, last err: %w", err)
+		return errors.Join(errors.New("jet: some of the prepared statements failed to close"), err)
 	}
 
 	return nil
+}
+
+// Close will clear the statements cache and close the underlying db connection
+func (d *DB) Close() error {
+	clearErr := d.ClearStatementsCache()
+	closeErr := d.DB.Close()
+
+	return errors.Join(clearErr, closeErr)
 }

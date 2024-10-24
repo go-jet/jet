@@ -19,36 +19,46 @@ import (
 
 var db *sqlite.DB
 var sampleDB *sqlite.DB
-var testRoot string
+
+var skipStatementsCaching bool
+
+func init() {
+	skipStatementsCaching = os.Getenv("JET_TESTS_NO_STMT_CACHE") == "true"
+}
 
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
-	sqlDB, err := sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
-	throw.OnError(err)
-	db = sqlite.NewDB(sqlDB).WithStatementsCaching(true)
-	defer db.Close()
+	for _, cachingEnabled := range []bool{false, true} {
 
-	_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
-	throw.OnError(err)
-
-	sqlSampleDB, err := sql.Open("sqlite3", dbconfig.TestSampleDBPath)
-	throw.OnError(err)
-	sampleDB = sqlite.NewDB(sqlSampleDB).WithStatementsCaching(true)
-	defer sampleDB.Close()
-
-	for i := 0; i < 2; i++ {
-		ret := m.Run()
-		if ret != 0 {
-			os.Exit(ret)
+		if cachingEnabled && skipStatementsCaching {
+			continue //skipped by global env variable
 		}
+
+		func() {
+
+			sqlDB, err := sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
+			throw.OnError(err)
+			db = sqlite.NewDB(sqlDB).WithStatementsCaching(cachingEnabled)
+			defer db.Close()
+
+			_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
+			throw.OnError(err)
+
+			sqlSampleDB, err := sql.Open("sqlite3", dbconfig.TestSampleDBPath)
+			throw.OnError(err)
+			sampleDB = sqlite.NewDB(sqlSampleDB).WithStatementsCaching(cachingEnabled)
+			defer sampleDB.Close()
+
+			ret := m.Run()
+			if ret != 0 {
+				os.Exit(ret)
+			}
+
+		}()
+
 	}
 
-	err = sampleDB.Clear()
-
-	if err != nil {
-		panic(err)
-	}
 }
 
 var loggedSQL string

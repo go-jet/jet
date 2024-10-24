@@ -69,7 +69,7 @@ func TestDeleteContextDeadlineExceeded(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
 
-	time.Sleep(10 * time.Millisecond)
+	time.Sleep(20 * time.Millisecond)
 
 	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		var dest []model.Link
