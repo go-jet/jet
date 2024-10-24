@@ -1,9 +1,9 @@
 package postgres
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/stretchr/testify/assert"
@@ -251,7 +251,7 @@ RETURNING payment.payment_id AS "payment.payment_id",
           payment.payment_date AS "payment.payment_date";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 
 		var payments []model.Payment
 

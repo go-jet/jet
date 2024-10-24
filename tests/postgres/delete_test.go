@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
@@ -43,7 +43,7 @@ RETURNING link.id AS "link.id",
           link.description AS "link.description";
 `, "Gmail", "Outlook")
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.Link
 
 		err := deleteStmt.Query(tx, &dest)
@@ -67,7 +67,7 @@ func TestDeleteQueryContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		dest := []model.Link{}
 		err := deleteStmt.QueryContext(ctx, tx, &dest)
 
@@ -88,7 +88,7 @@ func TestDeleteExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := deleteStmt.ExecContext(ctx, tx)
 
 		require.Error(t, err, "context deadline exceeded")
@@ -140,7 +140,7 @@ RETURNING rental.rental_id AS "rental.rental_id",
           store.last_update AS "store.last_update";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []struct {
 			Rental model2.Rental
 			Store  model2.Store

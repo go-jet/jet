@@ -2,9 +2,9 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
@@ -27,7 +27,7 @@ SET (name, url) = ('Bong', 'http://bong.com')
 WHERE link.name = 'Bing'::text;
 `, "Bong", "http://bong.com", "Bing")
 
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 
 			testutils.AssertExec(t, query, tx, 1)
 			requireLogged(t, query)
@@ -142,7 +142,7 @@ RETURNING link.id AS "link.id",
           link.description AS "link.description";
 `, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		links := []model.Link{}
 
 		err := stmt.Query(tx, &links)
@@ -325,8 +325,8 @@ func TestUpdateQueryContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
-		dest := []model.Link{}
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		var dest []model.Link
 		err := updateStmt.QueryContext(ctx, tx, &dest)
 
 		require.Error(t, err, "context deadline exceeded")
@@ -344,8 +344,8 @@ func TestUpdateExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
-		_, err := updateStmt.ExecContext(ctx, tx)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		_, err := updateStmt.ExecContext(ctx, db)
 		require.Error(t, err, "context deadline exceeded")
 	})
 }
@@ -388,7 +388,7 @@ RETURNING rental.rental_id AS "rental.rental_id",
           store.address_id AS "store.address_id";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []struct {
 			Rental model2.Rental
 			Store  model2.Store

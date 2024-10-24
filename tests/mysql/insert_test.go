@@ -2,10 +2,10 @@ package mysql
 
 import (
 	"context"
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
 
@@ -31,7 +31,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 		101, "http://www.google.com", "Google",
 		102, "http://www.yahoo.com", "Yahoo", nil)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := insertQuery.Exec(tx)
 		require.NoError(t, err)
 		requireLogged(t, insertQuery)
@@ -76,7 +76,7 @@ VALUES (100, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT
 `,
 		100, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial")
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 		requireLogged(t, stmt)
@@ -110,7 +110,7 @@ VALUES ('http://www.duckduckgo.com', 'Duck Duck go');
 `,
 		"http://www.duckduckgo.com", "Duck Duck go")
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 	})
@@ -132,7 +132,7 @@ INSERT INTO test_sample.link
 VALUES (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
 `, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 	})
@@ -168,7 +168,7 @@ VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
 		"http://www.google.com", "Google",
 		"http://www.yahoo.com", "Yahoo")
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 	})
@@ -203,7 +203,7 @@ VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT),
 		"http://www.google.com", "Google", nil,
 		"http://www.yahoo.com", "Yahoo", nil)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 	})
@@ -227,7 +227,7 @@ INSERT INTO test_sample.link (url, name) (
 );
 `, int64(1))
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
 		require.NoError(t, err)
 
@@ -263,7 +263,7 @@ ON DUPLICATE KEY UPDATE id = (link.id + ?),
 		randId, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial",
 		int64(11), "PostgreSQL Tutorial 2")
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 
@@ -322,7 +322,7 @@ ON DUPLICATE KEY UPDATE id = (link.id + ?),
                         description = new.description;
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 
@@ -354,9 +354,12 @@ func TestInsertWithQueryContext(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	var dest []model.Link
-	err := stmt.QueryContext(ctx, db, &dest)
 
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		err := stmt.QueryContext(ctx, tx, &dest)
+		require.Error(t, err, "context deadline exceeded")
+	})
+
 }
 
 func TestInsertWithExecContext(t *testing.T) {
@@ -368,9 +371,10 @@ func TestInsertWithExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	_, err := stmt.ExecContext(ctx, db)
-
-	require.Error(t, err, "context deadline exceeded")
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		_, err := stmt.ExecContext(ctx, tx)
+		require.Error(t, err, "context deadline exceeded")
+	})
 }
 
 func TestInsertOptimizerHints(t *testing.T) {
@@ -387,7 +391,7 @@ INSERT /*+ QB_NAME(qbIns) NO_ICP(link) */ INTO test_sample.link (url, name, desc
 VALUES ('http://www.google.com', 'Google', NULL);
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 	})

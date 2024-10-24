@@ -1,8 +1,8 @@
 package sqlite
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -49,7 +49,7 @@ WHERE people.people_id = ?;
 	})
 
 	t.Run("should insert without generated columns", func(t *testing.T) {
-		testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 			insertQuery := People.INSERT(
 				People.MutableColumns,
 			).MODEL(

@@ -17,28 +17,48 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-var db *sql.DB
-var sampleDB *sql.DB
+var db *sqlite.DB
+var sampleDB *sqlite.DB
+
+var skipStatementsCaching bool
+
+func init() {
+	skipStatementsCaching = os.Getenv("JET_TESTS_NO_STMT_CACHE") == "true"
+}
 
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
-	var err error
-	db, err = sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
-	throw.OnError(err)
-	defer db.Close()
+	for _, cachingEnabled := range []bool{false, true} {
 
-	_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
-	throw.OnError(err)
+		if cachingEnabled && skipStatementsCaching {
+			continue //skipped by global env variable
+		}
 
-	sampleDB, err = sql.Open("sqlite3", dbconfig.TestSampleDBPath)
-	throw.OnError(err)
+		func() {
 
-	ret := m.Run()
+			sqlDB, err := sql.Open("sqlite3", "file:"+dbconfig.SakilaDBPath)
+			throw.OnError(err)
+			db = sqlite.NewDB(sqlDB).WithStatementsCaching(cachingEnabled)
+			defer db.Close()
 
-	if ret != 0 {
-		os.Exit(ret)
+			_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
+			throw.OnError(err)
+
+			sqlSampleDB, err := sql.Open("sqlite3", dbconfig.TestSampleDBPath)
+			throw.OnError(err)
+			sampleDB = sqlite.NewDB(sqlSampleDB).WithStatementsCaching(cachingEnabled)
+			defer sampleDB.Close()
+
+			ret := m.Run()
+			if ret != 0 {
+				os.Exit(ret)
+			}
+
+		}()
+
 	}
+
 }
 
 var loggedSQL string
@@ -84,13 +104,13 @@ func requireLogged(t *testing.T, statement sqlite.Statement) {
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
 
-func beginSampleDBTx(t *testing.T) *sql.Tx {
-	tx, err := sampleDB.Begin()
+func beginSampleDBTx(t *testing.T) *sqlite.Tx {
+	tx, err := sampleDB.BeginTx(context.Background(), nil)
 	require.NoError(t, err)
 	return tx
 }
 
-func beginDBTx(t *testing.T) *sql.Tx {
+func beginDBTx(t *testing.T) *sqlite.Tx {
 	tx, err := db.Begin()
 	require.NoError(t, err)
 	return tx

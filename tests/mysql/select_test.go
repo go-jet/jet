@@ -2,8 +2,8 @@ package mysql
 
 import (
 	"context"
-	"database/sql"
 	"github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	"strings"
 	"testing"
 	"time"
@@ -868,11 +868,13 @@ func TestRowLock(t *testing.T) {
 	expectedSQL := `
 SELECT *
 FROM dvds.address
+ORDER BY address.address_id
 LIMIT 3
 OFFSET 1
 FOR`
-	query := Address.
-		SELECT(STAR).
+	query := SELECT(STAR).
+		FROM(Address).
+		ORDER_BY(Address.AddressID).
 		LIMIT(3).
 		OFFSET(1)
 
@@ -881,28 +883,14 @@ FOR`
 
 		expectedQuery := expectedSQL + " " + lockTypeStr + ";\n"
 		testutils.AssertDebugStatementSql(t, query, expectedQuery, int64(3), int64(1))
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-		require.NoError(t, err)
-
-		err = tx.Rollback()
-		require.NoError(t, err)
+		testutils.AssertExecAndRollback(t, query, db)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.NOWAIT())
 
 		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3), int64(1))
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-		require.NoError(t, err)
-
-		err = tx.Rollback()
-		require.NoError(t, err)
+		testutils.AssertExecAndRollback(t, query, db)
 	}
 
 	if sourceIsMariaDB() {
@@ -913,14 +901,7 @@ FOR`
 		query.FOR(lockType.SKIP_LOCKED())
 
 		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3), int64(1))
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-		require.NoError(t, err)
-
-		err = tx.Rollback()
-		require.NoError(t, err)
+		testutils.AssertExecAndRollback(t, query, db)
 	}
 }
 
@@ -956,7 +937,7 @@ LIMIT 1
 FOR UPDATE OF film, actor NOWAIT;
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []struct {
 			model.Film
 			CategoryID int
@@ -993,7 +974,7 @@ LIMIT 1
 FOR UPDATE OF ''myFilm'';
 `, "''", "`"))
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []struct {
 			model.Film `alias:"myFilm.*"`
 		}

@@ -2,9 +2,9 @@ package mysql
 
 import (
 	"context"
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
@@ -113,7 +113,7 @@ DELETE /*+ QB_NAME(deleteIns) MRR(link) */ FROM test_sample.link
 WHERE link.name IN ('Gmail', 'Outlook');
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
 	})

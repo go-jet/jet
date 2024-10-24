@@ -1,8 +1,8 @@
 package postgres
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/require"
@@ -294,7 +294,7 @@ RETURNING sample_ranges.date_range AS "sample_ranges.date_range",
 `
 	testutils.AssertDebugStatementSql(t, insertQuery, expectedQuery)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.SampleRanges
 		err := insertQuery.Query(tx, &dest)
 		require.NoError(t, err)
@@ -324,7 +324,7 @@ RETURNING sample_ranges.date_range AS "sample_ranges.date_range",
           sample_ranges.num_range AS "sample_ranges.num_range";
 `)
 
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			var dest []model.SampleRanges
 
 			err := stmt.Query(tx, &dest)
@@ -351,7 +351,7 @@ SET int4_range = int4range(-12::integer, 78::integer),
 WHERE LOWER(sample_ranges.timestampz_range) > '2024-02-27 00:00:00 UTC'::timestamp with time zone;
 `)
 
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			testutils.AssertExec(t, stmt, tx, 1)
 		})
 	})

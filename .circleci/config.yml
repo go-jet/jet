@@ -136,6 +136,8 @@ jobs:
           name: Running tests
           command:  gotestsum --junitfile $TEST_RESULTS/report.xml --format testname   -- -coverprofile=cover.out  -covermode=atomic -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/... ./...
 
+      # run tests will statement caching enabled
+      - run: JET_TESTS_WITH_STMT_CACHE=true go test -v ./tests/postgres
       # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
       - run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/

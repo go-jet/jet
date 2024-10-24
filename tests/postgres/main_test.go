@@ -19,15 +19,17 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-var db *sql.DB
+var db *postgres.DB
 var testRoot string
 
 var source string
+var withStatementCaching bool
 
 const CockroachDB = "COCKROACH_DB"
 
 func init() {
 	source = os.Getenv("PG_SOURCE")
+	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
 }
 
 func sourceIsCockroachDB() bool {
@@ -46,31 +48,47 @@ func TestMain(m *testing.M) {
 	setTestRoot()
 
 	for _, driverName := range []string{"pgx", "postgres"} {
-		fmt.Printf("\nRunning postgres tests for '%s' driver\n", driverName)
+
+		fmt.Printf("\nRunning postgres tests for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
 
 		func() {
-
 			connectionString := dbconfig.PostgresConnectString
 
 			if sourceIsCockroachDB() {
 				connectionString = dbconfig.CockroachConnectString
 			}
 
-			var err error
-			db, err = sql.Open(driverName, connectionString)
+			sqlDB, err := sql.Open(driverName, connectionString)
 			if err != nil {
 				fmt.Println(err.Error())
 				panic("Failed to connect to test db")
 			}
-			defer db.Close()
+			db = postgres.NewDB(sqlDB).WithStatementsCaching(withStatementCaching)
+			defer func(db *postgres.DB) {
+				err := db.Close()
+				if err != nil {
+					fmt.Printf("ERROR: Failed to close db connection, %v", err)
+				}
+			}(db)
 
-			ret := m.Run()
+			runCount := 1
 
-			if ret != 0 {
-				os.Exit(ret)
+			if withStatementCaching {
+				// With statement caching we run all tests twice to test caching logic.
+				// Unfortunately second call to m.Run does not add to code coverage
+				runCount = 2
+			}
+
+			for i := 0; i < runCount; i++ {
+				ret := m.Run()
+				if ret != 0 {
+					fmt.Printf("\nFAIL: Running postgres tests failed for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
+					os.Exit(ret)
+				}
 			}
 		}()
 	}
+
 }
 
 func setTestRoot() {

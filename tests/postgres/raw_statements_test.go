@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"database/sql"
+	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
 
@@ -128,7 +128,7 @@ RETURNING link.id AS "link.id",
          link.description AS "link.description";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var links []model2.Link
 		err := stmt.Query(tx, &links)
 		require.NoError(t, err)

@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-func TestSelect(t *testing.T) {
+func TestSelectAlbum(t *testing.T) {
 	stmt := SELECT(Album.AllColumns).
 		FROM(Album).
 		ORDER_BY(Album.AlbumId.ASC())
@@ -783,8 +783,10 @@ func TestQueryWithContext(t *testing.T) {
 		return // context cancellation doesn't work for pq driver
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Microsecond)
 	defer cancel()
+
+	time.Sleep(1 * time.Millisecond)
 
 	var dest []model.Album
 
