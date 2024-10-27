@@ -5,6 +5,7 @@ import (
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	"path"
+	"slices"
 	"strings"
 	"unicode"
 )
@@ -134,10 +135,19 @@ type TableSQLBuilderColumn struct {
 	Type string
 }
 
+var reservedKeywords = []string{"TableName", "Table", "SchemaName", "Alias", "AllColumns", "MutableColumns"}
+
+func renameIfReserved(name string) string {
+	if slices.Contains(reservedKeywords, name) {
+		return name + "_"
+	}
+	return name
+}
+
 // DefaultTableSQLBuilderColumn returns default implementation of TableSQLBuilderColumn
 func DefaultTableSQLBuilderColumn(columnMetaData metadata.Column) TableSQLBuilderColumn {
 	return TableSQLBuilderColumn{
-		Name: dbidentifier.ToGoIdentifier(columnMetaData.Name),
+		Name: renameIfReserved(dbidentifier.ToGoIdentifier(columnMetaData.Name)),
 		Type: getSqlBuilderColumnType(columnMetaData),
 	}
 }
