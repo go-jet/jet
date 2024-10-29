@@ -169,7 +169,10 @@ func initPostgresDB(dbType string, connectionString string) error {
 	for _, schemaName := range schemaNames {
 		fmt.Println("\nInitializing", schemaName, "schema...")
 
-		err = execFile(db, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName))
+		// retry add due to a concurrency issue in CockroachDB, specifically a TransactionRetryError
+		err = retry(3, func() error {
+			return execFile(db, fmt.Sprintf("./testdata/init/%s/%s.sql", dbType, schemaName))
+		})
 		if err != nil {
 			return fmt.Errorf("failed to execute sql file: %w", err)
 		}
@@ -177,6 +180,23 @@ func initPostgresDB(dbType string, connectionString string) error {
 		err = postgres.GenerateDSN(connectionString, schemaName, "./.gentestdata")
 		if err != nil {
 			return fmt.Errorf("failed to generate jet types: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func retry(count int, f func() error) error {
+
+	for i := 0; i < count; i++ {
+		err := f()
+
+		if err == nil {
+			break
+		}
+
+		if i == count-1 {
+			return err
 		}
 	}
 
