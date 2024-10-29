@@ -110,7 +110,7 @@ ORDER BY rental.staff_id ASC, rental.customer_id ASC, rental.rental_id ASC;
 `)
 }
 
-func TestClassicSelect(t *testing.T) {
+func TestSelectClassic(t *testing.T) {
 	expectedSQL := `
 SELECT payment.payment_id AS "payment.payment_id",
      payment.customer_id AS "payment.customer_id",
@@ -146,7 +146,7 @@ LIMIT 30;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(30))
 
-	dest := []model.Payment{}
+	var dest []model.Payment
 
 	err := query.Query(db, &dest)
 
@@ -232,12 +232,12 @@ LIMIT 12;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(db, &dest)
 	require.NoError(t, err)
 }
 
-func TestFetchFirst(t *testing.T) {
+func TestSelectFetchFirst(t *testing.T) {
 
 	t.Run("rows only", func(t *testing.T) {
 		stmt := SELECT(Actor.AllColumns).
@@ -321,7 +321,7 @@ FETCH FIRST (
 	})
 }
 
-func TestOffsetExpression(t *testing.T) {
+func TestSelectOffsetExpression(t *testing.T) {
 
 	stmt := SELECT(Actor.AllColumns).
 		FROM(Actor).
@@ -353,7 +353,7 @@ OFFSET (
 	require.Equal(t, dest[0].ActorID, int32(3))
 }
 
-func TestJoinQueryStruct(t *testing.T) {
+func TestSelectJoinQueryStruct(t *testing.T) {
 
 	expectedSQL := `
 SELECT film_actor.actor_id AS "film_actor.actor_id",
@@ -446,7 +446,7 @@ LIMIT 1000;
 	}
 }
 
-func TestJoinQuerySlice(t *testing.T) {
+func TestSelectJoinQuerySlice(t *testing.T) {
 	expectedSQL := `
 SELECT language.language_id AS "language.language_id",
      language.name AS "language.name",
@@ -475,7 +475,7 @@ LIMIT 15;
 		Film     []model.Film
 	}
 
-	filmsPerLanguage := []FilmsPerLanguage{}
+	var filmsPerLanguage []FilmsPerLanguage
 	limit := 15
 
 	query := Film.
@@ -505,7 +505,7 @@ LIMIT 15;
 }
 
 // https://github.com/go-jet/jet/issues/226
-func TestDuplicateSlicesInDestination(t *testing.T) {
+func TestSelectDuplicateSlicesInDestination(t *testing.T) {
 
 	type Staffs struct {
 		StaffList []model.Staff
@@ -646,7 +646,7 @@ func TestDuplicateSlicesInDestination(t *testing.T) {
 `)
 }
 
-func TestExecution1(t *testing.T) {
+func TestSelectExecution1(t *testing.T) {
 	stmt := City.
 		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
 		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
@@ -707,7 +707,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 
 }
 
-func TestExecution2(t *testing.T) {
+func TestSelectExecution2(t *testing.T) {
 
 	type MyAddress struct {
 		ID          int32 `sql:"primary_key"`
@@ -770,7 +770,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 	require.Equal(t, *dest[0].Customers[1].LastName, "Vines")
 }
 
-func TestExecution3(t *testing.T) {
+func TestSelectExecution3(t *testing.T) {
 
 	var dest []struct {
 		CityID   int32 `sql:"primary_key"`
@@ -827,7 +827,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 	require.Equal(t, *dest[0].Customers[1].LastName, "Vines")
 }
 
-func TestExecution4(t *testing.T) {
+func TestSelectExecution4(t *testing.T) {
 
 	var dest []struct {
 		CityID   int32  `sql:"primary_key" alias:"city.city_id"`
@@ -919,7 +919,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 }
 
 // Test join with custom primary keys (sql.NullInt64)
-func TestExecutionCustomPKTypes1(t *testing.T) {
+func TestSelectExecutionCustomPKTypes1(t *testing.T) {
 
 	var dest []struct {
 		CityID   sql.NullInt64 `sql:"primary_key" alias:"city.city_id"`
@@ -1040,7 +1040,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 }
 
 // Test join with custom primary keys (null.Int)
-func TestExecutionCustomPKTypes2(t *testing.T) {
+func TestSelectExecutionCustomPKTypes2(t *testing.T) {
 
 	var dest []struct {
 		CityID   null.Int `sql:"primary_key" alias:"city.city_id"`
@@ -1136,7 +1136,7 @@ ORDER BY city.city_id, address.address_id, customer.customer_id;
 `)
 }
 
-func TestJoinQuerySliceWithPtrs(t *testing.T) {
+func TestSelectJoinQuerySliceWithPtrs(t *testing.T) {
 	type FilmsPerLanguage struct {
 		Language model.Language
 		Film     *[]*model.Film
@@ -1161,7 +1161,7 @@ func TestJoinQuerySliceWithPtrs(t *testing.T) {
 }
 
 func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
-	query := Customer.SELECT(Customer.FirstName, Customer.LastName, Customer.Email)
+	query := Customer.SELECT(Customer.FirstName, Customer.LastName, Customer.Email).ORDER_BY(Customer.Email)
 
 	var customers []model.Customer
 
@@ -1220,7 +1220,7 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 	testutils.AssertDeepEqual(t, customerAscDesc327, customersAscDesc[327])
 }
 
-func TestOrderBy(t *testing.T) {
+func TestSelectOrderBy(t *testing.T) {
 
 	t.Run("default", func(t *testing.T) {
 		stmt := SELECT(
@@ -1651,7 +1651,7 @@ LIMIT 1000;
 	testutils.AssertDeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
 }
 
-func TestSubQuery(t *testing.T) {
+func TestSelectSubQuery(t *testing.T) {
 	rRatingFilms :=
 		SELECT(
 			Film.FilmID,
@@ -1817,7 +1817,7 @@ ORDER BY film.film_id ASC;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL)
 
-	maxRentalRateFilms := []model.Film{}
+	var maxRentalRateFilms []model.Film
 	err := query.Query(db, &maxRentalRateFilms)
 
 	require.NoError(t, err)
@@ -1921,7 +1921,7 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
 }
 
-func TestGroupByGroupingSets(t *testing.T) {
+func TestSelectGroupByGroupingSets(t *testing.T) {
 	skipForCockroachDB(t)
 
 	stmt := SELECT(
@@ -2003,7 +2003,7 @@ ORDER BY inventory.film_id, inventory.store_id;
 `)
 }
 
-func TestGroupByCube(t *testing.T) {
+func TestSelectGroupByCube(t *testing.T) {
 	skipForCockroachDB(t)
 
 	stmt := SELECT(
@@ -2080,7 +2080,7 @@ ORDER BY country.country, city.city;
 `)
 }
 
-func TestGroupByRollup(t *testing.T) {
+func TestSelectGroupByRollup(t *testing.T) {
 	skipForCockroachDB(t)
 
 	stmt := SELECT(
@@ -2167,7 +2167,7 @@ ORDER BY year ASC, EXTRACT(MONTH FROM rental.rental_date) ASC, day ASC;
 `)
 }
 
-func TestAggregateFunctionDistinct(t *testing.T) {
+func TestSelectAggregateFunctionDistinct(t *testing.T) {
 	stmt := SELECT(
 		Payment.CustomerID,
 
@@ -2298,7 +2298,7 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 }
 
 func TestSelectStaff(t *testing.T) {
-	staffs := []model.Staff{}
+	var staffs []model.Staff
 
 	err := Staff.SELECT(Staff.AllColumns).Query(db, &staffs)
 
@@ -2372,7 +2372,7 @@ ORDER BY payment.payment_date ASC;
 	})
 }
 
-func TestUnion(t *testing.T) {
+func TestSelectUnion(t *testing.T) {
 	expectedQuery := `
 (
      SELECT payment.payment_id AS "payment.payment_id",
@@ -2425,7 +2425,7 @@ OFFSET 20;
 	})
 }
 
-func TestUnionOffsetWithExpression(t *testing.T) {
+func TestSelectUnionOffsetWithExpression(t *testing.T) {
 	stmt := UNION(
 		SELECT(Rental.AllColumns).
 			FROM(Rental).
@@ -2475,7 +2475,7 @@ OFFSET (
 	require.Len(t, dest, 10)
 }
 
-func TestAllSetOperators(t *testing.T) {
+func TestSelectAllSetOperators(t *testing.T) {
 	var select1 = Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17600)).AND(Payment.PaymentID.LT(Int(17610))))
 	var select2 = Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17620)).AND(Payment.PaymentID.LT(Int(17630))))
 
@@ -2580,46 +2580,30 @@ func getRowLockTestData() map[RowLock]string {
 	}
 }
 
-func TestRowLock(t *testing.T) {
+func TestSelectRowLock(t *testing.T) {
+
+	query := SELECT(STAR).
+		FROM(Address).
+		WHERE(Address.AddressID.LT(Int(10)))
+
 	expectedSQL := `
 SELECT *
 FROM dvds.address
-LIMIT 3
+WHERE address.address_id < 10
 FOR`
-	query := Address.
-		SELECT(STAR).
-		LIMIT(3)
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType)
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
-
-		tx, _ := db.Begin()
-
-		res, err := query.Exec(tx)
-		require.NoError(t, err)
-		rowsAffected, _ := res.RowsAffected()
-		require.Equal(t, rowsAffected, int64(3))
-
-		err = tx.Rollback()
-		require.NoError(t, err)
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(10))
+		testutils.AssertExecAndRollback(t, query, db, 9)
 	}
 
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.NOWAIT())
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
-
-		tx, _ := db.Begin()
-
-		res, err := query.Exec(tx)
-		require.NoError(t, err)
-		rowsAffected, _ := res.RowsAffected()
-		require.Equal(t, rowsAffected, int64(3))
-
-		err = tx.Rollback()
-		require.NoError(t, err)
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(10))
+		testutils.AssertExecAndRollback(t, query, db, 9)
 	}
 
 	if sourceIsCockroachDB() {
@@ -2629,21 +2613,13 @@ FOR`
 	for lockType, lockTypeStr := range getRowLockTestData() {
 		query.FOR(lockType.SKIP_LOCKED())
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
-
-		tx, _ := db.Begin()
-
-		res, err := query.Exec(tx)
-		require.NoError(t, err)
-		rowsAffected, _ := res.RowsAffected()
-		require.Equal(t, rowsAffected, int64(3))
-
-		err = tx.Rollback()
-		require.NoError(t, err)
+		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(10))
+		testutils.AssertExecAndRollback(t, query, db, 9)
 	}
 }
 
-func TestRowLockWithUpdateOf(t *testing.T) {
+func TestSelectRowLockWithUpdateOf(t *testing.T) {
+
 	stmt := SELECT(
 		Film.FilmID,
 		Film.Title,
@@ -2673,9 +2649,10 @@ LIMIT 1
 FOR UPDATE OF film, actor NOWAIT;
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []struct {
 			model.Film
+
 			CategoryID int
 			Actor      []model.Actor
 		}
@@ -2686,7 +2663,7 @@ FOR UPDATE OF film, actor NOWAIT;
 	})
 }
 
-func TestRowLockWithUpdateOfAliasedTable(t *testing.T) {
+func TestSelectRowLockWithUpdateOfAliasedTable(t *testing.T) {
 
 	myFilm := Film.AS("myFilm")
 
@@ -2709,18 +2686,18 @@ LIMIT 1
 FOR UPDATE OF "myFilm";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []struct {
 			model.Film `alias:"myFilm.*"`
 		}
 
-		err := stmt.Query(db, &dest)
+		err := stmt.Query(tx, &dest)
 		require.NoError(t, err)
 		require.Len(t, dest, 1)
 	})
 }
 
-func TestQuickStart(t *testing.T) {
+func TestSelectQuickStart(t *testing.T) {
 
 	var expectedSQL = `
 SELECT actor.actor_id AS "actor.actor_id",
@@ -2811,7 +2788,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
-func TestQuickStartWithSubQueries(t *testing.T) {
+func TestSelectQuickStartWithSubQueries(t *testing.T) {
 
 	filmLogerThan180 := Film.
 		SELECT(Film.AllColumns).
@@ -2876,7 +2853,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
-func TestExpressionWrappers(t *testing.T) {
+func TestSelectExpressionWrappers(t *testing.T) {
 	query := SELECT(
 		BoolExp(Raw("true")),
 		IntExp(Raw("11")),
@@ -2906,7 +2883,7 @@ SELECT true,
 	require.NoError(t, err)
 }
 
-func TestWindowFunction(t *testing.T) {
+func TestSelectWindowFunction(t *testing.T) {
 	var expectedSQL = `
 SELECT AVG(payment.amount) OVER (),
      AVG(payment.amount) OVER (PARTITION BY payment.customer_id),
@@ -2978,7 +2955,7 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 	require.NoError(t, err)
 }
 
-func TestWindowClause(t *testing.T) {
+func TestSelectWindowClause(t *testing.T) {
 	var expectedSQL = `
 SELECT AVG(payment.amount) OVER (),
      AVG(payment.amount) OVER (w1),
@@ -3015,7 +2992,7 @@ ORDER BY payment.customer_id;
 	require.NoError(t, err)
 }
 
-func TestSimpleView(t *testing.T) {
+func TestSelectSimpleView(t *testing.T) {
 
 	query := SELECT(
 		view.ActorInfo.AllColumns,
@@ -3054,7 +3031,7 @@ func TestSimpleView(t *testing.T) {
 
 }
 
-func TestJoinViewWithTable(t *testing.T) {
+func TestSelectJoinViewWithTable(t *testing.T) {
 	query := SELECT(
 		view.CustomerList.AllColumns,
 		Rental.AllColumns,
@@ -3080,7 +3057,7 @@ func TestJoinViewWithTable(t *testing.T) {
 	require.Equal(t, len(dest[1].Rentals), 27)
 }
 
-func TestDynamicProjectionList(t *testing.T) {
+func TestSelectDynamicProjectionList(t *testing.T) {
 
 	var request struct {
 		ColumnsToSelect []string
@@ -3127,7 +3104,7 @@ LIMIT 3;
 	require.Equal(t, len(dest), 3)
 }
 
-func TestDynamicCondition(t *testing.T) {
+func TestSelectDynamicCondition(t *testing.T) {
 	var request struct {
 		CustomerID *int64
 		Email      *string
@@ -3177,7 +3154,7 @@ WHERE ($1::boolean AND (customer.customer_id = $2)) AND (customer.activebool = $
 	testutils.AssertDeepEqual(t, dest[0], customer0)
 }
 
-func TestLateral(t *testing.T) {
+func TestSelectLateral(t *testing.T) {
 
 	languages := LATERAL(
 		SELECT(
@@ -3349,7 +3326,7 @@ type ActorWrap struct {
 	Films []FilmWrap
 }
 
-func TestRecursionScanNxM(t *testing.T) {
+func TestSelectRecursionScanNxM(t *testing.T) {
 
 	stmt := SELECT(
 		Actor.AllColumns,
@@ -3492,7 +3469,7 @@ type StaffWrap struct {
 	Store StoreWrap
 }
 
-func TestRecursionScanNx1(t *testing.T) {
+func TestSelectRecursionScanNx1(t *testing.T) {
 	stmt := SELECT(
 		Store.AllColumns,
 		Staff.AllColumns,
@@ -3639,7 +3616,7 @@ type ManagerInfo struct {
 	Store *StoreInfo
 }
 
-func TestRecursionScan1x1(t *testing.T) {
+func TestSelectRecursionScan1x1(t *testing.T) {
 
 	stmt := SELECT(
 		Store.AllColumns,
@@ -3704,7 +3681,7 @@ func TestRecursionScan1x1(t *testing.T) {
 // In parameterized statements integer literals, like Int(num), are replaced with a placeholders. For some expressions,
 // postgres interpreter will not have enough information to deduce the type. If this is the case postgres returns an error.
 // Int8, Int16, .... functions will add automatic type cast over placeholder, so type deduction is always possible.
-func TestLiteralTypeDeduction(t *testing.T) {
+func TestSelectLiteralTypeDeduction(t *testing.T) {
 	stmt := SELECT(
 		SUM(
 			CASE().WHEN(Staff.Active.IS_TRUE()).
@@ -3726,7 +3703,7 @@ func GET_FILM_COUNT(lenFrom, lenTo IntegerExpression) IntegerExpression {
 	return IntExp(Func("dvds.get_film_count", lenFrom, lenTo))
 }
 
-func TestCustomFunctionCall(t *testing.T) {
+func TestSelectCustomFunctionCall(t *testing.T) {
 	skipForCockroachDB(t)
 
 	stmt := SELECT(
@@ -3762,7 +3739,7 @@ SELECT dvds.get_film_count(100, 120) AS "film_count";
 	require.Equal(t, dest.FilmCount, 165)
 }
 
-func TestScanUsingConn(t *testing.T) {
+func TestSelectScanUsingConn(t *testing.T) {
 	conn, err := db.Conn(context.Background())
 	require.NoError(t, err)
 	defer conn.Close()
@@ -3804,7 +3781,7 @@ func TestScanUsingConn(t *testing.T) {
 	})
 }
 
-func TestConditionalFunctions(t *testing.T) {
+func TestSelectConditionalFunctions(t *testing.T) {
 	stmt := SELECT(
 		EXISTS(
 			Film.SELECT(Film.FilmID).WHERE(Film.RentalDuration.GT(Int(100))),

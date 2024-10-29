@@ -3,8 +3,10 @@ package mysql
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"github.com/go-jet/jet/v2/mysql"
 	jetmysql "github.com/go-jet/jet/v2/mysql"
-	"github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/require"
@@ -15,14 +17,16 @@ import (
 	"testing"
 )
 
-var db *sql.DB
+var db *stmtcache.DB
 
 var source string
+var withStatementCaching bool
 
 const MariaDB = "MariaDB"
 
 func init() {
 	source = os.Getenv("MY_SQL_SOURCE")
+	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
 }
 
 func sourceIsMariaDB() bool {
@@ -32,16 +36,38 @@ func sourceIsMariaDB() bool {
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
-	var err error
-	db, err = sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
-	if err != nil {
-		panic("Failed to connect to test db" + err.Error())
+	func() {
+		fmt.Printf("\nRunning mysql tests caching enabled: %t \n", withStatementCaching)
+
+		sqlDB, err := sql.Open("mysql", dbconfig.MySQLConnectionString(sourceIsMariaDB(), ""))
+		if err != nil {
+			panic("Failed to connect to test db" + err.Error())
+		}
+
+		db = stmtcache.New(sqlDB).SetCaching(withStatementCaching)
+		defer db.Close()
+
+		for i := 0; i < runCount(withStatementCaching); i++ {
+			ret := m.Run()
+			if ret != 0 {
+				fmt.Printf("\nFAIL: Running mysql tests failed, caching enabled: %t \n", withStatementCaching)
+				os.Exit(ret)
+			}
+		}
+	}()
+
+}
+
+func getConnectionString() string {
+	return dbconfig.MySQLConnectionString(sourceIsMariaDB(), "")
+}
+
+func runCount(stmtCaching bool) int {
+	if stmtCaching {
+		return 3
 	}
-	defer db.Close()
 
-	ret := m.Run()
-
-	os.Exit(ret)
+	return 1
 }
 
 var loggedSQL string
@@ -65,14 +91,14 @@ func init() {
 	})
 }
 
-func requireLogged(t *testing.T, statement postgres.Statement) {
+func requireLogged(t *testing.T, statement mysql.Statement) {
 	query, args := statement.Sql()
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
 
-func requireQueryLogged(t *testing.T, statement postgres.Statement, rowsProcessed int64) {
+func requireQueryLogged(t *testing.T, statement mysql.Statement, rowsProcessed int64) {
 	query, args := statement.Sql()
 	queryLogged, argsLogged := queryInfo.Statement.Sql()
 

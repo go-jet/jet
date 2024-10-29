@@ -32,34 +32,14 @@ LOCK TABLE dvds.address IN`
 		query := Address.LOCK().IN(lockMode)
 
 		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-
-		require.NoError(t, err)
-
-		err = tx.Rollback()
-
-		require.NoError(t, err)
-		requireLogged(t, query)
+		testutils.AssertExecAndRollback(t, query, db)
 	}
 
 	for _, lockMode := range testData {
 		query := Address.LOCK().IN(lockMode).NOWAIT()
 
 		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
-
-		tx, _ := db.Begin()
-
-		_, err := query.Exec(tx)
-
-		require.NoError(t, err)
-
-		err = tx.Rollback()
-
-		require.NoError(t, err)
-		requireLogged(t, query)
+		testutils.AssertExecAndRollback(t, query, db)
 	}
 }
 

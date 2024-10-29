@@ -1,10 +1,10 @@
 package postgres
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
 
@@ -74,7 +74,7 @@ func TestAllTypesInsertModel(t *testing.T) {
 		MODEL(&allTypesRow1).
 		RETURNING(AllTypes.AllColumns)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.AllTypes
 		err := query.Query(tx, &dest)
 		require.NoError(t, err)
@@ -97,7 +97,7 @@ func TestAllTypesInsertQuery(t *testing.T) {
 		).
 		RETURNING(AllTypesAllColumns)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.AllTypes
 		err := query.Query(tx, &dest)
 
@@ -943,7 +943,7 @@ RETURNING employee.employee_id AS "employee.employee_id",
           employee.manager_id AS "employee.manager_id",
           employee.pto_accrual AS "employee.pto_accrual";
 `
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			var windy model.Employee
 			windy.PtoAccrual = ptr.Of("3h")
 			stmt := Employee.UPDATE(Employee.PtoAccrual).SET(
@@ -971,7 +971,7 @@ RETURNING employee.employee_id AS "employee.employee_id",
           employee.manager_id AS "employee.manager_id",
           employee.pto_accrual AS "employee.pto_accrual";
 `
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			var employee model.Employee
 			employee.PtoAccrual = ptr.Of("5h")
 			stmt := Employee.INSERT(Employee.AllColumns).
@@ -1393,7 +1393,7 @@ WHERE all_types.small_int = 14
 RETURNING all_types.json AS "all_types.json";
 `)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var res model.AllTypes
 
 		err := stmt.Query(tx, &res)
