@@ -175,9 +175,9 @@ stmt := SELECT(
         INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
         INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
 ).WHERE(
-    Language.Name.EQ(String("English")).             
-        AND(Category.Name.NOT_EQ(String("Action"))).  
-        AND(Film.Length.GT(Int(180))),               
+    Language.Name.EQ(Char(20)("English")).             
+        AND(Category.Name.NOT_EQ(Text("Action"))).  
+        AND(Film.Length.GT(Int32(180))),               
 ).ORDER_BY(
     Actor.ActorID.ASC(),
     Film.FilmID.ASC(),
@@ -200,35 +200,35 @@ args - query parameters
   
 ```sql
 SELECT actor.actor_id AS "actor.actor_id",
-     actor.first_name AS "actor.first_name",
-     actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update",
-     film.film_id AS "film.film_id",
-     film.title AS "film.title",
-     film.description AS "film.description",
-     film.release_year AS "film.release_year",
-     film.language_id AS "film.language_id",
-     film.rental_duration AS "film.rental_duration",
-     film.rental_rate AS "film.rental_rate",
-     film.length AS "film.length",
-     film.replacement_cost AS "film.replacement_cost",
-     film.rating AS "film.rating",
-     film.last_update AS "film.last_update",
-     film.special_features AS "film.special_features",
-     film.fulltext AS "film.fulltext",
-     language.language_id AS "language.language_id",
-     language.name AS "language.name",
-     language.last_update AS "language.last_update",
-     category.category_id AS "category.category_id",
-     category.name AS "category.name",
-     category.last_update AS "category.last_update"
+       actor.first_name AS "actor.first_name",
+       actor.last_name AS "actor.last_name",
+       actor.last_update AS "actor.last_update",
+       film.film_id AS "film.film_id",
+       film.title AS "film.title",
+       film.description AS "film.description",
+       film.release_year AS "film.release_year",
+       film.language_id AS "film.language_id",
+       film.rental_duration AS "film.rental_duration",
+       film.rental_rate AS "film.rental_rate",
+       film.length AS "film.length",
+       film.replacement_cost AS "film.replacement_cost",
+       film.rating AS "film.rating",
+       film.last_update AS "film.last_update",
+       film.special_features AS "film.special_features",
+       film.fulltext AS "film.fulltext",
+       language.language_id AS "language.language_id",
+       language.name AS "language.name",
+       language.last_update AS "language.last_update",
+       category.category_id AS "category.category_id",
+       category.name AS "category.name",
+       category.last_update AS "category.last_update"
 FROM dvds.actor
-     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
-     INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
-     INNER JOIN dvds.language ON (language.language_id = film.language_id)
-     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
-     INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = $1) AND (category.name != $2)) AND (film.length > $3)
+         INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
+         INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
+         INNER JOIN dvds.language ON (language.language_id = film.language_id)
+         INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+         INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
+WHERE ((language.name = $1::char(20)) AND (category.name != $2::text)) AND (film.length > $3::integer)
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
 ```sh 
@@ -277,7 +277,7 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English') AND (category.name != 'Action')) AND (film.length > 180)
+WHERE ((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
 </details>
@@ -545,18 +545,18 @@ The most expensive bugs are the one discovered on the production, and the least 
 With automatically generated type safe SQL, not only queries are written faster but bugs are found sooner.  
 Let's return to quick start example, and take closer look at a line:
  ```go
-AND(Film.Length.GT(Int(180))),
+AND(Film.Length.GT(Int32(180))),
 ```
 Let's say someone changes column `length` to `duration` from `film` table. The next go build will fail at that line, and 
 the bug will be caught at compile time.
 
-Let's say someone changes the type of `length` column to some non integer type. Build will also fail at the same line
+Let's say someone changes the type of `length` column to some non-integer type. Build will also fail at the same line
 because integer columns and expressions can be only compared to other integer columns and expressions.
 
 Build will also fail if someone removes `length` column from `film` table. `Film` field will be omitted from SQL Builder and Model types, 
 next time `jet` generator is run.
 
-Without Jet these bugs will have to be either caught by some test or by manual testing. 
+Without Jet these bugs will have to be either caught by tests or by manual testing. 
 
 ## Dependencies
 At the moment Jet dependence only of:

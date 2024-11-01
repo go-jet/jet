@@ -34,45 +34,62 @@ func Int64(value int64) IntegerExpression {
 	return CAST(jet.Int(value)).AS_BIGINT()
 }
 
-// Uint8 is constructor for 8 bit unsigned integer expressions literals.
-func Uint8(value uint8) IntegerExpression {
-	return CAST(jet.Uint8(value)).AS_SMALLINT()
-}
-
-// Uint16 is constructor for 16 bit unsigned integer expressions literals.
-func Uint16(value uint16) IntegerExpression {
-	return CAST(jet.Uint16(value)).AS_INTEGER()
-}
-
-// Uint32 is constructor for 32 bit unsigned integer expressions literals.
-func Uint32(value uint32) IntegerExpression {
-	return CAST(jet.Uint32(value)).AS_BIGINT()
-}
-
-// Uint64 is constructor for 64 bit unsigned integer expressions literals.
-func Uint64(value uint64) IntegerExpression {
-	return CAST(jet.Uint64(value)).AS_BIGINT()
-}
-
 // Float creates new float literal expression
 var Float = jet.Float
 
-// Float32 is constructor for 32 bit float literals
-func Float32(value float32) FloatExpression {
+// Real is placeholder constructor for 32-bit float literals
+func Real(value float32) FloatExpression {
 	return CAST(jet.Literal(value)).AS_REAL()
 }
 
-// Float64 is constructor for 64 bit float literals
-func Float64(value float64) FloatExpression {
+// Double is placeholder constructor for 64-bit float literals
+func Double(value float64) FloatExpression {
 	return CAST(jet.Literal(value)).AS_DOUBLE()
 }
 
 // Decimal creates new float literal expression
 var Decimal = jet.Decimal
 
-// String creates new string literal expression
+// String is a parameter constructor for the PostgreSQL text type. Using the `Text` constructor is
+// generally preferable.
+//
+// WARNING: String always applies a `text` type cast, which can be problematic if a parameter is compared
+// to a `character` column, as this may prevent index usage. In such cases, consider using the Char
+// constructor instead. See also other PostgreSQL-specific constructors: Text, Char, and VarChar.
 func String(value string) StringExpression {
 	return CAST(jet.String(value)).AS_TEXT()
+}
+
+// Text is a parameter constructor for the PostgreSQL text type. This constructor also adds an
+// explicit placeholder type cast to text in the generated query, such as `$3::text`.
+// Example usage:
+//
+//	Text("English")
+func Text(value string) StringExpression {
+	return CAST(jet.Literal(value)).AS_TEXT()
+}
+
+// Char is a parameter constructor for the PostgreSQL character type. This constructor also adds an
+// explicit placeholder type cast to text in the generated query, such as `$3::char(30)`.
+// Example usage:
+//
+//	Char(20)("English")
+func Char(length ...int) func(value string) StringExpression {
+	return func(value string) StringExpression {
+		return CAST(StringExp(jet.Literal(value))).AS_CHAR(length...)
+	}
+}
+
+// VarChar is a parameter constructor for the PostgreSQL character varying type. This constructor
+// also adds an explicit placeholder type cast to text in the generated query, such as `$3::varchar(30)`.
+// Example usage:
+//
+//	VarChar(20)("English")
+//	VarChar()("English")
+func VarChar(length ...int) func(value string) StringExpression {
+	return func(value string) StringExpression {
+		return CAST(StringExp(jet.Literal(value))).AS_VARCHAR(length...)
+	}
 }
 
 // Json creates new json literal expression

@@ -660,8 +660,8 @@ func TestSelectExecution1(t *testing.T) {
 		).
 		WHERE(
 			OR(
-				City.City.EQ(String("London")),
-				City.City.EQ(String("York")),
+				City.City.EQ(Text("London")),
+				City.City.EQ(Text("York")),
 			),
 		).
 		ORDER_BY(
@@ -741,7 +741,7 @@ func TestSelectExecution2(t *testing.T) {
 			Customer.CustomerID.AS("my_customer.id"),
 			Customer.LastName.AS("my_customer.last_name"),
 		).
-		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		WHERE(City.City.EQ(VarChar()("London")).OR(City.City.EQ(VarChar()("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
@@ -754,7 +754,7 @@ SELECT city.city_id AS "my_city.id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
+WHERE (city.city = 'London'::varchar) OR (city.city = 'York'::varchar)
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -798,7 +798,7 @@ func TestSelectExecution3(t *testing.T) {
 			Address.AddressID.AS("address_id"),
 			Address.Address.AS("address_line"),
 		).
-		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
+		WHERE(City.City.EQ(VarChar(20)("London")).OR(City.City.EQ(VarChar(20)("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
@@ -811,7 +811,7 @@ SELECT city.city_id AS "city_id",
 FROM dvds.city
      INNER JOIN dvds.address ON (address.city_id = city.city_id)
      INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London'::text) OR (city.city = 'York'::text)
+WHERE (city.city = 'London'::varchar(20)) OR (city.city = 'York'::varchar(20))
 ORDER BY city.city_id, address.address_id, customer.customer_id;
 `, "London", "York")
 
@@ -1866,7 +1866,7 @@ SELECT customer.customer_id AS "customer.customer_id",
 FROM dvds.payment
      INNER JOIN dvds.customer ON (customer.customer_id = payment.customer_id)
 GROUP BY customer.customer_id
-HAVING SUM(payment.amount) > 125.6
+HAVING SUM(payment.amount) > 125::real
 ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 `
 	query := SELECT(
@@ -1885,14 +1885,14 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 	).GROUP_BY(
 		Customer.CustomerID,
 	).HAVING(
-		SUMf(Payment.Amount).GT(Float(125.6)),
+		SUMf(Payment.Amount).GT(Real(125)),
 	).ORDER_BY(
 		Customer.CustomerID, SUMf(Payment.Amount).ASC(),
 	)
 
 	//fmt.Println(query.DebugSql())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, float64(125.6))
+	testutils.AssertDebugStatementSql(t, query, expectedSQL, float32(125))
 
 	var dest []struct {
 		model.Customer
@@ -2378,14 +2378,14 @@ func TestSelectUnion(t *testing.T) {
      SELECT payment.payment_id AS "payment.payment_id",
           payment.amount AS "payment.amount"
      FROM dvds.payment
-     WHERE payment.amount <= 100
+     WHERE payment.amount <= 100::double precision
 )
 UNION ALL
 (
      SELECT payment.payment_id AS "payment.payment_id",
           payment.amount AS "payment.amount"
      FROM dvds.payment
-     WHERE payment.amount >= 200
+     WHERE payment.amount >= 200::double precision
 )
 ORDER BY "payment.payment_id" ASC, "payment.amount" DESC
 LIMIT 10
@@ -2394,10 +2394,10 @@ OFFSET 20;
 	query := UNION_ALL(
 		Payment.
 			SELECT(Payment.PaymentID.AS("payment.payment_id"), Payment.Amount).
-			WHERE(Payment.Amount.LT_EQ(Float(100))),
+			WHERE(Payment.Amount.LT_EQ(Double(100))),
 		Payment.
 			SELECT(Payment.PaymentID, Payment.Amount).
-			WHERE(Payment.Amount.GT_EQ(Float(200))),
+			WHERE(Payment.Amount.GT_EQ(Double(200))),
 	).ORDER_BY(
 		IntegerColumn("payment.payment_id").ASC(),
 		Payment.Amount.DESC(),
@@ -2729,7 +2729,7 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English'::text) AND (category.name != 'Action'::text)) AND (film.length > 180)
+WHERE ((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 `
 
@@ -2746,15 +2746,15 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
 			INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
 	).WHERE(
-		Language.Name.EQ(String("English")). // note that every column has type.
-							AND(Category.Name.NOT_EQ(String("Action"))). // String column Language.Name and Category.Name can be compared only with string expression
-							AND(Film.Length.GT(Int(180))),               // Film.Length is integer column and can be compared only with integer expression
+		Language.Name.EQ(Char(20)("English")). // note that every column has type.
+							AND(Category.Name.NOT_EQ(Text("Action"))). // String column Language.Name and Category.Name can be compared only with string expression
+							AND(Film.Length.GT(Int32(180))),           // Film.Length is integer column and can be compared only with integer expression
 	).ORDER_BY(
 		Actor.ActorID.ASC(),
 		Film.FilmID.ASC(),
 	)
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "English", "Action", int32(180))
 
 	var dest []struct {
 		model.Actor
@@ -3162,7 +3162,7 @@ func TestSelectLateral(t *testing.T) {
 		).FROM(
 			Language,
 		).WHERE(
-			Language.Name.NOT_IN(String("spanish")).
+			Language.Name.NOT_IN(Char(20)("Spanish"), Char(20)("Catalan")).
 				AND(Film.LanguageID.EQ(Language.LanguageID)),
 		),
 	).AS("films")
@@ -3191,7 +3191,7 @@ FROM dvds.film
                language.name AS "language.name",
                language.last_update AS "language.last_update"
           FROM dvds.language
-          WHERE (language.name NOT IN ('spanish'::text)) AND (film.language_id = language.language_id)
+          WHERE (language.name NOT IN ('Spanish'::char(20), 'Catalan'::char(20))) AND (film.language_id = language.language_id)
      ) AS films
 WHERE film.film_id = 1
 ORDER BY film.film_id
@@ -3236,7 +3236,7 @@ FROM dvds.film,
                language.name AS "language.name",
                language.last_update AS "language.last_update"
           FROM dvds.language
-          WHERE (language.name NOT IN ('spanish'::text)) AND (film.language_id = language.language_id)
+          WHERE (language.name NOT IN ('Spanish'::char(20), 'Catalan'::char(20))) AND (film.language_id = language.language_id)
      ) AS films
 WHERE film.film_id = 1
 ORDER BY film.film_id
@@ -3787,9 +3787,9 @@ func TestSelectConditionalFunctions(t *testing.T) {
 			Film.SELECT(Film.FilmID).WHERE(Film.RentalDuration.GT(Int(100))),
 		).AS("exists"),
 		CASE(Film.Length.GT(Int(120))).
-			WHEN(Bool(true)).THEN(String("long film")).
-			ELSE(String("short film")).AS("case"),
-		COALESCE(Film.Description, String("none")).AS("coalesce"),
+			WHEN(Bool(true)).THEN(Text("long film")).
+			ELSE(Text("short film")).AS("case"),
+		COALESCE(Film.Description, Text("none")).AS("coalesce"),
 		NULLIF(Film.ReleaseYear, Int(200)).AS("null_if"),
 		GREATEST(Film.RentalDuration, Int(4), Int(5)).AS("greatest"),
 		LEAST(Film.RentalDuration, Int(7), Int(6)).AS("least"),

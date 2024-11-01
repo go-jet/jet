@@ -12,8 +12,8 @@ type values struct {
 // Example usage:
 //
 //	VALUES(
-//		WRAP(Int32(204), Float32(1.21)),
-//		WRAP(Int32(207), Float32(1.02)),
+//		WRAP(Int32(204), Real(1.21)),
+//		WRAP(Int32(207), Real(1.02)),
 //	)
 func VALUES(rows ...RowExpression) values {
 	return values{Values: jet.Values(rows)}

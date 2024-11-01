@@ -15,9 +15,9 @@ import (
 func TestVALUES(t *testing.T) {
 
 	values := VALUES(
-		WRAP(Int32(1), Int32(2), Float32(4.666), Bool(false), String("txt")),
-		WRAP(Int32(11).ADD(Int32(2)), Int32(22), Float32(33.222), Bool(true), String("png")),
-		WRAP(Int32(11), Int32(22), Float32(33.222), Bool(true), NULL),
+		WRAP(Int32(1), Int32(2), Real(4.666), Bool(false), String("txt")),
+		WRAP(Int32(11).ADD(Int32(2)), Int32(22), Real(33.222), Bool(true), String("png")),
+		WRAP(Int32(11), Int32(22), Real(33.222), Bool(true), NULL),
 	).AS("values_table")
 
 	stmt := SELECT(
@@ -86,11 +86,11 @@ func TestVALUES_Join(t *testing.T) {
 	lastUpdate := Timestamp(2007, time.February, 11, 12, 0, 0)
 
 	filmValues := VALUES(
-		WRAP(String("Chamber Italian"), Int64(117), Int32(2005), Float32(5.82), lastUpdate),
-		WRAP(String("Grosse Wonderful"), Int64(49), Int32(2004), Float32(6.242), lastUpdate.ADD(INTERVAL(1, HOUR))),
-		WRAP(String("Airport Pollock"), Int64(54), Int32(2001), Float32(7.22), NULL),
-		WRAP(String("Bright Encounters"), Int64(73), Int32(2002), Float32(8.25), NULL),
-		WRAP(String("Academy Dinosaur"), Int64(83), Int32(2010), Float32(9.22), lastUpdate.SUB(INTERVAL(2, MINUTE))),
+		WRAP(String("Chamber Italian"), Int64(117), Int32(2005), Real(5.82), lastUpdate),
+		WRAP(String("Grosse Wonderful"), Int64(49), Int32(2004), Real(6.242), lastUpdate.ADD(INTERVAL(1, HOUR))),
+		WRAP(String("Airport Pollock"), Int64(54), Int32(2001), Real(7.22), NULL),
+		WRAP(String("Bright Encounters"), Int64(73), Int32(2002), Real(8.25), NULL),
+		WRAP(String("Academy Dinosaur"), Int64(83), Int32(2010), Real(9.22), lastUpdate.SUB(INTERVAL(2, MINUTE))),
 	).AS("film_values",
 		title, IntegerColumn("length"), releaseYear, rentalRate, TimestampColumn("update_date"))
 
@@ -216,10 +216,10 @@ func TestVALUES_CTE_Update(t *testing.T) {
 	stmt := WITH(
 		paymentsToUpdate.AS(
 			VALUES(
-				WRAP(Int32(20564), Float32(1.21)),
-				WRAP(Int32(20567), Float32(1.02)),
-				WRAP(Int32(20570), Float32(1.34)),
-				WRAP(Int32(20573), Float32(1.72)),
+				WRAP(Int32(20564), Real(1.21)),
+				WRAP(Int32(20567), Real(1.02)),
+				WRAP(Int32(20570), Real(1.34)),
+				WRAP(Int32(20573), Real(1.72)),
 			),
 		),
 	)(

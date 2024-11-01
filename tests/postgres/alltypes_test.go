@@ -462,15 +462,15 @@ func TestStringOperators(t *testing.T) {
 
 	query := AllTypes.SELECT(
 		AllTypes.Text.EQ(AllTypes.Char),
-		AllTypes.Text.EQ(String("Text")),
+		AllTypes.Text.EQ(Text("Text")),
 		AllTypes.Text.NOT_EQ(AllTypes.VarCharPtr),
-		AllTypes.Text.NOT_EQ(String("Text")),
+		AllTypes.Text.NOT_EQ(Text("Text")),
 		AllTypes.Text.GT(AllTypes.Text),
-		AllTypes.Text.GT(String("Text")),
+		AllTypes.Text.GT(Text("Text")),
 		AllTypes.Text.GT_EQ(AllTypes.TextPtr),
-		AllTypes.Text.GT_EQ(String("Text")),
+		AllTypes.Text.GT_EQ(Text("Text")),
 		AllTypes.Text.LT(AllTypes.Char),
-		AllTypes.Text.LT(String("Text")),
+		AllTypes.Text.LT(Text("Text")),
 		AllTypes.Text.LT_EQ(AllTypes.VarChar),
 		AllTypes.Text.LT_EQ(String("Text")),
 		AllTypes.Text.BETWEEN(String("min"), String("max")),
@@ -490,13 +490,13 @@ func TestStringOperators(t *testing.T) {
 		OCTET_LENGTH(AllTypes.Text),
 		OCTET_LENGTH(String("length")),
 		LOWER(AllTypes.VarCharPtr),
-		LOWER(String("length")),
+		LOWER(Char(4)("length")),
 		UPPER(AllTypes.Char),
-		UPPER(String("upper")),
+		UPPER(VarChar()("upper")),
 		BTRIM(AllTypes.VarChar),
-		BTRIM(String("btrim")),
+		BTRIM(Char()("btrim")),
 		BTRIM(AllTypes.VarChar, String("AA")),
-		BTRIM(String("btrim"), String("AA")),
+		BTRIM(VarChar(11)("btrim"), String("AA")),
 		LTRIM(AllTypes.VarChar),
 		LTRIM(String("ltrim")),
 		LTRIM(AllTypes.VarChar, String("A")),
@@ -533,7 +533,7 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
@@ -630,9 +630,9 @@ func TestFloatOperators(t *testing.T) {
 		AllTypes.Numeric.BETWEEN(Float(1.34), AllTypes.Decimal).AS("between"),
 		AllTypes.Numeric.NOT_BETWEEN(AllTypes.Decimal.MUL(Float(3)), Float(100.12)).AS("not_between"),
 
-		TRUNC(AllTypes.Decimal.ADD(AllTypes.Decimal), Uint8(2)).AS("add1"),
+		TRUNC(AllTypes.Decimal.ADD(AllTypes.Decimal), Int8(2)).AS("add1"),
 		TRUNC(AllTypes.Decimal.ADD(Float(11.22)), Int8(2)).AS("add2"),
-		TRUNC(AllTypes.Decimal.SUB(AllTypes.DecimalPtr), Uint16(2)).AS("sub1"),
+		TRUNC(AllTypes.Decimal.SUB(AllTypes.DecimalPtr), Int32(2)).AS("sub1"),
 		TRUNC(AllTypes.Decimal.SUB(Float(11.22)), Int16(2)).AS("sub2"),
 		TRUNC(AllTypes.Decimal.MUL(AllTypes.DecimalPtr), Int16(2)).AS("mul1"),
 		TRUNC(AllTypes.Decimal.MUL(Float(11.22)), Int32(2)).AS("mul2"),
@@ -736,13 +736,13 @@ func TestIntegerOperators(t *testing.T) {
 		AllTypes.Integer.BETWEEN(Int(11), Int(200)).AS("between"),
 		AllTypes.Integer.NOT_BETWEEN(Int(66), Int(77)).AS("not_between"),
 		AllTypes.BigInt.LT(AllTypes.BigIntPtr).AS("lt1"),
-		AllTypes.BigInt.LT(Uint8(65)).AS("lt2"),
+		AllTypes.BigInt.LT(Int16(65)).AS("lt2"),
 		AllTypes.BigInt.LT_EQ(AllTypes.BigIntPtr).AS("lte1"),
-		AllTypes.BigInt.LT_EQ(Uint16(65)).AS("lte2"),
+		AllTypes.BigInt.LT_EQ(Int32(65)).AS("lte2"),
 		AllTypes.BigInt.GT(AllTypes.BigIntPtr).AS("gt1"),
-		AllTypes.BigInt.GT(Uint32(65)).AS("gt2"),
+		AllTypes.BigInt.GT(Int64(65)).AS("gt2"),
 		AllTypes.BigInt.GT_EQ(AllTypes.BigIntPtr).AS("gte1"),
-		AllTypes.BigInt.GT_EQ(Uint64(65)).AS("gte2"),
+		AllTypes.BigInt.GT_EQ(Int64(65)).AS("gte2"),
 
 		AllTypes.BigInt.ADD(AllTypes.BigInt).AS("add1"),
 		AllTypes.BigInt.ADD(Int(11)).AS("add2"),
@@ -1111,8 +1111,8 @@ func TestRowExpression(t *testing.T) {
 	nowAddHour := time.Now().Add(time.Hour)
 
 	stmt := SELECT(
-		ROW(Int32(1), Float32(11.22), String("john")).AS("row"),
-		WRAP(Int64(1), Float64(11.22), String("john")).AS("wrap"),
+		ROW(Int32(1), Real(11.22), Text("john")).AS("row"),
+		WRAP(Int64(1), Double(11.22), VarChar(10)("john")).AS("wrap"),
 
 		ROW(Bool(false), DateT(now)).EQ(ROW(Bool(true), DateT(now))),
 		WRAP(Bool(false), DateT(now)).NOT_EQ(WRAP(Bool(true), DateT(now))),
@@ -1131,7 +1131,7 @@ func TestRowExpression(t *testing.T) {
 
 	testutils.AssertStatementSql(t, stmt, `
 SELECT ROW($1::integer, $2::real, $3::text) AS "row",
-     ($4::bigint, $5::double precision, $6::text) AS "wrap",
+     ($4::bigint, $5::double precision, $6::varchar(10)) AS "wrap",
      ROW($7::boolean, $8::date) = ROW($9::boolean, $10::date),
      ($11::boolean, $12::date) != ($13::boolean, $14::date),
      ROW($15::time without time zone) IS DISTINCT FROM (row(NOW()::time)),
