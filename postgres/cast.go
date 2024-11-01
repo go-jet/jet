@@ -7,84 +7,45 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-type cast interface {
-	AS(castType string) Expression
-	// Cast expression AS bool type
-	AS_BOOL() BoolExpression
-	// Cast expression AS smallint type
-	AS_SMALLINT() IntegerExpression
-	// Cast expression AS integer type
-	AS_INTEGER() IntegerExpression
-	// Cast expression AS bigint type
-	AS_BIGINT() IntegerExpression
-	// Cast expression AS numeric type, using precision and optionally scale
-	AS_NUMERIC(precisionAndScale ...int) FloatExpression
-	// Cast expression AS real type
-	AS_REAL() FloatExpression
-	// Cast expression AS double precision type
-	AS_DOUBLE() FloatExpression
-	// Cast expression AS char with optional length
-	AS_CHAR(length ...int) StringExpression
-	// Cast expression AS date type
-	AS_DATE() DateExpression
-	// Cast expression AS numeric type, using precision and optionally scale
-	AS_DECIMAL() FloatExpression
-	// Cast expression AS time type
-	AS_TIME() TimeExpression
-	// Cast expression AS text type
-	AS_TEXT() StringExpression
-	// Cast expression AS bytea type
-	AS_BYTEA() StringExpression
-	// Cast expression AS time with time timezone type
-	AS_TIMEZ() TimezExpression
-	// Cast expression AS timestamp type
-	AS_TIMESTAMP() TimestampExpression
-	// Cast expression AS timestamp with timezone type
-	AS_TIMESTAMPZ() TimestampzExpression
-	// Cast expression AS interval type
-	AS_INTERVAL() IntervalExpression
-}
-
-type castImpl struct {
+type cast struct {
 	jet.Cast
 }
 
-// CAST function converts a expr (of any type) into latter specified datatype.
-func CAST(expr Expression) cast {
-	castImpl := &castImpl{}
+// CAST function converts an expr (of any type) into later specified datatype.
+func CAST(expr Expression) *cast {
+	ret := &cast{}
+	ret.Cast = jet.NewCastImpl(expr)
 
-	castImpl.Cast = jet.NewCastImpl(expr)
-
-	return castImpl
+	return ret
 }
 
-// Cast expression as castType
-func (b *castImpl) AS(castType string) Expression {
+// AS casts expression as castType
+func (b *cast) AS(castType string) Expression {
 	return b.Cast.AS(castType)
 }
 
-// Cast expression as bool type
-func (b *castImpl) AS_BOOL() BoolExpression {
+// AS_BOOL casts expression as bool type
+func (b *cast) AS_BOOL() BoolExpression {
 	return BoolExp(b.AS("boolean"))
 }
 
-// Cast expression as smallint type
-func (b *castImpl) AS_SMALLINT() IntegerExpression {
+// AS_SMALLINT casts expression as smallint type
+func (b *cast) AS_SMALLINT() IntegerExpression {
 	return IntExp(b.AS("smallint"))
 }
 
-// Cast expression AS integer type
-func (b *castImpl) AS_INTEGER() IntegerExpression {
+// AS_INTEGER casts expression AS integer type
+func (b *cast) AS_INTEGER() IntegerExpression {
 	return IntExp(b.AS("integer"))
 }
 
-// Cast expression AS bigint type
-func (b *castImpl) AS_BIGINT() IntegerExpression {
+// AS_BIGINT casts expression AS bigint type
+func (b *cast) AS_BIGINT() IntegerExpression {
 	return IntExp(b.AS("bigint"))
 }
 
-// Cast expression AS numeric type, using precision and optionally scale
-func (b *castImpl) AS_NUMERIC(precisionAndScale ...int) FloatExpression {
+// AS_NUMERIC casts expression as numeric type, using precision and optionally scale
+func (b *cast) AS_NUMERIC(precisionAndScale ...int) FloatExpression {
 	var castArgs string
 
 	var argLen = len(precisionAndScale)
@@ -97,22 +58,23 @@ func (b *castImpl) AS_NUMERIC(precisionAndScale ...int) FloatExpression {
 	return FloatExp(b.AS("numeric" + castArgs))
 }
 
-// Cast expression AS real type
-func (b *castImpl) AS_REAL() FloatExpression {
+// AS_REAL casts expression AS real type
+func (b *cast) AS_REAL() FloatExpression {
 	return FloatExp(b.AS("real"))
 }
 
-// Cast expression AS double precision type
-func (b *castImpl) AS_DOUBLE() FloatExpression {
+// AS_DOUBLE casts expression AS double precision type
+func (b *cast) AS_DOUBLE() FloatExpression {
 	return FloatExp(b.AS("double precision"))
 }
 
-// Cast expression AS text type
-func (b *castImpl) AS_TEXT() StringExpression {
+// AS_TEXT casts expression AS text type
+func (b *cast) AS_TEXT() StringExpression {
 	return StringExp(b.AS("text"))
 }
 
-func (b *castImpl) AS_CHAR(length ...int) StringExpression {
+// AS_CHAR casts expression AS a character type
+func (b *cast) AS_CHAR(length ...int) StringExpression {
 	if len(length) > 0 {
 		return StringExp(b.AS("char(" + strconv.Itoa(length[0]) + ")"))
 	}
@@ -120,42 +82,51 @@ func (b *castImpl) AS_CHAR(length ...int) StringExpression {
 	return StringExp(b.AS("char"))
 }
 
-// Cast expression AS date type
-func (b *castImpl) AS_DATE() DateExpression {
+// AS_VARCHAR casts expression AS a character varying type
+func (b *cast) AS_VARCHAR(length ...int) StringExpression {
+	if len(length) > 0 {
+		return StringExp(b.AS("varchar(" + strconv.Itoa(length[0]) + ")"))
+	}
+
+	return StringExp(b.AS("varchar"))
+}
+
+// AS_DATE casts expression AS date type
+func (b *cast) AS_DATE() DateExpression {
 	return DateExp(b.AS("date"))
 }
 
-// Cast expression AS date type
-func (b *castImpl) AS_DECIMAL() FloatExpression {
+// AS_DECIMAL casts expression AS date type
+func (b *cast) AS_DECIMAL() FloatExpression {
 	return FloatExp(b.AS("decimal"))
 }
 
-// Cast expression AS text type
-func (b *castImpl) AS_BYTEA() StringExpression {
+// AS_BYTEA casts expression AS text type
+func (b *cast) AS_BYTEA() StringExpression {
 	return StringExp(b.AS("bytea"))
 }
 
-// Cast expression AS date type
-func (b *castImpl) AS_TIME() TimeExpression {
+// AS_TIME casts expression AS date type
+func (b *cast) AS_TIME() TimeExpression {
 	return TimeExp(b.AS("time without time zone"))
 }
 
-// Cast expression AS time with time timezone type
-func (b *castImpl) AS_TIMEZ() TimezExpression {
+// AS_TIMEZ casts expression AS time with time timezone type
+func (b *cast) AS_TIMEZ() TimezExpression {
 	return TimezExp(b.AS("time with time zone"))
 }
 
-// Cast expression AS timestamp type
-func (b *castImpl) AS_TIMESTAMP() TimestampExpression {
+// AS_TIMESTAMP casts expression AS timestamp type
+func (b *cast) AS_TIMESTAMP() TimestampExpression {
 	return TimestampExp(b.AS("timestamp without time zone"))
 }
 
-// Cast expression AS timestamp with timezone type
-func (b *castImpl) AS_TIMESTAMPZ() TimestampzExpression {
+// AS_TIMESTAMPZ casts expression AS timestamp with timezone type
+func (b *cast) AS_TIMESTAMPZ() TimestampzExpression {
 	return TimestampzExp(b.AS("timestamp with time zone"))
 }
 
-// Cast expression AS interval type
-func (b *castImpl) AS_INTERVAL() IntervalExpression {
+// AS_INTERVAL casts expression AS interval type
+func (b *cast) AS_INTERVAL() IntervalExpression {
 	return IntervalExp(b.AS("interval"))
 }
