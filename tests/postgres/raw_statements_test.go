@@ -141,7 +141,9 @@ RETURNING link.id AS "link.id",
 }
 
 func TestRawStatementRows(t *testing.T) {
-	stmt := RawStatement(`
+	var stmt Statement
+
+	stmt = RawStatement(`
 		SELECT actor.actor_id AS "actor.actor_id",
 			 actor.first_name AS "actor.first_name",
 			 actor.last_name AS "actor.last_name",

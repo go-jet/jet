@@ -3867,6 +3867,68 @@ ORDER BY film.film_id;
 `)
 }
 
+func TestCustomSetReturningFunction(t *testing.T) {
+	skipForCockroachDB(t) // no set Set-Returning Functions
+
+	inventoryID := IntegerColumn("inventoryID")
+	filmsInStock := CTE("film_in_stock", inventoryID)
+
+	stmt := WITH(
+		filmsInStock.AS(
+			RawStatement("SELECT * FROM dvds.film_in_stock(#filmID, #storeID)",
+				RawArgs{
+					"#filmID":  1,
+					"#storeID": 2,
+				}),
+		),
+	)(
+		SELECT(
+			Inventory.AllColumns,
+		).FROM(Inventory.
+			INNER_JOIN(filmsInStock, Inventory.InventoryID.EQ(inventoryID)),
+		),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+WITH film_in_stock ("inventoryID") AS (SELECT * FROM dvds.film_in_stock($1, $2)
+)
+SELECT inventory.inventory_id AS "inventory.inventory_id",
+     inventory.film_id AS "inventory.film_id",
+     inventory.store_id AS "inventory.store_id",
+     inventory.last_update AS "inventory.last_update"
+FROM dvds.inventory
+     INNER JOIN film_in_stock ON (inventory.inventory_id = film_in_stock."inventoryID");
+`)
+
+	var dest []model.Inventory
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"InventoryID": 5,
+		"FilmID": 1,
+		"StoreID": 2,
+		"LastUpdate": "2006-02-15T10:09:17Z"
+	},
+	{
+		"InventoryID": 7,
+		"FilmID": 1,
+		"StoreID": 2,
+		"LastUpdate": "2006-02-15T10:09:17Z"
+	},
+	{
+		"InventoryID": 8,
+		"FilmID": 1,
+		"StoreID": 2,
+		"LastUpdate": "2006-02-15T10:09:17Z"
+	}
+]
+`)
+}
+
 var customer0 = model.Customer{
 	CustomerID: 1,
 	StoreID:    1,
