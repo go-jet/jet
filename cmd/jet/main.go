@@ -42,7 +42,11 @@ var (
 	ignoreViews  string
 	ignoreEnums  string
 
-	destDir string
+	destDir  string
+	modelPkg string
+	tablePkg string
+	viewPkg  string
+	enumPkg  string
 )
 
 func init() {
@@ -71,6 +75,10 @@ func init() {
 	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore`)
 
 	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
+	flag.StringVar(&modelPkg, "model-pkg", "", "Package name for the model files generated")
+	flag.StringVar(&tablePkg, "table-pkg", "", "Package name for the table files generated")
+	flag.StringVar(&viewPkg, "view-pkg", "", "Package name for the view files generated")
+	flag.StringVar(&enumPkg, "enum-pkg", "", "Package name for the enum files generated")
 }
 
 func main() {
@@ -170,6 +178,7 @@ func usage() {
 		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
+		"model-pkg", "table-pkg", "view-pkg", "enum-pkg",
 	}
 
 	for _, name := range order {
@@ -243,10 +252,16 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 		return strslice.Contains(ignoreEnums, strings.ToLower(enum.Name))
 	}
 
+	model := template.DefaultModel()
+
+	if modelPkg != "" {
+		model = model.UsePath("/" + modelPkg)
+	}
+
 	return template.Default(dialect).
 		UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 			return template.DefaultSchema(schemaMetaData).
-				UseModel(template.DefaultModel().
+				UseModel(model.
 					UseTable(func(table metadata.Table) template.TableModel {
 						if shouldSkipTable(table) {
 							return template.TableModel{Skip: true}
@@ -271,18 +286,33 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 						if shouldSkipTable(table) {
 							return template.TableSQLBuilder{Skip: true}
 						}
+
+						if tablePkg != "" {
+							return template.DefaultTableSQLBuilder(table).UsePath("/" + tablePkg)
+						}
+
 						return template.DefaultTableSQLBuilder(table)
 					}).
 					UseView(func(table metadata.Table) template.ViewSQLBuilder {
 						if shouldSkipView(table) {
 							return template.ViewSQLBuilder{Skip: true}
 						}
+
+						if viewPkg != "" {
+							return template.DefaultViewSQLBuilder(table).UsePath("/" + viewPkg)
+						}
+
 						return template.DefaultViewSQLBuilder(table)
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumSQLBuilder {
 						if shouldSkipEnum(enum) {
 							return template.EnumSQLBuilder{Skip: true}
 						}
+
+						if enumPkg != "" {
+							return template.DefaultEnumSQLBuilder(enum).UsePath("/" + enumPkg)
+						}
+
 						return template.DefaultEnumSQLBuilder(enum)
 					}),
 				)
