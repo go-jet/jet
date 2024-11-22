@@ -9,6 +9,8 @@ jobs:
     docker:
       # specify the version
       - image: cimg/go:1.22.8
+
+      # Please keep the version in sync with test/docker-compose.yaml
       - image: cimg/postgres:14.10
         environment:
           POSTGRES_USER: jet
@@ -16,6 +18,7 @@ jobs:
           POSTGRES_DB: jetdb
           PGPORT: 50901
 
+      # Please keep the version in sync with test/docker-compose.yaml
       - image: circleci/mysql:8.0.27
         command: [ --default-authentication-plugin=mysql_native_password ]
         environment:
@@ -25,6 +28,7 @@ jobs:
           MYSQL_PASSWORD: jet
           MYSQL_TCP_PORT: 50902
 
+      # Please keep the version in sync with test/docker-compose.yaml
       - image: circleci/mariadb:10.3
         command: [ '--default-authentication-plugin=mysql_native_password', '--port=50903' ]
         environment:
@@ -33,6 +37,7 @@ jobs:
           MYSQL_USER: jet
           MYSQL_PASSWORD: jet
 
+      # Please keep the version in sync with test/docker-compose.yaml
       - image: cockroachdb/cockroach-unstable:v23.1.0-rc.2
         command: ['start-single-node', '--accept-sql-without-tls']
         environment:
