@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -112,17 +113,22 @@ func TestCmdGeneratorWithPkgNames(t *testing.T) {
 	err := os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
 
+	// Testing with custom package paths
+	modelPath := "./newmodel"
+	tablePath := "./newtable"
+	viewPath := "./newview"
+	enumPath := "./newenum"
+
 	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost",
 		"-port="+strconv.Itoa(dbconfig.PgPort),
 		"-user=jet",
 		"-password=jet",
 		"-schema=dvds",
 		"-path="+genTestDir2,
-		"-model-pkg=newmodel",
-		"-table-pkg=newtable",
-		"-view-pkg=newview",
-		"-enum-pkg=newenum",
-	)
+		"-model-pkg="+modelPath,
+		"-table-pkg="+tablePath,
+		"-view-pkg="+viewPath,
+		"-enum-pkg="+enumPath)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -130,10 +136,47 @@ func TestCmdGeneratorWithPkgNames(t *testing.T) {
 	err = cmd.Run()
 	require.NoError(t, err)
 
-	assertGeneratedFilesWithPkgNames(t)
+	assertGeneratedFilesWithPkgNames(
+		t,
+		modelPath,
+		tablePath,
+		viewPath,
+		enumPath,
+	)
 
 	err = os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
+
+	// Testing with nested paths
+	modelPath = "./db/newmodel"
+	tablePath = "./db/newtable"
+	viewPath = "./db/newview"
+	enumPath = "./db/newenum"
+
+	cmd = exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost",
+		"-port="+strconv.Itoa(dbconfig.PgPort),
+		"-user=jet",
+		"-password=jet",
+		"-schema=dvds",
+		"-path="+genTestDir2,
+		"-model-pkg="+modelPath,
+		"-table-pkg="+tablePath,
+		"-view-pkg="+viewPath,
+		"-enum-pkg="+enumPath)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFilesWithPkgNames(
+		t,
+		modelPath,
+		tablePath,
+		viewPath,
+		enumPath,
+	)
 }
 
 func TestGeneratorIgnoreTables(t *testing.T) {
@@ -339,36 +382,88 @@ func assertGeneratedFiles(t *testing.T) {
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/model/actor.go", actorModelFile)
 }
 
-func assertGeneratedFilesWithPkgNames(t *testing.T) {
+func assertGeneratedFilesWithPkgNames(t *testing.T, modelPkgPath, tablePkgPath, viewPkgPath, enumPkgPath string) {
+	// We can get the package names from the base of the package paths for
+	// replacing package names in the default file content strings
+	modelPkg := filepath.Base(modelPkgPath)
+	tablePkg := filepath.Base(tablePkgPath)
+	viewPkg := filepath.Base(viewPkgPath)
+	enumPkg := filepath.Base(enumPkgPath)
+
 	// Table SQL Builder files
-	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/newtable",
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", tablePkgPath),
 		"actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
-		"payment.go", "rental.go", "staff.go", "store.go", "table_use_schema.go")
+		"payment.go", "rental.go", "staff.go", "store.go", "table_use_schema.go",
+	)
 
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/newtable/actor.go", actorSQLBuilderFileWithPkgName)
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/newtable/table_use_schema.go", tableUseSchemaFileWithPkgName)
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", tablePkgPath, "actor.go"),
+		getFileContentWithNewPkg(tablePkg, actorSQLBuilderFile),
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", tablePkgPath, "table_use_schema.go"),
+		getFileContentWithNewPkg(tablePkg, tableUseSchemaFile),
+	)
 
 	// View SQL Builder files
-	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/newview",
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", viewPkgPath),
 		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
-		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view_use_schema.go")
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view_use_schema.go",
+	)
 
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/newview/actor_info.go", actorInfoSQLBuilderFileWithPkgName)
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/newview/view_use_schema.go", viewUseSchemaFileWithPkgName)
+	testutils.AssertFileContent(t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", viewPkgPath, "actor_info.go"),
+		getFileContentWithNewPkg(viewPkg, actorInfoSQLBuilderFile),
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", viewPkgPath, "view_use_schema.go"),
+		getFileContentWithNewPkg(viewPkg, viewUseSchemaFile),
+	)
 
 	// Enums SQL Builder files
-	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/newenum", "mpaa_rating.go")
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/newenum/mpaa_rating.go", mpaaRatingEnumFileWithPkgName)
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", enumPkgPath),
+		"mpaa_rating.go",
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", enumPkgPath, "mpaa_rating.go"),
+		getFileContentWithNewPkg(enumPkg, mpaaRatingEnumFile),
+	)
 
 	// Model files
-	testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/newmodel", "actor.go", "address.go", "category.go", "city.go", "country.go",
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", modelPkgPath),
+		"actor.go", "address.go", "category.go", "city.go", "country.go",
 		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
 		"payment.go", "rental.go", "staff.go", "store.go", "mpaa_rating.go",
 		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
-		"customer_list.go", "sales_by_store.go", "staff_list.go")
+		"customer_list.go", "sales_by_store.go", "staff_list.go",
+	)
 
-	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/newmodel/actor.go", actorModelFileWithPkgName)
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", modelPkgPath, "actor.go"),
+		getFileContentWithNewPkg(modelPkg, actorModelFile),
+	)
+}
+
+func getFileContentWithNewPkg(pkgName, fileContent string) string {
+	regex := regexp.MustCompile(`package \w+`)
+	return regex.ReplaceAllString(fileContent, "package "+pkgName)
 }
 
 var mpaaRatingEnumFile = `
@@ -398,33 +493,6 @@ var MpaaRating = &struct {
 }
 `
 
-var mpaaRatingEnumFileWithPkgName = `
-//
-// Code generated by go-jet DO NOT EDIT.
-//
-// WARNING: Changes to this file may cause incorrect behavior
-// and will be lost if the code is regenerated
-//
-
-package newenum
-
-import "github.com/go-jet/jet/v2/postgres"
-
-var MpaaRating = &struct {
-	G    postgres.StringExpression
-	Pg   postgres.StringExpression
-	Pg13 postgres.StringExpression
-	R    postgres.StringExpression
-	Nc17 postgres.StringExpression
-}{
-	G:    postgres.NewEnumValue("G"),
-	Pg:   postgres.NewEnumValue("PG"),
-	Pg13: postgres.NewEnumValue("PG-13"),
-	R:    postgres.NewEnumValue("R"),
-	Nc17: postgres.NewEnumValue("NC-17"),
-}
-`
-
 var actorSQLBuilderFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
@@ -434,93 +502,6 @@ var actorSQLBuilderFile = `
 //
 
 package table
-
-import (
-	"github.com/go-jet/jet/v2/postgres"
-)
-
-var Actor = newActorTable("dvds", "actor", "")
-
-type actorTable struct {
-	postgres.Table
-
-	// Columns
-	ActorID    postgres.ColumnInteger
-	FirstName  postgres.ColumnString
-	LastName   postgres.ColumnString
-	LastUpdate postgres.ColumnTimestamp
-
-	AllColumns     postgres.ColumnList
-	MutableColumns postgres.ColumnList
-}
-
-type ActorTable struct {
-	actorTable
-
-	EXCLUDED actorTable
-}
-
-// AS creates new ActorTable with assigned alias
-func (a ActorTable) AS(alias string) *ActorTable {
-	return newActorTable(a.SchemaName(), a.TableName(), alias)
-}
-
-// Schema creates new ActorTable with assigned schema name
-func (a ActorTable) FromSchema(schemaName string) *ActorTable {
-	return newActorTable(schemaName, a.TableName(), a.Alias())
-}
-
-// WithPrefix creates new ActorTable with assigned table prefix
-func (a ActorTable) WithPrefix(prefix string) *ActorTable {
-	return newActorTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
-}
-
-// WithSuffix creates new ActorTable with assigned table suffix
-func (a ActorTable) WithSuffix(suffix string) *ActorTable {
-	return newActorTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
-}
-
-func newActorTable(schemaName, tableName, alias string) *ActorTable {
-	return &ActorTable{
-		actorTable: newActorTableImpl(schemaName, tableName, alias),
-		EXCLUDED:   newActorTableImpl("", "excluded", ""),
-	}
-}
-
-func newActorTableImpl(schemaName, tableName, alias string) actorTable {
-	var (
-		ActorIDColumn    = postgres.IntegerColumn("actor_id")
-		FirstNameColumn  = postgres.StringColumn("first_name")
-		LastNameColumn   = postgres.StringColumn("last_name")
-		LastUpdateColumn = postgres.TimestampColumn("last_update")
-		allColumns       = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
-		mutableColumns   = postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
-	)
-
-	return actorTable{
-		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
-
-		//Columns
-		ActorID:    ActorIDColumn,
-		FirstName:  FirstNameColumn,
-		LastName:   LastNameColumn,
-		LastUpdate: LastUpdateColumn,
-
-		AllColumns:     allColumns,
-		MutableColumns: mutableColumns,
-	}
-}
-`
-
-var actorSQLBuilderFileWithPkgName = `
-//
-// Code generated by go-jet DO NOT EDIT.
-//
-// WARNING: Changes to this file may cause incorrect behavior
-// and will be lost if the code is regenerated
-//
-
-package newtable
 
 import (
 	"github.com/go-jet/jet/v2/postgres"
@@ -630,37 +611,6 @@ func UseSchema(schema string) {
 }
 `
 
-var tableUseSchemaFileWithPkgName = `
-//
-// Code generated by go-jet DO NOT EDIT.
-//
-// WARNING: Changes to this file may cause incorrect behavior
-// and will be lost if the code is regenerated
-//
-
-package newtable
-
-// UseSchema sets a new schema name for all generated table SQL builder types. It is recommended to invoke
-// this method only once at the beginning of the program.
-func UseSchema(schema string) {
-	Actor = Actor.FromSchema(schema)
-	Address = Address.FromSchema(schema)
-	Category = Category.FromSchema(schema)
-	City = City.FromSchema(schema)
-	Country = Country.FromSchema(schema)
-	Customer = Customer.FromSchema(schema)
-	Film = Film.FromSchema(schema)
-	FilmActor = FilmActor.FromSchema(schema)
-	FilmCategory = FilmCategory.FromSchema(schema)
-	Inventory = Inventory.FromSchema(schema)
-	Language = Language.FromSchema(schema)
-	Payment = Payment.FromSchema(schema)
-	Rental = Rental.FromSchema(schema)
-	Staff = Staff.FromSchema(schema)
-	Store = Store.FromSchema(schema)
-}
-`
-
 var actorModelFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
@@ -670,28 +620,6 @@ var actorModelFile = `
 //
 
 package model
-
-import (
-	"time"
-)
-
-type Actor struct {
-	ActorID    int32 ` + "`sql:\"primary_key\"`" + `
-	FirstName  string
-	LastName   string
-	LastUpdate time.Time
-}
-`
-
-var actorModelFileWithPkgName = `
-//
-// Code generated by go-jet DO NOT EDIT.
-//
-// WARNING: Changes to this file may cause incorrect behavior
-// and will be lost if the code is regenerated
-//
-
-package newmodel
 
 import (
 	"time"
@@ -792,93 +720,6 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 }
 `
 
-var actorInfoSQLBuilderFileWithPkgName = `
-//
-// Code generated by go-jet DO NOT EDIT.
-//
-// WARNING: Changes to this file may cause incorrect behavior
-// and will be lost if the code is regenerated
-//
-
-package newview
-
-import (
-	"github.com/go-jet/jet/v2/postgres"
-)
-
-var ActorInfo = newActorInfoTable("dvds", "actor_info", "")
-
-type actorInfoTable struct {
-	postgres.Table
-
-	// Columns
-	ActorID   postgres.ColumnInteger
-	FirstName postgres.ColumnString
-	LastName  postgres.ColumnString
-	FilmInfo  postgres.ColumnString
-
-	AllColumns     postgres.ColumnList
-	MutableColumns postgres.ColumnList
-}
-
-type ActorInfoTable struct {
-	actorInfoTable
-
-	EXCLUDED actorInfoTable
-}
-
-// AS creates new ActorInfoTable with assigned alias
-func (a ActorInfoTable) AS(alias string) *ActorInfoTable {
-	return newActorInfoTable(a.SchemaName(), a.TableName(), alias)
-}
-
-// Schema creates new ActorInfoTable with assigned schema name
-func (a ActorInfoTable) FromSchema(schemaName string) *ActorInfoTable {
-	return newActorInfoTable(schemaName, a.TableName(), a.Alias())
-}
-
-// WithPrefix creates new ActorInfoTable with assigned table prefix
-func (a ActorInfoTable) WithPrefix(prefix string) *ActorInfoTable {
-	return newActorInfoTable(a.SchemaName(), prefix+a.TableName(), a.TableName())
-}
-
-// WithSuffix creates new ActorInfoTable with assigned table suffix
-func (a ActorInfoTable) WithSuffix(suffix string) *ActorInfoTable {
-	return newActorInfoTable(a.SchemaName(), a.TableName()+suffix, a.TableName())
-}
-
-func newActorInfoTable(schemaName, tableName, alias string) *ActorInfoTable {
-	return &ActorInfoTable{
-		actorInfoTable: newActorInfoTableImpl(schemaName, tableName, alias),
-		EXCLUDED:       newActorInfoTableImpl("", "excluded", ""),
-	}
-}
-
-func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
-	var (
-		ActorIDColumn   = postgres.IntegerColumn("actor_id")
-		FirstNameColumn = postgres.StringColumn("first_name")
-		LastNameColumn  = postgres.StringColumn("last_name")
-		FilmInfoColumn  = postgres.StringColumn("film_info")
-		allColumns      = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
-		mutableColumns  = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
-	)
-
-	return actorInfoTable{
-		Table: postgres.NewTable(schemaName, tableName, alias, allColumns...),
-
-		//Columns
-		ActorID:   ActorIDColumn,
-		FirstName: FirstNameColumn,
-		LastName:  LastNameColumn,
-		FilmInfo:  FilmInfoColumn,
-
-		AllColumns:     allColumns,
-		MutableColumns: mutableColumns,
-	}
-}
-`
-
 var viewUseSchemaFile = `
 //
 // Code generated by go-jet DO NOT EDIT.
@@ -888,29 +729,6 @@ var viewUseSchemaFile = `
 //
 
 package view
-
-// UseSchema sets a new schema name for all generated view SQL builder types. It is recommended to invoke
-// this method only once at the beginning of the program.
-func UseSchema(schema string) {
-	ActorInfo = ActorInfo.FromSchema(schema)
-	CustomerList = CustomerList.FromSchema(schema)
-	FilmList = FilmList.FromSchema(schema)
-	NicerButSlowerFilmList = NicerButSlowerFilmList.FromSchema(schema)
-	SalesByFilmCategory = SalesByFilmCategory.FromSchema(schema)
-	SalesByStore = SalesByStore.FromSchema(schema)
-	StaffList = StaffList.FromSchema(schema)
-}
-`
-
-var viewUseSchemaFileWithPkgName = `
-//
-// Code generated by go-jet DO NOT EDIT.
-//
-// WARNING: Changes to this file may cause incorrect behavior
-// and will be lost if the code is regenerated
-//
-
-package newview
 
 // UseSchema sets a new schema name for all generated view SQL builder types. It is recommended to invoke
 // this method only once at the beginning of the program.
