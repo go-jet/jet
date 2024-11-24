@@ -8,6 +8,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
@@ -79,12 +80,19 @@ func init() {
 	flag.StringVar(&tablePkg, "table-pkg", "table", "Relative path for the Table files package from the destination directory.")
 	flag.StringVar(&viewPkg, "view-pkg", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "enum-pkg", "enum", "Relative path for the Enum files package from the destination directory.")
-}
 
-func main() {
 	flag.Usage = usage
 	flag.Parse()
 
+	// Convert the OS-specific path separator to slashes for cross-platform compatibility.
+	destDir = filepath.ToSlash(destDir)
+	modelPkg = filepath.ToSlash(modelPkg)
+	tablePkg = filepath.ToSlash(tablePkg)
+	viewPkg = filepath.ToSlash(viewPkg)
+	enumPkg = filepath.ToSlash(enumPkg)
+}
+
+func main() {
 	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") {
 		printErrorAndExit("ERROR: required flag(s) missing")
 	}
