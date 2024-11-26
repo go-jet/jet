@@ -12,18 +12,18 @@ import (
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"github.com/stretchr/testify/require"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
 const tempTestDir = "./.tempTestDir"
 
-var defaultModelPath = path.Join(tempTestDir, "dvds/model")
-var defaultActorModelFilePath = path.Join(tempTestDir, "dvds/model", "actor.go")
-var defaultTableSQLBuilderFilePath = path.Join(tempTestDir, "dvds/table")
-var defaultViewSQLBuilderFilePath = path.Join(tempTestDir, "dvds/view")
-var defaultEnumSQLBuilderFilePath = path.Join(tempTestDir, "dvds/enum")
-var defaultActorSQLBuilderFilePath = path.Join(tempTestDir, "dvds/table", "actor.go")
+var defaultModelPath = filepath.Join(tempTestDir, "dvds/model")
+var defaultActorModelFilePath = filepath.Join(tempTestDir, "dvds/model", "actor.go")
+var defaultTableSQLBuilderFilePath = filepath.Join(tempTestDir, "dvds/table")
+var defaultViewSQLBuilderFilePath = filepath.Join(tempTestDir, "dvds/view")
+var defaultEnumSQLBuilderFilePath = filepath.Join(tempTestDir, "dvds/enum")
+var defaultActorSQLBuilderFilePath = filepath.Join(tempTestDir, "dvds/table", "actor.go")
 
 func dbConnection(dbName string) mysql2.DBConnection {
 	if sourceIsMariaDB() {

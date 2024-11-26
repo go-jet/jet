@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
-	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 	"unicode"
@@ -90,7 +90,7 @@ func DefaultViewSQLBuilder(viewMetaData metadata.Table) ViewSQLBuilder {
 
 // PackageName returns package name of table sql builder types
 func (tb TableSQLBuilder) PackageName() string {
-	return path.Base(tb.Path)
+	return filepath.Base(tb.Path)
 }
 
 // UsePath returns new TableSQLBuilder with new relative path set
@@ -228,7 +228,7 @@ func DefaultEnumSQLBuilder(enumMetaData metadata.Enum) EnumSQLBuilder {
 
 // PackageName returns enum sql builder package name
 func (e EnumSQLBuilder) PackageName() string {
-	return path.Base(e.Path)
+	return filepath.Base(e.Path)
 }
 
 // UsePath returns new EnumSQLBuilder with new path set

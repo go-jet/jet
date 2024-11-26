@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/filesys"
-	"path"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -20,7 +20,7 @@ func ProcessSchema(dirPath string, schemaMetaData metadata.Schema, generatorTemp
 	}
 
 	schemaTemplate := generatorTemplate.Schema(schemaMetaData)
-	schemaPath := path.Join(dirPath, schemaTemplate.Path)
+	schemaPath := filepath.Join(dirPath, schemaTemplate.Path)
 
 	fmt.Println("Destination directory:", schemaPath)
 	fmt.Println("Cleaning up destination directory...")
@@ -50,7 +50,7 @@ func processModel(dirPath string, schemaMetaData metadata.Schema, schemaTemplate
 		return nil
 	}
 
-	modelDirPath := path.Join(dirPath, modelTemplate.Path)
+	modelDirPath := filepath.Join(dirPath, modelTemplate.Path)
 
 	err := filesys.EnsureDirPathExist(modelDirPath)
 	if err != nil {
@@ -83,7 +83,7 @@ func processSQLBuilder(dirPath string, dialect jet.Dialect, schemaMetaData metad
 		return nil
 	}
 
-	sqlBuilderPath := path.Join(dirPath, sqlBuilderTemplate.Path)
+	sqlBuilderPath := filepath.Join(dirPath, sqlBuilderTemplate.Path)
 
 	err := processTableSQLBuilder("table", sqlBuilderPath, dialect, schemaMetaData, schemaMetaData.TablesMetaData, sqlBuilderTemplate)
 	if err != nil {
@@ -117,7 +117,7 @@ func processEnumSQLBuilder(dirPath string, dialect jet.Dialect, enumsMetaData []
 			continue
 		}
 
-		enumSQLBuilderPath := path.Join(dirPath, enumTemplate.Path)
+		enumSQLBuilderPath := filepath.Join(dirPath, enumTemplate.Path)
 
 		err := filesys.EnsureDirPathExist(enumSQLBuilderPath)
 		if err != nil {
@@ -182,7 +182,7 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 			continue
 		}
 
-		tableSQLBuilderPath := path.Join(dirPath, tableSQLBuilder.Path)
+		tableSQLBuilderPath := filepath.Join(dirPath, tableSQLBuilder.Path)
 
 		err := filesys.EnsureDirPathExist(tableSQLBuilderPath)
 		if err != nil {
@@ -255,7 +255,7 @@ func generateUseSchemaFunc(dirPath, fileTypes string, builders []TableSQLBuilder
 		return fmt.Errorf("failed to generate use schema template: %w", err)
 	}
 
-	basePath := path.Join(dirPath, builders[0].Path)
+	basePath := filepath.Join(dirPath, builders[0].Path)
 	fileName := fileTypes + "_use_schema"
 
 	err = filesys.FormatAndSaveGoFile(basePath, fileName, text)

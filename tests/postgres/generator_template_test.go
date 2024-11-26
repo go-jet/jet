@@ -3,7 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
@@ -20,13 +20,13 @@ import (
 
 const tempTestDir = "./.tempTestDir"
 
-var defaultModelPath = path.Join(tempTestDir, "jetdb/dvds/model")
-var defaultSqlBuilderPath = path.Join(tempTestDir, "jetdb/dvds/table")
-var defaultActorModelFilePath = path.Join(tempTestDir, "jetdb/dvds/model", "actor.go")
-var defaultTableSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/table")
-var defaultViewSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/view")
-var defaultEnumSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/enum")
-var defaultActorSQLBuilderFilePath = path.Join(tempTestDir, "jetdb/dvds/table", "actor.go")
+var defaultModelPath = filepath.Join(tempTestDir, "jetdb/dvds/model")
+var defaultSqlBuilderPath = filepath.Join(tempTestDir, "jetdb/dvds/table")
+var defaultActorModelFilePath = filepath.Join(tempTestDir, "jetdb/dvds/model", "actor.go")
+var defaultTableSQLBuilderFilePath = filepath.Join(tempTestDir, "jetdb/dvds/table")
+var defaultViewSQLBuilderFilePath = filepath.Join(tempTestDir, "jetdb/dvds/view")
+var defaultEnumSQLBuilderFilePath = filepath.Join(tempTestDir, "jetdb/dvds/enum")
+var defaultActorSQLBuilderFilePath = filepath.Join(tempTestDir, "jetdb/dvds/table", "actor.go")
 
 var dbConnection = postgres.DBConnection{
 	Host:       dbconfig.PgHost,
