@@ -125,10 +125,10 @@ func TestCmdGeneratorWithPkgNames(t *testing.T) {
 		"-password=jet",
 		"-schema=dvds",
 		"-path="+genTestDir2,
-		"-model-pkg="+modelPath,
-		"-table-pkg="+tablePath,
-		"-view-pkg="+viewPath,
-		"-enum-pkg="+enumPath)
+		"-rel-model-path="+modelPath,
+		"-rel-table-path="+tablePath,
+		"-rel-view-path="+viewPath,
+		"-rel-enum-path="+enumPath)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -159,10 +159,10 @@ func TestCmdGeneratorWithPkgNames(t *testing.T) {
 		"-password=jet",
 		"-schema=dvds",
 		"-path="+genTestDir2,
-		"-model-pkg="+modelPath,
-		"-table-pkg="+tablePath,
-		"-view-pkg="+viewPath,
-		"-enum-pkg="+enumPath)
+		"-rel-model-path="+modelPath,
+		"-rel-table-path="+tablePath,
+		"-rel-view-path="+viewPath,
+		"-rel-enum-path="+enumPath)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

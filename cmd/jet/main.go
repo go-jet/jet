@@ -75,10 +75,10 @@ func init() {
 	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore.`)
 
 	flag.StringVar(&destDir, "path", "", "Destination directory for files generated.")
-	flag.StringVar(&modelPkg, "model-pkg", "model", "Relative path for the Model files package from the destination directory.")
-	flag.StringVar(&tablePkg, "table-pkg", "table", "Relative path for the Table files package from the destination directory.")
-	flag.StringVar(&viewPkg, "view-pkg", "view", "Relative path for the View files package from the destination directory.")
-	flag.StringVar(&enumPkg, "enum-pkg", "enum", "Relative path for the Enum files package from the destination directory.")
+	flag.StringVar(&modelPkg, "rel-model-path", "model", "Relative path for the Model files package from the destination directory.")
+	flag.StringVar(&tablePkg, "rel-table-path", "table", "Relative path for the Table files package from the destination directory.")
+	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
+	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 }
 
 func main() {
