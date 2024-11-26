@@ -178,7 +178,7 @@ func usage() {
 		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
-		"model-pkg", "table-pkg", "view-pkg", "enum-pkg",
+		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path",
 	}
 
 	for _, name := range order {
@@ -195,7 +195,7 @@ func usage() {
 	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
 	$ jet -source=mysql -host=localhost -port=3306 -user=jet -password=jet -dbname=jetdb -path=./gen
 	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen
-	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen -model-pkg=./entity
+	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen -rel-model-path=./entity
 	`)
 }
 
