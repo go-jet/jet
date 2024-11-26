@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"strconv"
 	"testing"
 
@@ -106,6 +107,76 @@ func TestCmdGenerator(t *testing.T) {
 
 	err = os.RemoveAll(genTestDir2)
 	require.NoError(t, err)
+}
+
+func TestCmdGeneratorWithPkgNames(t *testing.T) {
+	err := os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
+
+	// Testing with custom package paths
+	modelPath := "./newmodel"
+	tablePath := "./newtable"
+	viewPath := "./newview"
+	enumPath := "./newenum"
+
+	cmd := exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost",
+		"-port="+strconv.Itoa(dbconfig.PgPort),
+		"-user=jet",
+		"-password=jet",
+		"-schema=dvds",
+		"-path="+genTestDir2,
+		"-rel-model-path="+modelPath,
+		"-rel-table-path="+tablePath,
+		"-rel-view-path="+viewPath,
+		"-rel-enum-path="+enumPath)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFilesWithPkgNames(
+		t,
+		modelPath,
+		tablePath,
+		viewPath,
+		enumPath,
+	)
+
+	err = os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
+
+	// Testing with nested paths
+	modelPath = "./db/newmodel"
+	tablePath = "./db/newtable"
+	viewPath = "./db/newview"
+	enumPath = "./db/newenum"
+
+	cmd = exec.Command("jet", "-source=PostgreSQL", "-dbname=jetdb", "-host=localhost",
+		"-port="+strconv.Itoa(dbconfig.PgPort),
+		"-user=jet",
+		"-password=jet",
+		"-schema=dvds",
+		"-path="+genTestDir2,
+		"-rel-model-path="+modelPath,
+		"-rel-table-path="+tablePath,
+		"-rel-view-path="+viewPath,
+		"-rel-enum-path="+enumPath)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err = cmd.Run()
+	require.NoError(t, err)
+
+	assertGeneratedFilesWithPkgNames(
+		t,
+		modelPath,
+		tablePath,
+		viewPath,
+		enumPath,
+	)
 }
 
 func TestGeneratorIgnoreTables(t *testing.T) {
@@ -309,6 +380,90 @@ func assertGeneratedFiles(t *testing.T) {
 		"customer_list.go", "sales_by_store.go", "staff_list.go")
 
 	testutils.AssertFileContent(t, "./.gentestdata2/jetdb/dvds/model/actor.go", actorModelFile)
+}
+
+func assertGeneratedFilesWithPkgNames(t *testing.T, modelPkgPath, tablePkgPath, viewPkgPath, enumPkgPath string) {
+	// We can get the package names from the base of the package paths for
+	// replacing package names in the default file content strings
+	modelPkg := filepath.Base(modelPkgPath)
+	tablePkg := filepath.Base(tablePkgPath)
+	viewPkg := filepath.Base(viewPkgPath)
+	enumPkg := filepath.Base(enumPkgPath)
+
+	// Table SQL Builder files
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", tablePkgPath),
+		"actor.go", "address.go", "category.go", "city.go", "country.go",
+		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
+		"payment.go", "rental.go", "staff.go", "store.go", "table_use_schema.go",
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", tablePkgPath, "actor.go"),
+		getFileContentWithNewPkg(tablePkg, actorSQLBuilderFile),
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", tablePkgPath, "table_use_schema.go"),
+		getFileContentWithNewPkg(tablePkg, tableUseSchemaFile),
+	)
+
+	// View SQL Builder files
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", viewPkgPath),
+		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go",
+		"sales_by_film_category.go", "customer_list.go", "sales_by_store.go", "staff_list.go", "view_use_schema.go",
+	)
+
+	testutils.AssertFileContent(t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", viewPkgPath, "actor_info.go"),
+		getFileContentWithNewPkg(viewPkg, actorInfoSQLBuilderFile),
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", viewPkgPath, "view_use_schema.go"),
+		getFileContentWithNewPkg(viewPkg, viewUseSchemaFile),
+	)
+
+	// Enums SQL Builder files
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", enumPkgPath),
+		"mpaa_rating.go",
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", enumPkgPath, "mpaa_rating.go"),
+		getFileContentWithNewPkg(enumPkg, mpaaRatingEnumFile),
+	)
+
+	// Model files
+	testutils.AssertFileNamesEqual(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", modelPkgPath),
+		"actor.go", "address.go", "category.go", "city.go", "country.go",
+		"customer.go", "film.go", "film_actor.go", "film_category.go", "inventory.go", "language.go",
+		"payment.go", "rental.go", "staff.go", "store.go", "mpaa_rating.go",
+		"actor_info.go", "film_list.go", "nicer_but_slower_film_list.go", "sales_by_film_category.go",
+		"customer_list.go", "sales_by_store.go", "staff_list.go",
+	)
+
+	testutils.AssertFileContent(
+		t,
+		filepath.Join("./.gentestdata2/jetdb/dvds/", modelPkgPath, "actor.go"),
+		getFileContentWithNewPkg(modelPkg, actorModelFile),
+	)
+}
+
+func getFileContentWithNewPkg(pkgName, fileContent string) string {
+	regex := regexp.MustCompile(`package \w+`)
+	return regex.ReplaceAllString(fileContent, "package "+pkgName)
 }
 
 var mpaaRatingEnumFile = `

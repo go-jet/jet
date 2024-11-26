@@ -42,7 +42,11 @@ var (
 	ignoreViews  string
 	ignoreEnums  string
 
-	destDir string
+	destDir  string
+	modelPkg string
+	tablePkg string
+	viewPkg  string
+	enumPkg  string
 )
 
 func init() {
@@ -66,11 +70,15 @@ func init() {
 	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public")(PostgreSQL only)`)
 	flag.StringVar(&params, "params", "", "Additional connection string parameters(optional). Used only if dsn is not set.")
 	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL. Used only if dsn is not set. (optional)(default "disable")(PostgreSQL only)`)
-	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore`)
-	flag.StringVar(&ignoreViews, "ignore-views", "", `Comma-separated list of views to ignore`)
-	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore`)
+	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore.`)
+	flag.StringVar(&ignoreViews, "ignore-views", "", `Comma-separated list of views to ignore.`)
+	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore.`)
 
-	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
+	flag.StringVar(&destDir, "path", "", "Destination directory for files generated.")
+	flag.StringVar(&modelPkg, "rel-model-path", "model", "Relative path for the Model files package from the destination directory.")
+	flag.StringVar(&tablePkg, "rel-table-path", "table", "Relative path for the Table files package from the destination directory.")
+	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
+	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 }
 
 func main() {
@@ -170,6 +178,7 @@ func usage() {
 		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
+		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path",
 	}
 
 	for _, name := range order {
@@ -186,6 +195,7 @@ func usage() {
 	$ jet -source=postgres -dsn="user=jet password=jet host=localhost port=5432 dbname=jetdb" -schema=dvds -path=./gen
 	$ jet -source=mysql -host=localhost -port=3306 -user=jet -password=jet -dbname=jetdb -path=./gen
 	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen
+	$ jet -source=sqlite -dsn="file://path/to/sqlite/database/file" -path=./gen -rel-model-path=./entity
 	`)
 }
 
@@ -246,7 +256,7 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 	return template.Default(dialect).
 		UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 			return template.DefaultSchema(schemaMetaData).
-				UseModel(template.DefaultModel().
+				UseModel(template.DefaultModel().UsePath(modelPkg).
 					UseTable(func(table metadata.Table) template.TableModel {
 						if shouldSkipTable(table) {
 							return template.TableModel{Skip: true}
@@ -271,19 +281,22 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 						if shouldSkipTable(table) {
 							return template.TableSQLBuilder{Skip: true}
 						}
-						return template.DefaultTableSQLBuilder(table)
+
+						return template.DefaultTableSQLBuilder(table).UsePath(tablePkg)
 					}).
 					UseView(func(table metadata.Table) template.ViewSQLBuilder {
 						if shouldSkipView(table) {
 							return template.ViewSQLBuilder{Skip: true}
 						}
-						return template.DefaultViewSQLBuilder(table)
+
+						return template.DefaultViewSQLBuilder(table).UsePath(viewPkg)
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumSQLBuilder {
 						if shouldSkipEnum(enum) {
 							return template.EnumSQLBuilder{Skip: true}
 						}
-						return template.DefaultEnumSQLBuilder(enum)
+
+						return template.DefaultEnumSQLBuilder(enum).UsePath(enumPkg)
 					}),
 				)
 		})

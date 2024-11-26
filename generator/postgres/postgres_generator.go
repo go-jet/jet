@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/url"
-	"path"
+	"path/filepath"
 	"strconv"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
@@ -66,7 +66,7 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) er
 		return fmt.Errorf("failed to get '%s' schema metadata: %w", schema, err)
 	}
 
-	dirPath := path.Join(destDir, cfg.Database)
+	dirPath := filepath.Join(destDir, cfg.Database)
 
 	err = template.ProcessSchema(dirPath, schemaMetadata, generatorTemplate)
 	if err != nil {
