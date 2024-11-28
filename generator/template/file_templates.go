@@ -36,8 +36,9 @@ type {{structImplName}} struct {
 	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{golangComment .Comment}}
 {{- end}}
 
-	AllColumns     {{dialect.PackageName}}.ColumnList
-	MutableColumns {{dialect.PackageName}}.ColumnList
+	AllColumns               {{dialect.PackageName}}.ColumnList
+	MutableColumns           {{dialect.PackageName}}.ColumnList
+	MutableNonDefaultColumns {{dialect.PackageName}}.ColumnList
 }
 
 type {{tableTemplate.TypeName}} struct {
@@ -79,8 +80,9 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 {{- $field := columnField $c}}
 		{{$field.Name}}Column = {{dialect.PackageName}}.{{$field.Type}}Column("{{$c.Name}}")
 {{- end}}
-		allColumns     = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} }
-		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} }
+		allColumns               = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} }
+		mutableColumns           = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} }
+        mutableNonDefaultColumns = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableNonDefaultColumns}} }
 	)
 
 	return {{structImplName}}{
@@ -92,8 +94,9 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 		{{$field.Name}}: {{$field.Name}}Column,
 {{- end}}
 
-		AllColumns:     allColumns,
-		MutableColumns: mutableColumns,
+		AllColumns:               allColumns,
+		MutableColumns:           mutableColumns,
+        MutableNonDefaultColumns: mutableNonDefaultColumns,
 	}
 }
 `
