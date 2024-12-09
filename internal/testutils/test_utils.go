@@ -127,7 +127,7 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 }
 
 // AssertJSONFile check if data json representation is the same as json at testRelativePath
-func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
+func AssertJSONFile(t require.TestingT, data interface{}, testRelativePath string) {
 
 	filePath := getFullPath(testRelativePath)
 	fileJSONData, err := os.ReadFile(filePath) // #nosec G304

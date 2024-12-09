@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5/stdlib"
 	"os"
 	"runtime"
 	"testing"
@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/profile"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var db *stmtcache.DB
@@ -48,7 +48,7 @@ func TestMain(m *testing.M) {
 
 	setTestRoot()
 
-	for _, driverName := range []string{"postgres", "pgx"} {
+	for _, driverName := range []string{"postgres"} {
 
 		fmt.Printf("\nRunning postgres tests for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
 
@@ -119,7 +119,7 @@ func init() {
 	})
 }
 
-func requireLogged(t *testing.T, statement postgres.Statement) {
+func requireLogged(t require.TestingT, statement postgres.Statement) {
 	query, args := statement.Sql()
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)

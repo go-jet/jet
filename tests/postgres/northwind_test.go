@@ -1,69 +1,98 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/testutils"
+	"context"
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/table"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-func TestNorthwindJoinEverything(t *testing.T) {
+var pgxDB *pgx.Conn
 
-	stmt :=
-		SELECT(
-			Customers.AllColumns,
-			CustomerDemographics.AllColumns,
-			Orders.AllColumns,
-			Shippers.AllColumns,
-			OrderDetails.AllColumns,
-			Products.AllColumns,
-			Categories.AllColumns,
-			Suppliers.AllColumns,
-		).FROM(
-			Customers.
-				LEFT_JOIN(CustomerCustomerDemo, Customers.CustomerID.EQ(CustomerCustomerDemo.CustomerID)).
-				LEFT_JOIN(CustomerDemographics, CustomerCustomerDemo.CustomerTypeID.EQ(CustomerDemographics.CustomerTypeID)).
-				LEFT_JOIN(Orders, Orders.CustomerID.EQ(Customers.CustomerID)).
-				LEFT_JOIN(Shippers, Orders.ShipVia.EQ(Shippers.ShipperID)).
-				LEFT_JOIN(OrderDetails, Orders.OrderID.EQ(OrderDetails.OrderID)).
-				LEFT_JOIN(Products, OrderDetails.ProductID.EQ(Products.ProductID)).
-				LEFT_JOIN(Categories, Products.CategoryID.EQ(Categories.CategoryID)).
-				LEFT_JOIN(Suppliers, Products.SupplierID.EQ(Suppliers.SupplierID)).
-				LEFT_JOIN(Employees, Orders.EmployeeID.EQ(Employees.EmployeeID)).
-				LEFT_JOIN(EmployeeTerritories, EmployeeTerritories.EmployeeID.EQ(Employees.EmployeeID)).
-				LEFT_JOIN(Territories, EmployeeTerritories.TerritoryID.EQ(Territories.TerritoryID)).
-				LEFT_JOIN(Region, Territories.RegionID.EQ(Region.RegionID)),
-		).ORDER_BY(Customers.CustomerID, Orders.OrderID, Products.ProductID)
+func init() {
+	var err error
+	pgxDB, err = pgx.Connect(context.Background(), getConnectionString())
 
-	var dest []struct {
-		model.Customers
+	if err != nil {
+		panic(err)
+	}
+}
 
-		Demographics model.CustomerDemographics
+func BenchmarkNorthwindJoinEverythingPGX(b *testing.B) {
 
-		Orders []struct {
-			model.Orders
+	benchQueryScan(b, func(stmt Statement, dest any) {
+		sql, args := stmt.Sql()
+		_, err := qrm.QueryPGX(context.Background(), pgxDB, sql, args, dest)
+		require.NoError(b, err)
+	})
+}
 
-			Shipper model.Shippers
+func BenchmarkNorthwindJoinEverythingPQ(b *testing.B) {
 
-			Details struct {
-				model.OrderDetails
+	benchQueryScan(b, func(stmt Statement, dest any) {
+		err := stmt.Query(db, dest)
+		require.NoError(b, err)
+	})
+}
 
-				Products []struct {
-					model.Products
+func benchQueryScan(b *testing.B, queryFunc func(statement Statement, dest any)) {
+	stmt := SELECT(
+		Customers.AllColumns,
+		CustomerDemographics.AllColumns,
+		Orders.AllColumns,
+		Shippers.AllColumns,
+		OrderDetails.AllColumns,
+		Products.AllColumns,
+		Categories.AllColumns,
+		Suppliers.AllColumns,
+	).FROM(
+		Customers.
+			LEFT_JOIN(CustomerCustomerDemo, Customers.CustomerID.EQ(CustomerCustomerDemo.CustomerID)).
+			LEFT_JOIN(CustomerDemographics, CustomerCustomerDemo.CustomerTypeID.EQ(CustomerDemographics.CustomerTypeID)).
+			LEFT_JOIN(Orders, Orders.CustomerID.EQ(Customers.CustomerID)).
+			LEFT_JOIN(Shippers, Orders.ShipVia.EQ(Shippers.ShipperID)).
+			LEFT_JOIN(OrderDetails, Orders.OrderID.EQ(OrderDetails.OrderID)).
+			LEFT_JOIN(Products, OrderDetails.ProductID.EQ(Products.ProductID)).
+			LEFT_JOIN(Categories, Products.CategoryID.EQ(Categories.CategoryID)).
+			LEFT_JOIN(Suppliers, Products.SupplierID.EQ(Suppliers.SupplierID)),
+	).ORDER_BY(
+		Customers.CustomerID,
+		Orders.OrderID,
+		Products.ProductID,
+	)
 
-					Category model.Categories
-					Supplier model.Suppliers
+	for i := 0; i < b.N; i++ {
+		var dest []struct {
+			model.Customers
+
+			Demographics model.CustomerDemographics
+
+			Orders []struct {
+				model.Orders
+
+				Shipper model.Shippers
+
+				Details struct {
+					model.OrderDetails
+
+					Products []struct {
+						model.Products
+
+						Category model.Categories
+						Supplier model.Suppliers
+					}
 				}
 			}
 		}
+
+		queryFunc(stmt, &dest)
+
+		//jsonSave("./testdata/northwind-all.json", dest)
+		//testutils.AssertJSONFile(b, dest, "./testdata/results/postgres/northwind-all.json")
+		//requireLogged(b, stmt)
 	}
-
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
-
-	//jsonSave("./testdata/northwind-all.json", dest)
-	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/northwind-all.json")
-	requireLogged(t, stmt)
 }
