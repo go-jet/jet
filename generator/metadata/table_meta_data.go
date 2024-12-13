@@ -21,3 +21,18 @@ func (t Table) MutableColumns() []Column {
 
 	return ret
 }
+
+// MutableNonDefaultColumns returns list of mutable non-default columns for table
+func (t Table) MutableNonDefaultColumns() []Column {
+	var ret []Column
+
+	for _, column := range t.Columns {
+		if column.IsPrimaryKey || column.IsGenerated || column.HasDefault {
+			continue
+		}
+
+		ret = append(ret, column)
+	}
+
+	return ret
+}
