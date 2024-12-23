@@ -121,6 +121,7 @@ var reservedWords = []string{
 	"AS",
 	"ASC",
 	"ASYMMETRIC",
+	"AUTHORIZATION",
 	"BOTH",
 	"CASE",
 	"CAST",
