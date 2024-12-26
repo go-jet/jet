@@ -11,13 +11,6 @@ var autoGenWarningTemplate = `
 `
 
 var tableSQLBuilderTemplate = ` 
-{{define "column-list" -}}
-	{{- range $i, $c := . }}
-{{- $field := columnField $c}}
-		{{- if gt $i 0 }}, {{end}}{{$field.Name}}Column
-	{{- end}}
-{{- end}}
-
 package {{package}}
 
 import (
@@ -33,7 +26,9 @@ type {{structImplName}} struct {
 	// Columns
 {{- range $i, $c := .Columns}}
 {{- $field := columnField $c}}
+{{- if not $field.Skip}}
 	{{$field.Name}} {{dialect.PackageName}}.Column{{$field.Type}} {{golangComment .Comment}}
+{{- end}}
 {{- end}}
 
 	AllColumns     {{dialect.PackageName}}.ColumnList
@@ -77,10 +72,12 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 	var (
 {{- range $i, $c := .Columns}}
 {{- $field := columnField $c}}
+{{- if not $field.Skip }}
 		{{$field.Name}}Column = {{dialect.PackageName}}.{{$field.Type}}Column("{{$c.Name}}")
 {{- end}}
-		allColumns     = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .Columns}} }
-		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{template "column-list" .MutableColumns}} }
+{{- end}}
+		allColumns     = {{dialect.PackageName}}.ColumnList{ {{columnList .Columns}} }
+		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{columnList .MutableColumns}} }
 	)
 
 	return {{structImplName}}{
@@ -89,7 +86,9 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 		//Columns
 {{- range $i, $c := .Columns}}
 {{- $field := columnField $c}}
+{{- if not $field.Skip }}
 		{{$field.Name}}: {{$field.Name}}Column,
+{{- end}}
 {{- end}}
 
 		AllColumns:     allColumns,
@@ -124,7 +123,9 @@ import (
 type {{$modelTableTemplate.TypeName}} struct {
 {{- range .Columns}}
 {{- $field := structField .}}
+{{- if not $field.Skip}}
 	{{$field.Name}} {{$field.Type.Name}} ` + "{{$field.TagsString}}" + ` {{golangComment .Comment}}
+{{- end }}
 {{- end}}
 }
 
