@@ -479,6 +479,55 @@ func TestGeneratorTemplate_SQLBuilder_ChangeColumnTypes(t *testing.T) {
 	require.Contains(t, actor, "ActorID    postgres.ColumnString")
 }
 
+func TestGeneratorTemplate_Model_SQLBuilder_SkipColumn(t *testing.T) {
+	err := postgres.Generate(
+		tempTestDir,
+		dbConnection,
+		template.Default(postgres2.Dialect).
+			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
+				return template.DefaultSchema(schemaMetaData).
+					UseSQLBuilder(template.DefaultSQLBuilder().
+						UseTable(func(table metadata.Table) template.TableSQLBuilder {
+							return template.DefaultTableSQLBuilder(table).
+								UseColumn(func(column metadata.Column) template.TableSQLBuilderColumn {
+									defaultColumn := template.DefaultTableSQLBuilderColumn(column)
+
+									if defaultColumn.Name == "FirstName" {
+										defaultColumn.Skip = true
+									}
+
+									return defaultColumn
+								})
+						}),
+					).
+					UseModel(template.DefaultModel().
+						UseTable(func(table metadata.Table) template.TableModel {
+							return template.DefaultTableModel(table).
+								UseField(func(column metadata.Column) template.TableModelField {
+									defaultColumn := template.DefaultTableModelField(column)
+
+									if defaultColumn.Name == "FirstName" {
+										defaultColumn.Skip = true
+									}
+
+									return defaultColumn
+								})
+						}),
+					)
+			}),
+	)
+
+	require.Nil(t, err)
+
+	actorSql := file2.Exists(t, defaultActorSQLBuilderFilePath)
+	require.NotContains(t, actorSql, "FirstName")
+	require.Contains(t, actorSql, "ActorID")
+
+	actorModel := file2.Exists(t, defaultActorModelFilePath)
+	require.NotContains(t, actorModel, "FirstName")
+	require.Contains(t, actorModel, "ActorID")
+}
+
 func TestRenameEnumValueName(t *testing.T) {
 	err := postgres.Generate(
 		tempTestDir,
