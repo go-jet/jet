@@ -131,6 +131,7 @@ func (tb TableSQLBuilder) UseColumn(columnsFunc func(column metadata.Column) Tab
 
 // TableSQLBuilderColumn is template for table sql builder column
 type TableSQLBuilderColumn struct {
+	Skip bool
 	Name string
 	Type string
 }
