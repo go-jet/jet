@@ -1,10 +1,11 @@
 package postgres
 
 import (
+	"testing"
+
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/uuid"
-	"testing"
 
 	"github.com/stretchr/testify/require"
 
@@ -452,8 +453,8 @@ SELECT "User"."column" AS "User.column",
      "User"."desc" AS "User.desc",
      "User".empty AS "User.empty",
      "User".float AS "User.float",
-     "User".join AS "User.join",
-     "User".like AS "User.like",
+     "User"."join" AS "User.join",
+     "User"."like" AS "User.like",
      "User".max AS "User.max",
      "User".rank AS "User.rank"
 FROM test_sample."User";
