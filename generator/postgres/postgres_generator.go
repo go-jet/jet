@@ -56,6 +56,14 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) er
 	defer db.Close()
 
 	fmt.Println("Retrieving schema information...")
+	return GenerateDB(db, schema, cfg.Database, destDir, templates...)
+}
+
+// GenerateDB generates jet files using the provided *sql.DB
+func GenerateDB(db *sql.DB, dbName, schema, destDir string, templates ...template.Template) error {
+	if dbName == "" {
+		return fmt.Errorf("database name is required")
+	}
 	generatorTemplate := template.Default(postgres.Dialect)
 	if len(templates) > 0 {
 		generatorTemplate = templates[0]
@@ -66,7 +74,7 @@ func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) er
 		return fmt.Errorf("failed to get '%s' schema metadata: %w", schema, err)
 	}
 
-	dirPath := filepath.Join(destDir, cfg.Database)
+	dirPath := filepath.Join(destDir, dbName)
 
 	err = template.ProcessSchema(dirPath, schemaMetadata, generatorTemplate)
 	if err != nil {
