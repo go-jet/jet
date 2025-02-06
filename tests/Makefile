@@ -14,7 +14,7 @@ checkout-latest-testdata: checkout-testdata
 # database with testdata retrieved in previous step.
 # On the first run this action might take couple of minutes. Docker temp data are stored in .docker directory.
 docker-compose-up:
-	docker-compose up
+	docker compose up
 
 init-all:
 	go run ./init/init.go -testsuite all
@@ -74,4 +74,4 @@ jet-gen-cockroach:
 
 # docker-compose-cleanup will stop and remove test containers, volumes, and images.
 cleanup:
-	docker-compose down --volumes
+	docker compose down --volumes

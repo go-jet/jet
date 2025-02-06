@@ -260,6 +260,7 @@ type linkTable struct {
 
 	AllColumns     mysql.ColumnList
 	MutableColumns mysql.ColumnList
+	DefaultColumns mysql.ColumnList
 }
 
 type LinkTable struct {
@@ -303,6 +304,7 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 		DescriptionColumn = mysql.StringColumn("description")
 		allColumns        = mysql.ColumnList{IDColumn, URLColumn, NameColumn, DescriptionColumn}
 		mutableColumns    = mysql.ColumnList{URLColumn, NameColumn, DescriptionColumn}
+		defaultColumns    = mysql.ColumnList{DescriptionColumn}
 	)
 
 	return linkTable{
@@ -316,6 +318,7 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `)
@@ -375,6 +378,7 @@ type actorTable struct {
 
 	AllColumns     mysql.ColumnList
 	MutableColumns mysql.ColumnList
+	DefaultColumns mysql.ColumnList
 }
 
 type ActorTable struct {
@@ -418,6 +422,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 		LastUpdateColumn = mysql.TimestampColumn("last_update")
 		allColumns       = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
 		mutableColumns   = mysql.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
+		defaultColumns   = mysql.ColumnList{LastUpdateColumn}
 	)
 
 	return actorTable{
@@ -431,6 +436,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
@@ -516,6 +522,7 @@ type actorInfoTable struct {
 
 	AllColumns     mysql.ColumnList
 	MutableColumns mysql.ColumnList
+	DefaultColumns mysql.ColumnList
 }
 
 type ActorInfoTable struct {
@@ -559,6 +566,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 		FilmInfoColumn  = mysql.StringColumn("film_info")
 		allColumns      = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 		mutableColumns  = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
+		defaultColumns  = mysql.ColumnList{ActorIDColumn}
 	)
 
 	return actorInfoTable{
@@ -572,6 +580,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
