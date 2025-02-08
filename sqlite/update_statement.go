@@ -12,6 +12,7 @@ type UpdateStatement interface {
 	FROM(tables ...ReadableTable) UpdateStatement
 	WHERE(expression BoolExpression) UpdateStatement
 	RETURNING(projections ...Projection) UpdateStatement
+	LIMIT(limit int64) UpdateStatement
 }
 
 type updateStatementImpl struct {
@@ -23,6 +24,7 @@ type updateStatementImpl struct {
 	SetNew    jet.SetClauseNew
 	Where     jet.ClauseWhere
 	Returning jet.ClauseReturning
+	Limit     jet.ClauseLimit
 }
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
@@ -33,7 +35,8 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 		&update.SetNew,
 		&update.From,
 		&update.Where,
-		&update.Returning)
+		&update.Returning,
+		&update.Limit)
 
 	update.Update.Table = table
 	update.Set.Columns = columns
@@ -74,5 +77,10 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 
 func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStatement {
 	u.Returning.ProjectionList = projections
+	return u
+}
+
+func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
+	u.Limit.Count = limit
 	return u
 }

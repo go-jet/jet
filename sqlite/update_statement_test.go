@@ -10,15 +10,17 @@ func TestUpdateWithOneValue(t *testing.T) {
 	expectedSQL := `
 UPDATE db.table1
 SET col_int = ?
-WHERE table1.col_int >= ?;
+WHERE table1.col_int >= ?
+LIMIT ?;
 `
 	stmt := table1.UPDATE(table1ColInt).
 		SET(1).
-		WHERE(table1ColInt.GT_EQ(Int(33)))
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(0)
 
 	fmt.Println(stmt.Sql())
 
-	assertStatementSql(t, stmt, expectedSQL, 1, int64(33))
+	assertStatementSql(t, stmt, expectedSQL, 1, int64(33), int64(0))
 }
 
 func TestUpdateWithValues(t *testing.T) {
@@ -26,15 +28,17 @@ func TestUpdateWithValues(t *testing.T) {
 UPDATE db.table1
 SET col_int = ?,
     col_float = ?
-WHERE table1.col_int >= ?;
+WHERE table1.col_int >= ?
+LIMIT ?;
 `
 	stmt := table1.UPDATE(table1ColInt, table1ColFloat).
 		SET(1, 22.2).
-		WHERE(table1ColInt.GT_EQ(Int(33)))
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(0)
 
 	fmt.Println(stmt.Sql())
 
-	assertStatementSql(t, stmt, expectedSQL, 1, 22.2, int64(33))
+	assertStatementSql(t, stmt, expectedSQL, 1, 22.2, int64(33), int64(0))
 }
 
 func TestUpdateOneColumnWithSelect(t *testing.T) {
@@ -44,16 +48,18 @@ SET col_float = (
          SELECT table1.col_float AS "table1.col_float"
          FROM db.table1
     )
-WHERE table1.col1 = ?;
+WHERE table1.col1 = ?
+LIMIT ?;
 `
 	stmt := table1.
 		UPDATE(table1ColFloat).
 		SET(
 			table1.SELECT(table1ColFloat),
 		).
-		WHERE(table1Col1.EQ(Int(2)))
+		WHERE(table1Col1.EQ(Int(2))).
+		LIMIT(0)
 
-	assertStatementSql(t, stmt, expectedSQL, int64(2))
+	assertStatementSql(t, stmt, expectedSQL, int64(2), int64(0))
 }
 
 func TestUpdateReservedWorldColumn(t *testing.T) {
@@ -69,11 +75,29 @@ func TestUpdateReservedWorldColumn(t *testing.T) {
 					Load: "foo",
 				},
 			).
-			WHERE(loadColumn.EQ(String("bar"))), strings.Replace(`
+			WHERE(loadColumn.EQ(String("bar"))).
+			LIMIT(0),
+		strings.Replace(`
 UPDATE db.table1
 SET ''Load'' = ?
-WHERE ''Load'' = ?;
-`, "''", "`", -1), "foo", "bar")
+WHERE ''Load'' = ?
+LIMIT ?;
+`, "''", "`", -1), "foo", "bar", int64(0))
+}
+
+func TestUpdateWithLimit(t *testing.T) {
+	expectedSQL := `
+UPDATE db.table1
+SET col_int = ?
+WHERE table1.col_int >= ?
+LIMIT ?;
+`
+	stmt := table1.UPDATE(table1ColInt).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+
+	assertStatementSql(t, stmt, expectedSQL, 1, int64(33), int64(5))
 }
 
 func TestInvalidInputs(t *testing.T) {

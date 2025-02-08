@@ -12,6 +12,7 @@ type UpdateStatement interface {
 	MODEL(data interface{}) UpdateStatement
 
 	WHERE(expression BoolExpression) UpdateStatement
+	LIMIT(limit int64) UpdateStatement
 }
 
 type updateStatementImpl struct {
@@ -21,6 +22,7 @@ type updateStatementImpl struct {
 	Set    jet.SetClause
 	SetNew jet.SetClauseNew
 	Where  jet.ClauseWhere
+	Limit  jet.ClauseLimit
 }
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
@@ -29,7 +31,8 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 		&update.Update,
 		&update.Set,
 		&update.SetNew,
-		&update.Where)
+		&update.Where,
+		&update.Limit)
 
 	update.Update.Table = table
 	update.Set.Columns = columns
@@ -65,5 +68,10 @@ func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
 
 func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 	u.Where.Condition = expression
+	return u
+}
+
+func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
+	u.Limit.Count = limit
 	return u
 }
