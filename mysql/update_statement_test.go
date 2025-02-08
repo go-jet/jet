@@ -6,6 +6,21 @@ import (
 	"testing"
 )
 
+func TestUpdateWithLimit(t *testing.T) {
+	expectedSQL := `
+UPDATE db.table1
+SET col_int = ?
+WHERE table1.col_int >= ?
+LIMIT ?;
+`
+	stmt := table1.UPDATE(table1ColInt).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+
+	assertStatementSql(t, stmt, expectedSQL, 1, int64(33), int64(5))
+}
+
 func TestUpdateWithOneValue(t *testing.T) {
 	expectedSQL := `
 UPDATE db.table1
@@ -69,11 +84,26 @@ func TestUpdateReservedWorldColumn(t *testing.T) {
 					Load: "foo",
 				},
 			).
-			WHERE(loadColumn.EQ(String("bar"))), strings.Replace(`
+			WHERE(loadColumn.EQ(String("bar"))).
+			LIMIT(0),
+		strings.Replace(`
 UPDATE db.table1
 SET ''Load'' = ?
-WHERE ''Load'' = ?;
-`, "''", "`", -1), "foo", "bar")
+WHERE ''Load'' = ?
+LIMIT ?;
+`, "''", "`", -1), "foo", "bar", int64(0))
+}
+
+func LimitPanicStatement() {
+	joinedTable := table1.INNER_JOIN(table2, table1Col1.EQ(table2Col3))
+	joinedTable.UPDATE(table1ColInt).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+}
+
+func TestUpdateWithMultiTableAndLimit(t *testing.T) {
+	assertPanicErr(t, func() { LimitPanicStatement() }, "jet: MySQL does not support LIMIT with multi-table UPDATE statements")
 }
 
 func TestInvalidInputs(t *testing.T) {

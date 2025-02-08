@@ -2,9 +2,10 @@ package mysql
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/qrm"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/qrm"
 
 	"github.com/stretchr/testify/require"
 
@@ -283,5 +284,58 @@ WHERE link.name = 'Bing';
 	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		_, err := stmt.Exec(tx)
 		require.NoError(t, err)
+	})
+}
+
+func TestUpdateWithLimit(t *testing.T) {
+	t.Run("single table update with limit", func(t *testing.T) {
+		stmt := Link.
+			UPDATE(Link.Name).
+			SET(String("Updated Link")).
+			WHERE(Link.Name.NOT_EQ(String(""))).
+			LIMIT(2)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+UPDATE test_sample.link
+SET name = 'Updated Link'
+WHERE link.name != ''
+LIMIT 2;
+`)
+
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+			// Execute update
+			testutils.AssertExec(t, stmt, tx)
+			requireLogged(t, stmt)
+
+			// Verify only 2 rows were updated
+			var updatedLinks []model.Link
+			err := Link.
+				SELECT(Link.AllColumns).
+				WHERE(Link.Name.EQ(String("Updated Link"))).
+				Query(tx, &updatedLinks)
+
+			require.NoError(t, err)
+			require.Equal(t, 2, len(updatedLinks))
+		})
+	})
+
+	t.Run("multi-table update with limit should panic", func(t *testing.T) {
+		defer func() {
+			r := recover()
+			require.NotNil(t, r)
+			require.Equal(t, "jet: MySQL does not support LIMIT with multi-table UPDATE statements", r)
+		}()
+
+		joinedTable := Link.
+			INNER_JOIN(Link2, Link.Name.EQ(Link2.Name))
+
+		stmt := joinedTable.
+			UPDATE(Link.Name).
+			SET(String("Updated Link")).
+			WHERE(Link.Name.NOT_EQ(String(""))).
+			LIMIT(2)
+
+		// Statement construction itself should panic
+		_ = stmt
 	})
 }
