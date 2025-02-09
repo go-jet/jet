@@ -94,6 +94,20 @@ LIMIT ?;
 `, "''", "`", -1), "foo", "bar", int64(0))
 }
 
+func TestUpdateWithMultiTableAndLimit(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Error("Expected panic when using LIMIT with multi-table UPDATE")
+		}
+	}()
+
+	table1.UPDATE(table1ColInt).
+		INNER_JOIN(table2, table1Col1.EQ(table2Col3)).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+}
+
 func TestInvalidInputs(t *testing.T) {
 	assertStatementSqlErr(t, table1.UPDATE(table1ColInt).SET(1), "jet: WHERE clause not set")
 	assertStatementSqlErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list for SET clause")

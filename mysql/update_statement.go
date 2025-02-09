@@ -84,7 +84,10 @@ func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
 
 func (u *updateStatementImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) UpdateStatement {
 	u.hasJoin = true
-	// Remove any existing LIMIT since it's not allowed with JOIN
-	u.Limit.Count = -1
+	if u.Limit.Count >= 0 {
+		panic("jet: MySQL does not support LIMIT with multi-table UPDATE statements")
+	}
+
+	u.Update.Table = jet.NewJoinTable(u.Update.Table, table, jet.InnerJoin, onCondition)
 	return u
 }
