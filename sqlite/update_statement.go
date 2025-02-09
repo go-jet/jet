@@ -25,6 +25,7 @@ type updateStatementImpl struct {
 	Where     jet.ClauseWhere
 	Returning jet.ClauseReturning
 	Limit     jet.ClauseLimit
+	hasFrom   bool
 }
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
@@ -41,6 +42,7 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 	update.Update.Table = table
 	update.Set.Columns = columns
 	update.Where.Mandatory = true
+	update.Limit.Count = -1 // Initialize to -1 to indicate no LIMIT
 
 	return update
 }
@@ -67,6 +69,9 @@ func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
 
 func (u *updateStatementImpl) FROM(tables ...ReadableTable) UpdateStatement {
 	u.From.Tables = readableTablesToSerializerList(tables)
+	u.hasFrom = true
+	// Remove any existing LIMIT since it's not allowed with FROM
+	u.Limit.Count = -1
 	return u
 }
 
@@ -81,6 +86,9 @@ func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStateme
 }
 
 func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
+	if u.hasFrom {
+		panic("jet: SQLite does not support LIMIT with multi-table UPDATE statements")
+	}
 	u.Limit.Count = limit
 	return u
 }
