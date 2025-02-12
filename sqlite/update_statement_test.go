@@ -100,6 +100,45 @@ LIMIT ?;
 	assertStatementSql(t, stmt, expectedSQL, 1, int64(33), int64(5))
 }
 
+func TestUpdateWithMultiTableAndLimit(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Expected panic when using LIMIT with multi-table UPDATE statement")
+		}
+		if r.(string) != "jet: SQLite does not support LIMIT with multi-table UPDATE statements" {
+			t.Errorf("Expected panic message about LIMIT with multi-table UPDATE, got: %v", r)
+		}
+	}()
+
+	table1.UPDATE(table1ColInt).
+		FROM(table2, table3).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+}
+
+func TestUpdateFromWithLimit(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Error("Expected panic when using LIMIT with UPDATE...FROM statement")
+		}
+		if r.(string) != "jet: SQLite does not support LIMIT with UPDATE...FROM statements" {
+			t.Errorf("Expected panic message about LIMIT with UPDATE...FROM, got: %v", r)
+		}
+	}()
+
+	// Set up an update statement with LIMIT first, then try to add FROM
+	stmt := table1.UPDATE(table1ColInt).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+
+	// This should panic
+	stmt.FROM(table2)
+}
+
 func TestInvalidInputs(t *testing.T) {
 	assertStatementSqlErr(t, table1.UPDATE(table1ColInt).SET(1), "jet: WHERE clause not set")
 	assertStatementSqlErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list for SET clause")
