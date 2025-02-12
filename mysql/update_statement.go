@@ -13,18 +13,16 @@ type UpdateStatement interface {
 
 	WHERE(expression BoolExpression) UpdateStatement
 	LIMIT(limit int64) UpdateStatement
-	INNER_JOIN(table ReadableTable, onCondition BoolExpression) UpdateStatement
 }
 
 type updateStatementImpl struct {
 	jet.SerializerStatement
 
-	Update  jet.ClauseUpdate
-	Set     jet.SetClause
-	SetNew  jet.SetClauseNew
-	Where   jet.ClauseWhere
-	Limit   jet.ClauseLimit
-	hasJoin bool
+	Update jet.ClauseUpdate
+	Set    jet.SetClause
+	SetNew jet.SetClauseNew
+	Where  jet.ClauseWhere
+	Limit  jet.ClauseLimit
 }
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
@@ -75,19 +73,9 @@ func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 }
 
 func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
-	if u.hasJoin {
+	if _, isJoinTable := u.Update.Table.(*joinTable); isJoinTable {
 		panic("jet: MySQL does not support LIMIT with multi-table UPDATE statements")
 	}
 	u.Limit.Count = limit
-	return u
-}
-
-func (u *updateStatementImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) UpdateStatement {
-	u.hasJoin = true
-	if u.Limit.Count >= 0 {
-		panic("jet: MySQL does not support LIMIT with multi-table UPDATE statements")
-	}
-
-	u.Update.Table = jet.NewJoinTable(u.Update.Table, table, jet.InnerJoin, onCondition)
 	return u
 }

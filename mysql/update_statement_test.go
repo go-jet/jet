@@ -98,11 +98,13 @@ func TestUpdateWithMultiTableAndLimit(t *testing.T) {
 	defer func() {
 		if r := recover(); r == nil {
 			t.Error("Expected panic when using LIMIT with multi-table UPDATE")
+		} else if r.(string) != "jet: MySQL does not support LIMIT with multi-table UPDATE statements" {
+			t.Errorf("Expected panic message about LIMIT with multi-table UPDATE, got: %v", r)
 		}
 	}()
 
-	table1.UPDATE(table1ColInt).
-		INNER_JOIN(table2, table1Col1.EQ(table2Col3)).
+	joinedTable := table1.INNER_JOIN(table2, table1Col1.EQ(table2Col3))
+	joinedTable.UPDATE(table1ColInt).
 		SET(1).
 		WHERE(table1ColInt.GT_EQ(Int(33))).
 		LIMIT(5)

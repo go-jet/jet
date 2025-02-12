@@ -68,10 +68,11 @@ func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
 }
 
 func (u *updateStatementImpl) FROM(tables ...ReadableTable) UpdateStatement {
+	if u.Limit.Count >= 0 {
+		panic("jet: SQLite does not support LIMIT with UPDATE...FROM statements")
+	}
 	u.From.Tables = readableTablesToSerializerList(tables)
 	u.hasFrom = true
-	// Remove any existing LIMIT since it's not allowed with FROM
-	u.Limit.Count = -1
 	return u
 }
 
@@ -86,7 +87,7 @@ func (u *updateStatementImpl) RETURNING(projections ...Projection) UpdateStateme
 }
 
 func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
-	if u.hasFrom {
+	if len(u.From.Tables) > 1 {
 		panic("jet: SQLite does not support LIMIT with multi-table UPDATE statements")
 	}
 	u.Limit.Count = limit
