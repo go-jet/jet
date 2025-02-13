@@ -292,27 +292,27 @@ func ALL[T Expression](expression jet.Array[T]) T {
 }
 
 func ARRAY_APPEND[E Expression](arr jet.Array[E], el E) jet.Array[E] {
-	return arrayTypeCaster[E](arr, Func("array_append", arr, el))
+	return arrayTypeCaster[E](arr, Func("ARRAY_APPEND", arr, el))
 }
 
 func ARRAY_CAT[E Expression](arr1, arr2 jet.Array[E]) jet.Array[E] {
-	return arrayTypeCaster[E](arr1, Func("array_cat", arr1, arr2))
+	return arrayTypeCaster[E](arr1, Func("ARRAY_CAT", arr1, arr2))
 }
 
 func ARRAY_PREPEND[E Expression](el E, arr jet.Array[E]) jet.Array[E] {
-	return jet.ArrayExp[E](Func("array_prepend", el, arr))
+	return jet.ArrayExp[E](Func("ARRAY_PREPEND", el, arr))
 }
 
 func ARRAY_LENGTH[E Expression](arr jet.Array[E], el IntegerExpression) IntegerExpression {
-	return IntExp(Func("array_length", arr, el))
+	return IntExp(Func("ARRAY_LENGTH", arr, el))
 }
 
 func ARRAY_REMOVE[E Expression](arr jet.Array[E], el Expression) IntegerExpression {
-	return IntExp(Func("array_remove", arr, el))
+	return IntExp(Func("ARRAY_REMOVE", arr, el))
 }
 
 func ARRAY_TO_STRING(arr Expression, delim StringExpression) StringExpression {
-	return StringExp(Func("array_to_string", arr, delim))
+	return StringExp(Func("ARRAY_TO_STRING", arr, delim))
 }
 
 func arrayTypeCaster[E Expression](arrayExp Expression, exp Expression) jet.Array[E] {
