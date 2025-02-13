@@ -311,7 +311,3 @@ func shouldQuoteIdentifier(identifier string) bool {
 func stringQuote(value string) string {
 	return `'` + strings.Replace(value, "'", "''", -1) + `'`
 }
-
-func stringDoubleQuote(value string) string {
-	return `"` + strings.Replace(value, `"`, `""`, -1) + `"`
-}

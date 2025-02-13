@@ -316,24 +316,24 @@ func (s *complexExpression) serialize(statement StatementType, out *SQLBuilder, 
 	}
 }
 
-type arraySubscriptExpression struct {
-	ExpressionInterfaceImpl
-	array     Expression
-	subscript IntegerExpression
-}
-
-func (a arraySubscriptExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if !contains(options, NoWrap) {
-		out.WriteString("(")
-	}
-	a.array.serialize(statement, out, FallTrough(options)...) // FallTrough here because complexExpression is just a wrapper
-	out.WriteString("[")
-	a.subscript.serialize(statement, out, FallTrough(options)...) // FallTrough here because complexExpression is just a wrapper
-	out.WriteString("]")
-	if !contains(options, NoWrap) {
-		out.WriteString(")")
-	}
-}
+//type arraySubscriptExpression struct {
+//	ExpressionInterfaceImpl
+//	array     Expression
+//	subscript IntegerExpression
+//}
+//
+//func (a arraySubscriptExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+//	if !contains(options, NoWrap) {
+//		out.WriteString("(")
+//	}
+//	a.array.serialize(statement, out, FallTrough(options)...) // FallTrough here because complexExpression is just a wrapper
+//	out.WriteString("[")
+//	a.subscript.serialize(statement, out, FallTrough(options)...) // FallTrough here because complexExpression is just a wrapper
+//	out.WriteString("]")
+//	if !contains(options, NoWrap) {
+//		out.WriteString(")")
+//	}
+//}
 
 func arraySubscriptExpr(array Expression, subscript IntegerExpression) Expression {
 	return CustomExpression(array, Token("["), subscript, Token("]"))
