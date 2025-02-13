@@ -291,20 +291,41 @@ func ALL[T Expression](expression jet.Array[T]) T {
 	return jet.ALL[T](expression)
 }
 
-func ARRAY_APPEND[T Expression](arr jet.Array[T], el T) jet.Array[T] {
-	return jet.ARRAY_APPEND(arr, el)
+func ARRAY_APPEND[E Expression](arr jet.Array[E], el E) jet.Array[E] {
+	return arrayTypeCaster[E](arr, Func("array_append", arr, el))
 }
 
-func ARRAY_CAT[T Expression](arr1, arr2 jet.Array[T]) jet.Array[T] {
-	return jet.ARRAY_CAT(arr1, arr2)
+func ARRAY_CAT[E Expression](arr1, arr2 jet.Array[E]) jet.Array[E] {
+	return arrayTypeCaster[E](arr1, Func("array_cat", arr1, arr2))
 }
 
-func ARRAY_LENGTH[T Expression](expression jet.Array[T], dim IntegerExpression) IntegerExpression {
-	return jet.ARRAY_LENGTH(expression, dim)
+func ARRAY_PREPEND[E Expression](el E, arr jet.Array[E]) jet.Array[E] {
+	return jet.ArrayExp[E](Func("array_prepend", el, arr))
 }
 
-func ARRAY_PREPEND[T Expression](el T, arr jet.Array[T]) jet.Array[T] {
-	return jet.ARRAY_PREPEND(el, arr)
+func ARRAY_LENGTH[E Expression](arr jet.Array[E], el IntegerExpression) IntegerExpression {
+	return IntExp(Func("array_length", arr, el))
+}
+
+func ARRAY_REMOVE[E Expression](arr jet.Array[E], el Expression) IntegerExpression {
+	return IntExp(Func("array_remove", arr, el))
+}
+
+func ARRAY_TO_STRING(arr Expression, delim StringExpression) StringExpression {
+	return StringExp(Func("array_to_string", arr, delim))
+}
+
+func arrayTypeCaster[E Expression](arrayExp Expression, exp Expression) jet.Array[E] {
+	var i Expression
+	switch arrayExp.(type) {
+	case jet.Array[StringExpression]:
+		i = jet.ArrayExp[StringExpression](exp)
+	case jet.Array[IntegerExpression]:
+		i = jet.ArrayExp[IntegerExpression](exp)
+	case jet.Array[BoolExpression]:
+		i = jet.ArrayExp[BoolExpression](exp)
+	}
+	return i.(jet.Array[E])
 }
 
 // ARRAY constructor
