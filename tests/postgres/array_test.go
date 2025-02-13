@@ -70,10 +70,10 @@ SELECT sample_arrays.text_array AS "sample_arrays.text_array",
      (sample_arrays.bool_array || $13) AS "sample.bool_concat",
      (sample_arrays.text_array || $14::text) AS "sample.text_concat_el",
      sample_arrays.text_array[$15::integer] AS "sample.text_at",
-     array_append(sample_arrays.text_array, $16::text) AS "sample.text_append",
-     array_cat(sample_arrays.text_array, $17) AS "sample.text_cat",
-     array_length(sample_arrays.text_array, $18::integer) AS "sample.text_length",
-     array_prepend($19::text, sample_arrays.text_array) AS "sample.text_prepend"
+     ARRAY_APPEND(sample_arrays.text_array, $16::text) AS "sample.text_append",
+     ARRAY_CAT(sample_arrays.text_array, $17) AS "sample.text_cat",
+     ARRAY_LENGTH(sample_arrays.text_array, $18::integer) AS "sample.text_length",
+     ARRAY_PREPEND($19::text, sample_arrays.text_array) AS "sample.text_prepend"
 FROM test_sample.sample_arrays
 WHERE sample_arrays.bool_array @> $20;
 `)
