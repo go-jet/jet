@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/go-jet/jet/v2/qrm"
-	"database/sql"
 	"github.com/lib/pq"
 	"testing"
 	"time"

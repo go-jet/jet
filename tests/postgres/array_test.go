@@ -1,9 +1,9 @@
 package postgres
 
 import (
-	"database/sql"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/go-cmp/cmp"
@@ -209,7 +209,7 @@ RETURNING sample_arrays.text_array AS "sample_arrays.text_array",
 `
 	testutils.AssertDebugStatementSql(t, insertQuery, expectedQuery)
 
-	testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.SampleArrays
 		err := insertQuery.Query(tx, &dest)
 		require.NoError(t, err)
@@ -237,9 +237,8 @@ RETURNING sample_arrays.text_array AS "sample_arrays.text_array",
           sample_arrays.int8_array AS "sample_arrays.int8_array";
 `)
 
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			var dest []model.SampleArrays
-
 			err := stmt.Query(tx, &dest)
 			require.NoError(t, err)
 			require.Len(t, dest, 1)
@@ -262,7 +261,7 @@ SET int4_array = ARRAY[-10::integer,11::integer],
 WHERE 'a'::text = ANY(sample_arrays.text_array);
 `)
 
-		testutils.ExecuteInTxAndRollback(t, db, func(tx *sql.Tx) {
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 			testutils.AssertExec(t, stmt, tx, 1)
 		})
 	})
