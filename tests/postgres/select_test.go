@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/lib/pq"
 	"testing"
 	"time"
 
@@ -1838,7 +1839,7 @@ ORDER BY film.film_id ASC;
 		Rating:          &gRating,
 		RentalDuration:  3,
 		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-		SpecialFeatures: ptr.Of("{Trailers,\"Deleted Scenes\"}"),
+		SpecialFeatures: &pq.StringArray{"Trailers", "Deleted Scenes"},
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
 }
@@ -3360,7 +3361,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 20.99,
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"SpecialFeatures": [
+			"Deleted Scenes",
+			"Behind the Scenes"
+		],
 		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 		"Actors": [
 			{
@@ -3384,7 +3388,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 9.99,
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"SpecialFeatures": [
+			"Trailers",
+			"Deleted Scenes"
+		],
 		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
 		"Actors": [
 			{
@@ -3432,7 +3439,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 20.99,
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"SpecialFeatures": [
+			"Deleted Scenes",
+			"Behind the Scenes"
+		],
 		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 		"Actors": null
 	},
@@ -3448,7 +3458,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 9.99,
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"SpecialFeatures": [
+			"Trailers",
+			"Deleted Scenes"
+		],
 		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
 		"Actors": null
 	}

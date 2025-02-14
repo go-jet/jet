@@ -757,13 +757,13 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 
 	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go",
-		"components.go", "vulnerabilities.go", "all_types_materialized_view.go", "sample_ranges.go")
+		"components.go", "vulnerabilities.go", "all_types_materialized_view.go", "sample_ranges.go", "sample_arrays.go")
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 	testutils.AssertFileContent(t, modelDir+"/link.go", linkModelContent)
 
 	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go",
-		"components.go", "vulnerabilities.go", "sample_ranges.go")
+		"components.go", "vulnerabilities.go", "sample_ranges.go", "sample_arrays.go")
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 	testutils.AssertFileContent(t, tableDir+"/sample_ranges.go", sampleRangeTableContent)
 
@@ -836,6 +836,7 @@ package model
 
 import (
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -894,11 +895,11 @@ type AllTypes struct {
 	JSON                 string
 	JsonbPtr             *string
 	Jsonb                string
-	IntegerArrayPtr      *string
-	IntegerArray         string
-	TextArrayPtr         *string
-	TextArray            string
-	JsonbArray           string
+	IntegerArrayPtr      *pq.Int32Array
+	IntegerArray         pq.Int32Array
+	TextArrayPtr         *pq.StringArray
+	TextArray            pq.StringArray
+	JsonbArray           pq.StringArray
 	TextMultiDimArrayPtr *string
 	TextMultiDimArray    string
 	MoodPtr              *Mood
@@ -999,11 +1000,11 @@ type allTypesTable struct {
 	JSON                 postgres.ColumnString
 	JsonbPtr             postgres.ColumnString
 	Jsonb                postgres.ColumnString
-	IntegerArrayPtr      postgres.ColumnString
-	IntegerArray         postgres.ColumnString
-	TextArrayPtr         postgres.ColumnString
-	TextArray            postgres.ColumnString
-	JsonbArray           postgres.ColumnString
+	IntegerArrayPtr      postgres.ColumnIntegerArray
+	IntegerArray         postgres.ColumnIntegerArray
+	TextArrayPtr         postgres.ColumnStringArray
+	TextArray            postgres.ColumnStringArray
+	JsonbArray           postgres.ColumnStringArray
 	TextMultiDimArrayPtr postgres.ColumnString
 	TextMultiDimArray    postgres.ColumnString
 	MoodPtr              postgres.ColumnString
@@ -1102,11 +1103,11 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		JSONColumn                 = postgres.StringColumn("json")
 		JsonbPtrColumn             = postgres.StringColumn("jsonb_ptr")
 		JsonbColumn                = postgres.StringColumn("jsonb")
-		IntegerArrayPtrColumn      = postgres.StringColumn("integer_array_ptr")
-		IntegerArrayColumn         = postgres.StringColumn("integer_array")
-		TextArrayPtrColumn         = postgres.StringColumn("text_array_ptr")
-		TextArrayColumn            = postgres.StringColumn("text_array")
-		JsonbArrayColumn           = postgres.StringColumn("jsonb_array")
+		IntegerArrayPtrColumn      = postgres.IntegerArrayColumn("integer_array_ptr")
+		IntegerArrayColumn         = postgres.IntegerArrayColumn("integer_array")
+		TextArrayPtrColumn         = postgres.StringArrayColumn("text_array_ptr")
+		TextArrayColumn            = postgres.StringArrayColumn("text_array")
+		JsonbArrayColumn           = postgres.StringArrayColumn("jsonb_array")
 		TextMultiDimArrayPtrColumn = postgres.StringColumn("text_multi_dim_array_ptr")
 		TextMultiDimArrayColumn    = postgres.StringColumn("text_multi_dim_array")
 		MoodPtrColumn              = postgres.StringColumn("mood_ptr")
