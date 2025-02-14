@@ -1,3 +1,6 @@
+//go:build postgres
+// +build postgres
+
 package postgres
 
 import (
@@ -12,7 +15,7 @@ import (
 
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 )
 
 func TestRangeTableSelect(t *testing.T) {
@@ -32,40 +35,40 @@ func TestRangeTableSelect(t *testing.T) {
 	)
 
 	query := SELECT(
-		SampleRanges.AllColumns,
+		table.SampleRanges.AllColumns,
 
-		SampleRanges.Int4Range.EQ(SampleRanges.Int4Range).AS("sample.int4eq"),
-		SampleRanges.Int8Range.EQ(int8Range).AS("sample.int8eq"),
-		SampleRanges.Int4Range.NOT_EQ(int4Range).AS("sample.int4neq"),
-		SampleRanges.NumRange.LT(numRange).IS_TRUE().AS("sample.num_lt"),
-		SampleRanges.DateRange.LT_EQ(dateRange).IS_FALSE().AS("sample.date_lteq"),
-		SampleRanges.TimestampRange.GT(tsRange).AS("sample.ts_gt"),
-		SampleRanges.TimestampzRange.GT_EQ(tstzRange).AS("sample.tstz_gteq"),
-		SampleRanges.Int4Range.CONTAINS(Int32(22)).AS("sample.int4cont"),
-		SampleRanges.Int8Range.CONTAINS(Int64(75364)).AS("sample.int8cont"),
-		SampleRanges.Int8Range.CONTAINS_RANGE(int8Range).AS("sample.int8cont_range"),
-		SampleRanges.NumRange.OVERLAP(numRange).AS("sample.num_overlap"),
-		SampleRanges.DateRange.UNION(dateRange).AS("sample.date_union"),
-		SampleRanges.TimestampRange.INTERSECTION(tsRange).AS("sample.ts_ints"),
-		SampleRanges.TimestampzRange.DIFFERENCE(tstzRange).AS("sample.tstz_diff"),
-		SampleRanges.Int4Range.UPPER_BOUND().ADD(Int(5)).AS("sample.int4_upper"),
-		SampleRanges.Int8Range.LOWER_BOUND().SUB(Int(12)).AS("sample.int8_lower"),
-		LOWER_BOUND[DateExpression](SampleRanges.DateRange),
-		UPPER_BOUND[NumericExpression](SampleRanges.NumRange).AS("sample.num_upper"),
-		SampleRanges.TimestampRange.UPPER_BOUND(),
-		SampleRanges.DateRange.IS_EMPTY().AS("sample.date_empty"),
-		SampleRanges.TimestampRange.LOWER_INC().AS("sample.ts_low_inc"),
-		SampleRanges.TimestampzRange.UPPER_INC().AS("sample.tstz_up_inc"),
-		SampleRanges.TimestampRange.LOWER_INF().AS("sample.ts_low_inf"),
-		SampleRanges.TimestampzRange.UPPER_INF().AS("sample.tstz_up_inf"),
+		table.SampleRanges.Int4Range.EQ(table.SampleRanges.Int4Range).AS("sample.int4eq"),
+		table.SampleRanges.Int8Range.EQ(int8Range).AS("sample.int8eq"),
+		table.SampleRanges.Int4Range.NOT_EQ(int4Range).AS("sample.int4neq"),
+		table.SampleRanges.NumRange.LT(numRange).IS_TRUE().AS("sample.num_lt"),
+		table.SampleRanges.DateRange.LT_EQ(dateRange).IS_FALSE().AS("sample.date_lteq"),
+		table.SampleRanges.TimestampRange.GT(tsRange).AS("sample.ts_gt"),
+		table.SampleRanges.TimestampzRange.GT_EQ(tstzRange).AS("sample.tstz_gteq"),
+		table.SampleRanges.Int4Range.CONTAINS(Int32(22)).AS("sample.int4cont"),
+		table.SampleRanges.Int8Range.CONTAINS(Int64(75364)).AS("sample.int8cont"),
+		table.SampleRanges.Int8Range.CONTAINS_RANGE(int8Range).AS("sample.int8cont_range"),
+		table.SampleRanges.NumRange.OVERLAP(numRange).AS("sample.num_overlap"),
+		table.SampleRanges.DateRange.UNION(dateRange).AS("sample.date_union"),
+		table.SampleRanges.TimestampRange.INTERSECTION(tsRange).AS("sample.ts_ints"),
+		table.SampleRanges.TimestampzRange.DIFFERENCE(tstzRange).AS("sample.tstz_diff"),
+		table.SampleRanges.Int4Range.UPPER_BOUND().ADD(Int(5)).AS("sample.int4_upper"),
+		table.SampleRanges.Int8Range.LOWER_BOUND().SUB(Int(12)).AS("sample.int8_lower"),
+		LOWER_BOUND[DateExpression](table.SampleRanges.DateRange),
+		UPPER_BOUND[NumericExpression](table.SampleRanges.NumRange).AS("sample.num_upper"),
+		table.SampleRanges.TimestampRange.UPPER_BOUND(),
+		table.SampleRanges.DateRange.IS_EMPTY().AS("sample.date_empty"),
+		table.SampleRanges.TimestampRange.LOWER_INC().AS("sample.ts_low_inc"),
+		table.SampleRanges.TimestampzRange.UPPER_INC().AS("sample.tstz_up_inc"),
+		table.SampleRanges.TimestampRange.LOWER_INF().AS("sample.ts_low_inf"),
+		table.SampleRanges.TimestampzRange.UPPER_INF().AS("sample.tstz_up_inf"),
 
 		RawInt4Range("'[1,2]'").EQ(int4Range),
 		RawInt8Range("int8range(15, 25)").EQ(int8Range),
 		RawNumRange("numrange(20.0, 30.0)").NOT_EQ(numRange),
 	).FROM(
-		SampleRanges,
+		table.SampleRanges,
 	).WHERE(
-		SampleRanges.DateRange.CONTAINS(Date(2023, 12, 12)),
+		table.SampleRanges.DateRange.CONTAINS(Date(2023, 12, 12)),
 	)
 
 	testutils.AssertStatementSql(t, query, `
@@ -207,10 +210,10 @@ func TestRangeSelectColumnsFromSubQuery(t *testing.T) {
 	skipForCockroachDB(t)
 
 	subQuery := SELECT(
-		SampleRanges.AllColumns,
-		SampleRanges.Int4Range.AS("range4"),
+		table.SampleRanges.AllColumns,
+		table.SampleRanges.Int4Range.AS("range4"),
 	).FROM(
-		SampleRanges,
+		table.SampleRanges,
 	).AsTable("sub_query")
 
 	int4Range := Int4RangeColumn("range4").From(subQuery)
@@ -260,7 +263,7 @@ FROM (
 func TestRangeTable_InsertColumn(t *testing.T) {
 	skipForCockroachDB(t)
 
-	insertQuery := SampleRanges.INSERT(SampleRanges.AllColumns).
+	insertQuery := table.SampleRanges.INSERT(table.SampleRanges.AllColumns).
 		VALUES(
 			DATE_RANGE(
 				Date(2010, 01, 01),
@@ -279,7 +282,7 @@ func TestRangeTable_InsertColumn(t *testing.T) {
 		).
 		MODEL(
 			sampleRangeRow,
-		).RETURNING(SampleRanges.AllColumns)
+		).RETURNING(table.SampleRanges.AllColumns)
 
 	expectedQuery := `
 INSERT INTO test_sample.sample_ranges (date_range, timestamp_range, timestampz_range, int4_range, int8_range, num_range)
@@ -307,10 +310,10 @@ func TestRangeTableUpdate(t *testing.T) {
 	skipForCockroachDB(t)
 
 	t.Run("using model", func(t *testing.T) {
-		stmt := SampleRanges.UPDATE(SampleRanges.AllColumns).
+		stmt := table.SampleRanges.UPDATE(table.SampleRanges.AllColumns).
 			MODEL(sampleRangeRow).
-			WHERE(SampleRanges.TimestampRange.LOWER_INF().IS_FALSE()).
-			RETURNING(SampleRanges.AllColumns)
+			WHERE(table.SampleRanges.TimestampRange.LOWER_INF().IS_FALSE()).
+			RETURNING(table.SampleRanges.AllColumns)
 
 		testutils.AssertStatementSql(t, stmt, `
 UPDATE test_sample.sample_ranges
@@ -335,13 +338,13 @@ RETURNING sample_ranges.date_range AS "sample_ranges.date_range",
 	})
 
 	t.Run("update using SET", func(t *testing.T) {
-		stmt := SampleRanges.UPDATE().
+		stmt := table.SampleRanges.UPDATE().
 			SET(
-				SampleRanges.Int4Range.SET(INT4_RANGE(Int32(-12), Int32(78))),
-				SampleRanges.Int8Range.SET(INT8_RANGE(Int64(-1200), Int64(7800))),
+				table.SampleRanges.Int4Range.SET(INT4_RANGE(Int32(-12), Int32(78))),
+				table.SampleRanges.Int8Range.SET(INT8_RANGE(Int64(-1200), Int64(7800))),
 			).
 			WHERE(
-				SampleRanges.TimestampzRange.LOWER_BOUND().GT(Timestampz(2024, 2, 27, 0, 0, 0, 0, "UTC")),
+				table.SampleRanges.TimestampzRange.LOWER_BOUND().GT(Timestampz(2024, 2, 27, 0, 0, 0, 0, "UTC")),
 			)
 
 		testutils.AssertDebugStatementSql(t, stmt, `
