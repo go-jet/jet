@@ -21,3 +21,16 @@ func (t Table) MutableColumns() []Column {
 
 	return ret
 }
+
+// DefaultColumns returns list of columns with default values set for table
+func (t Table) DefaultColumns() []Column {
+	var ret []Column
+
+	for _, column := range t.Columns {
+		if column.HasDefault {
+			ret = append(ret, column)
+		}
+	}
+
+	return ret
+}

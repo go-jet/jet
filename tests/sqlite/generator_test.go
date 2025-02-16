@@ -185,6 +185,7 @@ type actorTable struct {
 
 	AllColumns     sqlite.ColumnList
 	MutableColumns sqlite.ColumnList
+	DefaultColumns sqlite.ColumnList
 }
 
 type ActorTable struct {
@@ -228,6 +229,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 		LastUpdateColumn = sqlite.TimestampColumn("last_update")
 		allColumns       = sqlite.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
 		mutableColumns   = sqlite.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
+		defaultColumns   = sqlite.ColumnList{LastUpdateColumn}
 	)
 
 	return actorTable{
@@ -241,6 +243,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
@@ -307,6 +310,7 @@ type filmListTable struct {
 
 	AllColumns     sqlite.ColumnList
 	MutableColumns sqlite.ColumnList
+	DefaultColumns sqlite.ColumnList
 }
 
 type FilmListTable struct {
@@ -354,6 +358,7 @@ func newFilmListTableImpl(schemaName, tableName, alias string) filmListTable {
 		ActorsColumn      = sqlite.StringColumn("actors")
 		allColumns        = sqlite.ColumnList{FidColumn, TitleColumn, DescriptionColumn, CategoryColumn, PriceColumn, LengthColumn, RatingColumn, ActorsColumn}
 		mutableColumns    = sqlite.ColumnList{FidColumn, TitleColumn, DescriptionColumn, CategoryColumn, PriceColumn, LengthColumn, RatingColumn, ActorsColumn}
+		defaultColumns    = sqlite.ColumnList{}
 	)
 
 	return filmListTable{
@@ -371,6 +376,7 @@ func newFilmListTableImpl(schemaName, tableName, alias string) filmListTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `

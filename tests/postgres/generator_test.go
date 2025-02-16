@@ -520,6 +520,7 @@ type actorTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type ActorTable struct {
@@ -563,6 +564,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 		LastUpdateColumn = postgres.TimestampColumn("last_update")
 		allColumns       = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, LastUpdateColumn}
 		mutableColumns   = postgres.ColumnList{FirstNameColumn, LastNameColumn, LastUpdateColumn}
+		defaultColumns   = postgres.ColumnList{ActorIDColumn}
 	)
 
 	return actorTable{
@@ -576,6 +578,7 @@ func newActorTableImpl(schemaName, tableName, alias string) actorTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
@@ -660,6 +663,7 @@ type actorInfoTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type ActorInfoTable struct {
@@ -703,6 +707,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 		FilmInfoColumn  = postgres.StringColumn("film_info")
 		allColumns      = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 		mutableColumns  = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
+		defaultColumns  = postgres.ColumnList{}
 	)
 
 	return actorInfoTable{
@@ -716,6 +721,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
@@ -1011,6 +1017,7 @@ type allTypesTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type AllTypesTable struct {
@@ -1113,6 +1120,7 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		MoodColumn                 = postgres.StringColumn("mood")
 		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
 		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
+		defaultColumns             = postgres.ColumnList{SmallIntColumn, IntegerColumn, BigIntColumn, DecimalColumn, NumericColumn, RealColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharColumn, CharColumn, TextColumn, ByteaColumn, TimestampzColumn, TimestampColumn, DateColumn, TimezColumn, TimeColumn, IntervalColumn, BooleanColumn, BitColumn, BitVaryingColumn, TsvectorColumn, UUIDColumn, XMLColumn, JSONColumn, JsonbColumn, IntegerArrayColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayColumn, MoodColumn}
 	)
 
 	return allTypesTable{
@@ -1185,6 +1193,7 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
@@ -1218,6 +1227,7 @@ type sampleRangesTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type SampleRangesTable struct {
@@ -1263,6 +1273,7 @@ func newSampleRangesTableImpl(schemaName, tableName, alias string) sampleRangesT
 		NumRangeColumn        = postgres.NumericRangeColumn("num_range")
 		allColumns            = postgres.ColumnList{DateRangeColumn, TimestampRangeColumn, TimestampzRangeColumn, Int4RangeColumn, Int8RangeColumn, NumRangeColumn}
 		mutableColumns        = postgres.ColumnList{DateRangeColumn, TimestampRangeColumn, TimestampzRangeColumn, Int4RangeColumn, Int8RangeColumn, NumRangeColumn}
+		defaultColumns        = postgres.ColumnList{DateRangeColumn, TimestampRangeColumn, TimestampzRangeColumn, Int4RangeColumn, Int8RangeColumn, NumRangeColumn}
 	)
 
 	return sampleRangesTable{
@@ -1278,6 +1289,7 @@ func newSampleRangesTableImpl(schemaName, tableName, alias string) sampleRangesT
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
@@ -1310,6 +1322,7 @@ type linkTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type LinkTable struct {
@@ -1353,6 +1366,7 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 		DescriptionColumn = postgres.StringColumn("description")
 		allColumns        = postgres.ColumnList{IDColumn, URLColumn, NameColumn, DescriptionColumn}
 		mutableColumns    = postgres.ColumnList{URLColumn, NameColumn, DescriptionColumn}
+		defaultColumns    = postgres.ColumnList{IDColumn}
 	)
 
 	return linkTable{
@@ -1366,6 +1380,7 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `

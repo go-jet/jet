@@ -136,7 +136,7 @@ type TableSQLBuilderColumn struct {
 	Type string
 }
 
-var reservedKeywords = []string{"TableName", "Table", "SchemaName", "Alias", "AllColumns", "MutableColumns"}
+var reservedKeywords = []string{"TableName", "Table", "SchemaName", "Alias", "AllColumns", "MutableColumns", "DefaultColumns"}
 
 func renameIfReserved(name string) string {
 	if slices.Contains(reservedKeywords, name) {
