@@ -566,7 +566,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 		FilmInfoColumn  = mysql.StringColumn("film_info")
 		allColumns      = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 		mutableColumns  = mysql.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
-		defaultColumns  = mysql.ColumnList{ActorIDColumn}
+		defaultColumns  = mysql.ColumnList{}
 	)
 
 	return actorInfoTable{
