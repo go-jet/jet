@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+func LimitPanicStatement() {
+	table1.UPDATE(table1ColInt).
+		FROM(table2, table3).
+		SET(1).
+		WHERE(table1ColInt.GT_EQ(Int(33))).
+		LIMIT(5)
+}
+
 func TestUpdateWithOneValue(t *testing.T) {
 	expectedSQL := `
 UPDATE db.table1
@@ -101,21 +109,7 @@ LIMIT ?;
 }
 
 func TestUpdateWithMultiTableAndLimit(t *testing.T) {
-	defer func() {
-		r := recover()
-		if r == nil {
-			t.Error("Expected panic when using LIMIT with multi-table UPDATE statement")
-		}
-		if r.(string) != "jet: SQLite does not support LIMIT with multi-table UPDATE statements" {
-			t.Errorf("Expected panic message about LIMIT with multi-table UPDATE, got: %v", r)
-		}
-	}()
-
-	table1.UPDATE(table1ColInt).
-		FROM(table2, table3).
-		SET(1).
-		WHERE(table1ColInt.GT_EQ(Int(33))).
-		LIMIT(5)
+	assertPanicErr(t, func() { LimitPanicStatement() }, "jet: SQLite does not support LIMIT with multi-table UPDATE statements")
 }
 
 func TestUpdateFromWithLimit(t *testing.T) {

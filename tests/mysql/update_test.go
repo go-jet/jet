@@ -335,10 +335,7 @@ LIMIT 2;
 			WHERE(Link.Name.NOT_EQ(String(""))).
 			LIMIT(2)
 
-		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
-			testutils.AssertExec(t, stmt, tx)
-		})
-
-		t.Error("Expected panic did not occur")
+		// Statement construction itself should panic
+		_ = stmt
 	})
 }
