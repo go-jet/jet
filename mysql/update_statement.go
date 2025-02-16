@@ -12,6 +12,7 @@ type UpdateStatement interface {
 	MODEL(data interface{}) UpdateStatement
 
 	WHERE(expression BoolExpression) UpdateStatement
+	LIMIT(limit int64) UpdateStatement
 }
 
 type updateStatementImpl struct {
@@ -21,6 +22,7 @@ type updateStatementImpl struct {
 	Set    jet.SetClause
 	SetNew jet.SetClauseNew
 	Where  jet.ClauseWhere
+	Limit  jet.ClauseLimit
 }
 
 func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
@@ -29,11 +31,13 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 		&update.Update,
 		&update.Set,
 		&update.SetNew,
-		&update.Where)
+		&update.Where,
+		&update.Limit)
 
 	update.Update.Table = table
 	update.Set.Columns = columns
 	update.Where.Mandatory = true
+	update.Limit.Count = -1 // Initialize to -1 to indicate no LIMIT
 
 	return update
 }
@@ -65,5 +69,13 @@ func (u *updateStatementImpl) MODEL(data interface{}) UpdateStatement {
 
 func (u *updateStatementImpl) WHERE(expression BoolExpression) UpdateStatement {
 	u.Where.Condition = expression
+	return u
+}
+
+func (u *updateStatementImpl) LIMIT(limit int64) UpdateStatement {
+	if _, isJoinTable := u.Update.Table.(*joinTable); isJoinTable {
+		panic("jet: MySQL does not support LIMIT with multi-table UPDATE statements")
+	}
+	u.Limit.Count = limit
 	return u
 }
