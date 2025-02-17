@@ -22,6 +22,7 @@ func TestColumnRenameReserved(t *testing.T) {
 		{col: "Alias", want: "Alias_"},
 		{col: "AllColumns", want: "AllColumns_"},
 		{col: "MutableColumns", want: "MutableColumns_"},
+		{col: "DefaultColumns", want: "DefaultColumns_"},
 		{col: "OtherColumn", want: "OtherColumn"},
 	}
 

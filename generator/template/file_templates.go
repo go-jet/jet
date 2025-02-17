@@ -33,6 +33,7 @@ type {{structImplName}} struct {
 
 	AllColumns     {{dialect.PackageName}}.ColumnList
 	MutableColumns {{dialect.PackageName}}.ColumnList
+	DefaultColumns {{dialect.PackageName}}.ColumnList
 }
 
 type {{tableTemplate.TypeName}} struct {
@@ -78,6 +79,7 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 {{- end}}
 		allColumns     = {{dialect.PackageName}}.ColumnList{ {{columnList .Columns}} }
 		mutableColumns = {{dialect.PackageName}}.ColumnList{ {{columnList .MutableColumns}} }
+		defaultColumns = {{dialect.PackageName}}.ColumnList{ {{columnList .DefaultColumns}} }
 	)
 
 	return {{structImplName}}{
@@ -93,6 +95,7 @@ func new{{tableTemplate.TypeName}}Impl(schemaName, tableName, alias string) {{st
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
 `
