@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/min"
+	"github.com/go-jet/jet/v2/internal/utils/datetime"
 	"reflect"
 	"strconv"
-	"time"
 )
 
 var (
@@ -64,49 +63,18 @@ func (nt *NullTime) Scan(value interface{}) error {
 
 	// Some of the drivers (pgx, mysql) are not parsing all of the time formats(date, time with time zone,...) and are just forwarding string value.
 	// At this point we try to parse those values using some of the predefined formats
-	nt.Time, nt.Valid = tryParseAsTime(value)
+	nt.Time, nt.Valid = datetime.TryParseAsTime(value, []string{
+		"2006-01-02 15:04:05-07:00",  // sqlite
+		"2006-01-02 15:04:05.999999", // go-sql-driver/mysql
+		"15:04:05-07",                // pgx
+		"15:04:05.999999",            // pgx
+	})
 
 	if !nt.Valid {
 		return fmt.Errorf("can't scan time.Time from %q", value)
 	}
 
 	return nil
-}
-
-var formats = []string{
-	"2006-01-02 15:04:05-07:00",  // sqlite
-	"2006-01-02 15:04:05.999999", // go-sql-driver/mysql
-	"15:04:05-07",                // pgx
-	"15:04:05.999999",            // pgx
-}
-
-func tryParseAsTime(value interface{}) (time.Time, bool) {
-
-	var timeStr string
-
-	switch v := value.(type) {
-	case string:
-		timeStr = v
-	case []byte:
-		timeStr = string(v)
-	case int64:
-		return time.Unix(v, 0), true // sqlite
-	default:
-		return time.Time{}, false
-	}
-
-	for _, format := range formats {
-		formatLen := min.Int(len(format), len(timeStr))
-		t, err := time.Parse(format[:formatLen], timeStr)
-
-		if err != nil {
-			continue
-		}
-
-		return t, true
-	}
-
-	return time.Time{}, false
 }
 
 // NullUInt64 struct

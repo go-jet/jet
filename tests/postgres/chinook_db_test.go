@@ -188,7 +188,130 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 `)
 }
 
+type AllArtistDetails []struct { //list of all artist
+	model.Artist
+
+	Albums []struct { // list of albums per artist
+		model.Album
+
+		Tracks []struct { // list of tracks per album
+			model.Track
+
+			Genre     model.Genre     // track genre
+			MediaType model.MediaType // track media type
+
+			Playlists []model.Playlist // list of playlist where track is used
+
+			Invoices []struct { // list of invoices where track occurs
+				model.Invoice
+
+				Customer struct { // customer data for invoice
+					model.Customer
+
+					Employee *struct { // employee data for customer if exists
+						model.Employee
+
+						Manager *model.Employee `alias:"Manager"`
+					}
+				}
+			}
+		}
+	}
+}
+
+func BenchmarkJoinEverythingJSON(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testJoinEverythingJSON(b)
+	}
+}
+
+func TestJoinEverythingJSON(t *testing.T) {
+	testJoinEverythingJSON(t)
+}
+
+func testJoinEverythingJSON(t require.TestingT) {
+
+	manager := Employee.AS("Manager")
+
+	stmt := SELECT_JSON_ARR(
+		Artist.AllColumns,
+
+		SELECT_JSON_ARR(
+			Album.AllColumns,
+
+			SELECT_JSON_ARR(
+				Track.AllColumns,
+
+				SELECT_JSON_OBJ(Genre.AllColumns).
+					FROM(Genre).
+					WHERE(Genre.GenreId.EQ(Track.GenreId)).AS("Genre"),
+
+				SELECT_JSON_OBJ(MediaType.AllColumns).
+					FROM(MediaType).
+					WHERE(MediaType.MediaTypeId.EQ(Track.MediaTypeId)).AS("MediaType"),
+
+				SELECT_JSON_ARR(Playlist.AllColumns).
+					FROM(Playlist.INNER_JOIN(
+						PlaylistTrack,
+						Playlist.PlaylistId.EQ(PlaylistTrack.PlaylistId))).
+					WHERE(PlaylistTrack.TrackId.EQ(Track.TrackId)).
+					ORDER_BY(Playlist.PlaylistId).AS("Playlists"),
+
+				SELECT_JSON_ARR(
+					Invoice.AllColumns,
+
+					SELECT_JSON_OBJ(
+						Customer.AllColumns,
+
+						SELECT_JSON_OBJ(
+							Employee.AllColumns,
+
+							SELECT_JSON_OBJ(manager.AllColumns).
+								FROM(manager).
+								WHERE(manager.EmployeeId.EQ(Employee.ReportsTo)).AS("Manager"),
+						).FROM(Employee).
+							WHERE(Employee.EmployeeId.EQ(Customer.SupportRepId)).AS("Employee"),
+					).FROM(Customer).
+						WHERE(Customer.CustomerId.EQ(Invoice.CustomerId)).AS("Customer"),
+				).FROM(Invoice.INNER_JOIN(
+					InvoiceLine,
+					InvoiceLine.InvoiceId.EQ(Invoice.InvoiceId)),
+				).WHERE(InvoiceLine.TrackId.EQ(Track.TrackId)).
+					ORDER_BY(Invoice.InvoiceId).AS("Invoices"),
+			).FROM(Track).
+				WHERE(Track.AlbumId.EQ(Album.AlbumId)).
+				ORDER_BY(Track.TrackId).AS("Tracks"),
+		).FROM(Album).
+			WHERE(Album.ArtistId.EQ(Artist.ArtistId)).
+			ORDER_BY(Album.AlbumId).AS("Albums"),
+	).FROM(Artist).
+		ORDER_BY(Artist.ArtistId)
+
+	//fmt.Println(stmt.DebugSql())
+
+	var dest AllArtistDetails
+
+	err := stmt.QueryJSON(ctx, db, &dest)
+	require.NoError(t, err)
+
+	require.Equal(t, len(dest), 275)
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/joined_everything2.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
+	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 1)
+}
+
+func BenchmarkJoinEverything(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testJoinEverything(b)
+	}
+}
+
 func TestJoinEverything(t *testing.T) {
+	testJoinEverything(t)
+}
+
+func testJoinEverything(t require.TestingT) {
 
 	manager := Employee.AS("Manager")
 
@@ -222,37 +345,6 @@ func TestJoinEverything(t *testing.T) {
 		Genre.GenreId, MediaType.MediaTypeId, Playlist.PlaylistId,
 		Invoice.InvoiceId, Customer.CustomerId,
 	)
-
-	var dest []struct { //list of all artist
-		model.Artist
-
-		Albums []struct { // list of albums per artist
-			model.Album
-
-			Tracks []struct { // list of tracks per album
-				model.Track
-
-				Genre     model.Genre     // track genre
-				MediaType model.MediaType // track media type
-
-				Playlists []model.Playlist // list of playlist where track is used
-
-				Invoices []struct { // list of invoices where track occurs
-					model.Invoice
-
-					Customer struct { // customer data for invoice
-						model.Customer
-
-						Employee *struct { // employee data for customer if exists
-							model.Employee
-
-							Manager *model.Employee `alias:"Manager"`
-						}
-					}
-				}
-			}
-		}
-	}
 
 	testutils.AssertStatementSql(t, stmt, `
 SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
@@ -344,7 +436,7 @@ FROM chinook."Artist"
      LEFT JOIN chinook."Employee" AS "Manager" ON ("Manager"."EmployeeId" = "Employee"."ReportsTo")
 ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId", "Genre"."GenreId", "MediaType"."MediaTypeId", "Playlist"."PlaylistId", "Invoice"."InvoiceId", "Customer"."CustomerId";
 `)
-
+	var dest AllArtistDetails
 	err := stmt.QueryContext(context.Background(), db, &dest)
 
 	require.NoError(t, err)

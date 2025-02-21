@@ -119,14 +119,22 @@ func init() {
 	})
 }
 
-func requireLogged(t *testing.T, statement postgres.Statement) {
+func requireLogged(t require.TestingT, statement postgres.Statement) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	query, args := statement.Sql()
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
 
-func requireQueryLogged(t *testing.T, statement postgres.Statement, rowsProcessed int64) {
+func requireQueryLogged(t require.TestingT, statement postgres.Statement, rowsProcessed int64) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	query, args := statement.Sql()
 	queryLogged, argsLogged := queryInfo.Statement.Sql()
 

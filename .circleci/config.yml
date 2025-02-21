@@ -8,7 +8,7 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: cimg/go:1.22.8
+      - image: cimg/go:1.23.6
 
       # Please keep the version in sync with test/docker-compose.yaml
       - image: cimg/postgres:14.10
@@ -29,7 +29,7 @@ jobs:
           MYSQL_TCP_PORT: 50902
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: circleci/mariadb:10.3
+      - image: circleci/mariadb:11.7
         command: [ '--default-authentication-plugin=mysql_native_password', '--port=50903' ]
         environment:
           MYSQL_ROOT_PASSWORD: jet

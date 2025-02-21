@@ -58,6 +58,23 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 	}
 }
 
+// SerializeProjectionListJsonObj serializes a list of projections for JSON object
+func SerializeProjectionListJsonObj(statement StatementType, projections []Projection, out *SQLBuilder) {
+
+	for i, p := range projections {
+		if i > 0 {
+			out.WriteString(",")
+			out.NewLine()
+		}
+
+		if p == nil {
+			panic("jet: Projection is nil")
+		}
+
+		p.serializeForJsonObj(statement, out)
+	}
+}
+
 // SerializeColumnNames func
 func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	for i, col := range columns {

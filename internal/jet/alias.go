@@ -30,3 +30,8 @@ func (a *alias) serializeForProjection(statement StatementType, out *SQLBuilder)
 	out.WriteString("AS")
 	out.WriteAlias(a.alias)
 }
+
+func (a *alias) serializeForJsonObj(statement StatementType, out *SQLBuilder) {
+	out.WriteJsonObjKey(a.alias)
+	a.expression.serialize(statement, out)
+}

@@ -2,7 +2,7 @@ package jet
 
 import "fmt"
 
-// Expression is common interface for all expressions.
+// Expression is a common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
 	Serializer
@@ -89,7 +89,14 @@ func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, o
 }
 
 func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
+	if statement.IsSelectJSON() {
+		panic("jet: expression need to be aliased when used as SELECT JSON projection.")
+	}
 	e.Parent.serialize(statement, out, NoWrap)
+}
+
+func (e *ExpressionInterfaceImpl) serializeForJsonObj(statement StatementType, out *SQLBuilder) {
+	panic("jet: expression need to be aliased when used as SELECT JSON projection.")
 }
 
 func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {

@@ -70,12 +70,12 @@ type SelectStatement interface {
 
 // SELECT creates new SelectStatement with list of projections
 func SELECT(projection Projection, projections ...Projection) SelectStatement {
-	return newSelectStatement(nil, append([]Projection{projection}, projections...))
+	return newSelectStatement(jet.SelectStatementType, nil, append([]Projection{projection}, projections...))
 }
 
-func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
+func newSelectStatement(stmtType jet.StatementType, table ReadableTable, projections []Projection) *selectStatementImpl {
 	newSelect := &selectStatementImpl{}
-	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect,
+	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, stmtType, newSelect,
 		&newSelect.Select,
 		&newSelect.From,
 		&newSelect.Where,
@@ -94,7 +94,7 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 	}
 	newSelect.Limit.Count = -1
 
-	newSelect.setOperatorsImpl.parent = newSelect
+	newSelect.setOperatorsImpl.stmtRoot = newSelect
 
 	return newSelect
 }
@@ -144,7 +144,10 @@ func (s *selectStatementImpl) HAVING(boolExpression BoolExpression) SelectStatem
 
 func (s *selectStatementImpl) WINDOW(name string) windowExpand {
 	s.Window.Definitions = append(s.Window.Definitions, jet.WindowDefinition{Name: name})
-	return windowExpand{selectStatement: s}
+	return windowExpand{
+		selectStatement: s,
+		rootStmt:        s,
+	}
 }
 
 func (s *selectStatementImpl) ORDER_BY(orderByClauses ...OrderByClause) SelectStatement {
@@ -172,6 +175,7 @@ func (s *selectStatementImpl) FETCH_FIRST(count IntegerExpression) fetchExpand {
 
 	return fetchExpand{
 		selectStatement: s,
+		rootStmt:        s,
 	}
 }
 
@@ -188,6 +192,7 @@ func (s *selectStatementImpl) AsTable(alias string) SelectTable {
 
 type windowExpand struct {
 	selectStatement *selectStatementImpl
+	rootStmt        SelectStatement
 }
 
 func (w windowExpand) AS(window ...jet.Window) SelectStatement {
@@ -196,7 +201,7 @@ func (w windowExpand) AS(window ...jet.Window) SelectStatement {
 	}
 	windowsDefinition := w.selectStatement.Window.Definitions
 	windowsDefinition[len(windowsDefinition)-1].Window = window[0]
-	return w.selectStatement
+	return w.rootStmt
 }
 
 func toJetFrameOffset(offset int64) jet.Serializer {
@@ -216,16 +221,17 @@ func readableTablesToSerializerList(tables []ReadableTable) []jet.Serializer {
 
 type fetchExpand struct {
 	selectStatement *selectStatementImpl
+	rootStmt        SelectStatement
 }
 
 func (f fetchExpand) ROWS_ONLY() SelectStatement {
 	f.selectStatement.Fetch.WithTies = false
 
-	return f.selectStatement
+	return f.rootStmt
 }
 
 func (f fetchExpand) ROWS_WITH_TIES() SelectStatement {
 	f.selectStatement.Fetch.WithTies = true
 
-	return f.selectStatement
+	return f.rootStmt
 }

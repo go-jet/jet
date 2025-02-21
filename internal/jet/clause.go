@@ -52,6 +52,10 @@ func (s *ClauseSelect) Projections() ProjectionList {
 
 // Serialize serializes clause into SQLBuilder
 func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(s.ProjectionList) == 0 {
+		panic("jet: SELECT clause has to have at least one projection")
+	}
+
 	out.NewLine()
 	out.WriteString("SELECT")
 	s.OptimizerHints.Serialize(statementType, out, options...)
@@ -64,10 +68,6 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 		out.WriteString("ON (")
 		SerializeColumnExpressions(s.DistinctOnColumns, statementType, out)
 		out.WriteByte(')')
-	}
-
-	if len(s.ProjectionList) == 0 {
-		panic("jet: SELECT clause has to have at least one projection")
 	}
 
 	out.WriteProjections(statementType, s.ProjectionList)

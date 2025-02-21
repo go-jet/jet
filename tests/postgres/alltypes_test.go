@@ -35,6 +35,58 @@ func TestAllTypesSelect(t *testing.T) {
 	testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 }
 
+func TestAllTypesSelectJson(t *testing.T) {
+
+	stmt := SELECT_JSON_ARR(
+		AllTypesAllColumns.Except(
+			AllTypes.JSON, AllTypes.JSONPtr,
+			AllTypes.Jsonb, AllTypes.JsonbPtr,
+			AllTypes.TextArray, AllTypes.TextArrayPtr,
+			AllTypes.JsonbArray, AllTypes.IntegerArray, AllTypes.IntegerArrayPtr,
+			AllTypes.TextMultiDimArray, AllTypes.TextMultiDimArrayPtr,
+		),
+		CAST(AllTypes.JSONPtr).AS_TEXT().AS("jsonPtr"),
+		CAST(AllTypes.JSON).AS_TEXT().AS("JSON"),
+		CAST(AllTypes.JsonbPtr).AS_TEXT().AS("jsonbPtr"),
+		CAST(AllTypes.Jsonb).AS_TEXT().AS("Jsonb"),
+		CAST(AllTypes.TextArrayPtr).AS_TEXT().AS("TextArrayPtr"),
+		CAST(AllTypes.TextArray).AS_TEXT().AS("TextArray"),
+		CAST(AllTypes.JsonbArray).AS_TEXT().AS("JsonbArray"),
+		CAST(AllTypes.IntegerArray).AS_TEXT().AS("IntegerArray"),
+		CAST(AllTypes.IntegerArrayPtr).AS_TEXT().AS("IntegerArrayPtr"),
+		CAST(AllTypes.TextMultiDimArray).AS_TEXT().AS("TextMultiDimArray"),
+		CAST(AllTypes.TextMultiDimArrayPtr).AS_TEXT().AS("TextMultiDimArrayPtr"),
+	).FROM(AllTypes)
+
+	//fmt.Println(stmt.DebugSql())
+
+	var dest []model.AllTypes
+
+	err := stmt.QueryJSON(ctx, db, &dest)
+	require.NoError(t, err)
+
+	// fix inconsistencies between postgres and cockroachdb.
+	// cockroachdb returns char[N] columns with trailing whitespaces trimmed
+	if sourceIsCockroachDB() {
+		dest[0].Char = allTypesRow0.Char
+		dest[0].CharPtr = allTypesRow0.CharPtr
+
+		dest[1].Char = allTypesRow1.Char
+		dest[1].CharPtr = allTypesRow1.CharPtr
+	}
+
+	// set time local before comparison
+	dest[0].Timestampz = dest[0].Timestampz.Local()
+
+	if dest[0].TimestampzPtr != nil {
+		dest[0].TimestampzPtr = ptr.Of(dest[0].TimestampzPtr.Local())
+	}
+	dest[1].Timestampz = dest[1].Timestampz.Local()
+
+	require.Equal(t, dest[0], allTypesRow0)
+	require.Equal(t, dest[1], allTypesRow1)
+}
+
 func TestAllTypesViewSelect(t *testing.T) {
 	type AllTypesView model.AllTypes
 	var dest []AllTypesView
@@ -146,40 +198,42 @@ RETURNING all_types.bytea AS "all_types.bytea",
           all_types.bytea_ptr AS "all_types.bytea_ptr";
 `, byteArrHex, byteArrBin)
 
-	var inserted model.AllTypes
-	err := insertStmt.Query(db, &inserted)
-	require.NoError(t, err)
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		var inserted model.AllTypes
+		err := insertStmt.Query(tx, &inserted)
+		require.NoError(t, err)
 
-	require.Equal(t, string(*inserted.ByteaPtr), "Hello Gopher!")
-	// It is not possible to initiate bytea column using hex format '\xDEADBEEF' with pq driver.
-	// pq driver always encodes parameter string if destination column is of type bytea.
-	// Probably pq driver error.
-	// require.Equal(t, string(inserted.Bytea), "Hello Gopher!")
+		require.Equal(t, string(*inserted.ByteaPtr), "Hello Gopher!")
+		// It is not possible to initiate bytea column using hex format '\xDEADBEEF' with pq driver.
+		// pq driver always encodes parameter string if destination column is of type bytea.
+		// Probably pq driver error.
+		// require.Equal(t, string(inserted.Bytea), "Hello Gopher!")
 
-	stmt := SELECT(
-		AllTypes.Bytea,
-		AllTypes.ByteaPtr,
-	).FROM(
-		AllTypes,
-	).WHERE(
-		AllTypes.ByteaPtr.EQ(Bytea(byteArrBin)),
-	)
+		stmt := SELECT(
+			AllTypes.Bytea,
+			AllTypes.ByteaPtr,
+		).FROM(
+			AllTypes,
+		).WHERE(
+			AllTypes.ByteaPtr.EQ(Bytea(byteArrBin)),
+		)
 
-	testutils.AssertStatementSql(t, stmt, `
+		testutils.AssertStatementSql(t, stmt, `
 SELECT all_types.bytea AS "all_types.bytea",
      all_types.bytea_ptr AS "all_types.bytea_ptr"
 FROM test_sample.all_types
 WHERE all_types.bytea_ptr = $1::bytea;
 `, byteArrBin)
 
-	var dest model.AllTypes
+		var dest model.AllTypes
 
-	err = stmt.Query(db, &dest)
-	require.NoError(t, err)
+		err = stmt.Query(tx, &dest)
+		require.NoError(t, err)
 
-	require.Equal(t, string(*dest.ByteaPtr), "Hello Gopher!")
-	// Probably pq driver error.
-	// require.Equal(t, string(dest.Bytea), "Hello Gopher!")
+		require.Equal(t, string(*dest.ByteaPtr), "Hello Gopher!")
+		// Probably pq driver error.
+		// require.Equal(t, string(dest.Bytea), "Hello Gopher!")
+	})
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
