@@ -46,7 +46,7 @@ FROM (
 
 		err = stmt.QueryJSON(ctx, db, &dest2)
 		require.NoError(t, err)
-		testutils.PrintJson(dest2)
+		//testutils.PrintJson(dest2)
 		testutils.AssertDeepEqual(t, dest2, map[string]interface{}{
 			"actorID":    float64(2),
 			"firstName":  "Nick",

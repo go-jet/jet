@@ -76,15 +76,23 @@ func TestAllTypesSelectJson(t *testing.T) {
 	}
 
 	// set time local before comparison
-	dest[0].Timestampz = dest[0].Timestampz.Local()
+	dest[0].Timestampz = toCET(t, dest[0].Timestampz)
 
 	if dest[0].TimestampzPtr != nil {
-		dest[0].TimestampzPtr = ptr.Of(dest[0].TimestampzPtr.Local())
+		dest[0].TimestampzPtr = ptr.Of(toCET(t, *dest[0].TimestampzPtr))
 	}
-	dest[1].Timestampz = dest[1].Timestampz.Local()
+	dest[1].Timestampz = toCET(t, dest[1].Timestampz)
 
-	require.Equal(t, dest[0], allTypesRow0)
-	require.Equal(t, dest[1], allTypesRow1)
+	testutils.AssertJsonEqual(t, dest[0], allTypesRow0)
+	testutils.AssertJsonEqual(t, dest[1], allTypesRow1)
+}
+
+func toCET(t *testing.T, tm time.Time) time.Time {
+	cet, err := time.LoadLocation("CET") // "Europe/Berlin" also works
+	if err != nil {
+		t.Fail()
+	}
+	return tm.In(cet)
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
