@@ -8,12 +8,16 @@
 package json
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/base64"
+	hex2 "encoding/hex"
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/utils/datetime"
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf16"
 	"unicode/utf8"
@@ -851,7 +855,37 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 	isNull := item[0] == 'n' // null
 	u, ut, pv := indirect(v, isNull)
 	if u != nil {
-		return u.UnmarshalJSON(item)
+		err := u.UnmarshalJSON(item)
+
+		if err != nil {
+			if t, ok := u.(*time.Time); ok {
+
+				if len(item) < 2 || item[0] != '"' || item[len(item)-1] != '"' {
+					d.saveError(fmt.Errorf("Time.UnmarshalJSON: input is not a JSON string"))
+					return nil
+				}
+				item = item[len(`"`) : len(item)-len(`"`)]
+
+				tt, parsed := datetime.TryParseAsTime(item, []string{
+					time.RFC3339Nano,
+					"2006-01-02 15:04:05.999999", // go-sql-driver/mysql
+					"15:04:05-07",                // pgx
+					"15:04:05.999999",            // pgx
+				})
+
+				if !parsed {
+					d.saveError(fmt.Errorf("json: invalid time, trying to unmarshal %q into %v", item, v.Type()))
+					return nil
+				}
+
+				*t = tt
+				return nil
+			}
+
+			return err
+		}
+
+		return nil
 	}
 	if ut != nil {
 		if item[0] != '"' {
@@ -935,13 +969,30 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 				d.saveError(&UnmarshalTypeError{Value: "string", Type: v.Type(), Offset: int64(d.readIndex())})
 				break
 			}
-			b := make([]byte, base64.StdEncoding.DecodedLen(len(s)))
-			n, err := base64.StdEncoding.Decode(b, s)
-			if err != nil {
-				d.saveError(err)
-				break
+
+			if bytes.HasPrefix(s, []byte("\\x")) {
+				s = s[2:]
+				b := make([]byte, hex2.DecodedLen(len(s)))
+				n, err := hex2.Decode(b, s)
+				if err != nil {
+					d.saveError(err)
+					break
+				}
+				v.SetBytes(b[:n])
+			} else {
+				if bytes.HasPrefix(s, []byte("base64")) {
+					s = s[bytes.LastIndexByte(s, ':')+1:]
+				}
+
+				b := make([]byte, base64.StdEncoding.DecodedLen(len(s)))
+				n, err := base64.StdEncoding.Decode(b, s)
+				if err != nil {
+					d.saveError(err)
+					break
+				}
+				v.SetBytes(b[:n])
 			}
-			v.SetBytes(b[:n])
+
 		case reflect.String:
 			t := string(s)
 			if v.Type() == numberType && !isValidNumber(t) {
@@ -975,6 +1026,15 @@ func (d *decodeState) literalStore(item []byte, v reflect.Value, fromQuoted bool
 				return fmt.Errorf("json: invalid use of ,string struct tag, trying to unmarshal %q into %v", item, v.Type())
 			}
 			d.saveError(&UnmarshalTypeError{Value: "number", Type: v.Type(), Offset: int64(d.readIndex())})
+		case reflect.Bool:
+			itemVal := string(item)
+
+			if itemVal != "1" && itemVal != "0" {
+				d.saveError(&UnmarshalTypeError{Value: "number", Type: v.Type(), Offset: int64(d.readIndex())})
+				break
+			}
+			v.SetBool(itemVal == "1")
+
 		case reflect.Interface:
 			n, err := d.convertNumber(string(item))
 			if err != nil {
