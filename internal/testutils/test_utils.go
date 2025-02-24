@@ -115,6 +115,16 @@ func AssertJSON(t *testing.T, data interface{}, expectedJSON string) {
 	require.Equal(t, dataJson, expectedJSON)
 }
 
+// AssertJsonEqual checks if actual and expected json representation are the same
+func AssertJsonEqual(t require.TestingT, actual, expected interface{}, option ...cmp.Option) {
+	actualJsonData, err := json.MarshalIndent(actual, "", "\t")
+	require.NoError(t, err)
+	expectedJsonData, err := json.MarshalIndent(expected, "", "\t")
+	require.NoError(t, err)
+
+	require.Equal(t, actualJsonData, expectedJsonData)
+}
+
 // SaveJSONFile saves v as json at testRelativePath
 // nolint:unused
 func SaveJSONFile(v interface{}, testRelativePath string) {
@@ -127,7 +137,10 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 }
 
 // AssertJSONFile check if data json representation is the same as json at testRelativePath
-func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
+func AssertJSONFile(t require.TestingT, data interface{}, testRelativePath string) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
 
 	filePath := getFullPath(testRelativePath)
 	fileJSONData, err := os.ReadFile(filePath) // #nosec G304
@@ -145,7 +158,11 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 }
 
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
-func AssertStatementSql(t *testing.T, query jet.PrintableStatement, expectedQuery string, expectedArgs ...interface{}) {
+func AssertStatementSql(t require.TestingT, query jet.PrintableStatement, expectedQuery string, expectedArgs ...interface{}) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	queryStr, args := query.Sql()
 	assertQueryString(t, queryStr, expectedQuery)
 
@@ -255,6 +272,16 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 	_ = stmt.Query(db, dest)
 }
 
+// AssertQueryJsonPanicErr check if statement QueryJSON execution panics with error errString
+func AssertQueryJsonPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest interface{}, errString string) {
+	defer func() {
+		r := recover()
+		require.Equal(t, r, errString)
+	}()
+
+	_ = stmt.QueryJSON(context.Background(), db, dest)
+}
+
 // AssertFileContent check if file content at filePath contains expectedContent text.
 func AssertFileContent(t *testing.T, filePath string, expectedContent string) {
 	enumFileData, err := os.ReadFile(filePath) // #nosec G304
@@ -283,14 +310,14 @@ func AssertFileNamesEqual(t *testing.T, dirPath string, fileNames ...string) {
 }
 
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
-func AssertDeepEqual(t *testing.T, actual, expected interface{}, option ...cmp.Option) {
+func AssertDeepEqual(t require.TestingT, actual, expected interface{}, option ...cmp.Option) {
 	if !assert.True(t, cmp.Equal(actual, expected, option...)) {
 		printDiff(actual, expected, option...)
 		t.FailNow()
 	}
 }
 
-func assertQueryString(t *testing.T, actual, expected string) {
+func assertQueryString(t require.TestingT, actual, expected string) {
 	if !assert.Equal(t, actual, expected) {
 		printDiff(actual, expected)
 		t.FailNow()

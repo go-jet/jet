@@ -148,6 +148,11 @@ var NTH_VALUE = jet.NTH_VALUE
 
 //--------------------- String functions ------------------//
 
+// HEX function in MySQL takes an input and returns its equivalent hexadecimal representation
+func HEX(expression Expression) StringExpression {
+	return StringExp(Func("HEX", expression))
+}
+
 // BIT_LENGTH returns number of bits in string expression
 var BIT_LENGTH = jet.BIT_LENGTH
 

@@ -23,16 +23,60 @@ func TestAllTypes(t *testing.T) {
 
 	var dest []model.AllTypes
 
-	err := AllTypes.
-		SELECT(AllTypes.AllColumns).
+	err := SELECT(AllTypes.AllColumns).
+		FROM(AllTypes).
 		LIMIT(2).
 		Query(db, &dest)
 
 	require.NoError(t, err)
-
 	require.Equal(t, len(dest), 2)
 
 	//testutils.PrintJson(dest)
+	testutils.AssertJSON(t, dest, allTypesJson)
+}
+
+func TestAllTypesJSON(t *testing.T) {
+
+	stmt := SELECT_JSON_ARR(
+		AllTypes.AllColumns.Except(
+			AllTypes.JSON,
+			AllTypes.JSONPtr,
+			AllTypes.Bit,
+			AllTypes.BitPtr,
+			AllTypes.Blob,
+			AllTypes.BlobPtr,
+			AllTypes.Binary,
+			AllTypes.BinaryPtr,
+			AllTypes.VarBinary,
+			AllTypes.VarBinaryPtr,
+		),
+		CAST(AllTypes.JSON).AS_CHAR().AS("Json"),
+		CAST(AllTypes.JSONPtr).AS_CHAR().AS("JsonPtr"),
+		CAST(AllTypes.Bit).AS_CHAR().AS("Bit"),
+		CAST(AllTypes.BitPtr).AS_CHAR().AS("BitPtr"),
+
+		// TODO: remove when binary string is implemented
+		CONCAT(String("\\x"), HEX(AllTypes.Blob)).AS("Blob"),
+		CONCAT(String("\\x"), HEX(AllTypes.BlobPtr)).AS("BlobPtr"),
+
+		CONCAT(String("\\x"), HEX(AllTypes.Binary)).AS("Binary"),
+		CONCAT(String("\\x"), HEX(AllTypes.BinaryPtr)).AS("BinaryPtr"),
+
+		CONCAT(String("\\x"), HEX(AllTypes.VarBinary)).AS("VarBinary"),
+		CONCAT(String("\\x"), HEX(AllTypes.VarBinaryPtr)).AS("VarBinaryPtr"),
+	).FROM(AllTypes)
+
+	var dest []model.AllTypes
+
+	err := stmt.QueryJSON(ctx, db, &dest)
+	require.NoError(t, err)
+
+	// fix float rounding lost before comparison
+	dest[0].Float = 3.33
+	dest[0].FloatPtr = ptr.Of(3.33)
+	dest[1].Float = 3.33
+
+	//fmt.Println(allTypesJson)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 

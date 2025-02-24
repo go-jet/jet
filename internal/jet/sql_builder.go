@@ -99,6 +99,10 @@ func (s *SQLBuilder) WriteString(str string) {
 	s.write([]byte(str))
 }
 
+func (s *SQLBuilder) WriteJsonObjKey(key string) {
+	s.WriteString(fmt.Sprintf(`'%s', `, key))
+}
+
 // WriteIdentifier adds identifier to output SQL
 func (s *SQLBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
 	if s.shouldQuote(name, alwaysQuote...) {
