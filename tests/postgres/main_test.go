@@ -31,6 +31,7 @@ const CockroachDB = "COCKROACH_DB"
 func init() {
 	source = os.Getenv("PG_SOURCE")
 	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
+	testRoot = repo.GetTestsDirPath()
 }
 
 func sourceIsCockroachDB() bool {
@@ -45,8 +46,6 @@ func skipForCockroachDB(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
-
-	setTestRoot()
 
 	for _, driverName := range []string{"postgres", "pgx"} {
 
@@ -92,10 +91,6 @@ func getConnectionString() string {
 	}
 
 	return dbconfig.PostgresConnectString
-}
-
-func setTestRoot() {
-	testRoot = repo.GetTestsDirPath()
 }
 
 var loggedSQL string

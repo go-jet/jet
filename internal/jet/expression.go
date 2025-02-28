@@ -159,7 +159,7 @@ func newExpressionListOperator(operator string, expressions ...Expression) *expr
 }
 
 func newBoolExpressionListOperator(operator string, expressions ...BoolExpression) BoolExpression {
-	return BoolExp(newExpressionListOperator(operator, BoolExpressionListToExpressionList(expressions)...))
+	return BoolExp(newExpressionListOperator(operator, ToExpressionList(expressions)...))
 }
 
 func (elo *expressionListOperator) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {

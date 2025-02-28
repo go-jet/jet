@@ -468,6 +468,11 @@ func RawDate(raw string, namedArgs ...map[string]interface{}) DateExpression {
 	return DateExp(Raw(raw, namedArgs...))
 }
 
+// RawBlob is raw query helper that for blob expressions
+func RawBlob(raw string, namedArgs ...map[string]interface{}) BlobExpression {
+	return BlobExp(Raw(raw, namedArgs...))
+}
+
 // RawRange helper that for range expressions
 func RawRange[T Expression](raw string, namedArgs ...map[string]interface{}) Range[T] {
 	return RangeExp[T](Raw(raw, namedArgs...))

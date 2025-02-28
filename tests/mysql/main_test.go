@@ -8,6 +8,7 @@ import (
 	jetmysql "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
+	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/stretchr/testify/require"
 	"runtime"
@@ -21,12 +22,14 @@ var db *stmtcache.DB
 
 var source string
 var withStatementCaching bool
+var testRoot string
 
 const MariaDB = "MariaDB"
 
 func init() {
 	source = os.Getenv("MY_SQL_SOURCE")
 	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
+	testRoot = repo.GetTestsDirPath()
 }
 
 func sourceIsMariaDB() bool {

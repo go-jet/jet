@@ -196,10 +196,21 @@ var RTRIM = jet.RTRIM
 //	return jet.NewStringFunc("RIGHTSTR", str, n)
 //}
 
+// HEX function takes an input and returns its equivalent hexadecimal representation
+var HEX = jet.HEX
+
+// UNHEX for a string argument str, UNHEX(str) interprets each pair of characters in the argument
+// as a hexadecimal number and converts it to the byte represented by the number.
+// The return value is a binary string.
+var UNHEX = jet.UNHEX
+
 // LENGTH returns number of characters in string with a given encoding
-func LENGTH(str jet.StringExpression) jet.StringExpression {
+func LENGTH(str jet.StringOrBlobExpression) jet.IntegerExpression {
 	return jet.LENGTH(str)
 }
+
+// OCTET_LENGTH returns number of bytes in string expression
+var OCTET_LENGTH = jet.OCTET_LENGTH
 
 // LPAD fills up the string to length length by prepending the characters
 // fill (a space by default). If the string is already longer than length

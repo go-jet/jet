@@ -132,8 +132,8 @@ func ExpressionListToSerializerList(expressions []Expression) []Serializer {
 	return ret
 }
 
-// BoolExpressionListToExpressionList converts list of bool expressions to list of expressions
-func BoolExpressionListToExpressionList(expressions []BoolExpression) []Expression {
+// ToExpressionList converts list of any expressions to list of expressions
+func ToExpressionList[T Expression](expressions []T) []Expression {
 	var ret []Expression
 
 	for _, expression := range expressions {

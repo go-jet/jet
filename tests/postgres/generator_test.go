@@ -974,8 +974,8 @@ type allTypesTable struct {
 	Char                 postgres.ColumnString
 	TextPtr              postgres.ColumnString
 	Text                 postgres.ColumnString
-	ByteaPtr             postgres.ColumnString
-	Bytea                postgres.ColumnString
+	ByteaPtr             postgres.ColumnBytea
+	Bytea                postgres.ColumnBytea
 	TimestampzPtr        postgres.ColumnTimestampz
 	Timestampz           postgres.ColumnTimestampz
 	TimestampPtr         postgres.ColumnTimestamp
@@ -1078,8 +1078,8 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		CharColumn                 = postgres.StringColumn("char")
 		TextPtrColumn              = postgres.StringColumn("text_ptr")
 		TextColumn                 = postgres.StringColumn("text")
-		ByteaPtrColumn             = postgres.StringColumn("bytea_ptr")
-		ByteaColumn                = postgres.StringColumn("bytea")
+		ByteaPtrColumn             = postgres.ByteaColumn("bytea_ptr")
+		ByteaColumn                = postgres.ByteaColumn("bytea")
 		TimestampzPtrColumn        = postgres.TimestampzColumn("timestampz_ptr")
 		TimestampzColumn           = postgres.TimestampzColumn("timestampz")
 		TimestampPtrColumn         = postgres.TimestampColumn("timestamp_ptr")

@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"encoding/base64"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
 
@@ -485,6 +486,7 @@ func TestExpressionCast(t *testing.T) {
 		CAST(String("1999-01-08 04:05:06")).AS_TIMESTAMP(),
 		CAST(String("1999-01-08 04:05:06+01:00")).AS_TIMESTAMPZ(),
 		CAST(String("04:05:06")).AS_INTERVAL(),
+		CAST(String("some text")).AS_BYTEA().EQ(Bytea([]byte("some text"))),
 
 		func() ProjectionList {
 			if sourceIsCockroachDB() {
@@ -538,7 +540,6 @@ func TestStringOperators(t *testing.T) {
 		AllTypes.Text.BETWEEN(String("min"), String("max")),
 		AllTypes.Text.NOT_BETWEEN(AllTypes.VarChar, AllTypes.CharPtr),
 		AllTypes.Text.CONCAT(String("text2")),
-		AllTypes.Text.CONCAT(Int(11)),
 		AllTypes.Text.LIKE(String("abc")),
 		AllTypes.Text.NOT_LIKE(String("_b_")),
 		AllTypes.Text.REGEXP_LIKE(String("^t")),
@@ -569,18 +570,18 @@ func TestStringOperators(t *testing.T) {
 		CONCAT(AllTypes.VarCharPtr, AllTypes.VarCharPtr, String("aaa"), Int(1)),
 		CONCAT(Bool(false), Int(1), Float(22.2), String("test test")),
 		CONCAT_WS(String("string1"), Int(1), Float(11.22), String("bytea"), Bool(false)), //Float(11.12)),
-		CONVERT(Bytea("bytea"), String("UTF8"), String("LATIN1")),
-		CONVERT(AllTypes.Bytea, String("UTF8"), String("LATIN1")),
-		CONVERT_FROM(Bytea("text_in_utf8"), String("UTF8")),
-		CONVERT_TO(String("text_in_utf8"), String("UTF8")),
-		ENCODE(Bytea("123\000\001"), String("base64")),
-		DECODE(String("MTIzAAE="), String("base64")),
+		CONVERT(Bytea("bytea"), UTF8, LATIN1),
+		CONVERT(AllTypes.Bytea, UTF8, LATIN1),
+		CONVERT_FROM(Bytea("text_in_utf8"), UTF8),
+		CONVERT_TO(String("text_in_utf8"), UTF8),
+		ENCODE(Bytea("some text"), Escape),
+		DECODE(String("MTIzAAE="), Base64),
 		FORMAT(String("Hello %s, %1$s"), String("World")),
 		INITCAP(String("hi THOMAS")),
 		LEFT(String("abcde"), Int(2)),
 		RIGHT(String("abcde"), Int(2)),
 		LENGTH(Bytea("jose")),
-		LENGTH(Bytea("jose"), String("UTF8")),
+		LENGTH(Bytea("jose"), UTF8),
 		LPAD(String("Hi"), Int(5)),
 		LPAD(String("Hi"), Int(5), String("xy")),
 		RPAD(String("Hi"), Int(5)),
@@ -599,6 +600,155 @@ func TestStringOperators(t *testing.T) {
 	err := query.Query(db, &dest)
 
 	require.NoError(t, err)
+}
+
+func TestBlob(t *testing.T) {
+
+	var sampleBlob = Bytea([]byte{11, 0, 22, 33, 44})
+	var textBlob = Bytea([]byte("text blob"))
+
+	stmt := SELECT(
+		AllTypes.Bytea.EQ(sampleBlob),
+		AllTypes.Bytea.EQ(AllTypes.ByteaPtr),
+		AllTypes.Bytea.NOT_EQ(sampleBlob),
+		AllTypes.Bytea.GT(textBlob),
+		AllTypes.Bytea.GT_EQ(AllTypes.ByteaPtr),
+		AllTypes.Bytea.LT(AllTypes.ByteaPtr),
+		AllTypes.Bytea.LT_EQ(sampleBlob),
+		AllTypes.Bytea.BETWEEN(Bytea([]byte("min")), Bytea([]byte("max"))),
+		AllTypes.Bytea.NOT_BETWEEN(AllTypes.Bytea, AllTypes.ByteaPtr),
+		AllTypes.Bytea.CONCAT(textBlob),
+
+		func() ProjectionList {
+			if sourceIsCockroachDB() {
+				return ProjectionList{NULL}
+			}
+			// cockroach doesn't support currently
+			return ProjectionList{
+				AllTypes.Bytea.LIKE(Bytea("b'%pattern%'")),
+				AllTypes.Bytea.NOT_LIKE(Bytea("b'%pattern%'")),
+
+				BTRIM(AllTypes.Bytea, Bytea([]byte{33})),
+				RTRIM(AllTypes.ByteaPtr, sampleBlob),
+				LTRIM(sampleBlob, textBlob),
+				CONCAT(sampleBlob, AllTypes.ByteaPtr, textBlob),
+				BIT_COUNT(sampleBlob).EQ(Int(3)),
+				LENGTH(textBlob, UTF8).EQ(Int(4)),
+
+				CONVERT(textBlob, UTF8, WIN1252),
+				CONVERT(AllTypes.Bytea, UTF8, LATIN1).EQ(sampleBlob),
+			}
+		}(),
+
+		BIT_LENGTH(textBlob),
+		OCTET_LENGTH(textBlob),
+
+		GET_BIT(textBlob, Int(2)).EQ(Int(23)),
+		GET_BYTE(sampleBlob, Int(1)).EQ(Int(0)),
+		SET_BIT(textBlob, Int(1), Int(0)).EQ(sampleBlob),
+		SET_BYTE(textBlob, Int(1), Int(0)).EQ(textBlob),
+		LENGTH(sampleBlob),
+
+		SUBSTR(AllTypes.Bytea, Int(0), Int(2)),
+
+		MD5(AllTypes.Bytea),
+		SHA224(AllTypes.Bytea),
+		SHA256(AllTypes.Bytea),
+		SHA384(AllTypes.Bytea),
+		SHA512(AllTypes.Bytea),
+
+		ENCODE(sampleBlob, Base64),
+		DECODE(String("A234C12B"), Hex).EQ(sampleBlob),
+
+		CONVERT_FROM(AllTypes.ByteaPtr, UTF8).EQ(AllTypes.VarChar),
+		CONVERT_TO(AllTypes.Text, UTF8).NOT_EQ(textBlob),
+
+		RawBytea("DECODE(#1::text, #2)", RawArgs{
+			"#1": "A234C12B",
+			"#2": "hex",
+		}).EQ(sampleBlob),
+	).FROM(
+		AllTypes,
+	)
+
+	if !sourceIsCockroachDB() {
+		testutils.AssertStatementSql(t, stmt, `
+SELECT all_types.bytea = $1::bytea,
+     all_types.bytea = all_types.bytea_ptr,
+     all_types.bytea != $2::bytea,
+     all_types.bytea > $3::bytea,
+     all_types.bytea >= all_types.bytea_ptr,
+     all_types.bytea < all_types.bytea_ptr,
+     all_types.bytea <= $4::bytea,
+     all_types.bytea BETWEEN $5::bytea AND $6::bytea,
+     all_types.bytea NOT BETWEEN all_types.bytea AND all_types.bytea_ptr,
+     all_types.bytea || $7::bytea,
+     all_types.bytea LIKE $8::bytea,
+     all_types.bytea NOT LIKE $9::bytea,
+     BTRIM(all_types.bytea, $10::bytea),
+     RTRIM(all_types.bytea_ptr, $11::bytea),
+     LTRIM($12::bytea, $13::bytea),
+     CONCAT($14::bytea, all_types.bytea_ptr, $15::bytea),
+     BIT_COUNT($16::bytea) = $17,
+     LENGTH($18::bytea, $19::text) = $20,
+     CONVERT($21::bytea, $22::text, $23::text),
+     CONVERT(all_types.bytea, $24::text, $25::text) = $26::bytea,
+     BIT_LENGTH($27::bytea),
+     OCTET_LENGTH($28::bytea),
+     GET_BIT($29::bytea, $30) = $31,
+     GET_BYTE($32::bytea, $33) = $34,
+     SET_BIT($35::bytea, $36, $37) = $38::bytea,
+     SET_BYTE($39::bytea, $40, $41) = $42::bytea,
+     LENGTH($43::bytea),
+     SUBSTR(all_types.bytea, $44, $45),
+     MD5(all_types.bytea),
+     SHA224(all_types.bytea),
+     SHA256(all_types.bytea),
+     SHA384(all_types.bytea),
+     SHA512(all_types.bytea),
+     ENCODE($46::bytea, $47::text),
+     DECODE($48::text, $49::text) = $50::bytea,
+     CONVERT_FROM(all_types.bytea_ptr, $51::text) = all_types.var_char,
+     CONVERT_TO(all_types.text, $52::text) != $53::bytea,
+     (DECODE($54::text, $55)) = $56::bytea
+FROM test_sample.all_types;
+`)
+	}
+
+	var dest []struct{}
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+}
+
+func TestBlobConversion(t *testing.T) {
+
+	nonPrintable := []byte{11, 22, 33, 44, 55}
+	printable := []byte("this is blob")
+
+	stmt := SELECT(
+		Bytea(nonPrintable).AS("non_printable"),
+		Bytea(printable).AS("printable"),
+
+		ENCODE(Bytea(nonPrintable), Base64).AS("non_printable_base64"),
+		CONVERT_FROM(Bytea(printable), UTF8).AS("printable_utf8"),
+	)
+
+	var dest struct {
+		NonPrintable []byte
+		Printable    []byte
+
+		NonPrintableBase64 []byte
+		PrintableUTF8      string
+	}
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	require.Equal(t, dest.NonPrintable, nonPrintable)
+	require.Equal(t, dest.Printable, printable)
+	require.Equal(t, dest.NonPrintableBase64, []byte(base64.StdEncoding.EncodeToString(nonPrintable)))
+	require.Equal(t, dest.PrintableUTF8, string(printable))
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -1206,6 +1356,106 @@ SELECT ROW($1::integer, $2::real, $3::text) AS "row",
 
 	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
+}
+
+func TestAllTypesSubQueryFrom(t *testing.T) {
+	subQuery := SELECT(
+		AllTypes.Boolean,
+		AllTypes.Integer,
+		AllTypes.DoublePrecision,
+		AllTypes.Text,
+		AllTypes.Date,
+		AllTypes.Time,
+		AllTypes.Timez,
+		AllTypes.Timestamp,
+		AllTypes.Interval,
+		AllTypes.Bytea,
+	).FROM(
+		AllTypes,
+	).AsTable("subQuery")
+
+	stmt := SELECT(
+		AllTypes.Boolean.From(subQuery),
+		AllTypes.Integer.From(subQuery),
+		AllTypes.DoublePrecision.From(subQuery),
+		AllTypes.Text.From(subQuery),
+		AllTypes.Date.From(subQuery),
+		AllTypes.Time.From(subQuery),
+		AllTypes.Timez.From(subQuery),
+		AllTypes.Timestamp.From(subQuery),
+		AllTypes.Interval.From(subQuery),
+		AllTypes.Bytea.From(subQuery),
+	).FROM(
+		subQuery,
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
+     "subQuery"."all_types.integer" AS "all_types.integer",
+     "subQuery"."all_types.double_precision" AS "all_types.double_precision",
+     "subQuery"."all_types.text" AS "all_types.text",
+     "subQuery"."all_types.date" AS "all_types.date",
+     "subQuery"."all_types.time" AS "all_types.time",
+     "subQuery"."all_types.timez" AS "all_types.timez",
+     "subQuery"."all_types.timestamp" AS "all_types.timestamp",
+     "subQuery"."all_types.interval" AS "all_types.interval",
+     "subQuery"."all_types.bytea" AS "all_types.bytea"
+FROM (
+          SELECT all_types.boolean AS "all_types.boolean",
+               all_types.integer AS "all_types.integer",
+               all_types.double_precision AS "all_types.double_precision",
+               all_types.text AS "all_types.text",
+               all_types.date AS "all_types.date",
+               all_types.time AS "all_types.time",
+               all_types.timez AS "all_types.timez",
+               all_types.timestamp AS "all_types.timestamp",
+               all_types.interval AS "all_types.interval",
+               all_types.bytea AS "all_types.bytea"
+          FROM test_sample.all_types
+     ) AS "subQuery";
+`)
+
+	var dest []model.AllTypes
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+}
+
+func TestAllTypesUpdateSet(t *testing.T) {
+
+	stmt := AllTypes.UPDATE().
+		SET(
+			AllTypes.Boolean.SET(Bool(false)),
+			AllTypes.Integer.SET(Int(2)),
+			AllTypes.DoublePrecision.SET(Float(2.22)),
+			AllTypes.Text.SET(Text("some text")),
+			AllTypes.Date.SET(DateT(time.Now())),
+			AllTypes.Time.SET(TimeT(time.Now())),
+			AllTypes.Timez.SET(TimezT(time.Now())),
+			AllTypes.Timestamp.SET(TimestampT(time.Now())),
+			AllTypes.Interval.SET(INTERVAL(1, HOUR)),
+			AllTypes.Bytea.SET(Bytea([]byte{11, 22, 33, 44})),
+		).WHERE(Bool(true))
+
+	testutils.AssertStatementSql(t, stmt, `
+UPDATE test_sample.all_types
+SET boolean = $1::boolean,
+    integer = $2,
+    double_precision = $3,
+    text = $4::text,
+    date = $5::date,
+    time = $6::time without time zone,
+    timez = $7::time with time zone,
+    timestamp = $8::timestamp without time zone,
+    interval = INTERVAL '1 HOUR',
+    bytea = $9::bytea
+WHERE $10::boolean;
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		_, err := stmt.Exec(tx)
+		require.NoError(t, err)
+	})
 }
 
 func TestSubQueryColumnReference(t *testing.T) {

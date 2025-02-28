@@ -122,7 +122,7 @@ func Json(value interface{}) StringExpression {
 var UUID = jet.UUID
 
 // Bytea creates new bytea literal expression
-func Bytea(value interface{}) StringExpression {
+func Bytea(value interface{}) ByteaExpression {
 	switch value.(type) {
 	case string, []byte:
 	default:

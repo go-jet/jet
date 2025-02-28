@@ -1,6 +1,8 @@
 package jet
 
-import "strings"
+import (
+	"strings"
+)
 
 // Dialect interface
 type Dialect interface {
@@ -11,6 +13,7 @@ type Dialect interface {
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
+	ArgumentToString(value any) (string, bool)
 	IsReservedWord(name string) bool
 	SerializeOrderBy() func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName(index int) string
@@ -34,6 +37,7 @@ type DialectParams struct {
 	AliasQuoteChar             byte
 	IdentifierQuoteChar        byte
 	ArgumentPlaceholder        QueryPlaceholderFunc
+	ArgumentToString           func(value any) (string, bool)
 	ReservedWords              []string
 	SerializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName    func(index int) string
@@ -49,6 +53,7 @@ func NewDialect(params DialectParams) Dialect {
 		aliasQuoteChar:             params.AliasQuoteChar,
 		identifierQuoteChar:        params.IdentifierQuoteChar,
 		argumentPlaceholder:        params.ArgumentPlaceholder,
+		argumentToString:           params.ArgumentToString,
 		reservedWords:              arrayOfStringsToMapOfStrings(params.ReservedWords),
 		serializeOrderBy:           params.SerializeOrderBy,
 		valuesDefaultColumnName:    params.ValuesDefaultColumnName,
@@ -63,6 +68,7 @@ type dialectImpl struct {
 	aliasQuoteChar             byte
 	identifierQuoteChar        byte
 	argumentPlaceholder        QueryPlaceholderFunc
+	argumentToString           func(value any) (string, bool)
 	reservedWords              map[string]bool
 	serializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	valuesDefaultColumnName    func(index int) string
@@ -100,6 +106,10 @@ func (d *dialectImpl) IdentifierQuoteChar() byte {
 
 func (d *dialectImpl) ArgumentPlaceholder() QueryPlaceholderFunc {
 	return d.argumentPlaceholder
+}
+
+func (d *dialectImpl) ArgumentToString(value any) (string, bool) {
+	return d.argumentToString(value)
 }
 
 func (d *dialectImpl) IsReservedWord(name string) bool {

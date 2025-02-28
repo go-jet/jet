@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -26,13 +27,23 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},
-		ReservedWords: reservedWords,
+		ArgumentToString: argumentToString,
+		ReservedWords:    reservedWords,
 		ValuesDefaultColumnName: func(index int) string {
 			return fmt.Sprintf("column%d", index+1)
 		},
 	}
 
 	return jet.NewDialect(dialectParams)
+}
+
+func argumentToString(value any) (string, bool) {
+	switch bindVal := value.(type) {
+	case []byte:
+		return fmt.Sprintf("'\\x%s'", hex.EncodeToString(bindVal)), true
+	}
+
+	return "", false
 }
 
 func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {

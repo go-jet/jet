@@ -122,7 +122,7 @@ func IntegerColumn(name string) ColumnInteger {
 //------------------------------------------------------//
 
 // ColumnString is interface for SQL text, character, character varying
-// bytea, uuid columns and enums types.
+// uuid columns and enums types.
 type ColumnString interface {
 	StringExpression
 	Column
@@ -159,6 +159,47 @@ func StringColumn(name string) ColumnString {
 	stringColumn.ColumnExpressionImpl = NewColumnImpl(name, "", stringColumn)
 
 	return stringColumn
+}
+
+//------------------------------------------------------//
+
+// ColumnBlob is interface for binary data types (bytea, binary, blob, etc...)
+type ColumnBlob interface {
+	BlobExpression
+	Column
+
+	From(subQuery SelectTable) ColumnBlob
+	SET(blob BlobExpression) ColumnAssigment
+}
+
+type blobColumnImpl struct {
+	blobInterfaceImpl
+
+	ColumnExpressionImpl
+}
+
+func (i *blobColumnImpl) From(subQuery SelectTable) ColumnBlob {
+	newBlobColumn := BlobColumn(i.name)
+	newBlobColumn.setTableName(i.tableName)
+	newBlobColumn.setSubQuery(subQuery)
+
+	return newBlobColumn
+}
+
+func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: blobExp,
+	}
+}
+
+// BlobColumn creates named blob column.
+func BlobColumn(name string) ColumnBlob {
+	blobColumn := &blobColumnImpl{}
+	blobColumn.blobInterfaceImpl.parent = blobColumn
+	blobColumn.ColumnExpressionImpl = NewColumnImpl(name, "", blobColumn)
+
+	return blobColumn
 }
 
 //------------------------------------------------------//

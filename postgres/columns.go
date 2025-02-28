@@ -23,6 +23,12 @@ type ColumnString = jet.ColumnString
 // StringColumn creates named string column.
 var StringColumn = jet.StringColumn
 
+// ColumnBytea is interface for bytea columns
+type ColumnBytea = jet.ColumnBlob
+
+// ByteaColumn creates new named bytea column.
+var ByteaColumn = jet.BlobColumn
+
 // ColumnInteger is interface for SQL smallint, integer, bigint columns.
 type ColumnInteger = jet.ColumnInteger
 

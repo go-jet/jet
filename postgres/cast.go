@@ -101,9 +101,9 @@ func (b *cast) AS_DECIMAL() FloatExpression {
 	return FloatExp(b.AS("decimal"))
 }
 
-// AS_BYTEA casts expression AS text type
-func (b *cast) AS_BYTEA() StringExpression {
-	return StringExp(b.AS("bytea"))
+// AS_BYTEA casts expression AS bytea type
+func (b *cast) AS_BYTEA() ByteaExpression {
+	return ByteaExp(b.AS("bytea"))
 }
 
 // AS_TIME casts expression AS date type
