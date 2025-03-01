@@ -19,7 +19,7 @@ jobs:
           PGPORT: 50901
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: circleci/mysql:8.0.27
+      - image: cimg/mysql:8.0.27
         command: [ --default-authentication-plugin=mysql_native_password ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
