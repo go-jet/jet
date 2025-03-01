@@ -126,10 +126,22 @@ jobs:
             mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database dvds2"
 
       - run:
+          name: Check MySQL Version and SQL Mode
+          command: |
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT VERSION();"
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT @@sql_mode;"
+
+      - run:
           name: Init databases
           command: |
             cd tests
             go run ./init/init.go -testsuite all
+
+      - run:
+          name: Check MySQL Version and SQL Mode
+          command: |
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT VERSION();"
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT @@sql_mode;"
 
       - run:
           name: Install gotestsum
