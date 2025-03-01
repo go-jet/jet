@@ -3,6 +3,7 @@ package jet
 // StringExpression interface
 type StringExpression interface {
 	Expression
+	isStringOrBlob()
 
 	EQ(rhs StringExpression) BoolExpression
 	NOT_EQ(rhs StringExpression) BoolExpression
@@ -28,6 +29,8 @@ type StringExpression interface {
 type stringInterfaceImpl struct {
 	parent StringExpression
 }
+
+func (s *stringInterfaceImpl) isStringOrBlob() {}
 
 func (s *stringInterfaceImpl) EQ(rhs StringExpression) BoolExpression {
 	return Eq(s.parent, rhs)

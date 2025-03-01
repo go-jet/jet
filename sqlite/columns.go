@@ -21,6 +21,12 @@ type ColumnString = jet.ColumnString
 // StringColumn creates named string column.
 var StringColumn = jet.StringColumn
 
+// ColumnBlob is interface for
+type ColumnBlob = jet.ColumnBlob
+
+// BlobColumn creates new named blob column
+var BlobColumn = jet.BlobColumn
+
 // ColumnInteger is interface for SQL smallint, integer, bigint columns.
 type ColumnInteger = jet.ColumnInteger
 

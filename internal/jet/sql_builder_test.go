@@ -8,37 +8,39 @@ import (
 )
 
 func TestArgToString(t *testing.T) {
-	require.Equal(t, argToString(true), "TRUE")
-	require.Equal(t, argToString(false), "FALSE")
+	s := &SQLBuilder{Dialect: defaultDialect, Debug: true}
 
-	require.Equal(t, argToString(int(-32)), "-32")
-	require.Equal(t, argToString(uint(32)), "32")
-	require.Equal(t, argToString(int8(-43)), "-43")
-	require.Equal(t, argToString(uint8(43)), "43")
-	require.Equal(t, argToString(int16(-54)), "-54")
-	require.Equal(t, argToString(uint16(54)), "54")
-	require.Equal(t, argToString(int32(-65)), "-65")
-	require.Equal(t, argToString(uint32(65)), "65")
-	require.Equal(t, argToString(int64(-64)), "-64")
-	require.Equal(t, argToString(uint64(64)), "64")
-	require.Equal(t, argToString(float32(2.0)), "2")
-	require.Equal(t, argToString(float64(1.11)), "1.11")
+	require.Equal(t, s.argToString(true), "TRUE")
+	require.Equal(t, s.argToString(false), "FALSE")
 
-	require.Equal(t, argToString("john"), "'john'")
-	require.Equal(t, argToString("It's text"), "'It''s text'")
-	require.Equal(t, argToString([]byte("john")), "'john'")
-	require.Equal(t, argToString(uuid.MustParse("b68dbff4-a87d-11e9-a7f2-98ded00c39c6")), "'b68dbff4-a87d-11e9-a7f2-98ded00c39c6'")
+	require.Equal(t, s.argToString(int(-32)), "-32")
+	require.Equal(t, s.argToString(uint(32)), "32")
+	require.Equal(t, s.argToString(int8(-43)), "-43")
+	require.Equal(t, s.argToString(uint8(43)), "43")
+	require.Equal(t, s.argToString(int16(-54)), "-54")
+	require.Equal(t, s.argToString(uint16(54)), "54")
+	require.Equal(t, s.argToString(int32(-65)), "-65")
+	require.Equal(t, s.argToString(uint32(65)), "65")
+	require.Equal(t, s.argToString(int64(-64)), "-64")
+	require.Equal(t, s.argToString(uint64(64)), "64")
+	require.Equal(t, s.argToString(float32(2.0)), "2")
+	require.Equal(t, s.argToString(float64(1.11)), "1.11")
+
+	require.Equal(t, s.argToString("john"), "'john'")
+	require.Equal(t, s.argToString("It's text"), "'It''s text'")
+	require.Equal(t, s.argToString([]byte("john")), "'john'")
+	require.Equal(t, s.argToString(uuid.MustParse("b68dbff4-a87d-11e9-a7f2-98ded00c39c6")), "'b68dbff4-a87d-11e9-a7f2-98ded00c39c6'")
 
 	time, err := time.Parse("Mon Jan 2 15:04:05 -0700 MST 2006", "Mon Jan 2 15:04:05 -0700 MST 2006")
 	require.NoError(t, err)
-	require.Equal(t, argToString(time), "'2006-01-02 15:04:05-07:00'")
+	require.Equal(t, s.argToString(time), "'2006-01-02 15:04:05-07:00'")
 
 	func() {
 		defer func() {
 			require.Equal(t, recover().(string), "jet: map[string]bool type can not be used as SQL query parameter")
 		}()
 
-		argToString(map[string]bool{})
+		s.argToString(map[string]bool{})
 	}()
 }
 

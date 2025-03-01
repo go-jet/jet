@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
 )
@@ -23,13 +24,23 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(int) string {
 			return "?"
 		},
-		ReservedWords: reservedWords2,
+		ArgumentToString: argumentToString,
+		ReservedWords:    reservedWords2,
 		ValuesDefaultColumnName: func(index int) string {
 			return fmt.Sprintf("column%d", index+1)
 		},
 	}
 
 	return jet.NewDialect(mySQLDialectParams)
+}
+
+func argumentToString(value any) (string, bool) {
+	switch bindVal := value.(type) {
+	case []byte:
+		return fmt.Sprintf("X'%s'", hex.EncodeToString(bindVal)), true
+	}
+
+	return "", false
 }
 
 func sqliteBitXOR(expressions ...jet.Serializer) jet.SerializerFunc {

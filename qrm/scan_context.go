@@ -75,10 +75,18 @@ type typeInfo struct {
 	fieldMappings []fieldMapping
 }
 
+type fieldMappingType int
+
+const (
+	simpleType  fieldMappingType = iota
+	complexType                  // slice and struct are complex types supported
+	implementsScanner
+	jsonUnmarshal
+)
+
 type fieldMapping struct {
-	complexType       bool // slice and struct are complex types
-	rowIndex          int  // index in ScanContext.row
-	implementsScanner bool
+	rowIndex int // index in ScanContext.row
+	Type     fieldMappingType
 }
 
 func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.StructField) typeInfo {
@@ -100,17 +108,21 @@ func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 	for i := 0; i < structType.NumField(); i++ {
 		field := structType.Field(i)
 
-		newTypeName, fieldName := getTypeAndFieldName(typeName, field)
+		newTypeName, fieldName, jsonUnmarshaler := getTypeAndFieldName(typeName, field)
 		columnIndex := s.typeToColumnIndex(newTypeName, fieldName)
 
 		fieldMap := fieldMapping{
 			rowIndex: columnIndex,
 		}
 
-		if implementsScannerType(field.Type) {
-			fieldMap.implementsScanner = true
+		if jsonUnmarshaler {
+			fieldMap.Type = jsonUnmarshal
+		} else if implementsScannerType(field.Type) {
+			fieldMap.Type = implementsScanner
 		} else if !isSimpleModelType(field.Type) {
-			fieldMap.complexType = true
+			fieldMap.Type = complexType
+		} else {
+			fieldMap.Type = simpleType
 		}
 
 		newTypeInfo.fieldMappings = append(newTypeInfo.fieldMappings, fieldMap)
@@ -188,7 +200,7 @@ func (s *ScanContext) getGroupKeyInfo(
 		fieldType := indirectType(field.Type)
 
 		if isPrimaryKey(field, primaryKeyOverwrites) {
-			newTypeName, fieldName := getTypeAndFieldName(typeName, field)
+			newTypeName, fieldName, _ := getTypeAndFieldName(typeName, field)
 
 			pkIndex := s.typeToColumnIndex(newTypeName, fieldName)
 

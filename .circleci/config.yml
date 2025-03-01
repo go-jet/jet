@@ -8,10 +8,10 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: cimg/go:1.22.8
+      - image: cimg/go:1.23.6
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: cimg/postgres:14.10
+      - image: cimg/postgres:14.1
         environment:
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
@@ -19,7 +19,7 @@ jobs:
           PGPORT: 50901
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: circleci/mysql:8.0.27
+      - image: cimg/mysql:8.0.27
         command: [ --default-authentication-plugin=mysql_native_password ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
@@ -29,7 +29,7 @@ jobs:
           MYSQL_TCP_PORT: 50902
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: circleci/mariadb:10.3
+      - image: cimg/mariadb:11.4
         command: [ '--default-authentication-plugin=mysql_native_password', '--port=50903' ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
@@ -116,20 +116,32 @@ jobs:
           name: Create MySQL/MariaDB user and test databases
           command: |
             mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "set global sql_mode = 'STRICT_ALL_TABLES,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
             mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "create database test_sample"
             mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "create database dvds2"
             
             mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "set global sql_mode = 'STRICT_ALL_TABLES,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
             mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database test_sample"
             mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database dvds2"
+
+      - run:
+          name: Check MySQL Version and SQL Mode
+          command: |
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT VERSION();"
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT @@sql_mode;"
 
       - run:
           name: Init databases
           command: |
             cd tests
             go run ./init/init.go -testsuite all
+
+      - run:
+          name: Check MySQL Version and SQL Mode
+          command: |
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT VERSION();"
+            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT @@sql_mode;"
 
       - run:
           name: Install gotestsum

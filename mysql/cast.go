@@ -70,6 +70,6 @@ func (c *cast) AS_TIME() TimeExpression {
 }
 
 // AS_BINARY casts expression as BINARY type
-func (c *cast) AS_BINARY() StringExpression {
-	return StringExp(c.AS("BINARY"))
+func (c *cast) AS_BINARY() BlobExpression {
+	return BlobExp(c.AS("BINARY"))
 }

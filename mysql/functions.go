@@ -148,6 +148,14 @@ var NTH_VALUE = jet.NTH_VALUE
 
 //--------------------- String functions ------------------//
 
+// HEX function in MySQL takes an input and returns its equivalent hexadecimal representation
+var HEX = jet.HEX
+
+// UNHEX for a string argument str, UNHEX(str) interprets each pair of characters in the argument
+// as a hexadecimal number and converts it to the byte represented by the number.
+// The return value is a binary string.
+var UNHEX = jet.UNHEX
+
 // BIT_LENGTH returns number of bits in string expression
 var BIT_LENGTH = jet.BIT_LENGTH
 
@@ -156,6 +164,23 @@ var CHAR_LENGTH = jet.CHAR_LENGTH
 
 // OCTET_LENGTH returns number of bytes in string expression
 var OCTET_LENGTH = jet.OCTET_LENGTH
+
+// ELT returns the Nth element of the list of strings: str1 if N = 1, str2 if N = 2, and so on.
+// Returns NULL if N is less than 1, greater than the number of arguments, or NULL.
+func ELT(n IntegerExpression, list ...StringExpression) StringExpression {
+	args := []Expression{n}
+	args = append(args, jet.ToExpressionList(list)...)
+
+	return StringExp(Func("ELT", args...))
+}
+
+// FIELD returns the index (position) of str in the str1, str2, str3, ... list. Returns 0 if str is not found.
+func FIELD(str StringExpression, list ...StringExpression) StringExpression {
+	args := []Expression{str}
+	args = append(args, jet.ToExpressionList(list)...)
+
+	return StringExp(Func("FIELD", args...))
+}
 
 // LOWER returns string expression in lower case
 var LOWER = jet.LOWER
@@ -178,7 +203,35 @@ var CONCAT = jet.CONCAT
 var CONCAT_WS = jet.CONCAT_WS
 
 // FORMAT formats a number to a format like "#,###,###.##", rounded to a specified number of decimal places, then it returns the result as a string.
-var FORMAT = jet.FORMAT
+func FORMAT(number jet.NumericExpression, decimals IntegerExpression, optionalLocale ...StringExpression) StringExpression {
+	if len(optionalLocale) > 0 {
+		return StringExp(Func("FORMAT", number, decimals, optionalLocale[0]))
+	}
+
+	return StringExp(Func("FORMAT", number, decimals))
+}
+
+// TO_BASE64 converts the string argument to base-64 encoded form and returns the
+// result as a character string with the connection character set and collation.
+func TO_BASE64(data jet.StringOrBlobExpression) StringExpression {
+	return StringExp(Func("TO_BASE64", data))
+}
+
+// FROM_BASE64 takes a string encoded with the base-64 encoded rules used by TO_BASE64()
+// and returns the decoded result as a binary string.
+func FROM_BASE64(data StringExpression) BlobExpression {
+	return BlobExp(Func("FROM_BASE64", data))
+}
+
+// CHARSET returns the character set of the string argument, or NULL if the argument is NULL.
+func CHARSET(exp Expression) StringExpression {
+	return StringExp(Func("CHARSET", exp))
+}
+
+// COLLATION returns the collation of the string argument.
+func COLLATION(exp Expression) StringExpression {
+	return StringExp(Func("COLLATION ", exp))
+}
 
 // LEFT returns first n characters in the string.
 // When n is negative, return all but last |n| characters.
@@ -189,7 +242,7 @@ var LEFT = jet.LEFT
 var RIGHT = jet.RIGHT
 
 // LENGTH returns number of characters in string with a given encoding
-func LENGTH(str jet.StringExpression) jet.StringExpression {
+func LENGTH(str jet.StringOrBlobExpression) jet.IntegerExpression {
 	return jet.LENGTH(str)
 }
 

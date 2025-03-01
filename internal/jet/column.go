@@ -2,6 +2,10 @@
 
 package jet
 
+import (
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
+)
+
 // Column is common column interface for all types of columns.
 type Column interface {
 	Name() string
@@ -97,7 +101,17 @@ func (c ColumnExpressionImpl) serializeForProjection(statement StatementType, ou
 	c.serialize(statement, out)
 
 	out.WriteString("AS")
-	out.WriteAlias(c.defaultAlias())
+
+	if statement.IsSelectJSON() {
+		out.WriteAlias(snaker.SnakeToCamel(c.name, false))
+	} else {
+		out.WriteAlias(c.defaultAlias())
+	}
+}
+
+func (c ColumnExpressionImpl) serializeForJsonObj(statement StatementType, out *SQLBuilder) {
+	out.WriteJsonObjKey(snaker.SnakeToCamel(c.name, false))
+	c.serialize(statement, out)
 }
 
 func (c ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {

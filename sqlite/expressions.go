@@ -12,6 +12,9 @@ type BoolExpression = jet.BoolExpression
 // StringExpression interface
 type StringExpression = jet.StringExpression
 
+// BlobExpression interface
+type BlobExpression = jet.BlobExpression
+
 // NumericExpression is shared interface for integer or real expression
 type NumericExpression = jet.NumericExpression
 
@@ -45,6 +48,11 @@ var BoolExp = jet.BoolExp
 // Allows go compiler to see any expression as string expression.
 // Does not add sql cast to generated sql builder output.
 var StringExp = jet.StringExp
+
+// BlobExp is blob expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as blob expression.
+// Does not add sql cast to generated sql builder output.
+var BlobExp = jet.BlobExp
 
 // IntExp is int expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as int expression.

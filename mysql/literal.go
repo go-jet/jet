@@ -56,6 +56,11 @@ var String = jet.String
 // value can be any uuid type with a String method
 var UUID = jet.UUID
 
+// Blob creates new blob literal expression
+func Blob(data []byte) BlobExpression {
+	return BlobExp(jet.Literal(data))
+}
+
 // Date creates new date literal
 func Date(year int, month time.Month, day int) DateExpression {
 	return CAST(jet.Date(year, month, day)).AS_DATE()

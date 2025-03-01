@@ -19,9 +19,9 @@ import (
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
-	query := Actor.
-		SELECT(Actor.AllColumns).
+	query := SELECT(Actor.AllColumns).
 		DISTINCT().
+		FROM(Actor).
 		WHERE(Actor.ActorID.EQ(Int(2)))
 
 	testutils.AssertStatementSql(t, query, `
@@ -50,9 +50,56 @@ var actor2 = model.Actor{
 	LastUpdate: *testutils.TimestampWithoutTimeZone("2006-02-15 04:34:33", 2),
 }
 
+func TestSelect_NestedObject(t *testing.T) {
+	stmt := SELECT(
+		Actor.AllColumns,
+		Film.AllColumns,
+	).FROM(
+		Actor.
+			LEFT_JOIN(FilmActor, FilmActor.ActorID.EQ(Actor.ActorID)).
+			LEFT_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)),
+	).WHERE(
+		Actor.ActorID.EQ(Int(2)),
+	).ORDER_BY(
+		Film.LastUpdate.DESC(),
+	).LIMIT(1)
+
+	var dest struct {
+		model.Actor
+
+		LatestFilm model.Film
+	}
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"ActorID": 2,
+	"FirstName": "NICK",
+	"LastName": "WAHLBERG",
+	"LastUpdate": "2006-02-15T04:34:33Z",
+	"LatestFilm": {
+		"FilmID": 3,
+		"Title": "ADAPTATION HOLES",
+		"Description": "A Astounding Reflection of a Lumberjack And a Car who must Sink a Lumberjack in A Baloon Factory",
+		"ReleaseYear": 2006,
+		"LanguageID": 1,
+		"OriginalLanguageID": null,
+		"RentalDuration": 7,
+		"RentalRate": 2.99,
+		"Length": 50,
+		"ReplacementCost": 18.99,
+		"Rating": "NC-17",
+		"SpecialFeatures": "Trailers,Deleted Scenes",
+		"LastUpdate": "2006-02-15T05:03:42Z"
+	}
+}
+`)
+}
+
 func TestSelect_ScanToSlice(t *testing.T) {
-	query := Actor.
-		SELECT(Actor.AllColumns).
+	query := SELECT(Actor.AllColumns).
+		FROM(Actor).
 		ORDER_BY(Actor.ActorID)
 
 	testutils.AssertStatementSql(t, query, `
@@ -107,19 +154,20 @@ GROUP BY payment.customer_id
 HAVING SUM(payment.amount) > 125.6
 ORDER BY payment.customer_id, SUM(payment.amount) ASC;
 `
-	query := Payment.
-		INNER_JOIN(Customer, Customer.CustomerID.EQ(Payment.CustomerID)).
-		SELECT(
-			Customer.AllColumns,
+	query := SELECT(
+		Customer.AllColumns,
 
-			SUMf(Payment.Amount).AS("amount.sum"),
-			AVG(Payment.Amount).AS("amount.avg"),
-			MAX(Payment.PaymentDate).AS("amount.max_date"),
-			MAXf(Payment.Amount).AS("amount.max"),
-			MIN(Payment.PaymentDate).AS("amount.min_date"),
-			MINf(Payment.Amount).AS("amount.min"),
-			COUNT(Payment.Amount).AS("amount.count"),
-		).
+		SUMf(Payment.Amount).AS("amount.sum"),
+		AVG(Payment.Amount).AS("amount.avg"),
+		MAX(Payment.PaymentDate).AS("amount.max_date"),
+		MAXf(Payment.Amount).AS("amount.max"),
+		MIN(Payment.PaymentDate).AS("amount.min_date"),
+		MINf(Payment.Amount).AS("amount.min"),
+		COUNT(Payment.Amount).AS("amount.count"),
+	).FROM(
+		Payment.
+			INNER_JOIN(Customer, Customer.CustomerID.EQ(Payment.CustomerID)),
+	).
 		GROUP_BY(Payment.CustomerID).
 		HAVING(
 			SUMf(Payment.Amount).GT(Float(125.6)),
@@ -1122,7 +1170,7 @@ WHERE payment.payment_id < ?
 WINDOW w1 AS (PARTITION BY payment.payment_date), w2 AS (w1), w3 AS (w2 ORDER BY payment.customer_id)
 ORDER BY payment.customer_id;
 `
-	query := Payment.SELECT(
+	query := SELECT(
 		AVG(Payment.Amount).OVER(),
 		AVG(Payment.Amount).OVER(Window("w1")),
 		AVG(Payment.Amount).OVER(
@@ -1131,7 +1179,7 @@ ORDER BY payment.customer_id;
 				RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED)),
 		),
 		AVG(Payment.Amount).OVER(Window("w3").RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
-	).
+	).FROM(Payment).
 		WHERE(Payment.PaymentID.LT(Int(10))).
 		WINDOW("w1").AS(PARTITION_BY(Payment.PaymentDate)).
 		WINDOW("w2").AS(Window("w1")).
