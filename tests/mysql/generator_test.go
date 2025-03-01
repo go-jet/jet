@@ -305,7 +305,7 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 		DescriptionColumn = mysql.StringColumn("description")
 		allColumns        = mysql.ColumnList{IDColumn, URLColumn, NameColumn, DescriptionColumn}
 		mutableColumns    = mysql.ColumnList{URLColumn, NameColumn, DescriptionColumn}
-		defaultColumns    = mysql.ColumnList{DescriptionColumn}
+		defaultColumns    = mysql.ColumnList{}
 	)
 
 	return linkTable{
@@ -670,6 +670,7 @@ import (
 )
 
 type AllTypes struct {
+	ID            int32 ` + "`" + `sql:"primary_key"` + "`" + `
 	Boolean       bool
 	BooleanPtr    *bool
 	TinyInt       int8
@@ -755,6 +756,7 @@ type allTypesTable struct {
 	mysql.Table
 
 	// Columns
+	ID            mysql.ColumnInteger
 	Boolean       mysql.ColumnBool
 	BooleanPtr    mysql.ColumnBool
 	TinyInt       mysql.ColumnInteger
@@ -858,6 +860,7 @@ func newAllTypesTable(schemaName, tableName, alias string) *AllTypesTable {
 
 func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 	var (
+		IDColumn            = mysql.IntegerColumn("id")
 		BooleanColumn       = mysql.BoolColumn("boolean")
 		BooleanPtrColumn    = mysql.BoolColumn("boolean_ptr")
 		TinyIntColumn       = mysql.IntegerColumn("tiny_int")
@@ -920,7 +923,7 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		SetPtrColumn        = mysql.StringColumn("set_ptr")
 		JSONColumn          = mysql.StringColumn("json")
 		JSONPtrColumn       = mysql.StringColumn("json_ptr")
-		allColumns          = mysql.ColumnList{BooleanColumn, BooleanPtrColumn, TinyIntColumn, UTinyIntColumn, SmallIntColumn, USmallIntColumn, MediumIntColumn, UMediumIntColumn, IntegerColumn, UIntegerColumn, BigIntColumn, UBigIntColumn, TinyIntPtrColumn, UTinyIntPtrColumn, SmallIntPtrColumn, USmallIntPtrColumn, MediumIntPtrColumn, UMediumIntPtrColumn, IntegerPtrColumn, UIntegerPtrColumn, BigIntPtrColumn, UBigIntPtrColumn, DecimalColumn, DecimalPtrColumn, NumericColumn, NumericPtrColumn, FloatColumn, FloatPtrColumn, DoubleColumn, DoublePtrColumn, RealColumn, RealPtrColumn, BitColumn, BitPtrColumn, TimeColumn, TimePtrColumn, DateColumn, DatePtrColumn, DateTimeColumn, DateTimePtrColumn, TimestampColumn, TimestampPtrColumn, YearColumn, YearPtrColumn, CharColumn, CharPtrColumn, VarCharColumn, VarCharPtrColumn, BinaryColumn, BinaryPtrColumn, VarBinaryColumn, VarBinaryPtrColumn, BlobColumn, BlobPtrColumn, TextColumn, TextPtrColumn, EnumColumn, EnumPtrColumn, SetColumn, SetPtrColumn, JSONColumn, JSONPtrColumn}
+		allColumns          = mysql.ColumnList{IDColumn, BooleanColumn, BooleanPtrColumn, TinyIntColumn, UTinyIntColumn, SmallIntColumn, USmallIntColumn, MediumIntColumn, UMediumIntColumn, IntegerColumn, UIntegerColumn, BigIntColumn, UBigIntColumn, TinyIntPtrColumn, UTinyIntPtrColumn, SmallIntPtrColumn, USmallIntPtrColumn, MediumIntPtrColumn, UMediumIntPtrColumn, IntegerPtrColumn, UIntegerPtrColumn, BigIntPtrColumn, UBigIntPtrColumn, DecimalColumn, DecimalPtrColumn, NumericColumn, NumericPtrColumn, FloatColumn, FloatPtrColumn, DoubleColumn, DoublePtrColumn, RealColumn, RealPtrColumn, BitColumn, BitPtrColumn, TimeColumn, TimePtrColumn, DateColumn, DatePtrColumn, DateTimeColumn, DateTimePtrColumn, TimestampColumn, TimestampPtrColumn, YearColumn, YearPtrColumn, CharColumn, CharPtrColumn, VarCharColumn, VarCharPtrColumn, BinaryColumn, BinaryPtrColumn, VarBinaryColumn, VarBinaryPtrColumn, BlobColumn, BlobPtrColumn, TextColumn, TextPtrColumn, EnumColumn, EnumPtrColumn, SetColumn, SetPtrColumn, JSONColumn, JSONPtrColumn}
 		mutableColumns      = mysql.ColumnList{BooleanColumn, BooleanPtrColumn, TinyIntColumn, UTinyIntColumn, SmallIntColumn, USmallIntColumn, MediumIntColumn, UMediumIntColumn, IntegerColumn, UIntegerColumn, BigIntColumn, UBigIntColumn, TinyIntPtrColumn, UTinyIntPtrColumn, SmallIntPtrColumn, USmallIntPtrColumn, MediumIntPtrColumn, UMediumIntPtrColumn, IntegerPtrColumn, UIntegerPtrColumn, BigIntPtrColumn, UBigIntPtrColumn, DecimalColumn, DecimalPtrColumn, NumericColumn, NumericPtrColumn, FloatColumn, FloatPtrColumn, DoubleColumn, DoublePtrColumn, RealColumn, RealPtrColumn, BitColumn, BitPtrColumn, TimeColumn, TimePtrColumn, DateColumn, DatePtrColumn, DateTimeColumn, DateTimePtrColumn, TimestampColumn, TimestampPtrColumn, YearColumn, YearPtrColumn, CharColumn, CharPtrColumn, VarCharColumn, VarCharPtrColumn, BinaryColumn, BinaryPtrColumn, VarBinaryColumn, VarBinaryPtrColumn, BlobColumn, BlobPtrColumn, TextColumn, TextPtrColumn, EnumColumn, EnumPtrColumn, SetColumn, SetPtrColumn, JSONColumn, JSONPtrColumn}
 		defaultColumns      = mysql.ColumnList{BooleanColumn, TinyIntColumn, UTinyIntColumn, SmallIntColumn, USmallIntColumn, MediumIntColumn, UMediumIntColumn, IntegerColumn, UIntegerColumn, BigIntColumn, UBigIntColumn, DecimalColumn, NumericColumn, FloatColumn, DoubleColumn, RealColumn, BitColumn, TimeColumn, DateColumn, DateTimeColumn, TimestampColumn, YearColumn, CharColumn, VarCharColumn, BinaryColumn, VarBinaryColumn, EnumColumn, SetColumn}
 	)
@@ -929,6 +932,7 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		Table: mysql.NewTable(schemaName, tableName, alias, allColumns...),
 
 		//Columns
+		ID:            IDColumn,
 		Boolean:       BooleanColumn,
 		BooleanPtr:    BooleanPtrColumn,
 		TinyInt:       TinyIntColumn,

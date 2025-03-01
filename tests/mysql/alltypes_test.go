@@ -1247,6 +1247,7 @@ var toInsert = model.AllTypes{
 var allTypesJson = `
 [
 	{
+		"ID": 1,
 		"Boolean": false,
 		"BooleanPtr": true,
 		"TinyInt": -3,
@@ -1311,6 +1312,7 @@ var allTypesJson = `
 		"JSONPtr": "{\"key1\": \"value1\", \"key2\": \"value2\"}"
 	},
 	{
+		"ID": 2,
 		"Boolean": false,
 		"BooleanPtr": null,
 		"TinyInt": -3,
