@@ -18,8 +18,8 @@ func (m mySqlQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableTyp
 SELECT
 		t.table_name as "table.name",
 		col.COLUMN_NAME AS "column.Name",
-		col.COLUMN_DEFAULT IS NOT NULL AND t.table_type != 'VIEW' as "column.HasDefault",
-		col.IS_NULLABLE = "YES" AS "column.IsNullable",
+		(col.COLUMN_DEFAULT IS NOT NULL AND col.COLUMN_DEFAULT != 'NULL') AND t.table_type != 'VIEW' as "column.HasDefault",
+		col.IS_NULLABLE = 'YES' AS "column.IsNullable",
 		col.COLUMN_COMMENT AS "column.Comment",
 		COALESCE(pk.IsPrimaryKey, 0) AS "column.IsPrimaryKey",
 		IF (col.COLUMN_TYPE = 'tinyint(1)',
