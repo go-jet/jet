@@ -126,26 +126,16 @@ jobs:
             mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database dvds2"
 
       - run:
-          name: Check MySQL Version and SQL Mode
-          command: |
-            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT VERSION();"
-            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT @@sql_mode;"
-
-      - run:
-          name: Init databases
-          command: |
-            cd tests
-            go run ./init/init.go -testsuite all
-
-      - run:
-          name: Check MySQL Version and SQL Mode
-          command: |
-            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT VERSION();"
-            mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "SELECT @@sql_mode;"
-
-      - run:
           name: Install gotestsum
           command: go install gotest.tools/gotestsum@latest
+
+      - run:
+          name: Init databases (postgres, mysql, sqlite) and generate jet files
+          command: |
+            cd tests
+            go run ./init/init.go -testsuite postgres        
+            go run ./init/init.go -testsuite mysql        
+            go run ./init/init.go -testsuite sqlite        
 
       # to create test results report
       - run: mkdir -p $TEST_RESULTS
@@ -158,14 +148,14 @@ jobs:
           name: Running tests with statement caching enabled
           command: JET_TESTS_WITH_STMT_CACHE=true go test -tags postgres -v ./tests/...
 
-      # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run:
-          name: Jet generate mariadb and cockroachdb
+          name: Init databases (mariadb, cockroachdb) and generate jet files
           command: |
             cd tests
-            make jet-gen-mariadb
-            make jet-gen-cockroach
+            go run ./init/init.go -testsuite mariadb        
+            go run ./init/init.go -testsuite cockroach        
 
+      # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
       - run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/
 
