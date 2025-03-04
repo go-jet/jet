@@ -23,16 +23,60 @@ func TestAllTypes(t *testing.T) {
 
 	var dest []model.AllTypes
 
-	err := AllTypes.
-		SELECT(AllTypes.AllColumns).
+	err := SELECT(AllTypes.AllColumns).
+		FROM(AllTypes).
 		LIMIT(2).
 		Query(db, &dest)
 
 	require.NoError(t, err)
-
 	require.Equal(t, len(dest), 2)
 
 	//testutils.PrintJson(dest)
+	testutils.AssertJSON(t, dest, allTypesJson)
+}
+
+func TestAllTypesJSON(t *testing.T) {
+
+	stmt := SELECT_JSON_ARR(
+		AllTypes.AllColumns.Except(
+			AllTypes.JSON,
+			AllTypes.JSONPtr,
+			AllTypes.Bit,
+			AllTypes.BitPtr,
+			AllTypes.Blob,
+			AllTypes.BlobPtr,
+			AllTypes.Binary,
+			AllTypes.BinaryPtr,
+			AllTypes.VarBinary,
+			AllTypes.VarBinaryPtr,
+		),
+		CAST(AllTypes.JSON).AS_CHAR().AS("Json"),
+		CAST(AllTypes.JSONPtr).AS_CHAR().AS("JsonPtr"),
+		CAST(AllTypes.Bit).AS_CHAR().AS("Bit"),
+		CAST(AllTypes.BitPtr).AS_CHAR().AS("BitPtr"),
+
+		// TODO: remove when binary string is implemented
+		CONCAT(String("\\x"), HEX(AllTypes.Blob)).AS("Blob"),
+		CONCAT(String("\\x"), HEX(AllTypes.BlobPtr)).AS("BlobPtr"),
+
+		CONCAT(String("\\x"), HEX(AllTypes.Binary)).AS("Binary"),
+		CONCAT(String("\\x"), HEX(AllTypes.BinaryPtr)).AS("BinaryPtr"),
+
+		CONCAT(String("\\x"), HEX(AllTypes.VarBinary)).AS("VarBinary"),
+		CONCAT(String("\\x"), HEX(AllTypes.VarBinaryPtr)).AS("VarBinaryPtr"),
+	).FROM(AllTypes)
+
+	var dest []model.AllTypes
+
+	err := stmt.QueryJSON(ctx, db, &dest)
+	require.NoError(t, err)
+
+	// fix float rounding lost before comparison
+	dest[0].Float = 3.33
+	dest[0].FloatPtr = ptr.Of(3.33)
+	dest[1].Float = 3.33
+
+	//fmt.Println(allTypesJson)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 
@@ -467,7 +511,8 @@ func TestStringOperators(t *testing.T) {
 		RTRIM(AllTypes.VarCharPtr),
 		CONCAT(String("string1"), Int(1), Float(11.12)),
 		CONCAT_WS(String("string1"), Int(1), Float(11.12)),
-		FORMAT(String("Hello %s, %1$s"), String("World")),
+		FORMAT(Int(11), Int(2)),
+		FORMAT(Int(11), Int(2), String("de_DE")),
 		LEFT(String("abcde"), Int(2)),
 		RIGHT(String("abcde"), Int(2)),
 		LENGTH(String("jose")),
@@ -479,6 +524,12 @@ func TestStringOperators(t *testing.T) {
 		REVERSE(AllTypes.VarCharPtr),
 		SUBSTR(AllTypes.CharPtr, Int(3)),
 		SUBSTR(AllTypes.CharPtr, Int(3), Int(2)),
+		ELT(Int(2), AllTypes.CharPtr, AllTypes.Char, AllTypes.Text),
+		FIELD(AllTypes.Char, AllTypes.VarChar, AllTypes.Text),
+		FROM_BASE64(String("SGVsbG8gV29ybGQ=")),
+		TO_BASE64(String("Hello World")),
+		CHARSET(AllTypes.Char),
+		COLLATION(AllTypes.Text),
 	}
 
 	if !sourceIsMariaDB() {
@@ -496,6 +547,71 @@ func TestStringOperators(t *testing.T) {
 
 	dest := []struct{}{}
 	err := query.Query(db, &dest)
+
+	require.NoError(t, err)
+}
+
+func TestBlob(t *testing.T) {
+
+	var sampleBlob = Blob([]byte{11, 0, 22, 33, 44})
+	var textBlob = Blob([]byte("text blob"))
+
+	stmt := SELECT(
+		AllTypes.BlobPtr.EQ(sampleBlob),
+		AllTypes.BlobPtr.EQ(AllTypes.BlobPtr),
+		AllTypes.BlobPtr.NOT_EQ(sampleBlob),
+		AllTypes.BlobPtr.GT(textBlob),
+		AllTypes.BlobPtr.GT_EQ(AllTypes.BlobPtr),
+		AllTypes.BlobPtr.LT(AllTypes.BlobPtr),
+		AllTypes.BlobPtr.LT_EQ(sampleBlob),
+		AllTypes.BlobPtr.BETWEEN(Blob([]byte("min")), Blob([]byte("max"))),
+		AllTypes.BlobPtr.NOT_BETWEEN(AllTypes.BlobPtr, AllTypes.BlobPtr),
+		AllTypes.BlobPtr.CONCAT(textBlob),
+		AllTypes.BlobPtr.LIKE(AllTypes.BlobPtr),
+		AllTypes.BlobPtr.NOT_LIKE(sampleBlob),
+
+		BIT_LENGTH(textBlob),
+		LENGTH(sampleBlob),
+		CHAR_LENGTH(AllTypes.BlobPtr),
+		OCTET_LENGTH(textBlob),
+		CONCAT(sampleBlob, Int(1), Float(11.12)),
+		TO_BASE64(sampleBlob),
+		HEX(sampleBlob),
+		UNHEX(String("616B263A")),
+		SUBSTR(AllTypes.BlobPtr, Int(3)),
+		SUBSTR(AllTypes.BlobPtr, Int(3), Int(2)),
+	).FROM(
+		AllTypes,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT all_types.blob_ptr = X'0b0016212c',
+     all_types.blob_ptr = all_types.blob_ptr,
+     all_types.blob_ptr != X'0b0016212c',
+     all_types.blob_ptr > X'7465787420626c6f62',
+     all_types.blob_ptr >= all_types.blob_ptr,
+     all_types.blob_ptr < all_types.blob_ptr,
+     all_types.blob_ptr <= X'0b0016212c',
+     all_types.blob_ptr BETWEEN X'6d696e' AND X'6d6178',
+     all_types.blob_ptr NOT BETWEEN all_types.blob_ptr AND all_types.blob_ptr,
+     CONCAT(all_types.blob_ptr, X'7465787420626c6f62'),
+     all_types.blob_ptr LIKE all_types.blob_ptr,
+     all_types.blob_ptr NOT LIKE X'0b0016212c',
+     BIT_LENGTH(X'7465787420626c6f62'),
+     LENGTH(X'0b0016212c'),
+     CHAR_LENGTH(all_types.blob_ptr),
+     OCTET_LENGTH(X'7465787420626c6f62'),
+     CONCAT(X'0b0016212c', 1, 11.12),
+     TO_BASE64(X'0b0016212c'),
+     HEX(X'0b0016212c'),
+     UNHEX('616B263A'),
+     SUBSTR(all_types.blob_ptr, 3),
+     SUBSTR(all_types.blob_ptr, 3, 2)
+FROM test_sample.all_types;
+`)
+
+	var dest []struct{}
+	err := stmt.Query(db, &dest)
 
 	require.NoError(t, err)
 }
@@ -1131,6 +1247,7 @@ var toInsert = model.AllTypes{
 var allTypesJson = `
 [
 	{
+		"ID": 1,
 		"Boolean": false,
 		"BooleanPtr": true,
 		"TinyInt": -3,
@@ -1195,6 +1312,7 @@ var allTypesJson = `
 		"JSONPtr": "{\"key1\": \"value1\", \"key2\": \"value2\"}"
 	},
 	{
+		"ID": 2,
 		"Boolean": false,
 		"BooleanPtr": null,
 		"TinyInt": -3,

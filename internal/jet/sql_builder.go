@@ -99,6 +99,10 @@ func (s *SQLBuilder) WriteString(str string) {
 	s.write([]byte(str))
 }
 
+func (s *SQLBuilder) WriteJsonObjKey(key string) {
+	s.WriteString(fmt.Sprintf(`'%s', `, key))
+}
+
 // WriteIdentifier adds identifier to output SQL
 func (s *SQLBuilder) WriteIdentifier(name string, alwaysQuote ...bool) {
 	if s.shouldQuote(name, alwaysQuote...) {
@@ -123,7 +127,7 @@ func (s *SQLBuilder) finalize() (string, []interface{}) {
 }
 
 func (s *SQLBuilder) insertConstantArgument(arg interface{}) {
-	s.WriteString(argToString(arg))
+	s.WriteString(s.argToString(arg))
 }
 
 func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
@@ -196,7 +200,7 @@ func (s *SQLBuilder) insertRawQuery(raw string, namedArg map[string]interface{})
 		}
 
 		if s.Debug {
-			placeholder = argToString(namedArgumentPos.Value)
+			placeholder = s.argToString(namedArgumentPos.Value)
 		}
 
 		raw = strings.Replace(raw, namedArgumentPos.Name, placeholder, toReplace)
@@ -205,9 +209,15 @@ func (s *SQLBuilder) insertRawQuery(raw string, namedArg map[string]interface{})
 	s.WriteString(raw)
 }
 
-func argToString(value interface{}) string {
+func (s *SQLBuilder) argToString(value interface{}) string {
 	if is.Nil(value) {
 		return "NULL"
+	}
+
+	strVal, ok := s.Dialect.ArgumentToString(value)
+
+	if ok {
+		return strVal
 	}
 
 	switch bindVal := value.(type) {
@@ -246,7 +256,7 @@ func argToString(value interface{}) string {
 				return err.Error()
 			}
 
-			return argToString(val)
+			return s.argToString(val)
 		}
 
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))

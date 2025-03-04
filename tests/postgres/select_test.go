@@ -21,36 +21,36 @@ import (
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
-	expectedSQL := `
+
+	t.Run("standard", func(t *testing.T) {
+		stmt := SELECT(Actor.AllColumns).
+			DISTINCT().
+			FROM(Actor).
+			WHERE(Actor.ActorID.EQ(Int(2)))
+
+		testutils.AssertDebugStatementSql(t, stmt, `
 SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update"
 FROM dvds.actor
 WHERE actor.actor_id = 2;
-`
+`, int64(2))
 
-	query := SELECT(Actor.AllColumns).
-		DISTINCT().
-		FROM(Actor).
-		WHERE(Actor.ActorID.EQ(Int(2)))
+		var dest model.Actor
+		err := stmt.Query(db, &dest)
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(2))
+		require.NoError(t, err)
+		testutils.AssertDeepEqual(t, dest, actor2)
+		requireLogged(t, stmt)
+	})
+}
 
-	actor := model.Actor{}
-	err := query.Query(db, &actor)
-
-	require.NoError(t, err)
-
-	expectedActor := model.Actor{
-		ActorID:    2,
-		FirstName:  "Nick",
-		LastName:   "Wahlberg",
-		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
-	}
-
-	testutils.AssertDeepEqual(t, actor, expectedActor)
-	requireLogged(t, query)
+var actor2 = model.Actor{
+	ActorID:    2,
+	FirstName:  "Nick",
+	LastName:   "Wahlberg",
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 }
 
 func TestSelectDistinctOn(t *testing.T) {
@@ -85,7 +85,6 @@ ORDER BY rental.staff_id ASC, rental.customer_id ASC, rental.rental_id ASC;
 
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
-
 	testutils.AssertJSON(t, dest, `
 [
 	{
@@ -187,6 +186,21 @@ ORDER BY customer.customer_id ASC;
 	testutils.AssertDeepEqual(t, lastCustomer, customers[598])
 
 	requireLogged(t, query)
+
+	t.Run("select json", func(t *testing.T) {
+		stmt := SELECT_JSON_ARR(
+			Customer.AllColumns,
+		).FROM(
+			Customer,
+		).ORDER_BY(Customer.CustomerID.ASC())
+
+		var dest []model.Customer
+
+		err := stmt.QueryJSON(ctx, db, &dest)
+		require.NoError(t, err)
+
+		testutils.AssertDeepEqual(t, customers, dest)
+	})
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
@@ -217,15 +231,14 @@ FROM dvds.payment
 LIMIT 12;
 `
 
-	query := Payment.
-		SELECT(
-			Payment.PaymentID,
-			Customer.SELECT(Customer.CustomerID).LIMIT(1),
-			UNION(
-				Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
-				Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
-			).LIMIT(1),
-		).
+	query := SELECT(
+		Payment.PaymentID,
+		Customer.SELECT(Customer.CustomerID).LIMIT(1),
+		UNION(
+			Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
+			Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
+		).LIMIT(1),
+	).FROM(Payment).
 		LIMIT(12)
 
 	//fmt.Println(query.DebugSql())
@@ -2771,7 +2784,8 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	//jsonSave("./testdata/quick-start-dest.json", dest)
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-dest.json")
+
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
 
 	var dest2 []struct {
@@ -2784,7 +2798,7 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	err = stmt.Query(db, &dest2)
 	require.NoError(t, err)
 
-	//jsonSave("./testdata/quick-start-dest2.json", dest2)
+	//testutils.SaveJSONFile(dest2, "./testdata/results/postgres/quick-start-dest2.json")
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
@@ -2966,7 +2980,7 @@ WHERE payment.payment_id < $1
 WINDOW w1 AS (PARTITION BY payment.payment_date), w2 AS (w1), w3 AS (w2 ORDER BY payment.customer_id)
 ORDER BY payment.customer_id;
 `
-	query := Payment.SELECT(
+	query := SELECT(
 		AVG(Payment.Amount).OVER(),
 		AVG(Payment.Amount).OVER(Window("w1")),
 		AVG(Payment.Amount).OVER(
@@ -2976,6 +2990,7 @@ ORDER BY payment.customer_id;
 		),
 		AVG(Payment.Amount).OVER(Window("w3").RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
 	).
+		FROM(Payment).
 		WHERE(Payment.PaymentID.LT(Int(10))).
 		WINDOW("w1").AS(PARTITION_BY(Payment.PaymentDate)).
 		WINDOW("w2").AS(Window("w1")).

@@ -220,20 +220,7 @@ func TestUUIDComplex(t *testing.T) {
 		requireLogged(t, query)
 	})
 
-	t.Run("slice of structs left join", func(t *testing.T) {
-		leftQuery := Person.LEFT_JOIN(PersonPhone, PersonPhone.PersonID.EQ(Person.PersonID)).
-			SELECT(Person.AllColumns, PersonPhone.AllColumns).
-			ORDER_BY(Person.PersonID.ASC(), PersonPhone.PhoneID.ASC())
-		var dest []struct {
-			model.Person
-			Phones []struct {
-				model.PersonPhone
-			}
-		}
-		err := leftQuery.Query(db, &dest)
-
-		require.NoError(t, err)
-		testutils.AssertJSON(t, dest, `
+	var expectedSliceOfStructsLeftJoin = `
 [
 	{
 		"PersonID": "b68dbff4-a87d-11e9-a7f2-98ded00c39c6",
@@ -274,8 +261,48 @@ func TestUUIDComplex(t *testing.T) {
 		]
 	}
 ]
-`)
+`
+
+	t.Run("slice of structs left join", func(t *testing.T) {
+		leftQuery := Person.LEFT_JOIN(PersonPhone, PersonPhone.PersonID.EQ(Person.PersonID)).
+			SELECT(Person.AllColumns, PersonPhone.AllColumns).
+			ORDER_BY(Person.PersonID.ASC(), PersonPhone.PhoneID.ASC())
+		var dest []struct {
+			model.Person
+			Phones []struct {
+				model.PersonPhone
+			}
+		}
+		err := leftQuery.Query(db, &dest)
+
+		require.NoError(t, err)
+		testutils.AssertJSON(t, dest, expectedSliceOfStructsLeftJoin)
 		requireLogged(t, leftQuery)
+	})
+
+	t.Run("select json", func(t *testing.T) {
+		jsonQuery := SELECT_JSON_ARR(
+			Person.AllColumns,
+			SELECT_JSON_ARR(PersonPhone.AllColumns).
+				FROM(PersonPhone).
+				WHERE(PersonPhone.PersonID.EQ(Person.PersonID)).
+				ORDER_BY(PersonPhone.PhoneID).AS("Phones"),
+		).FROM(
+			Person,
+		).ORDER_BY(
+			Person.PersonID.ASC(),
+		)
+
+		var dest []struct {
+			model.Person
+			Phones []struct {
+				model.PersonPhone
+			}
+		}
+
+		err := jsonQuery.QueryJSON(ctx, db, &dest)
+		require.NoError(t, err)
+		testutils.AssertJSON(t, dest, expectedSliceOfStructsLeftJoin)
 	})
 
 }

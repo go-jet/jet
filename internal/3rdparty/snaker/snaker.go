@@ -40,12 +40,21 @@ func snakeToCamel(s string, upperCase bool) string {
 
 		if upperCase || i > 0 {
 			result += camelizeWord(word, len(words) > 1)
-		} else {
-			result += word
+		} else { // lowerCase and i == 0
+			result += toLowerFirstLetter(word)
 		}
 	}
 
 	return result
+}
+
+func toLowerFirstLetter(s string) string {
+	if s == "" {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
 }
 
 func camelizeWord(word string, force bool) string {

@@ -1,6 +1,8 @@
 package is
 
-import "reflect"
+import (
+	"reflect"
+)
 
 // Nil check if v is nil
 func Nil(v interface{}) bool {

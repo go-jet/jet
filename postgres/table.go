@@ -55,7 +55,7 @@ type readableTableInterfaceImpl struct {
 
 // Generates a select query on the current tableName.
 func (r readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
-	return newSelectStatement(r.parent, append([]Projection{projection1}, projections...))
+	return newSelectStatement(jet.SelectStatementType, r.parent, append([]Projection{projection1}, projections...))
 }
 
 // Creates a inner join tableName Expression using onCondition.

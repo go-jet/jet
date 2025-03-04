@@ -78,6 +78,12 @@ func (cl ColumnList) serializeForProjection(statement StatementType, out *SQLBui
 	SerializeProjectionList(statement, projections, out)
 }
 
+func (cl ColumnList) serializeForJsonObj(statement StatementType, out *SQLBuilder) {
+	projections := ColumnListToProjectionList(cl)
+
+	SerializeProjectionListJsonObj(statement, projections, out)
+}
+
 // dummy column interface implementation
 
 // Name is placeholder for ColumnList to implement Column interface
