@@ -49,6 +49,11 @@ func Uint32(value uint32) IntegerExpression {
 	return CAST(jet.Uint32(value)).AS_BIGINT()
 }
 
+// Uint64 is constructor for 64 bit unsigned integer expressions literals.
+func Uint64(value uint64) IntegerExpression {
+	return CAST(jet.Uint64(value)).AS_BIGINT()
+}
+
 // Float creates new float literal expression
 var Float = jet.Float
 

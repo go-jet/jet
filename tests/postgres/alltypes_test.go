@@ -3,6 +3,7 @@ package postgres
 import (
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
+	"math"
 
 	"github.com/go-jet/jet/v2/qrm"
 	"testing"
@@ -713,6 +714,18 @@ LIMIT $38;
 	// testutils.SaveJSONFile(dest, "./testdata/results/common/float_operators.json")
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/common/float_operators.json")
+}
+
+func TestUInt64Overflow(t *testing.T) {
+	stmt := AllTypes.INSERT(AllTypes.BigInt).
+		VALUES(Uint64(math.MaxUint64))
+
+	_, err := stmt.Exec(db)
+	if isPgxDriver() {
+		require.ErrorContains(t, err, "18446744073709551615 is greater than maximum value for Int8")
+	} else {
+		require.ErrorContains(t, err, "sql: converting argument $1 type: uint64 values with high bit set are not supported")
+	}
 }
 
 func TestIntegerOperators(t *testing.T) {
