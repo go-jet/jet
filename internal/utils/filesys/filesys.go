@@ -59,18 +59,8 @@ func EnsureDirPathExist(dirPath string) error {
 
 // RemoveDir deletes everything at folder dir.
 func RemoveDir(dir string) error {
-	exist, err := DirExists(dir)
-
-	if err != nil {
+	if err := os.RemoveAll(dir); err != nil {
 		return err
-	}
-
-	if exist {
-		err := os.RemoveAll(dir)
-
-		if err != nil {
-			return err
-		}
 	}
 
 	return nil
