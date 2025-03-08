@@ -251,9 +251,8 @@ func testJoinEverythingJSON(t require.TestingT) {
 					WHERE(MediaType.MediaTypeId.EQ(Track.MediaTypeId)).AS("MediaType"),
 
 				SELECT_JSON_ARR(Playlist.AllColumns).
-					FROM(Playlist.INNER_JOIN(
-						PlaylistTrack,
-						Playlist.PlaylistId.EQ(PlaylistTrack.PlaylistId))).
+					FROM(Playlist.
+						INNER_JOIN(PlaylistTrack, Playlist.PlaylistId.EQ(PlaylistTrack.PlaylistId))).
 					WHERE(PlaylistTrack.TrackId.EQ(Track.TrackId)).
 					ORDER_BY(Playlist.PlaylistId).AS("Playlists"),
 
@@ -273,9 +272,9 @@ func testJoinEverythingJSON(t require.TestingT) {
 							WHERE(Employee.EmployeeId.EQ(Customer.SupportRepId)).AS("Employee"),
 					).FROM(Customer).
 						WHERE(Customer.CustomerId.EQ(Invoice.CustomerId)).AS("Customer"),
-				).FROM(Invoice.INNER_JOIN(
-					InvoiceLine,
-					InvoiceLine.InvoiceId.EQ(Invoice.InvoiceId)),
+				).FROM(
+					Invoice.
+						INNER_JOIN(InvoiceLine, InvoiceLine.InvoiceId.EQ(Invoice.InvoiceId)),
 				).WHERE(InvoiceLine.TrackId.EQ(Track.TrackId)).
 					ORDER_BY(Invoice.InvoiceId).AS("Invoices"),
 			).FROM(Track).

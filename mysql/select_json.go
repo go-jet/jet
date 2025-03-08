@@ -43,7 +43,7 @@ func newSelectStatementJson(projections []Projection, statementType jet.Statemen
 }
 
 func constructJsonFunc(projections []Projection, statementType jet.StatementType) Expression {
-	jsonObj := Func("JSON_OBJECT", CustomExpression(jet.JsonProjectionList(projections)))
+	jsonObj := Func("JSON_OBJECT", CustomExpression(jet.JsonObjProjectionList(projections)))
 
 	if statementType == jet.SelectJsonArrStatementType {
 		return Func("JSON_ARRAYAGG", jsonObj)

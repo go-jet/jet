@@ -61,6 +61,16 @@ func (s *SQLBuilder) WriteProjections(statement StatementType, projections []Pro
 	s.DecreaseIdent()
 }
 
+func (s *SQLBuilder) WriteRowToJsonProjections(statement StatementType, projections []Projection) {
+	for i, projection := range projections {
+		if i > 0 {
+			s.WriteString(",")
+			s.NewLine()
+		}
+		projection.serializeForRowToJsonProjection(statement, s)
+	}
+}
+
 // NewLine adds new line to output SQL
 func (s *SQLBuilder) NewLine() {
 	s.write([]byte{'\n'})

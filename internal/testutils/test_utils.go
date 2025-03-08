@@ -122,7 +122,7 @@ func AssertJsonEqual(t require.TestingT, actual, expected interface{}, option ..
 	expectedJsonData, err := json.MarshalIndent(expected, "", "\t")
 	require.NoError(t, err)
 
-	require.Equal(t, actualJsonData, expectedJsonData)
+	require.Equal(t, string(actualJsonData), string(expectedJsonData))
 }
 
 // SaveJSONFile saves v as json at testRelativePath

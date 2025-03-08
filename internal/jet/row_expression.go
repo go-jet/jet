@@ -17,9 +17,9 @@ type RowExpression interface {
 }
 
 type rowInterfaceImpl struct {
-	parent    Expression
-	dialect   Dialect
-	elemCount int
+	parent      Expression
+	dialect     Dialect
+	expressions []Expression
 }
 
 func (n *rowInterfaceImpl) EQ(rhs RowExpression) BoolExpression {
@@ -57,9 +57,8 @@ func (n *rowInterfaceImpl) LT_EQ(rhs RowExpression) BoolExpression {
 func (n *rowInterfaceImpl) projections() ProjectionList {
 	var ret ProjectionList
 
-	for i := 0; i < n.elemCount; i++ {
-		rowColumn := NewColumnImpl(n.dialect.ValuesDefaultColumnName(i), "", nil)
-		ret = append(ret, &rowColumn)
+	for i, expression := range n.expressions {
+		ret = append(ret, newDummyColumnForExpression(expression, n.dialect.ValuesDefaultColumnName(i)))
 	}
 
 	return ret
@@ -77,7 +76,7 @@ func newRowExpression(name string, dialect Dialect, expressions ...Expression) R
 
 	ret.Expression = NewFunc(name, expressions, ret)
 	ret.dialect = dialect
-	ret.elemCount = len(expressions)
+	ret.expressions = expressions
 
 	return ret
 }

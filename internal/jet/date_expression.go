@@ -80,9 +80,10 @@ type dateExpressionWrapper struct {
 }
 
 func newDateExpressionWrap(expression Expression) DateExpression {
-	dateExpressionWrap := dateExpressionWrapper{Expression: expression}
-	dateExpressionWrap.dateInterfaceImpl.parent = &dateExpressionWrap
-	return &dateExpressionWrap
+	dateExpressionWrap := &dateExpressionWrapper{Expression: expression}
+	dateExpressionWrap.dateInterfaceImpl.parent = dateExpressionWrap
+	expression.setParent(dateExpressionWrap)
+	return dateExpressionWrap
 }
 
 // DateExp is date expression wrapper around arbitrary expression.

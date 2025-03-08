@@ -43,28 +43,81 @@ func TestAllTypesJSON(t *testing.T) {
 			AllTypes.JSONPtr,
 			AllTypes.Bit,
 			AllTypes.BitPtr,
-			AllTypes.Blob,
-			AllTypes.BlobPtr,
-			AllTypes.Binary,
-			AllTypes.BinaryPtr,
-			AllTypes.VarBinary,
-			AllTypes.VarBinaryPtr,
 		),
 		CAST(AllTypes.JSON).AS_CHAR().AS("Json"),
 		CAST(AllTypes.JSONPtr).AS_CHAR().AS("JsonPtr"),
 		CAST(AllTypes.Bit).AS_CHAR().AS("Bit"),
 		CAST(AllTypes.BitPtr).AS_CHAR().AS("BitPtr"),
-
-		// TODO: remove when binary string is implemented
-		CONCAT(String("\\x"), HEX(AllTypes.Blob)).AS("Blob"),
-		CONCAT(String("\\x"), HEX(AllTypes.BlobPtr)).AS("BlobPtr"),
-
-		CONCAT(String("\\x"), HEX(AllTypes.Binary)).AS("Binary"),
-		CONCAT(String("\\x"), HEX(AllTypes.BinaryPtr)).AS("BinaryPtr"),
-
-		CONCAT(String("\\x"), HEX(AllTypes.VarBinary)).AS("VarBinary"),
-		CONCAT(String("\\x"), HEX(AllTypes.VarBinaryPtr)).AS("VarBinaryPtr"),
 	).FROM(AllTypes)
+
+	testutils.AssertStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'id', all_types.id,
+          'boolean', all_types.boolean = 1,
+          'booleanPtr', all_types.boolean_ptr = 1,
+          'tinyInt', all_types.tiny_int,
+          'uTinyInt', all_types.u_tiny_int,
+          'smallInt', all_types.small_int,
+          'uSmallInt', all_types.u_small_int,
+          'mediumInt', all_types.medium_int,
+          'uMediumInt', all_types.u_medium_int,
+          'integer', all_types.''integer'',
+          'uInteger', all_types.u_integer,
+          'bigInt', all_types.big_int,
+          'uBigInt', all_types.u_big_int,
+          'tinyIntPtr', all_types.tiny_int_ptr,
+          'uTinyIntPtr', all_types.u_tiny_int_ptr,
+          'smallIntPtr', all_types.small_int_ptr,
+          'uSmallIntPtr', all_types.u_small_int_ptr,
+          'mediumIntPtr', all_types.medium_int_ptr,
+          'uMediumIntPtr', all_types.u_medium_int_ptr,
+          'integerPtr', all_types.integer_ptr,
+          'uIntegerPtr', all_types.u_integer_ptr,
+          'bigIntPtr', all_types.big_int_ptr,
+          'uBigIntPtr', all_types.u_big_int_ptr,
+          'decimal', all_types.''decimal'',
+          'decimalPtr', all_types.decimal_ptr,
+          'numeric', all_types.''numeric'',
+          'numericPtr', all_types.numeric_ptr,
+          'float', all_types.''float'',
+          'floatPtr', all_types.float_ptr,
+          'double', all_types.''double'',
+          'doublePtr', all_types.double_ptr,
+          'real', all_types.''real'',
+          'realPtr', all_types.real_ptr,
+          'time', CONCAT('0000-01-01T', DATE_FORMAT(all_types.time,'%H:%i:%s.%fZ')),
+          'timePtr', CONCAT('0000-01-01T', DATE_FORMAT(all_types.time_ptr,'%H:%i:%s.%fZ')),
+          'date', CONCAT(DATE_FORMAT(all_types.date,'%Y-%m-%d'), 'T00:00:00Z'),
+          'datePtr', CONCAT(DATE_FORMAT(all_types.date_ptr,'%Y-%m-%d'), 'T00:00:00Z'),
+          'dateTime', DATE_FORMAT(all_types.date_time,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'dateTimePtr', DATE_FORMAT(all_types.date_time_ptr,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'timestamp', DATE_FORMAT(all_types.timestamp,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'timestampPtr', DATE_FORMAT(all_types.timestamp_ptr,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'year', all_types.year,
+          'yearPtr', all_types.year_ptr,
+          'char', all_types.''char'',
+          'charPtr', all_types.char_ptr,
+          'varChar', all_types.var_char,
+          'varCharPtr', all_types.var_char_ptr,
+          'binary', TO_BASE64(all_types.''binary''),
+          'binaryPtr', TO_BASE64(all_types.binary_ptr),
+          'varBinary', TO_BASE64(all_types.var_binary),
+          'varBinaryPtr', TO_BASE64(all_types.var_binary_ptr),
+          'blob', TO_BASE64(all_types.''blob''),
+          'blobPtr', TO_BASE64(all_types.blob_ptr),
+          'text', all_types.text,
+          'textPtr', all_types.text_ptr,
+          'enum', all_types.enum,
+          'enumPtr', all_types.enum_ptr,
+          'set', all_types.''set'',
+          'setPtr', all_types.set_ptr,
+          'Json', CAST(all_types.json AS CHAR),
+          'JsonPtr', CAST(all_types.json_ptr AS CHAR),
+          'Bit', CAST(all_types.bit AS CHAR),
+          'BitPtr', CAST(all_types.bit_ptr AS CHAR)
+     )) AS "json"
+FROM test_sample.all_types;
+`, "''", "`"))
 
 	var dest []model.AllTypes
 
@@ -76,7 +129,6 @@ func TestAllTypesJSON(t *testing.T) {
 	dest[0].FloatPtr = ptr.Of(3.33)
 	dest[1].Float = 3.33
 
-	//fmt.Println(allTypesJson)
 	testutils.AssertJSON(t, dest, allTypesJson)
 }
 
@@ -1180,6 +1232,118 @@ func TestAllTypesInsertOnDuplicateKeyUpdate(t *testing.T) {
 
 	err = tx.Rollback()
 	require.NoError(t, err)
+}
+
+func TestAllTypesSubQueryFrom(t *testing.T) {
+	subQuery := SELECT(
+		AllTypes.Boolean,
+		AllTypes.Integer,
+		AllTypes.Double,
+		AllTypes.Text,
+		AllTypes.Date,
+		AllTypes.Time,
+		AllTypes.Timestamp,
+		AllTypes.Blob,
+	).FROM(
+		AllTypes,
+	).AsTable("sub_query")
+
+	stmt := SELECT(
+		AllTypes.Boolean.From(subQuery),
+		AllTypes.Integer.From(subQuery),
+		AllTypes.Double.From(subQuery),
+		AllTypes.Text.From(subQuery),
+		AllTypes.Date.From(subQuery),
+		AllTypes.Time.From(subQuery),
+		AllTypes.Timestamp.From(subQuery),
+		AllTypes.Blob.From(subQuery),
+	).FROM(
+		subQuery,
+	)
+
+	testutils.AssertStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT sub_query.''all_types.boolean'' AS "all_types.boolean",
+     sub_query.''all_types.integer'' AS "all_types.integer",
+     sub_query.''all_types.double'' AS "all_types.double",
+     sub_query.''all_types.text'' AS "all_types.text",
+     sub_query.''all_types.date'' AS "all_types.date",
+     sub_query.''all_types.time'' AS "all_types.time",
+     sub_query.''all_types.timestamp'' AS "all_types.timestamp",
+     sub_query.''all_types.blob'' AS "all_types.blob"
+FROM (
+          SELECT all_types.boolean AS "all_types.boolean",
+               all_types.''integer'' AS "all_types.integer",
+               all_types.''double'' AS "all_types.double",
+               all_types.text AS "all_types.text",
+               all_types.date AS "all_types.date",
+               all_types.time AS "all_types.time",
+               all_types.timestamp AS "all_types.timestamp",
+               all_types.''blob'' AS "all_types.blob"
+          FROM test_sample.all_types
+     ) AS sub_query;
+`, "''", "`"))
+
+	var dest []model.AllTypes
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	require.NotEmpty(t, dest)
+
+	t.Run("using SELECT_JSON", func(t *testing.T) {
+		stmtJson := SELECT_JSON_ARR(
+			AllTypes.Boolean.From(subQuery),
+			AllTypes.Integer.From(subQuery),
+			AllTypes.Double.From(subQuery),
+			AllTypes.Text.From(subQuery),
+			AllTypes.Date.From(subQuery),
+			AllTypes.Time.From(subQuery),
+			AllTypes.Timestamp.From(subQuery),
+			AllTypes.Blob.From(subQuery),
+		).FROM(
+			subQuery,
+		)
+
+		testutils.AssertDebugStatementSql(t, stmtJson, strings.ReplaceAll(`
+SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'boolean', sub_query.''all_types.boolean'' = 1,
+          'integer', sub_query.''all_types.integer'',
+          'double', sub_query.''all_types.double'',
+          'text', sub_query.''all_types.text'',
+          'date', CONCAT(DATE_FORMAT(sub_query.''all_types.date'','%Y-%m-%d'), 'T00:00:00Z'),
+          'time', CONCAT('0000-01-01T', DATE_FORMAT(sub_query.''all_types.time'','%H:%i:%s.%fZ')),
+          'timestamp', DATE_FORMAT(sub_query.''all_types.timestamp'','%Y-%m-%dT%H:%i:%s.%fZ'),
+          'blob', TO_BASE64(sub_query.''all_types.blob'')
+     )) AS "json"
+FROM (
+          SELECT all_types.boolean AS "all_types.boolean",
+               all_types.''integer'' AS "all_types.integer",
+               all_types.''double'' AS "all_types.double",
+               all_types.text AS "all_types.text",
+               all_types.date AS "all_types.date",
+               all_types.time AS "all_types.time",
+               all_types.timestamp AS "all_types.timestamp",
+               all_types.''blob'' AS "all_types.blob"
+          FROM test_sample.all_types
+     ) AS sub_query;
+`, "''", "`"))
+
+		var destJson []model.AllTypes
+
+		err := stmtJson.QueryJSON(ctx, db, &destJson)
+		require.NoError(t, err)
+
+		t.Run("using AllColumns()", func(t *testing.T) {
+			stmtJsonAllColumns := SELECT_JSON_ARR(
+				subQuery.AllColumns(),
+			).FROM(
+				subQuery,
+			)
+
+			require.Equal(t, stmtJson.DebugSql(), stmtJsonAllColumns.DebugSql())
+		})
+
+		testutils.AssertJsonEqual(t, dest, destJson)
+	})
 }
 
 var toInsert = model.AllTypes{

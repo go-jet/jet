@@ -75,14 +75,15 @@ func (t *timezInterfaceImpl) SUB(rhs Interval) TimezExpression {
 //---------------------------------------------------//
 
 type timezExpressionWrapper struct {
-	timezInterfaceImpl
 	Expression
+	timezInterfaceImpl
 }
 
 func newTimezExpressionWrap(expression Expression) TimezExpression {
-	timezExpressionWrap := timezExpressionWrapper{Expression: expression}
-	timezExpressionWrap.timezInterfaceImpl.parent = &timezExpressionWrap
-	return &timezExpressionWrap
+	timezExpressionWrap := &timezExpressionWrapper{Expression: expression}
+	timezExpressionWrap.timezInterfaceImpl.parent = timezExpressionWrap
+	expression.setParent(timezExpressionWrap)
+	return timezExpressionWrap
 }
 
 // TimezExp is time with time zone expression wrapper around arbitrary expression.

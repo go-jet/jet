@@ -17,6 +17,7 @@ type Dialect interface {
 	IsReservedWord(name string) bool
 	SerializeOrderBy() func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName(index int) string
+	JsonValueEncode(expr Expression) Expression
 }
 
 // SerializerFunc func
@@ -41,6 +42,7 @@ type DialectParams struct {
 	ReservedWords              []string
 	SerializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName    func(index int) string
+	JsonValueEncode            func(expr Expression) Expression
 }
 
 // NewDialect creates new dialect with params
@@ -57,6 +59,7 @@ func NewDialect(params DialectParams) Dialect {
 		reservedWords:              arrayOfStringsToMapOfStrings(params.ReservedWords),
 		serializeOrderBy:           params.SerializeOrderBy,
 		valuesDefaultColumnName:    params.ValuesDefaultColumnName,
+		jsonValueEncode:            params.JsonValueEncode,
 	}
 }
 
@@ -72,6 +75,7 @@ type dialectImpl struct {
 	reservedWords              map[string]bool
 	serializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	valuesDefaultColumnName    func(index int) string
+	jsonValueEncode            func(expr Expression) Expression
 }
 
 func (d *dialectImpl) Name() string {
@@ -123,6 +127,10 @@ func (d *dialectImpl) SerializeOrderBy() func(expression Expression, ascending, 
 
 func (d *dialectImpl) ValuesDefaultColumnName(index int) string {
 	return d.valuesDefaultColumnName(index)
+}
+
+func (d *dialectImpl) JsonValueEncode(expr Expression) Expression {
+	return d.jsonValueEncode(expr)
 }
 
 func arrayOfStringsToMapOfStrings(arr []string) map[string]bool {

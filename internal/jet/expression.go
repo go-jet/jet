@@ -10,6 +10,9 @@ type Expression interface {
 	GroupByClause
 	OrderByClause
 
+	serializeForJsonValue(statement StatementType, out *SQLBuilder)
+	setParent(parent Expression)
+
 	// IS_NULL tests expression whether it is a NULL value.
 	IS_NULL() BoolExpression
 	// IS_NOT_NULL tests expression whether it is a non-NULL value.
@@ -32,6 +35,10 @@ type Expression interface {
 // ExpressionInterfaceImpl implements Expression interface methods
 type ExpressionInterfaceImpl struct {
 	Parent Expression
+}
+
+func (e *ExpressionInterfaceImpl) setParent(parent Expression) {
+	e.Parent = parent
 }
 
 func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
@@ -89,14 +96,19 @@ func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, o
 }
 
 func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	if statement.IsSelectJSON() {
-		panic("jet: expression need to be aliased when used as SELECT JSON projection.")
-	}
 	e.Parent.serialize(statement, out, NoWrap)
 }
 
-func (e *ExpressionInterfaceImpl) serializeForJsonObj(statement StatementType, out *SQLBuilder) {
+func (e *ExpressionInterfaceImpl) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
 	panic("jet: expression need to be aliased when used as SELECT JSON projection.")
+}
+
+func (e *ExpressionInterfaceImpl) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	panic("jet: expression need to be aliased when used as SELECT JSON projection.")
+}
+
+func (e *ExpressionInterfaceImpl) serializeForJsonValue(statement StatementType, out *SQLBuilder) {
+	out.Dialect.JsonValueEncode(e.Parent).serialize(statement, out)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {

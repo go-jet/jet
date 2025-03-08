@@ -20,6 +20,8 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
+var ctx = context.Background()
+
 var db *stmtcache.DB
 var testRoot string
 

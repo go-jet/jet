@@ -71,6 +71,12 @@ type ColumnTimestampz = jet.ColumnTimestampz
 // TimestampzColumn creates named timestamp with time zone column.
 var TimestampzColumn = jet.TimestampzColumn
 
+// ColumnInterval is interface of PostgreSQL interval columns.
+type ColumnInterval = jet.ColumnInterval
+
+// IntervalColumn creates named interval column
+var IntervalColumn = jet.IntervalColumn
+
 // ColumnDateRange is interface of SQL date range column
 type ColumnDateRange = jet.ColumnRange[DateExpression]
 
@@ -106,41 +112,3 @@ type ColumnInt8Range jet.ColumnRange[jet.Int8Expression]
 
 // Int8RangeColumn creates named range with range column
 var Int8RangeColumn = jet.RangeColumn[jet.Int8Expression]
-
-//------------------------------------------------------//
-
-// ColumnInterval is interface of PostgreSQL interval columns.
-type ColumnInterval interface {
-	IntervalExpression
-	jet.Column
-
-	From(subQuery SelectTable) ColumnInterval
-	SET(intervalExp IntervalExpression) ColumnAssigment
-}
-
-//------------------------------------------------------//
-
-type intervalColumnImpl struct {
-	jet.ColumnExpressionImpl
-	intervalInterfaceImpl
-}
-
-func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssigment {
-	return jet.NewColumnAssignment(i, intervalExp)
-}
-
-func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
-	newIntervalColumn := IntervalColumn(i.Name())
-	jet.SetTableName(newIntervalColumn, i.TableName())
-	jet.SetSubQuery(newIntervalColumn, subQuery)
-
-	return newIntervalColumn
-}
-
-// IntervalColumn creates named interval column.
-func IntervalColumn(name string) ColumnInterval {
-	intervalColumn := &intervalColumnImpl{}
-	intervalColumn.ColumnExpressionImpl = jet.NewColumnImpl(name, "", intervalColumn)
-	intervalColumn.intervalInterfaceImpl.parent = intervalColumn
-	return intervalColumn
-}

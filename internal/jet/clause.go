@@ -41,6 +41,8 @@ type ClauseSelect struct {
 	DistinctOnColumns []ColumnExpression
 	ProjectionList    []Projection
 
+	IsForRowToJson bool
+
 	// MySQL only
 	OptimizerHints optimizerHints
 }
@@ -70,7 +72,13 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 		out.WriteByte(')')
 	}
 
-	out.WriteProjections(statementType, s.ProjectionList)
+	if s.IsForRowToJson {
+		out.IncreaseIdent()
+		out.WriteRowToJsonProjections(statementType, s.ProjectionList)
+		out.DecreaseIdent()
+	} else {
+		out.WriteProjections(statementType, s.ProjectionList)
+	}
 }
 
 // ClauseFrom struct

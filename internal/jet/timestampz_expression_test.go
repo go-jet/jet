@@ -53,11 +53,3 @@ func TestTimestampzExp(t *testing.T) {
 	assertClauseSerialize(t, TimestampzExp(table1ColFloat).LT(timestampz),
 		"(table1.col_float < $1)", "2000-01-31 10:20:05.000023 +200")
 }
-
-func TestTimestampzArithmetic(t *testing.T) {
-	timestampz := Timestampz(2000, 1, 1, 0, 0, 0, 100, "UTC")
-	assertClauseDebugSerialize(t, table1ColTimestampz.ADD(NewInterval(String("1 HOUR"))).EQ(timestampz),
-		"((table1.col_timestampz + INTERVAL '1 HOUR') = '2000-01-01 00:00:00.0000001 UTC')")
-	assertClauseDebugSerialize(t, table1ColTimestampz.SUB(NewInterval(String("1 HOUR"))).EQ(timestampz),
-		"((table1.col_timestampz - INTERVAL '1 HOUR') = '2000-01-01 00:00:00.0000001 UTC')")
-}

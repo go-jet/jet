@@ -22,10 +22,6 @@ func (s SerializeOption) WithFallTrough(options []SerializeOption) []SerializeOp
 // StatementType is type of the SQL statement
 type StatementType string
 
-func (s StatementType) IsSelectJSON() bool {
-	return s == SelectJsonObjStatementType || s == SelectJsonArrStatementType
-}
-
 // Statement types
 const (
 	SelectStatementType        StatementType = "SELECT"

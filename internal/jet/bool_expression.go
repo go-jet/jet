@@ -102,9 +102,10 @@ type boolExpressionWrapper struct {
 }
 
 func newBoolExpressionWrap(expression Expression) BoolExpression {
-	boolExpressionWrap := boolExpressionWrapper{Expression: expression}
-	boolExpressionWrap.boolInterfaceImpl.parent = &boolExpressionWrap
-	return &boolExpressionWrap
+	boolExpressionWrap := &boolExpressionWrapper{Expression: expression}
+	boolExpressionWrap.boolInterfaceImpl.parent = boolExpressionWrap
+	expression.setParent(boolExpressionWrap)
+	return boolExpressionWrap
 }
 
 // BoolExp is bool expression wrapper around arbitrary expression.

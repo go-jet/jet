@@ -3,9 +3,9 @@ package qrm
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/3rdparty/json"
 	"github.com/go-jet/jet/v2/internal/utils/must"
 	"reflect"
 )
@@ -67,8 +67,8 @@ func QueryJsonArr(ctx context.Context, db Queryable, query string, args []interf
 	return queryJson(ctx, db, query, args, destPtr)
 }
 
-var jsonDestObjErr = "jet: destination has to be a pointer to struct or pointer to map[string]any"
-var jsonDestArrErr = "jet: destination has to be a pointer to slice of struct or pointer to []map[string]any"
+var jsonDestObjErr = "jet: SELECT_JSON_OBJ destination has to be a pointer to struct or pointer to map[string]any"
+var jsonDestArrErr = "jet: SELECT_JSON_ARR destination has to be a pointer to slice of struct or pointer to []map[string]any"
 
 func queryJson(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 	must.BeInitializedPtr(db, "jet: db is nil")

@@ -194,18 +194,18 @@ func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression
 
 // Character encodings for CONVERT, CONVERT_FROM and CONVERT_TO functions
 var (
-	UTF8       = String("UTF8")
-	LATIN1     = String("LATIN1")
-	LATIN2     = String("LATIN2")
-	LATIN3     = String("LATIN3")
-	LATIN4     = String("LATIN4")
-	WIN1252    = String("WIN1252")
-	ISO_8859_5 = String("ISO_8859_5")
-	ISO_8859_6 = String("ISO_8859_6")
-	ISO_8859_7 = String("ISO_8859_7")
-	ISO_8859_8 = String("ISO_8859_8")
-	KOI8R      = String("KOI8R")
-	KOI8U      = String("KOI8U")
+	UTF8       = StringExp(jet.FixedLiteral("UTF8"))
+	LATIN1     = StringExp(jet.FixedLiteral("LATIN1"))
+	LATIN2     = StringExp(jet.FixedLiteral("LATIN2"))
+	LATIN3     = StringExp(jet.FixedLiteral("LATIN3"))
+	LATIN4     = StringExp(jet.FixedLiteral("LATIN4"))
+	WIN1252    = StringExp(jet.FixedLiteral("WIN1252"))
+	ISO_8859_5 = StringExp(jet.FixedLiteral("ISO_8859_5"))
+	ISO_8859_6 = StringExp(jet.FixedLiteral("ISO_8859_6"))
+	ISO_8859_7 = StringExp(jet.FixedLiteral("ISO_8859_7"))
+	ISO_8859_8 = StringExp(jet.FixedLiteral("ISO_8859_8"))
+	KOI8R      = StringExp(jet.FixedLiteral("KOI8R"))
+	KOI8U      = StringExp(jet.FixedLiteral("KOI8U"))
 )
 
 // CONVERT converts string to dest_encoding. The original encoding is
@@ -223,9 +223,9 @@ var CONVERT_TO = jet.CONVERT_TO
 
 // ENCODE/DECODE textual formats
 var (
-	Base64 StringExpression = String("base64")
-	Escape StringExpression = String("escape")
-	Hex    StringExpression = String("hex")
+	Base64 = StringExp(jet.FixedLiteral("base64"))
+	Escape = StringExp(jet.FixedLiteral("escape"))
+	Hex    = StringExp(jet.FixedLiteral("hex"))
 )
 
 // ENCODE encodes binary data into a textual representation.

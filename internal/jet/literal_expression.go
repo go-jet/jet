@@ -412,17 +412,6 @@ func Raw(raw string, namedArgs ...map[string]interface{}) Expression {
 	return rawExp
 }
 
-// RawWithParent is a Raw constructor used for construction dialect specific expression
-func RawWithParent(raw string, parent ...Expression) Expression {
-	rawExp := &rawExpression{
-		Raw:    raw,
-		noWrap: true,
-	}
-	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
-
-	return rawExp
-}
-
 // RawBool helper that for raw string boolean expressions
 func RawBool(raw string, namedArgs ...map[string]interface{}) BoolExpression {
 	return BoolExp(Raw(raw, namedArgs...))

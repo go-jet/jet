@@ -105,6 +105,7 @@ func newSelectStatementJson(projections []Projection, statementType jet.Statemen
 	}
 
 	newSelectJson.setOperatorsImpl.stmtRoot = newSelectJson
+	newSelectJson.subQuery.Select.IsForRowToJson = true
 
 	newSelectJson.setSubQueryAlias("")
 

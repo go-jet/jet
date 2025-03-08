@@ -139,7 +139,7 @@ func testNorthwindJoinEverythingJson(t require.TestingT) {
 						Territories,
 						EmployeeTerritories.TerritoryID.EQ(Territories.TerritoryID)),
 				).WHERE(
-					EmployeeTerritories.EmployeeID.EQ(Employees.EmployeeID), // TODO: move to join
+					EmployeeTerritories.EmployeeID.EQ(Employees.EmployeeID),
 				).AS("Territories"),
 			).FROM(Employees).
 				WHERE(Orders.EmployeeID.EQ(Employees.EmployeeID)).AS("Employee"),

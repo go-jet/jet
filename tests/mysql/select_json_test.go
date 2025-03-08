@@ -23,10 +23,12 @@ func TestSelectJsonObj(t *testing.T) {
 		WHERE(Actor.ActorID.EQ(Int(2)))
 
 	testutils.AssertStatementSql(t, stmt, `
-SELECT JSON_OBJECT('actorID', actor.actor_id,
-     'firstName', actor.first_name,
-     'lastName', actor.last_name,
-     'lastUpdate', actor.last_update) AS "json"
+SELECT JSON_OBJECT(
+          'actorID', actor.actor_id,
+          'firstName', actor.first_name,
+          'lastName', actor.last_name,
+          'lastUpdate', DATE_FORMAT(actor.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
+     ) AS "json"
 FROM dvds.actor
 WHERE actor.actor_id = ?;
 `, int64(2))
@@ -57,30 +59,34 @@ func TestSelectJsonObj_NestedObj(t *testing.T) {
 	)
 
 	testutils.AssertStatementSql(t, stmt, `
-SELECT JSON_OBJECT('actorID', actor.actor_id,
-     'firstName', actor.first_name,
-     'lastName', actor.last_name,
-     'lastUpdate', actor.last_update,
-     'LongestFilm', (
-          SELECT JSON_OBJECT('filmID', film.film_id,
-               'title', film.title,
-               'description', film.description,
-               'releaseYear', film.release_year,
-               'languageID', film.language_id,
-               'originalLanguageID', film.original_language_id,
-               'rentalDuration', film.rental_duration,
-               'rentalRate', film.rental_rate,
-               'length', film.length,
-               'replacementCost', film.replacement_cost,
-               'rating', film.rating,
-               'specialFeatures', film.special_features,
-               'lastUpdate', film.last_update) AS "json"
-          FROM dvds.film_actor
-               INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
-          WHERE actor.actor_id = film_actor.actor_id
-          ORDER BY film.length DESC
-          LIMIT ?
-     )) AS "json"
+SELECT JSON_OBJECT(
+          'actorID', actor.actor_id,
+          'firstName', actor.first_name,
+          'lastName', actor.last_name,
+          'lastUpdate', DATE_FORMAT(actor.last_update,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'LongestFilm', (
+               SELECT JSON_OBJECT(
+                         'filmID', film.film_id,
+                         'title', film.title,
+                         'description', film.description,
+                         'releaseYear', film.release_year,
+                         'languageID', film.language_id,
+                         'originalLanguageID', film.original_language_id,
+                         'rentalDuration', film.rental_duration,
+                         'rentalRate', film.rental_rate,
+                         'length', film.length,
+                         'replacementCost', film.replacement_cost,
+                         'rating', film.rating,
+                         'specialFeatures', film.special_features,
+                         'lastUpdate', DATE_FORMAT(film.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
+                    ) AS "json"
+               FROM dvds.film_actor
+                    INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
+               WHERE actor.actor_id = film_actor.actor_id
+               ORDER BY film.length DESC
+               LIMIT ?
+          )
+     ) AS "json"
 FROM dvds.actor
 WHERE actor.actor_id = ?;
 `)
@@ -125,10 +131,12 @@ func TestSelectJsonArr(t *testing.T) {
 		ORDER_BY(Actor.ActorID)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT JSON_ARRAYAGG(JSON_OBJECT('actorID', actor.actor_id,
-     'firstName', actor.first_name,
-     'lastName', actor.last_name,
-     'lastUpdate', actor.last_update)) AS "json"
+SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'actorID', actor.actor_id,
+          'firstName', actor.first_name,
+          'lastName', actor.last_name,
+          'lastUpdate', DATE_FORMAT(actor.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
+     )) AS "json"
 FROM dvds.actor
 ORDER BY actor.actor_id;
 `)
@@ -169,29 +177,33 @@ func TestSelectJsonArr_NestedArr(t *testing.T) {
 	)
 
 	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT JSON_ARRAYAGG(JSON_OBJECT('actorID', actor.actor_id,
-     'firstName', actor.first_name,
-     'lastName', actor.last_name,
-     'lastUpdate', actor.last_update,
-     'Films', (
-          SELECT JSON_ARRAYAGG(JSON_OBJECT('filmID', film.film_id,
-               'title', film.title,
-               'description', film.description,
-               'releaseYear', film.release_year,
-               'languageID', film.language_id,
-               'originalLanguageID', film.original_language_id,
-               'rentalDuration', film.rental_duration,
-               'rentalRate', film.rental_rate,
-               'length', film.length,
-               'replacementCost', film.replacement_cost,
-               'rating', film.rating,
-               'specialFeatures', film.special_features,
-               'lastUpdate', film.last_update)) AS "json"
-          FROM dvds.film_actor
-               INNER JOIN dvds.film ON ((film.film_id = film_actor.film_id) AND (actor.actor_id = film_actor.actor_id))
-          WHERE (film.film_id % 17) = 0
-          ORDER BY film.length DESC
-     ))) AS "json"
+SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'actorID', actor.actor_id,
+          'firstName', actor.first_name,
+          'lastName', actor.last_name,
+          'lastUpdate', DATE_FORMAT(actor.last_update,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'Films', (
+               SELECT JSON_ARRAYAGG(JSON_OBJECT(
+                         'filmID', film.film_id,
+                         'title', film.title,
+                         'description', film.description,
+                         'releaseYear', film.release_year,
+                         'languageID', film.language_id,
+                         'originalLanguageID', film.original_language_id,
+                         'rentalDuration', film.rental_duration,
+                         'rentalRate', film.rental_rate,
+                         'length', film.length,
+                         'replacementCost', film.replacement_cost,
+                         'rating', film.rating,
+                         'specialFeatures', film.special_features,
+                         'lastUpdate', DATE_FORMAT(film.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
+                    )) AS "json"
+               FROM dvds.film_actor
+                    INNER JOIN dvds.film ON ((film.film_id = film_actor.film_id) AND (actor.actor_id = film_actor.actor_id))
+               WHERE (film.film_id % 17) = 0
+               ORDER BY film.length DESC
+          )
+     )) AS "json"
 FROM dvds.actor
 WHERE actor.actor_id BETWEEN 1 AND 3
 ORDER BY actor.actor_id;
@@ -337,22 +349,26 @@ func TestSelectJson_GroupBy(t *testing.T) {
 	).FROM(subQuery)
 
 	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
-SELECT JSON_ARRAYAGG(JSON_OBJECT('customerID', customers_info.""customer.customer_id"",
-     'storeID', customers_info.""customer.store_id"",
-     'firstName', customers_info.""customer.first_name"",
-     'lastName', customers_info.""customer.last_name"",
-     'email', customers_info.""customer.email"",
-     'addressID', customers_info.""customer.address_id"",
-     'active', customers_info.""customer.active"",
-     'createDate', customers_info.""customer.create_date"",
-     'lastUpdate', customers_info.""customer.last_update"",
-     'amount', (
-          SELECT JSON_OBJECT('sum', customers_info.sum,
-               'avg', customers_info.avg,
-               'max', customers_info.max,
-               'min', customers_info.min,
-               'count', customers_info.count) AS "json"
-     ))) AS "json"
+SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'customerID', customers_info.''customer.customer_id'',
+          'storeID', customers_info.''customer.store_id'',
+          'firstName', customers_info.''customer.first_name'',
+          'lastName', customers_info.''customer.last_name'',
+          'email', customers_info.''customer.email'',
+          'addressID', customers_info.''customer.address_id'',
+          'active', customers_info.''customer.active'' = 1,
+          'createDate', DATE_FORMAT(customers_info.''customer.create_date'','%Y-%m-%dT%H:%i:%s.%fZ'),
+          'lastUpdate', DATE_FORMAT(customers_info.''customer.last_update'','%Y-%m-%dT%H:%i:%s.%fZ'),
+          'amount', (
+               SELECT JSON_OBJECT(
+                         'sum', customers_info.sum,
+                         'avg', customers_info.avg,
+                         'max', customers_info.max,
+                         'min', customers_info.min,
+                         'count', customers_info.count
+                    ) AS "json"
+          )
+     )) AS "json"
 FROM (
           SELECT customer.customer_id AS "customer.customer_id",
                customer.store_id AS "customer.store_id",
@@ -374,7 +390,7 @@ FROM (
           HAVING SUM(payment.amount) > 125
           ORDER BY customer.customer_id, SUM(payment.amount) ASC
      ) AS customers_info;
-`, `""`, "`"))
+`, "''", "`"))
 
 	var dest []struct {
 		model.Customer
@@ -389,7 +405,6 @@ FROM (
 	}
 
 	err := stmt.QueryJSON(ctx, db, &dest)
-	fmt.Println(err)
 	require.Nil(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/customer_payment_sum.json")

@@ -105,9 +105,10 @@ type stringExpressionWrapper struct {
 }
 
 func newStringExpressionWrap(expression Expression) StringExpression {
-	stringExpressionWrap := stringExpressionWrapper{Expression: expression}
-	stringExpressionWrap.stringInterfaceImpl.parent = &stringExpressionWrap
-	return &stringExpressionWrap
+	stringExpressionWrap := &stringExpressionWrapper{Expression: expression}
+	stringExpressionWrap.stringInterfaceImpl.parent = stringExpressionWrap
+	expression.setParent(stringExpressionWrap)
+	return stringExpressionWrap
 }
 
 // StringExp is string expression wrapper around arbitrary expression.

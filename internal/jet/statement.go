@@ -257,10 +257,11 @@ type expressionStatementImpl struct {
 }
 
 func (s *expressionStatementImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	if statement.IsSelectJSON() {
-		panic("jet: SELECT JSON statements need to be aliased when used as a projection.")
-	}
 	s.serialize(statement, out)
+}
+
+func (e *expressionStatementImpl) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	panic("jet: SELECT JSON statements need to be aliased when used as a projection.")
 }
 
 // NewStatementImpl creates new statementImpl

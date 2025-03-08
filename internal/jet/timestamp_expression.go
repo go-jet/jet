@@ -80,9 +80,10 @@ type timestampExpressionWrapper struct {
 }
 
 func newTimestampExpressionWrap(expression Expression) TimestampExpression {
-	timestampExpressionWrap := timestampExpressionWrapper{Expression: expression}
-	timestampExpressionWrap.timestampInterfaceImpl.parent = &timestampExpressionWrap
-	return &timestampExpressionWrap
+	timestampExpressionWrap := &timestampExpressionWrapper{Expression: expression}
+	timestampExpressionWrap.timestampInterfaceImpl.parent = timestampExpressionWrap
+	expression.setParent(timestampExpressionWrap)
+	return timestampExpressionWrap
 }
 
 // TimestampExp is timestamp expression wrapper around arbitrary expression.

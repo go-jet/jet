@@ -3,7 +3,8 @@ package jet
 // Projection is interface for all projection types. Types that can be part of, for instance SELECT clause.
 type Projection interface {
 	serializeForProjection(statement StatementType, out *SQLBuilder)
-	serializeForJsonObj(statement StatementType, out *SQLBuilder)
+	serializeForJsonObjEntry(statement StatementType, out *SQLBuilder)
+	serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder)
 	fromImpl(subQuery SelectTable) Projection
 }
 
@@ -29,7 +30,7 @@ func (pl ProjectionList) serializeForProjection(statement StatementType, out *SQ
 	SerializeProjectionList(statement, pl, out)
 }
 
-func (pl ProjectionList) serializeForJsonObj(statement StatementType, out *SQLBuilder) {
+func (pl ProjectionList) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
 	SerializeProjectionListJsonObj(statement, pl, out)
 }
 
@@ -85,9 +86,17 @@ func (pl ProjectionList) Except(toExclude ...Column) ProjectionList {
 	return ret
 }
 
-// JsonProjectionList redefines []Projection so projections can be serialized as json object key/values
-type JsonProjectionList []Projection
+func (pl ProjectionList) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	out.WriteRowToJsonProjections(statement, pl)
+}
 
-func (j JsonProjectionList) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+// JsonObjProjectionList redefines []Projection so projections can be serialized as json object key/values
+type JsonObjProjectionList []Projection
+
+func (j JsonObjProjectionList) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	out.IncreaseIdent()
+	out.NewLine()
 	SerializeProjectionListJsonObj(statement, j, out)
+	out.DecreaseIdent()
+	out.NewLine()
 }

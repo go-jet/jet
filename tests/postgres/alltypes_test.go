@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
-	"github.com/stretchr/testify/assert"
-
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
 
@@ -46,6 +46,7 @@ func TestAllTypesSelectJson(t *testing.T) {
 			AllTypes.JsonbArray, AllTypes.IntegerArray, AllTypes.IntegerArrayPtr,
 			AllTypes.TextMultiDimArray, AllTypes.TextMultiDimArrayPtr,
 		),
+		// unsupported at the moment, casting to text allows these columns to be assigned to string fields
 		CAST(AllTypes.JSONPtr).AS_TEXT().AS("jsonPtr"),
 		CAST(AllTypes.JSON).AS_TEXT().AS("JSON"),
 		CAST(AllTypes.JsonbPtr).AS_TEXT().AS("jsonbPtr"),
@@ -59,7 +60,75 @@ func TestAllTypesSelectJson(t *testing.T) {
 		CAST(AllTypes.TextMultiDimArrayPtr).AS_TEXT().AS("TextMultiDimArrayPtr"),
 	).FROM(AllTypes)
 
-	//fmt.Println(stmt.DebugSql())
+	testutils.AssertStatementSql(t, stmt, `
+SELECT json_agg(row_to_json(records)) AS "json"
+FROM (
+          SELECT all_types.small_int_ptr AS "smallIntPtr",
+               all_types.small_int AS "smallInt",
+               all_types.integer_ptr AS "integerPtr",
+               all_types.integer AS "integer",
+               all_types.big_int_ptr AS "bigIntPtr",
+               all_types.big_int AS "bigInt",
+               all_types.decimal_ptr AS "decimalPtr",
+               all_types.decimal AS "decimal",
+               all_types.numeric_ptr AS "numericPtr",
+               all_types.numeric AS "numeric",
+               all_types.real_ptr AS "realPtr",
+               all_types.real AS "real",
+               all_types.double_precision_ptr AS "doublePrecisionPtr",
+               all_types.double_precision AS "doublePrecision",
+               all_types.smallserial AS "smallserial",
+               all_types.serial AS "serial",
+               all_types.bigserial AS "bigserial",
+               all_types.var_char_ptr AS "varCharPtr",
+               all_types.var_char AS "varChar",
+               all_types.char_ptr AS "charPtr",
+               all_types.char AS "char",
+               all_types.text_ptr AS "textPtr",
+               all_types.text AS "text",
+               ENCODE(all_types.bytea_ptr, 'base64') AS "byteaPtr",
+               ENCODE(all_types.bytea, 'base64') AS "bytea",
+               all_types.timestampz_ptr AS "timestampzPtr",
+               all_types.timestampz AS "timestampz",
+               to_char(all_types.timestamp_ptr, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestampPtr",
+               to_char(all_types.timestamp, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestamp",
+               to_char(all_types.date_ptr::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "datePtr",
+               to_char(all_types.date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "date",
+               '0000-01-01T' || to_char('2000-10-10'::date + all_types.timez_ptr, 'HH24:MI:SS.USTZH:TZM') AS "timezPtr",
+               '0000-01-01T' || to_char('2000-10-10'::date + all_types.timez, 'HH24:MI:SS.USTZH:TZM') AS "timez",
+               '0000-01-01T' || to_char('2000-10-10'::date + all_types.time_ptr, 'HH24:MI:SS.USZ') AS "timePtr",
+               '0000-01-01T' || to_char('2000-10-10'::date + all_types.time, 'HH24:MI:SS.USZ') AS "time",
+               all_types.interval_ptr AS "intervalPtr",
+               all_types.interval AS "interval",
+               all_types.boolean_ptr AS "booleanPtr",
+               all_types.boolean AS "boolean",
+               all_types.point_ptr AS "pointPtr",
+               all_types.bit_ptr AS "bitPtr",
+               all_types.bit AS "bit",
+               all_types.bit_varying_ptr AS "bitVaryingPtr",
+               all_types.bit_varying AS "bitVarying",
+               all_types.tsvector_ptr AS "tsvectorPtr",
+               all_types.tsvector AS "tsvector",
+               all_types.uuid_ptr AS "uuidPtr",
+               all_types.uuid AS "uuid",
+               all_types.xml_ptr AS "xmlPtr",
+               all_types.xml AS "xml",
+               all_types.mood_ptr AS "moodPtr",
+               all_types.mood AS "mood",
+               all_types.json_ptr::text AS "jsonPtr",
+               all_types.json::text AS "JSON",
+               all_types.jsonb_ptr::text AS "jsonbPtr",
+               all_types.jsonb::text AS "Jsonb",
+               all_types.text_array_ptr::text AS "TextArrayPtr",
+               all_types.text_array::text AS "TextArray",
+               all_types.jsonb_array::text AS "JsonbArray",
+               all_types.integer_array::text AS "IntegerArray",
+               all_types.integer_array_ptr::text AS "IntegerArrayPtr",
+               all_types.text_multi_dim_array::text AS "TextMultiDimArray",
+               all_types.text_multi_dim_array_ptr::text AS "TextMultiDimArrayPtr"
+          FROM test_sample.all_types
+     ) AS records;
+`)
 
 	var dest []model.AllTypes
 
@@ -76,24 +145,30 @@ func TestAllTypesSelectJson(t *testing.T) {
 		dest[1].CharPtr = allTypesRow1.CharPtr
 	}
 
-	// set time local before comparison
-	dest[0].Timestampz = toCET(t, dest[0].Timestampz)
+	minus8 := time.FixedZone("UTC", -8*60*60)
+	plus1 := time.FixedZone("UTC", 60*60)
 
-	if dest[0].TimestampzPtr != nil {
-		dest[0].TimestampzPtr = ptr.Of(toCET(t, *dest[0].TimestampzPtr))
-	}
-	dest[1].Timestampz = toCET(t, dest[1].Timestampz)
+	// set time local before comparison
+	dest[0].Timez = *toTZ(&dest[0].Timez, minus8)
+	dest[0].TimezPtr = toTZ(dest[0].TimezPtr, minus8)
+	dest[1].Timez = *toTZ(&dest[1].Timez, minus8)
+	dest[1].TimezPtr = toTZ(dest[1].TimezPtr, minus8)
+
+	dest[0].Timestampz = *toTZ(&dest[0].Timestampz, plus1)
+	dest[0].TimestampzPtr = toTZ(dest[0].TimestampzPtr, plus1)
+	dest[1].Timestampz = *toTZ(&dest[1].Timestampz, plus1)
+	dest[1].TimestampzPtr = toTZ(dest[1].TimestampzPtr, plus1)
 
 	testutils.AssertJsonEqual(t, dest[0], allTypesRow0)
 	testutils.AssertJsonEqual(t, dest[1], allTypesRow1)
 }
 
-func toCET(t *testing.T, tm time.Time) time.Time {
-	cet, err := time.LoadLocation("CET") // "Europe/Berlin" also works
-	if err != nil {
-		t.Fail()
+func toTZ(tm *time.Time, loc *time.Location) *time.Time {
+	if tm == nil {
+		return nil
 	}
-	return tm.In(cet)
+
+	return ptr.Of(tm.In(loc))
 }
 
 func TestAllTypesViewSelect(t *testing.T) {
@@ -192,7 +267,7 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 	requireLogged(t, query)
 }
 
-func TestBytea(t *testing.T) {
+func TestByteaInsert(t *testing.T) {
 	byteArrHex := "\\x48656c6c6f20476f7068657221"
 	byteArrBin := []byte("\x48\x65\x6c\x6c\x6f\x20\x47\x6f\x70\x68\x65\x72\x21")
 
@@ -602,22 +677,22 @@ func TestStringOperators(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestBlob(t *testing.T) {
+func TestBytea(t *testing.T) {
 
-	var sampleBlob = Bytea([]byte{11, 0, 22, 33, 44})
-	var textBlob = Bytea([]byte("text blob"))
+	var sampleBytea = Bytea([]byte{11, 0, 22, 33, 44})
+	var textBytea = Bytea([]byte("text blob"))
 
 	stmt := SELECT(
-		AllTypes.Bytea.EQ(sampleBlob),
+		AllTypes.Bytea.EQ(sampleBytea),
 		AllTypes.Bytea.EQ(AllTypes.ByteaPtr),
-		AllTypes.Bytea.NOT_EQ(sampleBlob),
-		AllTypes.Bytea.GT(textBlob),
+		AllTypes.Bytea.NOT_EQ(sampleBytea),
+		AllTypes.Bytea.GT(textBytea),
 		AllTypes.Bytea.GT_EQ(AllTypes.ByteaPtr),
 		AllTypes.Bytea.LT(AllTypes.ByteaPtr),
-		AllTypes.Bytea.LT_EQ(sampleBlob),
+		AllTypes.Bytea.LT_EQ(sampleBytea),
 		AllTypes.Bytea.BETWEEN(Bytea([]byte("min")), Bytea([]byte("max"))),
 		AllTypes.Bytea.NOT_BETWEEN(AllTypes.Bytea, AllTypes.ByteaPtr),
-		AllTypes.Bytea.CONCAT(textBlob),
+		AllTypes.Bytea.CONCAT(textBytea),
 
 		func() ProjectionList {
 			if sourceIsCockroachDB() {
@@ -629,25 +704,25 @@ func TestBlob(t *testing.T) {
 				AllTypes.Bytea.NOT_LIKE(Bytea("b'%pattern%'")),
 
 				BTRIM(AllTypes.Bytea, Bytea([]byte{33})),
-				RTRIM(AllTypes.ByteaPtr, sampleBlob),
-				LTRIM(sampleBlob, textBlob),
-				CONCAT(sampleBlob, AllTypes.ByteaPtr, textBlob),
-				BIT_COUNT(sampleBlob).EQ(Int(3)),
-				LENGTH(textBlob, UTF8).EQ(Int(4)),
+				RTRIM(AllTypes.ByteaPtr, sampleBytea),
+				LTRIM(sampleBytea, textBytea),
+				CONCAT(sampleBytea, AllTypes.ByteaPtr, textBytea),
+				BIT_COUNT(sampleBytea).EQ(Int(3)),
+				LENGTH(textBytea, UTF8).EQ(Int(4)),
 
-				CONVERT(textBlob, UTF8, WIN1252),
-				CONVERT(AllTypes.Bytea, UTF8, LATIN1).EQ(sampleBlob),
+				CONVERT(textBytea, UTF8, WIN1252),
+				CONVERT(AllTypes.Bytea, UTF8, LATIN1).EQ(sampleBytea),
 			}
 		}(),
 
-		BIT_LENGTH(textBlob),
-		OCTET_LENGTH(textBlob),
+		BIT_LENGTH(textBytea),
+		OCTET_LENGTH(textBytea),
 
-		GET_BIT(textBlob, Int(2)).EQ(Int(23)),
-		GET_BYTE(sampleBlob, Int(1)).EQ(Int(0)),
-		SET_BIT(textBlob, Int(1), Int(0)).EQ(sampleBlob),
-		SET_BYTE(textBlob, Int(1), Int(0)).EQ(textBlob),
-		LENGTH(sampleBlob),
+		GET_BIT(textBytea, Int(2)).EQ(Int(23)),
+		GET_BYTE(sampleBytea, Int(1)).EQ(Int(0)),
+		SET_BIT(textBytea, Int(1), Int(0)).EQ(sampleBytea),
+		SET_BYTE(textBytea, Int(1), Int(0)).EQ(textBytea),
+		LENGTH(sampleBytea),
 
 		SUBSTR(AllTypes.Bytea, Int(0), Int(2)),
 
@@ -657,16 +732,16 @@ func TestBlob(t *testing.T) {
 		SHA384(AllTypes.Bytea),
 		SHA512(AllTypes.Bytea),
 
-		ENCODE(sampleBlob, Base64),
-		DECODE(String("A234C12B"), Hex).EQ(sampleBlob),
+		ENCODE(sampleBytea, Base64),
+		DECODE(String("A234C12B"), Hex).EQ(sampleBytea),
 
 		CONVERT_FROM(AllTypes.ByteaPtr, UTF8).EQ(AllTypes.VarChar),
-		CONVERT_TO(AllTypes.Text, UTF8).NOT_EQ(textBlob),
+		CONVERT_TO(AllTypes.Text, UTF8).NOT_EQ(textBytea),
 
 		RawBytea("DECODE(#1::text, #2)", RawArgs{
 			"#1": "A234C12B",
 			"#2": "hex",
-		}).EQ(sampleBlob),
+		}).EQ(sampleBytea),
 	).FROM(
 		AllTypes,
 	)
@@ -690,27 +765,27 @@ SELECT all_types.bytea = $1::bytea,
      LTRIM($12::bytea, $13::bytea),
      CONCAT($14::bytea, all_types.bytea_ptr, $15::bytea),
      BIT_COUNT($16::bytea) = $17,
-     LENGTH($18::bytea, $19::text) = $20,
-     CONVERT($21::bytea, $22::text, $23::text),
-     CONVERT(all_types.bytea, $24::text, $25::text) = $26::bytea,
-     BIT_LENGTH($27::bytea),
-     OCTET_LENGTH($28::bytea),
-     GET_BIT($29::bytea, $30) = $31,
-     GET_BYTE($32::bytea, $33) = $34,
-     SET_BIT($35::bytea, $36, $37) = $38::bytea,
-     SET_BYTE($39::bytea, $40, $41) = $42::bytea,
-     LENGTH($43::bytea),
-     SUBSTR(all_types.bytea, $44, $45),
+     LENGTH($18::bytea, 'UTF8') = $19,
+     CONVERT($20::bytea, 'UTF8', 'WIN1252'),
+     CONVERT(all_types.bytea, 'UTF8', 'LATIN1') = $21::bytea,
+     BIT_LENGTH($22::bytea),
+     OCTET_LENGTH($23::bytea),
+     GET_BIT($24::bytea, $25) = $26,
+     GET_BYTE($27::bytea, $28) = $29,
+     SET_BIT($30::bytea, $31, $32) = $33::bytea,
+     SET_BYTE($34::bytea, $35, $36) = $37::bytea,
+     LENGTH($38::bytea),
+     SUBSTR(all_types.bytea, $39, $40),
      MD5(all_types.bytea),
      SHA224(all_types.bytea),
      SHA256(all_types.bytea),
      SHA384(all_types.bytea),
      SHA512(all_types.bytea),
-     ENCODE($46::bytea, $47::text),
-     DECODE($48::text, $49::text) = $50::bytea,
-     CONVERT_FROM(all_types.bytea_ptr, $51::text) = all_types.var_char,
-     CONVERT_TO(all_types.text, $52::text) != $53::bytea,
-     (DECODE($54::text, $55)) = $56::bytea
+     ENCODE($41::bytea, 'base64'),
+     DECODE($42::text, 'hex') = $43::bytea,
+     CONVERT_FROM(all_types.bytea_ptr, 'UTF8') = all_types.var_char,
+     CONVERT_TO(all_types.text, 'UTF8') != $44::bytea,
+     (DECODE($45::text, $46)) = $47::bytea
 FROM test_sample.all_types;
 `)
 	}
@@ -727,28 +802,75 @@ func TestBlobConversion(t *testing.T) {
 	printable := []byte("this is blob")
 
 	stmt := SELECT(
-		Bytea(nonPrintable).AS("non_printable"),
-		Bytea(printable).AS("printable"),
+		Bytea(nonPrintable).AS("test_dest.non_printable"),
+		Bytea(printable).AS("test_dest.printable"),
 
-		ENCODE(Bytea(nonPrintable), Base64).AS("non_printable_base64"),
-		CONVERT_FROM(Bytea(printable), UTF8).AS("printable_utf8"),
+		Bytea(nonPrintable).CONCAT(Bytea(printable)).AS("test_dest.bytea_concat"),
+
+		ENCODE(Bytea(nonPrintable), Base64).AS("test_dest.non_printable_base64"),
+		CONVERT_FROM(Bytea(printable), UTF8).AS("test_dest.printable_utf8"),
 	)
 
-	var dest struct {
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT '\x0b16212c37'::bytea AS "test_dest.non_printable",
+     '\x7468697320697320626c6f62'::bytea AS "test_dest.printable",
+     ('\x0b16212c37'::bytea || '\x7468697320697320626c6f62'::bytea) AS "test_dest.bytea_concat",
+     ENCODE('\x0b16212c37'::bytea, 'base64') AS "test_dest.non_printable_base64",
+     CONVERT_FROM('\x7468697320697320626c6f62'::bytea, 'UTF8') AS "test_dest.printable_utf8";
+`)
+
+	type testDest struct {
 		NonPrintable []byte
 		Printable    []byte
 
-		NonPrintableBase64 []byte
+		ByteaConcat        []byte
+		NonPrintableBase64 string
 		PrintableUTF8      string
 	}
+
+	var dest testDest
 
 	err := stmt.Query(db, &dest)
 
 	require.NoError(t, err)
 	require.Equal(t, dest.NonPrintable, nonPrintable)
 	require.Equal(t, dest.Printable, printable)
-	require.Equal(t, dest.NonPrintableBase64, []byte(base64.StdEncoding.EncodeToString(nonPrintable)))
+
+	require.Equal(t, dest.ByteaConcat, append(nonPrintable, printable...))
+	require.Equal(t, dest.NonPrintableBase64, base64.StdEncoding.EncodeToString(nonPrintable))
 	require.Equal(t, dest.PrintableUTF8, string(printable))
+
+	t.Run("using select json", func(t *testing.T) {
+		stmtJson := SELECT_JSON_OBJ(
+			Bytea(nonPrintable).AS("nonPrintable"),
+			Bytea(printable).AS("printable"),
+
+			Bytea(nonPrintable).CONCAT(Bytea(printable)).AS("byteaConcat"),
+
+			ENCODE(Bytea(nonPrintable), Base64).AS("nonPrintableBase64"),
+			CONVERT_FROM(Bytea(printable), UTF8).AS("printableUtf8"),
+		)
+
+		testutils.AssertStatementSql(t, stmtJson, `
+SELECT row_to_json(records) AS "json"
+FROM (
+          SELECT ENCODE($1::bytea, 'base64') AS "nonPrintable",
+               ENCODE($2::bytea, 'base64') AS "printable",
+               ENCODE($3::bytea || $4::bytea, 'base64') AS "byteaConcat",
+               ENCODE($5::bytea, 'base64') AS "nonPrintableBase64",
+               CONVERT_FROM($6::bytea, 'UTF8') AS "printableUtf8"
+     ) AS records;
+`)
+
+		var destSelectJson testDest
+
+		err := stmtJson.QueryJSON(ctx, db, &destSelectJson)
+		require.NoError(t, err)
+		testutils.PrintJson(destSelectJson)
+
+		require.Equal(t, dest, destSelectJson)
+
+	})
 }
 
 func TestBoolOperators(t *testing.T) {
@@ -1140,6 +1262,190 @@ func TestTimeExpression(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestTimeScan(t *testing.T) {
+	loc, err := time.LoadLocation("Japan")
+	require.NoError(t, err)
+
+	timeT := time.Date(3, 3, 3, 11, 22, 33, 0, time.UTC)
+	timeWithNanoSeconds := time.Date(3, 3, 3, 1, 2, 3, 1000, time.UTC)
+
+	timez := time.Date(3, 3, 3, 7, 8, 9, 0, time.UTC)
+	timezWithNanoSeconds := time.Date(3, 3, 3, 4, 5, 6, 1000, loc)
+
+	// '1999-01-08 04:05:06'
+	timestamp := time.Date(1999, 01, 8, 4, 5, 6, 0, time.UTC)
+	timestampWithNanoSeconds := time.Date(3, 3, 3, 8, 9, 10, 1000, time.UTC)
+
+	timestampz := time.Date(2003, 10, 3, 9, 10, 11, 0, loc)
+	timestampzWithNanoSeconds := time.Date(3, 3, 3, 8, 9, 10, 1000, loc)
+
+	date := time.Date(2010, 2, 3, 0, 0, 0, 0, time.UTC)
+
+	stmt := SELECT(
+		TimeT(timeT).AS("time"),
+		TimeT(timeWithNanoSeconds).AS("timeWithNanoSeconds"),
+		TimezT(timez).AS("timez"),
+		TimezT(timezWithNanoSeconds).AS("timezWithNanoSeconds"),
+		Timestamp(1999, 01, 8, 4, 5, 6).AS("timestamp"),
+		TimestampT(timestampWithNanoSeconds).AS("timestampWithNanoSeconds"),
+		TimestampzT(timestampz).AS("timestampz"),
+		TimestampzT(timestampzWithNanoSeconds).AS("timestampzWithNanoSeconds"),
+		DateT(date).AS("date"),
+
+		TimeT(timeT).ADD(INTERVAL(2, HOUR)).AS("timeExpression"),
+
+		SELECT_JSON_OBJ(
+			TimeT(timeT).AS("time"),
+			TimeT(timeWithNanoSeconds).AS("timeWithNanoSeconds"),
+			TimezT(timez).AS("timez"),
+			TimezT(timezWithNanoSeconds).AS("timezWithNanoSeconds"),
+			TimestampT(timestamp).AS("timestamp"),
+			TimestampT(timestampWithNanoSeconds).AS("timestampWithNanoSeconds"),
+			TimestampzT(timestampz).AS("timestampz"),
+			TimestampzT(timestampzWithNanoSeconds).AS("timestampzWithNanoSeconds"),
+			DateT(date).AS("date"),
+
+			TimeT(timeT).ADD(INTERVAL(2, HOUR)).AS("timeExpression"),
+		).AS("json"),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT $1::time without time zone AS "time",
+     $2::time without time zone AS "timeWithNanoSeconds",
+     $3::time with time zone AS "timez",
+     $4::time with time zone AS "timezWithNanoSeconds",
+     $5::timestamp without time zone AS "timestamp",
+     $6::timestamp without time zone AS "timestampWithNanoSeconds",
+     $7::timestamp with time zone AS "timestampz",
+     $8::timestamp with time zone AS "timestampzWithNanoSeconds",
+     $9::date AS "date",
+     ($10::time without time zone + INTERVAL '2 HOUR') AS "timeExpression",
+     (
+          SELECT row_to_json(json_records) AS "json_json"
+          FROM (
+                    SELECT '0000-01-01T' || to_char('2000-10-10'::date + $11::time without time zone, 'HH24:MI:SS.USZ') AS "time",
+                         '0000-01-01T' || to_char('2000-10-10'::date + $12::time without time zone, 'HH24:MI:SS.USZ') AS "timeWithNanoSeconds",
+                         '0000-01-01T' || to_char('2000-10-10'::date + $13::time with time zone, 'HH24:MI:SS.USTZH:TZM') AS "timez",
+                         '0000-01-01T' || to_char('2000-10-10'::date + $14::time with time zone, 'HH24:MI:SS.USTZH:TZM') AS "timezWithNanoSeconds",
+                         to_char($15::timestamp without time zone, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestamp",
+                         to_char($16::timestamp without time zone, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestampWithNanoSeconds",
+                         $17::timestamp with time zone AS "timestampz",
+                         $18::timestamp with time zone AS "timestampzWithNanoSeconds",
+                         to_char($19::date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "date",
+                         '0000-01-01T' || to_char('2000-10-10'::date + ($20::time without time zone + INTERVAL '2 HOUR'), 'HH24:MI:SS.USZ') AS "timeExpression"
+               ) AS json_records
+     ) AS "json";
+`)
+
+	var dest struct {
+		Time                      time.Time
+		TimeWithNanoSeconds       time.Time
+		Timez                     time.Time
+		TimezWithNanoSeconds      time.Time
+		Timestamp                 time.Time
+		TimestampWithNanoSeconds  time.Time
+		Timestampz                time.Time
+		TimestampzWithNanoSeconds time.Time
+		Date                      time.Time
+
+		TimeExpression time.Time
+
+		Json struct {
+			Time                      time.Time
+			TimeWithNanoSeconds       time.Time
+			Timez                     time.Time
+			TimezWithNanoSeconds      time.Time
+			Timestamp                 time.Time
+			TimestampWithNanoSeconds  time.Time
+			Timestampz                time.Time
+			TimestampzWithNanoSeconds time.Time
+			Date                      time.Time
+
+			TimeExpression time.Time
+		} `json_column:"json"`
+	}
+
+	err = stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	ensureTimezEqual(t, timeT.Add(2*time.Hour), dest.TimeExpression, loc)
+	ensureTimezEqual(t, timeT.Add(2*time.Hour), dest.Json.TimeExpression, loc)
+
+	ensureTimezEqual(t, timeT, dest.Time, loc)
+	ensureTimezEqual(t, timeT, dest.Json.Time, loc)
+	ensureTimezEqual(t, timeWithNanoSeconds, dest.TimeWithNanoSeconds, loc)
+	ensureTimezEqual(t, timeWithNanoSeconds, dest.Json.TimeWithNanoSeconds, loc)
+
+	ensureTimezEqual(t, timez, dest.Timez, loc)
+	ensureTimezEqual(t, timez, dest.Json.Timez, loc)
+	ensureTimezEqual(t, timezWithNanoSeconds, dest.TimezWithNanoSeconds, loc)
+	ensureTimezEqual(t, timezWithNanoSeconds, dest.Json.TimezWithNanoSeconds, loc)
+
+	ensureTimezEqual(t, timestamp, dest.Timestamp, loc)
+	ensureTimezEqual(t, timestamp, dest.Json.Timestamp, loc)
+	ensureTimezEqual(t, timestampWithNanoSeconds, dest.TimestampWithNanoSeconds, loc)
+	ensureTimezEqual(t, timestampWithNanoSeconds, dest.Json.TimestampWithNanoSeconds, loc)
+
+	ensureTimezEqual(t, timestampz, dest.Timestampz, loc)
+	ensureTimezEqual(t, timestampz, dest.Json.Timestampz, loc)
+	ensureTimezEqual(t, timestampzWithNanoSeconds, dest.TimestampzWithNanoSeconds, loc)
+	ensureTimezEqual(t, timestampzWithNanoSeconds, dest.Json.TimestampzWithNanoSeconds, loc)
+
+	ensureTimezEqual(t, date, dest.Date, loc)
+	ensureTimezEqual(t, date, dest.Json.Date, loc)
+
+	t.Run("json only", func(t *testing.T) {
+		stmtJson := SELECT_JSON_OBJ(
+			TimeT(timeT).AS("time"),
+			TimeT(timeWithNanoSeconds).AS("timeWithNanoSeconds"),
+
+			TimezT(timez).AS("timez"),
+			TimezT(timezWithNanoSeconds).AS("timezWithNanoSeconds"),
+
+			Timestamp(1999, 01, 8, 4, 5, 6).AS("timestamp"),
+			TimestampT(timestampWithNanoSeconds).AS("timestampWithNanoSeconds"),
+
+			TimestampzT(timestampz).AS("timestampz"),
+			TimestampzT(timestampzWithNanoSeconds).AS("timestampzWithNanoSeconds"),
+
+			DateT(date).AS("date"),
+		)
+
+		var jsonDest struct {
+			Time                time.Time
+			TimeWithNanoSeconds time.Time
+
+			Timez                time.Time
+			TimezWithNanoSeconds time.Time
+
+			Timestamp                time.Time
+			TimestampWithNanoSeconds time.Time
+
+			Timestampz                time.Time
+			TimestampzWithNanoSeconds time.Time
+
+			Date time.Time
+		}
+
+		err := stmtJson.QueryJSON(ctx, db, &jsonDest)
+		require.NoError(t, err)
+	})
+}
+
+func ensureTimezEqual(t *testing.T, time1, time2 time.Time, loc *time.Location) {
+	time1Loc := time1.In(loc)
+	time2Loc := time2.In(loc)
+
+	require.Equal(t, time1Loc.Hour(), time2Loc.Hour())
+	require.Equal(t, time1Loc.Minute(), time2Loc.Minute())
+	require.Equal(t, time1Loc.Second(), time2Loc.Second())
+	require.Equal(t, toMicroSeconds(time1Loc.Nanosecond()), toMicroSeconds(time2Loc.Nanosecond()))
+}
+
+func toMicroSeconds(nanoseconds int) int {
+	return nanoseconds / 1000
+}
+
 func TestIntervalSetFunctionality(t *testing.T) {
 
 	t.Run("updateQueryIntervalTest", func(t *testing.T) {
@@ -1251,7 +1557,50 @@ func TestInterval(t *testing.T) {
 		AllTypes.IntervalPtr.DIV(Float(22.222)).EQ(AllTypes.IntervalPtr),
 	).FROM(AllTypes)
 
-	//fmt.Println(stmt.DebugSql())
+	fmt.Println(stmt.Sql())
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT INTERVAL '1 YEAR',
+     INTERVAL '1 MONTH',
+     INTERVAL '1 WEEK',
+     INTERVAL '1 DAY',
+     INTERVAL '1 HOUR',
+     INTERVAL '1 MINUTE',
+     INTERVAL '1 SECOND',
+     INTERVAL '1 MILLISECOND',
+     INTERVAL '1 MICROSECOND',
+     INTERVAL '1 DECADE',
+     INTERVAL '1 CENTURY',
+     INTERVAL '1 MILLENNIUM',
+     INTERVAL '1 YEAR 10 MONTH',
+     INTERVAL '1 YEAR 10 MONTH 20 DAY',
+     INTERVAL '1 YEAR 10 MONTH 20 DAY 3 HOUR',
+     INTERVAL '1 YEAR' IS NOT NULL,
+     INTERVAL '1 YEAR' AS "one year",
+     INTERVAL '0 MICROSECOND',
+     INTERVAL '1 MICROSECOND',
+     INTERVAL '1000 MICROSECOND',
+     INTERVAL '1 SECOND',
+     INTERVAL '1 MINUTE',
+     INTERVAL '1 HOUR',
+     INTERVAL '1 DAY',
+     INTERVAL '1 DAY 2 HOUR 3 MINUTE 4 SECOND 5 MICROSECOND',
+     (all_types.interval = INTERVAL '2 HOUR 20 MINUTE') = TRUE::boolean,
+     (all_types.interval_ptr != INTERVAL '2 HOUR 20 MINUTE') = FALSE::boolean,
+     (all_types.interval IS DISTINCT FROM INTERVAL '2 HOUR 20 MINUTE') = all_types.boolean,
+     (all_types.interval_ptr IS NOT DISTINCT FROM INTERVAL '10 MICROSECOND') = all_types.boolean,
+     (all_types.interval < all_types.interval_ptr) = all_types.boolean_ptr,
+     (all_types.interval <= all_types.interval_ptr) = all_types.boolean_ptr,
+     (all_types.interval > all_types.interval_ptr) = all_types.boolean_ptr,
+     (all_types.interval >= all_types.interval_ptr) = all_types.boolean_ptr,
+     all_types.interval BETWEEN INTERVAL '1 HOUR' AND INTERVAL '2 HOUR',
+     all_types.interval NOT BETWEEN all_types.interval_ptr AND INTERVAL '30 SECOND',
+     (all_types.interval + all_types.interval_ptr) = INTERVAL '17 SECOND',
+     (all_types.interval - all_types.interval_ptr) = INTERVAL '100 MICROSECOND',
+     (all_types.interval_ptr * 11) = all_types.interval,
+     (all_types.interval_ptr / 22.222) = all_types.interval_ptr
+FROM test_sample.all_types;
+`)
 
 	err := stmt.Query(db, &struct{}{})
 	require.NoError(t, err)
@@ -1368,6 +1717,7 @@ func TestAllTypesSubQueryFrom(t *testing.T) {
 		AllTypes.Time,
 		AllTypes.Timez,
 		AllTypes.Timestamp,
+		AllTypes.Timestampz,
 		AllTypes.Interval,
 		AllTypes.Bytea,
 	).FROM(
@@ -1383,6 +1733,7 @@ func TestAllTypesSubQueryFrom(t *testing.T) {
 		AllTypes.Time.From(subQuery),
 		AllTypes.Timez.From(subQuery),
 		AllTypes.Timestamp.From(subQuery),
+		AllTypes.Timestampz.From(subQuery),
 		AllTypes.Interval.From(subQuery),
 		AllTypes.Bytea.From(subQuery),
 	).FROM(
@@ -1398,6 +1749,7 @@ SELECT "subQuery"."all_types.boolean" AS "all_types.boolean",
      "subQuery"."all_types.time" AS "all_types.time",
      "subQuery"."all_types.timez" AS "all_types.timez",
      "subQuery"."all_types.timestamp" AS "all_types.timestamp",
+     "subQuery"."all_types.timestampz" AS "all_types.timestampz",
      "subQuery"."all_types.interval" AS "all_types.interval",
      "subQuery"."all_types.bytea" AS "all_types.bytea"
 FROM (
@@ -1409,6 +1761,7 @@ FROM (
                all_types.time AS "all_types.time",
                all_types.timez AS "all_types.timez",
                all_types.timestamp AS "all_types.timestamp",
+               all_types.timestampz AS "all_types.timestampz",
                all_types.interval AS "all_types.interval",
                all_types.bytea AS "all_types.bytea"
           FROM test_sample.all_types
@@ -1419,6 +1772,83 @@ FROM (
 
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
+
+	t.Run("using SELECT_JSON", func(t *testing.T) {
+		stmtJson := SELECT_JSON_ARR(
+			AllTypes.Boolean.From(subQuery),
+			AllTypes.Integer.From(subQuery),
+			AllTypes.DoublePrecision.From(subQuery),
+			AllTypes.Text.From(subQuery),
+			AllTypes.Date.From(subQuery),
+			AllTypes.Time.From(subQuery),
+			AllTypes.Timez.From(subQuery),
+			AllTypes.Timestamp.From(subQuery),
+			AllTypes.Timestampz.From(subQuery),
+			AllTypes.Interval.From(subQuery),
+			AllTypes.Bytea.From(subQuery),
+		).FROM(
+			subQuery,
+		)
+
+		testutils.AssertDebugStatementSql(t, stmtJson, `
+SELECT json_agg(row_to_json(records)) AS "json"
+FROM (
+          SELECT "subQuery"."all_types.boolean" AS "boolean",
+               "subQuery"."all_types.integer" AS "integer",
+               "subQuery"."all_types.double_precision" AS "doublePrecision",
+               "subQuery"."all_types.text" AS "text",
+               to_char("subQuery"."all_types.date"::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "date",
+               '0000-01-01T' || to_char('2000-10-10'::date + "subQuery"."all_types.time", 'HH24:MI:SS.USZ') AS "time",
+               '0000-01-01T' || to_char('2000-10-10'::date + "subQuery"."all_types.timez", 'HH24:MI:SS.USTZH:TZM') AS "timez",
+               to_char("subQuery"."all_types.timestamp", 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestamp",
+               "subQuery"."all_types.timestampz" AS "timestampz",
+               "subQuery"."all_types.interval" AS "interval",
+               ENCODE("subQuery"."all_types.bytea", 'base64') AS "bytea"
+          FROM (
+                    SELECT all_types.boolean AS "all_types.boolean",
+                         all_types.integer AS "all_types.integer",
+                         all_types.double_precision AS "all_types.double_precision",
+                         all_types.text AS "all_types.text",
+                         all_types.date AS "all_types.date",
+                         all_types.time AS "all_types.time",
+                         all_types.timez AS "all_types.timez",
+                         all_types.timestamp AS "all_types.timestamp",
+                         all_types.timestampz AS "all_types.timestampz",
+                         all_types.interval AS "all_types.interval",
+                         all_types.bytea AS "all_types.bytea"
+                    FROM test_sample.all_types
+               ) AS "subQuery"
+     ) AS records;
+`)
+
+		var destJson []model.AllTypes
+
+		err := stmtJson.QueryJSON(ctx, db, &destJson)
+		require.NoError(t, err)
+
+		t.Run("using AllColumns()", func(t *testing.T) {
+			stmtJsonAllColumns := SELECT_JSON_ARR(
+				subQuery.AllColumns(),
+			).FROM(
+				subQuery,
+			)
+
+			require.Equal(t, stmtJson.DebugSql(), stmtJsonAllColumns.DebugSql())
+		})
+
+		// fix timezone before comparisons
+		minus8 := time.FixedZone("UTC", -8*60*60)
+		destJson[0].Timez = *toTZ(&destJson[0].Timez, minus8)
+		destJson[1].Timez = *toTZ(&destJson[1].Timez, minus8)
+
+		destJson[0].Timestampz = *toTZ(&destJson[0].Timestampz, time.UTC)
+		destJson[1].Timestampz = *toTZ(&destJson[1].Timestampz, time.UTC)
+
+		dest[0].Timestampz = *toTZ(&dest[0].Timestampz, time.UTC)
+		dest[1].Timestampz = *toTZ(&dest[1].Timestampz, time.UTC)
+
+		testutils.AssertJsonEqual(t, dest, destJson)
+	})
 }
 
 func TestAllTypesUpdateSet(t *testing.T) {

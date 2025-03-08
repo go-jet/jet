@@ -141,11 +141,11 @@ type integerExpressionWrapper struct {
 }
 
 func newIntExpressionWrap(expression Expression) IntegerExpression {
-	intExpressionWrap := integerExpressionWrapper{Expression: expression}
+	intExpressionWrap := &integerExpressionWrapper{Expression: expression}
+	intExpressionWrap.integerInterfaceImpl.parent = intExpressionWrap
+	expression.setParent(intExpressionWrap)
 
-	intExpressionWrap.integerInterfaceImpl.parent = &intExpressionWrap
-
-	return &intExpressionWrap
+	return intExpressionWrap
 }
 
 // IntExp is int expression wrapper around arbitrary expression.

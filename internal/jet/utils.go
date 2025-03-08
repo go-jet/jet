@@ -71,7 +71,7 @@ func SerializeProjectionListJsonObj(statement StatementType, projections []Proje
 			panic("jet: Projection is nil")
 		}
 
-		p.serializeForJsonObj(statement, out)
+		p.serializeForJsonObjEntry(statement, out)
 	}
 }
 
