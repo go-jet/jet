@@ -4,7 +4,7 @@ go 1.22
 
 // used by jet generator
 require (
-	github.com/go-sql-driver/mysql v1.8.1
+	github.com/go-sql-driver/mysql v1.9.0
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgconn v1.14.3
 	github.com/jackc/pgtype v1.14.4
@@ -15,7 +15,7 @@ require (
 
 // used in tests
 require (
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/pkg/profile v1.7.0
 	github.com/shopspring/decimal v1.4.0
 	github.com/stretchr/testify v1.10.0

@@ -49,6 +49,11 @@ func TestUint32(t *testing.T) {
 	assertSerialize(t, Uint32(val), `$1::bigint`, val)
 }
 
+func TestUint64(t *testing.T) {
+	val := uint32(math.MaxUint32)
+	assertSerialize(t, Uint32(val), `$1::bigint`, val)
+}
+
 func TestFloat(t *testing.T) {
 	assertSerialize(t, Float(12.34), `$1`, float64(12.34))
 
