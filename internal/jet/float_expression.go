@@ -102,9 +102,10 @@ type floatExpressionWrapper struct {
 }
 
 func newFloatExpressionWrap(expression Expression) FloatExpression {
-	floatExpressionWrap := floatExpressionWrapper{Expression: expression}
-	floatExpressionWrap.floatInterfaceImpl.parent = &floatExpressionWrap
-	return &floatExpressionWrap
+	floatExpressionWrap := &floatExpressionWrapper{Expression: expression}
+	floatExpressionWrap.floatInterfaceImpl.parent = floatExpressionWrap
+	expression.setParent(floatExpressionWrap)
+	return floatExpressionWrap
 }
 
 // FloatExp is date expression wrapper around arbitrary expression.

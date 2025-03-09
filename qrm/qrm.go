@@ -3,6 +3,7 @@ package qrm
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/must"
@@ -12,10 +13,130 @@ import (
 // ErrNoRows is returned by Query when query result set is empty
 var ErrNoRows = errors.New("qrm: no rows in result set")
 
-// Query executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
-// using context `ctx` into destination `destPtr`.
-// Destination can be either pointer to struct or pointer to slice of structs.
-// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
+// QueryJsonObj executes a SQL query that returns a JSON object, unmarshals the result into the provided destination,
+// and returns the number of rows processed.
+//
+// The query must return exactly one row with a single column; otherwise, an error is returned.
+//
+// Parameters:
+//
+//	ctx      - The context for managing query execution (timeouts, cancellations).
+//	db       - The database connection or transaction that implements the Queryable interface.
+//	query    - The SQL query string to be executed.
+//	args     - A slice of arguments to be used with the query.
+//	destPtr  - A pointer to the variable where the unmarshaled JSON result will be stored.
+//	          The destination should be a pointer to a struct or map[string]any.
+//
+// Returns:
+//
+//	rowsProcessed - The number of rows processed by the query execution.
+//	err           - An error if query execution or unmarshaling fails.
+func QueryJsonObj(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(destPtr, "jet: destination is nil")
+	must.BeTypeKind(destPtr, reflect.Ptr, jsonDestObjErr)
+	destType := reflect.TypeOf(destPtr).Elem()
+	must.BeTrue(destType.Kind() == reflect.Struct || destType.Kind() == reflect.Map, jsonDestObjErr)
+
+	return queryJson(ctx, db, query, args, destPtr)
+}
+
+// QueryJsonArr executes a SQL query that returns a JSON array, unmarshals the result into the provided destination,
+// and returns the number of rows processed.
+//
+// The query must return exactly one row with a single column; otherwise, an error is returned.
+//
+// Parameters:
+//
+//	ctx      - The context for managing query execution (timeouts, cancellations).
+//	db       - The database connection or transaction that implements the Queryable interface.
+//	query    - The SQL query string to be executed.
+//	args     - A slice of arguments to be used with the query.
+//	destPtr  - A pointer to the variable where the unmarshaled JSON array will be stored.
+//	          The destination should be a pointer to a slice of structs or []map[string]any.
+//
+// Returns:
+//
+//	rowsProcessed - The number of rows processed by the query execution.
+//	err           - An error if query execution or unmarshaling fails.
+func QueryJsonArr(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(destPtr, "jet: destination is nil")
+	must.BeTypeKind(destPtr, reflect.Ptr, jsonDestArrErr)
+	destType := reflect.TypeOf(destPtr).Elem()
+	must.BeTrue(destType.Kind() == reflect.Slice, jsonDestArrErr)
+
+	return queryJson(ctx, db, query, args, destPtr)
+}
+
+var jsonDestObjErr = "jet: SELECT_JSON_OBJ destination has to be a pointer to struct or pointer to map[string]any"
+var jsonDestArrErr = "jet: SELECT_JSON_ARR destination has to be a pointer to slice of struct or pointer to []map[string]any"
+
+func queryJson(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(db, "jet: db is nil")
+
+	var rows *sql.Rows
+	rows, err = db.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer rows.Close()
+
+	if !rows.Next() {
+		err = rows.Err()
+		if err != nil {
+			return 0, err
+		}
+		return 0, ErrNoRows
+	}
+
+	var jsonData []byte
+	err = rows.Scan(&jsonData)
+
+	if err != nil {
+		return 1, err
+	}
+
+	if jsonData == nil {
+		return 1, nil
+	}
+
+	err = json.Unmarshal(jsonData, &destPtr)
+
+	if err != nil {
+		return 1, fmt.Errorf("jet: invalid json, %w", err)
+	}
+
+	if rows.Next() {
+		return 1, fmt.Errorf("jet: query returned more then one row")
+	}
+
+	err = rows.Close()
+	if err != nil {
+		return 1, err
+	}
+
+	return 1, nil
+}
+
+// Query executes a Query Result Mapping (QRM) of the provided SQL `query` with a list of parameterized arguments `args`
+// over the database connection `db` using the provided context `ctx` and stores the result in the destination `destPtr`.
+//
+// The destination must be a pointer to either a struct or a slice of structs
+// If the destination is a pointer to a struct and no rows are returned, the method returns qrm.ErrNoRows.
+//
+// Parameters:
+//
+//	ctx      - The context for managing query execution (timeouts, cancellations).
+//	db       - The database connection or transaction implementing the Queryable interface.
+//	query    - The SQL query string to be executed.
+//	args     - A slice of arguments to be used with the query.
+//	destPtr  - A pointer to the variable where the query result will be stored. This can be a pointer to a struct or a slice of structs.
+//
+// Returns:
+//
+//	rowsProcessed - The number of rows processed by the query execution.
+//	err           - An error if query execution or result mapping fails, or if no rows are found when a struct is expected.
 func Query(ctx context.Context, db Queryable, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 
 	must.BeInitializedPtr(db, "jet: db is nil")
@@ -185,7 +306,7 @@ func mapRowToSlice(
 func mapRowToBaseTypeSlice(scanContext *ScanContext, slicePtrValue reflect.Value, field *reflect.StructField) (updated bool, err error) {
 	index := 0
 	if field != nil {
-		typeName, columnName := getTypeAndFieldName("", *field)
+		typeName, columnName, _ := getTypeAndFieldName("", *field)
 		if index = scanContext.typeToColumnIndex(typeName, columnName); index < 0 {
 			return
 		}
@@ -233,9 +354,11 @@ func mapRowToStruct(
 			continue
 		}
 
-		fieldMap := typeInf.fieldMappings[i]
+		fieldMappingInfo := typeInf.fieldMappings[i]
 
-		if fieldMap.complexType {
+		switch fieldMappingInfo.Type {
+
+		case complexType:
 			var changed bool
 			changed, err = mapRowToDestinationValue(scanContext, concat(groupKey, ":", field.Name), fieldValue, &field)
 
@@ -246,13 +369,12 @@ func mapRowToStruct(
 			if changed {
 				updated = true
 			}
-
-		} else {
-			if mapOnlySlices || fieldMap.rowIndex == -1 {
+		default:
+			if mapOnlySlices || fieldMappingInfo.rowIndex == -1 {
 				continue
 			}
 
-			scannedValue := scanContext.rowElemValue(fieldMap.rowIndex)
+			scannedValue := scanContext.rowElemValue(fieldMappingInfo.rowIndex)
 
 			if !scannedValue.IsValid() {
 				setZeroValue(fieldValue) // scannedValue is nil, destination should be set to zero value
@@ -261,7 +383,8 @@ func mapRowToStruct(
 
 			updated = true
 
-			if fieldMap.implementsScanner {
+			switch fieldMappingInfo.Type {
+			case implementsScanner:
 				initializeValueIfNilPtr(fieldValue)
 				fieldScanner := getScanner(fieldValue)
 
@@ -270,20 +393,38 @@ func mapRowToStruct(
 				err := fieldScanner.Scan(value)
 
 				if err != nil {
-					return updated, fmt.Errorf(`can't scan %T(%q) to '%s %s': %w`, value, value, field.Name, field.Type.String(), err)
+					return updated, qrmAssignError(scannedValue, field, err)
 				}
-			} else {
+			case jsonUnmarshal:
+				value, ok := scannedValue.Interface().([]byte)
+
+				if !ok {
+					return updated, qrmAssignError(scannedValue, field, fmt.Errorf("value not convertable to []byte"))
+				}
+
+				fieldInterface := fieldValue.Addr().Interface()
+
+				err := json.Unmarshal(value, fieldInterface)
+
+				if err != nil {
+					return updated, qrmAssignError(scannedValue, field, fmt.Errorf("invalid json, %w", err))
+				}
+			default: // simple type
 				err := assign(scannedValue, fieldValue)
 
 				if err != nil {
-					return updated, fmt.Errorf(`can't assign %T(%q) to '%s %s': %w`, scannedValue.Interface(), scannedValue.Interface(),
-						field.Name, field.Type.String(), err)
+					return updated, qrmAssignError(scannedValue, field, err)
 				}
 			}
 		}
 	}
 
 	return
+}
+
+func qrmAssignError(scannedValue reflect.Value, field reflect.StructField, err error) error {
+	return fmt.Errorf(`can't assign %T(%q) to '%s %s': %w`, scannedValue.Interface(), scannedValue.Interface(),
+		field.Name, field.Type.String(), err)
 }
 
 func mapRowToDestinationValue(

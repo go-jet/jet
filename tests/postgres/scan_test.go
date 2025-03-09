@@ -209,7 +209,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 		require.Error(t, err)
-		require.EqualError(t, err, "jet: can't scan int64('\\x01') to 'InventoryID uuid.UUID': Scan: unable to scan type int64 into UUID")
+		require.EqualError(t, err, "jet: can't assign int64('\\x01') to 'InventoryID uuid.UUID': Scan: unable to scan type int64 into UUID")
 	})
 
 	t.Run("type mismatch base type", func(t *testing.T) {

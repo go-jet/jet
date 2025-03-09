@@ -118,9 +118,10 @@ type rangeExpressionWrapper[T Expression] struct {
 }
 
 func newRangeExpressionWrap[T Expression](expression Expression) Range[T] {
-	rangeExpressionWrap := rangeExpressionWrapper[T]{Expression: expression}
-	rangeExpressionWrap.rangeInterfaceImpl.parent = &rangeExpressionWrap
-	return &rangeExpressionWrap
+	rangeExpressionWrap := &rangeExpressionWrapper[T]{Expression: expression}
+	rangeExpressionWrap.rangeInterfaceImpl.parent = rangeExpressionWrap
+	expression.setParent(rangeExpressionWrap)
+	return rangeExpressionWrap
 }
 
 // RangeExp is range expression wrapper around arbitrary expression.

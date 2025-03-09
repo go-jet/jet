@@ -41,6 +41,8 @@ type ClauseSelect struct {
 	DistinctOnColumns []ColumnExpression
 	ProjectionList    []Projection
 
+	IsForRowToJson bool
+
 	// MySQL only
 	OptimizerHints optimizerHints
 }
@@ -52,6 +54,10 @@ func (s *ClauseSelect) Projections() ProjectionList {
 
 // Serialize serializes clause into SQLBuilder
 func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(s.ProjectionList) == 0 {
+		panic("jet: SELECT clause has to have at least one projection")
+	}
+
 	out.NewLine()
 	out.WriteString("SELECT")
 	s.OptimizerHints.Serialize(statementType, out, options...)
@@ -66,11 +72,13 @@ func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, o
 		out.WriteByte(')')
 	}
 
-	if len(s.ProjectionList) == 0 {
-		panic("jet: SELECT clause has to have at least one projection")
+	if s.IsForRowToJson {
+		out.IncreaseIdent()
+		out.WriteRowToJsonProjections(statementType, s.ProjectionList)
+		out.DecreaseIdent()
+	} else {
+		out.WriteProjections(statementType, s.ProjectionList)
 	}
-
-	out.WriteProjections(statementType, s.ProjectionList)
 }
 
 // ClauseFrom struct

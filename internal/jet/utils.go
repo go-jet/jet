@@ -58,6 +58,23 @@ func SerializeProjectionList(statement StatementType, projections []Projection, 
 	}
 }
 
+// SerializeProjectionListJsonObj serializes a list of projections for JSON object
+func SerializeProjectionListJsonObj(statement StatementType, projections []Projection, out *SQLBuilder) {
+
+	for i, p := range projections {
+		if i > 0 {
+			out.WriteString(",")
+			out.NewLine()
+		}
+
+		if p == nil {
+			panic("jet: Projection is nil")
+		}
+
+		p.serializeForJsonObjEntry(statement, out)
+	}
+}
+
 // SerializeColumnNames func
 func SerializeColumnNames(columns []Column, out *SQLBuilder) {
 	for i, col := range columns {
@@ -115,8 +132,8 @@ func ExpressionListToSerializerList(expressions []Expression) []Serializer {
 	return ret
 }
 
-// BoolExpressionListToExpressionList converts list of bool expressions to list of expressions
-func BoolExpressionListToExpressionList(expressions []BoolExpression) []Expression {
+// ToExpressionList converts list of any expressions to list of expressions
+func ToExpressionList[T Expression](expressions []T) []Expression {
 	var ret []Expression
 
 	for _, expression := range expressions {

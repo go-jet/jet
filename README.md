@@ -579,5 +579,5 @@ To run the tests, additional dependencies are required:
 
 ## License
 
-Copyright 2019-2024 Goran Bjelanovic  
+Copyright 2019-2025 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.

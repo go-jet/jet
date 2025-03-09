@@ -11,7 +11,7 @@ jobs:
       - image: cimg/go:1.22.8
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: cimg/postgres:14.10
+      - image: cimg/postgres:14.1
         environment:
           POSTGRES_USER: jet
           POSTGRES_PASSWORD: jet
@@ -19,7 +19,7 @@ jobs:
           PGPORT: 50901
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: circleci/mysql:8.0.27
+      - image: cimg/mysql:8.0.27
         command: [ --default-authentication-plugin=mysql_native_password ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
@@ -29,7 +29,7 @@ jobs:
           MYSQL_TCP_PORT: 50902
 
       # Please keep the version in sync with test/docker-compose.yaml
-      - image: circleci/mariadb:10.3
+      - image: cimg/mariadb:11.4
         command: [ '--default-authentication-plugin=mysql_native_password', '--port=50903' ]
         environment:
           MYSQL_ROOT_PASSWORD: jet
@@ -116,24 +116,26 @@ jobs:
           name: Create MySQL/MariaDB user and test databases
           command: |
             mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -P 50902 -u root -pjet -e "set global sql_mode = 'STRICT_ALL_TABLES,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
             mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "create database test_sample"
             mysql -h 127.0.0.1 -P 50902 -u jet -pjet -e "create database dvds2"
             
             mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "grant all privileges on *.* to 'jet'@'%';"
-            mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "set global sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
+            mysql -h 127.0.0.1 -P 50903 -u root -pjet -e "set global sql_mode = 'STRICT_ALL_TABLES,STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';"
             mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database test_sample"
             mysql -h 127.0.0.1 -P 50903 -u jet -pjet -e "create database dvds2"
 
       - run:
-          name: Init databases
-          command: |
-            cd tests
-            go run ./init/init.go -testsuite all
-
-      - run:
           name: Install gotestsum
           command: go install gotest.tools/gotestsum@latest
+
+      - run:
+          name: Init databases (postgres, mysql, sqlite) and generate jet files
+          command: |
+            cd tests
+            go run ./init/init.go -testsuite postgres        
+            go run ./init/init.go -testsuite mysql        
+            go run ./init/init.go -testsuite sqlite        
 
       # to create test results report
       - run: mkdir -p $TEST_RESULTS
@@ -146,14 +148,14 @@ jobs:
           name: Running tests with statement caching enabled
           command: JET_TESTS_WITH_STMT_CACHE=true go test -tags postgres -v ./tests/...
 
-      # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run:
-          name: Jet generate mariadb and cockroachdb
+          name: Init databases (mariadb, cockroachdb) and generate jet files
           command: |
             cd tests
-            make jet-gen-mariadb
-            make jet-gen-cockroach
+            go run ./init/init.go -testsuite mariadb        
+            go run ./init/init.go -testsuite cockroach        
 
+      # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
       - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
       - run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/
 

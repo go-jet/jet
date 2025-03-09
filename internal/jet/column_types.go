@@ -11,7 +11,11 @@ type ColumnBool interface {
 
 type boolColumnImpl struct {
 	boolInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *boolColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
@@ -51,7 +55,11 @@ type ColumnFloat interface {
 
 type floatColumnImpl struct {
 	floatInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *floatColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
@@ -92,7 +100,11 @@ type ColumnInteger interface {
 type integerColumnImpl struct {
 	integerInterfaceImpl
 
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *integerColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
@@ -122,7 +134,7 @@ func IntegerColumn(name string) ColumnInteger {
 //------------------------------------------------------//
 
 // ColumnString is interface for SQL text, character, character varying
-// bytea, uuid columns and enums types.
+// uuid columns and enums types.
 type ColumnString interface {
 	StringExpression
 	Column
@@ -134,7 +146,11 @@ type ColumnString interface {
 type stringColumnImpl struct {
 	stringInterfaceImpl
 
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *stringColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
@@ -163,6 +179,51 @@ func StringColumn(name string) ColumnString {
 
 //------------------------------------------------------//
 
+// ColumnBlob is interface for binary data types (bytea, binary, blob, etc...)
+type ColumnBlob interface {
+	BlobExpression
+	Column
+
+	From(subQuery SelectTable) ColumnBlob
+	SET(blob BlobExpression) ColumnAssigment
+}
+
+type blobColumnImpl struct {
+	blobInterfaceImpl
+
+	*ColumnExpressionImpl
+}
+
+func (i *blobColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
+}
+
+func (i *blobColumnImpl) From(subQuery SelectTable) ColumnBlob {
+	newBlobColumn := BlobColumn(i.name)
+	newBlobColumn.setTableName(i.tableName)
+	newBlobColumn.setSubQuery(subQuery)
+
+	return newBlobColumn
+}
+
+func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: blobExp,
+	}
+}
+
+// BlobColumn creates named blob column.
+func BlobColumn(name string) ColumnBlob {
+	blobColumn := &blobColumnImpl{}
+	blobColumn.blobInterfaceImpl.parent = blobColumn
+	blobColumn.ColumnExpressionImpl = NewColumnImpl(name, "", blobColumn)
+
+	return blobColumn
+}
+
+//------------------------------------------------------//
+
 // ColumnTime is interface for SQL time column.
 type ColumnTime interface {
 	TimeExpression
@@ -174,7 +235,11 @@ type ColumnTime interface {
 
 type timeColumnImpl struct {
 	timeInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timeColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
@@ -213,7 +278,11 @@ type ColumnTimez interface {
 
 type timezColumnImpl struct {
 	timezInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timezColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
@@ -253,7 +322,11 @@ type ColumnTimestamp interface {
 
 type timestampColumnImpl struct {
 	timestampInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timestampColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
@@ -293,7 +366,11 @@ type ColumnTimestampz interface {
 
 type timestampzColumnImpl struct {
 	timestampzInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timestampzColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
@@ -333,7 +410,11 @@ type ColumnDate interface {
 
 type dateColumnImpl struct {
 	dateInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *dateColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
@@ -361,6 +442,51 @@ func DateColumn(name string) ColumnDate {
 
 //------------------------------------------------------//
 
+// ColumnInterval is interface of PostgreSQL interval columns.
+type ColumnInterval interface {
+	IntervalExpression
+	Column
+
+	From(subQuery SelectTable) ColumnInterval
+	SET(intervalExp IntervalExpression) ColumnAssigment
+}
+
+//------------------------------------------------------//
+
+type intervalColumnImpl struct {
+	*ColumnExpressionImpl
+	intervalInterfaceImpl
+}
+
+func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:     i,
+		expression: intervalExp,
+	}
+}
+
+func (i *intervalColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
+}
+
+func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
+	newIntervalColumn := IntervalColumn(i.name)
+	newIntervalColumn.setTableName(i.tableName)
+	newIntervalColumn.setSubQuery(subQuery)
+
+	return newIntervalColumn
+}
+
+// IntervalColumn creates named interval column.
+func IntervalColumn(name string) ColumnInterval {
+	intervalColumn := &intervalColumnImpl{}
+	intervalColumn.ColumnExpressionImpl = NewColumnImpl(name, "", intervalColumn)
+	intervalColumn.intervalInterfaceImpl.parent = intervalColumn
+	return intervalColumn
+}
+
+//------------------------------------------------------//
+
 // ColumnRange is interface for range columns which can be int range, string range
 // timestamp range or date range.
 type ColumnRange[T Expression] interface {
@@ -373,7 +499,11 @@ type ColumnRange[T Expression] interface {
 
 type rangeColumnImpl[T Expression] struct {
 	rangeInterfaceImpl[T]
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *rangeColumnImpl[T]) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *rangeColumnImpl[T]) From(subQuery SelectTable) ColumnRange[T] {

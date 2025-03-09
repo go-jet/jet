@@ -65,31 +65,31 @@ type setOperators interface {
 }
 
 type setOperatorsImpl struct {
-	parent setOperators
+	stmtRoot setOperators
 }
 
 func (s *setOperatorsImpl) UNION(rhs SelectStatement) setStatement {
-	return UNION(s.parent, rhs)
+	return UNION(s.stmtRoot, rhs)
 }
 
 func (s *setOperatorsImpl) UNION_ALL(rhs SelectStatement) setStatement {
-	return UNION_ALL(s.parent, rhs)
+	return UNION_ALL(s.stmtRoot, rhs)
 }
 
 func (s *setOperatorsImpl) INTERSECT(rhs SelectStatement) setStatement {
-	return INTERSECT(s.parent, rhs)
+	return INTERSECT(s.stmtRoot, rhs)
 }
 
 func (s *setOperatorsImpl) INTERSECT_ALL(rhs SelectStatement) setStatement {
-	return INTERSECT_ALL(s.parent, rhs)
+	return INTERSECT_ALL(s.stmtRoot, rhs)
 }
 
 func (s *setOperatorsImpl) EXCEPT(rhs SelectStatement) setStatement {
-	return EXCEPT(s.parent, rhs)
+	return EXCEPT(s.stmtRoot, rhs)
 }
 
 func (s *setOperatorsImpl) EXCEPT_ALL(rhs SelectStatement) setStatement {
-	return EXCEPT_ALL(s.parent, rhs)
+	return EXCEPT_ALL(s.stmtRoot, rhs)
 }
 
 type setStatementImpl struct {
@@ -110,7 +110,7 @@ func newSetStatementImpl(operator string, all bool, selects []jet.SerializerStat
 	newSetStatement.setOperator.Selects = selects
 	newSetStatement.setOperator.Limit.Count = -1
 
-	newSetStatement.setOperatorsImpl.parent = newSetStatement
+	newSetStatement.setOperatorsImpl.stmtRoot = newSetStatement
 
 	return newSetStatement
 }

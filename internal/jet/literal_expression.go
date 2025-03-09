@@ -412,17 +412,6 @@ func Raw(raw string, namedArgs ...map[string]interface{}) Expression {
 	return rawExp
 }
 
-// RawWithParent is a Raw constructor used for construction dialect specific expression
-func RawWithParent(raw string, parent ...Expression) Expression {
-	rawExp := &rawExpression{
-		Raw:    raw,
-		noWrap: true,
-	}
-	rawExp.ExpressionInterfaceImpl.Parent = OptionalOrDefaultExpression(rawExp, parent...)
-
-	return rawExp
-}
-
 // RawBool helper that for raw string boolean expressions
 func RawBool(raw string, namedArgs ...map[string]interface{}) BoolExpression {
 	return BoolExp(Raw(raw, namedArgs...))
@@ -466,6 +455,11 @@ func RawTimestampz(raw string, namedArgs ...map[string]interface{}) TimestampzEx
 // RawDate helper that for date expressions
 func RawDate(raw string, namedArgs ...map[string]interface{}) DateExpression {
 	return DateExp(Raw(raw, namedArgs...))
+}
+
+// RawBlob is raw query helper that for blob expressions
+func RawBlob(raw string, namedArgs ...map[string]interface{}) BlobExpression {
+	return BlobExp(Raw(raw, namedArgs...))
 }
 
 // RawRange helper that for range expressions

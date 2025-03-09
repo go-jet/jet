@@ -12,6 +12,8 @@ type BoolExpression = jet.BoolExpression
 // StringExpression interface
 type StringExpression = jet.StringExpression
 
+type ByteaExpression = jet.BlobExpression
+
 // NumericExpression interface
 type NumericExpression = jet.NumericExpression
 
@@ -38,6 +40,9 @@ type TimestampzExpression = jet.TimestampzExpression
 
 // RowExpression interface
 type RowExpression = jet.RowExpression
+
+// IntervalExpression interface
+type IntervalExpression = jet.IntervalExpression
 
 // DateRange Expression interface
 type DateRange = jet.Range[DateExpression]
@@ -82,6 +87,11 @@ var TimeExp = jet.TimeExp
 // Does not add sql cast to generated sql builder output.
 var StringExp = jet.StringExp
 
+// ByteaExp is blob expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as string expression.
+// Does not add sql cast to generated sql builder output.
+var ByteaExp = jet.BlobExp
+
 // TimezExp is time with time zone expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as time with time zone expression.
 // Does not add sql cast to generated sql builder output.
@@ -101,6 +111,11 @@ var TimestampExp = jet.TimestampExp
 // Allows go compiler to see any expression as timestamp with time zone expression.
 // Does not add sql cast to generated sql builder output.
 var TimestampzExp = jet.TimestampzExp
+
+// IntervalExp is interval expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as interval expression.
+// Does not add sql cast to generated sql builder output.
+var IntervalExp = jet.IntervalExp
 
 // RowExp serves as a wrapper for an arbitrary expression, treating it as a row expression.
 // This enables the Go compiler to interpret any expression as a row expression
@@ -134,15 +149,17 @@ type RawArgs = map[string]interface{}
 var (
 	Raw = jet.Raw
 
-	RawBool            = jet.RawBool
-	RawInt             = jet.RawInt
-	RawFloat           = jet.RawFloat
-	RawString          = jet.RawString
-	RawTime            = jet.RawTime
-	RawTimez           = jet.RawTimez
-	RawTimestamp       = jet.RawTimestamp
-	RawTimestampz      = jet.RawTimestampz
-	RawDate            = jet.RawDate
+	RawBool       = jet.RawBool
+	RawInt        = jet.RawInt
+	RawFloat      = jet.RawFloat
+	RawString     = jet.RawString
+	RawTime       = jet.RawTime
+	RawTimez      = jet.RawTimez
+	RawTimestamp  = jet.RawTimestamp
+	RawTimestampz = jet.RawTimestampz
+	RawDate       = jet.RawDate
+	RawBytea      = jet.RawBlob
+
 	RawNumRange        = jet.RawRange[jet.NumericExpression]
 	RawInt4Range       = jet.RawRange[jet.Int4Expression]
 	RawInt8Range       = jet.RawRange[jet.Int8Expression]

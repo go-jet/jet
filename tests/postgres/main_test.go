@@ -20,6 +20,8 @@ import (
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
+var ctx = context.Background()
+
 var db *stmtcache.DB
 var testRoot string
 
@@ -31,6 +33,7 @@ const CockroachDB = "COCKROACH_DB"
 func init() {
 	source = os.Getenv("PG_SOURCE")
 	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
+	testRoot = repo.GetTestsDirPath()
 }
 
 func sourceIsCockroachDB() bool {
@@ -45,8 +48,6 @@ func skipForCockroachDB(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
-
-	setTestRoot()
 
 	for _, driverName := range []string{"postgres", "pgx"} {
 
@@ -94,10 +95,6 @@ func getConnectionString() string {
 	return dbconfig.PostgresConnectString
 }
 
-func setTestRoot() {
-	testRoot = repo.GetTestsDirPath()
-}
-
 var loggedSQL string
 var loggedSQLArgs []interface{}
 var loggedDebugSQL string
@@ -119,14 +116,22 @@ func init() {
 	})
 }
 
-func requireLogged(t *testing.T, statement postgres.Statement) {
+func requireLogged(t require.TestingT, statement postgres.Statement) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	query, args := statement.Sql()
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
 
-func requireQueryLogged(t *testing.T, statement postgres.Statement, rowsProcessed int64) {
+func requireQueryLogged(t require.TestingT, statement postgres.Statement, rowsProcessed int64) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	query, args := statement.Sql()
 	queryLogged, argsLogged := queryInfo.Statement.Sql()
 

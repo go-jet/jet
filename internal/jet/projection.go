@@ -3,6 +3,8 @@ package jet
 // Projection is interface for all projection types. Types that can be part of, for instance SELECT clause.
 type Projection interface {
 	serializeForProjection(statement StatementType, out *SQLBuilder)
+	serializeForJsonObjEntry(statement StatementType, out *SQLBuilder)
+	serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder)
 	fromImpl(subQuery SelectTable) Projection
 }
 
@@ -26,6 +28,10 @@ func (pl ProjectionList) fromImpl(subQuery SelectTable) Projection {
 
 func (pl ProjectionList) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	SerializeProjectionList(statement, pl, out)
+}
+
+func (pl ProjectionList) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
+	SerializeProjectionListJsonObj(statement, pl, out)
 }
 
 // As will create new projection list where each column is wrapped with a new table alias.
@@ -78,4 +84,19 @@ func (pl ProjectionList) Except(toExclude ...Column) ProjectionList {
 	}
 
 	return ret
+}
+
+func (pl ProjectionList) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	out.WriteRowToJsonProjections(statement, pl)
+}
+
+// JsonObjProjectionList redefines []Projection so projections can be serialized as json object key/values
+type JsonObjProjectionList []Projection
+
+func (j JsonObjProjectionList) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	out.IncreaseIdent()
+	out.NewLine()
+	SerializeProjectionListJsonObj(statement, j, out)
+	out.DecreaseIdent()
+	out.NewLine()
 }

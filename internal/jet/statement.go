@@ -7,25 +7,38 @@ import (
 	"time"
 )
 
-// Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
+// Statement is a common interface for all SQL statements, including SELECT, SELECT_JSON_ARR, SELECT_JSON_OBJ, INSERT,
+// UPDATE, DELETE, and LOCK.
 type Statement interface {
-	// Sql returns parametrized sql query with list of arguments.
+	// Sql returns a parameterized SQL query along with its list of arguments.
 	Sql() (query string, args []interface{})
-	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument string representation.
-	// Do not use it in production. Use it only for debug purposes.
+
+	// DebugSql returns a debug-friendly SQL query where all parameterized placeholders
+	// are replaced with their respective argument string representations.
+	//
+	// Warning: This method should only be used for debugging purposes.
+	//   Do not use it in production, as it may lead to security risks such as SQL injection.
 	DebugSql() (query string)
-	// Query executes statement over database connection/transaction db and stores row results in destination.
-	// Destination can be either pointer to struct or pointer to a slice.
-	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
+
+	// Query delegates call to QueryContext using context.Background() as parameter.
 	Query(db qrm.Queryable, destination interface{}) error
-	// QueryContext executes statement with a context over database connection/transaction db and stores row result in destination.
-	// Destination can be either pointer to struct or pointer to a slice.
-	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
+
+	// QueryContext executes the statement with the provided context over a database connection or transaction (`db`),
+	// and stores the retrieved row results in the given destination.
+	//
+	// For statements of type SELECT, INSERT, UPDATE, or DELETE, the destination must be a pointer to either a struct or a slice.
+	// For SELECT_JSON_ARR statements, the destination must be a pointer to a slice of structs or a pointer to []map[string]any.
+	// For SELECT_JSON_OBJ statements, the destination must be a pointer to a struct or a pointer to map[string]any.
+	//
+	// If the destination is a pointer to a struct and the query returns no rows, QueryContext returns qrm.ErrNoRows.
 	QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error
-	// Exec executes statement over db connection/transaction without returning any rows.
+
+	// Exec delegates call to ExecContext using context.Background() as parameter.
 	Exec(db qrm.Executable) (sql.Result, error)
+
 	// ExecContext executes statement with context over db connection/transaction without returning any rows.
 	ExecContext(ctx context.Context, db qrm.Executable) (sql.Result, error)
+
 	// Rows executes statements over db connection/transaction and returns rows
 	Rows(ctx context.Context, db qrm.Queryable) (*Rows, error)
 }
@@ -60,14 +73,14 @@ type SerializerHasProjections interface {
 	HasProjections
 }
 
-// serializerStatementInterfaceImpl struct
-type serializerStatementInterfaceImpl struct {
+// statementInterfaceImpl struct
+type statementInterfaceImpl struct {
 	dialect       Dialect
 	statementType StatementType
 	parent        SerializerStatement
 }
 
-func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface{}) {
+func (s *statementInterfaceImpl) Sql() (query string, args []interface{}) {
 
 	queryData := &SQLBuilder{Dialect: s.dialect}
 
@@ -77,7 +90,7 @@ func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface
 	return
 }
 
-func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
+func (s *statementInterfaceImpl) DebugSql() (query string) {
 	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
 
 	s.parent.serialize(s.statementType, sqlBuilder, NoWrap)
@@ -86,11 +99,27 @@ func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 	return
 }
 
-func (s *serializerStatementInterfaceImpl) Query(db qrm.Queryable, destination interface{}) error {
+func (s *statementInterfaceImpl) Query(db qrm.Queryable, destination interface{}) error {
 	return s.QueryContext(context.Background(), db, destination)
 }
 
-func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error {
+func (s *statementInterfaceImpl) QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error {
+	return s.query(ctx, func(query string, args []interface{}) (int64, error) {
+		switch s.statementType {
+		case SelectJsonObjStatementType:
+			return qrm.QueryJsonObj(ctx, db, query, args, destination)
+		case SelectJsonArrStatementType:
+			return qrm.QueryJsonArr(ctx, db, query, args, destination)
+		default:
+			return qrm.Query(ctx, db, query, args, destination)
+		}
+	})
+}
+
+func (s *statementInterfaceImpl) query(
+	ctx context.Context,
+	queryFunc func(query string, args []interface{}) (int64, error),
+) error {
 	query, args := s.Sql()
 
 	callLogger(ctx, s)
@@ -99,7 +128,7 @@ func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db 
 	var err error
 
 	duration := duration(func() {
-		rowsProcessed, err = qrm.Query(ctx, db, query, args, destination)
+		rowsProcessed, err = queryFunc(query, args)
 	})
 
 	callQueryLoggerFunc(ctx, QueryInfo{
@@ -112,11 +141,11 @@ func (s *serializerStatementInterfaceImpl) QueryContext(ctx context.Context, db 
 	return err
 }
 
-func (s *serializerStatementInterfaceImpl) Exec(db qrm.Executable) (res sql.Result, err error) {
+func (s *statementInterfaceImpl) Exec(db qrm.Executable) (res sql.Result, err error) {
 	return s.ExecContext(context.Background(), db)
 }
 
-func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db qrm.Executable) (res sql.Result, err error) {
+func (s *statementInterfaceImpl) ExecContext(ctx context.Context, db qrm.Executable) (res sql.Result, err error) {
 	query, args := s.Sql()
 
 	callLogger(ctx, s)
@@ -141,7 +170,7 @@ func (s *serializerStatementInterfaceImpl) ExecContext(ctx context.Context, db q
 	return res, err
 }
 
-func (s *serializerStatementInterfaceImpl) Rows(ctx context.Context, db qrm.Queryable) (*Rows, error) {
+func (s *statementInterfaceImpl) Rows(ctx context.Context, db qrm.Queryable) (*Rows, error) {
 	query, args := s.Sql()
 
 	callLogger(ctx, s)
@@ -191,11 +220,15 @@ type ExpressionStatement interface {
 }
 
 // NewExpressionStatementImpl creates new expression statement
-func NewExpressionStatementImpl(Dialect Dialect, statementType StatementType, parent ExpressionStatement, clauses ...Clause) ExpressionStatement {
+func NewExpressionStatementImpl(Dialect Dialect,
+	statementType StatementType,
+	parent ExpressionStatement,
+	clauses ...Clause) ExpressionStatement {
+
 	return &expressionStatementImpl{
 		ExpressionInterfaceImpl{Parent: parent},
 		statementImpl{
-			serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
+			statementInterfaceImpl: statementInterfaceImpl{
 				parent:        parent,
 				dialect:       Dialect,
 				statementType: statementType,
@@ -214,10 +247,14 @@ func (s *expressionStatementImpl) serializeForProjection(statement StatementType
 	s.serialize(statement, out)
 }
 
+func (e *expressionStatementImpl) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	panic("jet: SELECT JSON statements need to be aliased when used as a projection.")
+}
+
 // NewStatementImpl creates new statementImpl
 func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) SerializerStatement {
 	return &statementImpl{
-		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
+		statementInterfaceImpl: statementInterfaceImpl{
 			parent:        parent,
 			dialect:       Dialect,
 			statementType: statementType,
@@ -227,7 +264,7 @@ func NewStatementImpl(Dialect Dialect, statementType StatementType, parent Seria
 }
 
 type statementImpl struct {
-	serializerStatementInterfaceImpl
+	statementInterfaceImpl
 
 	Clauses []Clause
 }

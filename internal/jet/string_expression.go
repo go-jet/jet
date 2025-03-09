@@ -3,6 +3,7 @@ package jet
 // StringExpression interface
 type StringExpression interface {
 	Expression
+	isStringOrBlob()
 
 	EQ(rhs StringExpression) BoolExpression
 	NOT_EQ(rhs StringExpression) BoolExpression
@@ -28,6 +29,8 @@ type StringExpression interface {
 type stringInterfaceImpl struct {
 	parent StringExpression
 }
+
+func (s *stringInterfaceImpl) isStringOrBlob() {}
 
 func (s *stringInterfaceImpl) EQ(rhs StringExpression) BoolExpression {
 	return Eq(s.parent, rhs)
@@ -102,9 +105,10 @@ type stringExpressionWrapper struct {
 }
 
 func newStringExpressionWrap(expression Expression) StringExpression {
-	stringExpressionWrap := stringExpressionWrapper{Expression: expression}
-	stringExpressionWrap.stringInterfaceImpl.parent = &stringExpressionWrap
-	return &stringExpressionWrap
+	stringExpressionWrap := &stringExpressionWrapper{Expression: expression}
+	stringExpressionWrap.stringInterfaceImpl.parent = stringExpressionWrap
+	expression.setParent(stringExpressionWrap)
+	return stringExpressionWrap
 }
 
 // StringExp is string expression wrapper around arbitrary expression.

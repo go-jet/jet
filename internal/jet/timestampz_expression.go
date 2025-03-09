@@ -80,9 +80,10 @@ type timestampzExpressionWrapper struct {
 }
 
 func newTimestampzExpressionWrap(expression Expression) TimestampzExpression {
-	timestampzExpressionWrap := timestampzExpressionWrapper{Expression: expression}
-	timestampzExpressionWrap.timestampzInterfaceImpl.parent = &timestampzExpressionWrap
-	return &timestampzExpressionWrap
+	timestampzExpressionWrap := &timestampzExpressionWrapper{Expression: expression}
+	timestampzExpressionWrap.timestampzInterfaceImpl.parent = timestampzExpressionWrap
+	expression.setParent(timestampzExpressionWrap)
+	return timestampzExpressionWrap
 }
 
 // TimestampzExp is timestamp with time zone expression wrapper around arbitrary expression.

@@ -62,12 +62,12 @@ type SelectStatement interface {
 
 // SELECT creates new SelectStatement with list of projections
 func SELECT(projection Projection, projections ...Projection) SelectStatement {
-	return newSelectStatement(nil, append([]Projection{projection}, projections...))
+	return newSelectStatement(jet.SelectStatementType, nil, append([]Projection{projection}, projections...))
 }
 
-func newSelectStatement(table ReadableTable, projections []Projection) SelectStatement {
+func newSelectStatement(stmtType jet.StatementType, table ReadableTable, projections []Projection) *selectStatementImpl {
 	newSelect := &selectStatementImpl{}
-	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect,
+	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, stmtType, newSelect,
 		&newSelect.Select,
 		&newSelect.From,
 		&newSelect.Where,
