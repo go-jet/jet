@@ -61,6 +61,7 @@ func (s *SQLBuilder) WriteProjections(statement StatementType, projections []Pro
 	s.DecreaseIdent()
 }
 
+// WriteRowToJsonProjections serializes slice of projections intended for row_to_json json aggregation
 func (s *SQLBuilder) WriteRowToJsonProjections(statement StatementType, projections []Projection) {
 	for i, projection := range projections {
 		if i > 0 {
@@ -109,6 +110,7 @@ func (s *SQLBuilder) WriteString(str string) {
 	s.write([]byte(str))
 }
 
+// WriteJsonObjKey serializes json object key
 func (s *SQLBuilder) WriteJsonObjKey(key string) {
 	s.WriteString(fmt.Sprintf(`'%s', `, key))
 }

@@ -1,6 +1,6 @@
 module github.com/go-jet/jet/v2
 
-go 1.21
+go 1.22
 
 // used by jet generator
 require (

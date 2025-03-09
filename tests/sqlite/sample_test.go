@@ -2,8 +2,8 @@ package sqlite
 
 import (
 	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/stretchr/testify/require"
 	"testing"
 

@@ -103,25 +103,25 @@ func TestNullUInt64(t *testing.T) {
 	//Validate negative use cases
 	err := nullUInt64.Scan(int64(-5))
 	assert.NotNil(t, err)
-	assert.Error(t, err, castOverFlowError)
+	assert.Error(t, err, errCastOverFlow)
 
 	//Validate negative use cases
 	err = nullUInt64.Scan(-5)
 	assert.NotNil(t, err)
-	assert.Error(t, err, castOverFlowError)
+	assert.Error(t, err, errCastOverFlow)
 
 	//Validate negative use cases
 	err = nullUInt64.Scan(int32(-5))
 	assert.NotNil(t, err)
-	assert.Error(t, err, castOverFlowError)
+	assert.Error(t, err, errCastOverFlow)
 
 	//Validate negative use cases
 	err = nullUInt64.Scan(int16(-5))
 	assert.NotNil(t, err)
-	assert.Error(t, err, castOverFlowError)
+	assert.Error(t, err, errCastOverFlow)
 
 	//Validate negative use cases
 	err = nullUInt64.Scan(int8(-5))
 	assert.NotNil(t, err)
-	assert.Error(t, err, castOverFlowError)
+	assert.Error(t, err, errCastOverFlow)
 }

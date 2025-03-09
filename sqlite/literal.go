@@ -50,6 +50,7 @@ var Decimal = jet.Decimal
 // String creates new string literal expression
 var String = jet.String
 
+// Blob creates new blob literal expression
 func Blob(data []byte) BlobExpression {
 	return BlobExp(jet.Literal(data))
 }

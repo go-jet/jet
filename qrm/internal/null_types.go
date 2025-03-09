@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	castOverFlowError = fmt.Errorf("cannot cast a negative value to an unsigned value, buffer overflow error")
+	errCastOverFlow = fmt.Errorf("cannot cast a negative value to an unsigned value, buffer overflow error")
 )
 
 // NullBool struct
@@ -92,31 +92,31 @@ func (n *NullUInt64) Scan(value interface{}) error {
 		return nil
 	case int64:
 		if v < 0 {
-			return castOverFlowError
+			return errCastOverFlow
 		}
 		n.UInt64, n.Valid = uint64(v), true
 		return nil
 	case int32:
 		if v < 0 {
-			return castOverFlowError
+			return errCastOverFlow
 		}
 		n.UInt64, n.Valid = uint64(v), true
 		return nil
 	case int16:
 		if v < 0 {
-			return castOverFlowError
+			return errCastOverFlow
 		}
 		n.UInt64, n.Valid = uint64(v), true
 		return nil
 	case int8:
 		if v < 0 {
-			return castOverFlowError
+			return errCastOverFlow
 		}
 		n.UInt64, n.Valid = uint64(v), true
 		return nil
 	case int:
 		if v < 0 {
-			return castOverFlowError
+			return errCastOverFlow
 		}
 		n.UInt64, n.Valid = uint64(v), true
 		return nil
