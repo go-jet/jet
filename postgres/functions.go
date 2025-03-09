@@ -267,7 +267,7 @@ var TO_ASCII = jet.TO_ASCII
 // TO_HEX converts number to its equivalent hexadecimal representation
 var TO_HEX = jet.TO_HEX
 
-//----------Data Type Formatting Functions ----------------------//
+//---------- Range Functions ----------------------//
 
 // LOWER_BOUND returns range expressions lower bound
 func LOWER_BOUND[T Expression](expression jet.Range[T]) T {
@@ -279,7 +279,61 @@ func UPPER_BOUND[T Expression](expression jet.Range[T]) T {
 	return jet.UPPER_BOUND[T](expression)
 }
 
-//----------Data Type Formatting Functions ----------------------//
+// ---------- Array Functions ----------------------//
+
+// ANY should be used in combination with a boolean operator. The result of ANY is "true" if any true result is obtained
+func ANY[T Expression](expression jet.Array[T]) T {
+	return jet.ANY[T](expression)
+}
+
+// ALL should be used in combination with a boolean operator. TThe result of ALL is “true” if all comparisons yield true
+func ALL[T Expression](expression jet.Array[T]) T {
+	return jet.ALL[T](expression)
+}
+
+func ARRAY_APPEND[E Expression](arr jet.Array[E], el E) jet.Array[E] {
+	return arrayTypeCaster[E](arr, Func("ARRAY_APPEND", arr, el))
+}
+
+func ARRAY_CAT[E Expression](arr1, arr2 jet.Array[E]) jet.Array[E] {
+	return arrayTypeCaster[E](arr1, Func("ARRAY_CAT", arr1, arr2))
+}
+
+func ARRAY_PREPEND[E Expression](el E, arr jet.Array[E]) jet.Array[E] {
+	return jet.ArrayExp[E](Func("ARRAY_PREPEND", el, arr))
+}
+
+func ARRAY_LENGTH[E Expression](arr jet.Array[E], el IntegerExpression) IntegerExpression {
+	return IntExp(Func("ARRAY_LENGTH", arr, el))
+}
+
+func ARRAY_REMOVE[E Expression](arr jet.Array[E], el Expression) IntegerExpression {
+	return IntExp(Func("ARRAY_REMOVE", arr, el))
+}
+
+func ARRAY_TO_STRING(arr Expression, delim StringExpression) StringExpression {
+	return StringExp(Func("ARRAY_TO_STRING", arr, delim))
+}
+
+func arrayTypeCaster[E Expression](arrayExp Expression, exp Expression) jet.Array[E] {
+	var i Expression
+	switch arrayExp.(type) {
+	case jet.Array[StringExpression]:
+		i = jet.ArrayExp[StringExpression](exp)
+	case jet.Array[IntegerExpression]:
+		i = jet.ArrayExp[IntegerExpression](exp)
+	case jet.Array[BoolExpression]:
+		i = jet.ArrayExp[BoolExpression](exp)
+	}
+	return i.(jet.Array[E])
+}
+
+// ARRAY constructor
+func ARRAY[T Expression](elems ...T) jet.Array[T] {
+	return jet.ARRAY[T](elems...)
+}
+
+//---------- Data Type Formatting Functions ----------------------//
 
 // TO_CHAR converts expression to string with format
 var TO_CHAR = jet.TO_CHAR

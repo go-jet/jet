@@ -6,6 +6,7 @@ import (
 	"math"
 
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/lib/pq"
 	"testing"
 	"time"
 
@@ -1474,11 +1475,11 @@ var allTypesRow0 = model.AllTypes{
 	JSON:                 `{"a": 1, "b": 3}`,
 	JsonbPtr:             ptr.Of(`{"a": 1, "b": 3}`),
 	Jsonb:                `{"a": 1, "b": 3}`,
-	IntegerArrayPtr:      ptr.Of("{1,2,3}"),
-	IntegerArray:         "{1,2,3}",
-	TextArrayPtr:         ptr.Of("{breakfast,consulting}"),
-	TextArray:            "{breakfast,consulting}",
-	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
+	IntegerArrayPtr:      &pq.Int32Array{1, 2, 3},
+	IntegerArray:         pq.Int32Array{1, 2, 3},
+	TextArrayPtr:         &pq.StringArray{"breakfast", "consulting"},
+	TextArray:            pq.StringArray{"breakfast", "consulting"},
+	JsonbArray:           pq.StringArray{`{"a": 1, "b": 2}`, `{"a": 3, "b": 4}`},
 	TextMultiDimArrayPtr: ptr.Of("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 	MoodPtr:              &moodSad,
@@ -1543,10 +1544,10 @@ var allTypesRow1 = model.AllTypes{
 	JsonbPtr:             nil,
 	Jsonb:                `{"a": 1, "b": 3}`,
 	IntegerArrayPtr:      nil,
-	IntegerArray:         "{1,2,3}",
+	IntegerArray:         pq.Int32Array{1, 2, 3},
 	TextArrayPtr:         nil,
-	TextArray:            "{breakfast,consulting}",
-	JsonbArray:           `{"{\"a\": 1, \"b\": 2}","{\"a\": 3, \"b\": 4}"}`,
+	TextArray:            pq.StringArray{"breakfast", "consulting"},
+	JsonbArray:           pq.StringArray{`{"a": 1, "b": 2}`, `{"a": 3, "b": 4}`},
 	TextMultiDimArrayPtr: nil,
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 	MoodPtr:              nil,
