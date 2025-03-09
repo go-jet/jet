@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
+	"math"
 
 	"github.com/go-jet/jet/v2/qrm"
 	"testing"
