@@ -130,7 +130,7 @@ func testDVDsJoinEverythingJSON(t require.TestingT) {
 
 	var dest allInfo
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.NoError(t, err)
 
 	//testutils.SaveJSONFile(dest, "./testdata/results/mysql/dvds_join_everything2.json")

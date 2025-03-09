@@ -20,31 +20,20 @@ type Statement interface {
 	//   Do not use it in production, as it may lead to security risks such as SQL injection.
 	DebugSql() (query string)
 
-	// Query executes statement on the provided database connection or transaction (db),
-	// storing the retrieved row results in the given destination.
-	// Destination must be a pointer to either a struct or a slice.
-	// If the destination is a pointer to a struct and the query returns no rows, Query returns qrm.ErrNoRows.
+	// Query delegates call to QueryContext using context.Background() as parameter.
 	Query(db qrm.Queryable, destination interface{}) error
 
-	// QueryContext executes statement with a context over database connection/transaction db,
-	// storing the retrieved row results in the given destination.
-	// Destination must be a pointer to either a struct or a slice.
-	// If the destination is a pointer to a struct and the query returns no rows, Query returns qrm.ErrNoRows.
+	// QueryContext executes the statement with the provided context over a database connection or transaction (`db`),
+	// and stores the retrieved row results in the given destination.
+	//
+	// For statements of type SELECT, INSERT, UPDATE, or DELETE, the destination must be a pointer to either a struct or a slice.
+	// For SELECT_JSON_ARR statements, the destination must be a pointer to a slice of structs or a pointer to []map[string]any.
+	// For SELECT_JSON_OBJ statements, the destination must be a pointer to a struct or a pointer to map[string]any.
+	//
+	// If the destination is a pointer to a struct and the query returns no rows, QueryContext returns qrm.ErrNoRows.
 	QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error
 
-	// QueryJSON executes the given statement within the provided context on the database connection/transaction (db)
-	// and unmarshals the JSON result into the destination.
-	// If the statement is created as SELECT_JSON_ARR, the destination must be a pointer to a slice of structs or a
-	// pointer to []map[string]any.
-	// If the statement is created as SELECT_JSON_OBJ, the destination must be a pointer to a struct or a pointer to
-	// map[string]any.
-	// QueryJSON can also be used by other SQL statements that generate JSON on the server. The only requirement is
-	// that the query must return exactly one row with a single column; otherwise, an error is returned.
-	// If the destination is a pointer to a struct (or []map[string]any) and the query result set is empty, the method
-	// returns qrm.ErrNoRows.
-	QueryJSON(ctx context.Context, db qrm.Queryable, destination interface{}) error
-
-	// Exec executes statement over db connection/transaction without returning any rows.
+	// Exec delegates call to ExecContext using context.Background() as parameter.
 	Exec(db qrm.Executable) (sql.Result, error)
 
 	// ExecContext executes statement with context over db connection/transaction without returning any rows.
@@ -116,16 +105,14 @@ func (s *statementInterfaceImpl) Query(db qrm.Queryable, destination interface{}
 
 func (s *statementInterfaceImpl) QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error {
 	return s.query(ctx, func(query string, args []interface{}) (int64, error) {
-		return qrm.Query(ctx, db, query, args, destination)
-	})
-}
-
-func (s *statementInterfaceImpl) QueryJSON(ctx context.Context, db qrm.Queryable, destination interface{}) error {
-	return s.query(ctx, func(query string, args []interface{}) (int64, error) {
-		if s.statementType == SelectJsonObjStatementType {
+		switch s.statementType {
+		case SelectJsonObjStatementType:
 			return qrm.QueryJsonObj(ctx, db, query, args, destination)
+		case SelectJsonArrStatementType:
+			return qrm.QueryJsonArr(ctx, db, query, args, destination)
+		default:
+			return qrm.Query(ctx, db, query, args, destination)
 		}
-		return qrm.QueryJsonArr(ctx, db, query, args, destination)
 	})
 }
 

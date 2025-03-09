@@ -132,7 +132,7 @@ FROM (
 
 	var dest []model.AllTypes
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.NoError(t, err)
 
 	// fix inconsistencies between postgres and cockroachdb.
@@ -864,7 +864,7 @@ FROM (
 
 		var destSelectJson testDest
 
-		err := stmtJson.QueryJSON(ctx, db, &destSelectJson)
+		err := stmtJson.QueryContext(ctx, db, &destSelectJson)
 		require.NoError(t, err)
 		testutils.PrintJson(destSelectJson)
 
@@ -1427,7 +1427,7 @@ SELECT $1::time without time zone AS "time",
 			Date time.Time
 		}
 
-		err := stmtJson.QueryJSON(ctx, db, &jsonDest)
+		err := stmtJson.QueryContext(ctx, db, &jsonDest)
 		require.NoError(t, err)
 	})
 }
@@ -1823,7 +1823,7 @@ FROM (
 
 		var destJson []model.AllTypes
 
-		err := stmtJson.QueryJSON(ctx, db, &destJson)
+		err := stmtJson.QueryContext(ctx, db, &destJson)
 		require.NoError(t, err)
 
 		t.Run("using AllColumns()", func(t *testing.T) {

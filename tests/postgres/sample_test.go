@@ -300,7 +300,7 @@ func TestUUIDComplex(t *testing.T) {
 			}
 		}
 
-		err := jsonQuery.QueryJSON(ctx, db, &dest)
+		err := jsonQuery.QueryContext(ctx, db, &dest)
 		require.NoError(t, err)
 		testutils.AssertJSON(t, dest, expectedSliceOfStructsLeftJoin)
 	})

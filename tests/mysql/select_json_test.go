@@ -35,7 +35,7 @@ WHERE actor.actor_id = ?;
 
 	var dest model.Actor
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.Query(db, &dest)
 	require.Nil(t, err)
 
 	testutils.AssertDeepEqual(t, dest, actor2)
@@ -51,7 +51,7 @@ func TestSelectJsonObj_NestedObj(t *testing.T) {
 			FROM(FilmActor.INNER_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID))).
 			WHERE(Actor.ActorID.EQ(FilmActor.ActorID)).
 			ORDER_BY(Film.Length.DESC()).
-			LIMIT(1).AS("LongestFilm"),
+			LIMIT(1).OFFSET(3).AS("LongestFilm"),
 	).FROM(
 		Actor,
 	).WHERE(
@@ -85,6 +85,7 @@ SELECT JSON_OBJECT(
                WHERE actor.actor_id = film_actor.actor_id
                ORDER BY film.length DESC
                LIMIT ?
+               OFFSET ?
           )
      ) AS "json"
 FROM dvds.actor
@@ -97,7 +98,7 @@ WHERE actor.actor_id = ?;
 		LongestFilm model.Film
 	}
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.Nil(t, err)
 	testutils.AssertJSON(t, dest, `
 {
@@ -106,18 +107,18 @@ WHERE actor.actor_id = ?;
 	"LastName": "WAHLBERG",
 	"LastUpdate": "2006-02-15T04:34:33Z",
 	"LongestFilm": {
-		"FilmID": 958,
-		"Title": "WARDROBE PHANTOM",
-		"Description": "A Action-Packed Display of a Mad Cow And a Astronaut who must Kill a Car in Ancient India",
+		"FilmID": 754,
+		"Title": "RUSHMORE MERMAID",
+		"Description": "A Boring Story of a Woman And a Moose who must Reach a Husband in A Shark Tank",
 		"ReleaseYear": 2006,
 		"LanguageID": 1,
 		"OriginalLanguageID": null,
 		"RentalDuration": 6,
 		"RentalRate": 2.99,
-		"Length": 178,
-		"ReplacementCost": 19.99,
-		"Rating": "G",
-		"SpecialFeatures": "Trailers,Commentaries",
+		"Length": 150,
+		"ReplacementCost": 17.99,
+		"Rating": "PG-13",
+		"SpecialFeatures": "Trailers,Commentaries,Deleted Scenes",
 		"LastUpdate": "2006-02-15T05:03:42Z"
 	}
 }
@@ -143,7 +144,7 @@ ORDER BY actor.actor_id;
 
 	var dest []model.Actor
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.Query(db, &dest)
 	require.Nil(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/all_actors.json")
@@ -215,7 +216,7 @@ ORDER BY actor.actor_id;
 		Films []model.Film
 	}
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	fmt.Println(err)
 	require.Nil(t, err)
 	testutils.AssertJSON(t, dest, `
@@ -404,7 +405,7 @@ FROM (
 		}
 	}
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.Nil(t, err)
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/customer_payment_sum.json")
@@ -420,7 +421,7 @@ func TestSelectJsonObject_EmptyResult(t *testing.T) {
 
 		var dest model.Actor
 
-		err := stmt.QueryJSON(ctx, db, &dest)
+		err := stmt.QueryContext(ctx, db, &dest)
 		require.ErrorIs(t, err, qrm.ErrNoRows)
 	})
 
@@ -431,7 +432,7 @@ func TestSelectJsonObject_EmptyResult(t *testing.T) {
 
 		var dest []model.Actor
 
-		err := stmt.QueryJSON(ctx, db, &dest)
+		err := stmt.QueryContext(ctx, db, &dest)
 		require.NoError(t, err)
 		require.Empty(t, dest)
 	})

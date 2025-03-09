@@ -104,7 +104,7 @@ func queryJson(ctx context.Context, db Queryable, query string, args []interface
 	err = json.Unmarshal(jsonData, &destPtr)
 
 	if err != nil {
-		return 1, err
+		return 1, fmt.Errorf("jet: invalid json, %w", err)
 	}
 
 	if rows.Next() {
@@ -407,7 +407,7 @@ func mapRowToStruct(
 				err := json.Unmarshal(value, fieldInterface)
 
 				if err != nil {
-					return updated, qrmAssignError(scannedValue, field, err)
+					return updated, qrmAssignError(scannedValue, field, fmt.Errorf("invalid json, %w", err))
 				}
 			default: // simple type
 				err := assign(scannedValue, fieldValue)

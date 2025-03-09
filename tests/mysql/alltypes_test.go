@@ -121,7 +121,7 @@ FROM test_sample.all_types;
 
 	var dest []model.AllTypes
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.NoError(t, err)
 
 	// fix float rounding lost before comparison
@@ -1329,7 +1329,7 @@ FROM (
 
 		var destJson []model.AllTypes
 
-		err := stmtJson.QueryJSON(ctx, db, &destJson)
+		err := stmtJson.QueryContext(ctx, db, &destJson)
 		require.NoError(t, err)
 
 		t.Run("using AllColumns()", func(t *testing.T) {

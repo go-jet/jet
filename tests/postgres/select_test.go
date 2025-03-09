@@ -196,7 +196,7 @@ ORDER BY customer.customer_id ASC;
 
 		var dest []model.Customer
 
-		err := stmt.QueryJSON(ctx, db, &dest)
+		err := stmt.QueryContext(ctx, db, &dest)
 		require.NoError(t, err)
 
 		testutils.AssertDeepEqual(t, customers, dest)

@@ -272,16 +272,6 @@ func AssertQueryPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest inter
 	_ = stmt.Query(db, dest)
 }
 
-// AssertQueryJsonPanicErr check if statement QueryJSON execution panics with error errString
-func AssertQueryJsonPanicErr(t *testing.T, stmt jet.Statement, db qrm.DB, dest interface{}, errString string) {
-	defer func() {
-		r := recover()
-		require.Equal(t, r, errString)
-	}()
-
-	_ = stmt.QueryJSON(context.Background(), db, dest)
-}
-
 // AssertFileContent check if file content at filePath contains expectedContent text.
 func AssertFileContent(t *testing.T, filePath string, expectedContent string) {
 	enumFileData, err := os.ReadFile(filePath) // #nosec G304

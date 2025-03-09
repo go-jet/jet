@@ -290,7 +290,7 @@ func testJoinEverythingJSON(t require.TestingT) {
 
 	var dest AllArtistDetails
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.NoError(t, err)
 
 	require.Equal(t, len(dest), 275)

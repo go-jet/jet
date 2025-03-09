@@ -7,6 +7,7 @@ import (
 
 func TestSnakeToCamel(t *testing.T) {
 	require.Equal(t, SnakeToCamel(""), "")
+	require.Equal(t, SnakeToCamel("_", false), "")
 	require.Equal(t, SnakeToCamel("potato_"), "Potato")
 	require.Equal(t, SnakeToCamel("potato_", false), "potato")
 	require.Equal(t, SnakeToCamel("Potato_", false), "potato")

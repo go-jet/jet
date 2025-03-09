@@ -182,7 +182,7 @@ func testNorthwindJoinEverythingJson(t require.TestingT) {
 
 	var dest Dest
 
-	err := stmt.QueryJSON(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 	require.NoError(t, err)
 
 	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/northwind-all2.json")
