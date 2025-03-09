@@ -50,55 +50,55 @@ type WritableTable interface {
 }
 
 type readableTableInterfaceImpl struct {
-	parent ReadableTable
+	root ReadableTable
 }
 
 // Generates a select query on the current tableName.
 func (r readableTableInterfaceImpl) SELECT(projection1 Projection, projections ...Projection) SelectStatement {
-	return newSelectStatement(jet.SelectStatementType, r.parent, append([]Projection{projection1}, projections...))
+	return newSelectStatement(jet.SelectStatementType, r.root, append([]Projection{projection1}, projections...))
 }
 
 // Creates a inner join tableName Expression using onCondition.
 func (r readableTableInterfaceImpl) INNER_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, jet.InnerJoin, onCondition)
+	return newJoinTable(r.root, table, jet.InnerJoin, onCondition)
 }
 
 // Creates a left join tableName Expression using onCondition.
 func (r readableTableInterfaceImpl) LEFT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, jet.LeftJoin, onCondition)
+	return newJoinTable(r.root, table, jet.LeftJoin, onCondition)
 }
 
 // Creates a right join tableName Expression using onCondition.
 func (r readableTableInterfaceImpl) RIGHT_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, jet.RightJoin, onCondition)
+	return newJoinTable(r.root, table, jet.RightJoin, onCondition)
 }
 
 func (r readableTableInterfaceImpl) FULL_JOIN(table ReadableTable, onCondition BoolExpression) ReadableTable {
-	return newJoinTable(r.parent, table, jet.FullJoin, onCondition)
+	return newJoinTable(r.root, table, jet.FullJoin, onCondition)
 }
 
 func (r readableTableInterfaceImpl) CROSS_JOIN(table ReadableTable) ReadableTable {
-	return newJoinTable(r.parent, table, jet.CrossJoin, nil)
+	return newJoinTable(r.root, table, jet.CrossJoin, nil)
 }
 
 type writableTableInterfaceImpl struct {
-	parent WritableTable
+	root WritableTable
 }
 
 func (w *writableTableInterfaceImpl) INSERT(columns ...jet.Column) InsertStatement {
-	return newInsertStatement(w.parent, jet.UnwidColumnList(columns))
+	return newInsertStatement(w.root, jet.UnwidColumnList(columns))
 }
 
 func (w *writableTableInterfaceImpl) UPDATE(columns ...jet.Column) UpdateStatement {
-	return newUpdateStatement(w.parent, jet.UnwidColumnList(columns))
+	return newUpdateStatement(w.root, jet.UnwidColumnList(columns))
 }
 
 func (w *writableTableInterfaceImpl) DELETE() DeleteStatement {
-	return newDeleteStatement(w.parent)
+	return newDeleteStatement(w.root)
 }
 
 func (w *writableTableInterfaceImpl) LOCK() LockStatement {
-	return LOCK(w.parent)
+	return LOCK(w.root)
 }
 
 type tableImpl struct {
@@ -115,8 +115,8 @@ func NewTable(schemaName, name, alias string, columns ...jet.ColumnExpression) T
 		SerializerTable: jet.NewTable(schemaName, name, alias, columns...),
 	}
 
-	t.readableTableInterfaceImpl.parent = t
-	t.writableTableInterfaceImpl.parent = t
+	t.readableTableInterfaceImpl.root = t
+	t.writableTableInterfaceImpl.root = t
 
 	return t
 }
@@ -131,7 +131,7 @@ func newJoinTable(lhs jet.Serializer, rhs jet.Serializer, joinType jet.JoinType,
 		JoinTable: jet.NewJoinTable(lhs, rhs, joinType, onCondition),
 	}
 
-	newJoinTable.readableTableInterfaceImpl.parent = newJoinTable
+	newJoinTable.readableTableInterfaceImpl.root = newJoinTable
 
 	return newJoinTable
 }

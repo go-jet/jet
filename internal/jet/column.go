@@ -39,16 +39,16 @@ type ColumnExpressionImpl struct {
 }
 
 // NewColumnImpl creates new ColumnExpressionImpl
-func NewColumnImpl(name string, tableName string, parent ColumnExpression) *ColumnExpressionImpl {
+func NewColumnImpl(name string, tableName string, root ColumnExpression) *ColumnExpressionImpl {
 	newColumn := &ColumnExpressionImpl{
 		name:      name,
 		tableName: tableName,
 	}
 
-	if parent != nil {
-		newColumn.ExpressionInterfaceImpl.Parent = parent
+	if root != nil {
+		newColumn.ExpressionInterfaceImpl.Root = root
 	} else {
-		newColumn.ExpressionInterfaceImpl.Parent = newColumn
+		newColumn.ExpressionInterfaceImpl.Root = newColumn
 	}
 
 	return newColumn
@@ -100,11 +100,11 @@ func (c *ColumnExpressionImpl) serializeForProjection(statement StatementType, o
 
 func (c *ColumnExpressionImpl) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
 	out.WriteJsonObjKey(snaker.SnakeToCamel(c.name, false))
-	c.Parent.serializeForJsonValue(statement, out)
+	c.Root.serializeForJsonValue(statement, out)
 }
 
 func (c *ColumnExpressionImpl) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
-	c.Parent.serializeForJsonValue(statement, out)
+	c.Root.serializeForJsonValue(statement, out)
 
 	out.WriteString("AS")
 

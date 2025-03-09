@@ -21,55 +21,55 @@ type TimeExpression interface {
 }
 
 type timeInterfaceImpl struct {
-	parent TimeExpression
+	root TimeExpression
 }
 
 func (t *timeInterfaceImpl) EQ(rhs TimeExpression) BoolExpression {
-	return Eq(t.parent, rhs)
+	return Eq(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) NOT_EQ(rhs TimeExpression) BoolExpression {
-	return NotEq(t.parent, rhs)
+	return NotEq(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) IS_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
-	return IsDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimeExpression) BoolExpression {
-	return IsNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) LT(rhs TimeExpression) BoolExpression {
-	return Lt(t.parent, rhs)
+	return Lt(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) LT_EQ(rhs TimeExpression) BoolExpression {
-	return LtEq(t.parent, rhs)
+	return LtEq(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) GT(rhs TimeExpression) BoolExpression {
-	return Gt(t.parent, rhs)
+	return Gt(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) GT_EQ(rhs TimeExpression) BoolExpression {
-	return GtEq(t.parent, rhs)
+	return GtEq(t.root, rhs)
 }
 
 func (t *timeInterfaceImpl) BETWEEN(min, max TimeExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, false)
+	return NewBetweenOperatorExpression(t.root, min, max, false)
 }
 
 func (t *timeInterfaceImpl) NOT_BETWEEN(min, max TimeExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, true)
+	return NewBetweenOperatorExpression(t.root, min, max, true)
 }
 
 func (t *timeInterfaceImpl) ADD(rhs Interval) TimeExpression {
-	return TimeExp(Add(t.parent, rhs))
+	return TimeExp(Add(t.root, rhs))
 }
 
 func (t *timeInterfaceImpl) SUB(rhs Interval) TimeExpression {
-	return TimeExp(Sub(t.parent, rhs))
+	return TimeExp(Sub(t.root, rhs))
 }
 
 //---------------------------------------------------//
@@ -81,8 +81,8 @@ type timeExpressionWrapper struct {
 
 func newTimeExpressionWrap(expression Expression) TimeExpression {
 	timeExpressionWrap := &timeExpressionWrapper{Expression: expression}
-	timeExpressionWrap.timeInterfaceImpl.parent = timeExpressionWrap
-	expression.setParent(timeExpressionWrap)
+	timeExpressionWrap.timeInterfaceImpl.root = timeExpressionWrap
+	expression.setRoot(timeExpressionWrap)
 	return timeExpressionWrap
 }
 

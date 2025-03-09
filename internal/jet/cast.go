@@ -24,7 +24,7 @@ func (b *castImpl) AS(castType string) Expression {
 		cast:       string(castType),
 	}
 
-	castExp.ExpressionInterfaceImpl.Parent = castExp
+	castExp.ExpressionInterfaceImpl.Root = castExp
 
 	return castExp
 }

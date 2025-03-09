@@ -12,7 +12,7 @@ func WITH(dialect Dialect, recursive bool, cte ...*CommonTableExpression) func(s
 			statementType: WithStatementType,
 		},
 	}
-	newWithImpl.parent = newWithImpl
+	newWithImpl.root = newWithImpl
 
 	return func(primaryStatement Statement) Statement {
 		serializerStatement, ok := primaryStatement.(SerializerStatement)

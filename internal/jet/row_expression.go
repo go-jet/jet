@@ -17,41 +17,41 @@ type RowExpression interface {
 }
 
 type rowInterfaceImpl struct {
-	parent      Expression
+	root        Expression
 	dialect     Dialect
 	expressions []Expression
 }
 
 func (n *rowInterfaceImpl) EQ(rhs RowExpression) BoolExpression {
-	return Eq(n.parent, rhs)
+	return Eq(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) NOT_EQ(rhs RowExpression) BoolExpression {
-	return NotEq(n.parent, rhs)
+	return NotEq(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) IS_DISTINCT_FROM(rhs RowExpression) BoolExpression {
-	return IsDistinctFrom(n.parent, rhs)
+	return IsDistinctFrom(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs RowExpression) BoolExpression {
-	return IsNotDistinctFrom(n.parent, rhs)
+	return IsNotDistinctFrom(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) GT(rhs RowExpression) BoolExpression {
-	return Gt(n.parent, rhs)
+	return Gt(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) GT_EQ(rhs RowExpression) BoolExpression {
-	return GtEq(n.parent, rhs)
+	return GtEq(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) LT(rhs RowExpression) BoolExpression {
-	return Lt(n.parent, rhs)
+	return Lt(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) LT_EQ(rhs RowExpression) BoolExpression {
-	return LtEq(n.parent, rhs)
+	return LtEq(n.root, rhs)
 }
 
 func (n *rowInterfaceImpl) projections() ProjectionList {
@@ -72,7 +72,7 @@ type rowExpressionWrapper struct {
 
 func newRowExpression(name string, dialect Dialect, expressions ...Expression) RowExpression {
 	ret := &rowExpressionWrapper{}
-	ret.rowInterfaceImpl.parent = ret
+	ret.rowInterfaceImpl.root = ret
 
 	ret.Expression = NewFunc(name, expressions, ret)
 	ret.dialect = dialect
@@ -96,6 +96,6 @@ func WRAP(dialect Dialect, expressions ...Expression) RowExpression {
 // Note: This does not modify the generated SQL builder output by adding a SQL CAST operation.
 func RowExp(expression Expression) RowExpression {
 	rowExpressionWrap := rowExpressionWrapper{Expression: expression}
-	rowExpressionWrap.rowInterfaceImpl.parent = &rowExpressionWrap
+	rowExpressionWrap.rowInterfaceImpl.root = &rowExpressionWrap
 	return &rowExpressionWrap
 }

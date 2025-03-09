@@ -11,8 +11,8 @@ type enumValue struct {
 func NewEnumValue(name string) StringExpression {
 	enumValue := &enumValue{name: name}
 
-	enumValue.ExpressionInterfaceImpl.Parent = enumValue
-	enumValue.stringInterfaceImpl.parent = enumValue
+	enumValue.ExpressionInterfaceImpl.Root = enumValue
+	enumValue.stringInterfaceImpl.root = enumValue
 
 	return enumValue
 }

@@ -35,15 +35,15 @@ type setOperators interface {
 }
 
 type setOperatorsImpl struct {
-	parent setOperators
+	root setOperators
 }
 
 func (s *setOperatorsImpl) UNION(rhs SelectStatement) setStatement {
-	return UNION(s.parent, rhs)
+	return UNION(s.root, rhs)
 }
 
 func (s *setOperatorsImpl) UNION_ALL(rhs SelectStatement) setStatement {
-	return UNION_ALL(s.parent, rhs)
+	return UNION_ALL(s.root, rhs)
 }
 
 type setStatementImpl struct {
@@ -64,7 +64,7 @@ func newSetStatementImpl(operator string, all bool, selects []jet.SerializerStat
 	newSetStatement.setOperator.Selects = selects
 	newSetStatement.setOperator.Limit.Count = -1
 
-	newSetStatement.setOperatorsImpl.parent = newSetStatement
+	newSetStatement.setOperatorsImpl.root = newSetStatement
 
 	return newSetStatement
 }

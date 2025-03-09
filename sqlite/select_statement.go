@@ -77,7 +77,7 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 	newSelect.ShareLock.Name = "LOCK IN SHARE MODE"
 	newSelect.ShareLock.InNewLine = true
 
-	newSelect.setOperatorsImpl.parent = newSelect
+	newSelect.setOperatorsImpl.root = newSelect
 
 	return newSelect
 }

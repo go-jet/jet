@@ -25,61 +25,61 @@ type BlobExpression interface {
 }
 
 type blobInterfaceImpl struct {
-	parent BlobExpression
+	root BlobExpression
 }
 
 func (b *blobInterfaceImpl) isStringOrBlob() {}
 
 func (b *blobInterfaceImpl) EQ(rhs BlobExpression) BoolExpression {
-	return Eq(b.parent, rhs)
+	return Eq(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) NOT_EQ(rhs BlobExpression) BoolExpression {
-	return NotEq(b.parent, rhs)
+	return NotEq(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) IS_DISTINCT_FROM(rhs BlobExpression) BoolExpression {
-	return IsDistinctFrom(b.parent, rhs)
+	return IsDistinctFrom(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BlobExpression) BoolExpression {
-	return IsNotDistinctFrom(b.parent, rhs)
+	return IsNotDistinctFrom(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) GT(rhs BlobExpression) BoolExpression {
-	return Gt(b.parent, rhs)
+	return Gt(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) GT_EQ(rhs BlobExpression) BoolExpression {
-	return GtEq(b.parent, rhs)
+	return GtEq(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) LT(rhs BlobExpression) BoolExpression {
-	return Lt(b.parent, rhs)
+	return Lt(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) LT_EQ(rhs BlobExpression) BoolExpression {
-	return LtEq(b.parent, rhs)
+	return LtEq(b.root, rhs)
 }
 
 func (b *blobInterfaceImpl) BETWEEN(min, max BlobExpression) BoolExpression {
-	return NewBetweenOperatorExpression(b.parent, min, max, false)
+	return NewBetweenOperatorExpression(b.root, min, max, false)
 }
 
 func (b *blobInterfaceImpl) NOT_BETWEEN(min, max BlobExpression) BoolExpression {
-	return NewBetweenOperatorExpression(b.parent, min, max, true)
+	return NewBetweenOperatorExpression(b.root, min, max, true)
 }
 
 func (b *blobInterfaceImpl) CONCAT(rhs BlobExpression) BlobExpression {
-	return BlobExp(newBinaryStringOperatorExpression(b.parent, rhs, StringConcatOperator))
+	return BlobExp(newBinaryStringOperatorExpression(b.root, rhs, StringConcatOperator))
 }
 
 func (b *blobInterfaceImpl) LIKE(pattern BlobExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(b.parent, pattern, "LIKE")
+	return newBinaryBoolOperatorExpression(b.root, pattern, "LIKE")
 }
 
 func (b *blobInterfaceImpl) NOT_LIKE(pattern BlobExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(b.parent, pattern, "NOT LIKE")
+	return newBinaryBoolOperatorExpression(b.root, pattern, "NOT LIKE")
 }
 
 //---------------------------------------------------//
@@ -91,8 +91,8 @@ type blobExpressionWrapper struct {
 
 func newBlobExpressionWrap(expression Expression) BlobExpression {
 	blobExpressionWrap := &blobExpressionWrapper{Expression: expression}
-	blobExpressionWrap.blobInterfaceImpl.parent = blobExpressionWrap
-	expression.setParent(blobExpressionWrap)
+	blobExpressionWrap.blobInterfaceImpl.root = blobExpressionWrap
+	expression.setRoot(blobExpressionWrap)
 	return blobExpressionWrap
 }
 

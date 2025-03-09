@@ -42,7 +42,7 @@ func newOrderSetAggregateFuncExpression(aggFunc OrderSetAggregateFunc) *orderSet
 		OrderSetAggregateFunc: aggFunc,
 	}
 
-	ret.ExpressionInterfaceImpl.Parent = ret
+	ret.ExpressionInterfaceImpl.Root = ret
 
 	return ret
 }

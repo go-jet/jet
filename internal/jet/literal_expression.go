@@ -27,7 +27,7 @@ func literal(value interface{}, optionalConstant ...bool) *literalExpressionImpl
 		exp.constant = optionalConstant[0]
 	}
 
-	exp.ExpressionInterfaceImpl.Parent = &exp
+	exp.ExpressionInterfaceImpl.Root = &exp
 
 	return &exp
 }
@@ -72,8 +72,8 @@ func intLiteral(value interface{}) IntegerExpression {
 
 	numLiteral.literalExpressionImpl = *literal(value)
 
-	numLiteral.literalExpressionImpl.Parent = numLiteral
-	numLiteral.integerInterfaceImpl.parent = numLiteral
+	numLiteral.literalExpressionImpl.Root = numLiteral
+	numLiteral.integerInterfaceImpl.root = numLiteral
 
 	return numLiteral
 }
@@ -129,7 +129,7 @@ func Bool(value bool) BoolExpression {
 	boolLiteralExpression := boolLiteralExpression{}
 
 	boolLiteralExpression.literalExpressionImpl = *literal(value)
-	boolLiteralExpression.boolInterfaceImpl.parent = &boolLiteralExpression
+	boolLiteralExpression.boolInterfaceImpl.root = &boolLiteralExpression
 
 	return &boolLiteralExpression
 }
@@ -145,7 +145,7 @@ func Float(value float64) FloatExpression {
 	floatLiteral := floatLiteral{}
 	floatLiteral.literalExpressionImpl = *literal(value)
 
-	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
+	floatLiteral.floatInterfaceImpl.root = &floatLiteral
 
 	return &floatLiteral
 }
@@ -155,7 +155,7 @@ func Decimal(value string) FloatExpression {
 	floatLiteral := floatLiteral{}
 	floatLiteral.literalExpressionImpl = *literal(value)
 
-	floatLiteral.floatInterfaceImpl.parent = &floatLiteral
+	floatLiteral.floatInterfaceImpl.root = &floatLiteral
 
 	return &floatLiteral
 }
@@ -171,7 +171,7 @@ func String(value string) StringExpression {
 	stringLiteral := stringLiteral{}
 	stringLiteral.literalExpressionImpl = *literal(value)
 
-	stringLiteral.stringInterfaceImpl.parent = &stringLiteral
+	stringLiteral.stringInterfaceImpl.root = &stringLiteral
 
 	return &stringLiteral
 }
@@ -190,7 +190,7 @@ func Time(hour, minute, second int, nanoseconds ...time.Duration) TimeExpression
 	timeStr += formatNanoseconds(nanoseconds...)
 	timeLiteral.literalExpressionImpl = *literal(timeStr)
 
-	timeLiteral.timeInterfaceImpl.parent = timeLiteral
+	timeLiteral.timeInterfaceImpl.root = timeLiteral
 
 	return timeLiteral
 }
@@ -199,7 +199,7 @@ func Time(hour, minute, second int, nanoseconds ...time.Duration) TimeExpression
 func TimeT(t time.Time) TimeExpression {
 	timeLiteral := &timeLiteral{}
 	timeLiteral.literalExpressionImpl = *literal(t)
-	timeLiteral.timeInterfaceImpl.parent = timeLiteral
+	timeLiteral.timeInterfaceImpl.root = timeLiteral
 
 	return timeLiteral
 }
@@ -226,7 +226,7 @@ func Timez(hour, minute, second int, nanoseconds time.Duration, timezone string)
 func TimezT(t time.Time) TimezExpression {
 	timeLiteral := &timezLiteral{}
 	timeLiteral.literalExpressionImpl = *literal(t)
-	timeLiteral.timezInterfaceImpl.parent = timeLiteral
+	timeLiteral.timezInterfaceImpl.root = timeLiteral
 
 	return timeLiteral
 }
@@ -244,7 +244,7 @@ func Timestamp(year int, month time.Month, day, hour, minute, second int, nanose
 	timeStr := fmt.Sprintf("%04d-%02d-%02d %02d:%02d:%02d", year, month, day, hour, minute, second)
 	timeStr += formatNanoseconds(nanoseconds...)
 	timestamp.literalExpressionImpl = *literal(timeStr)
-	timestamp.timestampInterfaceImpl.parent = timestamp
+	timestamp.timestampInterfaceImpl.root = timestamp
 	return timestamp
 }
 
@@ -252,7 +252,7 @@ func Timestamp(year int, month time.Month, day, hour, minute, second int, nanose
 func TimestampT(t time.Time) TimestampExpression {
 	timestamp := &timestampLiteral{}
 	timestamp.literalExpressionImpl = *literal(t)
-	timestamp.timestampInterfaceImpl.parent = timestamp
+	timestamp.timestampInterfaceImpl.root = timestamp
 	return timestamp
 }
 
@@ -271,7 +271,7 @@ func Timestampz(year int, month time.Month, day, hour, minute, second int, nanos
 	timeStr += " " + timezone
 
 	timestamp.literalExpressionImpl = *literal(timeStr)
-	timestamp.timestampzInterfaceImpl.parent = timestamp
+	timestamp.timestampzInterfaceImpl.root = timestamp
 	return timestamp
 }
 
@@ -279,7 +279,7 @@ func Timestampz(year int, month time.Month, day, hour, minute, second int, nanos
 func TimestampzT(t time.Time) TimestampzExpression {
 	timestamp := &timestampzLiteral{}
 	timestamp.literalExpressionImpl = *literal(t)
-	timestamp.timestampzInterfaceImpl.parent = timestamp
+	timestamp.timestampzInterfaceImpl.root = timestamp
 	return timestamp
 }
 
@@ -296,7 +296,7 @@ func Date(year int, month time.Month, day int) DateExpression {
 
 	timeStr := fmt.Sprintf("%04d-%02d-%02d", year, month, day)
 	dateLiteral.literalExpressionImpl = *literal(timeStr)
-	dateLiteral.dateInterfaceImpl.parent = dateLiteral
+	dateLiteral.dateInterfaceImpl.root = dateLiteral
 
 	return dateLiteral
 }
@@ -305,7 +305,7 @@ func Date(year int, month time.Month, day int) DateExpression {
 func DateT(t time.Time) DateExpression {
 	dateLiteral := &dateLiteral{}
 	dateLiteral.literalExpressionImpl = *literal(t)
-	dateLiteral.dateInterfaceImpl.parent = dateLiteral
+	dateLiteral.dateInterfaceImpl.root = dateLiteral
 
 	return dateLiteral
 }
@@ -346,7 +346,7 @@ type nullLiteral struct {
 func newNullLiteral() Expression {
 	nullExpression := &nullLiteral{}
 
-	nullExpression.ExpressionInterfaceImpl.Parent = nullExpression
+	nullExpression.ExpressionInterfaceImpl.Root = nullExpression
 
 	return nullExpression
 }
@@ -363,7 +363,7 @@ type starLiteral struct {
 func newStarLiteral() Expression {
 	starExpression := &starLiteral{}
 
-	starExpression.ExpressionInterfaceImpl.Parent = starExpression
+	starExpression.ExpressionInterfaceImpl.Root = starExpression
 
 	return starExpression
 }
@@ -407,7 +407,7 @@ func Raw(raw string, namedArgs ...map[string]interface{}) Expression {
 		Raw:           raw,
 		NamedArgument: namedArguments,
 	}
-	rawExp.ExpressionInterfaceImpl.Parent = rawExp
+	rawExp.ExpressionInterfaceImpl.Root = rawExp
 
 	return rawExp
 }

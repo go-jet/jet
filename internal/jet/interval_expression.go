@@ -25,65 +25,65 @@ type IntervalExpression interface {
 }
 
 type intervalInterfaceImpl struct {
-	parent IntervalExpression
+	root IntervalExpression
 }
 
 func (i *intervalInterfaceImpl) isInterval() {}
 
 func (i *intervalInterfaceImpl) EQ(rhs IntervalExpression) BoolExpression {
-	return Eq(i.parent, rhs)
+	return Eq(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) NOT_EQ(rhs IntervalExpression) BoolExpression {
-	return NotEq(i.parent, rhs)
+	return NotEq(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) IS_DISTINCT_FROM(rhs IntervalExpression) BoolExpression {
-	return IsDistinctFrom(i.parent, rhs)
+	return IsDistinctFrom(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs IntervalExpression) BoolExpression {
-	return IsNotDistinctFrom(i.parent, rhs)
+	return IsNotDistinctFrom(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) LT(rhs IntervalExpression) BoolExpression {
-	return Lt(i.parent, rhs)
+	return Lt(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) LT_EQ(rhs IntervalExpression) BoolExpression {
-	return LtEq(i.parent, rhs)
+	return LtEq(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) GT(rhs IntervalExpression) BoolExpression {
-	return Gt(i.parent, rhs)
+	return Gt(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) GT_EQ(rhs IntervalExpression) BoolExpression {
-	return GtEq(i.parent, rhs)
+	return GtEq(i.root, rhs)
 }
 
 func (i *intervalInterfaceImpl) BETWEEN(min, max IntervalExpression) BoolExpression {
-	return NewBetweenOperatorExpression(i.parent, min, max, false)
+	return NewBetweenOperatorExpression(i.root, min, max, false)
 }
 
 func (i *intervalInterfaceImpl) NOT_BETWEEN(min, max IntervalExpression) BoolExpression {
-	return NewBetweenOperatorExpression(i.parent, min, max, true)
+	return NewBetweenOperatorExpression(i.root, min, max, true)
 }
 
 func (i *intervalInterfaceImpl) ADD(rhs IntervalExpression) IntervalExpression {
-	return IntervalExp(Add(i.parent, rhs))
+	return IntervalExp(Add(i.root, rhs))
 }
 
 func (i *intervalInterfaceImpl) SUB(rhs IntervalExpression) IntervalExpression {
-	return IntervalExp(Sub(i.parent, rhs))
+	return IntervalExp(Sub(i.root, rhs))
 }
 
 func (i *intervalInterfaceImpl) MUL(rhs NumericExpression) IntervalExpression {
-	return IntervalExp(Mul(i.parent, rhs))
+	return IntervalExp(Mul(i.root, rhs))
 }
 
 func (i *intervalInterfaceImpl) DIV(rhs NumericExpression) IntervalExpression {
-	return IntervalExp(Div(i.parent, rhs))
+	return IntervalExp(Div(i.root, rhs))
 }
 
 type intervalWrapper struct {
@@ -93,8 +93,8 @@ type intervalWrapper struct {
 
 func newIntervalExpressionWrap(expression Expression) IntervalExpression {
 	intervalWrap := &intervalWrapper{Expression: expression}
-	intervalWrap.intervalInterfaceImpl.parent = intervalWrap
-	expression.setParent(intervalWrap)
+	intervalWrap.intervalInterfaceImpl.root = intervalWrap
+	expression.setRoot(intervalWrap)
 	return intervalWrap
 }
 

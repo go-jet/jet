@@ -674,16 +674,16 @@ type funcExpressionImpl struct {
 }
 
 // NewFunc creates new function with name and expressions parameters
-func NewFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
+func NewFunc(name string, expressions []Expression, root Expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:       name,
 		parameters: parametersSerializer(expressions),
 	}
 
-	if parent != nil {
-		funcExp.ExpressionInterfaceImpl.Parent = parent
+	if root != nil {
+		funcExp.ExpressionInterfaceImpl.Root = root
 	} else {
-		funcExp.ExpressionInterfaceImpl.Parent = funcExp
+		funcExp.ExpressionInterfaceImpl.Root = funcExp
 	}
 
 	return funcExp
@@ -732,7 +732,7 @@ func (p parametersSerializer) serialize(statement StatementType, out *SQLBuilder
 func newWindowFunc(name string, expressions ...Expression) windowExpression {
 	newFun := NewFunc(name, expressions, nil)
 	windowExpr := newWindowExpression(newFun)
-	newFun.ExpressionInterfaceImpl.Parent = windowExpr
+	newFun.ExpressionInterfaceImpl.Root = windowExpr
 
 	return windowExpr
 }
@@ -746,8 +746,8 @@ func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 	boolFunc := &boolFunc{}
 
 	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
-	boolFunc.boolInterfaceImpl.parent = boolFunc
-	boolFunc.ExpressionInterfaceImpl.Parent = boolFunc
+	boolFunc.boolInterfaceImpl.root = boolFunc
+	boolFunc.ExpressionInterfaceImpl.Root = boolFunc
 
 	return boolFunc
 }
@@ -758,8 +758,8 @@ func newBoolWindowFunc(name string, expressions ...Expression) boolWindowExpress
 
 	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
 	intWindowFunc := newBoolWindowExpression(boolFunc)
-	boolFunc.boolInterfaceImpl.parent = intWindowFunc
-	boolFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
+	boolFunc.boolInterfaceImpl.root = intWindowFunc
+	boolFunc.ExpressionInterfaceImpl.Root = intWindowFunc
 
 	return intWindowFunc
 }
@@ -774,7 +774,7 @@ func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 	floatFunc := &floatFunc{}
 
 	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
-	floatFunc.floatInterfaceImpl.parent = floatFunc
+	floatFunc.floatInterfaceImpl.root = floatFunc
 
 	return floatFunc
 }
@@ -785,8 +785,8 @@ func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpre
 
 	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
 	floatWindowFunc := newFloatWindowExpression(floatFunc)
-	floatFunc.floatInterfaceImpl.parent = floatWindowFunc
-	floatFunc.ExpressionInterfaceImpl.Parent = floatWindowFunc
+	floatFunc.floatInterfaceImpl.root = floatWindowFunc
+	floatFunc.ExpressionInterfaceImpl.Root = floatWindowFunc
 
 	return floatWindowFunc
 }
@@ -800,7 +800,7 @@ func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
 	intFunc := &integerFunc{}
 
 	intFunc.funcExpressionImpl = *NewFunc(name, expressions, intFunc)
-	intFunc.integerInterfaceImpl.parent = intFunc
+	intFunc.integerInterfaceImpl.root = intFunc
 
 	return intFunc
 }
@@ -811,8 +811,8 @@ func newIntegerWindowFunc(name string, expressions ...Expression) integerWindowE
 
 	integerFunc.funcExpressionImpl = *NewFunc(name, expressions, integerFunc)
 	intWindowFunc := newIntegerWindowExpression(integerFunc)
-	integerFunc.integerInterfaceImpl.parent = intWindowFunc
-	integerFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
+	integerFunc.integerInterfaceImpl.root = intWindowFunc
+	integerFunc.ExpressionInterfaceImpl.Root = intWindowFunc
 
 	return intWindowFunc
 }
@@ -827,7 +827,7 @@ func NewStringFunc(name string, expressions ...Expression) StringExpression {
 	stringFunc := &stringFunc{}
 
 	stringFunc.funcExpressionImpl = *NewFunc(name, expressions, stringFunc)
-	stringFunc.stringInterfaceImpl.parent = stringFunc
+	stringFunc.stringInterfaceImpl.root = stringFunc
 
 	return stringFunc
 }
@@ -842,7 +842,7 @@ func NewDateFunc(name string, expressions ...Expression) *dateFunc {
 	dateFunc := &dateFunc{}
 
 	dateFunc.funcExpressionImpl = *NewFunc(name, expressions, dateFunc)
-	dateFunc.dateInterfaceImpl.parent = dateFunc
+	dateFunc.dateInterfaceImpl.root = dateFunc
 
 	return dateFunc
 }
@@ -857,7 +857,7 @@ func NewTimeFunc(name string, expressions ...Expression) *timeFunc {
 	timeFun := &timeFunc{}
 
 	timeFun.funcExpressionImpl = *NewFunc(name, expressions, timeFun)
-	timeFun.timeInterfaceImpl.parent = timeFun
+	timeFun.timeInterfaceImpl.root = timeFun
 
 	return timeFun
 }
@@ -871,7 +871,7 @@ func newTimezFunc(name string, expressions ...Expression) *timezFunc {
 	timezFun := &timezFunc{}
 
 	timezFun.funcExpressionImpl = *NewFunc(name, expressions, timezFun)
-	timezFun.timezInterfaceImpl.parent = timezFun
+	timezFun.timezInterfaceImpl.root = timezFun
 
 	return timezFun
 }
@@ -886,7 +886,7 @@ func NewTimestampFunc(name string, expressions ...Expression) *timestampFunc {
 	timestampFunc := &timestampFunc{}
 
 	timestampFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampFunc)
-	timestampFunc.timestampInterfaceImpl.parent = timestampFunc
+	timestampFunc.timestampInterfaceImpl.root = timestampFunc
 
 	return timestampFunc
 }
@@ -900,7 +900,7 @@ func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 	timestampzFunc := &timestampzFunc{}
 
 	timestampzFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampzFunc)
-	timestampzFunc.timestampzInterfaceImpl.parent = timestampzFunc
+	timestampzFunc.timestampzInterfaceImpl.root = timestampzFunc
 
 	return timestampzFunc
 }

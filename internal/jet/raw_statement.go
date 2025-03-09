@@ -13,7 +13,7 @@ func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]
 		statementInterfaceImpl: statementInterfaceImpl{
 			dialect:       dialect,
 			statementType: "",
-			parent:        nil,
+			root:          nil,
 		},
 		RawQuery: rawQuery,
 	}
@@ -22,7 +22,7 @@ func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]
 		newRawStatement.NamedArguments = namedArgument[0]
 	}
 
-	newRawStatement.parent = &newRawStatement
+	newRawStatement.root = &newRawStatement
 
 	return &newRawStatement
 }

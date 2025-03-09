@@ -15,15 +15,15 @@ type windowImpl struct {
 	frameUnits  string
 	start, end  FrameExtent
 
-	parent Window
+	root Window
 }
 
-func newWindowImpl(parent Window) *windowImpl {
+func newWindowImpl(root Window) *windowImpl {
 	newWindow := &windowImpl{}
-	if parent == nil {
-		newWindow.parent = newWindow
+	if root == nil {
+		newWindow.root = newWindow
 	} else {
-		newWindow.parent = parent
+		newWindow.root = root
 	}
 
 	return newWindow
@@ -62,25 +62,25 @@ func (w *windowImpl) serialize(statement StatementType, out *SQLBuilder, options
 
 func (w *windowImpl) ORDER_BY(exprs ...OrderByClause) Window {
 	w.orderBy.List = exprs
-	return w.parent
+	return w.root
 }
 
 func (w *windowImpl) ROWS(start FrameExtent, end ...FrameExtent) Window {
 	w.frameUnits = "ROWS"
 	w.setFrameRange(start, end...)
-	return w.parent
+	return w.root
 }
 
 func (w *windowImpl) RANGE(start FrameExtent, end ...FrameExtent) Window {
 	w.frameUnits = "RANGE"
 	w.setFrameRange(start, end...)
-	return w.parent
+	return w.root
 }
 
 func (w *windowImpl) GROUPS(start FrameExtent, end ...FrameExtent) Window {
 	w.frameUnits = "GROUPS"
 	w.setFrameRange(start, end...)
-	return w.parent
+	return w.root
 }
 
 func (w *windowImpl) setFrameRange(start FrameExtent, end ...FrameExtent) {
@@ -167,7 +167,7 @@ func (f frameExtentKeyword) isFrameExtent() {}
 // WindowName is used to specify window reference from WINDOW clause
 func WindowName(name string) Window {
 	newWindow := &windowName{name: name}
-	newWindow.parent = newWindow
+	newWindow.root = newWindow
 	return newWindow
 }
 

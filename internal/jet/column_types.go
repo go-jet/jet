@@ -37,7 +37,7 @@ func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
 func BoolColumn(name string) ColumnBool {
 	boolColumn := &boolColumnImpl{}
 	boolColumn.ColumnExpressionImpl = NewColumnImpl(name, "", boolColumn)
-	boolColumn.boolInterfaceImpl.parent = boolColumn
+	boolColumn.boolInterfaceImpl.root = boolColumn
 
 	return boolColumn
 }
@@ -80,7 +80,7 @@ func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssigment {
 // FloatColumn creates named float column.
 func FloatColumn(name string) ColumnFloat {
 	floatColumn := &floatColumnImpl{}
-	floatColumn.floatInterfaceImpl.parent = floatColumn
+	floatColumn.floatInterfaceImpl.root = floatColumn
 	floatColumn.ColumnExpressionImpl = NewColumnImpl(name, "", floatColumn)
 
 	return floatColumn
@@ -125,7 +125,7 @@ func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssigment {
 // IntegerColumn creates named integer column.
 func IntegerColumn(name string) ColumnInteger {
 	integerColumn := &integerColumnImpl{}
-	integerColumn.integerInterfaceImpl.parent = integerColumn
+	integerColumn.integerInterfaceImpl.root = integerColumn
 	integerColumn.ColumnExpressionImpl = NewColumnImpl(name, "", integerColumn)
 
 	return integerColumn
@@ -171,7 +171,7 @@ func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssigment {
 // StringColumn creates named string column.
 func StringColumn(name string) ColumnString {
 	stringColumn := &stringColumnImpl{}
-	stringColumn.stringInterfaceImpl.parent = stringColumn
+	stringColumn.stringInterfaceImpl.root = stringColumn
 	stringColumn.ColumnExpressionImpl = NewColumnImpl(name, "", stringColumn)
 
 	return stringColumn
@@ -216,7 +216,7 @@ func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssigment {
 // BlobColumn creates named blob column.
 func BlobColumn(name string) ColumnBlob {
 	blobColumn := &blobColumnImpl{}
-	blobColumn.blobInterfaceImpl.parent = blobColumn
+	blobColumn.blobInterfaceImpl.root = blobColumn
 	blobColumn.ColumnExpressionImpl = NewColumnImpl(name, "", blobColumn)
 
 	return blobColumn
@@ -260,7 +260,7 @@ func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssigment {
 // TimeColumn creates named time column
 func TimeColumn(name string) ColumnTime {
 	timeColumn := &timeColumnImpl{}
-	timeColumn.timeInterfaceImpl.parent = timeColumn
+	timeColumn.timeInterfaceImpl.root = timeColumn
 	timeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timeColumn)
 	return timeColumn
 }
@@ -303,7 +303,7 @@ func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssigment {
 // TimezColumn creates named time with time zone column.
 func TimezColumn(name string) ColumnTimez {
 	timezColumn := &timezColumnImpl{}
-	timezColumn.timezInterfaceImpl.parent = timezColumn
+	timezColumn.timezInterfaceImpl.root = timezColumn
 	timezColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timezColumn)
 
 	return timezColumn
@@ -347,7 +347,7 @@ func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssigm
 // TimestampColumn creates named timestamp column
 func TimestampColumn(name string) ColumnTimestamp {
 	timestampColumn := &timestampColumnImpl{}
-	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
+	timestampColumn.timestampInterfaceImpl.root = timestampColumn
 	timestampColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampColumn)
 
 	return timestampColumn
@@ -391,7 +391,7 @@ func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAss
 // TimestampzColumn creates named timestamp with time zone column.
 func TimestampzColumn(name string) ColumnTimestampz {
 	timestampzColumn := &timestampzColumnImpl{}
-	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
+	timestampzColumn.timestampzInterfaceImpl.root = timestampzColumn
 	timestampzColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampzColumn)
 
 	return timestampzColumn
@@ -435,7 +435,7 @@ func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssigment {
 // DateColumn creates named date column.
 func DateColumn(name string) ColumnDate {
 	dateColumn := &dateColumnImpl{}
-	dateColumn.dateInterfaceImpl.parent = dateColumn
+	dateColumn.dateInterfaceImpl.root = dateColumn
 	dateColumn.ColumnExpressionImpl = NewColumnImpl(name, "", dateColumn)
 	return dateColumn
 }
@@ -481,7 +481,7 @@ func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
 func IntervalColumn(name string) ColumnInterval {
 	intervalColumn := &intervalColumnImpl{}
 	intervalColumn.ColumnExpressionImpl = NewColumnImpl(name, "", intervalColumn)
-	intervalColumn.intervalInterfaceImpl.parent = intervalColumn
+	intervalColumn.intervalInterfaceImpl.root = intervalColumn
 	return intervalColumn
 }
 
@@ -524,7 +524,7 @@ func (i *rangeColumnImpl[T]) SET(rangeExp Range[T]) ColumnAssigment {
 // RangeColumn creates named range column.
 func RangeColumn[T Expression](name string) ColumnRange[T] {
 	rangeColumn := &rangeColumnImpl[T]{}
-	rangeColumn.rangeInterfaceImpl.parent = rangeColumn
+	rangeColumn.rangeInterfaceImpl.root = rangeColumn
 	rangeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", rangeColumn)
 
 	return rangeColumn

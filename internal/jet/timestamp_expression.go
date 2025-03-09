@@ -21,55 +21,55 @@ type TimestampExpression interface {
 }
 
 type timestampInterfaceImpl struct {
-	parent TimestampExpression
+	root TimestampExpression
 }
 
 func (t *timestampInterfaceImpl) EQ(rhs TimestampExpression) BoolExpression {
-	return Eq(t.parent, rhs)
+	return Eq(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) NOT_EQ(rhs TimestampExpression) BoolExpression {
-	return NotEq(t.parent, rhs)
+	return NotEq(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) IS_DISTINCT_FROM(rhs TimestampExpression) BoolExpression {
-	return IsDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimestampExpression) BoolExpression {
-	return IsNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) LT(rhs TimestampExpression) BoolExpression {
-	return Lt(t.parent, rhs)
+	return Lt(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) LT_EQ(rhs TimestampExpression) BoolExpression {
-	return LtEq(t.parent, rhs)
+	return LtEq(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) GT(rhs TimestampExpression) BoolExpression {
-	return Gt(t.parent, rhs)
+	return Gt(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) GT_EQ(rhs TimestampExpression) BoolExpression {
-	return GtEq(t.parent, rhs)
+	return GtEq(t.root, rhs)
 }
 
 func (t *timestampInterfaceImpl) BETWEEN(min, max TimestampExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, false)
+	return NewBetweenOperatorExpression(t.root, min, max, false)
 }
 
 func (t *timestampInterfaceImpl) NOT_BETWEEN(min, max TimestampExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, true)
+	return NewBetweenOperatorExpression(t.root, min, max, true)
 }
 
 func (t *timestampInterfaceImpl) ADD(rhs Interval) TimestampExpression {
-	return TimestampExp(Add(t.parent, rhs))
+	return TimestampExp(Add(t.root, rhs))
 }
 
 func (t *timestampInterfaceImpl) SUB(rhs Interval) TimestampExpression {
-	return TimestampExp(Sub(t.parent, rhs))
+	return TimestampExp(Sub(t.root, rhs))
 }
 
 //-------------------------------------------------
@@ -81,8 +81,8 @@ type timestampExpressionWrapper struct {
 
 func newTimestampExpressionWrap(expression Expression) TimestampExpression {
 	timestampExpressionWrap := &timestampExpressionWrapper{Expression: expression}
-	timestampExpressionWrap.timestampInterfaceImpl.parent = timestampExpressionWrap
-	expression.setParent(timestampExpressionWrap)
+	timestampExpressionWrap.timestampInterfaceImpl.root = timestampExpressionWrap
+	expression.setRoot(timestampExpressionWrap)
 	return timestampExpressionWrap
 }
 

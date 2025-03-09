@@ -77,14 +77,14 @@ type SerializerHasProjections interface {
 type statementInterfaceImpl struct {
 	dialect       Dialect
 	statementType StatementType
-	parent        SerializerStatement
+	root          SerializerStatement
 }
 
 func (s *statementInterfaceImpl) Sql() (query string, args []interface{}) {
 
 	queryData := &SQLBuilder{Dialect: s.dialect}
 
-	s.parent.serialize(s.statementType, queryData, NoWrap)
+	s.root.serialize(s.statementType, queryData, NoWrap)
 
 	query, args = queryData.finalize()
 	return
@@ -93,7 +93,7 @@ func (s *statementInterfaceImpl) Sql() (query string, args []interface{}) {
 func (s *statementInterfaceImpl) DebugSql() (query string) {
 	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
 
-	s.parent.serialize(s.statementType, sqlBuilder, NoWrap)
+	s.root.serialize(s.statementType, sqlBuilder, NoWrap)
 
 	query, _ = sqlBuilder.finalize()
 	return
@@ -222,14 +222,14 @@ type ExpressionStatement interface {
 // NewExpressionStatementImpl creates new expression statement
 func NewExpressionStatementImpl(Dialect Dialect,
 	statementType StatementType,
-	parent ExpressionStatement,
+	root ExpressionStatement,
 	clauses ...Clause) ExpressionStatement {
 
 	return &expressionStatementImpl{
-		ExpressionInterfaceImpl{Parent: parent},
+		ExpressionInterfaceImpl{Root: root},
 		statementImpl{
 			statementInterfaceImpl: statementInterfaceImpl{
-				parent:        parent,
+				root:          root,
 				dialect:       Dialect,
 				statementType: statementType,
 			},
@@ -252,10 +252,10 @@ func (e *expressionStatementImpl) serializeForRowToJsonProjection(statement Stat
 }
 
 // NewStatementImpl creates new statementImpl
-func NewStatementImpl(Dialect Dialect, statementType StatementType, parent SerializerStatement, clauses ...Clause) SerializerStatement {
+func NewStatementImpl(Dialect Dialect, statementType StatementType, root SerializerStatement, clauses ...Clause) SerializerStatement {
 	return &statementImpl{
 		statementInterfaceImpl: statementInterfaceImpl{
-			parent:        parent,
+			root:          root,
 			dialect:       Dialect,
 			statementType: statementType,
 		},

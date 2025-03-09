@@ -21,55 +21,55 @@ type DateExpression interface {
 }
 
 type dateInterfaceImpl struct {
-	parent DateExpression
+	root DateExpression
 }
 
 func (d *dateInterfaceImpl) EQ(rhs DateExpression) BoolExpression {
-	return Eq(d.parent, rhs)
+	return Eq(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) NOT_EQ(rhs DateExpression) BoolExpression {
-	return NotEq(d.parent, rhs)
+	return NotEq(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) IS_DISTINCT_FROM(rhs DateExpression) BoolExpression {
-	return IsDistinctFrom(d.parent, rhs)
+	return IsDistinctFrom(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs DateExpression) BoolExpression {
-	return IsNotDistinctFrom(d.parent, rhs)
+	return IsNotDistinctFrom(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) LT(rhs DateExpression) BoolExpression {
-	return Lt(d.parent, rhs)
+	return Lt(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) LT_EQ(rhs DateExpression) BoolExpression {
-	return LtEq(d.parent, rhs)
+	return LtEq(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) GT(rhs DateExpression) BoolExpression {
-	return Gt(d.parent, rhs)
+	return Gt(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) GT_EQ(rhs DateExpression) BoolExpression {
-	return GtEq(d.parent, rhs)
+	return GtEq(d.root, rhs)
 }
 
 func (d *dateInterfaceImpl) BETWEEN(min, max DateExpression) BoolExpression {
-	return NewBetweenOperatorExpression(d.parent, min, max, false)
+	return NewBetweenOperatorExpression(d.root, min, max, false)
 }
 
 func (d *dateInterfaceImpl) NOT_BETWEEN(min, max DateExpression) BoolExpression {
-	return NewBetweenOperatorExpression(d.parent, min, max, true)
+	return NewBetweenOperatorExpression(d.root, min, max, true)
 }
 
 func (d *dateInterfaceImpl) ADD(rhs Interval) TimestampExpression {
-	return TimestampExp(Add(d.parent, rhs))
+	return TimestampExp(Add(d.root, rhs))
 }
 
 func (d *dateInterfaceImpl) SUB(rhs Interval) TimestampExpression {
-	return TimestampExp(Sub(d.parent, rhs))
+	return TimestampExp(Sub(d.root, rhs))
 }
 
 //---------------------------------------------------//
@@ -81,8 +81,8 @@ type dateExpressionWrapper struct {
 
 func newDateExpressionWrap(expression Expression) DateExpression {
 	dateExpressionWrap := &dateExpressionWrapper{Expression: expression}
-	dateExpressionWrap.dateInterfaceImpl.parent = dateExpressionWrap
-	expression.setParent(dateExpressionWrap)
+	dateExpressionWrap.dateInterfaceImpl.root = dateExpressionWrap
+	expression.setRoot(dateExpressionWrap)
 	return dateExpressionWrap
 }
 
