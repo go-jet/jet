@@ -137,8 +137,10 @@ WHERE sample_ranges.date_range @> $36::date;
 	}
 
 	var dest sample
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &dest)
+		require.NoError(t, err)
+	})
 
 	expectedRow := sample{
 		SampleRanges:  sampleRangeRow,
@@ -219,7 +221,7 @@ func TestRangeSelectColumnsFromSubQuery(t *testing.T) {
 	int4Range := Int4RangeColumn("range4").From(subQuery)
 
 	stmt := SELECT(
-		subQuery.AllColumns(),
+		subQuery.AllColumns().Except(int4Range),
 		int4Range,
 	).FROM(
 		subQuery,
@@ -232,7 +234,6 @@ SELECT sub_query."sample_ranges.date_range" AS "sample_ranges.date_range",
      sub_query."sample_ranges.int4_range" AS "sample_ranges.int4_range",
      sub_query."sample_ranges.int8_range" AS "sample_ranges.int8_range",
      sub_query."sample_ranges.num_range" AS "sample_ranges.num_range",
-     sub_query.range4 AS "range4",
      sub_query.range4 AS "range4"
 FROM (
           SELECT sample_ranges.date_range AS "sample_ranges.date_range",

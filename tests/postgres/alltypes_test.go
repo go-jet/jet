@@ -591,10 +591,12 @@ func TestExpressionCast(t *testing.T) {
 		Raw("current_database()"),
 	)
 
-	var dest []struct{}
-	err := query.Query(db, &dest)
+	allowUnusedColumns(func() {
+		var dest []struct{}
+		err := query.Query(db, &dest)
+		require.NoError(t, err)
+	})
 
-	require.NoError(t, err)
 }
 
 func TestStringOperators(t *testing.T) {
@@ -673,10 +675,11 @@ func TestStringOperators(t *testing.T) {
 		TO_HEX(AllTypes.IntegerPtr),
 	)
 
-	var dest []struct{}
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		var dest []struct{}
+		err := query.Query(db, &dest)
+		require.NoError(t, err)
+	})
 }
 
 func TestBytea(t *testing.T) {
@@ -792,10 +795,12 @@ FROM test_sample.all_types;
 `)
 	}
 
-	var dest []struct{}
-	err := stmt.Query(db, &dest)
+	allowUnusedColumns(func() {
+		var dest []struct{}
+		err := stmt.Query(db, &dest)
 
-	require.NoError(t, err)
+		require.NoError(t, err)
+	})
 }
 
 func TestBlobConversion(t *testing.T) {
@@ -1185,9 +1190,11 @@ LIMIT $27;
 		common.AllTypesIntegerExpResult `alias:"."`
 	}
 
-	err := query.Query(db, &dest)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &dest)
 
-	require.NoError(t, err)
+		require.NoError(t, err)
+	})
 
 	//testutils.SaveJSONFile(dest, "./testdata/results/common/int_operators.json")
 	//testutils.PrintJson(dest)
@@ -1271,9 +1278,12 @@ func TestTimeExpression(t *testing.T) {
 	// fmt.Println(query.DebugSql())
 
 	var dest []struct{}
-	err := query.Query(db, &dest)
 
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &dest)
+
+		require.NoError(t, err)
+	})
 }
 
 func TestTimeScan(t *testing.T) {
@@ -1616,8 +1626,11 @@ SELECT INTERVAL '1 YEAR',
 FROM test_sample.all_types;
 `)
 
-	err := stmt.Query(db, &struct{}{})
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := stmt.Query(db, &struct{}{})
+		require.NoError(t, err)
+	})
+
 	requireLogged(t, stmt)
 }
 
@@ -1677,8 +1690,10 @@ SELECT EXTRACT(CENTURY FROM all_types.timestampz),
 FROM test_sample.all_types;
 `)
 
-	err := stmt.Query(db, &struct{}{})
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := stmt.Query(db, &struct{}{})
+		require.NoError(t, err)
+	})
 }
 
 func TestRowExpression(t *testing.T) {
@@ -1717,8 +1732,10 @@ SELECT ROW($1::integer, $2::real, $3::text) AS "row",
      ROW($26::timestamp with time zone) <= ROW($27::timestamp with time zone);
 `)
 
-	err := stmt.Query(db, &struct{}{})
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := stmt.Query(db, &struct{}{})
+		require.NoError(t, err)
+	})
 }
 
 func TestAllTypesSubQueryFrom(t *testing.T) {
@@ -2048,7 +2065,11 @@ FROM`
 
 		testutils.AssertDebugStatementSql(t, stmt1, expectedSQL+expected.sql+";\n", expected.args...)
 
-		dest1 := []model.AllTypes{}
+		var dest1 []struct {
+			model.AllTypes
+
+			AliasedColumn []byte
+		}
 		err := stmt1.Query(db, &dest1)
 		require.NoError(t, err)
 		require.Equal(t, len(dest1), 2)
@@ -2064,12 +2085,17 @@ FROM`
 
 		stmt2 := SELECT(
 			subQuery.AllColumns(),
-		).
-			FROM(subQuery)
+		).FROM(
+			subQuery,
+		)
 
 		testutils.AssertDebugStatementSql(t, stmt2, expectedSQL+expected.sql+";\n", expected.args...)
 
-		dest2 := []model.AllTypes{}
+		var dest2 []struct {
+			model.AllTypes
+
+			AliasedColumn []byte
+		}
 		err = stmt2.Query(db, &dest2)
 
 		require.NoError(t, err)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"github.com/jackc/pgx/v4/stdlib"
@@ -49,6 +50,8 @@ func skipForCockroachDB(t *testing.T) {
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
+	qrm.GlobalConfig.StrictScan = true
+
 	for _, driverName := range []string{"postgres", "pgx"} {
 
 		fmt.Printf("\nRunning postgres tests for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
@@ -93,6 +96,16 @@ func getConnectionString() string {
 	}
 
 	return dbconfig.PostgresConnectString
+}
+
+func allowUnusedColumns(f func()) {
+	defer func() {
+		qrm.GlobalConfig.StrictScan = true
+	}()
+
+	qrm.GlobalConfig.StrictScan = false
+
+	f()
 }
 
 var loggedSQL string
