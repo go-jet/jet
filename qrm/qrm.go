@@ -17,12 +17,19 @@ type Config struct {
 	// to a field in the destination struct.
 	// Does not apply to statements build with SELECT_JSON_OBJ or SELECT_JSON_ARR
 	StrictScan bool
+
+	// JsonUnmarshalFunc is called by the Query method to unmarshal JSON query results created by
+	// SELECT_JSON_OBJ and SELECT_JSON_ARR statements.
+	// It can be replaced with any implementation that matches the standard "encoding/json" `Unmarshal` function signature.
+	// By default, it uses the `Unmarshal` function from Go's standard `encoding/json` package.
+	JsonUnmarshalFunc func(data []byte, v any) error
 }
 
 // GlobalConfig is the package-wide configuration for SQL scanning.
-// This variable should be modified only once, for instance, during application initialization.
+// This variable is not thread safe, and it should be modified only once, for instance, during application initialization.
 var GlobalConfig = Config{
-	StrictScan: false,
+	StrictScan:        false,
+	JsonUnmarshalFunc: json.Unmarshal,
 }
 
 // ErrNoRows is returned by Query when query result set is empty
@@ -116,7 +123,7 @@ func queryJson(ctx context.Context, db Queryable, query string, args []interface
 		return 1, nil
 	}
 
-	err = json.Unmarshal(jsonData, &destPtr)
+	err = GlobalConfig.JsonUnmarshalFunc(jsonData, &destPtr)
 
 	if err != nil {
 		return 1, fmt.Errorf("jet: invalid json, %w", err)

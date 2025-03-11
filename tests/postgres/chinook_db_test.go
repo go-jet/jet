@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"github.com/bytedance/sonic"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/postgres"
@@ -225,8 +226,22 @@ func BenchmarkJoinEverythingJSON(b *testing.B) {
 	}
 }
 
+func BenchmarkJoinEverythingJsonSonic(b *testing.B) {
+	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+		for i := 0; i < b.N; i++ {
+			testJoinEverythingJSON(b)
+		}
+	})
+}
+
 func TestJoinEverythingJSON(t *testing.T) {
 	testJoinEverythingJSON(t)
+}
+
+func TestJoinEverythingJSONSonic(t *testing.T) {
+	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+		testJoinEverythingJSON(t)
+	})
 }
 
 func testJoinEverythingJSON(t require.TestingT) {

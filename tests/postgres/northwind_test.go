@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"github.com/bytedance/sonic"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/model"
@@ -109,6 +110,21 @@ func BenchmarkTestNorthwindJoinEverythingJson(b *testing.B) {
 func TestNorthwindJoinEverythingJson(t *testing.T) {
 	testNorthwindJoinEverythingJson(t)
 }
+
+func BenchmarkTestNorthwindJoinEverythingSonicJson(b *testing.B) {
+	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+		for i := 0; i < b.N; i++ {
+			testNorthwindJoinEverythingJson(b)
+		}
+	})
+}
+
+// uncomment when bug is fixed: https://github.com/bytedance/sonic/issues/774
+//func TestNorthwindJoinEverythingJsonSonic(t *testing.T) {
+//	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+//		testNorthwindJoinEverythingJson(t)
+//	})
+//}
 
 func testNorthwindJoinEverythingJson(t require.TestingT) {
 
