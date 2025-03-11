@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/stmtcache"
@@ -104,6 +105,16 @@ func allowUnusedColumns(f func()) {
 	}()
 
 	qrm.GlobalConfig.StrictScan = false
+
+	f()
+}
+
+func useJsonUnmarshalFunc(unmarshalJson func(data []byte, v any) error, f func()) {
+	defer func() {
+		qrm.GlobalConfig.JsonUnmarshalFunc = json.Unmarshal
+	}()
+
+	qrm.GlobalConfig.JsonUnmarshalFunc = unmarshalJson
 
 	f()
 }
