@@ -17,7 +17,9 @@ type ScanContext struct {
 	groupKeyInfoCache        map[string]groupKeyInfo
 	typeInfoMap              map[string]typeInfo
 
-	typesVisited typeStack // to prevent circular dependency scan
+	typesVisited    typeStack // to prevent circular dependency scan
+	columnAlias     []string
+	columnIndexRead []bool
 }
 
 // NewScanContext creates new ScanContext from rows
@@ -57,7 +59,24 @@ func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 		typeInfoMap: make(map[string]typeInfo),
 
 		typesVisited: newTypeStack(),
+
+		columnAlias:     aliases,
+		columnIndexRead: make([]bool, len(aliases)),
 	}, nil
+}
+
+func (s *ScanContext) EnsureEveryColumnRead() {
+	var neverUsedColumns []string
+
+	for index, read := range s.columnIndexRead {
+		if !read {
+			neverUsedColumns = append(neverUsedColumns, `'`+s.columnAlias[index]+`'`)
+		}
+	}
+
+	if len(neverUsedColumns) > 0 {
+		panic("jet: columns never used: " + strings.Join(neverUsedColumns, ", "))
+	}
 }
 
 func createScanSlice(columnCount int) []interface{} {
@@ -244,6 +263,9 @@ func (s *ScanContext) typeToColumnIndex(typeName, fieldName string) int {
 // rowElemValue always returns non-ptr value,
 // invalid value is nil
 func (s *ScanContext) rowElemValue(index int) reflect.Value {
+	if s.rowNum == 1 {
+		s.columnIndexRead[index] = true
+	}
 	scannedValue := reflect.ValueOf(s.row[index])
 	return scannedValue.Elem().Elem() // no need to check validity of Elem, because s.row[index] always contains interface in interface
 }

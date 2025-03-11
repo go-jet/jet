@@ -10,6 +10,21 @@ import (
 	"reflect"
 )
 
+// Config holds the configuration settings for QRM scanning behavior.
+type Config struct {
+	// StrictScan, when true, causes the scanning function to panic if it encounters any
+	// unused columns in the SQL query result. This ensures that every column is mapped
+	// to a field in the destination struct.
+	// Does not apply to statements build with SELECT_JSON_OBJ or SELECT_JSON_ARR
+	StrictScan bool
+}
+
+// GlobalConfig is the package-wide configuration for SQL scanning.
+// This variable should be modified only once, for instance, during application initialization.
+var GlobalConfig = Config{
+	StrictScan: false,
+}
+
 // ErrNoRows is returned by Query when query result set is empty
 var ErrNoRows = errors.New("qrm: no rows in result set")
 
@@ -199,11 +214,15 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 
 	destValuePtr := reflect.ValueOf(destPtr)
 
+	scanContext.rowNum++
+
 	_, err = mapRowToStruct(scanContext, "", destValuePtr, nil)
 
 	if err != nil {
 		return fmt.Errorf("jet: failed to scan a row into destination, %w", err)
 	}
+
+	scanContext.EnsureEveryColumnRead() // can panic
 
 	return nil
 }
@@ -245,6 +264,10 @@ func queryToSlice(ctx context.Context, db Queryable, query string, args []interf
 
 		if err != nil {
 			return scanContext.rowNum, err
+		}
+
+		if scanContext.rowNum == 1 && GlobalConfig.StrictScan {
+			scanContext.EnsureEveryColumnRead()
 		}
 	}
 
