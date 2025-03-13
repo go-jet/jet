@@ -51,6 +51,18 @@ func (cl ColumnList) As(tableAlias string) ProjectionList {
 	return ret
 }
 
+// From creates a new ColumnList that references the specified subquery.
+// This method is typically used to project columns from a subquery into the surrounding query.
+func (cl ColumnList) From(subQuery SelectTable) ColumnList {
+	var ret ColumnList
+
+	for _, column := range cl {
+		ret = append(ret, column.fromImpl(subQuery).(ColumnExpression))
+	}
+
+	return ret
+}
+
 func (cl ColumnList) fromImpl(subQuery SelectTable) Projection {
 	newProjectionList := ProjectionList{}
 

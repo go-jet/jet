@@ -332,13 +332,7 @@ func TestSelectJson_GroupBy(t *testing.T) {
 	).AsTable("customers_info")
 
 	stmt := SELECT_JSON_ARR(
-		subQuery.AllColumns().Except( // TODO: remove when ColumnList.From() is implemented
-			FloatColumn("sum"),
-			FloatColumn("avg"),
-			FloatColumn("max"),
-			FloatColumn("min"),
-			FloatColumn("count"),
-		),
+		Customer.AllColumns.From(subQuery),
 
 		SELECT_JSON_OBJ(
 			FloatColumn("sum").From(subQuery),
