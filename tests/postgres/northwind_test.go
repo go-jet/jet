@@ -204,3 +204,114 @@ func testNorthwindJoinEverythingJson(t require.TestingT) {
 	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/northwind-all2.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/northwind-all.json")
 }
+
+func TestColumnListFrom(t *testing.T) {
+
+	toOrderBy := map[string]bool{
+		"city":        true,
+		"region":      true,
+		"postal_code": true,
+	}
+
+	subQuery := SELECT(
+		Customers.AllColumns,
+	).FROM(
+		Customers,
+	).AsTable("subQuery")
+
+	var orderBy []OrderByClause
+
+	for _, column := range Customers.AllColumns.From(subQuery) {
+		if toOrderBy[column.Name()] {
+			orderBy = append(orderBy, column.ASC())
+		}
+	}
+
+	stmt := SELECT(
+		subQuery.AllColumns(),
+	).FROM(
+		subQuery,
+	).ORDER_BY(
+		orderBy...,
+	).LIMIT(3)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT "subQuery"."customers.customer_id" AS "customers.customer_id",
+     "subQuery"."customers.company_name" AS "customers.company_name",
+     "subQuery"."customers.contact_name" AS "customers.contact_name",
+     "subQuery"."customers.contact_title" AS "customers.contact_title",
+     "subQuery"."customers.address" AS "customers.address",
+     "subQuery"."customers.city" AS "customers.city",
+     "subQuery"."customers.region" AS "customers.region",
+     "subQuery"."customers.postal_code" AS "customers.postal_code",
+     "subQuery"."customers.country" AS "customers.country",
+     "subQuery"."customers.phone" AS "customers.phone",
+     "subQuery"."customers.fax" AS "customers.fax"
+FROM (
+          SELECT customers.customer_id AS "customers.customer_id",
+               customers.company_name AS "customers.company_name",
+               customers.contact_name AS "customers.contact_name",
+               customers.contact_title AS "customers.contact_title",
+               customers.address AS "customers.address",
+               customers.city AS "customers.city",
+               customers.region AS "customers.region",
+               customers.postal_code AS "customers.postal_code",
+               customers.country AS "customers.country",
+               customers.phone AS "customers.phone",
+               customers.fax AS "customers.fax"
+          FROM northwind.customers
+     ) AS "subQuery"
+ORDER BY "subQuery"."customers.city" ASC, "subQuery"."customers.region" ASC, "subQuery"."customers.postal_code" ASC
+LIMIT 3;
+`)
+
+	var dest []model.Customers
+
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+
+	testutils.AssertJSON(t, dest, `
+[
+	{
+		"CustomerID": "DRACD",
+		"CompanyName": "Drachenblut Delikatessen",
+		"ContactName": "Sven Ottlieb",
+		"ContactTitle": "Order Administrator",
+		"Address": "Walserweg 21",
+		"City": "Aachen",
+		"Region": null,
+		"PostalCode": "52066",
+		"Country": "Germany",
+		"Phone": "0241-039123",
+		"Fax": "0241-059428"
+	},
+	{
+		"CustomerID": "RATTC",
+		"CompanyName": "Rattlesnake Canyon Grocery",
+		"ContactName": "Paula Wilson",
+		"ContactTitle": "Assistant Sales Representative",
+		"Address": "2817 Milton Dr.",
+		"City": "Albuquerque",
+		"Region": "NM",
+		"PostalCode": "87110",
+		"Country": "USA",
+		"Phone": "(505) 555-5939",
+		"Fax": "(505) 555-3620"
+	},
+	{
+		"CustomerID": "OLDWO",
+		"CompanyName": "Old World Delicatessen",
+		"ContactName": "Rene Phillips",
+		"ContactTitle": "Sales Representative",
+		"Address": "2743 Bering St.",
+		"City": "Anchorage",
+		"Region": "AK",
+		"PostalCode": "99508",
+		"Country": "USA",
+		"Phone": "(907) 555-7584",
+		"Fax": "(907) 555-2880"
+	}
+]
+`)
+
+}
