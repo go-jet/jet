@@ -1,27 +1,20 @@
 package jet
 
-// ColumnAssigment is interface wrapper around column assigment
+// ColumnAssigment is interface wrapper around column assignment
 type ColumnAssigment interface {
 	Serializer
-	isColumnAssigment()
+	isColumnAssignment()
 }
 
 type columnAssigmentImpl struct {
-	column     ColumnSerializer
-	expression Expression
+	column   ColumnSerializer
+	toAssign Serializer
 }
 
-func NewColumnAssignment(serializer ColumnSerializer, expression Expression) ColumnAssigment {
-	return &columnAssigmentImpl{
-		column:     serializer,
-		expression: expression,
-	}
-}
-
-func (a columnAssigmentImpl) isColumnAssigment() {}
+func (a columnAssigmentImpl) isColumnAssignment() {}
 
 func (a columnAssigmentImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	a.column.serialize(statement, out, ShortName.WithFallTrough(options)...)
 	out.WriteString("=")
-	a.expression.serialize(statement, out, FallTrough(options)...)
+	a.toAssign.serialize(statement, out, FallTrough(options)...)
 }

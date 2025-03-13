@@ -28,8 +28,8 @@ func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
 
 func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: boolExp,
+		column:   i,
+		toAssign: boolExp,
 	}
 }
 
@@ -72,8 +72,8 @@ func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
 
 func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: floatExp,
+		column:   i,
+		toAssign: floatExp,
 	}
 }
 
@@ -117,8 +117,8 @@ func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
 
 func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: intExp,
+		column:   i,
+		toAssign: intExp,
 	}
 }
 
@@ -163,8 +163,8 @@ func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
 
 func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: stringExp,
+		column:   i,
+		toAssign: stringExp,
 	}
 }
 
@@ -208,8 +208,8 @@ func (i *blobColumnImpl) From(subQuery SelectTable) ColumnBlob {
 
 func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: blobExp,
+		column:   i,
+		toAssign: blobExp,
 	}
 }
 
@@ -252,8 +252,8 @@ func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
 
 func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timeExp,
+		column:   i,
+		toAssign: timeExp,
 	}
 }
 
@@ -295,8 +295,8 @@ func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
 
 func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timezExp,
+		column:   i,
+		toAssign: timezExp,
 	}
 }
 
@@ -339,8 +339,8 @@ func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
 
 func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timestampExp,
+		column:   i,
+		toAssign: timestampExp,
 	}
 }
 
@@ -383,8 +383,8 @@ func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
 
 func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timestampzExp,
+		column:   i,
+		toAssign: timestampzExp,
 	}
 }
 
@@ -427,8 +427,8 @@ func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
 
 func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: dateExp,
+		column:   i,
+		toAssign: dateExp,
 	}
 }
 
@@ -460,8 +460,8 @@ type intervalColumnImpl struct {
 
 func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: intervalExp,
+		column:   i,
+		toAssign: intervalExp,
 	}
 }
 
@@ -516,8 +516,8 @@ func (i *rangeColumnImpl[T]) From(subQuery SelectTable) ColumnRange[T] {
 
 func (i *rangeColumnImpl[T]) SET(rangeExp Range[T]) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: rangeExp,
+		column:   i,
+		toAssign: rangeExp,
 	}
 }
 

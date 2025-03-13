@@ -1,17 +1,60 @@
 package jet
 
+import "fmt"
+
 // ColumnList is a helper type to support list of columns as single projection
 type ColumnList []ColumnExpression
 
-// SET creates column assigment for each column in column list. expression should be created by ROW function
+func (cl ColumnList) isExpressionOrColumnList() {}
+
+// SET creates a column assignment from the current ColumnList using the provided expression.
+// This assignment can be used in INSERT queries (e.g., to set columns on conflict) or in UPDATE queries
+// (e.g., to assign new values to columns).
 //
-//	Link.UPDATE().
-//		SET(Link.MutableColumns.SET(ROW(String("github.com"), Bool(false))).
-//		WHERE(Link.ID.EQ(Int(0)))
-func (cl ColumnList) SET(expression Expression) ColumnAssigment {
+// The expression can be:
+//   - Another ColumnList: It must have the same length as the current ColumnList and each column must match by name
+//   - A ROW expression containing values.
+//   - A SELECT statement that returns a matching column list structure.
+//
+// Examples:
+//
+//	Link.AllColumns.SET(ROW(String("github.com"), Bool(false)))
+//
+//	Link.MutableColumns.SET(Link.EXCLUDED.MutableColumns)
+//
+//	Link.MutableColumns.SET(
+//	  SELECT(Link.MutableColumns).
+//	    FROM(Link).
+//	    WHERE(Link.ID.EQ(Int(200))),
+//	)
+func (cl ColumnList) SET(toAssignExp expressionOrColumnList) ColumnAssigment {
+
+	if toAssign, ok := toAssignExp.(ColumnList); ok {
+		if len(cl) != len(toAssign) {
+			panic(fmt.Sprintf("jet: column list length mismatch: expected %d columns, got %d", len(cl), len(toAssign)))
+		}
+
+		var ret columnListAssigment
+
+		for i, column := range cl {
+			if column.Name() != toAssign[i].Name() {
+				panic(fmt.Sprintf("jet: column name mismatch at index %d: expected column '%s', got '%s'",
+					i, column.Name(), toAssign[i].Name(),
+				))
+			}
+
+			ret = append(ret, columnAssigmentImpl{
+				column:   column,
+				toAssign: toAssign[i],
+			})
+		}
+
+		return ret
+	}
+
 	return columnAssigmentImpl{
-		column:     cl,
-		expression: expression,
+		column:   cl,
+		toAssign: toAssignExp,
 	}
 }
 

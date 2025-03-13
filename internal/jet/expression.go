@@ -9,6 +9,7 @@ type Expression interface {
 	Projection
 	GroupByClause
 	OrderByClause
+	expressionOrColumnList
 
 	serializeForJsonValue(statement StatementType, out *SQLBuilder)
 	setRoot(root Expression)
@@ -36,6 +37,8 @@ type Expression interface {
 type ExpressionInterfaceImpl struct {
 	Root Expression
 }
+
+func (e *ExpressionInterfaceImpl) isExpressionOrColumnList() {}
 
 func (e *ExpressionInterfaceImpl) setRoot(root Expression) {
 	e.Root = root
