@@ -1,6 +1,6 @@
 # Jet
 
-![mascot](./mascot.png)
+<img align="right" width="200px" src="./mascot.png">
 
 [![go-jet](https://circleci.com/gh/go-jet/jet.svg?style=svg)](https://app.circleci.com/pipelines/github/go-jet/jet?branch=master)
 [![codecov](https://codecov.io/gh/go-jet/jet/branch/master/graph/badge.svg)](https://codecov.io/gh/go-jet/jet)
