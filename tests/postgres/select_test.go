@@ -2739,7 +2739,7 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)
+WHERE (((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)) AND (film.rating != 'R')
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 `
 
@@ -2758,7 +2758,8 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	).WHERE(
 		Language.Name.EQ(Char(20)("English")). // note that every column has type.
 							AND(Category.Name.NOT_EQ(Text("Action"))). // String column Language.Name and Category.Name can be compared only with string expression
-							AND(Film.Length.GT(Int32(180))),           // Film.Length is integer column and can be compared only with integer expression
+							AND(Film.Length.GT(Int32(180))).           // Film.Length is integer column and can be compared only with integer expression
+							AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),
 	).ORDER_BY(
 		Actor.ActorID.ASC(),
 		Film.FilmID.ASC(),
@@ -2805,7 +2806,7 @@ func TestSelectQuickStartWithSubQueries(t *testing.T) {
 
 	filmLogerThan180 := Film.
 		SELECT(Film.AllColumns).
-		WHERE(Film.Length.GT(Int(180))).
+		WHERE(Film.Length.GT(Int(180)).AND(Film.Rating.NOT_EQ(enum.MpaaRating.R))).
 		AsTable("films")
 
 	filmID := Film.FilmID.From(filmLogerThan180)
