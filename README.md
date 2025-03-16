@@ -182,7 +182,7 @@ import (
 )
 ```
 Let's say we want to retrieve the list of all _actors_ who acted in _films_ longer than 180 minutes, _film language_ is 'English'
-and _film category_ is not 'Action'.
+,_film category_ is not 'Action' and _film rating_ is not 'R'.
 ```golang
 stmt := SELECT(
     Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,  // or just Actor.AllColumns
