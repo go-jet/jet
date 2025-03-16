@@ -1,6 +1,6 @@
 # Jet
 
-<img align="right" width="200px" src="./mascot.png">
+<img align="right" width="175px" src="https://github.com/go-jet/jet/wiki/image/mascot.png">
 
 [![go-jet](https://circleci.com/gh/go-jet/jet.svg?style=svg)](https://app.circleci.com/pipelines/github/go-jet/jet?branch=master)
 [![codecov](https://codecov.io/gh/go-jet/jet/branch/master/graph/badge.svg)](https://codecov.io/gh/go-jet/jet)
@@ -177,7 +177,8 @@ import (
   . "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
   . "github.com/go-jet/jet/v2/postgres"
 
-  "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/model"
+  "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/enum"
+  "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/model"  
 )
 ```
 Let's say we want to retrieve the list of all _actors_ who acted in _films_ longer than 180 minutes, _film language_ is 'English'
@@ -198,7 +199,8 @@ stmt := SELECT(
 ).WHERE(
     Language.Name.EQ(Char(20)("English")).             
         AND(Category.Name.NOT_EQ(Text("Action"))).  
-        AND(Film.Length.GT(Int32(180))),               
+        AND(Film.Length.GT(Int32(180))).
+        AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),              
 ).ORDER_BY(
     Actor.ActorID.ASC(),
     Film.FilmID.ASC(),
@@ -251,7 +253,7 @@ FROM dvds.actor
          INNER JOIN dvds.language ON (language.language_id = film.language_id)
          INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
          INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = $1::char(20)) AND (category.name != $2::text)) AND (film.length > $3::integer)
+WHERE (((language.name = $1::char(20)) AND (category.name != $2::text)) AND (film.length > $3)) AND (film.rating != 'R')
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
 ```sh 
@@ -302,7 +304,7 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)
+WHERE (((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180)) AND (film.rating != 'R')
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
 </details>
