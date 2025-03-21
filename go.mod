@@ -15,7 +15,7 @@ require (
 
 // used in tests
 require (
-	github.com/bytedance/sonic v1.13.1
+	github.com/bytedance/sonic v1.13.2
 	github.com/google/go-cmp v0.7.0
 	github.com/pkg/profile v1.7.0
 	github.com/shopspring/decimal v1.4.0
