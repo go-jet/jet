@@ -3,9 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
-	"path/filepath"
-	"testing"
-
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/template"
@@ -16,6 +13,8 @@ import (
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 	"github.com/stretchr/testify/require"
+	"path/filepath"
+	"testing"
 )
 
 const tempTestDir = "./.tempTestDir"
@@ -432,6 +431,12 @@ func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 										defaultTableModelField.Type = template.NewType(sql.NullFloat64{})
 									case "*time.Time":
 										defaultTableModelField.Type = template.NewType(sql.NullTime{})
+									case "time.Time":
+										defaultTableModelField.Type = template.Type{
+											ImportPath:            "database/sql",
+											AdditionalImportPaths: []string{"github.com/google/uuid"},
+											Name:                  "sql.Null[uuid.UUID]",
+										}
 									}
 									return defaultTableModelField
 								})
@@ -443,10 +448,12 @@ func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 	require.Nil(t, err)
 
 	data := file2.Exists(t, defaultModelPath, "film.go")
-	require.Contains(t, data, "\"database/sql\"")
+	require.Contains(t, data, `"database/sql"`)
+	require.Contains(t, data, `"github.com/google/uuid"`)
 	require.Contains(t, data, "Description     sql.NullString")
 	require.Contains(t, data, "ReleaseYear     sql.NullInt32")
 	require.Contains(t, data, "SpecialFeatures sql.NullString")
+	require.Contains(t, data, "LastUpdate      sql.Null[uuid.UUID]")
 }
 
 func TestGeneratorTemplate_SQLBuilder_ChangeColumnTypes(t *testing.T) {
