@@ -6,8 +6,10 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
+	"maps"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 )
@@ -106,19 +108,13 @@ func getTableModelImports(modelType TableModel, tableMetaData metadata.Table) []
 	importPaths := map[string]bool{}
 	for _, columnMetaData := range tableMetaData.Columns {
 		field := modelType.Field(columnMetaData)
-		importPath := field.Type.ImportPath
-
-		if importPath != "" {
-			importPaths[importPath] = true
+		for _, importPath := range append([]string{field.Type.ImportPath}, field.Type.AdditionalImportPaths...) {
+			if importPath != "" {
+				importPaths[importPath] = true
+			}
 		}
 	}
-
-	var ret []string
-	for importPath := range importPaths {
-		ret = append(ret, importPath)
-	}
-
-	return ret
+	return slices.Collect(maps.Keys(importPaths))
 }
 
 // EnumModel is template for enum model files generation
@@ -207,31 +203,71 @@ func (f TableModelField) TagsString() string {
 
 // Type represents type of the struct field
 type Type struct {
-	ImportPath string
-	Name       string
+	ImportPath            string
+	AdditionalImportPaths []string
+	Name                  string
 }
 
 // NewType creates new type for dummy object
 func NewType(dummyObject interface{}) Type {
+	typeName, importPaths := parseType(dummyObject)
 	return Type{
-		ImportPath: getImportPath(dummyObject),
-		Name:       getTypeName(dummyObject),
+		AdditionalImportPaths: importPaths,
+		Name:                  typeName,
 	}
 }
 
-func getTypeName(t interface{}) string {
-	typeStr := reflect.TypeOf(t).String()
+func parseType(t interface{}) (string, []string) {
+	typ := reflect.TypeOf(t)
+	typeStr := typ.String()
+
+	importPath := typ.PkgPath()
+	if typ.Kind() == reflect.Ptr {
+		importPath = typ.Elem().PkgPath()
+	}
+	importPaths := make(map[string]struct{})
+	if importPath != "" {
+		importPaths[importPath] = struct{}{}
+	}
+
 	typeStr = strings.Replace(typeStr, "[]uint8", "[]byte", -1)
-
-	return typeStr
-}
-
-func getImportPath(dummyData interface{}) string {
-	dataType := reflect.TypeOf(dummyData)
-	if dataType.Kind() == reflect.Ptr {
-		return dataType.Elem().PkgPath()
+	firstBracketIdx := strings.Index(typeStr, "[")
+	if firstBracketIdx <= 0 || typeStr[firstBracketIdx-1] == '*' {
+		return typeStr, slices.Collect(maps.Keys(importPaths))
 	}
-	return dataType.PkgPath()
+
+	var innerTypes []string
+
+	genericTypesString := typeStr[firstBracketIdx+1 : len(typeStr)-1]
+	genericTypes := strings.Split(genericTypesString, ",")
+
+	for _, p := range genericTypes {
+		lastDotIdx := strings.LastIndex(p, ".")
+		// No dot means it's a primitive type, no need to parse imports
+		if lastDotIdx == -1 {
+			innerTypes = append(innerTypes, p)
+			continue
+		}
+
+		// If the inner type is a pointer, we need to remove it from the package path and add back to the type.
+		// i.e., *github.com/go-jet/jet/v2/generator/template.Foo ->  *template.Foo.
+		var ptrPrefix string
+		innerImport, typeName := p[:lastDotIdx], p[lastDotIdx+1:]
+		if pointerIdx := strings.LastIndex(p, "*"); pointerIdx != -1 {
+			ptrPrefix = p[:pointerIdx+1]
+			innerImport = strings.TrimPrefix(innerImport, ptrPrefix)
+		}
+
+		importPaths[innerImport] = struct{}{}
+
+		// Take only the name of the package itself for the type string, e.g, database/sql.NullString -> sql.NullString
+		lastSlashIdx := strings.LastIndex(innerImport, "/")
+		innerType := fmt.Sprintf("%s%s.%s", ptrPrefix, innerImport[lastSlashIdx+1:], typeName)
+		innerTypes = append(innerTypes, innerType)
+	}
+
+	typeStr = fmt.Sprintf("%s[%s]", strings.Split(typ.String(), "[")[0], strings.Join(innerTypes, ","))
+	return typeStr, slices.Collect(maps.Keys(importPaths))
 }
 
 func getType(columnMetadata metadata.Column) Type {
