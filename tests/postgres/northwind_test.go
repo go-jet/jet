@@ -119,12 +119,11 @@ func BenchmarkTestNorthwindJoinEverythingSonicJson(b *testing.B) {
 	})
 }
 
-// uncomment when bug is fixed: https://github.com/bytedance/sonic/issues/774
-//func TestNorthwindJoinEverythingJsonSonic(t *testing.T) {
-//	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
-//		testNorthwindJoinEverythingJson(t)
-//	})
-//}
+func TestNorthwindJoinEverythingJsonSonic(t *testing.T) {
+	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+		testNorthwindJoinEverythingJson(t)
+	})
+}
 
 func testNorthwindJoinEverythingJson(t require.TestingT) {
 
