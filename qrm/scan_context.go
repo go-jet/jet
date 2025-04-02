@@ -70,7 +70,7 @@ func newScanContext(aliases []string) *ScanContext {
 
 		columnAlias:     aliases,
 		columnIndexRead: make([]bool, len(aliases)),
-	}, nil
+	}
 }
 
 func (s *ScanContext) EnsureEveryColumnRead() {
