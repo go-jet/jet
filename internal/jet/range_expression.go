@@ -29,85 +29,85 @@ type Range[T Expression] interface {
 }
 
 type rangeInterfaceImpl[T Expression] struct {
-	parent Range[T]
+	root Range[T]
 }
 
 func (r *rangeInterfaceImpl[T]) EQ(rhs Range[T]) BoolExpression {
-	return Eq(r.parent, rhs)
+	return Eq(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) NOT_EQ(rhs Range[T]) BoolExpression {
-	return NotEq(r.parent, rhs)
+	return NotEq(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) LT(rhs Range[T]) BoolExpression {
-	return Lt(r.parent, rhs)
+	return Lt(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) LT_EQ(rhs Range[T]) BoolExpression {
-	return LtEq(r.parent, rhs)
+	return LtEq(r.root, rhs)
 
 }
 
 func (r *rangeInterfaceImpl[T]) GT(rhs Range[T]) BoolExpression {
-	return Gt(r.parent, rhs)
+	return Gt(r.root, rhs)
 
 }
 
 func (r *rangeInterfaceImpl[T]) GT_EQ(rhs Range[T]) BoolExpression {
-	return GtEq(r.parent, rhs)
+	return GtEq(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) CONTAINS(rhs T) BoolExpression {
-	return Contains(r.parent, rhs)
+	return Contains(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) CONTAINS_RANGE(rhs Range[T]) BoolExpression {
-	return Contains(r.parent, rhs)
+	return Contains(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) OVERLAP(rhs Range[T]) BoolExpression {
-	return Overlap(r.parent, rhs)
+	return Overlap(r.root, rhs)
 }
 
 func (r *rangeInterfaceImpl[T]) UNION(rhs Range[T]) Range[T] {
-	return RangeExp[T](Add(r.parent, rhs))
+	return RangeExp[T](Add(r.root, rhs))
 }
 
 func (r *rangeInterfaceImpl[T]) INTERSECTION(rhs Range[T]) Range[T] {
-	return RangeExp[T](Mul(r.parent, rhs))
+	return RangeExp[T](Mul(r.root, rhs))
 }
 
 func (r *rangeInterfaceImpl[T]) DIFFERENCE(rhs Range[T]) Range[T] {
-	return RangeExp[T](Sub(r.parent, rhs))
+	return RangeExp[T](Sub(r.root, rhs))
 }
 
 func (r *rangeInterfaceImpl[T]) UPPER_BOUND() T {
-	return UPPER_BOUND(r.parent)
+	return UPPER_BOUND(r.root)
 }
 
 func (r *rangeInterfaceImpl[T]) LOWER_BOUND() T {
-	return LOWER_BOUND(r.parent)
+	return LOWER_BOUND(r.root)
 }
 
 func (r *rangeInterfaceImpl[T]) IS_EMPTY() BoolExpression {
-	return IS_EMPTY(r.parent)
+	return IS_EMPTY(r.root)
 }
 
 func (r *rangeInterfaceImpl[T]) LOWER_INC() BoolExpression {
-	return LOWER_INC(r.parent)
+	return LOWER_INC(r.root)
 }
 
 func (r *rangeInterfaceImpl[T]) UPPER_INC() BoolExpression {
-	return UPPER_INC(r.parent)
+	return UPPER_INC(r.root)
 }
 
 func (r *rangeInterfaceImpl[T]) LOWER_INF() BoolExpression {
-	return LOWER_INF(r.parent)
+	return LOWER_INF(r.root)
 }
 
 func (r *rangeInterfaceImpl[T]) UPPER_INF() BoolExpression {
-	return UPPER_INF(r.parent)
+	return UPPER_INF(r.root)
 }
 
 //---------------------------------------------------//
@@ -118,9 +118,10 @@ type rangeExpressionWrapper[T Expression] struct {
 }
 
 func newRangeExpressionWrap[T Expression](expression Expression) Range[T] {
-	rangeExpressionWrap := rangeExpressionWrapper[T]{Expression: expression}
-	rangeExpressionWrap.rangeInterfaceImpl.parent = &rangeExpressionWrap
-	return &rangeExpressionWrap
+	rangeExpressionWrap := &rangeExpressionWrapper[T]{Expression: expression}
+	rangeExpressionWrap.rangeInterfaceImpl.root = rangeExpressionWrap
+	expression.setRoot(rangeExpressionWrap)
+	return rangeExpressionWrap
 }
 
 // RangeExp is range expression wrapper around arbitrary expression.

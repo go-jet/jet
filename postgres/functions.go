@@ -192,9 +192,27 @@ func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression
 	return jet.CONCAT_WS(explicitLiteralCast(separator), explicitLiteralCasts(expressions...)...)
 }
 
+// Character encodings for CONVERT, CONVERT_FROM and CONVERT_TO functions
+var (
+	UTF8       = StringExp(jet.FixedLiteral("UTF8"))
+	LATIN1     = StringExp(jet.FixedLiteral("LATIN1"))
+	LATIN2     = StringExp(jet.FixedLiteral("LATIN2"))
+	LATIN3     = StringExp(jet.FixedLiteral("LATIN3"))
+	LATIN4     = StringExp(jet.FixedLiteral("LATIN4"))
+	WIN1252    = StringExp(jet.FixedLiteral("WIN1252"))
+	ISO_8859_5 = StringExp(jet.FixedLiteral("ISO_8859_5"))
+	ISO_8859_6 = StringExp(jet.FixedLiteral("ISO_8859_6"))
+	ISO_8859_7 = StringExp(jet.FixedLiteral("ISO_8859_7"))
+	ISO_8859_8 = StringExp(jet.FixedLiteral("ISO_8859_8"))
+	KOI8R      = StringExp(jet.FixedLiteral("KOI8R"))
+	KOI8U      = StringExp(jet.FixedLiteral("KOI8U"))
+)
+
 // CONVERT converts string to dest_encoding. The original encoding is
 // specified by src_encoding. The string must be valid in this encoding.
-var CONVERT = jet.CONVERT
+func CONVERT(str ByteaExpression, srcEncoding StringExpression, destEncoding StringExpression) ByteaExpression {
+	return jet.CONVERT(str, srcEncoding, destEncoding)
+}
 
 // CONVERT_FROM converts string to the database encoding. The original
 // encoding is specified by src_encoding. The string must be valid in this encoding.
@@ -202,6 +220,13 @@ var CONVERT_FROM = jet.CONVERT_FROM
 
 // CONVERT_TO converts string to dest_encoding.
 var CONVERT_TO = jet.CONVERT_TO
+
+// ENCODE/DECODE textual formats
+var (
+	Base64 = StringExp(jet.FixedLiteral("base64"))
+	Escape = StringExp(jet.FixedLiteral("escape"))
+	Hex    = StringExp(jet.FixedLiteral("hex"))
+)
 
 // ENCODE encodes binary data into a textual representation.
 // Supported formats are: base64, hex, escape. escape converts zero bytes and
@@ -212,7 +237,7 @@ var ENCODE = jet.ENCODE
 // Options for format are same as in encode.
 var DECODE = jet.DECODE
 
-// FORMAT formats a number to a format like "#,###,###.##", rounded to a specified number of decimal places, then it returns the result as a string.
+// FORMAT formats the arguments according to a format string. This function is similar to the C function sprintf.
 func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
 	return jet.FORMAT(formatStr, explicitLiteralCasts(formatArgs...)...)
 }
@@ -241,6 +266,49 @@ var LPAD = jet.LPAD
 // RPAD fills up the string to length length by appending the characters
 // fill (a space by default). If the string is already longer than length then it is truncated.
 var RPAD = jet.RPAD
+
+// BIT_COUNT returns the number of bits set in the binary string (also known as “popcount”).
+var BIT_COUNT = jet.BIT_COUNT
+
+// GET_BIT extracts n'th bit from binary string.
+func GET_BIT(bytes ByteaExpression, n IntegerExpression) IntegerExpression {
+	return IntExp(Func("GET_BIT", bytes, n))
+}
+
+// GET_BYTE extracts n'th byte from binary string.
+func GET_BYTE(bytes ByteaExpression, n IntegerExpression) IntegerExpression {
+	return IntExp(Func("GET_BYTE", bytes, n))
+}
+
+// SET_BIT sets n'th bit in binary string to newvalue.
+func SET_BIT(bytes ByteaExpression, n IntegerExpression, newValue IntegerExpression) ByteaExpression {
+	return ByteaExp(Func("SET_BIT", bytes, n, newValue))
+}
+
+// SET_BYTE sets n'th byte in binary string to newvalue.
+func SET_BYTE(bytes ByteaExpression, n IntegerExpression, newValue IntegerExpression) ByteaExpression {
+	return ByteaExp(Func("SET_BYTE", bytes, n, newValue))
+}
+
+// SHA224 computes the SHA-224 hash of the binary string.
+func SHA224(bytes ByteaExpression) ByteaExpression {
+	return ByteaExp(Func("SHA224", bytes))
+}
+
+// SHA256 computes the SHA-256 hash of the binary string.
+func SHA256(bytes ByteaExpression) ByteaExpression {
+	return ByteaExp(Func("SHA256", bytes))
+}
+
+// SHA384 computes the SHA-384 hash of the binary string.
+func SHA384(bytes ByteaExpression) ByteaExpression {
+	return ByteaExp(Func("SHA384", bytes))
+}
+
+// SHA512 computes the SHA-512 hash of the binary string.
+func SHA512(bytes ByteaExpression) ByteaExpression {
+	return ByteaExp(Func("SHA512", bytes))
+}
 
 // MD5 calculates the MD5 hash of string, returning the result in hexadecimal
 var MD5 = jet.MD5

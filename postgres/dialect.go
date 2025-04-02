@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"strconv"
@@ -25,13 +26,40 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},
-		ReservedWords: reservedWords,
+		ArgumentToString: argumentToString,
+		ReservedWords:    reservedWords,
 		ValuesDefaultColumnName: func(index int) string {
 			return fmt.Sprintf("column%d", index+1)
+		},
+		JsonValueEncode: func(expr Expression) Expression {
+			switch e := expr.(type) {
+			case ByteaExpression:
+				return ENCODE(e, Base64)
+
+			// CustomExpression used bellow (instead TO_CHAR function) so that only expr is parametrized
+			case TimeExpression:
+				return CustomExpression(Token("'0000-01-01T' || to_char('2000-10-10'::date + "), e, Token(`, 'HH24:MI:SS.USZ')`))
+			case TimezExpression:
+				return CustomExpression(Token("'0000-01-01T' || to_char('2000-10-10'::date + "), e, Token(`, 'HH24:MI:SS.USTZH:TZM')`))
+			case TimestampExpression:
+				return CustomExpression(Token("to_char("), e, Token(`, 'YYYY-MM-DD"T"HH24:MI:SS.USZ')`))
+			case DateExpression:
+				return CustomExpression(Token("to_char("), e, Token(`::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z'`))
+			}
+			return expr
 		},
 	}
 
 	return jet.NewDialect(dialectParams)
+}
+
+func argumentToString(value any) (string, bool) {
+	switch bindVal := value.(type) {
+	case []byte:
+		return fmt.Sprintf("'\\x%s'", hex.EncodeToString(bindVal)), true
+	}
+
+	return "", false
 }
 
 func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {
@@ -121,17 +149,23 @@ var reservedWords = []string{
 	"AS",
 	"ASC",
 	"ASYMMETRIC",
+	"AUTHORIZATION",
+	"BINARY",
 	"BOTH",
 	"CASE",
 	"CAST",
 	"CHECK",
 	"COLLATE",
+	"COLLATION",
 	"COLUMN",
+	"CONCURRENTLY",
 	"CONSTRAINT",
 	"CREATE",
+	"CROSS",
 	"CURRENT_CATALOG",
 	"CURRENT_DATE",
 	"CURRENT_ROLE",
+	"CURRENT_SCHEMA",
 	"CURRENT_TIME",
 	"CURRENT_TIMESTAMP",
 	"CURRENT_USER",
@@ -147,26 +181,39 @@ var reservedWords = []string{
 	"FETCH",
 	"FOR",
 	"FOREIGN",
+	"FREEZE",
 	"FROM",
+	"FULL",
 	"GRANT",
 	"GROUP",
 	"HAVING",
+	"ILIKE",
 	"IN",
 	"INITIALLY",
+	"INNER",
 	"INTERSECT",
 	"INTO",
+	"IS",
+	"ISNULL",
+	"JOIN",
 	"LATERAL",
 	"LEADING",
+	"LEFT",
+	"LIKE",
 	"LIMIT",
 	"LOCALTIME",
 	"LOCALTIMESTAMP",
+	"NATURAL",
 	"NOT",
+	"NOTNULL",
 	"NULL",
 	"OFFSET",
 	"ON",
 	"ONLY",
 	"OR",
 	"ORDER",
+	"OUTER",
+	"OVERLAPS",
 	"PLACING",
 	"PRIMARY",
 	"REFERENCES",
@@ -174,9 +221,12 @@ var reservedWords = []string{
 	"RIGHT",
 	"SELECT",
 	"SESSION_USER",
+	"SIMILAR",
 	"SOME",
 	"SYMMETRIC",
+	"SYSTEM_USER",
 	"TABLE",
+	"TABLESAMPLE",
 	"THEN",
 	"TO",
 	"TRAILING",
@@ -186,6 +236,7 @@ var reservedWords = []string{
 	"USER",
 	"USING",
 	"VARIADIC",
+	"VERBOSE",
 	"WHEN",
 	"WHERE",
 	"WINDOW",

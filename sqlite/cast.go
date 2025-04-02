@@ -42,6 +42,6 @@ func (c *cast) AS_REAL() FloatExpression {
 }
 
 // AS_BLOB cast expression to BLOB type
-func (c *cast) AS_BLOB() StringExpression {
-	return StringExp(c.AS("BLOB"))
+func (c *cast) AS_BLOB() BlobExpression {
+	return BlobExp(c.AS("BLOB"))
 }

@@ -3,7 +3,9 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -20,6 +22,8 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
+var ctx = context.Background()
+
 var db *stmtcache.DB
 var testRoot string
 
@@ -31,6 +35,7 @@ const CockroachDB = "COCKROACH_DB"
 func init() {
 	source = os.Getenv("PG_SOURCE")
 	withStatementCaching = os.Getenv("JET_TESTS_WITH_STMT_CACHE") == "true"
+	testRoot = repo.GetTestsDirPath()
 }
 
 func sourceIsCockroachDB() bool {
@@ -46,7 +51,7 @@ func skipForCockroachDB(t *testing.T) {
 func TestMain(m *testing.M) {
 	defer profile.Start().Stop()
 
-	setTestRoot()
+	qrm.GlobalConfig.StrictScan = true
 
 	for _, driverName := range []string{"postgres"} {
 
@@ -94,8 +99,24 @@ func getConnectionString() string {
 	return dbconfig.PostgresConnectString
 }
 
-func setTestRoot() {
-	testRoot = repo.GetTestsDirPath()
+func allowUnusedColumns(f func()) {
+	defer func() {
+		qrm.GlobalConfig.StrictScan = true
+	}()
+
+	qrm.GlobalConfig.StrictScan = false
+
+	f()
+}
+
+func useJsonUnmarshalFunc(unmarshalJson func(data []byte, v any) error, f func()) {
+	defer func() {
+		qrm.GlobalConfig.JsonUnmarshalFunc = json.Unmarshal
+	}()
+
+	qrm.GlobalConfig.JsonUnmarshalFunc = unmarshalJson
+
+	f()
 }
 
 var loggedSQL string
@@ -120,13 +141,21 @@ func init() {
 }
 
 func requireLogged(t require.TestingT, statement postgres.Statement) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	query, args := statement.Sql()
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)
 	require.Equal(t, loggedDebugSQL, statement.DebugSql())
 }
 
-func requireQueryLogged(t *testing.T, statement postgres.Statement, rowsProcessed int64) {
+func requireQueryLogged(t require.TestingT, statement postgres.Statement, rowsProcessed int64) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
 	query, args := statement.Sql()
 	queryLogged, argsLogged := queryInfo.Statement.Sql()
 

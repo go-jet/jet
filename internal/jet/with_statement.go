@@ -7,12 +7,12 @@ func WITH(dialect Dialect, recursive bool, cte ...*CommonTableExpression) func(s
 	newWithImpl := &withImpl{
 		recursive: recursive,
 		ctes:      cte,
-		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
+		statementInterfaceImpl: statementInterfaceImpl{
 			dialect:       dialect,
 			statementType: WithStatementType,
 		},
 	}
-	newWithImpl.parent = newWithImpl
+	newWithImpl.root = newWithImpl
 
 	return func(primaryStatement Statement) Statement {
 		serializerStatement, ok := primaryStatement.(SerializerStatement)
@@ -25,7 +25,7 @@ func WITH(dialect Dialect, recursive bool, cte ...*CommonTableExpression) func(s
 }
 
 type withImpl struct {
-	serializerStatementInterfaceImpl
+	statementInterfaceImpl
 	recursive        bool
 	ctes             []*CommonTableExpression
 	primaryStatement SerializerStatement

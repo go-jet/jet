@@ -2,6 +2,10 @@
 
 package jet
 
+import (
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
+)
+
 // Column is common column interface for all types of columns.
 type Column interface {
 	Name() string
@@ -35,19 +39,19 @@ type ColumnExpressionImpl struct {
 }
 
 // NewColumnImpl creates new ColumnExpressionImpl
-func NewColumnImpl(name string, tableName string, parent ColumnExpression) ColumnExpressionImpl {
-	bc := ColumnExpressionImpl{
+func NewColumnImpl(name string, tableName string, root ColumnExpression) *ColumnExpressionImpl {
+	newColumn := &ColumnExpressionImpl{
 		name:      name,
 		tableName: tableName,
 	}
 
-	if parent != nil {
-		bc.ExpressionInterfaceImpl.Parent = parent
+	if root != nil {
+		newColumn.ExpressionInterfaceImpl.Root = root
 	} else {
-		bc.ExpressionInterfaceImpl.Parent = &bc
+		newColumn.ExpressionInterfaceImpl.Root = newColumn
 	}
 
-	return bc
+	return newColumn
 }
 
 // Name returns name of the column
@@ -76,13 +80,6 @@ func (c *ColumnExpressionImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *ColumnExpressionImpl) fromImpl(subQuery SelectTable) Projection {
-	newColumn := NewColumnImpl(c.name, c.tableName, nil)
-	newColumn.setSubQuery(subQuery)
-
-	return &newColumn
-}
-
 func (c *ColumnExpressionImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
@@ -93,14 +90,28 @@ func (c *ColumnExpressionImpl) serializeForOrderBy(statement StatementType, out 
 	c.serialize(statement, out)
 }
 
-func (c ColumnExpressionImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
+func (c *ColumnExpressionImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	c.serialize(statement, out)
 
 	out.WriteString("AS")
+
 	out.WriteAlias(c.defaultAlias())
 }
 
-func (c ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (c *ColumnExpressionImpl) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
+	out.WriteJsonObjKey(snaker.SnakeToCamel(c.name, false))
+	c.Root.serializeForJsonValue(statement, out)
+}
+
+func (c *ColumnExpressionImpl) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	c.Root.serializeForJsonValue(statement, out)
+
+	out.WriteString("AS")
+
+	out.WriteAlias(snaker.SnakeToCamel(c.name, false))
+}
+
+func (c *ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())

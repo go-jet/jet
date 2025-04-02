@@ -21,55 +21,55 @@ type TimestampzExpression interface {
 }
 
 type timestampzInterfaceImpl struct {
-	parent TimestampzExpression
+	root TimestampzExpression
 }
 
 func (t *timestampzInterfaceImpl) EQ(rhs TimestampzExpression) BoolExpression {
-	return Eq(t.parent, rhs)
+	return Eq(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) NOT_EQ(rhs TimestampzExpression) BoolExpression {
-	return NotEq(t.parent, rhs)
+	return NotEq(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) IS_DISTINCT_FROM(rhs TimestampzExpression) BoolExpression {
-	return IsDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimestampzExpression) BoolExpression {
-	return IsNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) LT(rhs TimestampzExpression) BoolExpression {
-	return Lt(t.parent, rhs)
+	return Lt(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) LT_EQ(rhs TimestampzExpression) BoolExpression {
-	return LtEq(t.parent, rhs)
+	return LtEq(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) GT(rhs TimestampzExpression) BoolExpression {
-	return Gt(t.parent, rhs)
+	return Gt(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) GT_EQ(rhs TimestampzExpression) BoolExpression {
-	return GtEq(t.parent, rhs)
+	return GtEq(t.root, rhs)
 }
 
 func (t *timestampzInterfaceImpl) BETWEEN(min, max TimestampzExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, false)
+	return NewBetweenOperatorExpression(t.root, min, max, false)
 }
 
 func (t *timestampzInterfaceImpl) NOT_BETWEEN(min, max TimestampzExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, true)
+	return NewBetweenOperatorExpression(t.root, min, max, true)
 }
 
 func (t *timestampzInterfaceImpl) ADD(rhs Interval) TimestampzExpression {
-	return TimestampzExp(Add(t.parent, rhs))
+	return TimestampzExp(Add(t.root, rhs))
 }
 
 func (t *timestampzInterfaceImpl) SUB(rhs Interval) TimestampzExpression {
-	return TimestampzExp(Sub(t.parent, rhs))
+	return TimestampzExp(Sub(t.root, rhs))
 }
 
 //-------------------------------------------------
@@ -80,9 +80,10 @@ type timestampzExpressionWrapper struct {
 }
 
 func newTimestampzExpressionWrap(expression Expression) TimestampzExpression {
-	timestampzExpressionWrap := timestampzExpressionWrapper{Expression: expression}
-	timestampzExpressionWrap.timestampzInterfaceImpl.parent = &timestampzExpressionWrap
-	return &timestampzExpressionWrap
+	timestampzExpressionWrap := &timestampzExpressionWrapper{Expression: expression}
+	timestampzExpressionWrap.timestampzInterfaceImpl.root = timestampzExpressionWrap
+	expression.setRoot(timestampzExpressionWrap)
+	return timestampzExpressionWrap
 }
 
 // TimestampzExp is timestamp with time zone expression wrapper around arbitrary expression.

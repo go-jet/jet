@@ -196,6 +196,47 @@ RETURNING link.id AS "link.id",
 		testutils.AssertExecAndRollback(t, stmt, db, 2)
 	})
 
+	t.Run("do update column list", func(t *testing.T) {
+		stmt := Link.INSERT().
+			VALUES(1, "http://www.postgresqltutorial.com", "PostgreSQL Tutorial", DEFAULT).
+			ON_CONFLICT(Link.ID).DO_UPDATE(
+			SET(
+				Link.MutableColumns.SET(Link.EXCLUDED.MutableColumns),
+			),
+		).RETURNING(Link.AllColumns)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
+INSERT INTO test_sample.link
+VALUES (1, 'http://www.postgresqltutorial.com', 'PostgreSQL Tutorial', DEFAULT)
+ON CONFLICT (id) DO UPDATE
+       SET url = excluded.url,
+           name = excluded.name,
+           description = excluded.description
+RETURNING link.id AS "link.id",
+          link.url AS "link.url",
+          link.name AS "link.name",
+          link.description AS "link.description";
+`)
+
+		testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+			var dest []model.Link
+
+			err := stmt.QueryContext(ctx, tx, &dest)
+			require.NoError(t, err)
+
+			testutils.AssertJSON(t, dest, `
+[
+	{
+		"ID": 1,
+		"URL": "http://www.postgresqltutorial.com",
+		"Name": "PostgreSQL Tutorial",
+		"Description": null
+	}
+]
+`)
+		})
+	})
+
 	t.Run("do update complex", func(t *testing.T) {
 		skipForCockroachDB(t) // does not support ROW
 

@@ -454,8 +454,11 @@ FROM cte2;
 		} `alias:"territories4.*"`
 	}
 
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+	})
+
 	require.Len(t, dest, 53)
 	require.Equal(t, dest[0].Territories1.Territories, model.Territories{
 		TerritoryID:          "01581",

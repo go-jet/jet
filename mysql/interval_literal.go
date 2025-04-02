@@ -98,13 +98,10 @@ func INTERVAL(value interface{}, unitType unitType) Interval {
 
 // INTERVALe creates new temporal interval from expresion and unit type.
 func INTERVALe(expr Expression, unitType unitType) Interval {
-	return jet.NewInterval(jet.ListSerializer{
-		Serializers: []jet.Serializer{expr, jet.RawWithParent(string(unitType))},
-		Separator:   " ",
-	})
+	return jet.IntervalExp(CustomExpression(Token("INTERVAL"), expr, Token(unitType)))
 }
 
-// INTERVALd temoral interval from time.Duration
+// INTERVALd creates new temporal interval from time.Duration
 func INTERVALd(duration time.Duration) Interval {
 	var sign int64 = 1
 	if duration < 0 {

@@ -12,6 +12,9 @@ var defaultDialect = NewDialect(DialectParams{ // just for tests
 	ArgumentPlaceholder: func(ord int) string {
 		return "$" + strconv.Itoa(ord)
 	},
+	ArgumentToString: func(value any) (string, bool) {
+		return "", false
+	},
 })
 
 var (

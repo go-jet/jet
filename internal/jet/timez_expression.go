@@ -21,68 +21,69 @@ type TimezExpression interface {
 }
 
 type timezInterfaceImpl struct {
-	parent TimezExpression
+	root TimezExpression
 }
 
 func (t *timezInterfaceImpl) EQ(rhs TimezExpression) BoolExpression {
-	return Eq(t.parent, rhs)
+	return Eq(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) NOT_EQ(rhs TimezExpression) BoolExpression {
-	return NotEq(t.parent, rhs)
+	return NotEq(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) IS_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
-	return IsDistinctFrom(t.parent, rhs)
+	return IsDistinctFrom(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs TimezExpression) BoolExpression {
-	return IsNotDistinctFrom(t.parent, rhs)
+	return IsNotDistinctFrom(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) LT(rhs TimezExpression) BoolExpression {
-	return Lt(t.parent, rhs)
+	return Lt(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) LT_EQ(rhs TimezExpression) BoolExpression {
-	return LtEq(t.parent, rhs)
+	return LtEq(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) GT(rhs TimezExpression) BoolExpression {
-	return Gt(t.parent, rhs)
+	return Gt(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) GT_EQ(rhs TimezExpression) BoolExpression {
-	return GtEq(t.parent, rhs)
+	return GtEq(t.root, rhs)
 }
 
 func (t *timezInterfaceImpl) BETWEEN(min, max TimezExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, false)
+	return NewBetweenOperatorExpression(t.root, min, max, false)
 }
 
 func (t *timezInterfaceImpl) NOT_BETWEEN(min, max TimezExpression) BoolExpression {
-	return NewBetweenOperatorExpression(t.parent, min, max, true)
+	return NewBetweenOperatorExpression(t.root, min, max, true)
 }
 
 func (t *timezInterfaceImpl) ADD(rhs Interval) TimezExpression {
-	return TimezExp(Add(t.parent, rhs))
+	return TimezExp(Add(t.root, rhs))
 }
 
 func (t *timezInterfaceImpl) SUB(rhs Interval) TimezExpression {
-	return TimezExp(Sub(t.parent, rhs))
+	return TimezExp(Sub(t.root, rhs))
 }
 
 //---------------------------------------------------//
 
 type timezExpressionWrapper struct {
-	timezInterfaceImpl
 	Expression
+	timezInterfaceImpl
 }
 
 func newTimezExpressionWrap(expression Expression) TimezExpression {
-	timezExpressionWrap := timezExpressionWrapper{Expression: expression}
-	timezExpressionWrap.timezInterfaceImpl.parent = &timezExpressionWrap
-	return &timezExpressionWrap
+	timezExpressionWrap := &timezExpressionWrapper{Expression: expression}
+	timezExpressionWrap.timezInterfaceImpl.root = timezExpressionWrap
+	expression.setRoot(timezExpressionWrap)
+	return timezExpressionWrap
 }
 
 // TimezExp is time with time zone expression wrapper around arbitrary expression.

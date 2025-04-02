@@ -11,7 +11,11 @@ type ColumnBool interface {
 
 type boolColumnImpl struct {
 	boolInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *boolColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
@@ -24,8 +28,8 @@ func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
 
 func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: boolExp,
+		column:   i,
+		toAssign: boolExp,
 	}
 }
 
@@ -33,7 +37,7 @@ func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
 func BoolColumn(name string) ColumnBool {
 	boolColumn := &boolColumnImpl{}
 	boolColumn.ColumnExpressionImpl = NewColumnImpl(name, "", boolColumn)
-	boolColumn.boolInterfaceImpl.parent = boolColumn
+	boolColumn.boolInterfaceImpl.root = boolColumn
 
 	return boolColumn
 }
@@ -51,7 +55,11 @@ type ColumnFloat interface {
 
 type floatColumnImpl struct {
 	floatInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *floatColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
@@ -64,15 +72,15 @@ func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
 
 func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: floatExp,
+		column:   i,
+		toAssign: floatExp,
 	}
 }
 
 // FloatColumn creates named float column.
 func FloatColumn(name string) ColumnFloat {
 	floatColumn := &floatColumnImpl{}
-	floatColumn.floatInterfaceImpl.parent = floatColumn
+	floatColumn.floatInterfaceImpl.root = floatColumn
 	floatColumn.ColumnExpressionImpl = NewColumnImpl(name, "", floatColumn)
 
 	return floatColumn
@@ -92,7 +100,11 @@ type ColumnInteger interface {
 type integerColumnImpl struct {
 	integerInterfaceImpl
 
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *integerColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
@@ -105,15 +117,15 @@ func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
 
 func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: intExp,
+		column:   i,
+		toAssign: intExp,
 	}
 }
 
 // IntegerColumn creates named integer column.
 func IntegerColumn(name string) ColumnInteger {
 	integerColumn := &integerColumnImpl{}
-	integerColumn.integerInterfaceImpl.parent = integerColumn
+	integerColumn.integerInterfaceImpl.root = integerColumn
 	integerColumn.ColumnExpressionImpl = NewColumnImpl(name, "", integerColumn)
 
 	return integerColumn
@@ -122,7 +134,7 @@ func IntegerColumn(name string) ColumnInteger {
 //------------------------------------------------------//
 
 // ColumnString is interface for SQL text, character, character varying
-// bytea, uuid columns and enums types.
+// uuid columns and enums types.
 type ColumnString interface {
 	StringExpression
 	Column
@@ -134,7 +146,11 @@ type ColumnString interface {
 type stringColumnImpl struct {
 	stringInterfaceImpl
 
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *stringColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
@@ -147,18 +163,63 @@ func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
 
 func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: stringExp,
+		column:   i,
+		toAssign: stringExp,
 	}
 }
 
 // StringColumn creates named string column.
 func StringColumn(name string) ColumnString {
 	stringColumn := &stringColumnImpl{}
-	stringColumn.stringInterfaceImpl.parent = stringColumn
+	stringColumn.stringInterfaceImpl.root = stringColumn
 	stringColumn.ColumnExpressionImpl = NewColumnImpl(name, "", stringColumn)
 
 	return stringColumn
+}
+
+//------------------------------------------------------//
+
+// ColumnBlob is interface for binary data types (bytea, binary, blob, etc...)
+type ColumnBlob interface {
+	BlobExpression
+	Column
+
+	From(subQuery SelectTable) ColumnBlob
+	SET(blob BlobExpression) ColumnAssigment
+}
+
+type blobColumnImpl struct {
+	blobInterfaceImpl
+
+	*ColumnExpressionImpl
+}
+
+func (i *blobColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
+}
+
+func (i *blobColumnImpl) From(subQuery SelectTable) ColumnBlob {
+	newBlobColumn := BlobColumn(i.name)
+	newBlobColumn.setTableName(i.tableName)
+	newBlobColumn.setSubQuery(subQuery)
+
+	return newBlobColumn
+}
+
+func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:   i,
+		toAssign: blobExp,
+	}
+}
+
+// BlobColumn creates named blob column.
+func BlobColumn(name string) ColumnBlob {
+	blobColumn := &blobColumnImpl{}
+	blobColumn.blobInterfaceImpl.root = blobColumn
+	blobColumn.ColumnExpressionImpl = NewColumnImpl(name, "", blobColumn)
+
+	return blobColumn
 }
 
 //------------------------------------------------------//
@@ -174,7 +235,11 @@ type ColumnTime interface {
 
 type timeColumnImpl struct {
 	timeInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timeColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
@@ -187,15 +252,15 @@ func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
 
 func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timeExp,
+		column:   i,
+		toAssign: timeExp,
 	}
 }
 
 // TimeColumn creates named time column
 func TimeColumn(name string) ColumnTime {
 	timeColumn := &timeColumnImpl{}
-	timeColumn.timeInterfaceImpl.parent = timeColumn
+	timeColumn.timeInterfaceImpl.root = timeColumn
 	timeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timeColumn)
 	return timeColumn
 }
@@ -213,7 +278,11 @@ type ColumnTimez interface {
 
 type timezColumnImpl struct {
 	timezInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timezColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
@@ -226,15 +295,15 @@ func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
 
 func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timezExp,
+		column:   i,
+		toAssign: timezExp,
 	}
 }
 
 // TimezColumn creates named time with time zone column.
 func TimezColumn(name string) ColumnTimez {
 	timezColumn := &timezColumnImpl{}
-	timezColumn.timezInterfaceImpl.parent = timezColumn
+	timezColumn.timezInterfaceImpl.root = timezColumn
 	timezColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timezColumn)
 
 	return timezColumn
@@ -253,7 +322,11 @@ type ColumnTimestamp interface {
 
 type timestampColumnImpl struct {
 	timestampInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timestampColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
@@ -266,15 +339,15 @@ func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
 
 func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timestampExp,
+		column:   i,
+		toAssign: timestampExp,
 	}
 }
 
 // TimestampColumn creates named timestamp column
 func TimestampColumn(name string) ColumnTimestamp {
 	timestampColumn := &timestampColumnImpl{}
-	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
+	timestampColumn.timestampInterfaceImpl.root = timestampColumn
 	timestampColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampColumn)
 
 	return timestampColumn
@@ -293,7 +366,11 @@ type ColumnTimestampz interface {
 
 type timestampzColumnImpl struct {
 	timestampzInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *timestampzColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
@@ -306,15 +383,15 @@ func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
 
 func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: timestampzExp,
+		column:   i,
+		toAssign: timestampzExp,
 	}
 }
 
 // TimestampzColumn creates named timestamp with time zone column.
 func TimestampzColumn(name string) ColumnTimestampz {
 	timestampzColumn := &timestampzColumnImpl{}
-	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
+	timestampzColumn.timestampzInterfaceImpl.root = timestampzColumn
 	timestampzColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampzColumn)
 
 	return timestampzColumn
@@ -333,7 +410,11 @@ type ColumnDate interface {
 
 type dateColumnImpl struct {
 	dateInterfaceImpl
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *dateColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
@@ -346,17 +427,62 @@ func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
 
 func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: dateExp,
+		column:   i,
+		toAssign: dateExp,
 	}
 }
 
 // DateColumn creates named date column.
 func DateColumn(name string) ColumnDate {
 	dateColumn := &dateColumnImpl{}
-	dateColumn.dateInterfaceImpl.parent = dateColumn
+	dateColumn.dateInterfaceImpl.root = dateColumn
 	dateColumn.ColumnExpressionImpl = NewColumnImpl(name, "", dateColumn)
 	return dateColumn
+}
+
+//------------------------------------------------------//
+
+// ColumnInterval is interface of PostgreSQL interval columns.
+type ColumnInterval interface {
+	IntervalExpression
+	Column
+
+	From(subQuery SelectTable) ColumnInterval
+	SET(intervalExp IntervalExpression) ColumnAssigment
+}
+
+//------------------------------------------------------//
+
+type intervalColumnImpl struct {
+	*ColumnExpressionImpl
+	intervalInterfaceImpl
+}
+
+func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:   i,
+		toAssign: intervalExp,
+	}
+}
+
+func (i *intervalColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
+}
+
+func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
+	newIntervalColumn := IntervalColumn(i.name)
+	newIntervalColumn.setTableName(i.tableName)
+	newIntervalColumn.setSubQuery(subQuery)
+
+	return newIntervalColumn
+}
+
+// IntervalColumn creates named interval column.
+func IntervalColumn(name string) ColumnInterval {
+	intervalColumn := &intervalColumnImpl{}
+	intervalColumn.ColumnExpressionImpl = NewColumnImpl(name, "", intervalColumn)
+	intervalColumn.intervalInterfaceImpl.root = intervalColumn
+	return intervalColumn
 }
 
 //------------------------------------------------------//
@@ -373,7 +499,11 @@ type ColumnRange[T Expression] interface {
 
 type rangeColumnImpl[T Expression] struct {
 	rangeInterfaceImpl[T]
-	ColumnExpressionImpl
+	*ColumnExpressionImpl
+}
+
+func (i *rangeColumnImpl[T]) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
 }
 
 func (i *rangeColumnImpl[T]) From(subQuery SelectTable) ColumnRange[T] {
@@ -386,15 +516,15 @@ func (i *rangeColumnImpl[T]) From(subQuery SelectTable) ColumnRange[T] {
 
 func (i *rangeColumnImpl[T]) SET(rangeExp Range[T]) ColumnAssigment {
 	return columnAssigmentImpl{
-		column:     i,
-		expression: rangeExp,
+		column:   i,
+		toAssign: rangeExp,
 	}
 }
 
 // RangeColumn creates named range column.
 func RangeColumn[T Expression](name string) ColumnRange[T] {
 	rangeColumn := &rangeColumnImpl[T]{}
-	rangeColumn.rangeInterfaceImpl.parent = rangeColumn
+	rangeColumn.rangeInterfaceImpl.root = rangeColumn
 	rangeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", rangeColumn)
 
 	return rangeColumn

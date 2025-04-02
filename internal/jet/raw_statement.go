@@ -1,7 +1,7 @@
 package jet
 
 type rawStatementImpl struct {
-	serializerStatementInterfaceImpl
+	statementInterfaceImpl
 
 	RawQuery       string
 	NamedArguments map[string]interface{}
@@ -10,10 +10,10 @@ type rawStatementImpl struct {
 // RawStatement creates new sql statements from raw query and optional map of named arguments
 func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]interface{}) SerializerStatement {
 	newRawStatement := rawStatementImpl{
-		serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
+		statementInterfaceImpl: statementInterfaceImpl{
 			dialect:       dialect,
 			statementType: "",
-			parent:        nil,
+			root:          nil,
 		},
 		RawQuery: rawQuery,
 	}
@@ -22,7 +22,7 @@ func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]
 		newRawStatement.NamedArguments = namedArgument[0]
 	}
 
-	newRawStatement.parent = &newRawStatement
+	newRawStatement.root = &newRawStatement
 
 	return &newRawStatement
 }

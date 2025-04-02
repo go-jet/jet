@@ -18,7 +18,7 @@ func newSelectTable(serializerWithProjections jet.SerializerHasProjections, alia
 		SelectTable: jet.NewSelectTable(serializerWithProjections, alias, columnAliases),
 	}
 
-	subQuery.readableTableInterfaceImpl.parent = subQuery
+	subQuery.readableTableInterfaceImpl.root = subQuery
 
 	return subQuery
 }

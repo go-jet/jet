@@ -13,6 +13,7 @@ import (
 	. "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
 	. "github.com/go-jet/jet/v2/postgres"
 
+	"github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/enum"
 	"github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/model"
 )
 
@@ -48,7 +49,8 @@ func main() {
 	).WHERE(
 		Language.Name.EQ(Char(20)("English")).
 			AND(Category.Name.NOT_EQ(Text("Action"))).
-			AND(Film.Length.GT(Int(180))),
+			AND(Film.Length.GT(Int(180))).
+			AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),
 	).ORDER_BY(
 		Actor.ActorID.ASC(),
 		Film.FilmID.ASC(),

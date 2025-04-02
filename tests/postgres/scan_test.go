@@ -54,8 +54,18 @@ func TestScanToInvalidDestination(t *testing.T) {
 }
 
 func TestScanToValidDestination(t *testing.T) {
+
+	t.Run("pointer to empty struct - non strict scan", func(t *testing.T) {
+		allowUnusedColumns(func() {
+			var dest []struct{}
+			err := oneInventoryQuery.Query(db, &dest)
+
+			require.NoError(t, err)
+		})
+	})
+
 	t.Run("pointer to struct", func(t *testing.T) {
-		dest := []struct{}{}
+		var dest model.Inventory
 		err := oneInventoryQuery.Query(db, &dest)
 
 		require.NoError(t, err)
@@ -63,20 +73,24 @@ func TestScanToValidDestination(t *testing.T) {
 
 	t.Run("global query function scan", func(t *testing.T) {
 		queryStr, args := oneInventoryQuery.Sql()
-		dest := []struct{}{}
+		var dest model.Inventory
 		rowProcessed, err := qrm.Query(nil, db, queryStr, args, &dest)
 		require.Equal(t, rowProcessed, int64(1))
 		require.NoError(t, err)
 	})
 
 	t.Run("pointer to slice", func(t *testing.T) {
-		err := oneInventoryQuery.Query(db, &[]struct{}{})
+		var dest []model.Inventory
+
+		err := oneInventoryQuery.Query(db, &dest)
 
 		require.NoError(t, err)
 	})
 
 	t.Run("pointer to slice of pointer to structs", func(t *testing.T) {
-		err := oneInventoryQuery.Query(db, &[]*struct{}{})
+		var dest []*model.Inventory
+
+		err := oneInventoryQuery.Query(db, &dest)
 
 		require.NoError(t, err)
 	})
@@ -84,7 +98,7 @@ func TestScanToValidDestination(t *testing.T) {
 	t.Run("pointer to slice of integers", func(t *testing.T) {
 		var dest []int32
 
-		err := oneInventoryQuery.Query(db, &dest)
+		err := Inventory.SELECT(Inventory.InventoryID).Query(db, &dest)
 		require.NoError(t, err)
 		require.Equal(t, dest[0], int32(1))
 	})
@@ -92,7 +106,7 @@ func TestScanToValidDestination(t *testing.T) {
 	t.Run("pointer to slice integer pointers", func(t *testing.T) {
 		var dest []*int32
 
-		err := oneInventoryQuery.Query(db, &dest)
+		err := Inventory.SELECT(Inventory.InventoryID).Query(db, &dest)
 		require.NoError(t, err)
 		require.Equal(t, dest[0], ptr.Of(int32(1)))
 	})
@@ -113,8 +127,6 @@ func TestScanToStruct(t *testing.T) {
 	query := Inventory.
 		SELECT(Inventory.AllColumns).
 		ORDER_BY(Inventory.InventoryID)
-
-	//fmt.Println(query.DebugSql())
 
 	t.Run("one struct", func(t *testing.T) {
 		dest := model.Inventory{}
@@ -173,6 +185,7 @@ func TestScanToStruct(t *testing.T) {
 			InventoryID *int32 `sql:"primary_key"`
 			FilmID      int16
 			StoreID     *int16
+			LastUpdate  time.Time
 		}
 
 		dest := Inventory{}
@@ -184,12 +197,15 @@ func TestScanToStruct(t *testing.T) {
 		require.Equal(t, *dest.InventoryID, int32(1))
 		require.Equal(t, dest.FilmID, int16(1))
 		require.Equal(t, *dest.StoreID, int16(1))
+		require.NotEmpty(t, dest.LastUpdate)
 	})
 
 	t.Run("type convert int32 to int", func(t *testing.T) {
 		type Inventory struct {
-			InventoryID int
-			FilmID      string
+			InventoryID *int32 `sql:"primary_key"`
+			FilmID      int16
+			StoreID     *int16
+			LastUpdate  time.Time
 		}
 
 		dest := Inventory{}
@@ -209,7 +225,7 @@ func TestScanToStruct(t *testing.T) {
 
 		err := query.Query(db, &dest)
 		require.Error(t, err)
-		require.EqualError(t, err, "jet: can't scan int64('\\x01') to 'InventoryID uuid.UUID': Scan: unable to scan type int64 into UUID")
+		require.EqualError(t, err, "jet: can't assign int64('\\x01') to 'InventoryID uuid.UUID': Scan: unable to scan type int64 into UUID")
 	})
 
 	t.Run("type mismatch base type", func(t *testing.T) {
@@ -267,6 +283,8 @@ func TestScanToNestedStruct(t *testing.T) {
 		dest := struct {
 			model.Inventory
 			model.Actor //unused
+			model.Film
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -280,6 +298,8 @@ func TestScanToNestedStruct(t *testing.T) {
 		dest := struct {
 			model.Inventory
 			*model.Actor //unused
+			model.Film
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -293,6 +313,8 @@ func TestScanToNestedStruct(t *testing.T) {
 		dest := struct {
 			model.Inventory
 			Actor *model.Actor //unused
+			model.Film
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -312,6 +334,8 @@ func TestScanToNestedStruct(t *testing.T) {
 		dest := struct {
 			model.Inventory
 			Actor *model.Actor //unused
+			model.Film
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -327,6 +351,8 @@ func TestScanToNestedStruct(t *testing.T) {
 			Actor *struct {
 				model.Actor
 			} //unused
+			model.Film
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -343,6 +369,8 @@ func TestScanToNestedStruct(t *testing.T) {
 				model.Actor    //unused
 				model.Language //unesed
 			}
+			model.Film
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -362,6 +390,7 @@ func TestScanToNestedStruct(t *testing.T) {
 				model.Actor //unselected
 				model.Film  //selected
 			}
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -382,6 +411,7 @@ func TestScanToNestedStruct(t *testing.T) {
 					*model.Film //selected
 				}
 			}
+			model.Store
 		}{}
 
 		err := query.Query(db, &dest)
@@ -443,8 +473,13 @@ func TestScanToSlice(t *testing.T) {
 			ORDER_BY(Inventory.InventoryID).
 			LIMIT(10)
 
+		justIDs := Inventory.
+			SELECT(Inventory.InventoryID).
+			ORDER_BY(Inventory.InventoryID).
+			LIMIT(10)
+
 		t.Run("slice od inventory", func(t *testing.T) {
-			dest := []model.Inventory{}
+			var dest []model.Inventory
 
 			err := query.Query(db, &dest)
 
@@ -454,95 +489,111 @@ func TestScanToSlice(t *testing.T) {
 			testutils.AssertDeepEqual(t, dest[1], inventory2)
 		})
 
-		t.Run("slice of ints", func(t *testing.T) {
+		t.Run("slice of int32 non strict scan", func(t *testing.T) {
+			allowUnusedColumns(func() {
+				var dest []int32
+
+				err := query.Query(db, &dest)
+				require.NoError(t, err)
+				testutils.AssertDeepEqual(t, dest, []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
+			})
+		})
+
+		t.Run("slice of int32 strict scan", func(t *testing.T) {
 			var dest []int32
 
-			err := query.Query(db, &dest)
+			err := justIDs.Query(db, &dest)
 			require.NoError(t, err)
 			testutils.AssertDeepEqual(t, dest, []int32{1, 2, 3, 4, 5, 6, 7, 8, 9, 10})
-
 		})
 
 		t.Run("slice type convertible", func(t *testing.T) {
 			var dest []int
 
-			err := query.Query(db, &dest)
+			err := justIDs.Query(db, &dest)
 			require.NoError(t, err)
 		})
 
 		t.Run("slice type mismatch", func(t *testing.T) {
 			var dest []bool
 
-			err := query.Query(db, &dest)
+			err := justIDs.Query(db, &dest)
 			require.Error(t, err)
 			require.EqualError(t, err, `jet: can't append int64 to []bool slice: can't assign int64(2) to bool`)
 		})
 	})
 
 	t.Run("slice of complex structs", func(t *testing.T) {
-		query := Inventory.
-			INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
-			INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)).
-			SELECT(
-				Inventory.AllColumns,
-				Film.AllColumns,
-				Store.AllColumns,
-			).
-			ORDER_BY(Inventory.InventoryID).
-			LIMIT(10)
+		query := SELECT(
+			Inventory.AllColumns,
+			Film.AllColumns,
+			Store.AllColumns,
+		).FROM(
+			Inventory.
+				INNER_JOIN(Film, Inventory.FilmID.EQ(Film.FilmID)).
+				INNER_JOIN(Store, Inventory.StoreID.EQ(Store.StoreID)),
+		).ORDER_BY(
+			Inventory.InventoryID,
+		).LIMIT(10)
 
-		t.Run("struct with slice of ints", func(t *testing.T) {
-			var dest struct {
-				model.Film
-				IDs []int32 `alias:"inventory.inventory_id"`
-			}
+		t.Run("struct with slice of ints - non strict scan", func(t *testing.T) {
+			allowUnusedColumns(func() {
+				var dest struct {
+					model.Film
+					IDs []int32 `alias:"inventory.inventory_id"`
+				}
 
-			err := query.Query(db, &dest)
+				err := query.Query(db, &dest)
 
-			require.NoError(t, err)
-			testutils.AssertDeepEqual(t, dest.Film, film1)
-			testutils.AssertDeepEqual(t, dest.IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
+				require.NoError(t, err)
+				testutils.AssertDeepEqual(t, dest.Film, film1)
+				testutils.AssertDeepEqual(t, dest.IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
+			})
 		})
 
 		t.Run("slice of structs with slice of ints", func(t *testing.T) {
-			var dest []struct {
-				model.Film
-				IDs []int32 `alias:"inventory.inventory_id"`
-			}
+			allowUnusedColumns(func() {
+				var dest []struct {
+					model.Film
+					IDs []int32 `alias:"inventory.inventory_id"`
+				}
 
-			err := query.Query(db, &dest)
+				err := query.Query(db, &dest)
 
-			require.NoError(t, err)
-			require.Equal(t, len(dest), 2)
-			testutils.AssertDeepEqual(t, dest[0].Film, film1)
-			testutils.AssertDeepEqual(t, dest[0].IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
-			testutils.AssertDeepEqual(t, dest[1].Film, film2)
-			testutils.AssertDeepEqual(t, dest[1].IDs, []int32{9, 10})
+				require.NoError(t, err)
+				require.Equal(t, len(dest), 2)
+				testutils.AssertDeepEqual(t, dest[0].Film, film1)
+				testutils.AssertDeepEqual(t, dest[0].IDs, []int32{1, 2, 3, 4, 5, 6, 7, 8})
+				testutils.AssertDeepEqual(t, dest[1].Film, film2)
+				testutils.AssertDeepEqual(t, dest[1].IDs, []int32{9, 10})
+			})
 		})
 
 		t.Run("slice of structs with slice of pointer to ints", func(t *testing.T) {
-			var dest []struct {
-				model.Film
-				IDs []*int32 `alias:"inventory.inventory_id"`
-			}
+			allowUnusedColumns(func() {
+				var dest []struct {
+					model.Film
+					IDs []*int32 `alias:"inventory.inventory_id"`
+				}
 
-			err := query.Query(db, &dest)
+				err := query.Query(db, &dest)
 
-			require.NoError(t, err)
-			require.Equal(t, len(dest), 2)
-			testutils.AssertDeepEqual(t, dest[0].Film, film1)
-			testutils.AssertDeepEqual(t, dest[0].IDs, []*int32{ptr.Of(int32(1)), ptr.Of(int32(2)), ptr.Of(int32(3)), ptr.Of(int32(4)),
-				ptr.Of(int32(5)), ptr.Of(int32(6)), ptr.Of(int32(7)), ptr.Of(int32(8))})
-			testutils.AssertDeepEqual(t, dest[1].Film, film2)
-			testutils.AssertDeepEqual(t, dest[1].IDs, []*int32{ptr.Of(int32(9)), ptr.Of(int32(10))})
+				require.NoError(t, err)
+				require.Equal(t, len(dest), 2)
+				testutils.AssertDeepEqual(t, dest[0].Film, film1)
+				testutils.AssertDeepEqual(t, dest[0].IDs, []*int32{ptr.Of(int32(1)), ptr.Of(int32(2)), ptr.Of(int32(3)), ptr.Of(int32(4)),
+					ptr.Of(int32(5)), ptr.Of(int32(6)), ptr.Of(int32(7)), ptr.Of(int32(8))})
+				testutils.AssertDeepEqual(t, dest[1].Film, film2)
+				testutils.AssertDeepEqual(t, dest[1].IDs, []*int32{ptr.Of(int32(9)), ptr.Of(int32(10))})
+			})
 		})
 
 		t.Run("complex struct 1", func(t *testing.T) {
-			dest := []struct {
+			var dest []struct {
 				model.Inventory
 				model.Film
 				model.Store
-			}{}
+			}
 
 			err := query.Query(db, &dest)
 
@@ -619,6 +670,7 @@ func TestScanToSlice(t *testing.T) {
 
 				Inventories []struct {
 					model.Inventory
+					model.Store
 
 					Rentals  *[]model.Rental
 					Rentals2 []model.Rental
@@ -639,11 +691,11 @@ func TestScanToSlice(t *testing.T) {
 	})
 
 	t.Run("slice of complex structs 2", func(t *testing.T) {
-		query := Country.
-			INNER_JOIN(City, City.CountryID.EQ(Country.CountryID)).
-			INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
-			INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
-			SELECT(Country.AllColumns, City.AllColumns, Address.AllColumns, Customer.AllColumns).
+		query := SELECT(Country.AllColumns, City.AllColumns, Address.AllColumns, Customer.AllColumns).
+			FROM(Country.
+				INNER_JOIN(City, City.CountryID.EQ(Country.CountryID)).
+				INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
+				INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID))).
 			ORDER_BY(Country.CountryID.ASC(), City.CityID.ASC(), Address.AddressID.ASC(), Customer.CustomerID.ASC()).
 			LIMIT(1000)
 
@@ -654,7 +706,7 @@ func TestScanToSlice(t *testing.T) {
 				Cities []struct {
 					model.City
 
-					Adresses []struct {
+					Addresses []struct {
 						model.Address
 
 						Customer model.Customer
@@ -669,14 +721,14 @@ func TestScanToSlice(t *testing.T) {
 			testutils.AssertDeepEqual(t, dest[100].Country, countryUk)
 			require.Equal(t, len(dest[100].Cities), 8)
 			testutils.AssertDeepEqual(t, dest[100].Cities[2].City, cityLondon)
-			require.Equal(t, len(dest[100].Cities[2].Adresses), 2)
-			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[0].Address, address256)
-			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[0].Customer, customer256)
-			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[1].Address, addres517)
-			testutils.AssertDeepEqual(t, dest[100].Cities[2].Adresses[1].Customer, customer512)
+			require.Equal(t, len(dest[100].Cities[2].Addresses), 2)
+			testutils.AssertDeepEqual(t, dest[100].Cities[2].Addresses[0].Address, address256)
+			testutils.AssertDeepEqual(t, dest[100].Cities[2].Addresses[0].Customer, customer256)
+			testutils.AssertDeepEqual(t, dest[100].Cities[2].Addresses[1].Address, addres517)
+			testutils.AssertDeepEqual(t, dest[100].Cities[2].Addresses[1].Customer, customer512)
 		})
 
-		t.Run("dest1", func(t *testing.T) {
+		t.Run("dest2", func(t *testing.T) {
 			var dest []*struct {
 				*model.Country
 
@@ -707,7 +759,7 @@ func TestScanToSlice(t *testing.T) {
 
 	})
 
-	t.Run("dest1", func(t *testing.T) {
+	t.Run("dest3", func(t *testing.T) {
 		var dest []*struct {
 			*model.Country
 
@@ -1072,6 +1124,47 @@ INSERT INTO dvds.customer
 VALUES (1234, 0, 'Joe', '', NULL, 1, TRUE, '2020-02-02 10:00:00Z', NULL, 1);
 `)
 	testutils.AssertExecAndRollback(t, stmt, db)
+}
+
+func TestStrictScan(t *testing.T) {
+
+	stmt := SELECT(
+		Actor.AllColumns,
+	).FROM(
+		Actor,
+	).LIMIT(10)
+
+	type Actor struct {
+		ActorID   int32 `sql:"primary_key"`
+		FirstName string
+		//LastName   string
+		//LastUpdate time.Time
+	}
+
+	var dest []Actor
+
+	require.PanicsWithValue(t, "jet: columns never used: 'actor.last_name', 'actor.last_update'", func() {
+		err := stmt.Query(db, &dest)
+		require.NoError(t, err)
+	})
+
+	var dest2 []model.Actor
+
+	err := stmt.Query(db, &dest2)
+	require.NoError(t, err)
+
+	t.Run("using_rows", func(t *testing.T) {
+		rows, err := stmt.Rows(ctx, db)
+		require.NoError(t, err)
+
+		require.True(t, rows.Next())
+
+		require.PanicsWithValue(t, "jet: columns never used: 'actor.last_name', 'actor.last_update'", func() {
+			var actor Actor
+			err = rows.Scan(&actor)
+			require.NoError(t, err)
+		})
+	})
 }
 
 var address256 = model.Address{

@@ -132,7 +132,7 @@ func CASE(expression ...Expression) CaseOperator {
 		caseExp.expression = expression[0]
 	}
 
-	caseExp.ExpressionInterfaceImpl.Parent = caseExp
+	caseExp.ExpressionInterfaceImpl.Root = caseExp
 
 	return caseExp
 }

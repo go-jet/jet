@@ -159,6 +159,7 @@ type TableModelField struct {
 	Name string
 	Type Type
 	Tags []string
+	Skip bool
 }
 
 // DefaultTableModelField returns default TableModelField implementation
@@ -173,6 +174,7 @@ func DefaultTableModelField(columnMetaData metadata.Column) TableModelField {
 		Name: dbidentifier.ToGoIdentifier(columnMetaData.Name),
 		Type: getType(columnMetaData),
 		Tags: tags,
+		Skip: false,
 	}
 }
 

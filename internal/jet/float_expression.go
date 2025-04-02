@@ -27,71 +27,71 @@ type FloatExpression interface {
 
 type floatInterfaceImpl struct {
 	numericExpressionImpl
-	parent FloatExpression
+	root FloatExpression
 }
 
 func (n *floatInterfaceImpl) EQ(rhs FloatExpression) BoolExpression {
-	return Eq(n.parent, rhs)
+	return Eq(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) NOT_EQ(rhs FloatExpression) BoolExpression {
-	return NotEq(n.parent, rhs)
+	return NotEq(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) IS_DISTINCT_FROM(rhs FloatExpression) BoolExpression {
-	return IsDistinctFrom(n.parent, rhs)
+	return IsDistinctFrom(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs FloatExpression) BoolExpression {
-	return IsNotDistinctFrom(n.parent, rhs)
+	return IsNotDistinctFrom(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) GT(rhs FloatExpression) BoolExpression {
-	return Gt(n.parent, rhs)
+	return Gt(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) GT_EQ(rhs FloatExpression) BoolExpression {
-	return GtEq(n.parent, rhs)
+	return GtEq(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) LT(rhs FloatExpression) BoolExpression {
-	return Lt(n.parent, rhs)
+	return Lt(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) LT_EQ(rhs FloatExpression) BoolExpression {
-	return LtEq(n.parent, rhs)
+	return LtEq(n.root, rhs)
 }
 
 func (n *floatInterfaceImpl) BETWEEN(min, max FloatExpression) BoolExpression {
-	return NewBetweenOperatorExpression(n.parent, min, max, false)
+	return NewBetweenOperatorExpression(n.root, min, max, false)
 }
 
 func (n *floatInterfaceImpl) NOT_BETWEEN(min, max FloatExpression) BoolExpression {
-	return NewBetweenOperatorExpression(n.parent, min, max, true)
+	return NewBetweenOperatorExpression(n.root, min, max, true)
 }
 
 func (n *floatInterfaceImpl) ADD(rhs NumericExpression) FloatExpression {
-	return FloatExp(Add(n.parent, rhs))
+	return FloatExp(Add(n.root, rhs))
 }
 
 func (n *floatInterfaceImpl) SUB(rhs NumericExpression) FloatExpression {
-	return FloatExp(Sub(n.parent, rhs))
+	return FloatExp(Sub(n.root, rhs))
 }
 
 func (n *floatInterfaceImpl) MUL(rhs NumericExpression) FloatExpression {
-	return FloatExp(Mul(n.parent, rhs))
+	return FloatExp(Mul(n.root, rhs))
 }
 
 func (n *floatInterfaceImpl) DIV(rhs NumericExpression) FloatExpression {
-	return FloatExp(Div(n.parent, rhs))
+	return FloatExp(Div(n.root, rhs))
 }
 
 func (n *floatInterfaceImpl) MOD(rhs NumericExpression) FloatExpression {
-	return FloatExp(Mod(n.parent, rhs))
+	return FloatExp(Mod(n.root, rhs))
 }
 
 func (n *floatInterfaceImpl) POW(rhs NumericExpression) FloatExpression {
-	return POW(n.parent, rhs)
+	return POW(n.root, rhs)
 }
 
 //---------------------------------------------------//
@@ -102,9 +102,10 @@ type floatExpressionWrapper struct {
 }
 
 func newFloatExpressionWrap(expression Expression) FloatExpression {
-	floatExpressionWrap := floatExpressionWrapper{Expression: expression}
-	floatExpressionWrap.floatInterfaceImpl.parent = &floatExpressionWrap
-	return &floatExpressionWrap
+	floatExpressionWrap := &floatExpressionWrapper{Expression: expression}
+	floatExpressionWrap.floatInterfaceImpl.root = floatExpressionWrap
+	expression.setRoot(floatExpressionWrap)
+	return floatExpressionWrap
 }
 
 // FloatExp is date expression wrapper around arbitrary expression.

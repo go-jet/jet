@@ -49,6 +49,11 @@ func Uint32(value uint32) IntegerExpression {
 	return CAST(jet.Uint32(value)).AS_BIGINT()
 }
 
+// Uint64 is constructor for 64 bit unsigned integer expressions literals.
+func Uint64(value uint64) IntegerExpression {
+	return CAST(jet.Uint64(value)).AS_BIGINT()
+}
+
 // Float creates new float literal expression
 var Float = jet.Float
 
@@ -122,7 +127,7 @@ func Json(value interface{}) StringExpression {
 var UUID = jet.UUID
 
 // Bytea creates new bytea literal expression
-func Bytea(value interface{}) StringExpression {
+func Bytea(value interface{}) ByteaExpression {
 	switch value.(type) {
 	case string, []byte:
 	default:

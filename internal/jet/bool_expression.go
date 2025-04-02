@@ -33,55 +33,55 @@ type BoolExpression interface {
 }
 
 type boolInterfaceImpl struct {
-	parent BoolExpression
+	root BoolExpression
 }
 
 func (b *boolInterfaceImpl) EQ(expression BoolExpression) BoolExpression {
-	return Eq(b.parent, expression)
+	return Eq(b.root, expression)
 }
 
 func (b *boolInterfaceImpl) NOT_EQ(expression BoolExpression) BoolExpression {
-	return NotEq(b.parent, expression)
+	return NotEq(b.root, expression)
 }
 
 func (b *boolInterfaceImpl) IS_DISTINCT_FROM(rhs BoolExpression) BoolExpression {
-	return IsDistinctFrom(b.parent, rhs)
+	return IsDistinctFrom(b.root, rhs)
 }
 
 func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpression {
-	return IsNotDistinctFrom(b.parent, rhs)
+	return IsNotDistinctFrom(b.root, rhs)
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(b.parent, expression, "AND")
+	return newBinaryBoolOperatorExpression(b.root, expression, "AND")
 }
 
 func (b *boolInterfaceImpl) OR(expression BoolExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(b.parent, expression, "OR")
+	return newBinaryBoolOperatorExpression(b.root, expression, "OR")
 }
 
 func (b *boolInterfaceImpl) IS_TRUE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS TRUE")
+	return newPostfixBoolOperatorExpression(b.root, "IS TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_TRUE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS NOT TRUE")
+	return newPostfixBoolOperatorExpression(b.root, "IS NOT TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_FALSE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS FALSE")
+	return newPostfixBoolOperatorExpression(b.root, "IS FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_FALSE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS NOT FALSE")
+	return newPostfixBoolOperatorExpression(b.root, "IS NOT FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_UNKNOWN() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS UNKNOWN")
+	return newPostfixBoolOperatorExpression(b.root, "IS UNKNOWN")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS NOT UNKNOWN")
+	return newPostfixBoolOperatorExpression(b.root, "IS NOT UNKNOWN")
 }
 
 func newBinaryBoolOperatorExpression(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
@@ -102,9 +102,10 @@ type boolExpressionWrapper struct {
 }
 
 func newBoolExpressionWrap(expression Expression) BoolExpression {
-	boolExpressionWrap := boolExpressionWrapper{Expression: expression}
-	boolExpressionWrap.boolInterfaceImpl.parent = &boolExpressionWrap
-	return &boolExpressionWrap
+	boolExpressionWrap := &boolExpressionWrapper{Expression: expression}
+	boolExpressionWrap.boolInterfaceImpl.root = boolExpressionWrap
+	expression.setRoot(boolExpressionWrap)
+	return boolExpressionWrap
 }
 
 // BoolExp is bool expression wrapper around arbitrary expression.

@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"encoding/hex"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -18,7 +19,7 @@ import (
 
 func TestAllTypes(t *testing.T) {
 
-	dest := []model.AllTypes{}
+	var dest []model.AllTypes
 
 	err := SELECT(AllTypes.AllColumns).
 		FROM(AllTypes).
@@ -571,10 +572,100 @@ func TestStringOperators(t *testing.T) {
 		SUBSTR(AllTypes.CharPtr, Int(3), Int(2)),
 	).FROM(AllTypes)
 
-	dest := []struct{}{}
+	var dest []struct{}
 	err := query.Query(sampleDB, &dest)
 
 	require.NoError(t, err)
+}
+
+func TestBlob(t *testing.T) {
+
+	var sampleBlob = Blob([]byte{11, 0, 22, 33, 44})
+	var textBlob = Blob([]byte("text blob"))
+
+	stmt := SELECT(
+		AllTypes.Blob.EQ(sampleBlob),
+		AllTypes.Blob.EQ(AllTypes.BlobPtr),
+		AllTypes.Blob.NOT_EQ(sampleBlob),
+		AllTypes.Blob.GT(textBlob),
+		AllTypes.Blob.GT_EQ(AllTypes.BlobPtr),
+		AllTypes.Blob.LT(AllTypes.BlobPtr),
+		AllTypes.Blob.LT_EQ(sampleBlob),
+		AllTypes.Blob.BETWEEN(Blob([]byte("min")), Blob([]byte("max"))),
+		AllTypes.Blob.NOT_BETWEEN(AllTypes.Blob, AllTypes.BlobPtr),
+		AllTypes.Blob.CONCAT(textBlob),
+		AllTypes.Blob.LIKE(AllTypes.BlobPtr),
+		AllTypes.Blob.NOT_LIKE(sampleBlob),
+
+		RTRIM(AllTypes.BlobPtr, sampleBlob),
+		LTRIM(sampleBlob, textBlob),
+		LENGTH(sampleBlob),
+		OCTET_LENGTH(textBlob),
+		SUBSTR(AllTypes.Blob, Int(0), Int(2)),
+
+		HEX(AllTypes.Blob),
+		UNHEX(AllTypes.Text),
+	).FROM(
+		AllTypes,
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT all_types.blob = X'0b0016212c',
+     all_types.blob = all_types.blob_ptr,
+     all_types.blob != X'0b0016212c',
+     all_types.blob > X'7465787420626c6f62',
+     all_types.blob >= all_types.blob_ptr,
+     all_types.blob < all_types.blob_ptr,
+     all_types.blob <= X'0b0016212c',
+     all_types.blob BETWEEN X'6d696e' AND X'6d6178',
+     all_types.blob NOT BETWEEN all_types.blob AND all_types.blob_ptr,
+     all_types.blob || X'7465787420626c6f62',
+     all_types.blob LIKE all_types.blob_ptr,
+     all_types.blob NOT LIKE X'0b0016212c',
+     RTRIM(all_types.blob_ptr, X'0b0016212c'),
+     LTRIM(X'0b0016212c', X'7465787420626c6f62'),
+     LENGTH(X'0b0016212c'),
+     OCTET_LENGTH(X'7465787420626c6f62'),
+     SUBSTR(all_types.blob, 0, 2),
+     HEX(all_types.blob),
+     UNHEX(all_types.text)
+FROM all_types;
+`)
+
+	var dest []struct{}
+	err := stmt.Query(sampleDB, &dest)
+
+	require.NoError(t, err)
+}
+
+func TestBlobConversion(t *testing.T) {
+
+	nonPrintable := []byte{0x11, 0x22, 0x33, 0x44, 0x55}
+	printable := []byte("this is blob")
+
+	stmt := SELECT(
+		Blob(nonPrintable).AS("non_printable"),
+		Blob(printable).AS("printable"),
+
+		HEX(Blob(nonPrintable)).AS("non_printable_hex"),
+		UNHEX(String("1122334455")).AS("non_printable_unhex"),
+	)
+
+	var dest struct {
+		NonPrintable []byte
+		Printable    []byte
+
+		NonPrintableHex   string
+		NonPrintableUnHex []byte
+	}
+
+	err := stmt.Query(db, &dest)
+
+	require.NoError(t, err)
+	require.Equal(t, dest.NonPrintable, nonPrintable)
+	require.Equal(t, dest.Printable, printable)
+	require.Equal(t, dest.NonPrintableHex, hex.EncodeToString(nonPrintable))
+	require.Equal(t, dest.NonPrintableUnHex, nonPrintable)
 }
 
 func TestReservedWord(t *testing.T) {

@@ -36,7 +36,7 @@ func CTE(name string, columns ...jet.ColumnExpression) CommonTableExpression {
 		CommonTableExpression:      jet.CTE(name, columns...),
 	}
 
-	cte.parent = cte
+	cte.root = cte
 
 	return cte
 }

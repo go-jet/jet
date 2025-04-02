@@ -217,6 +217,17 @@ func processTableSQLBuilder(fileTypes, dirPath string,
 					return insertedRowAlias(dialect)
 				},
 				"golangComment": formatGolangComment,
+				"columnList": func(columns []metadata.Column) string {
+					names := []string{}
+					for _, col := range columns {
+						bc := tableSQLBuilder.Column(col)
+						if bc.Skip {
+							continue
+						}
+						names = append(names, bc.Name+"Column")
+					}
+					return strings.Join(names, ", ")
+				},
 			})
 		if err != nil {
 			return fmt.Errorf("failed to generate table sql builder type %s: %w", tableSQLBuilder.TypeName, err)

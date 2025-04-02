@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"fmt"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/sqlite"
@@ -17,7 +18,11 @@ func GenerateDSN(dsn, destDir string, templates ...template.Template) error {
 	defer db.Close()
 
 	fmt.Println("Retrieving schema information...")
+	return GenerateDB(db, destDir, templates...)
+}
 
+// GenerateDB generates jet files using the provided *sql.DB
+func GenerateDB(db *sql.DB, destDir string, templates ...template.Template) error {
 	generatorTemplate := template.Default(sqlite.Dialect)
 	if len(templates) > 0 {
 		generatorTemplate = templates[0]

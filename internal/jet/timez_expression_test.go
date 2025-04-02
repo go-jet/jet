@@ -51,11 +51,3 @@ func TestTimezExp(t *testing.T) {
 	assertClauseSerialize(t, TimezExp(table1ColFloat).LT(Timez(1, 1, 1, 1, "+4:00")),
 		"(table1.col_float < $1)", string("01:01:01.000000001 +4:00"))
 }
-
-func TestTimezArithmetic(t *testing.T) {
-	timez := Timez(0, 0, 0, 100, "UTC")
-	assertClauseDebugSerialize(t, table1ColTimez.ADD(NewInterval(String("1 HOUR"))).EQ(timez),
-		"((table1.col_timez + INTERVAL '1 HOUR') = '00:00:00.0000001 UTC')")
-	assertClauseDebugSerialize(t, table1ColTimez.SUB(NewInterval(String("1 HOUR"))).EQ(timez),
-		"((table1.col_timez - INTERVAL '1 HOUR') = '00:00:00.0000001 UTC')")
-}

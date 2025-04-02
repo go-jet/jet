@@ -2,13 +2,17 @@ package jet
 
 import "fmt"
 
-// Expression is common interface for all expressions.
+// Expression is a common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression interface {
 	Serializer
 	Projection
 	GroupByClause
 	OrderByClause
+	expressionOrColumnList
+
+	serializeForJsonValue(statement StatementType, out *SQLBuilder)
+	setRoot(root Expression)
 
 	// IS_NULL tests expression whether it is a NULL value.
 	IS_NULL() BoolExpression
@@ -31,69 +35,87 @@ type Expression interface {
 
 // ExpressionInterfaceImpl implements Expression interface methods
 type ExpressionInterfaceImpl struct {
-	Parent Expression
+	Root Expression
+}
+
+func (e *ExpressionInterfaceImpl) isExpressionOrColumnList() {}
+
+func (e *ExpressionInterfaceImpl) setRoot(root Expression) {
+	e.Root = root
 }
 
 func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 	panic(fmt.Sprintf("jet: can't export unaliased expression subQuery: %s, expression: %s",
-		subQuery.Alias(), serializeToDefaultDebugString(e.Parent)))
+		subQuery.Alias(), serializeToDefaultDebugString(e.Root)))
 }
 
 // IS_NULL tests expression whether it is a NULL value.
 func (e *ExpressionInterfaceImpl) IS_NULL() BoolExpression {
-	return newPostfixBoolOperatorExpression(e.Parent, "IS NULL")
+	return newPostfixBoolOperatorExpression(e.Root, "IS NULL")
 }
 
 // IS_NOT_NULL tests expression whether it is a non-NULL value.
 func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
-	return newPostfixBoolOperatorExpression(e.Parent, "IS NOT NULL")
+	return newPostfixBoolOperatorExpression(e.Root, "IS NOT NULL")
 }
 
 // IN checks if this expressions matches any in expressions list
 func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(e.Parent, wrap(expressions...), "IN")
+	return newBinaryBoolOperatorExpression(e.Root, wrap(expressions...), "IN")
 }
 
 // NOT_IN checks if this expressions is different of all expressions in expressions list
 func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(e.Parent, wrap(expressions...), "NOT IN")
+	return newBinaryBoolOperatorExpression(e.Root, wrap(expressions...), "NOT IN")
 }
 
 // AS the temporary alias name to assign to the expression
 func (e *ExpressionInterfaceImpl) AS(alias string) Projection {
-	return newAlias(e.Parent, alias)
+	return newAlias(e.Root, alias)
 }
 
 // ASC expression will be used to sort a query result in ascending order
 func (e *ExpressionInterfaceImpl) ASC() OrderByClause {
-	return newOrderByAscending(e.Parent, true)
+	return newOrderByAscending(e.Root, true)
 }
 
 // DESC expression will be used to sort a query result in descending order
 func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
-	return newOrderByAscending(e.Parent, false)
+	return newOrderByAscending(e.Root, false)
 }
 
 // NULLS_FIRST specifies sort where null values appear before all non-null values
 func (e *ExpressionInterfaceImpl) NULLS_FIRST() OrderByClause {
-	return newOrderByNullsFirst(e.Parent, true)
+	return newOrderByNullsFirst(e.Root, true)
 }
 
 // NULLS_LAST specifies sort where null values appear after all non-null values
 func (e *ExpressionInterfaceImpl) NULLS_LAST() OrderByClause {
-	return newOrderByNullsFirst(e.Parent, false)
+	return newOrderByNullsFirst(e.Root, false)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, NoWrap)
+	e.Root.serialize(statement, out, NoWrap)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, NoWrap)
+	e.Root.serialize(statement, out, NoWrap)
+}
+
+func (e *ExpressionInterfaceImpl) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
+	panic("jet: expression need to be aliased when used as SELECT JSON projection.")
+}
+
+func (e *ExpressionInterfaceImpl) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	panic("jet: expression need to be aliased when used as SELECT JSON projection.")
+}
+
+func (e *ExpressionInterfaceImpl) serializeForJsonValue(statement StatementType, out *SQLBuilder) {
+	out.Dialect.JsonValueEncode(e.Root).serialize(statement, out)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, NoWrap)
+	e.Root.serialize(statement, out, NoWrap)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -117,7 +139,7 @@ func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additiona
 		binaryExpression.additionalParam = additionalParam[0]
 	}
 
-	binaryExpression.ExpressionInterfaceImpl.Parent = binaryExpression
+	binaryExpression.ExpressionInterfaceImpl.Root = binaryExpression
 
 	return complexExpr(binaryExpression)
 }
@@ -146,13 +168,13 @@ func newExpressionListOperator(operator string, expressions ...Expression) *expr
 		expressions: expressions,
 	}
 
-	ret.ExpressionInterfaceImpl.Parent = ret
+	ret.ExpressionInterfaceImpl.Root = ret
 
 	return ret
 }
 
 func newBoolExpressionListOperator(operator string, expressions ...BoolExpression) BoolExpression {
-	return BoolExp(newExpressionListOperator(operator, BoolExpressionListToExpressionList(expressions)...))
+	return BoolExp(newExpressionListOperator(operator, ToExpressionList(expressions)...))
 }
 
 func (elo *expressionListOperator) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
@@ -205,7 +227,7 @@ func newPrefixOperatorExpression(expression Expression, operator string) Express
 		expression: expression,
 		operator:   operator,
 	}
-	prefixExpression.ExpressionInterfaceImpl.Parent = prefixExpression
+	prefixExpression.ExpressionInterfaceImpl.Root = prefixExpression
 
 	return complexExpr(prefixExpression)
 }
@@ -229,7 +251,7 @@ func newPostfixOperatorExpression(expression Expression, operator string) *postf
 		operator:   operator,
 	}
 
-	postfixOpExpression.ExpressionInterfaceImpl.Parent = postfixOpExpression
+	postfixOpExpression.ExpressionInterfaceImpl.Root = postfixOpExpression
 
 	return postfixOpExpression
 }
@@ -257,7 +279,7 @@ func NewBetweenOperatorExpression(expression, min, max Expression, notBetween bo
 		max:        max,
 	}
 
-	newBetweenOperator.ExpressionInterfaceImpl.Parent = newBetweenOperator
+	newBetweenOperator.ExpressionInterfaceImpl.Root = newBetweenOperator
 
 	return BoolExp(complexExpr(newBetweenOperator))
 }
@@ -282,7 +304,7 @@ func CustomExpression(parts ...Serializer) Expression {
 	ret := customExpression{
 		parts: parts,
 	}
-	ret.ExpressionInterfaceImpl.Parent = &ret
+	ret.ExpressionInterfaceImpl.Root = &ret
 	return &ret
 }
 
@@ -299,7 +321,7 @@ type complexExpression struct {
 
 func complexExpr(expression Expression) Expression {
 	complexExpression := &complexExpression{expressions: expression}
-	complexExpression.ExpressionInterfaceImpl.Parent = complexExpression
+	complexExpression.ExpressionInterfaceImpl.Root = complexExpression
 
 	return complexExpression
 }

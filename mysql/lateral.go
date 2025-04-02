@@ -18,7 +18,7 @@ func (l lateralImpl) AS(alias string) SelectTable {
 		SelectTable: jet.NewLateral(l.selectStmt, alias),
 	}
 
-	subQuery.readableTableInterfaceImpl.parent = subQuery
+	subQuery.readableTableInterfaceImpl.root = subQuery
 
 	return subQuery
 }

@@ -107,20 +107,26 @@ func getTypeName(structType reflect.Type, parentField *reflect.StructField) stri
 	return toCommonIdentifier(aliasParts[0])
 }
 
-func getTypeAndFieldName(structType string, field reflect.StructField) (string, string) {
+func getTypeAndFieldName(structType string, field reflect.StructField) (string, string, bool) {
 	aliasTag := field.Tag.Get("alias")
 
-	if aliasTag == "" {
-		return structType, field.Name
+	if aliasTag != "" {
+		aliasParts := strings.Split(aliasTag, ".")
+
+		if len(aliasParts) == 1 {
+			return structType, toCommonIdentifier(aliasParts[0]), false
+		}
+
+		return toCommonIdentifier(aliasParts[0]), toCommonIdentifier(aliasParts[1]), false
 	}
 
-	aliasParts := strings.Split(aliasTag, ".")
+	jsonColumnTag := field.Tag.Get("json_column")
 
-	if len(aliasParts) == 1 {
-		return structType, toCommonIdentifier(aliasParts[0])
+	if jsonColumnTag != "" {
+		return "", toCommonIdentifier(jsonColumnTag), true
 	}
 
-	return toCommonIdentifier(aliasParts[0]), toCommonIdentifier(aliasParts[1])
+	return structType, field.Name, false
 }
 
 var replacer = strings.NewReplacer(" ", "", "-", "", "_", "")

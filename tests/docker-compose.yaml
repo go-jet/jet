@@ -26,7 +26,7 @@ services:
       - ./testdata/init/mysql:/docker-entrypoint-initdb.d
 
   mariadb:
-    image: mariadb:10.3
+    image: mariadb:11.4
     command: ['--default-authentication-plugin=mysql_native_password', '--log_bin_trust_function_creators=1']
     restart: always
     environment:

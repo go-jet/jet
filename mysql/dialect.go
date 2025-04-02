@@ -1,11 +1,12 @@
 package mysql
 
 import (
+	"encoding/hex"
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-// Dialect is implementation of MySQL dialect for SQL Builder serialisation.
+// Dialect is implementation of MySQL dialect for SQL Builder serialization.
 var Dialect = newDialect()
 
 func newDialect() jet.Dialect {
@@ -27,14 +28,41 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(int) string {
 			return "?"
 		},
+		ArgumentToString: argumentToString,
 		ReservedWords:    reservedWords,
 		SerializeOrderBy: serializeOrderBy,
 		ValuesDefaultColumnName: func(index int) string {
 			return fmt.Sprintf("column_%d", index)
 		},
+		JsonValueEncode: func(expr Expression) Expression {
+			switch e := expr.(type) {
+			case BlobExpression:
+				return TO_BASE64(e)
+
+			// CustomExpression used bellow (instead DATE_FORMAT function) so that only expr is parametrized
+			case TimestampExpression:
+				return CustomExpression(Token("DATE_FORMAT("), e, Token(",'%Y-%m-%dT%H:%i:%s.%fZ')"))
+			case TimeExpression:
+				return CustomExpression(Token("CONCAT('0000-01-01T', DATE_FORMAT("), e, Token(",'%H:%i:%s.%fZ'))"))
+			case DateExpression:
+				return CustomExpression(Token("CONCAT(DATE_FORMAT("), e, Token(",'%Y-%m-%d')"), Token(", 'T00:00:00Z')"))
+			case BoolExpression:
+				return CustomExpression(e, Token(" = 1"))
+			}
+			return expr
+		},
 	}
 
 	return jet.NewDialect(mySQLDialectParams)
+}
+
+func argumentToString(value any) (string, bool) {
+	switch bindVal := value.(type) {
+	case []byte:
+		return fmt.Sprintf("X'%s'", hex.EncodeToString(bindVal)), true
+	}
+
+	return "", false
 }
 
 func mysqlBitXor(expressions ...jet.Serializer) jet.SerializerFunc {

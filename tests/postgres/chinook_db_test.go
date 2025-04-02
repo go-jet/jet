@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"github.com/bytedance/sonic"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/postgres"
@@ -188,7 +189,143 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 `)
 }
 
+type AllArtistDetails []struct { //list of all artist
+	model.Artist
+
+	Albums []struct { // list of albums per artist
+		model.Album
+
+		Tracks []struct { // list of tracks per album
+			model.Track
+
+			Genre     model.Genre     // track genre
+			MediaType model.MediaType // track media type
+
+			Playlists []model.Playlist // list of playlist where track is used
+
+			Invoices []struct { // list of invoices where track occurs
+				model.Invoice
+
+				Customer struct { // customer data for invoice
+					model.Customer
+
+					Employee *struct { // employee data for customer if exists
+						model.Employee
+
+						Manager *model.Employee `alias:"Manager"`
+					}
+				}
+			}
+		}
+	}
+}
+
+func BenchmarkJoinEverythingJSON(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testJoinEverythingJSON(b)
+	}
+}
+
+func BenchmarkJoinEverythingJsonSonic(b *testing.B) {
+	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+		for i := 0; i < b.N; i++ {
+			testJoinEverythingJSON(b)
+		}
+	})
+}
+
+func TestJoinEverythingJSON(t *testing.T) {
+	testJoinEverythingJSON(t)
+}
+
+func TestJoinEverythingJSONSonic(t *testing.T) {
+	useJsonUnmarshalFunc(sonic.Unmarshal, func() {
+		testJoinEverythingJSON(t)
+	})
+}
+
+func testJoinEverythingJSON(t require.TestingT) {
+
+	manager := Employee.AS("Manager")
+
+	stmt := SELECT_JSON_ARR(
+		Artist.AllColumns,
+
+		SELECT_JSON_ARR(
+			Album.AllColumns,
+
+			SELECT_JSON_ARR(
+				Track.AllColumns,
+
+				SELECT_JSON_OBJ(Genre.AllColumns).
+					FROM(Genre).
+					WHERE(Genre.GenreId.EQ(Track.GenreId)).AS("Genre"),
+
+				SELECT_JSON_OBJ(MediaType.AllColumns).
+					FROM(MediaType).
+					WHERE(MediaType.MediaTypeId.EQ(Track.MediaTypeId)).AS("MediaType"),
+
+				SELECT_JSON_ARR(Playlist.AllColumns).
+					FROM(Playlist.
+						INNER_JOIN(PlaylistTrack, Playlist.PlaylistId.EQ(PlaylistTrack.PlaylistId))).
+					WHERE(PlaylistTrack.TrackId.EQ(Track.TrackId)).
+					ORDER_BY(Playlist.PlaylistId).AS("Playlists"),
+
+				SELECT_JSON_ARR(
+					Invoice.AllColumns,
+
+					SELECT_JSON_OBJ(
+						Customer.AllColumns,
+
+						SELECT_JSON_OBJ(
+							Employee.AllColumns,
+
+							SELECT_JSON_OBJ(manager.AllColumns).
+								FROM(manager).
+								WHERE(manager.EmployeeId.EQ(Employee.ReportsTo)).AS("Manager"),
+						).FROM(Employee).
+							WHERE(Employee.EmployeeId.EQ(Customer.SupportRepId)).AS("Employee"),
+					).FROM(Customer).
+						WHERE(Customer.CustomerId.EQ(Invoice.CustomerId)).AS("Customer"),
+				).FROM(
+					Invoice.
+						INNER_JOIN(InvoiceLine, InvoiceLine.InvoiceId.EQ(Invoice.InvoiceId)),
+				).WHERE(InvoiceLine.TrackId.EQ(Track.TrackId)).
+					ORDER_BY(Invoice.InvoiceId).AS("Invoices"),
+			).FROM(Track).
+				WHERE(Track.AlbumId.EQ(Album.AlbumId)).
+				ORDER_BY(Track.TrackId).AS("Tracks"),
+		).FROM(Album).
+			WHERE(Album.ArtistId.EQ(Artist.ArtistId)).
+			ORDER_BY(Album.AlbumId).AS("Albums"),
+	).FROM(Artist).
+		ORDER_BY(Artist.ArtistId)
+
+	//fmt.Println(stmt.DebugSql())
+
+	var dest AllArtistDetails
+
+	err := stmt.QueryContext(ctx, db, &dest)
+	require.NoError(t, err)
+
+	require.Equal(t, len(dest), 275)
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/joined_everything2.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
+	requireLogged(t, stmt)
+	requireQueryLogged(t, stmt, 1)
+}
+
+func BenchmarkJoinEverything(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		testJoinEverything(b)
+	}
+}
+
 func TestJoinEverything(t *testing.T) {
+	testJoinEverything(t)
+}
+
+func testJoinEverything(t require.TestingT) {
 
 	manager := Employee.AS("Manager")
 
@@ -198,7 +335,6 @@ func TestJoinEverything(t *testing.T) {
 		Track.AllColumns,
 		Genre.AllColumns,
 		MediaType.AllColumns,
-		PlaylistTrack.AllColumns,
 		Playlist.AllColumns,
 		Invoice.AllColumns,
 		Customer.AllColumns,
@@ -223,37 +359,6 @@ func TestJoinEverything(t *testing.T) {
 		Invoice.InvoiceId, Customer.CustomerId,
 	)
 
-	var dest []struct { //list of all artist
-		model.Artist
-
-		Albums []struct { // list of albums per artist
-			model.Album
-
-			Tracks []struct { // list of tracks per album
-				model.Track
-
-				Genre     model.Genre     // track genre
-				MediaType model.MediaType // track media type
-
-				Playlists []model.Playlist // list of playlist where track is used
-
-				Invoices []struct { // list of invoices where track occurs
-					model.Invoice
-
-					Customer struct { // customer data for invoice
-						model.Customer
-
-						Employee *struct { // employee data for customer if exists
-							model.Employee
-
-							Manager *model.Employee `alias:"Manager"`
-						}
-					}
-				}
-			}
-		}
-	}
-
 	testutils.AssertStatementSql(t, stmt, `
 SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
      "Artist"."Name" AS "Artist.Name",
@@ -274,8 +379,6 @@ SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
      "Genre"."Name" AS "Genre.Name",
      "MediaType"."MediaTypeId" AS "MediaType.MediaTypeId",
      "MediaType"."Name" AS "MediaType.Name",
-     "PlaylistTrack"."PlaylistId" AS "PlaylistTrack.PlaylistId",
-     "PlaylistTrack"."TrackId" AS "PlaylistTrack.TrackId",
      "Playlist"."PlaylistId" AS "Playlist.PlaylistId",
      "Playlist"."Name" AS "Playlist.Name",
      "Invoice"."InvoiceId" AS "Invoice.InvoiceId",
@@ -344,7 +447,7 @@ FROM chinook."Artist"
      LEFT JOIN chinook."Employee" AS "Manager" ON ("Manager"."EmployeeId" = "Employee"."ReportsTo")
 ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId", "Genre"."GenreId", "MediaType"."MediaTypeId", "Playlist"."PlaylistId", "Invoice"."InvoiceId", "Customer"."CustomerId";
 `)
-
+	var dest AllArtistDetails
 	err := stmt.QueryContext(context.Background(), db, &dest)
 
 	require.NoError(t, err)
@@ -1204,7 +1307,7 @@ func TestAggregateFunc(t *testing.T) {
 			WITHIN_GROUP_ORDER_BY(Invoice.BillingAddress.DESC()).AS("percentile_disc_3"),
 
 		PERCENTILE_CONT(Float(0.3)).WITHIN_GROUP_ORDER_BY(Invoice.Total).AS("percentile_cont_1"),
-		PERCENTILE_CONT(Float(0.2)).WITHIN_GROUP_ORDER_BY(INTERVAL(1, HOUR).DESC()).AS("percentile_cont_int"),
+		PERCENTILE_CONT(Float(0.2)).WITHIN_GROUP_ORDER_BY(INTERVAL(1, HOUR).DESC()).AS("percentile_cont_interval"),
 
 		MODE().WITHIN_GROUP_ORDER_BY(Invoice.BillingPostalCode.DESC()).AS("mode_1"),
 	).FROM(
@@ -1218,18 +1321,19 @@ SELECT PERCENTILE_DISC ($1::double precision) WITHIN GROUP (ORDER BY "Invoice"."
      PERCENTILE_DISC ("Invoice"."Total" / $2) WITHIN GROUP (ORDER BY "Invoice"."InvoiceDate" ASC) AS "percentile_disc_2",
      PERCENTILE_DISC ((select array_agg(s) from generate_series(0, 1, 0.2) as s)) WITHIN GROUP (ORDER BY "Invoice"."BillingAddress" DESC) AS "percentile_disc_3",
      PERCENTILE_CONT ($3::double precision) WITHIN GROUP (ORDER BY "Invoice"."Total") AS "percentile_cont_1",
-     PERCENTILE_CONT ($4::double precision) WITHIN GROUP (ORDER BY INTERVAL '1 HOUR' DESC) AS "percentile_cont_int",
+     PERCENTILE_CONT ($4::double precision) WITHIN GROUP (ORDER BY INTERVAL '1 HOUR' DESC) AS "percentile_cont_interval",
      MODE () WITHIN GROUP (ORDER BY "Invoice"."BillingPostalCode" DESC) AS "mode_1"
 FROM chinook."Invoice"
 GROUP BY "Invoice"."Total";
 `, 0.1, 100.0, 0.3, 0.2)
 
 	var dest struct {
-		PercentileDisc1 string
-		PercentileDisc2 string
-		PercentileDisc3 string
-		PercentileCont1 string
-		Mode1           string
+		PercentileDisc1        string
+		PercentileDisc2        string
+		PercentileDisc3        string
+		PercentileCont1        string
+		PercentileContInterval string
+		Mode1                  string
 	}
 
 	err := stmt.Query(db, &dest)
@@ -1241,6 +1345,7 @@ GROUP BY "Invoice"."Total";
 	"PercentileDisc2": "2009-01-19T00:00:00Z",
 	"PercentileDisc3": "{\"Via Degli Scipioni, 43\",\"Qe 7 Bloco G\",\"Berger Stra�e 10\",\"696 Osborne Street\",\"2211 W Berry Street\",\"1033 N Park Ave\"}",
 	"PercentileCont1": "0.99",
+	"PercentileContInterval": "01:00:00",
 	"Mode1": "X1A 1N6"
 }
 `)

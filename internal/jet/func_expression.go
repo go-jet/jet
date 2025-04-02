@@ -255,18 +255,30 @@ func leadLagImpl(name string, expr Expression, offsetAndDefault ...interface{}) 
 
 //------------ String functions ------------------//
 
+// HEX function takes an input and returns its equivalent hexadecimal representation
+func HEX(expression Expression) StringExpression {
+	return StringExp(Func("HEX", expression))
+}
+
+// UNHEX for a string argument str, UNHEX(str) interprets each pair of characters in the argument
+// as a hexadecimal number and converts it to the byte represented by the number.
+// The return value is a binary string.
+func UNHEX(expression StringExpression) BlobExpression {
+	return BlobExp(Func("UNHEX", expression))
+}
+
 // BIT_LENGTH returns number of bits in string expression
-func BIT_LENGTH(stringExpression StringExpression) IntegerExpression {
+func BIT_LENGTH(stringExpression StringOrBlobExpression) IntegerExpression {
 	return newIntegerFunc("BIT_LENGTH", stringExpression)
 }
 
 // CHAR_LENGTH returns number of characters in string expression
-func CHAR_LENGTH(stringExpression StringExpression) IntegerExpression {
+func CHAR_LENGTH(stringExpression StringOrBlobExpression) IntegerExpression {
 	return newIntegerFunc("CHAR_LENGTH", stringExpression)
 }
 
 // OCTET_LENGTH returns number of bytes in string expression
-func OCTET_LENGTH(stringExpression StringExpression) IntegerExpression {
+func OCTET_LENGTH(stringExpression StringOrBlobExpression) IntegerExpression {
 	return newIntegerFunc("OCTET_LENGTH", stringExpression)
 }
 
@@ -282,7 +294,7 @@ func UPPER(stringExpression StringExpression) StringExpression {
 
 // BTRIM removes the longest string consisting only of characters
 // in characters (a space by default) from the start and end of string
-func BTRIM(stringExpression StringExpression, trimChars ...StringExpression) StringExpression {
+func BTRIM(stringExpression StringOrBlobExpression, trimChars ...StringOrBlobExpression) StringExpression {
 	if len(trimChars) > 0 {
 		return NewStringFunc("BTRIM", stringExpression, trimChars[0])
 	}
@@ -291,7 +303,7 @@ func BTRIM(stringExpression StringExpression, trimChars ...StringExpression) Str
 
 // LTRIM removes the longest string containing only characters
 // from characters (a space by default) from the start of string
-func LTRIM(str StringExpression, trimChars ...StringExpression) StringExpression {
+func LTRIM(str StringOrBlobExpression, trimChars ...StringOrBlobExpression) StringExpression {
 	if len(trimChars) > 0 {
 		return NewStringFunc("LTRIM", str, trimChars[0])
 	}
@@ -300,7 +312,7 @@ func LTRIM(str StringExpression, trimChars ...StringExpression) StringExpression
 
 // RTRIM removes the longest string containing only characters
 // from characters (a space by default) from the end of string
-func RTRIM(str StringExpression, trimChars ...StringExpression) StringExpression {
+func RTRIM(str StringOrBlobExpression, trimChars ...StringOrBlobExpression) StringExpression {
 	if len(trimChars) > 0 {
 		return NewStringFunc("RTRIM", str, trimChars[0])
 	}
@@ -324,32 +336,32 @@ func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression
 
 // CONVERT converts string to dest_encoding. The original encoding is
 // specified by src_encoding. The string must be valid in this encoding.
-func CONVERT(str StringExpression, srcEncoding StringExpression, destEncoding StringExpression) StringExpression {
-	return NewStringFunc("CONVERT", str, srcEncoding, destEncoding)
+func CONVERT(str BlobExpression, srcEncoding StringExpression, destEncoding StringExpression) BlobExpression {
+	return BlobExp(Func("CONVERT", str, srcEncoding, destEncoding))
 }
 
 // CONVERT_FROM converts string to the database encoding. The original
 // encoding is specified by src_encoding. The string must be valid in this encoding.
-func CONVERT_FROM(str StringExpression, srcEncoding StringExpression) StringExpression {
+func CONVERT_FROM(str BlobExpression, srcEncoding StringExpression) StringExpression {
 	return NewStringFunc("CONVERT_FROM", str, srcEncoding)
 }
 
 // CONVERT_TO converts string to dest_encoding.
-func CONVERT_TO(str StringExpression, toEncoding StringExpression) StringExpression {
-	return NewStringFunc("CONVERT_TO", str, toEncoding)
+func CONVERT_TO(str StringExpression, toEncoding StringExpression) BlobExpression {
+	return BlobExp(Func("CONVERT_TO", str, toEncoding))
 }
 
 // ENCODE encodes binary data into a textual representation.
 // Supported formats are: base64, hex, escape. escape converts zero bytes and
 // high-bit-set bytes to octal sequences (\nnn) and doubles backslashes.
-func ENCODE(data StringExpression, format StringExpression) StringExpression {
-	return NewStringFunc("ENCODE", data, format)
+func ENCODE(data BlobExpression, format StringExpression) StringExpression {
+	return StringExp(Func("ENCODE", data, format))
 }
 
 // DECODE decodes binary data from textual representation in string.
 // Options for format are same as in encode.
-func DECODE(data StringExpression, format StringExpression) StringExpression {
-	return NewStringFunc("DECODE", data, format)
+func DECODE(data StringExpression, format StringExpression) BlobExpression {
+	return BlobExp(Func("DECODE", data, format))
 }
 
 // FORMAT formats a number to a format like "#,###,###.##", rounded to a specified number of decimal places, then it returns the result as a string.
@@ -379,11 +391,11 @@ func RIGHT(str StringExpression, n IntegerExpression) StringExpression {
 }
 
 // LENGTH returns number of characters in string with a given encoding
-func LENGTH(str StringExpression, encoding ...StringExpression) StringExpression {
+func LENGTH(str StringOrBlobExpression, encoding ...StringExpression) IntegerExpression {
 	if len(encoding) > 0 {
-		return NewStringFunc("LENGTH", str, encoding[0])
+		return IntExp(Func("LENGTH", str, encoding[0]))
 	}
-	return NewStringFunc("LENGTH", str)
+	return IntExp(Func("LENGTH", str))
 }
 
 // LPAD fills up the string to length length by prepending the characters
@@ -407,8 +419,13 @@ func RPAD(str StringExpression, length IntegerExpression, text ...StringExpressi
 	return NewStringFunc("RPAD", str, length)
 }
 
+// BIT_COUNT returns the number of bits set in the binary string (also known as “popcount”).
+func BIT_COUNT(bytes BlobExpression) IntegerExpression {
+	return IntExp(Func("BIT_COUNT", bytes))
+}
+
 // MD5 calculates the MD5 hash of string, returning the result in hexadecimal
-func MD5(stringExpression StringExpression) StringExpression {
+func MD5(stringExpression StringOrBlobExpression) StringExpression {
 	return NewStringFunc("MD5", stringExpression)
 }
 
@@ -434,7 +451,7 @@ func STRPOS(str, substring StringExpression) IntegerExpression {
 }
 
 // SUBSTR extracts substring
-func SUBSTR(str StringExpression, from IntegerExpression, count ...IntegerExpression) StringExpression {
+func SUBSTR(str StringOrBlobExpression, from IntegerExpression, count ...IntegerExpression) StringExpression {
 	if len(count) > 0 {
 		return NewStringFunc("SUBSTR", str, from, count[0])
 	}
@@ -657,16 +674,16 @@ type funcExpressionImpl struct {
 }
 
 // NewFunc creates new function with name and expressions parameters
-func NewFunc(name string, expressions []Expression, parent Expression) *funcExpressionImpl {
+func NewFunc(name string, expressions []Expression, root Expression) *funcExpressionImpl {
 	funcExp := &funcExpressionImpl{
 		name:       name,
 		parameters: parametersSerializer(expressions),
 	}
 
-	if parent != nil {
-		funcExp.ExpressionInterfaceImpl.Parent = parent
+	if root != nil {
+		funcExp.ExpressionInterfaceImpl.Root = root
 	} else {
-		funcExp.ExpressionInterfaceImpl.Parent = funcExp
+		funcExp.ExpressionInterfaceImpl.Root = funcExp
 	}
 
 	return funcExp
@@ -715,7 +732,7 @@ func (p parametersSerializer) serialize(statement StatementType, out *SQLBuilder
 func newWindowFunc(name string, expressions ...Expression) windowExpression {
 	newFun := NewFunc(name, expressions, nil)
 	windowExpr := newWindowExpression(newFun)
-	newFun.ExpressionInterfaceImpl.Parent = windowExpr
+	newFun.ExpressionInterfaceImpl.Root = windowExpr
 
 	return windowExpr
 }
@@ -729,8 +746,8 @@ func newBoolFunc(name string, expressions ...Expression) BoolExpression {
 	boolFunc := &boolFunc{}
 
 	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
-	boolFunc.boolInterfaceImpl.parent = boolFunc
-	boolFunc.ExpressionInterfaceImpl.Parent = boolFunc
+	boolFunc.boolInterfaceImpl.root = boolFunc
+	boolFunc.ExpressionInterfaceImpl.Root = boolFunc
 
 	return boolFunc
 }
@@ -741,8 +758,8 @@ func newBoolWindowFunc(name string, expressions ...Expression) boolWindowExpress
 
 	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
 	intWindowFunc := newBoolWindowExpression(boolFunc)
-	boolFunc.boolInterfaceImpl.parent = intWindowFunc
-	boolFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
+	boolFunc.boolInterfaceImpl.root = intWindowFunc
+	boolFunc.ExpressionInterfaceImpl.Root = intWindowFunc
 
 	return intWindowFunc
 }
@@ -757,7 +774,7 @@ func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
 	floatFunc := &floatFunc{}
 
 	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
-	floatFunc.floatInterfaceImpl.parent = floatFunc
+	floatFunc.floatInterfaceImpl.root = floatFunc
 
 	return floatFunc
 }
@@ -768,8 +785,8 @@ func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpre
 
 	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
 	floatWindowFunc := newFloatWindowExpression(floatFunc)
-	floatFunc.floatInterfaceImpl.parent = floatWindowFunc
-	floatFunc.ExpressionInterfaceImpl.Parent = floatWindowFunc
+	floatFunc.floatInterfaceImpl.root = floatWindowFunc
+	floatFunc.ExpressionInterfaceImpl.Root = floatWindowFunc
 
 	return floatWindowFunc
 }
@@ -783,7 +800,7 @@ func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
 	intFunc := &integerFunc{}
 
 	intFunc.funcExpressionImpl = *NewFunc(name, expressions, intFunc)
-	intFunc.integerInterfaceImpl.parent = intFunc
+	intFunc.integerInterfaceImpl.root = intFunc
 
 	return intFunc
 }
@@ -794,8 +811,8 @@ func newIntegerWindowFunc(name string, expressions ...Expression) integerWindowE
 
 	integerFunc.funcExpressionImpl = *NewFunc(name, expressions, integerFunc)
 	intWindowFunc := newIntegerWindowExpression(integerFunc)
-	integerFunc.integerInterfaceImpl.parent = intWindowFunc
-	integerFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
+	integerFunc.integerInterfaceImpl.root = intWindowFunc
+	integerFunc.ExpressionInterfaceImpl.Root = intWindowFunc
 
 	return intWindowFunc
 }
@@ -810,7 +827,7 @@ func NewStringFunc(name string, expressions ...Expression) StringExpression {
 	stringFunc := &stringFunc{}
 
 	stringFunc.funcExpressionImpl = *NewFunc(name, expressions, stringFunc)
-	stringFunc.stringInterfaceImpl.parent = stringFunc
+	stringFunc.stringInterfaceImpl.root = stringFunc
 
 	return stringFunc
 }
@@ -825,7 +842,7 @@ func NewDateFunc(name string, expressions ...Expression) *dateFunc {
 	dateFunc := &dateFunc{}
 
 	dateFunc.funcExpressionImpl = *NewFunc(name, expressions, dateFunc)
-	dateFunc.dateInterfaceImpl.parent = dateFunc
+	dateFunc.dateInterfaceImpl.root = dateFunc
 
 	return dateFunc
 }
@@ -840,7 +857,7 @@ func NewTimeFunc(name string, expressions ...Expression) *timeFunc {
 	timeFun := &timeFunc{}
 
 	timeFun.funcExpressionImpl = *NewFunc(name, expressions, timeFun)
-	timeFun.timeInterfaceImpl.parent = timeFun
+	timeFun.timeInterfaceImpl.root = timeFun
 
 	return timeFun
 }
@@ -854,7 +871,7 @@ func newTimezFunc(name string, expressions ...Expression) *timezFunc {
 	timezFun := &timezFunc{}
 
 	timezFun.funcExpressionImpl = *NewFunc(name, expressions, timezFun)
-	timezFun.timezInterfaceImpl.parent = timezFun
+	timezFun.timezInterfaceImpl.root = timezFun
 
 	return timezFun
 }
@@ -869,7 +886,7 @@ func NewTimestampFunc(name string, expressions ...Expression) *timestampFunc {
 	timestampFunc := &timestampFunc{}
 
 	timestampFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampFunc)
-	timestampFunc.timestampInterfaceImpl.parent = timestampFunc
+	timestampFunc.timestampInterfaceImpl.root = timestampFunc
 
 	return timestampFunc
 }
@@ -883,7 +900,7 @@ func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
 	timestampzFunc := &timestampzFunc{}
 
 	timestampzFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampzFunc)
-	timestampzFunc.timestampzInterfaceImpl.parent = timestampzFunc
+	timestampzFunc.timestampzInterfaceImpl.root = timestampzFunc
 
 	return timestampzFunc
 }

@@ -38,7 +38,7 @@ func Generate(destDir string, dbConn DBConnection, generatorTemplate ...template
 	}
 	defer db.Close()
 
-	err = generate(db, dbConn.DBName, destDir, generatorTemplate...)
+	err = GenerateDB(db, dbConn.DBName, destDir, generatorTemplate...)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func GenerateDSN(dsn, destDir string, templates ...template.Template) error {
 	}
 	defer db.Close()
 
-	err = generate(db, cfg.DBName, destDir, templates...)
+	err = GenerateDB(db, cfg.DBName, destDir, templates...)
 	if err != nil {
 		return fmt.Errorf("failed to generate: %w", err)
 	}
@@ -96,7 +96,8 @@ func openConnection(connectionString string) (*sql.DB, error) {
 	return db, nil
 }
 
-func generate(db *sql.DB, dbName, destDir string, templates ...template.Template) error {
+// GenerateDB generates jet files using the provided *sql.DB
+func GenerateDB(db *sql.DB, dbName, destDir string, templates ...template.Template) error {
 	fmt.Println("Retrieving database information...")
 	// No schemas in MySQL
 	schemaMetaData, err := metadata.GetSchema(db, &mySqlQuerySet{}, dbName)

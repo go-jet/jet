@@ -21,36 +21,36 @@ import (
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
-	expectedSQL := `
+
+	t.Run("standard", func(t *testing.T) {
+		stmt := SELECT(Actor.AllColumns).
+			DISTINCT().
+			FROM(Actor).
+			WHERE(Actor.ActorID.EQ(Int(2)))
+
+		testutils.AssertDebugStatementSql(t, stmt, `
 SELECT DISTINCT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
      actor.last_update AS "actor.last_update"
 FROM dvds.actor
 WHERE actor.actor_id = 2;
-`
+`, int64(2))
 
-	query := SELECT(Actor.AllColumns).
-		DISTINCT().
-		FROM(Actor).
-		WHERE(Actor.ActorID.EQ(Int(2)))
+		var dest model.Actor
+		err := stmt.Query(db, &dest)
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(2))
+		require.NoError(t, err)
+		testutils.AssertDeepEqual(t, dest, actor2)
+		requireLogged(t, stmt)
+	})
+}
 
-	actor := model.Actor{}
-	err := query.Query(db, &actor)
-
-	require.NoError(t, err)
-
-	expectedActor := model.Actor{
-		ActorID:    2,
-		FirstName:  "Nick",
-		LastName:   "Wahlberg",
-		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
-	}
-
-	testutils.AssertDeepEqual(t, actor, expectedActor)
-	requireLogged(t, query)
+var actor2 = model.Actor{
+	ActorID:    2,
+	FirstName:  "Nick",
+	LastName:   "Wahlberg",
+	LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
 }
 
 func TestSelectDistinctOn(t *testing.T) {
@@ -85,7 +85,6 @@ ORDER BY rental.staff_id ASC, rental.customer_id ASC, rental.rental_id ASC;
 
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
-
 	testutils.AssertJSON(t, dest, `
 [
 	{
@@ -146,7 +145,11 @@ LIMIT 30;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(30))
 
-	var dest []model.Payment
+	var dest []struct {
+		model.Payment
+
+		Customer model.Customer
+	}
 
 	err := query.Query(db, &dest)
 
@@ -187,6 +190,21 @@ ORDER BY customer.customer_id ASC;
 	testutils.AssertDeepEqual(t, lastCustomer, customers[598])
 
 	requireLogged(t, query)
+
+	t.Run("select json", func(t *testing.T) {
+		stmt := SELECT_JSON_ARR(
+			Customer.AllColumns,
+		).FROM(
+			Customer,
+		).ORDER_BY(Customer.CustomerID.ASC())
+
+		var dest []model.Customer
+
+		err := stmt.QueryContext(ctx, db, &dest)
+		require.NoError(t, err)
+
+		testutils.AssertDeepEqual(t, customers, dest)
+	})
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
@@ -217,15 +235,14 @@ FROM dvds.payment
 LIMIT 12;
 `
 
-	query := Payment.
-		SELECT(
-			Payment.PaymentID,
-			Customer.SELECT(Customer.CustomerID).LIMIT(1),
-			UNION(
-				Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
-				Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
-			).LIMIT(1),
-		).
+	query := SELECT(
+		Payment.PaymentID,
+		Customer.SELECT(Customer.CustomerID).LIMIT(1),
+		UNION(
+			Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(10),
+			Payment.SELECT(Payment.PaymentID).LIMIT(1).OFFSET(2),
+		).LIMIT(1),
+	).FROM(Payment).
 		LIMIT(12)
 
 	//fmt.Println(query.DebugSql())
@@ -233,8 +250,10 @@ LIMIT 12;
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
 
 	var dest []struct{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &dest)
+		require.NoError(t, err)
+	})
 }
 
 func TestSelectFetchFirst(t *testing.T) {
@@ -356,10 +375,7 @@ OFFSET (
 func TestSelectJoinQueryStruct(t *testing.T) {
 
 	expectedSQL := `
-SELECT film_actor.actor_id AS "film_actor.actor_id",
-     film_actor.film_id AS "film_actor.film_id",
-     film_actor.last_update AS "film_actor.last_update",
-     film.film_id AS "film.film_id",
+SELECT film.film_id AS "film.film_id",
      film.title AS "film.title",
      film.description AS "film.description",
      film.release_year AS "film.release_year",
@@ -407,7 +423,6 @@ LIMIT 1000;
 			INNER_JOIN(Inventory, Inventory.FilmID.EQ(Film.FilmID)).
 			INNER_JOIN(Rental, Rental.InventoryID.EQ(Inventory.InventoryID)).
 			SELECT(
-				FilmActor.AllColumns,
 				Film.AllColumns,
 				Language.AllColumns,
 				Actor.AllColumns,
@@ -1222,6 +1237,8 @@ func TestSelectOrderByAscDesc(t *testing.T) {
 
 func TestSelectOrderBy(t *testing.T) {
 
+	var destRentals []model.Rental
+
 	t.Run("default", func(t *testing.T) {
 		stmt := SELECT(
 			Rental.AllColumns,
@@ -1243,7 +1260,8 @@ FROM dvds.rental
 ORDER BY rental.return_date
 LIMIT 200;
 `)
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("NULLS FIRST", func(t *testing.T) {
@@ -1267,7 +1285,7 @@ FROM dvds.rental
 ORDER BY rental.return_date NULLS FIRST
 LIMIT 200;
 `)
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("NULLS LAST", func(t *testing.T) {
@@ -1291,7 +1309,7 @@ FROM dvds.rental
 ORDER BY rental.return_date NULLS LAST
 LIMIT 200;
 `)
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("ASC", func(t *testing.T) {
@@ -1315,7 +1333,7 @@ FROM dvds.rental
 ORDER BY rental.return_date ASC
 LIMIT 200;
 `)
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("ASC NULLS FIRST", func(t *testing.T) {
@@ -1340,7 +1358,7 @@ ORDER BY rental.return_date ASC NULLS FIRST
 LIMIT 200;
 `)
 
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("ASC NULLS LAST", func(t *testing.T) {
@@ -1366,7 +1384,7 @@ LIMIT 200
 OFFSET 15800;
 `)
 
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("DESC", func(t *testing.T) {
@@ -1392,7 +1410,7 @@ LIMIT 200
 OFFSET 15800;
 `)
 
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("DESC NULLS LAST", func(t *testing.T) {
@@ -1418,7 +1436,7 @@ LIMIT 200
 OFFSET 15800;
 `)
 
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 
 	t.Run("DESC NULLS FIRST", func(t *testing.T) {
@@ -1443,7 +1461,7 @@ ORDER BY rental.return_date DESC NULLS FIRST
 LIMIT 200;
 `)
 
-		require.NoError(t, stmt.Query(db, &struct{}{}))
+		require.NoError(t, stmt.Query(db, &destRentals))
 	})
 }
 
@@ -1539,14 +1557,14 @@ LIMIT 1000;
 
 	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
 
-	var customerAddresCrosJoined []struct {
+	var customerAddersCrossJoined []struct {
 		model.Customer
 		model.Address
 	}
 
-	err := query.Query(db, &customerAddresCrosJoined)
+	err := query.Query(db, &customerAddersCrossJoined)
 
-	require.Equal(t, len(customerAddresCrosJoined), 1000)
+	require.Equal(t, len(customerAddersCrossJoined), 1000)
 
 	require.NoError(t, err)
 }
@@ -1669,7 +1687,6 @@ func TestSelectSubQuery(t *testing.T) {
 		SELECT(
 			rRatingFilms.AllColumns(),
 			Actor.AllColumns,
-			FilmActor.AllColumns,
 		).FROM(
 			rRatingFilms.
 				INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(rFilmID)).
@@ -1688,10 +1705,7 @@ SELECT "rFilms"."film.film_id" AS "film.film_id",
      actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update",
-     film_actor.actor_id AS "film_actor.actor_id",
-     film_actor.film_id AS "film_actor.film_id",
-     film_actor.last_update AS "film_actor.last_update"
+     actor.last_update AS "actor.last_update"
 FROM (
           SELECT film.film_id AS "film.film_id",
                film.title AS "film.title",
@@ -1858,9 +1872,7 @@ SELECT customer.customer_id AS "customer.customer_id",
      customer.active AS "customer.active",
      SUM(payment.amount) AS "amount.sum",
      AVG(payment.amount) AS "amount.avg",
-     MAX(payment.payment_date) AS "amount.max_date",
      MAX(payment.amount) AS "amount.max",
-     MIN(payment.payment_date) AS "amount.min_date",
      MIN(payment.amount) AS "amount.min",
      COUNT(payment.amount) AS "amount.count"
 FROM dvds.payment
@@ -1874,9 +1886,7 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 
 		SUMf(Payment.Amount).AS("amount.sum"),
 		AVG(Payment.Amount).AS("amount.avg"),
-		MAX(Payment.PaymentDate).AS("amount.max_date"),
 		MAXf(Payment.Amount).AS("amount.max"),
-		MIN(Payment.PaymentDate).AS("amount.min_date"),
 		MINf(Payment.Amount).AS("amount.min"),
 		COUNT(Payment.Amount).AS("amount.count"),
 	).FROM(
@@ -2729,7 +2739,7 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)
+WHERE (((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)) AND (film.rating != 'R')
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 `
 
@@ -2748,7 +2758,8 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	).WHERE(
 		Language.Name.EQ(Char(20)("English")). // note that every column has type.
 							AND(Category.Name.NOT_EQ(Text("Action"))). // String column Language.Name and Category.Name can be compared only with string expression
-							AND(Film.Length.GT(Int32(180))),           // Film.Length is integer column and can be compared only with integer expression
+							AND(Film.Length.GT(Int32(180))).           // Film.Length is integer column and can be compared only with integer expression
+							AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),
 	).ORDER_BY(
 		Actor.ActorID.ASC(),
 		Film.FilmID.ASC(),
@@ -2771,7 +2782,8 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 
-	//jsonSave("./testdata/quick-start-dest.json", dest)
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-dest.json")
+
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
 
 	var dest2 []struct {
@@ -2781,10 +2793,12 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 		Actors []model.Actor
 	}
 
-	err = stmt.Query(db, &dest2)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err = stmt.Query(db, &dest2)
+		require.NoError(t, err)
+	})
 
-	//jsonSave("./testdata/quick-start-dest2.json", dest2)
+	//testutils.SaveJSONFile(dest2, "./testdata/results/postgres/quick-start-dest2.json")
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
 }
 
@@ -2792,7 +2806,7 @@ func TestSelectQuickStartWithSubQueries(t *testing.T) {
 
 	filmLogerThan180 := Film.
 		SELECT(Film.AllColumns).
-		WHERE(Film.Length.GT(Int(180))).
+		WHERE(Film.Length.GT(Int(180)).AND(Film.Rating.NOT_EQ(enum.MpaaRating.R))).
 		AsTable("films")
 
 	filmID := Film.FilmID.From(filmLogerThan180)
@@ -2805,18 +2819,19 @@ func TestSelectQuickStartWithSubQueries(t *testing.T) {
 
 	categoryID := Category.CategoryID.From(categoriesNotAction)
 
-	stmt := Actor.
-		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
-		INNER_JOIN(filmLogerThan180, filmID.EQ(FilmActor.FilmID)).
-		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageID)).
-		INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmID)).
-		INNER_JOIN(categoriesNotAction, categoryID.EQ(FilmCategory.CategoryID)).
-		SELECT(
-			Actor.AllColumns,
-			filmLogerThan180.AllColumns(),
-			Language.AllColumns,
-			categoriesNotAction.AllColumns(),
-		).ORDER_BY(
+	stmt := SELECT(
+		Actor.AllColumns,
+		filmLogerThan180.AllColumns(),
+		Language.AllColumns,
+		categoriesNotAction.AllColumns(),
+	).FROM(
+		Actor.
+			INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
+			INNER_JOIN(filmLogerThan180, filmID.EQ(FilmActor.FilmID)).
+			INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageID)).
+			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(filmID)).
+			INNER_JOIN(categoriesNotAction, categoryID.EQ(FilmCategory.CategoryID)),
+	).ORDER_BY(
 		Actor.ActorID.ASC(),
 		filmID.ASC(),
 	)
@@ -2846,8 +2861,10 @@ func TestSelectQuickStartWithSubQueries(t *testing.T) {
 		Actors []model.Actor
 	}
 
-	err = stmt.Query(db, &dest2)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err = stmt.Query(db, &dest2)
+		require.NoError(t, err)
+	})
 
 	//jsonSave("./testdata/quick-start-dest2.json", dest2)
 	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
@@ -2878,9 +2895,10 @@ SELECT true,
      'date';
 `)
 
-	dest := []struct{}{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &[]struct{}{})
+		require.NoError(t, err)
+	})
 }
 
 func TestSelectWindowFunction(t *testing.T) {
@@ -2914,45 +2932,52 @@ FROM dvds.payment
 WHERE payment.payment_id < $3
 GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 `
-	query := Payment.
-		SELECT(
-			AVG(Payment.Amount).OVER(),
-			AVG(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID)),
-			MAXf(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate.DESC())),
-			MINf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
-			SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).
-				ORDER_BY(Payment.PaymentDate.DESC()).ROWS(PRECEDING(1), FOLLOWING(6))),
-			SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).
-				ORDER_BY(Payment.PaymentDate.DESC()).RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
-			MAXi(Payment.CustomerID).OVER(ORDER_BY(Payment.PaymentDate.DESC()).ROWS(CURRENT_ROW, FOLLOWING(UNBOUNDED))),
-			MINi(Payment.CustomerID).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
-			SUMi(Payment.CustomerID).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
-			ROW_NUMBER().OVER(ORDER_BY(Payment.PaymentDate)),
-			RANK().OVER(ORDER_BY(Payment.PaymentDate)),
-			DENSE_RANK().OVER(ORDER_BY(Payment.PaymentDate)),
-			CUME_DIST().OVER(ORDER_BY(Payment.PaymentDate)),
-			NTILE(11).OVER(ORDER_BY(Payment.PaymentDate)),
-			LAG(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
-			LAG(Payment.Amount, 2).OVER(ORDER_BY(Payment.PaymentDate)),
-			LAG(Payment.Amount, 2, Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
-			LAG(Payment.Amount, 2, 100).OVER(ORDER_BY(Payment.PaymentDate)),
-			LEAD(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
-			LEAD(Payment.Amount, 2).OVER(ORDER_BY(Payment.PaymentDate)),
-			LEAD(Payment.Amount, 2, Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
-			LEAD(Payment.Amount, 2, 100).OVER(ORDER_BY(Payment.PaymentDate)),
-			FIRST_VALUE(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
-			LAST_VALUE(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
-			NTH_VALUE(Payment.Amount, 3).OVER(ORDER_BY(Payment.PaymentDate)),
-		).GROUP_BY(Payment.Amount, Payment.CustomerID, Payment.PaymentDate).
-		WHERE(Payment.PaymentID.LT(Int(10)))
+	query := SELECT(
+		AVG(Payment.Amount).OVER(),
+		AVG(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID)),
+		MAXf(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate.DESC())),
+		MINf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
+		SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).
+			ORDER_BY(Payment.PaymentDate.DESC()).ROWS(PRECEDING(1), FOLLOWING(6))),
+		SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID).
+			ORDER_BY(Payment.PaymentDate.DESC()).RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
+		MAXi(Payment.CustomerID).OVER(ORDER_BY(Payment.PaymentDate.DESC()).ROWS(CURRENT_ROW, FOLLOWING(UNBOUNDED))),
+		MINi(Payment.CustomerID).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
+		SUMi(Payment.CustomerID).OVER(PARTITION_BY(Payment.CustomerID).ORDER_BY(Payment.PaymentDate.DESC())),
+		ROW_NUMBER().OVER(ORDER_BY(Payment.PaymentDate)),
+		RANK().OVER(ORDER_BY(Payment.PaymentDate)),
+		DENSE_RANK().OVER(ORDER_BY(Payment.PaymentDate)),
+		CUME_DIST().OVER(ORDER_BY(Payment.PaymentDate)),
+		NTILE(11).OVER(ORDER_BY(Payment.PaymentDate)),
+		LAG(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+		LAG(Payment.Amount, 2).OVER(ORDER_BY(Payment.PaymentDate)),
+		LAG(Payment.Amount, 2, Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+		LAG(Payment.Amount, 2, 100).OVER(ORDER_BY(Payment.PaymentDate)),
+		LEAD(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+		LEAD(Payment.Amount, 2).OVER(ORDER_BY(Payment.PaymentDate)),
+		LEAD(Payment.Amount, 2, Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+		LEAD(Payment.Amount, 2, 100).OVER(ORDER_BY(Payment.PaymentDate)),
+		FIRST_VALUE(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+		LAST_VALUE(Payment.Amount).OVER(ORDER_BY(Payment.PaymentDate)),
+		NTH_VALUE(Payment.Amount, 3).OVER(ORDER_BY(Payment.PaymentDate)),
+	).FROM(
+		Payment,
+	).WHERE(
+		Payment.PaymentID.LT(Int(10)),
+	).GROUP_BY(
+		Payment.Amount,
+		Payment.CustomerID,
+		Payment.PaymentDate,
+	)
 
 	//fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
 
-	dest := []struct{}{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &[]struct{}{})
+		require.NoError(t, err)
+	})
 }
 
 func TestSelectWindowClause(t *testing.T) {
@@ -2966,7 +2991,7 @@ WHERE payment.payment_id < $1
 WINDOW w1 AS (PARTITION BY payment.payment_date), w2 AS (w1), w3 AS (w2 ORDER BY payment.customer_id)
 ORDER BY payment.customer_id;
 `
-	query := Payment.SELECT(
+	query := SELECT(
 		AVG(Payment.Amount).OVER(),
 		AVG(Payment.Amount).OVER(Window("w1")),
 		AVG(Payment.Amount).OVER(
@@ -2976,6 +3001,7 @@ ORDER BY payment.customer_id;
 		),
 		AVG(Payment.Amount).OVER(Window("w3").RANGE(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED))),
 	).
+		FROM(Payment).
 		WHERE(Payment.PaymentID.LT(Int(10))).
 		WINDOW("w1").AS(PARTITION_BY(Payment.PaymentDate)).
 		WINDOW("w2").AS(Window("w1")).
@@ -2986,10 +3012,11 @@ ORDER BY payment.customer_id;
 
 	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
 
-	dest := []struct{}{}
-	err := query.Query(db, &dest)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &[]struct{}{})
 
-	require.NoError(t, err)
+		require.NoError(t, err)
+	})
 }
 
 func TestSelectSimpleView(t *testing.T) {
@@ -3035,12 +3062,14 @@ func TestSelectJoinViewWithTable(t *testing.T) {
 	query := SELECT(
 		view.CustomerList.AllColumns,
 		Rental.AllColumns,
-	).
-		FROM(view.CustomerList.
+	).FROM(
+		view.CustomerList.
 			INNER_JOIN(Rental, view.CustomerList.ID.EQ(Rental.CustomerID)),
-		).
-		ORDER_BY(view.CustomerList.ID).
-		WHERE(view.CustomerList.ID.LT_EQ(Int(2)))
+	).WHERE(
+		view.CustomerList.ID.LT_EQ(Int(2)),
+	).ORDER_BY(
+		view.CustomerList.ID,
+	)
 
 	var dest []struct {
 		model.CustomerList `sql:"primary_key=ID"`
@@ -3147,7 +3176,7 @@ FROM dvds.customer
 WHERE ($1::boolean AND (customer.customer_id = $2)) AND (customer.activebool = $3::boolean);
 `, true, int64(1), true)
 
-	dest := []model.Customer{}
+	var dest []model.Customer
 	err := stmt.Query(db, &dest)
 	require.NoError(t, err)
 	require.Len(t, dest, 1)
@@ -3695,8 +3724,10 @@ SELECT SUM((CASE WHEN staff.active IS TRUE THEN $1::smallint ELSE $2::integer EN
 FROM dvds.staff;
 `)
 
-	err := stmt.Query(db, &struct{}{})
-	require.NoError(t, err)
+	allowUnusedColumns(func() {
+		err := stmt.Query(db, &struct{}{})
+		require.NoError(t, err)
+	})
 }
 
 func GET_FILM_COUNT(lenFrom, lenTo IntegerExpression) IntegerExpression {

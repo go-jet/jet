@@ -39,91 +39,91 @@ type (
 
 type integerInterfaceImpl struct {
 	numericExpressionImpl
-	parent IntegerExpression
+	root IntegerExpression
 }
 
 func (i *integerInterfaceImpl) EQ(rhs IntegerExpression) BoolExpression {
-	return Eq(i.parent, rhs)
+	return Eq(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) NOT_EQ(rhs IntegerExpression) BoolExpression {
-	return NotEq(i.parent, rhs)
+	return NotEq(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) IS_DISTINCT_FROM(rhs IntegerExpression) BoolExpression {
-	return IsDistinctFrom(i.parent, rhs)
+	return IsDistinctFrom(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs IntegerExpression) BoolExpression {
-	return IsNotDistinctFrom(i.parent, rhs)
+	return IsNotDistinctFrom(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) GT(rhs IntegerExpression) BoolExpression {
-	return Gt(i.parent, rhs)
+	return Gt(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) GT_EQ(rhs IntegerExpression) BoolExpression {
-	return GtEq(i.parent, rhs)
+	return GtEq(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) LT(rhs IntegerExpression) BoolExpression {
-	return Lt(i.parent, rhs)
+	return Lt(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) LT_EQ(rhs IntegerExpression) BoolExpression {
-	return LtEq(i.parent, rhs)
+	return LtEq(i.root, rhs)
 }
 
 func (i *integerInterfaceImpl) BETWEEN(min, max IntegerExpression) BoolExpression {
-	return NewBetweenOperatorExpression(i.parent, min, max, false)
+	return NewBetweenOperatorExpression(i.root, min, max, false)
 }
 
 func (i *integerInterfaceImpl) NOT_BETWEEN(min, max IntegerExpression) BoolExpression {
-	return NewBetweenOperatorExpression(i.parent, min, max, true)
+	return NewBetweenOperatorExpression(i.root, min, max, true)
 }
 
 func (i *integerInterfaceImpl) ADD(rhs IntegerExpression) IntegerExpression {
-	return IntExp(Add(i.parent, rhs))
+	return IntExp(Add(i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) SUB(rhs IntegerExpression) IntegerExpression {
-	return IntExp(Sub(i.parent, rhs))
+	return IntExp(Sub(i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) MUL(rhs IntegerExpression) IntegerExpression {
-	return IntExp(Mul(i.parent, rhs))
+	return IntExp(Mul(i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) DIV(rhs IntegerExpression) IntegerExpression {
-	return IntExp(Div(i.parent, rhs))
+	return IntExp(Div(i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) MOD(rhs IntegerExpression) IntegerExpression {
-	return IntExp(Mod(i.parent, rhs))
+	return IntExp(Mod(i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) POW(rhs IntegerExpression) IntegerExpression {
-	return IntExp(POW(i.parent, rhs))
+	return IntExp(POW(i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) BIT_AND(rhs IntegerExpression) IntegerExpression {
-	return newBinaryIntegerOperatorExpression(i.parent, rhs, "&")
+	return newBinaryIntegerOperatorExpression(i.root, rhs, "&")
 }
 
 func (i *integerInterfaceImpl) BIT_OR(rhs IntegerExpression) IntegerExpression {
-	return newBinaryIntegerOperatorExpression(i.parent, rhs, "|")
+	return newBinaryIntegerOperatorExpression(i.root, rhs, "|")
 }
 
 func (i *integerInterfaceImpl) BIT_XOR(rhs IntegerExpression) IntegerExpression {
-	return newBinaryIntegerOperatorExpression(i.parent, rhs, "#")
+	return newBinaryIntegerOperatorExpression(i.root, rhs, "#")
 }
 
 func (i *integerInterfaceImpl) BIT_SHIFT_LEFT(intExpression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerOperatorExpression(i.parent, intExpression, "<<")
+	return newBinaryIntegerOperatorExpression(i.root, intExpression, "<<")
 }
 
 func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) IntegerExpression {
-	return newBinaryIntegerOperatorExpression(i.parent, intExpression, ">>")
+	return newBinaryIntegerOperatorExpression(i.root, intExpression, ">>")
 }
 
 func newBinaryIntegerOperatorExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
@@ -141,11 +141,11 @@ type integerExpressionWrapper struct {
 }
 
 func newIntExpressionWrap(expression Expression) IntegerExpression {
-	intExpressionWrap := integerExpressionWrapper{Expression: expression}
+	intExpressionWrap := &integerExpressionWrapper{Expression: expression}
+	intExpressionWrap.integerInterfaceImpl.root = intExpressionWrap
+	expression.setRoot(intExpressionWrap)
 
-	intExpressionWrap.integerInterfaceImpl.parent = &intExpressionWrap
-
-	return &intExpressionWrap
+	return intExpressionWrap
 }
 
 // IntExp is int expression wrapper around arbitrary expression.
