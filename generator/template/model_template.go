@@ -106,10 +106,10 @@ func getTableModelImports(modelType TableModel, tableMetaData metadata.Table) []
 	importPaths := map[string]bool{}
 	for _, columnMetaData := range tableMetaData.Columns {
 		field := modelType.Field(columnMetaData)
-		importPath := field.Type.ImportPath
-
-		if importPath != "" {
-			importPaths[importPath] = true
+		for _, importPath := range append([]string{field.Type.ImportPath}, field.Type.AdditionalImportPaths...) {
+			if importPath != "" {
+				importPaths[importPath] = true
+			}
 		}
 	}
 
@@ -207,8 +207,9 @@ func (f TableModelField) TagsString() string {
 
 // Type represents type of the struct field
 type Type struct {
-	ImportPath string
-	Name       string
+	ImportPath            string
+	AdditionalImportPaths []string
+	Name                  string
 }
 
 // NewType creates new type for dummy object
