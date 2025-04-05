@@ -43,6 +43,7 @@ into complex object composition.
 - [Dependencies](#dependencies)
 - [Versioning](#versioning)
 - [License](#license)
+- [Support the Project](#support-the-project)
 
 ## Motivation
 https://medium.com/@go.jet/jet-5f3667efa0cc
@@ -630,3 +631,10 @@ Typically, two releases are published each year — one in early spring and anot
 
 Copyright 2019-2025 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.
+
+## Support the Project
+
+Ways to donate:
+- [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E71CXDAE)
+- BTC: bc1qtjhxe8mqx0yzff2l0f6stjpjj92kgwr0a53wxv
+- ETH: 0xe98e4535C744c617e8E45828B63fDFf9367E3574
