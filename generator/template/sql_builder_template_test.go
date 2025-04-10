@@ -1,9 +1,11 @@
 package template
 
 import (
-	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
 )
 
 func TestToGoEnumValueIdentifier(t *testing.T) {
@@ -32,6 +34,32 @@ func TestColumnRenameReserved(t *testing.T) {
 				Name: tt.col,
 			})
 			require.Equal(t, builder.Name, tt.want)
+		})
+	}
+}
+
+func Test_SQLBuilder_ShouldSkip(t *testing.T) {
+	tests := []struct {
+		name    string
+		initial SQLBuilder
+		skip    bool
+	}{
+		{
+			name:    "True",
+			initial: SQLBuilder{Skip: false},
+			skip:    true,
+		},
+		{
+			name:    "False",
+			initial: SQLBuilder{Skip: true},
+			skip:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			updatedBuilder := tt.initial.ShouldSkip(tt.skip)
+			require.Equal(t, tt.skip, updatedBuilder.Skip)
 		})
 	}
 }

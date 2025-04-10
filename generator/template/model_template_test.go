@@ -1,9 +1,11 @@
 package template
 
 import (
-	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
 )
 
 func Test_TableModelField(t *testing.T) {
@@ -42,4 +44,30 @@ func Test_TableModelField(t *testing.T) {
 		},
 		Tags: nil,
 	})
+}
+
+func Test_Model_ShouldSkip(t *testing.T) {
+	tests := []struct {
+		name    string
+		initial Model
+		skip    bool
+	}{
+		{
+			name:    "True",
+			initial: Model{Skip: false},
+			skip:    true,
+		},
+		{
+			name:    "False",
+			initial: Model{Skip: true},
+			skip:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			updatedModel := tt.initial.ShouldSkip(tt.skip)
+			require.Equal(t, tt.skip, updatedModel.Skip)
+		})
+	}
 }
