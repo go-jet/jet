@@ -2,12 +2,13 @@ package template
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 	"path/filepath"
 	"slices"
 	"strings"
 	"unicode"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 )
 
 // SQLBuilder is template for generating sql builder files
@@ -50,6 +51,12 @@ func (sb SQLBuilder) UseView(viewFunc func(table metadata.Table) ViewSQLBuilder)
 // UseEnum returns new SQLBuilder with new EnumSQLBuilder template function set
 func (sb SQLBuilder) UseEnum(enumFunc func(enum metadata.Enum) EnumSQLBuilder) SQLBuilder {
 	sb.Enum = enumFunc
+	return sb
+}
+
+// ShouldSkip returns new SQLBuilder with new skip flag set
+func (sb SQLBuilder) ShouldSkip(skip bool) SQLBuilder {
+	sb.Skip = skip
 	return sb
 }
 
