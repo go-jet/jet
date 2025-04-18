@@ -3,6 +3,11 @@ package postgres
 import (
 	"database/sql"
 	"fmt"
+	"path/filepath"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/postgres"
 	"github.com/go-jet/jet/v2/generator/template"
@@ -12,9 +17,6 @@ import (
 	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
-	"github.com/stretchr/testify/require"
-	"path/filepath"
-	"testing"
 )
 
 const tempTestDir = "./.tempTestDir"
@@ -62,9 +64,7 @@ func TestGeneratorTemplate_Model_SkipGeneration(t *testing.T) {
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
-					UseModel(template.Model{
-						Skip: true,
-					})
+					UseModel(template.DefaultModel().ShouldSkip(true))
 			}),
 	)
 
@@ -80,9 +80,7 @@ func TestGeneratorTemplate_SQLBuilder_SkipGeneration(t *testing.T) {
 		template.Default(postgres2.Dialect).
 			UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 				return template.DefaultSchema(schemaMetaData).
-					UseSQLBuilder(template.SQLBuilder{
-						Skip: true,
-					})
+					UseSQLBuilder(template.DefaultSQLBuilder().ShouldSkip(true))
 			}),
 	)
 
