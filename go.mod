@@ -2,7 +2,7 @@ module github.com/go-jet/jet/v2
 
 go 1.23.0
 
-toolchain go1.24.1
+toolchain go1.23.8
 
 // used by jet generator
 require (
