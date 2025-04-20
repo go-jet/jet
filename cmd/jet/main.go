@@ -5,24 +5,24 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/errfmt"
-	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"os"
 	"strings"
 
-	"github.com/go-jet/jet/v2/generator/metadata"
-	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
-	"github.com/go-jet/jet/v2/generator/template"
-	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/mysql"
-	postgres2 "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/sqlite"
-
-	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
-	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
+	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
+	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
+	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/generator/template"
+	"github.com/go-jet/jet/v2/internal/jet"
+	"github.com/go-jet/jet/v2/internal/utils/errfmt"
+	"github.com/go-jet/jet/v2/internal/utils/strslice"
+	"github.com/go-jet/jet/v2/mysql"
+	postgres2 "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/sqlite"
 )
 
 var (
@@ -41,6 +41,9 @@ var (
 	ignoreTables string
 	ignoreViews  string
 	ignoreEnums  string
+
+	skipModel      bool
+	skipSQLBuilder bool
 
 	destDir  string
 	modelPkg string
@@ -73,6 +76,8 @@ func init() {
 	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore.`)
 	flag.StringVar(&ignoreViews, "ignore-views", "", `Comma-separated list of views to ignore.`)
 	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore.`)
+	flag.BoolVar(&skipModel, "skip-model", false, `Skip model generation.`)
+	flag.BoolVar(&skipSQLBuilder, "skip-sql-builder", false, `Skip SQL builder generation.`)
 
 	flag.StringVar(&destDir, "path", "", "Destination directory for files generated.")
 	flag.StringVar(&modelPkg, "rel-model-path", "model", "Relative path for the Model files package from the destination directory.")
@@ -178,6 +183,7 @@ func usage() {
 		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
+		"skip-model", "skip-sql-builder",
 		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path",
 	}
 
@@ -256,7 +262,7 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 	return template.Default(dialect).
 		UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 			return template.DefaultSchema(schemaMetaData).
-				UseModel(template.DefaultModel().UsePath(modelPkg).
+				UseModel(template.DefaultModel().ShouldSkip(skipModel).UsePath(modelPkg).
 					UseTable(func(table metadata.Table) template.TableModel {
 						if shouldSkipTable(table) {
 							return template.TableModel{Skip: true}
@@ -276,7 +282,7 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 						return template.DefaultEnumModel(enum)
 					}),
 				).
-				UseSQLBuilder(template.DefaultSQLBuilder().
+				UseSQLBuilder(template.DefaultSQLBuilder().ShouldSkip(skipSQLBuilder).
 					UseTable(func(table metadata.Table) template.TableSQLBuilder {
 						if shouldSkipTable(table) {
 							return template.TableSQLBuilder{Skip: true}

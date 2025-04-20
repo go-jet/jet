@@ -2,14 +2,16 @@ package template
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
-	"github.com/google/uuid"
-	"github.com/jackc/pgtype"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 )
 
 // Model is template for model files generation
@@ -47,6 +49,12 @@ func (m Model) UseView(tableModelFunc func(table metadata.Table) TableModel) Mod
 // UseEnum returns new Model template with replaced template for enum model files generation
 func (m Model) UseEnum(enumFunc func(enumMetaData metadata.Enum) EnumModel) Model {
 	m.Enum = enumFunc
+	return m
+}
+
+// ShouldSkip returns new Model template with new skip flag set
+func (m Model) ShouldSkip(skip bool) Model {
+	m.Skip = skip
 	return m
 }
 
