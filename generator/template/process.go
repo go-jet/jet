@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/filesys"
+	"os"
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/go-jet/jet/v2/internal/utils/filesys"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/jet"
@@ -24,12 +26,11 @@ func ProcessSchema(dirPath string, schemaMetaData metadata.Schema, generatorTemp
 
 	fmt.Println("Destination directory:", schemaPath)
 	fmt.Println("Cleaning up destination directory...")
-	err := filesys.RemoveDir(schemaPath)
-	if err != nil {
+	if err := os.RemoveAll(schemaPath); err != nil {
 		return errors.New("failed to cleanup generated files")
 	}
 
-	err = processModel(schemaPath, schemaMetaData, schemaTemplate)
+	err := processModel(schemaPath, schemaMetaData, schemaTemplate)
 	if err != nil {
 		return fmt.Errorf("failed to generate model types: %w", err)
 	}
