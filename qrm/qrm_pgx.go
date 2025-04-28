@@ -8,9 +8,63 @@ import (
 	"reflect"
 )
 
-// QueryablePGX interface for pgx Query method
+// QueryablePGX interface for pgx QueryContext method
 type QueryablePGX interface {
-	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
+	QueryContext(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+}
+
+// QueryPGXJsonObj executes a SQL query that returns a JSON object, unmarshals the result into the provided destination,
+// and returns the number of rows processed.
+//
+// The query must return exactly one row with a single column; otherwise, an error is returned.
+//
+// Parameters:
+//
+//	ctx      - The context for managing query execution (timeouts, cancellations).
+//	db       - The database connection or transaction that implements the QueryablePGX interface.
+//	query    - The SQL query string to be executed.
+//	args     - A slice of arguments to be used with the query.
+//	destPtr  - A pointer to the variable where the unmarshaled JSON result will be stored.
+//	          The destination should be a pointer to a struct or map[string]any.
+//
+// Returns:
+//
+//	rowsProcessed - The number of rows processed by the query execution.
+//	err           - An error if query execution or unmarshaling fails.
+func QueryPGXJsonObj(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(destPtr, "jet: destination is nil")
+	must.BeTypeKind(destPtr, reflect.Ptr, jsonDestObjErr)
+	destType := reflect.TypeOf(destPtr).Elem()
+	must.BeTrue(destType.Kind() == reflect.Struct || destType.Kind() == reflect.Map, jsonDestObjErr)
+
+	return queryPGXJson(ctx, db, query, args, destPtr)
+}
+
+// QueryPGXJsonArr executes a SQL query that returns a JSON array, unmarshals the result into the provided destination,
+// and returns the number of rows processed.
+//
+// The query must return exactly one row with a single column; otherwise, an error is returned.
+//
+// Parameters:
+//
+//	ctx      - The context for managing query execution (timeouts, cancellations).
+//	db       - The database connection or transaction that implements the QueryablePGX interface.
+//	query    - The SQL query string to be executed.
+//	args     - A slice of arguments to be used with the query.
+//	destPtr  - A pointer to the variable where the unmarshaled JSON array will be stored.
+//	          The destination should be a pointer to a slice of structs or []map[string]any.
+//
+// Returns:
+//
+//	rowsProcessed - The number of rows processed by the query execution.
+//	err           - An error if query execution or unmarshaling fails.
+func QueryPGXJsonArr(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(destPtr, "jet: destination is nil")
+	must.BeTypeKind(destPtr, reflect.Ptr, jsonDestArrErr)
+	destType := reflect.TypeOf(destPtr).Elem()
+	must.BeTrue(destType.Kind() == reflect.Slice, jsonDestArrErr)
+
+	return queryPGXJson(ctx, db, query, args, destPtr)
 }
 
 // QueryPGX executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
@@ -67,7 +121,7 @@ func queryToSlicePGX(ctx context.Context, db QueryablePGX, query string, args []
 		ctx = context.Background()
 	}
 
-	rows, err := db.Query(ctx, query, args...)
+	rows, err := db.QueryContext(ctx, query, args...)
 
 	if err != nil {
 		return
@@ -105,4 +159,50 @@ func queryToSlicePGX(ctx context.Context, db QueryablePGX, query string, args []
 	rows.Close()
 
 	return scanContext.rowNum, rows.Err()
+}
+
+func queryPGXJson(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+	must.BeInitializedPtr(db, "jet: db is nil")
+
+	var rows pgx.Rows
+	rows, err = db.QueryContext(ctx, query, args...)
+
+	if err != nil {
+		return 0, err
+	}
+
+	defer rows.Close()
+
+	if !rows.Next() {
+		err = rows.Err()
+		if err != nil {
+			return 0, err
+		}
+		return 0, ErrNoRows
+	}
+
+	var jsonData []byte
+	err = rows.Scan(&jsonData)
+
+	if err != nil {
+		return 1, err
+	}
+
+	if jsonData == nil {
+		return 1, nil
+	}
+
+	err = GlobalConfig.JsonUnmarshalFunc(jsonData, &destPtr)
+
+	if err != nil {
+		return 1, fmt.Errorf("jet: invalid json, %w", err)
+	}
+
+	if rows.Next() {
+		return 1, fmt.Errorf("jet: query returned more then one row")
+	}
+
+	rows.Close()
+
+	return 1, nil
 }
