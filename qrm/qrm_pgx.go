@@ -8,9 +8,9 @@ import (
 	"reflect"
 )
 
-// QueryablePGX interface for pgx QueryContext method
+// QueryablePGX interface for pgx Query method
 type QueryablePGX interface {
-	QueryContext(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
 }
 
 // QueryPGXJsonObj executes a SQL query that returns a JSON object, unmarshals the result into the provided destination,
@@ -121,7 +121,7 @@ func queryToSlicePGX(ctx context.Context, db QueryablePGX, query string, args []
 		ctx = context.Background()
 	}
 
-	rows, err := db.QueryContext(ctx, query, args...)
+	rows, err := db.Query(ctx, query, args...)
 
 	if err != nil {
 		return
@@ -165,7 +165,7 @@ func queryPGXJson(ctx context.Context, db QueryablePGX, query string, args []int
 	must.BeInitializedPtr(db, "jet: db is nil")
 
 	var rows pgx.Rows
-	rows, err = db.QueryContext(ctx, query, args...)
+	rows, err = db.Query(ctx, query, args...)
 
 	if err != nil {
 		return 0, err
