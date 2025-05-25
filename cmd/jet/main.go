@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,6 +18,7 @@ import (
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
 	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/generator/template"
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"github.com/go-jet/jet/v2/internal/utils/strslice"
@@ -50,6 +52,8 @@ var (
 	tablePkg string
 	viewPkg  string
 	enumPkg  string
+
+	modelJsonTag string
 )
 
 func init() {
@@ -84,6 +88,8 @@ func init() {
 	flag.StringVar(&tablePkg, "rel-table-path", "table", "Relative path for the Table files package from the destination directory.")
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
+
+	flag.StringVar(&modelJsonTag, "model-json-tag", "snake-case", "Json tag model to be included in Go structs. (optional)(default <empty>)(allowed values: <empty>, none, pascal-case, camel-case, snake-case")
 }
 
 func main() {
@@ -92,6 +98,10 @@ func main() {
 
 	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") {
 		printErrorAndExit("ERROR: required flag(s) missing")
+	}
+
+	if modelJsonTag != "" && !slices.Contains([]string{"none", "snake-case", "pascal-case", "camel-case"}, modelJsonTag) {
+		printErrorAndExit("ERROR: json tag does not contain correct value")
 	}
 
 	source := getSource()
@@ -185,6 +195,7 @@ func usage() {
 		"ignore-tables", "ignore-views", "ignore-enums",
 		"skip-model", "skip-sql-builder",
 		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path",
+		"model-json-tag",
 	}
 
 	for _, name := range order {
@@ -267,7 +278,25 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 						if shouldSkipTable(table) {
 							return template.TableModel{Skip: true}
 						}
-						return template.DefaultTableModel(table)
+						return template.DefaultTableModel(table).
+							UseField(func(columnMetaData metadata.Column) template.TableModelField {
+								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
+
+								var jsonTag string
+								switch modelJsonTag {
+								case "none":
+								case "snake-case":
+									jsonTag = fmt.Sprintf(`json:"%s"`, columnMetaData.Name)
+								case "camel-case":
+									jsonTag = fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, false))
+								case "pascal-case":
+									jsonTag = fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, true))
+								}
+
+								return defaultTableModelField.UseTags(
+									jsonTag,
+								)
+							})
 					}).
 					UseView(func(view metadata.Table) template.ViewModel {
 						if shouldSkipView(view) {
