@@ -638,3 +638,6 @@ Ways to donate:
 - [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E71CXDAE)
 - BTC: bc1qtjhxe8mqx0yzff2l0f6stjpjj92kgwr0a53wxv
 - ETH: 0xe98e4535C744c617e8E45828B63fDFf9367E3574
+
+### Powered by
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
