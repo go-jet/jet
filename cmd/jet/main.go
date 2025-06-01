@@ -89,7 +89,7 @@ func init() {
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 
-	flag.StringVar(&modelJsonTag, "model-json-tag", "snake-case", "Json tag model to be included in Go structs. (optional)(default <empty>)(allowed values: <empty>, none, pascal-case, camel-case, snake-case")
+	flag.StringVar(&modelJsonTag, "model-json-tag", "", "Json tag model to be included in Go structs. (optional)(default <empty>)(allowed values: <empty>, pascal-case, camel-case, snake-case")
 }
 
 func main() {
@@ -100,7 +100,7 @@ func main() {
 		printErrorAndExit("ERROR: required flag(s) missing")
 	}
 
-	if modelJsonTag != "" && !slices.Contains([]string{"none", "snake-case", "pascal-case", "camel-case"}, modelJsonTag) {
+	if !slices.Contains([]string{"", "snake-case", "pascal-case", "camel-case"}, modelJsonTag) {
 		printErrorAndExit("ERROR: json tag does not contain correct value")
 	}
 
@@ -284,7 +284,7 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 
 								var jsonTag string
 								switch modelJsonTag {
-								case "none":
+								case "":
 								case "snake-case":
 									jsonTag = fmt.Sprintf(`json:"%s"`, columnMetaData.Name)
 								case "camel-case":
