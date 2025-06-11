@@ -621,12 +621,12 @@ func TestGeneratedTestSampleDatabase(t *testing.T) {
 
 	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_enum.go", "all_types_enum_ptr.go",
 		"all_types_view.go", "all_types_view_enum.go", "all_types_view_enum_ptr.go", "link.go", "link2.go",
-		"floats.go", "user.go")
+		"floats.go", "user.go", "people.go")
 
 	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
 
 	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go",
-		"link.go", "link2.go", "user.go", "floats.go", "table_use_schema.go")
+		"link.go", "link2.go", "user.go", "floats.go", "table_use_schema.go", "people.go")
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
 
 	testutils.AssertFileNamesEqual(t, viewDir, "all_types_view.go", "view_use_schema.go")

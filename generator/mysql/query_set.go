@@ -29,7 +29,8 @@ SELECT
 						col.DATA_TYPE)
 		) AS "dataType.Name",
 		IF (col.DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind",
-		col.COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned"
+		col.COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned",
+		col.EXTRA LIKE '%VIRTUAL GENERATED%' AS "column.isGenerated"
 FROM INFORMATION_SCHEMA.tables AS t
 INNER JOIN
 		information_schema.columns AS col
