@@ -312,34 +312,31 @@ func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter tem
 }
 
 func createTemplateFilter(ignoreList, allowList string) templateFilter {
-	ignoreListParsed := parseList(ignoreList)
-	allowListParsed := parseList(allowList)
-
-	if len(allowListParsed) > 0 {
+	if allowList != "" {
 		return templateFilter{
-			names: allowListParsed,
+			names: parseList(allowList),
 			allow: true,
 		}
 	}
 
 	return templateFilter{
-		names: ignoreListParsed,
+		names: parseList(ignoreList),
 		allow: false,
 	}
 }
 
-func shouldSkipTable(table metadata.Table, config templateFilter) bool {
-	if config.allow {
-		return !strslice.Contains(config.names, strings.ToLower(table.Name))
+func shouldSkipTable(table metadata.Table, filter templateFilter) bool {
+	if filter.allow {
+		return !strslice.Contains(filter.names, strings.ToLower(table.Name))
 	}
 
-	return strslice.Contains(config.names, strings.ToLower(table.Name))
+	return strslice.Contains(filter.names, strings.ToLower(table.Name))
 }
 
-func shouldSkipEnum(enum metadata.Enum, config templateFilter) bool {
-	if config.allow {
-		return !strslice.Contains(config.names, strings.ToLower(enum.Name))
+func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
+	if filter.allow {
+		return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
 	}
 
-	return strslice.Contains(config.names, strings.ToLower(enum.Name))
+	return strslice.Contains(filter.names, strings.ToLower(enum.Name))
 }
