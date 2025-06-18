@@ -94,9 +94,9 @@ func init() {
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 
-	flag.StringVar(&allowTables, "allow-tables", "", `Comma-separated list of tables to allow.`)
-	flag.StringVar(&allowViews, "allow-views", "", `Comma-separated list of views to allow. Will override ignore-views flag.`)
-	flag.StringVar(&allowEnums, "allow-enums", "", `Comma-separated list of enums to allow.`)
+	flag.StringVar(&allowTables, "allow-tables", "", `Comma-separated list of tables to allow. Takes precedence over --ignore-tables flag.`)
+	flag.StringVar(&allowViews, "allow-views", "", `Comma-separated list of views to allow. Takes precedence over --ignore-views flag.`)
+	flag.StringVar(&allowEnums, "allow-enums", "", `Comma-separated list of enums to allow. Takes precedence over --ignore-enums flag.`)
 }
 
 func main() {
