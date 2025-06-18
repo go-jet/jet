@@ -427,3 +427,53 @@ type Address struct {
 	LastUpdate time.Time
 }
 `
+
+func TestAllowTablesEnums(t *testing.T) {
+	cmd := exec.Command("jet",
+		"-source=SQLite",
+		"-dsn=file://"+testDatabaseFilePath,
+		"-allow-tables=actor,Address,CATEGORY , city ,film,rental,store",
+		"-allow-views=customer_list, film_list,STAFF_LIst",
+		"-path="+genDestDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/table", "actor.go", "address.go", "category.go", "city.go",
+		"film.go", "rental.go", "store.go", "table_use_schema.go")
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/view", "customer_list.go", "film_list.go", "staff_list.go",
+		"view_use_schema.go")
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/model", "actor.go", "address.go", "category.go", "city.go",
+		"film.go", "rental.go", "store.go", "customer_list.go", "film_list.go", "staff_list.go")
+}
+
+func TestAllowAndIgnoreTablesEnums(t *testing.T) {
+	cmd := exec.Command("jet",
+		"-source=SQLite",
+		"-dsn=file://"+testDatabaseFilePath,
+		"-allow-tables=actor,Address,CATEGORY , city ,film,rental,store",
+		"-allow-views=customer_list, film_list,STAFF_LIst",
+		"-ignore-tables=actor,CATEGORY ,store",
+		"-ignore-views=customer_list",
+		"-path="+genDestDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/table", "actor.go", "address.go", "category.go", "city.go",
+		"film.go", "rental.go", "store.go", "table_use_schema.go")
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/view", "customer_list.go", "film_list.go", "staff_list.go",
+		"view_use_schema.go")
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/model", "actor.go", "address.go", "category.go", "city.go",
+		"film.go", "rental.go", "store.go", "customer_list.go", "film_list.go", "staff_list.go")
+}
