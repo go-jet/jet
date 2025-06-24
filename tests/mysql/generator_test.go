@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -1012,9 +1013,9 @@ func TestAllowTablesViewsEnums(t *testing.T) {
 			name: "with dsn",
 			args: []string{
 				"-dsn=mysql://" + dbconfig.MySQLConnectionString(sourceIsMariaDB(), "dvds"),
-				"-allow-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
-				"-allow-views=actor_info,CUSTomER_LIST, film_list",
-				"-allow-enums=film_list_rating,film_rating",
+				"-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+				"-views=actor_info,CUSTomER_LIST, film_list",
+				"-enums=film_list_rating,film_rating",
 				"-path=" + genTestDir3,
 			},
 		},
@@ -1027,9 +1028,9 @@ func TestAllowTablesViewsEnums(t *testing.T) {
 				"-port=" + strconv.Itoa(dbconfig.MySQLPort),
 				"-user=" + dbconfig.MySQLUser,
 				"-password=" + dbconfig.MySQLPassword,
-				"-allow-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
-				"-allow-views=actor_info,CUSTomER_LIST, film_list",
-				"-allow-enums=film_list_rating,film_rating",
+				"-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+				"-views=actor_info,CUSTomER_LIST, film_list",
+				"-enums=film_list_rating,film_rating",
 				"-path=" + genTestDir3,
 			},
 		},
@@ -1069,9 +1070,9 @@ func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
 			name: "with dsn",
 			args: []string{
 				"-dsn=mysql://" + dbconfig.MySQLConnectionString(sourceIsMariaDB(), "dvds"),
-				"-allow-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
-				"-allow-views=actor_info,CUSTomER_LIST, film_list",
-				"-allow-enums=film_list_rating,film_rating",
+				"-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+				"-views=actor_info,CUSTomER_LIST, film_list",
+				"-enums=film_list_rating,film_rating",
 				"-ignore-tables=actor,ADDRESS,store,rental",
 				"-ignore-views=film_list",
 				"-ignore-enums=film_rating",
@@ -1087,9 +1088,9 @@ func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
 				"-port=" + strconv.Itoa(dbconfig.MySQLPort),
 				"-user=" + dbconfig.MySQLUser,
 				"-password=" + dbconfig.MySQLPassword,
-				"-allow-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
-				"-allow-views=actor_info,CUSTomER_LIST, film_list",
-				"-allow-enums=film_list_rating,film_rating",
+				"-tables=actor,ADDRESS,Category, city ,country,staff,store,rental",
+				"-views=actor_info,CUSTomER_LIST, film_list",
+				"-enums=film_list_rating,film_rating",
 				"-ignore-tables=actor,ADDRESS,store,rental",
 				"-ignore-views=film_list",
 				"-ignore-enums=film_rating",
@@ -1102,23 +1103,16 @@ func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			cmd := exec.Command("jet", tt.args...)
 
+			var stdOut bytes.Buffer
 			cmd.Stderr = os.Stderr
-			cmd.Stdout = os.Stdout
+			cmd.Stdout = &stdOut
 
 			err := cmd.Run()
-			require.NoError(t, err)
+			require.Error(t, err)
+			require.Equal(t, "exit status 1", err.Error())
 
-			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/table", "category.go", "actor.go", "address.go",
-				"city.go", "country.go", "staff.go", "store.go", "rental.go", "table_use_schema.go")
-
-			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/view", "actor_info.go", "customer_list.go",
-				"film_list.go", "view_use_schema.go")
-
-			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/enum", "film_list_rating.go", "film_rating.go")
-
-			testutils.AssertFileNamesEqual(t, genTestDir3+"/dvds/model", "category.go", "actor.go", "address.go",
-				"city.go", "country.go", "staff.go", "store.go", "rental.go", "actor_info.go",
-				"customer_list.go", "film_list.go", "film_list_rating.go", "film_rating.go")
+			stdOutput := stdOut.String()
+			require.Contains(t, stdOutput, "ERROR: cannot use both -tables and -ignore-tables flags simultaneously. Please specify only one option.")
 		})
 	}
 }

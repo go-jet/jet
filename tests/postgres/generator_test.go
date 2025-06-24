@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -1395,9 +1396,9 @@ func TestAllowTablesViewsEnums(t *testing.T) {
 			args: []string{
 				"-dsn=" + defaultDSN(),
 				"-schema=dvds",
-				"-allow-tables=actor,ADDRESS,country, Film , cITY,",
-				"-allow-views=Actor_info, FILM_LIST ,staff_list",
-				"-allow-enums=mpaa_rating",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
 				"-path=" + genTestDir2,
 			},
 		},
@@ -1411,9 +1412,9 @@ func TestAllowTablesViewsEnums(t *testing.T) {
 				"-password=jet",
 				"-dbname=jetdb",
 				"-schema=dvds",
-				"-allow-tables=actor,ADDRESS,country, Film , cITY,",
-				"-allow-views=Actor_info, FILM_LIST ,staff_list",
-				"-allow-enums=mpaa_rating",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
 				"-path=" + genTestDir2,
 			},
 		},
@@ -1451,7 +1452,7 @@ func TestAllowTablesViewsEnums(t *testing.T) {
 	}
 }
 
-func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
+func TestAllowAndIgnoreEnums(t *testing.T) {
 	tests := []struct {
 		name string
 		args []string
@@ -1461,11 +1462,7 @@ func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
 			args: []string{
 				"-dsn=" + defaultDSN(),
 				"-schema=dvds",
-				"-allow-tables=actor,ADDRESS,country, Film , cITY,",
-				"-allow-views=Actor_info, FILM_LIST ,staff_list",
-				"-allow-enums=mpaa_rating",
-				"-ignore-tables=ADDRESS,country, Film",
-				"-ignore-views=FILM_LIST",
+				"-enums=mpaa_rating",
 				"-ignore-enums=mpaa_rating",
 				"-path=" + genTestDir2,
 			},
@@ -1480,11 +1477,7 @@ func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
 				"-password=jet",
 				"-dbname=jetdb",
 				"-schema=dvds",
-				"-allow-tables=actor,ADDRESS,country, Film , cITY,",
-				"-allow-views=Actor_info, FILM_LIST ,staff_list",
-				"-allow-enums=mpaa_rating",
-				"-ignore-tables=ADDRESS,country, Film",
-				"-ignore-views=FILM_LIST",
+				"-enums=mpaa_rating",
 				"-ignore-enums=mpaa_rating",
 				"-path=" + genTestDir2,
 			},
@@ -1499,26 +1492,16 @@ func TestAllowAndIgnoreTablesViewsEnums(t *testing.T) {
 			cmd := exec.Command("jet", tt.args...)
 
 			fmt.Println(cmd.Args)
+			var stdOut bytes.Buffer
 			cmd.Stderr = os.Stderr
-			cmd.Stdout = os.Stdout
+			cmd.Stdout = &stdOut
 
 			err = cmd.Run()
-			require.NoError(t, err)
+			require.Error(t, err)
+			require.Equal(t, "exit status 1", err.Error())
 
-			// Table SQL Builder files
-			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/table", "actor.go", "address.go",
-				"country.go", "film.go", "city.go", "table_use_schema.go")
-
-			// View SQL Builder files
-			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/view", "actor_info.go", "film_list.go",
-				"staff_list.go", "view_use_schema.go")
-
-			// Enums SQL Builder files
-			file.Exists(t, "./.gentestdata2/jetdb/dvds/enum", "mpaa_rating.go")
-
-			// Model files
-			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/model", "actor.go", "address.go",
-				"country.go", "film.go", "city.go", "actor_info.go", "film_list.go", "staff_list.go", "mpaa_rating.go")
+			stdOutput := stdOut.String()
+			require.Contains(t, stdOutput, "ERROR: cannot use both -enums and -ignore-enums flags simultaneously. Please specify only one option.")
 		})
 	}
 }

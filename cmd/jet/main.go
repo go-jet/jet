@@ -58,7 +58,7 @@ var (
 
 type templateFilter struct {
 	names []string
-	allow   bool
+	allow bool
 }
 
 func init() {
@@ -94,9 +94,9 @@ func init() {
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 
-	flag.StringVar(&allowTables, "allow-tables", "", `Comma-separated list of tables to allow. Takes precedence over --ignore-tables flag.`)
-	flag.StringVar(&allowViews, "allow-views", "", `Comma-separated list of views to allow. Takes precedence over --ignore-views flag.`)
-	flag.StringVar(&allowEnums, "allow-enums", "", `Comma-separated list of enums to allow. Takes precedence over --ignore-enums flag.`)
+	flag.StringVar(&allowTables, "tables", "", `Comma-separated list of tables to allow.`)
+	flag.StringVar(&allowViews, "views", "", `Comma-separated list of views to allow.`)
+	flag.StringVar(&allowEnums, "enums", "", `Comma-separated list of enums to allow.`)
 }
 
 func main() {
@@ -108,9 +108,9 @@ func main() {
 	}
 
 	source := getSource()
-	tablesFilter := createTemplateFilter(ignoreTables, allowTables)
-	viewsFilter := createTemplateFilter(ignoreViews, allowViews)
-	enumsFilter := createTemplateFilter(ignoreEnums, allowEnums)
+	tablesFilter := createTemplateFilter(ignoreTables, allowTables, "tables")
+	viewsFilter := createTemplateFilter(ignoreViews, allowViews, "views")
+	enumsFilter := createTemplateFilter(ignoreEnums, allowEnums, "enums")
 
 	var err error
 
@@ -197,8 +197,8 @@ func usage() {
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
 		"skip-model", "skip-sql-builder",
-		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path", "allow-tables", "allow-views",
-		"allow-enums",
+		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path", "tables", "views",
+		"enums",
 	}
 
 	for _, name := range order {
@@ -311,7 +311,11 @@ func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter tem
 		})
 }
 
-func createTemplateFilter(ignoreList, allowList string) templateFilter {
+func createTemplateFilter(ignoreList, allowList, filterType string) templateFilter {
+	if ignoreList != "" && allowList != "" {
+		printErrorAndExit(fmt.Sprintf("ERROR: cannot use both -%s and -ignore-%s flags simultaneously. Please specify only one option.", filterType, filterType))
+	}
+
 	if allowList != "" {
 		return templateFilter{
 			names: parseList(allowList),
