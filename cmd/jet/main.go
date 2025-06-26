@@ -50,7 +50,16 @@ var (
 	tablePkg string
 	viewPkg  string
 	enumPkg  string
+
+	tables string
+	views  string
+	enums  string
 )
+
+type templateFilter struct {
+	names []string
+	ignore bool
+}
 
 func init() {
 	flag.StringVar(&source, "source", "", "Database system name (postgres, mysql, cockroachdb, mariadb or sqlite)")
@@ -84,6 +93,10 @@ func init() {
 	flag.StringVar(&tablePkg, "rel-table-path", "table", "Relative path for the Table files package from the destination directory.")
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
+
+	flag.StringVar(&tables, "tables", "", `Comma-separated list of tables to generate.`)
+	flag.StringVar(&views, "views", "", `Comma-separated list of views to generate.`)
+	flag.StringVar(&enums, "enums", "", `Comma-separated list of enums to generate.`)
 }
 
 func main() {
@@ -95,15 +108,15 @@ func main() {
 	}
 
 	source := getSource()
-	ignoreTablesList := parseList(ignoreTables)
-	ignoreViewsList := parseList(ignoreViews)
-	ignoreEnumsList := parseList(ignoreEnums)
+	tablesFilter := createTemplateFilter(ignoreTables, tables, "tables")
+	viewsFilter := createTemplateFilter(ignoreViews, views, "views")
+	enumsFilter := createTemplateFilter(ignoreEnums, enums, "enums")
 
 	var err error
 
 	switch source {
 	case "postgresql", "postgres", "cockroachdb", "cockroach":
-		generatorTemplate := genTemplate(postgres2.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+		generatorTemplate := genTemplate(postgres2.Dialect, tablesFilter, viewsFilter, enumsFilter)
 
 		if dsn != "" {
 			err = postgresgen.GenerateDSN(dsn, schemaName, destDir, generatorTemplate)
@@ -129,7 +142,7 @@ func main() {
 		)
 
 	case "mysql", "mysqlx", "mariadb":
-		generatorTemplate := genTemplate(mysql.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+		generatorTemplate := genTemplate(mysql.Dialect, tablesFilter, viewsFilter, enumsFilter)
 
 		if dsn != "" {
 			err = mysqlgen.GenerateDSN(dsn, destDir, generatorTemplate)
@@ -158,7 +171,7 @@ func main() {
 		err = sqlitegen.GenerateDSN(
 			dsn,
 			destDir,
-			genTemplate(sqlite.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList),
+			genTemplate(sqlite.Dialect, tablesFilter, viewsFilter, enumsFilter),
 		)
 
 	case "":
@@ -184,7 +197,8 @@ func usage() {
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
 		"skip-model", "skip-sql-builder",
-		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path",
+		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path", "tables", "views",
+		"enums",
 	}
 
 	for _, name := range order {
@@ -245,38 +259,27 @@ func parseList(list string) []string {
 	return ret
 }
 
-func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []string, ignoreEnums []string) template.Template {
 
-	shouldSkipTable := func(table metadata.Table) bool {
-		return strslice.Contains(ignoreTables, strings.ToLower(table.Name))
-	}
 
-	shouldSkipView := func(view metadata.Table) bool {
-		return strslice.Contains(ignoreViews, strings.ToLower(view.Name))
-	}
-
-	shouldSkipEnum := func(enum metadata.Enum) bool {
-		return strslice.Contains(ignoreEnums, strings.ToLower(enum.Name))
-	}
-
+func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter templateFilter) template.Template {
 	return template.Default(dialect).
 		UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 			return template.DefaultSchema(schemaMetaData).
 				UseModel(template.DefaultModel().ShouldSkip(skipModel).UsePath(modelPkg).
 					UseTable(func(table metadata.Table) template.TableModel {
-						if shouldSkipTable(table) {
+						if shouldSkipTable(table, tablesFilter) {
 							return template.TableModel{Skip: true}
 						}
 						return template.DefaultTableModel(table)
 					}).
 					UseView(func(view metadata.Table) template.ViewModel {
-						if shouldSkipView(view) {
+						if shouldSkipTable(view, viewsFilter) {
 							return template.ViewModel{Skip: true}
 						}
 						return template.DefaultViewModel(view)
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumModel {
-						if shouldSkipEnum(enum) {
+						if shouldSkipEnum(enum, enumsFilter) {
 							return template.EnumModel{Skip: true}
 						}
 						return template.DefaultEnumModel(enum)
@@ -284,21 +287,21 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 				).
 				UseSQLBuilder(template.DefaultSQLBuilder().ShouldSkip(skipSQLBuilder).
 					UseTable(func(table metadata.Table) template.TableSQLBuilder {
-						if shouldSkipTable(table) {
+						if shouldSkipTable(table, tablesFilter) {
 							return template.TableSQLBuilder{Skip: true}
 						}
 
 						return template.DefaultTableSQLBuilder(table).UsePath(tablePkg)
 					}).
 					UseView(func(table metadata.Table) template.ViewSQLBuilder {
-						if shouldSkipView(table) {
+						if shouldSkipTable(table, viewsFilter) {
 							return template.ViewSQLBuilder{Skip: true}
 						}
 
 						return template.DefaultViewSQLBuilder(table).UsePath(viewPkg)
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumSQLBuilder {
-						if shouldSkipEnum(enum) {
+						if shouldSkipEnum(enum, enumsFilter) {
 							return template.EnumSQLBuilder{Skip: true}
 						}
 
@@ -306,4 +309,38 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 					}),
 				)
 		})
+}
+
+func createTemplateFilter(ignoreList, allowList, filterType string) templateFilter {
+	if ignoreList != "" && allowList != "" {
+		printErrorAndExit(fmt.Sprintf("ERROR: cannot use both -%s and -ignore-%s flags simultaneously. Please specify only one option.", filterType, filterType))
+	}
+
+	if allowList != "" {
+		return templateFilter{
+			names: parseList(allowList),
+			ignore: false,
+		}
+	}
+
+	return templateFilter{
+		names: parseList(ignoreList),
+		ignore: true,
+	}
+}
+
+func shouldSkipTable(table metadata.Table, filter templateFilter) bool {
+	if filter.ignore {
+		return strslice.Contains(filter.names, strings.ToLower(table.Name))
+	}
+
+	return !strslice.Contains(filter.names, strings.ToLower(table.Name))
+}
+
+func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
+	if filter.ignore {
+		return strslice.Contains(filter.names, strings.ToLower(enum.Name))
+	}
+
+	return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
 }

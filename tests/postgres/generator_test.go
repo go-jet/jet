@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -1384,3 +1385,123 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 	}
 }
 `
+
+func TestAllowTablesViewsEnums(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with dsn",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+		{
+			name: "without dsn",
+			args: []string{
+				"-source=PostgreSQL",
+				"-host=localhost",
+				"-port=" + strconv.Itoa(dbconfig.PgPort),
+				"-user=jet",
+				"-password=jet",
+				"-dbname=jetdb",
+				"-schema=dvds",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := os.RemoveAll(genTestDir2)
+			require.NoError(t, err)
+
+			cmd := exec.Command("jet", tt.args...)
+
+			fmt.Println(cmd.Args)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+
+			err = cmd.Run()
+			require.NoError(t, err)
+
+			// Table SQL Builder files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/table", "actor.go", "address.go",
+				"country.go", "film.go", "city.go", "table_use_schema.go")
+
+			// View SQL Builder files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/view", "actor_info.go", "film_list.go",
+				"staff_list.go", "view_use_schema.go")
+
+			// Enums SQL Builder files
+			file.Exists(t, "./.gentestdata2/jetdb/dvds/enum", "mpaa_rating.go")
+
+			// Model files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/model", "actor.go", "address.go",
+				"country.go", "film.go", "city.go", "actor_info.go", "film_list.go", "staff_list.go", "mpaa_rating.go")
+		})
+	}
+}
+
+func TestAllowAndIgnoreEnums(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with dsn",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-enums=mpaa_rating",
+				"-ignore-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+		{
+			name: "without dsn",
+			args: []string{
+				"-source=PostgreSQL",
+				"-host=localhost",
+				"-port=" + strconv.Itoa(dbconfig.PgPort),
+				"-user=jet",
+				"-password=jet",
+				"-dbname=jetdb",
+				"-schema=dvds",
+				"-enums=mpaa_rating",
+				"-ignore-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := os.RemoveAll(genTestDir2)
+			require.NoError(t, err)
+
+			cmd := exec.Command("jet", tt.args...)
+
+			fmt.Println(cmd.Args)
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err = cmd.Run()
+			require.Error(t, err)
+			require.Equal(t, "exit status 1", err.Error())
+
+			stdOutput := stdOut.String()
+			require.Contains(t, stdOutput, "ERROR: cannot use both -enums and -ignore-enums flags simultaneously. Please specify only one option.")
+		})
+	}
+}
