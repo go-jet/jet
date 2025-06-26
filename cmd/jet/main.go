@@ -51,14 +51,14 @@ var (
 	viewPkg  string
 	enumPkg  string
 
-	allowTables string
-	allowViews  string
-	allowEnums  string
+	tables string
+	views  string
+	enums  string
 )
 
 type templateFilter struct {
 	names []string
-	allow bool
+	ignore bool
 }
 
 func init() {
@@ -94,9 +94,9 @@ func init() {
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 
-	flag.StringVar(&allowTables, "tables", "", `Comma-separated list of tables to allow.`)
-	flag.StringVar(&allowViews, "views", "", `Comma-separated list of views to allow.`)
-	flag.StringVar(&allowEnums, "enums", "", `Comma-separated list of enums to allow.`)
+	flag.StringVar(&tables, "tables", "", `Comma-separated list of tables to generate.`)
+	flag.StringVar(&views, "views", "", `Comma-separated list of views to generate.`)
+	flag.StringVar(&enums, "enums", "", `Comma-separated list of enums to generate.`)
 }
 
 func main() {
@@ -108,9 +108,9 @@ func main() {
 	}
 
 	source := getSource()
-	tablesFilter := createTemplateFilter(ignoreTables, allowTables, "tables")
-	viewsFilter := createTemplateFilter(ignoreViews, allowViews, "views")
-	enumsFilter := createTemplateFilter(ignoreEnums, allowEnums, "enums")
+	tablesFilter := createTemplateFilter(ignoreTables, tables, "tables")
+	viewsFilter := createTemplateFilter(ignoreViews, views, "views")
+	enumsFilter := createTemplateFilter(ignoreEnums, enums, "enums")
 
 	var err error
 
@@ -319,28 +319,28 @@ func createTemplateFilter(ignoreList, allowList, filterType string) templateFilt
 	if allowList != "" {
 		return templateFilter{
 			names: parseList(allowList),
-			allow: true,
+			ignore: false,
 		}
 	}
 
 	return templateFilter{
 		names: parseList(ignoreList),
-		allow: false,
+		ignore: true,
 	}
 }
 
 func shouldSkipTable(table metadata.Table, filter templateFilter) bool {
-	if filter.allow {
-		return !strslice.Contains(filter.names, strings.ToLower(table.Name))
+	if filter.ignore {
+		return strslice.Contains(filter.names, strings.ToLower(table.Name))
 	}
 
-	return strslice.Contains(filter.names, strings.ToLower(table.Name))
+	return !strslice.Contains(filter.names, strings.ToLower(table.Name))
 }
 
 func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
-	if filter.allow {
-		return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
+	if filter.ignore {
+		return strslice.Contains(filter.names, strings.ToLower(enum.Name))
 	}
 
-	return strslice.Contains(filter.names, strings.ToLower(enum.Name))
+	return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
 }
