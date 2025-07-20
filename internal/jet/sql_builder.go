@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
-	"github.com/go-jet/jet/v2/internal/utils/is"
-	"github.com/google/uuid"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
+	"github.com/go-jet/jet/v2/internal/utils/is"
+	"github.com/google/uuid"
 )
 
 // SQLBuilder generates output SQL
@@ -302,9 +303,18 @@ func integerTypesToString(value interface{}) string {
 }
 
 func shouldQuoteIdentifier(identifier string) bool {
+	if len(identifier) == 0 {
+		return true
+	}
+
 	_, err := strconv.ParseInt(identifier, 10, 64)
 
 	if err == nil { // if it is a number we should quote it
+		return true
+	}
+
+	firstChar := rune(identifier[0])
+	if unicode.IsNumber(firstChar) {
 		return true
 	}
 

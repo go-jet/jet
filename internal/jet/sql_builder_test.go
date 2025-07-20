@@ -1,10 +1,11 @@
 package jet
 
 import (
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestArgToString(t *testing.T) {
@@ -58,4 +59,6 @@ func TestShouldQuote(t *testing.T) {
 	require.Equal(t, shouldQuoteIdentifier("abc_123"), false)
 	require.Equal(t, shouldQuoteIdentifier("Abc_123"), true)
 	require.Equal(t, shouldQuoteIdentifier("ǄƜĐǶ"), true)
+	require.Equal(t, shouldQuoteIdentifier("1test"), true)
+	require.Equal(t, shouldQuoteIdentifier(""), true)
 }
