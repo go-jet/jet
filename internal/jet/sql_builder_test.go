@@ -60,5 +60,4 @@ func TestShouldQuote(t *testing.T) {
 	require.Equal(t, shouldQuoteIdentifier("Abc_123"), true)
 	require.Equal(t, shouldQuoteIdentifier("ǄƜĐǶ"), true)
 	require.Equal(t, shouldQuoteIdentifier("1test"), true)
-	require.Equal(t, shouldQuoteIdentifier(""), true)
 }

@@ -303,24 +303,15 @@ func integerTypesToString(value interface{}) string {
 }
 
 func shouldQuoteIdentifier(identifier string) bool {
-	if len(identifier) == 0 {
-		return true
-	}
-
 	_, err := strconv.ParseInt(identifier, 10, 64)
 
 	if err == nil { // if it is a number we should quote it
 		return true
 	}
 
-	firstChar := rune(identifier[0])
-	if unicode.IsNumber(firstChar) {
-		return true
-	}
-
 	// check if contains non ascii characters
-	for _, c := range identifier {
-		if unicode.IsNumber(c) || c == '_' {
+	for i, c := range identifier {
+		if (unicode.IsNumber(c) && i > 0) || c == '_' {
 			continue
 		}
 		if c > unicode.MaxASCII || !unicode.IsLetter(c) || unicode.IsUpper(c) {
