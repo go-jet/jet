@@ -4,15 +4,16 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
-	"github.com/go-jet/jet/v2/internal/utils/is"
-	"github.com/google/uuid"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
+	"github.com/go-jet/jet/v2/internal/utils/is"
+	"github.com/google/uuid"
 )
 
 // SQLBuilder generates output SQL
@@ -309,8 +310,8 @@ func shouldQuoteIdentifier(identifier string) bool {
 	}
 
 	// check if contains non ascii characters
-	for _, c := range identifier {
-		if unicode.IsNumber(c) || c == '_' {
+	for i, c := range identifier {
+		if (unicode.IsNumber(c) && i > 0) || c == '_' {
 			continue
 		}
 		if c > unicode.MaxASCII || !unicode.IsLetter(c) || unicode.IsUpper(c) {
