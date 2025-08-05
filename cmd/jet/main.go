@@ -280,17 +280,7 @@ func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter tem
 						return template.DefaultTableModel(table).
 							UseField(func(columnMetaData metadata.Column) template.TableModelField {
 								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
-
-								var tags []string
-								switch modelJsonTag {
-								case "snake-case":
-									tags = append(tags, fmt.Sprintf(`json:"%s"`, columnMetaData.Name))
-								case "camel-case":
-									tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, false)))
-								case "pascal-case":
-									tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, true)))
-								}
-
+								tags := createModelTags(columnMetaData)
 								return defaultTableModelField.UseTags(tags...)
 							})
 					}).
@@ -298,7 +288,12 @@ func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter tem
 						if shouldSkipTable(view, viewsFilter) {
 							return template.ViewModel{Skip: true}
 						}
-						return template.DefaultViewModel(view)
+						return template.DefaultViewModel(view).
+							UseField(func(columnMetaData metadata.Column) template.TableModelField {
+								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
+								tags := createModelTags(columnMetaData)
+								return defaultTableModelField.UseTags(tags...)
+							})
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumModel {
 						if shouldSkipEnum(enum, enumsFilter) {
@@ -365,4 +360,17 @@ func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
 	}
 
 	return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
+}
+
+func createModelTags(columnMetaData metadata.Column) []string {
+	var tags []string
+	switch modelJsonTag {
+	case "snake-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, columnMetaData.Name))
+	case "camel-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, false)))
+	case "pascal-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, true)))
+	}
+	return tags
 }
