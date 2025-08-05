@@ -1585,17 +1585,105 @@ func TestSnakeCaseModelJsonTag(t *testing.T) {
 			err := cmd.Run()
 			require.Nil(t, err)
 
-			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model", "actor.go")
+			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor.go")
 			require.Contains(t, actor, `json:"actor_id"`)
 			require.Contains(t, actor, `json:"first_name"`)
 			require.Contains(t, actor, `json:"last_name"`)
 			require.Contains(t, actor, `json:"last_update"`)
 
-			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model", "actor_info.go")
+			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor_info.go")
 			require.Contains(t, actorInfo, `json:"actor_id"`)
 			require.Contains(t, actorInfo, `json:"first_name"`)
 			require.Contains(t, actorInfo, `json:"last_name"`)
-			require.Contains(t, actorInfo, `json:"file_info"`)
+			require.Contains(t, actorInfo, `json:"film_info"`)
+		})
+	}
+}
+
+func TestPascalCaseModelJsonTag(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with pascal-case",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-views=Actor_info",
+				"-tables=actor",
+				"-path=" + genTestDir2,
+				"-model-json-tag=pascal-case",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
+
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err := cmd.Run()
+			require.Nil(t, err)
+
+			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor.go")
+			require.Contains(t, actor, `json:"ActorID"`)
+			require.Contains(t, actor, `json:"FirstName"`)
+			require.Contains(t, actor, `json:"LastName"`)
+			require.Contains(t, actor, `json:"LastUpdate"`)
+
+			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor_info.go")
+			require.Contains(t, actorInfo, `json:"ActorID"`)
+			require.Contains(t, actorInfo, `json:"FirstName"`)
+			require.Contains(t, actorInfo, `json:"LastName"`)
+			require.Contains(t, actorInfo, `json:"FilmInfo"`)
+		})
+	}
+}
+
+func TestCamelCaseModelJsonTag(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with camel-case",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-views=Actor_info",
+				"-tables=actor",
+				"-path=" + genTestDir2,
+				"-model-json-tag=camel-case",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
+
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err := cmd.Run()
+			require.Nil(t, err)
+
+			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor.go")
+			require.Contains(t, actor, `json:"actorID"`)
+			require.Contains(t, actor, `json:"firstName"`)
+			require.Contains(t, actor, `json:"lastName"`)
+			require.Contains(t, actor, `json:"lastUpdate"`)
+
+			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor_info.go")
+			require.Contains(t, actorInfo, `json:"actorID"`)
+			require.Contains(t, actorInfo, `json:"firstName"`)
+			require.Contains(t, actorInfo, `json:"lastName"`)
+			require.Contains(t, actorInfo, `json:"filmInfo"`)
 		})
 	}
 }
