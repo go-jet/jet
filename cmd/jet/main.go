@@ -366,7 +366,7 @@ func createModelTags(columnMetaData metadata.Column) []string {
 	var tags []string
 	switch modelJsonTag {
 	case "snake-case":
-		tags = append(tags, fmt.Sprintf(`json:"%s"`, columnMetaData.Name))
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.CamelToSnake(columnMetaData.Name)))
 	case "camel-case":
 		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, false)))
 	case "pascal-case":
