@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,6 +18,7 @@ import (
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
 	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
 	"github.com/go-jet/jet/v2/generator/template"
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
 	"github.com/go-jet/jet/v2/internal/utils/strslice"
@@ -54,10 +56,12 @@ var (
 	tables string
 	views  string
 	enums  string
+
+	modelJsonTag string
 )
 
 type templateFilter struct {
-	names []string
+	names  []string
 	ignore bool
 }
 
@@ -93,6 +97,7 @@ func init() {
 	flag.StringVar(&tablePkg, "rel-table-path", "table", "Relative path for the Table files package from the destination directory.")
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
+	flag.StringVar(&modelJsonTag, "model-json-tag", "", "Json tag model to be included in Go structs. (optional)(default <empty>)(allowed values: <empty>, pascal-case, camel-case, snake-case")
 
 	flag.StringVar(&tables, "tables", "", `Comma-separated list of tables to generate.`)
 	flag.StringVar(&views, "views", "", `Comma-separated list of views to generate.`)
@@ -105,6 +110,10 @@ func main() {
 
 	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") {
 		printErrorAndExit("ERROR: required flag(s) missing")
+	}
+
+	if !slices.Contains([]string{"", "snake-case", "pascal-case", "camel-case"}, modelJsonTag) {
+		printErrorAndExit("ERROR: json tag does not contain correct value")
 	}
 
 	source := getSource()
@@ -259,8 +268,6 @@ func parseList(list string) []string {
 	return ret
 }
 
-
-
 func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter templateFilter) template.Template {
 	return template.Default(dialect).
 		UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
@@ -270,13 +277,23 @@ func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter tem
 						if shouldSkipTable(table, tablesFilter) {
 							return template.TableModel{Skip: true}
 						}
-						return template.DefaultTableModel(table)
+						return template.DefaultTableModel(table).
+							UseField(func(columnMetaData metadata.Column) template.TableModelField {
+								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
+								tags := createModelTags(columnMetaData)
+								return defaultTableModelField.UseTags(tags...)
+							})
 					}).
 					UseView(func(view metadata.Table) template.ViewModel {
 						if shouldSkipTable(view, viewsFilter) {
 							return template.ViewModel{Skip: true}
 						}
-						return template.DefaultViewModel(view)
+						return template.DefaultViewModel(view).
+							UseField(func(columnMetaData metadata.Column) template.TableModelField {
+								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
+								tags := createModelTags(columnMetaData)
+								return defaultTableModelField.UseTags(tags...)
+							})
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumModel {
 						if shouldSkipEnum(enum, enumsFilter) {
@@ -318,13 +335,13 @@ func createTemplateFilter(ignoreList, allowList, filterType string) templateFilt
 
 	if allowList != "" {
 		return templateFilter{
-			names: parseList(allowList),
+			names:  parseList(allowList),
 			ignore: false,
 		}
 	}
 
 	return templateFilter{
-		names: parseList(ignoreList),
+		names:  parseList(ignoreList),
 		ignore: true,
 	}
 }
@@ -343,4 +360,17 @@ func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
 	}
 
 	return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
+}
+
+func createModelTags(columnMetaData metadata.Column) []string {
+	var tags []string
+	switch modelJsonTag {
+	case "snake-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.CamelToSnake(columnMetaData.Name)))
+	case "camel-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, false)))
+	case "pascal-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, true)))
+	}
+	return tags
 }
