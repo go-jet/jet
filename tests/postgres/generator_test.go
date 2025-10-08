@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -20,6 +21,7 @@ import (
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	"github.com/go-jet/jet/v2/tests/internal/utils/file"
+	file2 "github.com/go-jet/jet/v2/tests/internal/utils/file"
 )
 
 func dsn(host string, port int, dbName, user, password string) string {
@@ -1384,3 +1386,304 @@ func newLinkTableImpl(schemaName, tableName, alias string) linkTable {
 	}
 }
 `
+
+func TestAllowTablesViewsEnums(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with dsn",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+		{
+			name: "without dsn",
+			args: []string{
+				"-source=PostgreSQL",
+				"-host=localhost",
+				"-port=" + strconv.Itoa(dbconfig.PgPort),
+				"-user=jet",
+				"-password=jet",
+				"-dbname=jetdb",
+				"-schema=dvds",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := os.RemoveAll(genTestDir2)
+			require.NoError(t, err)
+
+			cmd := exec.Command("jet", tt.args...)
+
+			fmt.Println(cmd.Args)
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = os.Stdout
+
+			err = cmd.Run()
+			require.NoError(t, err)
+
+			// Table SQL Builder files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/table", "actor.go", "address.go",
+				"country.go", "film.go", "city.go", "table_use_schema.go")
+
+			// View SQL Builder files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/view", "actor_info.go", "film_list.go",
+				"staff_list.go", "view_use_schema.go")
+
+			// Enums SQL Builder files
+			file.Exists(t, "./.gentestdata2/jetdb/dvds/enum", "mpaa_rating.go")
+
+			// Model files
+			testutils.AssertFileNamesEqual(t, "./.gentestdata2/jetdb/dvds/model", "actor.go", "address.go",
+				"country.go", "film.go", "city.go", "actor_info.go", "film_list.go", "staff_list.go", "mpaa_rating.go")
+		})
+	}
+}
+
+func TestAllowAndIgnoreEnums(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with dsn",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-enums=mpaa_rating",
+				"-ignore-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+		{
+			name: "without dsn",
+			args: []string{
+				"-source=PostgreSQL",
+				"-host=localhost",
+				"-port=" + strconv.Itoa(dbconfig.PgPort),
+				"-user=jet",
+				"-password=jet",
+				"-dbname=jetdb",
+				"-schema=dvds",
+				"-enums=mpaa_rating",
+				"-ignore-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := os.RemoveAll(genTestDir2)
+			require.NoError(t, err)
+
+			cmd := exec.Command("jet", tt.args...)
+
+			fmt.Println(cmd.Args)
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err = cmd.Run()
+			require.Error(t, err)
+			require.Equal(t, "exit status 1", err.Error())
+
+			stdOutput := stdOut.String()
+			require.Contains(t, stdOutput, "ERROR: cannot use both -enums and -ignore-enums flags simultaneously. Please specify only one option.")
+		})
+	}
+}
+
+func TestJsonInvalidModelTags(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with invalid json tag",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+				"-model-json-tag=invalid",
+			},
+		},
+		{
+			name: "with invalid json tag",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-tables=actor,ADDRESS,country, Film , cITY,",
+				"-views=Actor_info, FILM_LIST ,staff_list",
+				"-enums=mpaa_rating",
+				"-path=" + genTestDir2,
+				"-model-json-tag= invalid",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
+
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err := cmd.Run()
+			require.Error(t, err)
+			require.Equal(t, "exit status 1", err.Error())
+
+			stdOutput := stdOut.String()
+			require.Contains(t, stdOutput, "ERROR: json tag does not contain correct value")
+		})
+	}
+}
+
+func TestSnakeCaseModelJsonTag(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with snake-case",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-views=Actor_info",
+				"-tables=actor",
+				"-path=" + genTestDir2,
+				"-model-json-tag=snake-case",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
+
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err := cmd.Run()
+			require.Nil(t, err)
+
+			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor.go")
+			require.Contains(t, actor, `json:"actor_id"`)
+			require.Contains(t, actor, `json:"first_name"`)
+			require.Contains(t, actor, `json:"last_name"`)
+			require.Contains(t, actor, `json:"last_update"`)
+
+			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor_info.go")
+			require.Contains(t, actorInfo, `json:"actor_id"`)
+			require.Contains(t, actorInfo, `json:"first_name"`)
+			require.Contains(t, actorInfo, `json:"last_name"`)
+			require.Contains(t, actorInfo, `json:"film_info"`)
+		})
+	}
+}
+
+func TestPascalCaseModelJsonTag(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with pascal-case",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-views=Actor_info",
+				"-tables=actor",
+				"-path=" + genTestDir2,
+				"-model-json-tag=pascal-case",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
+
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err := cmd.Run()
+			require.Nil(t, err)
+
+			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor.go")
+			require.Contains(t, actor, `json:"ActorID"`)
+			require.Contains(t, actor, `json:"FirstName"`)
+			require.Contains(t, actor, `json:"LastName"`)
+			require.Contains(t, actor, `json:"LastUpdate"`)
+
+			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor_info.go")
+			require.Contains(t, actorInfo, `json:"ActorID"`)
+			require.Contains(t, actorInfo, `json:"FirstName"`)
+			require.Contains(t, actorInfo, `json:"LastName"`)
+			require.Contains(t, actorInfo, `json:"FilmInfo"`)
+		})
+	}
+}
+
+func TestCamelCaseModelJsonTag(t *testing.T) {
+	tests := []struct {
+		name string
+		args []string
+	}{
+		{
+			name: "with camel-case",
+			args: []string{
+				"-dsn=" + defaultDSN(),
+				"-schema=dvds",
+				"-views=Actor_info",
+				"-tables=actor",
+				"-path=" + genTestDir2,
+				"-model-json-tag=camel-case",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd := exec.Command("jet", tt.args...)
+
+			var stdOut bytes.Buffer
+			cmd.Stderr = os.Stderr
+			cmd.Stdout = &stdOut
+
+			err := cmd.Run()
+			require.Nil(t, err)
+
+			actor := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor.go")
+			require.Contains(t, actor, `json:"actorID"`)
+			require.Contains(t, actor, `json:"firstName"`)
+			require.Contains(t, actor, `json:"lastName"`)
+			require.Contains(t, actor, `json:"lastUpdate"`)
+
+			actorInfo := file2.Exists(t, genTestDir2+"/jetdb/dvds/model/actor_info.go")
+			require.Contains(t, actorInfo, `json:"actorID"`)
+			require.Contains(t, actorInfo, `json:"firstName"`)
+			require.Contains(t, actorInfo, `json:"lastName"`)
+			require.Contains(t, actorInfo, `json:"filmInfo"`)
+		})
+	}
+}

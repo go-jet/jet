@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"reflect"
@@ -427,3 +428,47 @@ type Address struct {
 	LastUpdate time.Time
 }
 `
+
+func TestAllowTablesEnums(t *testing.T) {
+	cmd := exec.Command("jet",
+		"-source=SQLite",
+		"-dsn=file://"+testDatabaseFilePath,
+		"-tables=actor,Address,CATEGORY , city ,film,rental,store",
+		"-views=customer_list, film_list,STAFF_LIst",
+		"-path="+genDestDir)
+
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+
+	err := cmd.Run()
+	require.NoError(t, err)
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/table", "actor.go", "address.go", "category.go", "city.go",
+		"film.go", "rental.go", "store.go", "table_use_schema.go")
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/view", "customer_list.go", "film_list.go", "staff_list.go",
+		"view_use_schema.go")
+
+	testutils.AssertFileNamesEqual(t, genDestDir+"/model", "actor.go", "address.go", "category.go", "city.go",
+		"film.go", "rental.go", "store.go", "customer_list.go", "film_list.go", "staff_list.go")
+}
+
+func TestAllowAndIgnoreViews(t *testing.T) {
+	cmd := exec.Command("jet",
+		"-source=SQLite",
+		"-dsn=file://"+testDatabaseFilePath,
+		"-views=customer_list, film_list,STAFF_LIst",
+		"-ignore-views=customer_list",
+		"-path="+genDestDir)
+
+	var stdOut bytes.Buffer
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = &stdOut
+
+	err := cmd.Run()
+	require.Error(t, err)
+	require.Equal(t, "exit status 1", err.Error())
+
+	stdOutput := stdOut.String()
+	require.Contains(t, stdOutput, "ERROR: cannot use both -views and -ignore-views flags simultaneously. Please specify only one option.")
+}

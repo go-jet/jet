@@ -17,3 +17,13 @@ func TestSnakeToCamel(t *testing.T) {
 	require.Equal(t, SnakeToCamel("id"), "ID")
 	require.Equal(t, SnakeToCamel("oauth_client"), "OAuthClient")
 }
+
+func TestCamelToSnake(t *testing.T) {
+	require.Equal(t, "", CamelToSnake(""))
+	require.Equal(t, "_", CamelToSnake("_"))
+	require.Equal(t, "snake_case", CamelToSnake("snake_case"))
+	require.Equal(t, "camel_case", CamelToSnake("camelCase"))
+	require.Equal(t, "jet_is_cool_as_hell", CamelToSnake("jetIsCoolAsHell"))
+	require.Equal(t, "jet_is_cool_as_hell", CamelToSnake("jet_is_cool_as_hell"))
+	require.Equal(t, "id", CamelToSnake("ID"))
+}

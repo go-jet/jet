@@ -5,24 +5,26 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/errfmt"
-	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"os"
+	"slices"
 	"strings"
 
-	"github.com/go-jet/jet/v2/generator/metadata"
-	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
-	"github.com/go-jet/jet/v2/generator/template"
-	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/mysql"
-	postgres2 "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/sqlite"
-
-	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
-	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
+	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
+	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
+	sqlitegen "github.com/go-jet/jet/v2/generator/sqlite"
+	"github.com/go-jet/jet/v2/generator/template"
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
+	"github.com/go-jet/jet/v2/internal/jet"
+	"github.com/go-jet/jet/v2/internal/utils/errfmt"
+	"github.com/go-jet/jet/v2/internal/utils/strslice"
+	"github.com/go-jet/jet/v2/mysql"
+	postgres2 "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/sqlite"
 )
 
 var (
@@ -42,12 +44,26 @@ var (
 	ignoreViews  string
 	ignoreEnums  string
 
+	skipModel      bool
+	skipSQLBuilder bool
+
 	destDir  string
 	modelPkg string
 	tablePkg string
 	viewPkg  string
 	enumPkg  string
+
+	tables string
+	views  string
+	enums  string
+
+	modelJsonTag string
 )
+
+type templateFilter struct {
+	names  []string
+	ignore bool
+}
 
 func init() {
 	flag.StringVar(&source, "source", "", "Database system name (postgres, mysql, cockroachdb, mariadb or sqlite)")
@@ -73,12 +89,19 @@ func init() {
 	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore.`)
 	flag.StringVar(&ignoreViews, "ignore-views", "", `Comma-separated list of views to ignore.`)
 	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore.`)
+	flag.BoolVar(&skipModel, "skip-model", false, `Skip model generation.`)
+	flag.BoolVar(&skipSQLBuilder, "skip-sql-builder", false, `Skip SQL builder generation.`)
 
 	flag.StringVar(&destDir, "path", "", "Destination directory for files generated.")
 	flag.StringVar(&modelPkg, "rel-model-path", "model", "Relative path for the Model files package from the destination directory.")
 	flag.StringVar(&tablePkg, "rel-table-path", "table", "Relative path for the Table files package from the destination directory.")
 	flag.StringVar(&viewPkg, "rel-view-path", "view", "Relative path for the View files package from the destination directory.")
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
+	flag.StringVar(&modelJsonTag, "model-json-tag", "", "Json tag model to be included in Go structs. (optional)(default <empty>)(allowed values: <empty>, pascal-case, camel-case, snake-case")
+
+	flag.StringVar(&tables, "tables", "", `Comma-separated list of tables to generate.`)
+	flag.StringVar(&views, "views", "", `Comma-separated list of views to generate.`)
+	flag.StringVar(&enums, "enums", "", `Comma-separated list of enums to generate.`)
 }
 
 func main() {
@@ -89,16 +112,20 @@ func main() {
 		printErrorAndExit("ERROR: required flag(s) missing")
 	}
 
+	if !slices.Contains([]string{"", "snake-case", "pascal-case", "camel-case"}, modelJsonTag) {
+		printErrorAndExit("ERROR: json tag does not contain correct value")
+	}
+
 	source := getSource()
-	ignoreTablesList := parseList(ignoreTables)
-	ignoreViewsList := parseList(ignoreViews)
-	ignoreEnumsList := parseList(ignoreEnums)
+	tablesFilter := createTemplateFilter(ignoreTables, tables, "tables")
+	viewsFilter := createTemplateFilter(ignoreViews, views, "views")
+	enumsFilter := createTemplateFilter(ignoreEnums, enums, "enums")
 
 	var err error
 
 	switch source {
 	case "postgresql", "postgres", "cockroachdb", "cockroach":
-		generatorTemplate := genTemplate(postgres2.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+		generatorTemplate := genTemplate(postgres2.Dialect, tablesFilter, viewsFilter, enumsFilter)
 
 		if dsn != "" {
 			err = postgresgen.GenerateDSN(dsn, schemaName, destDir, generatorTemplate)
@@ -124,7 +151,7 @@ func main() {
 		)
 
 	case "mysql", "mysqlx", "mariadb":
-		generatorTemplate := genTemplate(mysql.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList)
+		generatorTemplate := genTemplate(mysql.Dialect, tablesFilter, viewsFilter, enumsFilter)
 
 		if dsn != "" {
 			err = mysqlgen.GenerateDSN(dsn, destDir, generatorTemplate)
@@ -153,7 +180,7 @@ func main() {
 		err = sqlitegen.GenerateDSN(
 			dsn,
 			destDir,
-			genTemplate(sqlite.Dialect, ignoreTablesList, ignoreViewsList, ignoreEnumsList),
+			genTemplate(sqlite.Dialect, tablesFilter, viewsFilter, enumsFilter),
 		)
 
 	case "":
@@ -178,7 +205,9 @@ func usage() {
 		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
-		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path",
+		"skip-model", "skip-sql-builder",
+		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path", "tables", "views",
+		"enums",
 	}
 
 	for _, name := range order {
@@ -239,60 +268,57 @@ func parseList(list string) []string {
 	return ret
 }
 
-func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []string, ignoreEnums []string) template.Template {
-
-	shouldSkipTable := func(table metadata.Table) bool {
-		return strslice.Contains(ignoreTables, strings.ToLower(table.Name))
-	}
-
-	shouldSkipView := func(view metadata.Table) bool {
-		return strslice.Contains(ignoreViews, strings.ToLower(view.Name))
-	}
-
-	shouldSkipEnum := func(enum metadata.Enum) bool {
-		return strslice.Contains(ignoreEnums, strings.ToLower(enum.Name))
-	}
-
+func genTemplate(dialect jet.Dialect, tablesFilter, viewsFilter, enumsFilter templateFilter) template.Template {
 	return template.Default(dialect).
 		UseSchema(func(schemaMetaData metadata.Schema) template.Schema {
 			return template.DefaultSchema(schemaMetaData).
-				UseModel(template.DefaultModel().UsePath(modelPkg).
+				UseModel(template.DefaultModel().ShouldSkip(skipModel).UsePath(modelPkg).
 					UseTable(func(table metadata.Table) template.TableModel {
-						if shouldSkipTable(table) {
+						if shouldSkipTable(table, tablesFilter) {
 							return template.TableModel{Skip: true}
 						}
-						return template.DefaultTableModel(table)
+						return template.DefaultTableModel(table).
+							UseField(func(columnMetaData metadata.Column) template.TableModelField {
+								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
+								tags := createModelTags(columnMetaData)
+								return defaultTableModelField.UseTags(tags...)
+							})
 					}).
 					UseView(func(view metadata.Table) template.ViewModel {
-						if shouldSkipView(view) {
+						if shouldSkipTable(view, viewsFilter) {
 							return template.ViewModel{Skip: true}
 						}
-						return template.DefaultViewModel(view)
+						return template.DefaultViewModel(view).
+							UseField(func(columnMetaData metadata.Column) template.TableModelField {
+								defaultTableModelField := template.DefaultTableModelField(columnMetaData)
+								tags := createModelTags(columnMetaData)
+								return defaultTableModelField.UseTags(tags...)
+							})
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumModel {
-						if shouldSkipEnum(enum) {
+						if shouldSkipEnum(enum, enumsFilter) {
 							return template.EnumModel{Skip: true}
 						}
 						return template.DefaultEnumModel(enum)
 					}),
 				).
-				UseSQLBuilder(template.DefaultSQLBuilder().
+				UseSQLBuilder(template.DefaultSQLBuilder().ShouldSkip(skipSQLBuilder).
 					UseTable(func(table metadata.Table) template.TableSQLBuilder {
-						if shouldSkipTable(table) {
+						if shouldSkipTable(table, tablesFilter) {
 							return template.TableSQLBuilder{Skip: true}
 						}
 
 						return template.DefaultTableSQLBuilder(table).UsePath(tablePkg)
 					}).
 					UseView(func(table metadata.Table) template.ViewSQLBuilder {
-						if shouldSkipView(table) {
+						if shouldSkipTable(table, viewsFilter) {
 							return template.ViewSQLBuilder{Skip: true}
 						}
 
 						return template.DefaultViewSQLBuilder(table).UsePath(viewPkg)
 					}).
 					UseEnum(func(enum metadata.Enum) template.EnumSQLBuilder {
-						if shouldSkipEnum(enum) {
+						if shouldSkipEnum(enum, enumsFilter) {
 							return template.EnumSQLBuilder{Skip: true}
 						}
 
@@ -300,4 +326,51 @@ func genTemplate(dialect jet.Dialect, ignoreTables []string, ignoreViews []strin
 					}),
 				)
 		})
+}
+
+func createTemplateFilter(ignoreList, allowList, filterType string) templateFilter {
+	if ignoreList != "" && allowList != "" {
+		printErrorAndExit(fmt.Sprintf("ERROR: cannot use both -%s and -ignore-%s flags simultaneously. Please specify only one option.", filterType, filterType))
+	}
+
+	if allowList != "" {
+		return templateFilter{
+			names:  parseList(allowList),
+			ignore: false,
+		}
+	}
+
+	return templateFilter{
+		names:  parseList(ignoreList),
+		ignore: true,
+	}
+}
+
+func shouldSkipTable(table metadata.Table, filter templateFilter) bool {
+	if filter.ignore {
+		return strslice.Contains(filter.names, strings.ToLower(table.Name))
+	}
+
+	return !strslice.Contains(filter.names, strings.ToLower(table.Name))
+}
+
+func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
+	if filter.ignore {
+		return strslice.Contains(filter.names, strings.ToLower(enum.Name))
+	}
+
+	return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
+}
+
+func createModelTags(columnMetaData metadata.Column) []string {
+	var tags []string
+	switch modelJsonTag {
+	case "snake-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.CamelToSnake(columnMetaData.Name)))
+	case "camel-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, false)))
+	case "pascal-case":
+		tags = append(tags, fmt.Sprintf(`json:"%s"`, snaker.SnakeToCamel(columnMetaData.Name, true)))
+	}
+	return tags
 }
