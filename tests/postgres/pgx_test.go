@@ -1,37 +1,44 @@
 package postgres
 
 import (
-	"context"
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/go-jet/jet/v2/pgxV5"
 	. "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/qrm"
+	model3 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
+	table3 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/table"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-var pgxDB *pgx.Conn
+var pgxConn *pgx.Conn
+var pgxPool *pgxpool.Pool
 
 func init() {
 	var err error
-	pgxDB, err = pgx.Connect(context.Background(), getConnectionString())
+	pgxConn, err = pgx.Connect(ctx, getConnectionString())
+
+	if err != nil {
+		panic(err)
+	}
+
+	pgxPool, err = pgxpool.New(ctx, getConnectionString())
 
 	if err != nil {
 		panic(err)
 	}
 }
 
-func BenchmarkNorthwindJoinEverythingPGX(b *testing.B) {
+func BenchmarkNorthwindJoinEverythingPgx(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		testNorthwindJoinEverythingCustomScan(b, func(stmt Statement, dest any) {
-			sql, args := stmt.Sql()
-			_, err := qrm.QueryPGX(context.Background(), pgxDB, sql, args, dest)
+			err := pgxV5.Query(ctx, stmt, pgxConn, dest)
 			require.NoError(b, err)
 		})
 	}
@@ -55,8 +62,7 @@ func TestNorthwindJoinEverythingPQ(t *testing.T) {
 
 func TestNorthwindJoinEverythingPGX(t *testing.T) {
 	testNorthwindJoinEverythingCustomScan(t, func(stmt Statement, dest any) {
-		sql, args := stmt.Sql()
-		_, err := qrm.QueryPGX(context.Background(), pgxDB, sql, args, dest)
+		err := pgxV5.Query(ctx, stmt, pgxConn, dest)
 		require.NoError(t, err)
 	})
 }
@@ -101,6 +107,7 @@ func testNorthwindJoinEverythingCustomScan(b require.TestingT, queryFunc func(st
 	queryFunc(stmt, &dest)
 
 	testutils.AssertJSONFile(b, dest, "./testdata/results/postgres/northwind-all.json")
+	requireLogged(b, stmt)
 }
 
 func TestUUIDTypePGX(t *testing.T) {
@@ -119,12 +126,10 @@ WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
 
 	result := model2.AllTypes{}
 
-	//err := query.Query(db, &result)
-
-	sql, args := stmt.Sql()
-	_, err := qrm.QueryPGX(context.Background(), pgxDB, sql, args, &result)
-
+	err := pgxV5.Query(ctx, stmt, pgxPool, &result)
 	require.NoError(t, err)
+	requireLogged(t, stmt)
+
 	require.Equal(t, result.UUID, uuid.MustParse("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 	testutils.AssertDeepEqual(t, result.UUIDPtr, testutils.UUIDPtr("a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11"))
 }
@@ -146,9 +151,13 @@ func TestPGXScannerType(t *testing.T) {
 
 	var result floats
 
-	sql, args := query.Sql()
-	_, err := qrm.QueryPGX(context.Background(), pgxDB, sql, args, &result)
+	pgxTx, err := pgxPool.Begin(ctx)
 	require.NoError(t, err)
+	defer pgxTx.Rollback(ctx)
+
+	err = pgxV5.Query(ctx, query, pgxTx, &result)
+	require.NoError(t, err)
+	requireLogged(t, query)
 
 	require.Equal(t, "1.11111111111111111111", result.Decimal.String())
 	require.Equal(t, "0", result.DecimalPtr.String()) // NULL
@@ -195,10 +204,105 @@ func TestAllTypesSelectPGX(t *testing.T) {
 		table.AllTypes,
 	).LIMIT(2)
 
-	fmt.Println(stmt.DebugSql())
+	err := pgxV5.Query(ctx, stmt, pgxConn, &dest)
+	require.NoError(t, err)
+	requireLogged(t, stmt)
+}
 
-	sql, args := stmt.Sql()
-	_, err := qrm.QueryPGX(context.Background(), pgxDB, sql, args, &dest)
+func TestSelectJsonObjectPgxV5(t *testing.T) {
+	stmt := SELECT_JSON_OBJ(table3.Actor.AllColumns).
+		FROM(table3.Actor).
+		WHERE(table3.Actor.ActorID.EQ(Int32(2)))
+
+	var dest model3.Actor
+
+	err := pgxV5.Query(ctx, stmt, pgxPool, &dest)
 
 	require.NoError(t, err)
+	testutils.AssertJsonEqual(t, dest, actor2)
+	requireLogged(t, stmt)
+
+	t.Run("scan to map", func(t *testing.T) {
+		var dest2 map[string]interface{}
+
+		err := pgxV5.Query(ctx, stmt, pgxPool, &dest2)
+
+		require.NoError(t, err)
+		testutils.AssertDeepEqual(t, dest2, map[string]interface{}{
+			"actorID":    float64(2),
+			"firstName":  "Nick",
+			"lastName":   "Wahlberg",
+			"lastUpdate": "2013-05-26T14:47:57.620000Z",
+		})
+	})
+}
+
+func TestSelectQuickStartJsonPgxV5(t *testing.T) {
+
+	stmt := SELECT_JSON_ARR(
+		table3.Actor.ActorID,
+		table3.Actor.FirstName,
+		table3.Actor.LastName,
+		table3.Actor.LastUpdate,
+
+		SELECT_JSON_ARR(
+			table3.Film.AllColumns.Except(table3.Film.SpecialFeatures),
+			CAST(table3.Film.SpecialFeatures).AS_TEXT().AS("SpecialFeatures"),
+
+			SELECT_JSON_OBJ(
+				table3.Language.AllColumns,
+			).FROM(
+				table3.Language,
+			).WHERE(
+				table3.Language.LanguageID.EQ(table3.Film.LanguageID).AND(
+					table3.Language.Name.EQ(Char(20)("English")),
+				),
+			).AS("Language"),
+
+			SELECT_JSON_ARR(
+				table3.Category.AllColumns,
+			).FROM(
+				table3.Category.
+					INNER_JOIN(table3.FilmCategory, table3.FilmCategory.CategoryID.EQ(table3.Category.CategoryID)),
+			).WHERE(
+				table3.FilmCategory.FilmID.EQ(table3.Film.FilmID).AND(
+					table3.Category.Name.NOT_EQ(Text("Action")),
+				),
+			).AS("Categories"),
+		).FROM(
+			table3.Film.
+				INNER_JOIN(table3.FilmActor, table3.FilmActor.FilmID.EQ(table3.Film.FilmID)),
+		).WHERE(
+			table3.FilmActor.ActorID.EQ(table3.Actor.ActorID).AND(table3.Film.Length.GT(Int32(180))),
+		).ORDER_BY(
+			table3.Film.FilmID.ASC(),
+		).AS("Films"),
+	).FROM(
+		table3.Actor,
+	).ORDER_BY(
+		table3.Actor.ActorID.ASC(),
+	)
+
+	var dest []struct {
+		model3.Actor
+
+		Films []struct {
+			model3.Film
+
+			Language   model3.Language
+			Categories []model3.Category
+		}
+	}
+
+	err := pgxV5.Query(ctx, stmt, pgxConn, &dest)
+
+	require.NoError(t, err)
+	require.Len(t, dest, 200)
+	requireLogged(t, stmt)
+
+	if sourceIsCockroachDB() {
+		return // char[n] columns whitespaces are trimmed when returned as json in cockroachdb
+	}
+
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-json-dest.json")
 }

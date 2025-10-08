@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"encoding/base64"
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
 	"math"
@@ -873,10 +872,8 @@ FROM (
 
 		err := stmtJson.QueryContext(ctx, db, &destSelectJson)
 		require.NoError(t, err)
-		testutils.PrintJson(destSelectJson)
 
 		require.Equal(t, dest, destSelectJson)
-
 	})
 }
 
@@ -1580,8 +1577,6 @@ func TestInterval(t *testing.T) {
 		AllTypes.IntervalPtr.MUL(Int(11)).EQ(AllTypes.Interval),
 		AllTypes.IntervalPtr.DIV(Float(22.222)).EQ(AllTypes.IntervalPtr),
 	).FROM(AllTypes)
-
-	fmt.Println(stmt.Sql())
 
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT INTERVAL '1 YEAR',

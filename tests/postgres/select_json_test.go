@@ -470,7 +470,7 @@ FROM (
 	}
 
 	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-json-dest2.json")
-	//testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-json-dest.json")
+	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-json-dest.json")
 }
 
 func TestSelectJsonInReturning(t *testing.T) {

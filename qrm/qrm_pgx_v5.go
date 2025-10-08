@@ -8,12 +8,12 @@ import (
 	"reflect"
 )
 
-// QueryablePGX interface for pgx Query method
-type QueryablePGX interface {
+// QueryablePgxV5 interface for pgx Query method
+type QueryablePgxV5 interface {
 	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
 }
 
-// QueryPGXJsonObj executes a SQL query that returns a JSON object, unmarshals the result into the provided destination,
+// QueryJsonObjPgxV5 executes a SQL query that returns a JSON object, unmarshals the result into the provided destination,
 // and returns the number of rows processed.
 //
 // The query must return exactly one row with a single column; otherwise, an error is returned.
@@ -31,16 +31,16 @@ type QueryablePGX interface {
 //
 //	rowsProcessed - The number of rows processed by the query execution.
 //	err           - An error if query execution or unmarshaling fails.
-func QueryPGXJsonObj(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+func QueryJsonObjPgxV5(ctx context.Context, db QueryablePgxV5, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 	must.BeInitializedPtr(destPtr, "jet: destination is nil")
 	must.BeTypeKind(destPtr, reflect.Ptr, jsonDestObjErr)
 	destType := reflect.TypeOf(destPtr).Elem()
 	must.BeTrue(destType.Kind() == reflect.Struct || destType.Kind() == reflect.Map, jsonDestObjErr)
 
-	return queryPGXJson(ctx, db, query, args, destPtr)
+	return queryJsonPgxV5(ctx, db, query, args, destPtr)
 }
 
-// QueryPGXJsonArr executes a SQL query that returns a JSON array, unmarshals the result into the provided destination,
+// QueryJsonArrPgxV5 executes a SQL query that returns a JSON array, unmarshals the result into the provided destination,
 // and returns the number of rows processed.
 //
 // The query must return exactly one row with a single column; otherwise, an error is returned.
@@ -58,20 +58,20 @@ func QueryPGXJsonObj(ctx context.Context, db QueryablePGX, query string, args []
 //
 //	rowsProcessed - The number of rows processed by the query execution.
 //	err           - An error if query execution or unmarshaling fails.
-func QueryPGXJsonArr(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+func QueryJsonArrPgxV5(ctx context.Context, db QueryablePgxV5, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 	must.BeInitializedPtr(destPtr, "jet: destination is nil")
 	must.BeTypeKind(destPtr, reflect.Ptr, jsonDestArrErr)
 	destType := reflect.TypeOf(destPtr).Elem()
 	must.BeTrue(destType.Kind() == reflect.Slice, jsonDestArrErr)
 
-	return queryPGXJson(ctx, db, query, args, destPtr)
+	return queryJsonPgxV5(ctx, db, query, args, destPtr)
 }
 
-// QueryPGX executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
+// QueryPgxV5 executes Query Result Mapping (QRM) of `query` with list of parametrized arguments `arg` over database connection `db`
 // using context `ctx` into destination `destPtr`.
 // Destination can be either pointer to struct or pointer to slice of structs.
 // If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
-func QueryPGX(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+func QueryPgxV5(ctx context.Context, db QueryablePgxV5, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 
 	must.BeInitializedPtr(db, "jet: db is nil")
 	must.BeInitializedPtr(destPtr, "jet: destination is nil")
@@ -80,7 +80,7 @@ func QueryPGX(ctx context.Context, db QueryablePGX, query string, args []interfa
 	destinationPtrType := reflect.TypeOf(destPtr)
 
 	if destinationPtrType.Elem().Kind() == reflect.Slice {
-		rowsProcessed, err := queryToSlicePGX(ctx, db, query, args, destPtr)
+		rowsProcessed, err := queryToSlicePgxV5(ctx, db, query, args, destPtr)
 		if err != nil {
 			return rowsProcessed, fmt.Errorf("jet: %w", err)
 		}
@@ -89,7 +89,7 @@ func QueryPGX(ctx context.Context, db QueryablePGX, query string, args []interfa
 		tempSlicePtrValue := reflect.New(reflect.SliceOf(destinationPtrType))
 		tempSliceValue := tempSlicePtrValue.Elem()
 
-		rowsProcessed, err := queryToSlicePGX(ctx, db, query, args, tempSlicePtrValue.Interface())
+		rowsProcessed, err := queryToSlicePgxV5(ctx, db, query, args, tempSlicePtrValue.Interface())
 
 		if err != nil {
 			return rowsProcessed, fmt.Errorf("jet: %w", err)
@@ -116,7 +116,7 @@ func QueryPGX(ctx context.Context, db QueryablePGX, query string, args []interfa
 	}
 }
 
-func queryToSlicePGX(ctx context.Context, db QueryablePGX, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {
+func queryToSlicePgxV5(ctx context.Context, db QueryablePgxV5, query string, args []interface{}, slicePtr interface{}) (rowsProcessed int64, err error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -161,7 +161,7 @@ func queryToSlicePGX(ctx context.Context, db QueryablePGX, query string, args []
 	return scanContext.rowNum, rows.Err()
 }
 
-func queryPGXJson(ctx context.Context, db QueryablePGX, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
+func queryJsonPgxV5(ctx context.Context, db QueryablePgxV5, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
 	must.BeInitializedPtr(db, "jet: db is nil")
 
 	var rows pgx.Rows
