@@ -1,15 +1,13 @@
 package postgres
 
 import (
-	"database/sql"
-	"github.com/lib/pq"
 	"encoding/base64"
-	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/stretchr/testify/assert"
 	"math"
 
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/lib/pq"
 	"testing"
 	"time"
 
@@ -46,8 +44,7 @@ func TestAllTypesSelectJson(t *testing.T) {
 		AllTypesAllColumns.Except(
 			AllTypes.JSON, AllTypes.JSONPtr,
 			AllTypes.Jsonb, AllTypes.JsonbPtr,
-			AllTypes.TextArray, AllTypes.TextArrayPtr,
-			AllTypes.JsonbArray, AllTypes.IntegerArray, AllTypes.IntegerArrayPtr,
+			AllTypes.JsonbArray,
 			AllTypes.TextMultiDimArray, AllTypes.TextMultiDimArrayPtr,
 		),
 		// unsupported at the moment, casting to text allows these columns to be assigned to string fields
@@ -55,11 +52,7 @@ func TestAllTypesSelectJson(t *testing.T) {
 		CAST(AllTypes.JSON).AS_TEXT().AS("JSON"),
 		CAST(AllTypes.JsonbPtr).AS_TEXT().AS("jsonbPtr"),
 		CAST(AllTypes.Jsonb).AS_TEXT().AS("Jsonb"),
-		CAST(AllTypes.TextArrayPtr).AS_TEXT().AS("TextArrayPtr"),
-		CAST(AllTypes.TextArray).AS_TEXT().AS("TextArray"),
-		CAST(AllTypes.JsonbArray).AS_TEXT().AS("JsonbArray"),
-		CAST(AllTypes.IntegerArray).AS_TEXT().AS("IntegerArray"),
-		CAST(AllTypes.IntegerArrayPtr).AS_TEXT().AS("IntegerArrayPtr"),
+		CAST(AllTypes.JsonbArray).AS_TEXT_ARRAY().AS("JsonbArray"),
 		CAST(AllTypes.TextMultiDimArray).AS_TEXT().AS("TextMultiDimArray"),
 		CAST(AllTypes.TextMultiDimArrayPtr).AS_TEXT().AS("TextMultiDimArrayPtr"),
 	).FROM(AllTypes)
@@ -117,17 +110,17 @@ FROM (
                all_types.uuid AS "uuid",
                all_types.xml_ptr AS "xmlPtr",
                all_types.xml AS "xml",
+               all_types.integer_array_ptr AS "integerArrayPtr",
+               all_types.integer_array AS "integerArray",
+               all_types.text_array_ptr AS "textArrayPtr",
+               all_types.text_array AS "textArray",
                all_types.mood_ptr AS "moodPtr",
                all_types.mood AS "mood",
                all_types.json_ptr::text AS "jsonPtr",
                all_types.json::text AS "JSON",
                all_types.jsonb_ptr::text AS "jsonbPtr",
                all_types.jsonb::text AS "Jsonb",
-               all_types.text_array_ptr::text AS "TextArrayPtr",
-               all_types.text_array::text AS "TextArray",
-               all_types.jsonb_array::text AS "JsonbArray",
-               all_types.integer_array::text AS "IntegerArray",
-               all_types.integer_array_ptr::text AS "IntegerArrayPtr",
+               all_types.jsonb_array::text[] AS "JsonbArray",
                all_types.text_multi_dim_array::text AS "TextMultiDimArray",
                all_types.text_multi_dim_array_ptr::text AS "TextMultiDimArrayPtr"
           FROM test_sample.all_types
@@ -259,7 +252,7 @@ func TestUUIDType(t *testing.T) {
 SELECT all_types.uuid AS "all_types.uuid",
      all_types.uuid_ptr AS "all_types.uuid_ptr"
 FROM test_sample.all_types
-WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid;
 `, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
 
 	result := model.AllTypes{}
@@ -875,10 +868,7 @@ FROM (
 
 		err := stmtJson.QueryContext(ctx, db, &destSelectJson)
 		require.NoError(t, err)
-		testutils.PrintJson(destSelectJson)
-
 		require.Equal(t, dest, destSelectJson)
-
 	})
 }
 
@@ -1583,8 +1573,6 @@ func TestInterval(t *testing.T) {
 		AllTypes.IntervalPtr.DIV(Float(22.222)).EQ(AllTypes.IntervalPtr),
 	).FROM(AllTypes)
 
-	fmt.Println(stmt.Sql())
-
 	testutils.AssertDebugStatementSql(t, stmt, `
 SELECT INTERVAL '1 YEAR',
      INTERVAL '1 MONTH',
@@ -2250,7 +2238,7 @@ var allTypesRow0 = model.AllTypes{
 	TextArrayPtr:         &pq.StringArray{"breakfast", "consulting"},
 	TextArray:            pq.StringArray{"breakfast", "consulting"},
 	JsonbArray:           pq.StringArray{`{"a": 1, "b": 2}`, `{"a": 3, "b": 4}`},
-	TextMultiDimArrayPtr: testutils.StringPtr("{{meeting,lunch},{training,presentation}}"),
+	TextMultiDimArrayPtr: ptr.Of("{{meeting,lunch},{training,presentation}}"),
 	TextMultiDimArray:    "{{meeting,lunch},{training,presentation}}",
 	MoodPtr:              &moodSad,
 	Mood:                 model.Mood_Happy,

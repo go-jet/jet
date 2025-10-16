@@ -299,6 +299,16 @@ func AssertFileNamesEqual(t *testing.T, dirPath string, fileNames ...string) {
 	}
 }
 
+// DeepCopy create deep copy of src
+func DeepCopy[T any](t require.TestingT, src T) T {
+	var dst T
+	data, err := json.Marshal(src)
+	require.NoError(t, err)
+	err = json.Unmarshal(data, &dst)
+	require.NoError(t, err)
+	return dst
+}
+
 // AssertDeepEqual checks if actual and expected objects are deeply equal.
 func AssertDeepEqual(t require.TestingT, actual, expected interface{}, option ...cmp.Option) {
 	if !assert.True(t, cmp.Equal(actual, expected, option...)) {

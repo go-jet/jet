@@ -66,23 +66,25 @@ select
     not attr.attnotnull as "column.isNullable",
     attr.attgenerated = 's' as "column.isGenerated",
     attr.atthasdef as "column.hasDefault",
-    attr.attndims as "dataType.dimensions",
-    (case
-        when tp.typtype = 'b' AND tp.typcategory <> 'A' then 'base'
-        when tp.typtype = 'b' AND tp.typcategory = 'A' then 'array'
-        when tp.typtype = 'd' then 'base'
-        when tp.typtype = 'e' then 'enum'
-        when tp.typtype = 'r' then 'range'
-     end) as "dataType.Kind",
+    (case when tp.typcategory = 'A' then greatest(1, attr.attndims) --cockroach num dims fix
+          else 0
+        end) as "dataType.dimensions",
+    (case coalesce(elem.typtype, tp.typtype)
+         when 'b' then 'base'
+         when 'd' then 'base'
+         when 'e' then 'enum'
+         when 'r' then 'range'
+        end) as "dataType.Kind",
     (case when tp.typtype = 'd' then (select pg_type.typname from pg_catalog.pg_type where pg_type.oid = tp.typbasetype)
-          when tp.typcategory = 'A' then pg_catalog.format_type(attr.atttypid, attr.atttypmod)
+          when tp.typcategory = 'A' then elem.typname
           else tp.typname
-     end) as "dataType.Name",
+        end) as "dataType.Name",
     false as "dataType.isUnsigned"
 from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
      join pg_catalog.pg_type as tp on tp.oid = attr.atttypid
+	 left join pg_catalog.pg_type elem ON tp.typelem = elem.oid -- only for arrays
 where 
     ns.nspname = $1 and
     cls.relname = $2 and 

@@ -16,13 +16,14 @@ var Language = newLanguageTable("dvds", "language", "")
 type languageTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	LanguageID postgres.ColumnInteger
 	Name       postgres.ColumnString
 	LastUpdate postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type LanguageTable struct {
@@ -65,6 +66,7 @@ func newLanguageTableImpl(schemaName, tableName, alias string) languageTable {
 		LastUpdateColumn = postgres.TimestampColumn("last_update")
 		allColumns       = postgres.ColumnList{LanguageIDColumn, NameColumn, LastUpdateColumn}
 		mutableColumns   = postgres.ColumnList{NameColumn, LastUpdateColumn}
+		defaultColumns   = postgres.ColumnList{LanguageIDColumn, LastUpdateColumn}
 	)
 
 	return languageTable{
@@ -77,5 +79,6 @@ func newLanguageTableImpl(schemaName, tableName, alias string) languageTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }

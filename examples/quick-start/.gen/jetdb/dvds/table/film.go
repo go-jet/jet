@@ -16,7 +16,7 @@ var Film = newFilmTable("dvds", "film", "")
 type filmTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	FilmID          postgres.ColumnInteger
 	Title           postgres.ColumnString
 	Description     postgres.ColumnString
@@ -28,11 +28,12 @@ type filmTable struct {
 	ReplacementCost postgres.ColumnFloat
 	Rating          postgres.ColumnString
 	LastUpdate      postgres.ColumnTimestamp
-	SpecialFeatures postgres.ColumnString
+	SpecialFeatures postgres.ColumnStringArray
 	Fulltext        postgres.ColumnString
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type FilmTable struct {
@@ -81,10 +82,11 @@ func newFilmTableImpl(schemaName, tableName, alias string) filmTable {
 		ReplacementCostColumn = postgres.FloatColumn("replacement_cost")
 		RatingColumn          = postgres.StringColumn("rating")
 		LastUpdateColumn      = postgres.TimestampColumn("last_update")
-		SpecialFeaturesColumn = postgres.StringColumn("special_features")
+		SpecialFeaturesColumn = postgres.StringArrayColumn("special_features")
 		FulltextColumn        = postgres.StringColumn("fulltext")
 		allColumns            = postgres.ColumnList{FilmIDColumn, TitleColumn, DescriptionColumn, ReleaseYearColumn, LanguageIDColumn, RentalDurationColumn, RentalRateColumn, LengthColumn, ReplacementCostColumn, RatingColumn, LastUpdateColumn, SpecialFeaturesColumn, FulltextColumn}
 		mutableColumns        = postgres.ColumnList{TitleColumn, DescriptionColumn, ReleaseYearColumn, LanguageIDColumn, RentalDurationColumn, RentalRateColumn, LengthColumn, ReplacementCostColumn, RatingColumn, LastUpdateColumn, SpecialFeaturesColumn, FulltextColumn}
+		defaultColumns        = postgres.ColumnList{FilmIDColumn, RentalDurationColumn, RentalRateColumn, ReplacementCostColumn, RatingColumn, LastUpdateColumn}
 	)
 
 	return filmTable{
@@ -107,5 +109,6 @@ func newFilmTableImpl(schemaName, tableName, alias string) filmTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }

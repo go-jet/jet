@@ -1,6 +1,8 @@
 package postgres
 
 import (
+	"fmt"
+	"github.com/lib/pq"
 	"time"
 
 	"github.com/go-jet/jet/v2/internal/jet"
@@ -9,11 +11,6 @@ import (
 // Bool is boolean literal constructor
 func Bool(value bool) BoolExpression {
 	return CAST(jet.Bool(value)).AS_BOOL()
-}
-
-// BoolArray creates new bool array literal expression
-func BoolArray(elements []bool) BoolArrayExpression {
-	return jet.BoolArray(elements)
 }
 
 // Int is constructor for 64 bit signed integer expressions literals.
@@ -73,8 +70,11 @@ func Double(value float64) FloatExpression {
 }
 
 // Decimal creates new float literal expression
-var Decimal = jet.Decimal
+func Decimal(value string) FloatExpression {
+	return CAST(jet.Literal(value)).AS_DECIMAL()
+}
 
+// String creates new string literal expression
 // String is a parameter constructor for the PostgreSQL text type. Using the `Text` constructor is
 // generally preferable.
 //
@@ -83,11 +83,6 @@ var Decimal = jet.Decimal
 // constructor instead. See also other PostgreSQL-specific constructors: Text, Char, and VarChar.
 func String(value string) StringExpression {
 	return CAST(jet.String(value)).AS_TEXT()
-}
-
-// StringArray creates new string array literal expression
-func StringArray(elements []string) StringArrayExpression {
-	return jet.StringArray(elements)
 }
 
 // Text is a parameter constructor for the PostgreSQL text type. This constructor also adds an
@@ -134,7 +129,9 @@ func Json(value interface{}) StringExpression {
 
 // UUID is a helper function to create string literal expression from uuid object
 // value can be any uuid type with a String method
-var UUID = jet.UUID
+func UUID(value fmt.Stringer) StringExpression {
+	return CAST(jet.Literal(value.String())).AS_UUID()
+}
 
 // Bytea creates new bytea literal expression
 func Bytea(value interface{}) ByteaExpression {
@@ -194,4 +191,64 @@ func Timestampz(year int, month time.Month, day, hour, minute, second int, milli
 // TimestampzT creates new timestamp literal expression from time.Time object
 func TimestampzT(t time.Time) TimestampzExpression {
 	return CAST(jet.TimestampzT(t)).AS_TIMESTAMPZ()
+}
+
+// BoolArray creates new bool array literal expression from list of values
+func BoolArray(values ...bool) Array[BoolExpression] {
+	return CAST(jet.Literal(pq.BoolArray(values))).AS_BOOL_ARRAY()
+}
+
+// Int32Array creates new integer array literal expression from list of values
+func Int32Array(values ...int32) Array[IntegerExpression] {
+	return CAST(jet.Literal(pq.Int32Array(values))).AS_INTEGER_ARRAY()
+}
+
+// Int64Array creates new bigint array literal expression from list of values
+func Int64Array(values ...int64) Array[IntegerExpression] {
+	return CAST(jet.Literal(pq.Int64Array(values))).AS_BIGINT_ARRAY()
+}
+
+// Float32Array creates new real array literal expression from list of values
+func Float32Array(values ...float32) Array[FloatExpression] {
+	return CAST(jet.Literal(pq.Float32Array(values))).AS_REAL_ARRAY()
+}
+
+// Float64Array creates new double precision array literal expression from list of values
+func Float64Array(values ...float64) Array[FloatExpression] {
+	return CAST(jet.Literal(pq.Float64Array(values))).AS_DOUBLE_ARRAY()
+}
+
+// StringArray creates new string array literal expression from list of values
+func StringArray(values ...string) Array[StringExpression] {
+	return CAST(jet.Literal(pq.StringArray(values))).AS_TEXT_ARRAY()
+}
+
+// ByteaArray creates new bytea array literal expression from list of values
+func ByteaArray(values ...[]byte) Array[ByteaExpression] {
+	return CAST(jet.Literal(pq.ByteaArray(values))).AS_BYTEA_ARRAY()
+}
+
+// DateArray creates new date array literal expression from list of values
+func DateArray(values ...time.Time) Array[DateExpression] {
+	return CAST(jet.Literal(pq.Array(values))).AS_DATE_ARRAY()
+}
+
+// TimestampArray creates new timestamp array literal expression from list of values
+func TimestampArray(values ...time.Time) Array[TimestampExpression] {
+	return CAST(jet.Literal(pq.Array(values))).AS_TIMESTAMP_ARRAY()
+}
+
+// TimestampzArray creates new timestampt with timezone array literal expression from list of values
+func TimestampzArray(values ...time.Time) Array[TimestampzExpression] {
+	return CAST(jet.Literal(pq.Array(values))).AS_TIMESTAMPZ_ARRAY()
+}
+
+// TimeArray creates new time array literal expression from list of values
+func TimeArray(values ...time.Time) Array[TimeExpression] {
+	return CAST(jet.Literal(pq.Array(values))).AS_TIME_ARRAY()
+}
+
+// TimezArray creates new time with timezone array literal expression from list of values
+func TimezArray(values ...time.Time) Array[TimezExpression] {
+	return CAST(jet.Literal(pq.Array(values))).AS_TIMEZ_ARRAY()
 }

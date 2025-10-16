@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
+	"github.com/go-jet/jet/v2/internal/utils/is"
+	"github.com/google/uuid"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
-
-	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
-	"github.com/go-jet/jet/v2/internal/utils/is"
-	"github.com/google/uuid"
 )
 
 // SQLBuilder generates output SQL
@@ -249,8 +248,6 @@ func (s *SQLBuilder) argToString(value interface{}) string {
 
 	case string:
 		return stringQuote(bindVal)
-	case []string:
-		return stringArrayQuote(bindVal)
 	case []byte:
 		return stringQuote(string(bindVal))
 	case uuid.UUID:
@@ -276,19 +273,6 @@ func (s *SQLBuilder) argToString(value interface{}) string {
 
 		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
 	}
-}
-
-func stringArrayQuote(val []string) string {
-	var sb strings.Builder
-	sb.WriteString(`'{`)
-	for i := 0; i < len(val); i++ {
-		if i > 0 {
-			sb.WriteString(`, `)
-		}
-		sb.WriteString(stringDoubleQuote(val[i]))
-	}
-	sb.WriteString(`}'`)
-	return sb.String()
 }
 
 func integerTypesToString(value interface{}) string {
@@ -338,8 +322,4 @@ func shouldQuoteIdentifier(identifier string) bool {
 
 func stringQuote(value string) string {
 	return `'` + strings.Replace(value, "'", "''", -1) + `'`
-}
-
-func stringDoubleQuote(value string) string {
-	return `"` + strings.Replace(value, `"`, `""`, -1) + `"`
 }

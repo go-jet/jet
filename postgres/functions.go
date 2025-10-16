@@ -335,7 +335,7 @@ var TO_ASCII = jet.TO_ASCII
 // TO_HEX converts number to its equivalent hexadecimal representation
 var TO_HEX = jet.TO_HEX
 
-//----------Data Type Formatting Functions ----------------------//
+//---------- Range Functions ----------------------//
 
 // LOWER_BOUND returns range expressions lower bound
 func LOWER_BOUND[T Expression](expression jet.Range[T]) T {
@@ -347,7 +347,144 @@ func UPPER_BOUND[T Expression](expression jet.Range[T]) T {
 	return jet.UPPER_BOUND[T](expression)
 }
 
-//----------Data Type Formatting Functions ----------------------//
+// ---------- Array Functions ----------------------//
+
+// ANY should be used in combination with a boolean operator. The result of ANY is "true" if any true result is obtained
+func ANY[E Expression](arr Array[E]) E {
+	return jet.CastToArrayElemType(arr, Func("ANY", arr))
+}
+
+// ALL should be used in combination with a boolean operator. The result of ALL is “true” if all comparisons yield true
+func ALL[E Expression](arr Array[E]) E {
+	return jet.CastToArrayElemType(arr, Func("ALL", arr))
+}
+
+// ARRAY_APPEND appends an element to the end of an array
+func ARRAY_APPEND[E Expression](arr Array[E], elem E) Array[E] {
+	return ArrayExp[E](Func("ARRAY_APPEND", arr, elem))
+}
+
+// ARRAY_CAT concatenates two arrays
+func ARRAY_CAT[E Expression](arr1, arr2 Array[E]) Array[E] {
+	return ArrayExp[E](Func("ARRAY_CAT", arr1, arr2))
+}
+
+// ARRAY_DIMS returns a text representation of the array's dimensions.
+func ARRAY_DIMS[E Expression](arr Array[E]) StringExpression {
+	return StringExp(Func("ARRAY_DIMS", arr))
+}
+
+// ARRAY_LENGTH returns the length of the requested array dimension.
+// Produces NULL instead of 0 for empty or missing array dimensions.
+func ARRAY_LENGTH[E Expression](arr Array[E], elem IntegerExpression) IntegerExpression {
+	return IntExp(Func("ARRAY_LENGTH", arr, elem))
+}
+
+// ARRAY_LOWER returns the lower bound of the requested array dimension.
+func ARRAY_LOWER[E Expression](arr Array[E]) IntegerExpression {
+	return IntExp(Func("ARRAY_LOWER", arr))
+}
+
+// ARRAY_NDIMS returns the number of dimensions of the array.
+func ARRAY_NDIMS[E Expression](arr Array[E]) IntegerExpression {
+	return IntExp(Func("ARRAY_NDIMS", arr))
+}
+
+// ARRAY_POSITION returns the subscript of the first occurrence of the second argument in the array, or NULL if it's not present.
+// If the third argument is given, the search begins at that subscript.
+// The array must be one-dimensional.
+// Comparisons are done using IS NOT DISTINCT FROM semantics, so it is possible to search for NULL.
+func ARRAY_POSITION[E Expression](arr Array[E], elem E, beginAt ...IntegerExpression) IntegerExpression {
+	return IntExp(Func("ARRAY_POSITION", optionalAppend([]Expression{arr, elem}, beginAt)...))
+}
+
+// ARRAY_POSITIONS returns an array of the subscripts of all occurrences of the second argument in the array given as first argument.
+// The array must be one-dimensional.
+// Comparisons are done using IS NOT DISTINCT FROM semantics, so it is possible to search for NULL.
+// NULL is returned only if the array is NULL; if the value is not found in the array, an empty array is returned.
+func ARRAY_POSITIONS[E Expression](arr Array[E], elem E) Array[IntegerExpression] {
+	return ArrayExp[IntegerExpression](Func("ARRAY_POSITIONS", arr, elem))
+}
+
+// ARRAY_PREPEND prepends an element to the beginning of an array
+func ARRAY_PREPEND[E Expression](el E, arr Array[E]) Array[E] {
+	return ArrayExp[E](Func("ARRAY_PREPEND", el, arr))
+}
+
+// ARRAY_REMOVE removes all elements equal to the given value from the array. The array must be one-dimensional.
+// Comparisons are done using IS NOT DISTINCT FROM semantics, so it is possible to remove NULLs.
+func ARRAY_REMOVE[E Expression](arr Array[E], elem Expression) IntegerExpression {
+	return IntExp(Func("ARRAY_REMOVE", arr, elem))
+}
+
+// ARRAY_REPLACE replaces each array element equal to the second argument with the third argument.
+func ARRAY_REPLACE[E Expression](arr Array[E], existing E, new E) Array[E] {
+	return ArrayExp[E](Func("ARRAY_REPLACE", arr, existing, new))
+}
+
+// ARRAY_REVERSE reverses the first dimension of the array.
+func ARRAY_REVERSE[E Expression](arr Array[E]) Array[E] {
+	return ArrayExp[E](Func("ARRAY_REVERSE", arr))
+}
+
+// ARRAY_SAMPLE returns an array of n items randomly selected from array.
+// n may not exceed the length of array's first dimension.
+// If array is multi-dimensional, an “item” is a slice having a given first subscript.
+func ARRAY_SAMPLE[E Expression](arr Array[E], n IntegerExpression) Array[E] {
+	return ArrayExp[E](Func("ARRAY_SAMPLE", arr, n))
+}
+
+// ARRAY_SHUFFLE randomly shuffles the first dimension of the array.
+func ARRAY_SHUFFLE[E Expression](arr Array[E]) Array[E] {
+	return ArrayExp[E](Func("ARRAY_SHUFFLE", arr))
+}
+
+// ARRAY_SORT sorts the first dimension of the array.
+// The sort order is determined by the default sort ordering of the array's element type; however, if the element type is collatable, the collation to use can be specified by adding a COLLATE clause to the array argument.
+//
+// If descending is true then sort in descending order, otherwise ascending order.
+// If omitted, the default is ascending order.
+// If nulls_first is true then nulls appear before non-null values, otherwise nulls appear after non-null values.
+// If omitted, nulls_first is taken to have the same value as descending.
+func ARRAY_SORT[E Expression](arr Array[E], desc BoolExpression, nullFirst ...BoolExpression) Array[E] {
+	return ArrayExp[E](Func("ARRAY_SORT", optionalAppend([]Expression{arr, desc}, nullFirst)...))
+}
+
+// ARRAY_TO_STRING Converts each array element to its text representation, and concatenates those separated by the delimiter string.
+// If null_string is given and is not NULL, then NULL array entries are represented by that string; otherwise, they are omitted.
+func ARRAY_TO_STRING[T Expression](arr Array[T], delim StringExpression) StringExpression {
+	return StringExp(Func("ARRAY_TO_STRING", arr, delim))
+}
+
+// ARRAY_UPPER returns the upper bound of the requested array dimension.
+func ARRAY_UPPER[E Expression](arr Array[E], dim IntegerExpression) IntegerExpression {
+	return IntExp(Func("ARRAY_UPPER", arr, dim))
+}
+
+// CARDINALITY returns the total number of elements in the array, or 0 if the array is empty.
+func CARDINALITY[E Expression](arr Array[E]) IntegerExpression {
+	return IntExp(Func("CARDINALITY", arr))
+}
+
+// TRIM_ARRAY trims an array by removing the last n elements. If the array is multidimensional, only the first dimension is trimmed.
+func TRIM_ARRAY[E Expression](arr Array[E], n IntegerExpression) Array[E] {
+	return ArrayExp[E](Func("TRIM_ARRAY", arr, n))
+}
+
+// ARRAY constructor is an expression that builds an array value using values for its member elements.
+func ARRAY[T Expression](elems ...T) Array[T] {
+	return jet.ARRAY[T](elems...)
+}
+
+func optionalAppend[O Expression](elem []Expression, optional []O) []Expression {
+	if len(optional) == 0 {
+		return elem
+	}
+
+	return append(elem, optional[0])
+}
+
+//---------- Data Type Formatting Functions ----------------------//
 
 // TO_CHAR converts expression to string with format
 var TO_CHAR = jet.TO_CHAR

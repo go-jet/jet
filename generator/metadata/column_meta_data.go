@@ -19,7 +19,6 @@ const (
 	BaseType        DataTypeKind = "base"
 	EnumType        DataTypeKind = "enum"
 	UserDefinedType DataTypeKind = "user-defined"
-	ArrayType       DataTypeKind = "array"
 	RangeType       DataTypeKind = "range"
 )
 
@@ -29,4 +28,8 @@ type DataType struct {
 	Kind       DataTypeKind
 	IsUnsigned bool
 	Dimensions int // The number of array dimensions
+}
+
+func (d DataType) IsArray() bool {
+	return d.Dimensions > 0
 }

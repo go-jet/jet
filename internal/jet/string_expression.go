@@ -17,9 +17,6 @@ type StringExpression interface {
 	BETWEEN(min, max StringExpression) BoolExpression
 	NOT_BETWEEN(min, max StringExpression) BoolExpression
 
-	ANY_EQ(rhs ArrayExpression[StringExpression]) BoolExpression
-	ALL_EQ(rhs ArrayExpression[StringExpression]) BoolExpression
-
 	CONCAT(rhs Expression) StringExpression
 
 	LIKE(pattern StringExpression) BoolExpression
@@ -73,14 +70,6 @@ func (s *stringInterfaceImpl) BETWEEN(min, max StringExpression) BoolExpression 
 
 func (s *stringInterfaceImpl) NOT_BETWEEN(min, max StringExpression) BoolExpression {
 	return NewBetweenOperatorExpression(s.root, min, max, true)
-}
-
-func (i *stringInterfaceImpl) ANY_EQ(rhs ArrayExpression[StringExpression]) BoolExpression {
-	return Any(i.parent, Eq, rhs)
-}
-
-func (i *stringInterfaceImpl) ALL_EQ(rhs ArrayExpression[StringExpression]) BoolExpression {
-	return All(i.parent, Eq, rhs)
 }
 
 func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {

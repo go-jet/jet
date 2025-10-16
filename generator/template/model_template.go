@@ -2,15 +2,17 @@ package template
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/generator/metadata"
-	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
-	"github.com/google/uuid"
-	"github.com/jackc/pgtype"
 	"github.com/lib/pq"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgtype"
+
+	"github.com/go-jet/jet/v2/generator/metadata"
+	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
 )
 
 // Model is template for model files generation
@@ -246,10 +248,21 @@ func getType(columnMetadata metadata.Column) Type {
 	userDefinedType := getUserDefinedType(columnMetadata)
 
 	if userDefinedType != "" {
-		if columnMetadata.IsNullable {
-			return Type{Name: "*" + userDefinedType}
+		var importPath string
+
+		if columnMetadata.DataType.IsArray() {
+			userDefinedType = "pq.StringArray"
+			importPath = "github.com/lib/pq"
 		}
-		return Type{Name: userDefinedType}
+
+		if columnMetadata.IsNullable {
+			userDefinedType = "*" + userDefinedType
+		}
+
+		return Type{
+			Name:       userDefinedType,
+			ImportPath: importPath,
+		}
 	}
 
 	return NewType(getGoType(columnMetadata))
@@ -267,21 +280,44 @@ func getUserDefinedType(column metadata.Column) string {
 }
 
 func getGoType(column metadata.Column) interface{} {
-	defaultGoType := toGoType(column)
+	goType := toGoType(column)
 
-	if column.IsNullable {
-		return reflect.New(reflect.TypeOf(defaultGoType)).Interface()
+	if column.DataType.IsArray() {
+		goType = toGoArrayType(goType, column)
 	}
 
-	return defaultGoType
+	if column.IsNullable {
+		return reflect.New(reflect.TypeOf(goType)).Interface()
+	}
+
+	return goType
+}
+
+func toGoArrayType(elemType any, column metadata.Column) any {
+	if column.DataType.Dimensions > 1 {
+		return "" // unsupported multidimensional arrays
+	}
+
+	switch elemType.(type) {
+	case bool:
+		return pq.BoolArray{}
+	case int32:
+		return pq.Int32Array{}
+	case int64:
+		return pq.Int64Array{}
+	case float32:
+		return pq.Float32Array{}
+	case float64:
+		return pq.Float64Array{}
+	case []byte:
+		return pq.ByteaArray{}
+	default:
+		return pq.StringArray{}
+	}
 }
 
 // toGoType returns model type for column info.
 func toGoType(column metadata.Column) interface{} {
-	// We don't support multi-dimensional arrays
-	if column.DataType.Dimensions > 1 {
-		return ""
-	}
 
 	switch strings.ToLower(column.DataType.Name) {
 	case "user-defined", "enum":
@@ -348,14 +384,6 @@ func toGoType(column metadata.Column) interface{} {
 		return pgtype.Int8range{}
 	case "numrange":
 		return pgtype.Numrange{}
-	case "bool[]":
-		return pq.BoolArray{}
-	case "integer[]", "int4[]":
-		return pq.Int32Array{}
-	case "bigint[]":
-		return pq.Int64Array{}
-	case "text[]", "jsonb[]", "json[]":
-		return pq.StringArray{}
 	default:
 		fmt.Println("- [Model      ] Unsupported sql column '" + column.Name + " " + column.DataType.Name + "', using string instead.")
 		return ""

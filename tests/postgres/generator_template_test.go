@@ -450,7 +450,7 @@ func TestGeneratorTemplate_Model_ChangeFieldTypes(t *testing.T) {
 	require.Contains(t, data, `"github.com/google/uuid"`)
 	require.Contains(t, data, "Description     sql.NullString")
 	require.Contains(t, data, "ReleaseYear     sql.NullInt32")
-	require.Contains(t, data, "SpecialFeatures sql.NullString")
+	require.Contains(t, data, "SpecialFeatures *pq.StringArray")
 	require.Contains(t, data, "LastUpdate      sql.Null[uuid.UUID]")
 }
 

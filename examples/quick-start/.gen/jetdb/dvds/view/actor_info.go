@@ -16,7 +16,7 @@ var ActorInfo = newActorInfoTable("dvds", "actor_info", "")
 type actorInfoTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	ActorID   postgres.ColumnInteger
 	FirstName postgres.ColumnString
 	LastName  postgres.ColumnString
@@ -24,6 +24,7 @@ type actorInfoTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type ActorInfoTable struct {
@@ -67,6 +68,7 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 		FilmInfoColumn  = postgres.StringColumn("film_info")
 		allColumns      = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
 		mutableColumns  = postgres.ColumnList{ActorIDColumn, FirstNameColumn, LastNameColumn, FilmInfoColumn}
+		defaultColumns  = postgres.ColumnList{}
 	)
 
 	return actorInfoTable{
@@ -80,5 +82,6 @@ func newActorInfoTableImpl(schemaName, tableName, alias string) actorInfoTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }
