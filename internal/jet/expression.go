@@ -341,3 +341,42 @@ func (s *complexExpression) serialize(statement StatementType, out *SQLBuilder, 
 func wrap(expressions ...Expression) Expression {
 	return NewFunc("", expressions, nil)
 }
+
+type arraySubscriptExpression struct {
+	ExpressionInterfaceImpl
+	array     Expression
+	subscript IntegerExpression
+}
+
+func (a arraySubscriptExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if !contains(options, NoWrap) {
+		out.WriteString("(")
+	}
+	a.array.serialize(statement, out, FallTrough(options)...) // FallTrough here because complexExpression is just a wrapper
+	out.WriteString("[")
+	a.subscript.serialize(statement, out, FallTrough(options)...) // FallTrough here because complexExpression is just a wrapper
+	out.WriteString("]")
+	if !contains(options, NoWrap) {
+		out.WriteString(")")
+	}
+}
+
+func arraySubscriptExpr(array Expression, subscript IntegerExpression) Expression {
+	arraySubscriptExpression := &arraySubscriptExpression{array: array, subscript: subscript}
+	arraySubscriptExpression.ExpressionInterfaceImpl.Parent = arraySubscriptExpression
+
+	return arraySubscriptExpression
+}
+
+type skipParenthesisWrap struct {
+	Expression
+}
+
+func skipWrap(expression Expression) Expression {
+	return &skipParenthesisWrap{expression}
+}
+
+// since the expression is a function parameter, there is no need to wrap it in parentheses
+func (s *skipParenthesisWrap) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	s.Expression.serialize(statement, out, append(options, NoWrap)...)
+}

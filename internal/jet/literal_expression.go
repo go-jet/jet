@@ -2,6 +2,7 @@ package jet
 
 import (
 	"fmt"
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -158,6 +159,66 @@ func Decimal(value string) FloatExpression {
 	floatLiteral.floatInterfaceImpl.root = &floatLiteral
 
 	return &floatLiteral
+}
+
+// ---------------------------------------------------//
+
+type boolArrayLiteral struct {
+	arrayInterfaceImpl[BoolExpression]
+	literalExpressionImpl
+}
+
+func BoolArray(values []bool) ArrayExpression[BoolExpression] {
+	l := boolArrayLiteral{}
+	l.literalExpressionImpl = *literal(pq.BoolArray(values))
+	l.arrayInterfaceImpl.parent = &l
+
+	return &l
+}
+
+type integerArrayLiteral struct {
+	arrayInterfaceImpl[IntegerExpression]
+	literalExpressionImpl
+}
+
+func Int64Array(values []int64) ArrayExpression[IntegerExpression] {
+	l := integerArrayLiteral{}
+	l.literalExpressionImpl = *literal(pq.Int64Array(values))
+	l.arrayInterfaceImpl.parent = &l
+	return &l
+}
+
+func Int32Array(values []int32) ArrayExpression[IntegerExpression] {
+	l := integerArrayLiteral{}
+	l.literalExpressionImpl = *literal(pq.Int32Array(values))
+	l.arrayInterfaceImpl.parent = &l
+	return &l
+}
+
+type stringArrayLiteral struct {
+	arrayInterfaceImpl[StringExpression]
+	literalExpressionImpl
+}
+
+func StringArray(values []string) ArrayExpression[StringExpression] {
+	l := stringArrayLiteral{}
+	l.literalExpressionImpl = *literal(pq.StringArray(values))
+	l.arrayInterfaceImpl.parent = &l
+
+	return &l
+}
+
+type unsafeArrayLiteral[E Expression] struct {
+	arrayInterfaceImpl[E]
+	literalExpressionImpl
+}
+
+func UnsafeArray[E LiteralExpression](values []interface{}) ArrayExpression[E] {
+	l := unsafeArrayLiteral[E]{}
+	l.literalExpressionImpl = *literal(pq.Array(values))
+	l.arrayInterfaceImpl.parent = &l
+
+	return &l
 }
 
 // ---------------------------------------------------//

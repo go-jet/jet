@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"github.com/lib/pq"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/volatiletech/null/v8"
 	"testing"
@@ -1006,6 +1007,7 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 	type MyFloat32 float32
 	type MyFloat64 float64
 	type MyString string
+	type MyStringArray pq.StringArray
 	type MyTime = time.Time
 
 	type film struct {
@@ -1020,26 +1022,25 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 		ReplacementCost MyFloat64
 		Rating          *model.MpaaRating
 		LastUpdate      MyTime
-		SpecialFeatures *MyString
+		SpecialFeatures MyStringArray
 		Fulltext        MyString
 	}
 
+	// We'll skip special features, because it's a slice and it does not implement sql.Scanner
 	stmt := SELECT(
-		Film.AllColumns,
+		Film.AllColumns.Except(Film.SpecialFeatures),
 	).FROM(
 		Film,
 	).ORDER_BY(
 		Film.FilmID.ASC(),
 	).LIMIT(3)
 
-	var films []model.Film
-
-	err := stmt.Query(db, &films)
+	var myFilms []film
+	err := stmt.Query(db, &myFilms)
 	require.NoError(t, err)
 
-	var myFilms []film
-
-	err = stmt.Query(db, &myFilms)
+	var films []model.Film
+	err = stmt.Query(db, &films)
 	require.NoError(t, err)
 
 	require.Equal(t, testutils.ToJSON(films), testutils.ToJSON(myFilms))
@@ -1254,7 +1255,7 @@ var film1 = model.Film{
 	ReplacementCost: 20.99,
 	Rating:          &pgRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-	SpecialFeatures: ptr.Of("{\"Deleted Scenes\",\"Behind the Scenes\"}"),
+	SpecialFeatures: &pq.StringArray{"Deleted Scenes", "Behind the Scenes"},
 	Fulltext:        "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 }
 
@@ -1270,7 +1271,7 @@ var film2 = model.Film{
 	ReplacementCost: 12.99,
 	Rating:          &gRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-	SpecialFeatures: ptr.Of(`{Trailers,"Deleted Scenes"}`),
+	SpecialFeatures: &pq.StringArray{"Trailers", "Deleted Scenes"},
 	Fulltext:        `'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14`,
 }
 
