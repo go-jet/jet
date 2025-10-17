@@ -115,8 +115,10 @@ func TestArrayOperations(t *testing.T) {
 		ARRAY_APPEND(SampleArrays.TextArray, String("after")).AS("append"),
 		ARRAY_CAT(SampleArrays.TimeArray, timeArray2).AS("cat"),
 		ARRAY_LENGTH(timezArray2, Int32(1)).AS("length"),
-		// ARRAY_LOWER(SampleArrays.UUIDArray).AS("lower"), //newer postgres versions
-		ARRAY_POSITIONS(stringArray, String("text")).AS("position"),
+		// ARRAY_LOWER(SampleArrays.UUIDArray).AS("lower"),
+		ARRAY_POSITION(SampleArrays.Int4Array, Int32(30)).AS("position"),
+		ARRAY_POSITION(SampleArrays.DoubleArray, Float(33.33), Int(1)).AS("position_from"),
+		ARRAY_POSITIONS(stringArray, String("text")).AS("positions"),
 		ARRAY_PREPEND(String("before"), SampleArrays.TextArray).AS("prepend"),
 		ARRAY_REMOVE(boolArray, Bool(true)).AS("remove"),
 		ARRAY_REPLACE(SampleArrays.VarcharArray, String("hello"), String("hi")).AS("replace"),
@@ -172,15 +174,17 @@ SELECT $1::boolean[] AS "bool_array",
      ARRAY_APPEND(sample_arrays.text_array, $31::text) AS "append",
      ARRAY_CAT(sample_arrays.time_array, ARRAY[$32::time without time zone,$33::time without time zone]) AS "cat",
      ARRAY_LENGTH(ARRAY[$34::time with time zone,$35::time with time zone], $36::integer) AS "length",
-     ARRAY_POSITIONS($37::text[], $38::text) AS "position",
-     ARRAY_PREPEND($39::text, sample_arrays.text_array) AS "prepend",
-     ARRAY_REMOVE($40::boolean[], $41::boolean) AS "remove",
-     ARRAY_REPLACE(sample_arrays.varchar_array, $42::text, $43::text) AS "replace",
-     ARRAY_TO_STRING(sample_arrays.mood_enum_array, $44::text) AS "to_string",
-     ARRAY_UPPER(sample_arrays.int8_array, $45) AS "upper",
+     ARRAY_POSITION(sample_arrays.int4_array, $37::integer) AS "position",
+     ARRAY_POSITION(sample_arrays.double_array, $38, $39) AS "position_from",
+     ARRAY_POSITIONS($40::text[], $41::text) AS "positions",
+     ARRAY_PREPEND($42::text, sample_arrays.text_array) AS "prepend",
+     ARRAY_REMOVE($43::boolean[], $44::boolean) AS "remove",
+     ARRAY_REPLACE(sample_arrays.varchar_array, $45::text, $46::text) AS "replace",
+     ARRAY_TO_STRING(sample_arrays.mood_enum_array, $47::text) AS "to_string",
+     ARRAY_UPPER(sample_arrays.int8_array, $48) AS "upper",
      CARDINALITY(sample_arrays.double_array) AS "cardinality"
 FROM test_sample.sample_arrays
-WHERE sample_arrays.bool_array @> $46::boolean[];
+WHERE sample_arrays.bool_array @> $49::boolean[];
 `)
 
 	var dest struct {
@@ -218,20 +222,22 @@ WHERE sample_arrays.bool_array @> $46::boolean[];
 		StringEqAll  bool
 
 		// functions
-		Append      pq.StringArray
-		Cat         pq.StringArray
-		Dims        string
-		Length      int32
-		Lower       int32
-		NDims       int32
-		Position    pq.Int32Array
-		Prepend     pq.StringArray
-		Remove      pq.BoolArray
-		Replace     pq.StringArray
-		ToString    string
-		Upper       int32
-		Cardinality int32
-		Trim        pq.StringArray
+		Append       pq.StringArray
+		Cat          pq.StringArray
+		Dims         string
+		Length       int32
+		Lower        int32
+		NDims        int32
+		Position     *int32
+		PositionFrom *int32
+		Positions    pq.Int32Array
+		Prepend      pq.StringArray
+		Remove       pq.BoolArray
+		Replace      pq.StringArray
+		ToString     string
+		Upper        int32
+		Cardinality  int32
+		Trim         pq.StringArray
 	}
 
 	err := query.Query(db, &dest)
@@ -339,7 +345,9 @@ WHERE sample_arrays.bool_array @> $46::boolean[];
 	"Length": 2,
 	"Lower": 0,
 	"NDims": 0,
-	"Position": [
+	"Position": 3,
+	"PositionFrom": 3,
+	"Positions": [
 		2
 	],
 	"Prepend": [

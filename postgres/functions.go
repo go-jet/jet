@@ -394,8 +394,8 @@ func ARRAY_NDIMS[E Expression](arr Array[E]) IntegerExpression {
 // If the third argument is given, the search begins at that subscript.
 // The array must be one-dimensional.
 // Comparisons are done using IS NOT DISTINCT FROM semantics, so it is possible to search for NULL.
-func ARRAY_POSITION[E Expression](arr Array[E], elem E, beginAt ...IntegerExpression) IntegerExpression {
-	return IntExp(Func("ARRAY_POSITION", optionalAppend([]Expression{arr, elem}, beginAt)...))
+func ARRAY_POSITION[E Expression](arr Array[E], elem E, start ...IntegerExpression) IntegerExpression {
+	return IntExp(Func("ARRAY_POSITION", optionalAppend([]Expression{arr, elem}, start)...))
 }
 
 // ARRAY_POSITIONS returns an array of the subscripts of all occurrences of the second argument in the array given as first argument.
