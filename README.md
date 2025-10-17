@@ -198,10 +198,13 @@ stmt := SELECT(
         INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
         INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
 ).WHERE(
-    Language.Name.EQ(Char(20)("English")).             
-        AND(Category.Name.NOT_EQ(Text("Action"))).  
-        AND(Film.Length.GT(Int32(180))).
-        AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),              
+    AND(
+        Language.Name.EQ(Char(20)("English")), // string columns Language.Name and Category.Name can be compared only with string expression
+        Category.Name.NOT_EQ(Text("Action")),
+        Film.Length.GT(Int32(180)), // Film.Length is integer column and can be compared only with integer expression
+        Film.Rating.NOT_EQ(enum.MpaaRating.R),
+        String("Trailers").EQ(ANY(Film.SpecialFeatures)), // type safety is also enforced on array element types
+    ),             
 ).ORDER_BY(
     Actor.ActorID.ASC(),
     Film.FilmID.ASC(),
@@ -212,7 +215,8 @@ stmt := SELECT(
 
 Note that every column has a type. String columns, such as `Language.Name` and `Category.Name` can only be compared with
 string columns and expressions. Similarity, `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns
-and can only be compared with integer columns and expressions.
+and can only be compared with integer columns and expressions. The same type safety rules apply to arrays and their
+element types.
 
 __How to Get a Parametrized SQL Query from the Statement?__
 ```go
@@ -244,7 +248,6 @@ SELECT actor.actor_id AS "actor.actor_id",
        film.fulltext AS "film.fulltext",
        language.language_id AS "language.language_id",
        language.name AS "language.name",
-       language.last_update AS "language.last_update",
        category.category_id AS "category.category_id",
        category.name AS "category.name",
        category.last_update AS "category.last_update"
@@ -254,11 +257,18 @@ FROM dvds.actor
          INNER JOIN dvds.language ON (language.language_id = film.language_id)
          INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
          INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE (((language.name = $1::char(20)) AND (category.name != $2::text)) AND (film.length > $3)) AND (film.rating != 'R')
+WHERE (
+          (language.name = $1::char(20))
+              AND (category.name != $2::text)
+              AND (film.length > $3::integer)
+              AND (film.rating != 'R')
+              AND ($4::text = ANY(film.special_features))
+          )
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
+
 ```sh 
-[English Action 180]
+[English Action 180 Trailers]
 ```
 
 
@@ -277,35 +287,40 @@ debugSql - this query string can be copy-pasted into sql editor and executed.
 
 ```sql
 SELECT actor.actor_id AS "actor.actor_id",
-     actor.first_name AS "actor.first_name",
-     actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update",
-     film.film_id AS "film.film_id",
-     film.title AS "film.title",
-     film.description AS "film.description",
-     film.release_year AS "film.release_year",
-     film.language_id AS "film.language_id",
-     film.rental_duration AS "film.rental_duration",
-     film.rental_rate AS "film.rental_rate",
-     film.length AS "film.length",
-     film.replacement_cost AS "film.replacement_cost",
-     film.rating AS "film.rating",
-     film.last_update AS "film.last_update",
-     film.special_features AS "film.special_features",
-     film.fulltext AS "film.fulltext",
-     language.language_id AS "language.language_id",
-     language.name AS "language.name",
-     language.last_update AS "language.last_update",
-     category.category_id AS "category.category_id",
-     category.name AS "category.name",
-     category.last_update AS "category.last_update"
+       actor.first_name AS "actor.first_name",
+       actor.last_name AS "actor.last_name",
+       actor.last_update AS "actor.last_update",
+       film.film_id AS "film.film_id",
+       film.title AS "film.title",
+       film.description AS "film.description",
+       film.release_year AS "film.release_year",
+       film.language_id AS "film.language_id",
+       film.rental_duration AS "film.rental_duration",
+       film.rental_rate AS "film.rental_rate",
+       film.length AS "film.length",
+       film.replacement_cost AS "film.replacement_cost",
+       film.rating AS "film.rating",
+       film.last_update AS "film.last_update",
+       film.special_features AS "film.special_features",
+       film.fulltext AS "film.fulltext",
+       language.language_id AS "language.language_id",
+       language.name AS "language.name",
+       category.category_id AS "category.category_id",
+       category.name AS "category.name",
+       category.last_update AS "category.last_update"
 FROM dvds.actor
-     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
-     INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
-     INNER JOIN dvds.language ON (language.language_id = film.language_id)
-     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
-     INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE (((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180)) AND (film.rating != 'R')
+         INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
+         INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
+         INNER JOIN dvds.language ON (language.language_id = film.language_id)
+         INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+         INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
+WHERE (
+          (language.name = 'English'::char(20))
+              AND (category.name != 'Action'::text)
+              AND (film.length > 180::integer)
+              AND (film.rating != 'R')
+              AND ('Trailers'::text = ANY(film.special_features))
+          )
 ORDER BY actor.actor_id ASC, film.film_id ASC;
 ```
 </details>
@@ -355,8 +370,8 @@ __And that's it.__
 The `dest` variable now contains a list of all actors (each with a list of
 films they acted in). Each film includes information about its language and
 a list of categories it belongs to. This list is filtered to include only
-films longer than 180 minutes, where the film language is 'English', and
-the film category is not 'Action'.
+films longer than 180 minutes, where the film language is 'English',
+the film category is not 'Action' and 'Trailers' are one of the film's special features.
 
 > [!Tip]  
 > It is recommended to enable **Strict Scan** on application startup, especially when destination contains 
@@ -370,82 +385,88 @@ fmt.Println(string(jsonText))
 
 ```js
 [
-  {
-    "ActorID": 1,
-    "FirstName": "Penelope",
-    "LastName": "Guiness",
-    "LastUpdate": "2013-05-26T14:47:57.62Z",
-    "Films": [
-      {
-        "FilmID": 499,
-        "Title": "King Evolution",
-        "Description": "A Action-Packed Tale of a Boy And a Lumberjack who must Chase a Madman in A Baloon",
-        "ReleaseYear": 2006,
-        "LanguageID": 1,
-        "RentalDuration": 3,
-        "RentalRate": 4.99,
-        "Length": 184,
-        "ReplacementCost": 24.99,
-        "Rating": "NC-17",
-        "LastUpdate": "2013-05-26T14:50:58.951Z",
-        "SpecialFeatures": "{Trailers,\"Deleted Scenes\",\"Behind the Scenes\"}",
-        "Fulltext": "'action':5 'action-pack':4 'baloon':21 'boy':10 'chase':16 'evolut':2 'king':1 'lumberjack':13 'madman':18 'must':15 'pack':6 'tale':7",
-        "Language": {
-          "LanguageID": 1,
-          "Name": "English             ",
-          "LastUpdate": "0001-01-01T00:00:00Z"
-        },
-        "Categories": [
-          {
-            "CategoryID": 8,
-            "Name": "Family",
-            "LastUpdate": "2006-02-15T09:46:27Z"
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "ActorID": 3,
-    "FirstName": "Ed",
-    "LastName": "Chase",
-    "LastUpdate": "2013-05-26T14:47:57.62Z",
-    "Films": [
-      {
-        "FilmID": 996,
-        "Title": "Young Language",
-        "Description": "A Unbelieveable Yarn of a Boat And a Database Administrator who must Meet a Boy in The First Manned Space Station",
-        "ReleaseYear": 2006,
-        "LanguageID": 1,
-        "RentalDuration": 6,
-        "RentalRate": 0.99,
-        "Length": 183,
-        "ReplacementCost": 9.99,
-        "Rating": "G",
-        "LastUpdate": "2013-05-26T14:50:58.951Z",
-        "SpecialFeatures": "{Trailers,\"Behind the Scenes\"}",
-        "Fulltext": "'administr':12 'boat':8 'boy':17 'databas':11 'first':20 'languag':2 'man':21 'meet':15 'must':14 'space':22 'station':23 'unbeliev':4 'yarn':5 'young':1",
-        "Language": {
-          "LanguageID": 1,
-          "Name": "English             ",
-          "LastUpdate": "0001-01-01T00:00:00Z"
-        },
-        "Categories": [
-          {
-            "CategoryID": 6,
-            "Name": "Documentary",
-            "LastUpdate": "2006-02-15T09:46:27Z"
-          }
-        ]
-      }
-    ]
-  },
-  //...(125 more items)
+	{
+		"ActorID": 1,
+		"FirstName": "Penelope",
+		"LastName": "Guiness",
+		"LastUpdate": "2013-05-26T14:47:57.62Z",
+		"Films": [
+			{
+				"FilmID": 499,
+				"Title": "King Evolution",
+				"Description": "A Action-Packed Tale of a Boy And a Lumberjack who must Chase a Madman in A Baloon",
+				"ReleaseYear": 2006,
+				"LanguageID": 1,
+				"RentalDuration": 3,
+				"RentalRate": 4.99,
+				"Length": 184,
+				"ReplacementCost": 24.99,
+				"Rating": "NC-17",
+				"LastUpdate": "2013-05-26T14:50:58.951Z",
+				"SpecialFeatures": [
+					"Trailers",
+					"Deleted Scenes",
+					"Behind the Scenes"
+				],
+				"Fulltext": "'action':5 'action-pack':4 'baloon':21 'boy':10 'chase':16 'evolut':2 'king':1 'lumberjack':13 'madman':18 'must':15 'pack':6 'tale':7",
+				"Language": {
+					"LanguageID": 1,
+					"Name": "English             ",
+					"LastUpdate": "0001-01-01T00:00:00Z"
+				},
+				"Categories": [
+					{
+						"CategoryID": 8,
+						"Name": "Family",
+						"LastUpdate": "2006-02-15T09:46:27Z"
+					}
+				]
+			}
+		]
+	},
+	{
+		"ActorID": 3,
+		"FirstName": "Ed",
+		"LastName": "Chase",
+		"LastUpdate": "2013-05-26T14:47:57.62Z",
+		"Films": [
+			{
+				"FilmID": 996,
+				"Title": "Young Language",
+				"Description": "A Unbelieveable Yarn of a Boat And a Database Administrator who must Meet a Boy in The First Manned Space Station",
+				"ReleaseYear": 2006,
+				"LanguageID": 1,
+				"RentalDuration": 6,
+				"RentalRate": 0.99,
+				"Length": 183,
+				"ReplacementCost": 9.99,
+				"Rating": "G",
+				"LastUpdate": "2013-05-26T14:50:58.951Z",
+				"SpecialFeatures": [
+					"Trailers",
+					"Behind the Scenes"
+				],
+				"Fulltext": "'administr':12 'boat':8 'boy':17 'databas':11 'first':20 'languag':2 'man':21 'meet':15 'must':14 'space':22 'station':23 'unbeliev':4 'yarn':5 'young':1",
+				"Language": {
+					"LanguageID": 1,
+					"Name": "English             ",
+					"LastUpdate": "0001-01-01T00:00:00Z"
+				},
+				"Categories": [
+					{
+						"CategoryID": 6,
+						"Name": "Documentary",
+						"LastUpdate": "2006-02-15T09:46:27Z"
+					}
+				]
+			}
+		]
+	},
+    //...(125 more items)
 ]
 ```
 
-What if, we also want to have list of films per category and actors per category, where films are longer than 180 minutes, film language is 'English'
-and film category is not 'Action'.  
+What if, we also want to have a list of films per category and actors per category, with the same search conditions.  
 In that case we can reuse above statement `stmt`, and just change our destination:
 
 ```go
@@ -464,88 +485,71 @@ handleError(err)
 
 ```js
 [
-  {
-    "CategoryID": 8,
-    "Name": "Family",
-    "LastUpdate": "2006-02-15T09:46:27Z",
-    "Films": [
-      {
-        "FilmID": 499,
-        "Title": "King Evolution",
-        "Description": "A Action-Packed Tale of a Boy And a Lumberjack who must Chase a Madman in A Baloon",
-        "ReleaseYear": 2006,
-        "LanguageID": 1,
-        "RentalDuration": 3,
-        "RentalRate": 4.99,
-        "Length": 184,
-        "ReplacementCost": 24.99,
-        "Rating": "NC-17",
-        "LastUpdate": "2013-05-26T14:50:58.951Z",
-        "SpecialFeatures": "{Trailers,\"Deleted Scenes\",\"Behind the Scenes\"}",
-        "Fulltext": "'action':5 'action-pack':4 'baloon':21 'boy':10 'chase':16 'evolut':2 'king':1 'lumberjack':13 'madman':18 'must':15 'pack':6 'tale':7"
-      },
-      {
-        "FilmID": 50,
-        "Title": "Baked Cleopatra",
-        "Description": "A Stunning Drama of a Forensic Psychologist And a Husband who must Overcome a Waitress in A Monastery",
-        "ReleaseYear": 2006,
-        "LanguageID": 1,
-        "RentalDuration": 3,
-        "RentalRate": 2.99,
-        "Length": 182,
-        "ReplacementCost": 20.99,
-        "Rating": "G",
-        "LastUpdate": "2013-05-26T14:50:58.951Z",
-        "SpecialFeatures": "{Commentaries,\"Behind the Scenes\"}",
-        "Fulltext": "'bake':1 'cleopatra':2 'drama':5 'forens':8 'husband':12 'monasteri':20 'must':14 'overcom':15 'psychologist':9 'stun':4 'waitress':17"
-      }
-    ],
-    "Actors": [
-      {
-        "ActorID": 1,
-        "FirstName": "Penelope",
-        "LastName": "Guiness",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      },
-      {
-        "ActorID": 20,
-        "FirstName": "Lucille",
-        "LastName": "Tracy",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      },
-      {
-        "ActorID": 36,
-        "FirstName": "Burt",
-        "LastName": "Dukakis",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      },
-      {
-        "ActorID": 70,
-        "FirstName": "Michelle",
-        "LastName": "Mcconaughey",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      },
-      {
-        "ActorID": 118,
-        "FirstName": "Cuba",
-        "LastName": "Allen",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      },
-      {
-        "ActorID": 187,
-        "FirstName": "Renee",
-        "LastName": "Ball",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      },
-      {
-        "ActorID": 198,
-        "FirstName": "Mary",
-        "LastName": "Keitel",
-        "LastUpdate": "2013-05-26T14:47:57.62Z"
-      }
-    ]
-  },
-    //...
+	{
+		"CategoryID": 8,
+		"Name": "Family",
+		"LastUpdate": "2006-02-15T09:46:27Z",
+		"Films": [
+			{
+				"FilmID": 499,
+				"Title": "King Evolution",
+				"Description": "A Action-Packed Tale of a Boy And a Lumberjack who must Chase a Madman in A Baloon",
+				"ReleaseYear": 2006,
+				"LanguageID": 1,
+				"RentalDuration": 3,
+				"RentalRate": 4.99,
+				"Length": 184,
+				"ReplacementCost": 24.99,
+				"Rating": "NC-17",
+				"LastUpdate": "2013-05-26T14:50:58.951Z",
+				"SpecialFeatures": [
+					"Trailers",
+					"Deleted Scenes",
+					"Behind the Scenes"
+				],
+				"Fulltext": "'action':5 'action-pack':4 'baloon':21 'boy':10 'chase':16 'evolut':2 'king':1 'lumberjack':13 'madman':18 'must':15 'pack':6 'tale':7"
+			}
+		],
+		"Actors": [
+			{
+				"ActorID": 1,
+				"FirstName": "Penelope",
+				"LastName": "Guiness",
+				"LastUpdate": "2013-05-26T14:47:57.62Z"
+			},
+			{
+				"ActorID": 20,
+				"FirstName": "Lucille",
+				"LastName": "Tracy",
+				"LastUpdate": "2013-05-26T14:47:57.62Z"
+			},
+			{
+				"ActorID": 36,
+				"FirstName": "Burt",
+				"LastName": "Dukakis",
+				"LastUpdate": "2013-05-26T14:47:57.62Z"
+			},
+			{
+				"ActorID": 118,
+				"FirstName": "Cuba",
+				"LastName": "Allen",
+				"LastUpdate": "2013-05-26T14:47:57.62Z"
+			},
+			{
+				"ActorID": 187,
+				"FirstName": "Renee",
+				"LastName": "Ball",
+				"LastUpdate": "2013-05-26T14:47:57.62Z"
+			},
+			{
+				"ActorID": 198,
+				"FirstName": "Mary",
+				"LastName": "Keitel",
+				"LastUpdate": "2013-05-26T14:47:57.62Z"
+			}
+		]
+	},
+  // ...
 ]
 ```
 </details>

@@ -162,11 +162,32 @@ func DefaultTableSQLBuilderColumn(columnMetaData metadata.Column) TableSQLBuilde
 
 // getSqlBuilderColumnType returns type of jet sql builder column
 func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
-	if columnMetaData.DataType.Kind != metadata.BaseType &&
-		columnMetaData.DataType.Kind != metadata.RangeType {
+	switch columnMetaData.DataType.Kind {
+	case metadata.EnumType, metadata.UserDefinedType:
+		if columnMetaData.DataType.IsArray() {
+			return "StringArray"
+		}
 		return "String"
 	}
 
+	columnType := sqlToColumnType(columnMetaData)
+
+	if columnMetaData.DataType.IsArray() {
+		if columnMetaData.DataType.Dimensions > 1 {
+			fmt.Println("- [SQL Builder] Unsupported sql array with multiple dimensions column '" +
+				columnMetaData.Name + " " + columnMetaData.DataType.Name + "', using StringColumn instead.")
+			return "String"
+		}
+
+		columnType = columnType + "Array"
+	}
+
+	return columnType
+}
+
+// sqlToColumnType maps the type of a SQL column type to a go jet sql builder column. The second return value returns
+// whether the given type is supported.
+func sqlToColumnType(columnMetaData metadata.Column) string {
 	switch strings.ToLower(columnMetaData.DataType.Name) {
 	case "boolean", "bool":
 		return "Bool"

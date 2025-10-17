@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/lib/pq"
 	"testing"
 	"time"
 
@@ -1852,7 +1853,7 @@ ORDER BY film.film_id ASC;
 		Rating:          &gRating,
 		RentalDuration:  3,
 		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-		SpecialFeatures: ptr.Of("{Trailers,\"Deleted Scenes\"}"),
+		SpecialFeatures: &pq.StringArray{"Trailers", "Deleted Scenes"},
 		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
 	})
 }
@@ -2709,7 +2710,32 @@ FOR UPDATE OF "myFilm";
 
 func TestSelectQuickStart(t *testing.T) {
 
-	var expectedSQL = `
+	stmt := SELECT(
+		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate, // list of all actor columns (equivalent to Actor.AllColumns)
+		Film.AllColumns, // list of all film columns (equivalent to Film.FilmID, Film.Title, ...)
+		Language.AllColumns.Except(Language.LastUpdate),
+		Category.AllColumns,
+	).FROM(
+		Actor.
+			INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)). // INNER JOIN Actor with FilmActor on condition Actor.ActorID = FilmActor.ActorID
+			INNER_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)).         // then with Film, Language, FilmCategory and Category.
+			INNER_JOIN(Language, Language.LanguageID.EQ(Film.LanguageID)).
+			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
+	).WHERE(
+		AND(
+			Language.Name.EQ(Char(20)("English")), // String column Language.Name and Category.Name can be compared only with string expression
+			Category.Name.NOT_EQ(Text("Action")),
+			Film.Length.GT(Int32(180)), // Film.Length is integer column and can be compared only with integer expression
+			Film.Rating.NOT_EQ(enum.MpaaRating.R),
+			String("Trailers").EQ(ANY(Film.SpecialFeatures)), // arrays element type safety is also enforced
+		),
+	).ORDER_BY(
+		Actor.ActorID.ASC(),
+		Film.FilmID.ASC(),
+	)
+
+	testutils.AssertStatementSql(t, stmt, `
 SELECT actor.actor_id AS "actor.actor_id",
      actor.first_name AS "actor.first_name",
      actor.last_name AS "actor.last_name",
@@ -2729,7 +2755,6 @@ SELECT actor.actor_id AS "actor.actor_id",
      film.fulltext AS "film.fulltext",
      language.language_id AS "language.language_id",
      language.name AS "language.name",
-     language.last_update AS "language.last_update",
      category.category_id AS "category.category_id",
      category.name AS "category.name",
      category.last_update AS "category.last_update"
@@ -2739,33 +2764,54 @@ FROM dvds.actor
      INNER JOIN dvds.language ON (language.language_id = film.language_id)
      INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
      INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE (((language.name = 'English'::char(20)) AND (category.name != 'Action'::text)) AND (film.length > 180::integer)) AND (film.rating != 'R')
+WHERE (
+          (language.name = $1::char(20))
+              AND (category.name != $2::text)
+              AND (film.length > $3::integer)
+              AND (film.rating != 'R')
+              AND ($4::text = ANY(film.special_features))
+      )
 ORDER BY actor.actor_id ASC, film.film_id ASC;
-`
+`, "English", "Action", int32(180), "Trailers")
 
-	stmt := SELECT(
-		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate, // list of all actor columns (equivalent to Actor.AllColumns)
-		Film.AllColumns, // list of all film columns (equivalent to Film.FilmID, Film.Title, ...)
-		Language.AllColumns,
-		Category.AllColumns,
-	).FROM(
-		Actor.
-			INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)). // INNER JOIN Actor with FilmActor on condition Actor.ActorID = FilmActor.ActorID
-			INNER_JOIN(Film, Film.FilmID.EQ(FilmActor.FilmID)).         // then with Film, Language, FilmCategory and Category.
-			INNER_JOIN(Language, Language.LanguageID.EQ(Film.LanguageID)).
-			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
-			INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
-	).WHERE(
-		Language.Name.EQ(Char(20)("English")). // note that every column has type.
-							AND(Category.Name.NOT_EQ(Text("Action"))). // String column Language.Name and Category.Name can be compared only with string expression
-							AND(Film.Length.GT(Int32(180))).           // Film.Length is integer column and can be compared only with integer expression
-							AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),
-	).ORDER_BY(
-		Actor.ActorID.ASC(),
-		Film.FilmID.ASC(),
-	)
-
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "English", "Action", int32(180))
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update",
+     film.film_id AS "film.film_id",
+     film.title AS "film.title",
+     film.description AS "film.description",
+     film.release_year AS "film.release_year",
+     film.language_id AS "film.language_id",
+     film.rental_duration AS "film.rental_duration",
+     film.rental_rate AS "film.rental_rate",
+     film.length AS "film.length",
+     film.replacement_cost AS "film.replacement_cost",
+     film.rating AS "film.rating",
+     film.last_update AS "film.last_update",
+     film.special_features AS "film.special_features",
+     film.fulltext AS "film.fulltext",
+     language.language_id AS "language.language_id",
+     language.name AS "language.name",
+     category.category_id AS "category.category_id",
+     category.name AS "category.name",
+     category.last_update AS "category.last_update"
+FROM dvds.actor
+     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
+     INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
+     INNER JOIN dvds.language ON (language.language_id = film.language_id)
+     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+     INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
+WHERE (
+          (language.name = 'English'::char(20))
+              AND (category.name != 'Action'::text)
+              AND (film.length > 180::integer)
+              AND (film.rating != 'R')
+              AND ('Trailers'::text = ANY(film.special_features))
+      )
+ORDER BY actor.actor_id ASC, film.film_id ASC;
+`)
 
 	var dest []struct {
 		model.Actor
@@ -2783,7 +2829,6 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 	require.NoError(t, err)
 
 	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-dest.json")
-
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
 
 	var dest2 []struct {
@@ -2806,7 +2851,11 @@ func TestSelectQuickStartWithSubQueries(t *testing.T) {
 
 	filmLogerThan180 := Film.
 		SELECT(Film.AllColumns).
-		WHERE(Film.Length.GT(Int(180)).AND(Film.Rating.NOT_EQ(enum.MpaaRating.R))).
+		WHERE(
+			Film.Length.GT(Int(180)).
+				AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)).
+				AND(String("Trailers").EQ(ANY(Film.SpecialFeatures))),
+		).
 		AsTable("films")
 
 	filmID := Film.FilmID.From(filmLogerThan180)
@@ -2822,7 +2871,7 @@ func TestSelectQuickStartWithSubQueries(t *testing.T) {
 	stmt := SELECT(
 		Actor.AllColumns,
 		filmLogerThan180.AllColumns(),
-		Language.AllColumns,
+		Language.AllColumns.Except(Language.LastUpdate),
 		categoriesNotAction.AllColumns(),
 	).FROM(
 		Actor.
@@ -3389,7 +3438,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 20.99,
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"SpecialFeatures": [
+			"Deleted Scenes",
+			"Behind the Scenes"
+		],
 		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 		"Actors": [
 			{
@@ -3413,7 +3465,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 9.99,
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"SpecialFeatures": [
+			"Trailers",
+			"Deleted Scenes"
+		],
 		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
 		"Actors": [
 			{
@@ -3461,7 +3516,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 20.99,
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{\"Deleted Scenes\",\"Behind the Scenes\"}",
+		"SpecialFeatures": [
+			"Deleted Scenes",
+			"Behind the Scenes"
+		],
 		"Fulltext": "'academi':1 'battl':15 'canadian':20 'dinosaur':2 'drama':5 'epic':4 'feminist':8 'mad':11 'must':14 'rocki':21 'scientist':12 'teacher':17",
 		"Actors": null
 	},
@@ -3477,7 +3535,10 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReplacementCost": 9.99,
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
-		"SpecialFeatures": "{Trailers,\"Deleted Scenes\"}",
+		"SpecialFeatures": [
+			"Trailers",
+			"Deleted Scenes"
+		],
 		"Fulltext": "'anaconda':1 'australia':18 'confess':2 'dentist':8,11 'display':5 'fight':14 'girl':16 'lacklustur':4 'must':13",
 		"Actors": null
 	}

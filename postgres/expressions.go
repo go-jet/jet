@@ -2,7 +2,7 @@ package postgres
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
-// Expression is common interface for all expressions.
+// Expression is a common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression = jet.Expression
 
@@ -176,3 +176,13 @@ var NewEnumValue = jet.NewEnumValue
 
 // BinaryOperator can be used to use custom or unsupported operators that take two operands.
 var BinaryOperator = jet.BinaryOperator
+
+// Array is a common template interface for all array expressions.
+type Array[T Expression] jet.Array[T]
+
+// ArrayExp serves as a wrapper for an arbitrary expression, treating it as an array expression of type T.
+// This enables the Go compiler to interpret any expression as an array expression of type T.
+// Note: This does not modify the generated SQL builder output by adding an SQL CAST operation.
+func ArrayExp[T Expression](exp Expression) Array[T] {
+	return jet.ArrayExp[T](exp)
+}

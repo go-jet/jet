@@ -16,13 +16,14 @@ var Category = newCategoryTable("dvds", "category", "")
 type categoryTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	CategoryID postgres.ColumnInteger
 	Name       postgres.ColumnString
 	LastUpdate postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type CategoryTable struct {
@@ -65,6 +66,7 @@ func newCategoryTableImpl(schemaName, tableName, alias string) categoryTable {
 		LastUpdateColumn = postgres.TimestampColumn("last_update")
 		allColumns       = postgres.ColumnList{CategoryIDColumn, NameColumn, LastUpdateColumn}
 		mutableColumns   = postgres.ColumnList{NameColumn, LastUpdateColumn}
+		defaultColumns   = postgres.ColumnList{CategoryIDColumn, LastUpdateColumn}
 	)
 
 	return categoryTable{
@@ -77,5 +79,6 @@ func newCategoryTableImpl(schemaName, tableName, alias string) categoryTable {
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }

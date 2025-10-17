@@ -8,6 +8,7 @@
 package model
 
 import (
+	"github.com/lib/pq"
 	"time"
 )
 
@@ -23,6 +24,6 @@ type Film struct {
 	ReplacementCost float64
 	Rating          *MpaaRating
 	LastUpdate      time.Time
-	SpecialFeatures *string
+	SpecialFeatures *pq.StringArray
 	Fulltext        string
 }
