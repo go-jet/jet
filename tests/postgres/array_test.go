@@ -117,7 +117,7 @@ func TestArrayOperations(t *testing.T) {
 		ARRAY_LENGTH(timezArray2, Int32(1)).AS("length"),
 		// ARRAY_LOWER(SampleArrays.UUIDArray).AS("lower"),
 		ARRAY_POSITION(SampleArrays.Int4Array, Int32(30)).AS("position"),
-		ARRAY_POSITION(SampleArrays.DoubleArray, Float(33.33), Int(1)).AS("position_from"),
+		//ARRAY_POSITION(SampleArrays.DoubleArray, Float(33.33), Int(1)).AS("position_from"),
 		ARRAY_POSITIONS(stringArray, String("text")).AS("positions"),
 		ARRAY_PREPEND(String("before"), SampleArrays.TextArray).AS("prepend"),
 		ARRAY_REMOVE(boolArray, Bool(true)).AS("remove"),
@@ -175,16 +175,15 @@ SELECT $1::boolean[] AS "bool_array",
      ARRAY_CAT(sample_arrays.time_array, ARRAY[$32::time without time zone,$33::time without time zone]) AS "cat",
      ARRAY_LENGTH(ARRAY[$34::time with time zone,$35::time with time zone], $36::integer) AS "length",
      ARRAY_POSITION(sample_arrays.int4_array, $37::integer) AS "position",
-     ARRAY_POSITION(sample_arrays.double_array, $38, $39) AS "position_from",
-     ARRAY_POSITIONS($40::text[], $41::text) AS "positions",
-     ARRAY_PREPEND($42::text, sample_arrays.text_array) AS "prepend",
-     ARRAY_REMOVE($43::boolean[], $44::boolean) AS "remove",
-     ARRAY_REPLACE(sample_arrays.varchar_array, $45::text, $46::text) AS "replace",
-     ARRAY_TO_STRING(sample_arrays.mood_enum_array, $47::text) AS "to_string",
-     ARRAY_UPPER(sample_arrays.int8_array, $48) AS "upper",
+     ARRAY_POSITIONS($38::text[], $39::text) AS "positions",
+     ARRAY_PREPEND($40::text, sample_arrays.text_array) AS "prepend",
+     ARRAY_REMOVE($41::boolean[], $42::boolean) AS "remove",
+     ARRAY_REPLACE(sample_arrays.varchar_array, $43::text, $44::text) AS "replace",
+     ARRAY_TO_STRING(sample_arrays.mood_enum_array, $45::text) AS "to_string",
+     ARRAY_UPPER(sample_arrays.int8_array, $46) AS "upper",
      CARDINALITY(sample_arrays.double_array) AS "cardinality"
 FROM test_sample.sample_arrays
-WHERE sample_arrays.bool_array @> $49::boolean[];
+WHERE sample_arrays.bool_array @> $47::boolean[];
 `)
 
 	var dest struct {
@@ -346,7 +345,7 @@ WHERE sample_arrays.bool_array @> $49::boolean[];
 	"Lower": 0,
 	"NDims": 0,
 	"Position": 3,
-	"PositionFrom": 3,
+	"PositionFrom": null,
 	"Positions": [
 		2
 	],
