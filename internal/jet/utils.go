@@ -167,11 +167,11 @@ func ToSerializerValue(value interface{}) Serializer {
 func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 	structValue := reflect.Indirect(reflect.ValueOf(data))
 
-	row := []Serializer{}
+	row := make([]Serializer, len(columns))
 
 	must.ValueBeOfTypeKind(structValue, reflect.Struct, "jet: data has to be a struct")
 
-	for _, column := range columns {
+	for i, column := range columns {
 		columnName := column.Name()
 		structFieldName := dbidentifier.ToGoIdentifier(columnName)
 
@@ -189,7 +189,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 			field = reflect.Indirect(structField).Interface()
 		}
 
-		row = append(row, literal(field))
+		row[i] = literal(field)
 	}
 
 	return row
@@ -200,12 +200,13 @@ func UnwindRowsFromModels(columns []Column, data interface{}) [][]Serializer {
 	sliceValue := reflect.Indirect(reflect.ValueOf(data))
 	must.ValueBeOfTypeKind(sliceValue, reflect.Slice, "jet: data has to be a slice.")
 
-	rows := [][]Serializer{}
+	sliceLen := sliceValue.Len()
+	rows := make([][]Serializer, sliceLen)
 
-	for i := 0; i < sliceValue.Len(); i++ {
+	for i := 0; i < sliceLen; i++ {
 		structValue := sliceValue.Index(i)
 
-		rows = append(rows, UnwindRowFromModel(columns, structValue.Interface()))
+		rows[i] = UnwindRowFromModel(columns, structValue.Interface())
 	}
 
 	return rows
@@ -213,37 +214,20 @@ func UnwindRowsFromModels(columns []Column, data interface{}) [][]Serializer {
 
 // UnwindRowFromValues func
 func UnwindRowFromValues(value interface{}, values []interface{}) []Serializer {
-	row := []Serializer{}
-
 	allValues := append([]interface{}{value}, values...)
 
-	for _, val := range allValues {
-		row = append(row, ToSerializerValue(val))
+	row := make([]Serializer, len(allValues))
+
+	for i, val := range allValues {
+		row[i] = ToSerializerValue(val)
 	}
 
 	return row
 }
 
-// UnwindColumns func
-func UnwindColumns(column1 Column, columns ...Column) []Column {
-	columnList := []Column{}
-
-	if val, ok := column1.(ColumnList); ok {
-		for _, col := range val {
-			columnList = append(columnList, col)
-		}
-		columnList = append(columnList, columns...)
-	} else {
-		columnList = append(columnList, column1)
-		columnList = append(columnList, columns...)
-	}
-
-	return columnList
-}
-
 // UnwidColumnList func
 func UnwidColumnList(columns []Column) []Column {
-	ret := []Column{}
+	var ret []Column
 
 	for _, col := range columns {
 		if columnList, ok := col.(ColumnList); ok {

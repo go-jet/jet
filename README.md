@@ -214,7 +214,7 @@ stmt := SELECT(
 > Package(dot) import is used, so the statements look as close as possible to the native SQL.  
 
 Note that every column has a type. String columns, such as `Language.Name` and `Category.Name` can only be compared with
-string columns and expressions. Similarity, `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns
+string columns and expressions. Similarly, `Actor.ActorID`, `FilmActor.ActorID`, `Film.Length` are integer columns
 and can only be compared with integer columns and expressions. The same type safety rules apply to arrays and their
 element types.
 
