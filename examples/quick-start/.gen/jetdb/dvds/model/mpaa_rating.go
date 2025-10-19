@@ -19,6 +19,14 @@ const (
 	MpaaRating_Nc17 MpaaRating = "NC-17"
 )
 
+var MpaaRatingAllValues = []MpaaRating{
+	MpaaRating_G,
+	MpaaRating_Pg,
+	MpaaRating_Pg13,
+	MpaaRating_R,
+	MpaaRating_Nc17,
+}
+
 func (e *MpaaRating) Scan(value interface{}) error {
 	var enumValue string
 	switch val := value.(type) {

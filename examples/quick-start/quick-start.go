@@ -35,9 +35,9 @@ func main() {
 
 	// Write query
 	stmt := SELECT(
-		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,
+		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate, // or just Actor.AllColumns
 		Film.AllColumns,
-		Language.AllColumns.Except(Language.LastUpdate),
+		Language.AllColumns.Except(Language.LastUpdate), // all language columns except last_update
 		Category.AllColumns,
 	).FROM(
 		Actor.
@@ -47,10 +47,13 @@ func main() {
 			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)).
 			INNER_JOIN(Category, Category.CategoryID.EQ(FilmCategory.CategoryID)),
 	).WHERE(
-		Language.Name.EQ(Char(20)("English")).
-			AND(Category.Name.NOT_EQ(Text("Action"))).
-			AND(Film.Length.GT(Int(180))).
-			AND(Film.Rating.NOT_EQ(enum.MpaaRating.R)),
+		AND(
+			Language.Name.EQ(Char(20)("English")), // string columns Language.Name and Category.Name can be compared only with string expression
+			Category.Name.NOT_EQ(Text("Action")),
+			Film.Length.GT(Int32(180)), // Film.Length is integer column and can be compared only with integer expression
+			Film.Rating.NOT_EQ(enum.MpaaRating.R),
+			String("Trailers").EQ(ANY(Film.SpecialFeatures)), // type safety is also enforced on array element types
+		),
 	).ORDER_BY(
 		Actor.ActorID.ASC(),
 		Film.FilmID.ASC(),

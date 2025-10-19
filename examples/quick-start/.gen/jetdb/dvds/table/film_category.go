@@ -16,13 +16,14 @@ var FilmCategory = newFilmCategoryTable("dvds", "film_category", "")
 type filmCategoryTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	FilmID     postgres.ColumnInteger
 	CategoryID postgres.ColumnInteger
 	LastUpdate postgres.ColumnTimestamp
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type FilmCategoryTable struct {
@@ -65,6 +66,7 @@ func newFilmCategoryTableImpl(schemaName, tableName, alias string) filmCategoryT
 		LastUpdateColumn = postgres.TimestampColumn("last_update")
 		allColumns       = postgres.ColumnList{FilmIDColumn, CategoryIDColumn, LastUpdateColumn}
 		mutableColumns   = postgres.ColumnList{LastUpdateColumn}
+		defaultColumns   = postgres.ColumnList{LastUpdateColumn}
 	)
 
 	return filmCategoryTable{
@@ -77,5 +79,6 @@ func newFilmCategoryTableImpl(schemaName, tableName, alias string) filmCategoryT
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }

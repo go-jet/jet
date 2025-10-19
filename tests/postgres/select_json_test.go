@@ -358,8 +358,7 @@ func TestSelectQuickStartJSON(t *testing.T) {
 		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate,
 
 		SELECT_JSON_ARR(
-			Film.AllColumns.Except(Film.SpecialFeatures),
-			CAST(Film.SpecialFeatures).AS_TEXT().AS("SpecialFeatures"),
+			Film.AllColumns,
 
 			SELECT_JSON_OBJ(
 				Language.AllColumns,
@@ -385,7 +384,11 @@ func TestSelectQuickStartJSON(t *testing.T) {
 			Film.
 				INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(Film.FilmID)),
 		).WHERE(
-			FilmActor.ActorID.EQ(Actor.ActorID).AND(Film.Length.GT(Int32(180))),
+			AND(
+				FilmActor.ActorID.EQ(Actor.ActorID),
+				Film.Length.GT(Int32(180)),
+				String("Trailers").EQ(ANY(Film.SpecialFeatures)),
+			),
 		).ORDER_BY(
 			Film.FilmID.ASC(),
 		).AS("Films"),
@@ -416,8 +419,8 @@ FROM (
                                    film.replacement_cost AS "replacementCost",
                                    film.rating AS "rating",
                                    to_char(film.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
+                                   film.special_features AS "specialFeatures",
                                    film.fulltext AS "fulltext",
-                                   film.special_features::text AS "SpecialFeatures",
                                    (
                                         SELECT row_to_json(language_records) AS "language_json"
                                         FROM (
@@ -441,7 +444,11 @@ FROM (
                                    ) AS "Categories"
                               FROM dvds.film
                                    INNER JOIN dvds.film_actor ON (film_actor.film_id = film.film_id)
-                              WHERE (film_actor.actor_id = actor.actor_id) AND (film.length > 180::integer)
+                              WHERE (
+                                        (film_actor.actor_id = actor.actor_id)
+                                            AND (film.length > 180::integer)
+                                            AND ('Trailers'::text = ANY(film.special_features))
+                                    )
                               ORDER BY film.film_id ASC
                          ) AS films_records
                ) AS "Films"
@@ -469,7 +476,7 @@ FROM (
 		return // char[n] columns whitespaces are trimmed when returned as json in cockroachdb
 	}
 
-	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-json-dest2.json")
+	//testutils.SaveJSONFile(dest, "./testdata/results/postgres/quick-start-json-dest.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-json-dest.json")
 }
 

@@ -172,7 +172,9 @@ ORDER BY film_values.title;
 			"ReplacementCost": 15.99,
 			"Rating": "R",
 			"LastUpdate": "2013-05-26T14:50:58.951Z",
-			"SpecialFeatures": "{Trailers}",
+			"SpecialFeatures": [
+				"Trailers"
+			],
 			"Fulltext": "'airport':1 'ancient':18 'confront':14 'epic':4 'girl':11 'india':19 'monkey':16 'moos':8 'must':13 'pollock':2 'tale':5"
 		},
 		"Title": "Airport Pollock",
@@ -194,7 +196,9 @@ ORDER BY film_values.title;
 			"ReplacementCost": 12.99,
 			"Rating": "PG-13",
 			"LastUpdate": "2013-05-26T14:50:58.951Z",
-			"SpecialFeatures": "{Trailers}",
+			"SpecialFeatures": [
+				"Trailers"
+			],
 			"Fulltext": "'boat':20 'bright':1 'conquer':14 'encount':2 'fate':4 'feminist':11 'jet':19 'lumberjack':8 'must':13 'student':16 'yarn':5"
 		},
 		"Title": "Bright Encounters",

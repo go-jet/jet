@@ -4,16 +4,15 @@ import (
 	"bytes"
 	"database/sql/driver"
 	"fmt"
+	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
+	"github.com/go-jet/jet/v2/internal/utils/is"
+	"github.com/google/uuid"
 	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
-
-	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
-	"github.com/go-jet/jet/v2/internal/utils/is"
-	"github.com/google/uuid"
 )
 
 // SQLBuilder generates output SQL
@@ -93,11 +92,11 @@ func (s *SQLBuilder) write(data []byte) {
 }
 
 func isPreSeparator(b byte) bool {
-	return b == ' ' || b == '.' || b == ',' || b == '(' || b == '\n' || b == ':'
+	return b == ' ' || b == '.' || b == ',' || b == '(' || b == '\n' || b == ':' || b == '['
 }
 
 func isPostSeparator(b byte) bool {
-	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':'
+	return b == ' ' || b == '.' || b == ',' || b == ')' || b == '\n' || b == ':' || b == '[' || b == ']'
 }
 
 // WriteAlias is used to add alias to output SQL

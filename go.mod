@@ -2,8 +2,6 @@ module github.com/go-jet/jet/v2
 
 go 1.23.0
 
-toolchain go1.23.8
-
 // used by jet generator
 require (
 	github.com/go-sql-driver/mysql v1.9.3

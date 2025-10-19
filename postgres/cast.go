@@ -96,7 +96,7 @@ func (b *cast) AS_DATE() DateExpression {
 	return DateExp(b.AS("date"))
 }
 
-// AS_DECIMAL casts expression AS date type
+// AS_DECIMAL casts expression AS decimal type
 func (b *cast) AS_DECIMAL() FloatExpression {
 	return FloatExp(b.AS("decimal"))
 }
@@ -129,4 +129,69 @@ func (b *cast) AS_TIMESTAMPZ() TimestampzExpression {
 // AS_INTERVAL casts expression AS interval type
 func (b *cast) AS_INTERVAL() IntervalExpression {
 	return IntervalExp(b.AS("interval"))
+}
+
+// AS_UUID casts expression AS uuid type
+func (b *cast) AS_UUID() StringExpression {
+	return StringExp(b.AS("uuid"))
+}
+
+// AS_BOOL_ARRAY casts expression as boolean array type
+func (b *cast) AS_BOOL_ARRAY() Array[BoolExpression] {
+	return ArrayExp[BoolExpression](b.AS("boolean[]"))
+}
+
+// AS_INTEGER_ARRAY casts expression as integer array type
+func (b *cast) AS_INTEGER_ARRAY() Array[IntegerExpression] {
+	return ArrayExp[IntegerExpression](b.AS("integer[]"))
+}
+
+// AS_BIGINT_ARRAY casts expression as bigint array type
+func (b *cast) AS_BIGINT_ARRAY() Array[IntegerExpression] {
+	return ArrayExp[IntegerExpression](b.AS("bigint[]"))
+}
+
+// AS_REAL_ARRAY casts expression as real array
+func (b *cast) AS_REAL_ARRAY() Array[FloatExpression] {
+	return ArrayExp[FloatExpression](b.AS("real[]"))
+}
+
+// AS_DOUBLE_ARRAY casts expression as double precision array
+func (b *cast) AS_DOUBLE_ARRAY() Array[FloatExpression] {
+	return ArrayExp[FloatExpression](b.AS("double precision[]"))
+}
+
+// AS_TEXT_ARRAY casts expression as text array
+func (b *cast) AS_TEXT_ARRAY() Array[StringExpression] {
+	return ArrayExp[StringExpression](b.AS("text[]"))
+}
+
+// AS_BYTEA_ARRAY casts expression as bytea array
+func (b *cast) AS_BYTEA_ARRAY() Array[ByteaExpression] {
+	return ArrayExp[ByteaExpression](b.AS("bytea[]"))
+}
+
+// AS_DATE_ARRAY casts expression as date array
+func (b *cast) AS_DATE_ARRAY() Array[DateExpression] {
+	return ArrayExp[DateExpression](b.AS("date[]"))
+}
+
+// AS_TIMESTAMP_ARRAY casts expression as timestamp array
+func (b *cast) AS_TIMESTAMP_ARRAY() Array[TimestampExpression] {
+	return ArrayExp[TimestampExpression](b.AS("timestamp without time zone[]"))
+}
+
+// AS_TIMESTAMPZ_ARRAY casts expression as timestamp with time zone array
+func (b *cast) AS_TIMESTAMPZ_ARRAY() Array[TimestampzExpression] {
+	return ArrayExp[TimestampzExpression](b.AS("timestamp with time zone[]"))
+}
+
+// AS_TIME_ARRAY casts expression as time array
+func (b *cast) AS_TIME_ARRAY() Array[TimeExpression] {
+	return ArrayExp[TimeExpression](b.AS("time without time zone[]"))
+}
+
+// AS_TIMEZ_ARRAY casts expression as time with timezone array
+func (b *cast) AS_TIMEZ_ARRAY() Array[TimezExpression] {
+	return ArrayExp[TimezExpression](b.AS("time with time zone[]"))
 }

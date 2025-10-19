@@ -16,7 +16,7 @@ var CustomerList = newCustomerListTable("dvds", "customer_list", "")
 type customerListTable struct {
 	postgres.Table
 
-	//Columns
+	// Columns
 	ID      postgres.ColumnInteger
 	Name    postgres.ColumnString
 	Address postgres.ColumnString
@@ -29,6 +29,7 @@ type customerListTable struct {
 
 	AllColumns     postgres.ColumnList
 	MutableColumns postgres.ColumnList
+	DefaultColumns postgres.ColumnList
 }
 
 type CustomerListTable struct {
@@ -77,6 +78,7 @@ func newCustomerListTableImpl(schemaName, tableName, alias string) customerListT
 		SidColumn      = postgres.IntegerColumn("sid")
 		allColumns     = postgres.ColumnList{IDColumn, NameColumn, AddressColumn, ZipCodeColumn, PhoneColumn, CityColumn, CountryColumn, NotesColumn, SidColumn}
 		mutableColumns = postgres.ColumnList{IDColumn, NameColumn, AddressColumn, ZipCodeColumn, PhoneColumn, CityColumn, CountryColumn, NotesColumn, SidColumn}
+		defaultColumns = postgres.ColumnList{}
 	)
 
 	return customerListTable{
@@ -95,5 +97,6 @@ func newCustomerListTableImpl(schemaName, tableName, alias string) customerListT
 
 		AllColumns:     allColumns,
 		MutableColumns: mutableColumns,
+		DefaultColumns: defaultColumns,
 	}
 }

@@ -8,7 +8,7 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: cimg/go:1.22.8
+      - image: cimg/go:1.23.8
 
       # Please keep the version in sync with test/docker-compose.yaml
       - image: cimg/postgres:14.1
