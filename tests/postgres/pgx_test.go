@@ -121,7 +121,7 @@ func TestUUIDTypePGX(t *testing.T) {
 SELECT all_types.uuid AS "all_types.uuid",
      all_types.uuid_ptr AS "all_types.uuid_ptr"
 FROM test_sample.all_types
-WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11';
+WHERE all_types.uuid = 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'::uuid;
 `, "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11")
 
 	result := model2.AllTypes{}
@@ -246,8 +246,7 @@ func TestSelectQuickStartJsonPgxV5(t *testing.T) {
 		table3.Actor.LastUpdate,
 
 		SELECT_JSON_ARR(
-			table3.Film.AllColumns.Except(table3.Film.SpecialFeatures),
-			CAST(table3.Film.SpecialFeatures).AS_TEXT().AS("SpecialFeatures"),
+			table3.Film.AllColumns,
 
 			SELECT_JSON_OBJ(
 				table3.Language.AllColumns,
@@ -273,7 +272,11 @@ func TestSelectQuickStartJsonPgxV5(t *testing.T) {
 			table3.Film.
 				INNER_JOIN(table3.FilmActor, table3.FilmActor.FilmID.EQ(table3.Film.FilmID)),
 		).WHERE(
-			table3.FilmActor.ActorID.EQ(table3.Actor.ActorID).AND(table3.Film.Length.GT(Int32(180))),
+			AND(
+				table3.FilmActor.ActorID.EQ(table3.Actor.ActorID),
+				table3.Film.Length.GT(Int32(180)),
+				String("Trailers").EQ(ANY(table3.Film.SpecialFeatures)),
+			),
 		).ORDER_BY(
 			table3.Film.FilmID.ASC(),
 		).AS("Films"),
