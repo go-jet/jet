@@ -3,6 +3,7 @@ package mysql
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
@@ -437,6 +438,7 @@ var reservedWords = []string{
 	"RESIGNAL",
 	"RESTRICT",
 	"RETURN",
+	"RETURNING",
 	"REVOKE",
 	"RIGHT",
 	"RLIKE",

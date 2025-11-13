@@ -19,6 +19,8 @@ type InsertStatement interface {
 	ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
+
+	RETURNING(projections ...Projection) InsertStatement
 }
 
 func newInsertStatement(table Table, columns []jet.Column) InsertStatement {
@@ -27,6 +29,7 @@ func newInsertStatement(table Table, columns []jet.Column) InsertStatement {
 		&newInsert.Insert,
 		&newInsert.ValuesQuery,
 		&newInsert.OnDuplicateKey,
+		&newInsert.Returning,
 	)
 
 	newInsert.Insert.Table = table
@@ -40,6 +43,7 @@ type insertStatementImpl struct {
 
 	Insert         jet.ClauseInsert
 	ValuesQuery    jet.ClauseValuesQuery
+	Returning      jet.ClauseReturning
 	OnDuplicateKey onDuplicateKeyUpdateClause
 }
 
@@ -61,6 +65,11 @@ func (is *insertStatementImpl) MODEL(data interface{}) InsertStatement {
 func (is *insertStatementImpl) MODELS(data interface{}) InsertStatement {
 	is.ValuesQuery.Rows = append(is.ValuesQuery.Rows, jet.UnwindRowsFromModels(is.Insert.GetColumns(), data)...)
 	return is
+}
+
+func (i *insertStatementImpl) RETURNING(projections ...jet.Projection) InsertStatement {
+	i.Returning.ProjectionList = projections
+	return i
 }
 
 func (is *insertStatementImpl) AS_NEW() InsertStatement {
