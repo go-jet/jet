@@ -16,7 +16,7 @@ type InsertStatement interface {
 	MODELS(data interface{}) InsertStatement
 	AS_NEW() InsertStatement
 
-	ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement
+	ON_DUPLICATE_KEY_UPDATE(assignments ...ColumnAssignment) InsertStatement
 
 	QUERY(selectStatement SelectStatement) InsertStatement
 
@@ -77,8 +77,8 @@ func (is *insertStatementImpl) AS_NEW() InsertStatement {
 	return is
 }
 
-func (is *insertStatementImpl) ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement {
-	is.OnDuplicateKey = assigments
+func (is *insertStatementImpl) ON_DUPLICATE_KEY_UPDATE(assignments ...ColumnAssignment) InsertStatement {
+	is.OnDuplicateKey = assignments
 	return is
 }
 
@@ -87,7 +87,7 @@ func (is *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStat
 	return is
 }
 
-type onDuplicateKeyUpdateClause []jet.ColumnAssigment
+type onDuplicateKeyUpdateClause []jet.ColumnAssignment
 
 // Serialize for SetClause
 func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
@@ -98,13 +98,13 @@ func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, o
 	out.WriteString("ON DUPLICATE KEY UPDATE")
 	out.IncreaseIdent(24)
 
-	for i, assigment := range s {
+	for i, assignment := range s {
 		if i > 0 {
 			out.WriteString(",")
 			out.NewLine()
 		}
 
-		jet.Serialize(assigment, statementType, out, jet.FallTrough(options)...)
+		jet.Serialize(assignment, statementType, out, jet.FallTrough(options)...)
 	}
 
 	out.DecreaseIdent(24)
