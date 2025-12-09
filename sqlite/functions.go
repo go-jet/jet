@@ -2,8 +2,9 @@ package sqlite
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/jet"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // This functions can be used, instead of its method counterparts, to have a better indentation of a complex condition
@@ -211,6 +212,12 @@ func LENGTH(str jet.StringOrBlobExpression) jet.IntegerExpression {
 
 // OCTET_LENGTH returns number of bytes in string expression
 var OCTET_LENGTH = jet.OCTET_LENGTH
+
+// TO_BASE64 converts the string argument to base-64 encoded form and returns the
+// result as a character string with the connection character set and collation.
+func TO_BASE64(data jet.StringOrBlobExpression) StringExpression {
+	return StringExp(Func("TO_BASE64", data))
+}
 
 // LPAD fills up the string to length length by prepending the characters
 // fill (a space by default). If the string is already longer than length

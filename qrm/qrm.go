@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/must"
 	"reflect"
+
+	"github.com/go-jet/jet/v2/internal/utils/must"
 )
 
 // Config holds the configuration settings for QRM scanning behavior.
@@ -429,7 +430,12 @@ func mapRowToStruct(
 				value, ok := scannedValue.Interface().([]byte)
 
 				if !ok {
-					return updated, qrmAssignError(scannedValue, field, fmt.Errorf("value not convertable to []byte"))
+					valueStr, ok := scannedValue.Interface().(string)
+					if !ok {
+						return updated, qrmAssignError(scannedValue, field, fmt.Errorf("value not convertable to []byte"))
+					}
+
+					value = []byte(valueStr)
 				}
 
 				fieldInterface := fieldValue.Addr().Interface()
