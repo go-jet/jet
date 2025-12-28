@@ -29,11 +29,13 @@ func SELECT_JSON_OBJ(projections ...Projection) SelectJsonStatement {
 
 type selectJsonStatement struct {
 	*selectStatementImpl
+	statementType jet.StatementType
 }
 
 func newSelectStatementJson(projections []Projection, statementType jet.StatementType) SelectJsonStatement {
 	newSelect := &selectJsonStatement{
 		selectStatementImpl: newSelectStatement(statementType, nil, nil),
+		statementType:       statementType,
 	}
 
 	newSelect.Select.ProjectionList = ProjectionList{constructJsonFunc(projections, statementType).AS("json")}
@@ -75,4 +77,12 @@ func (s *selectJsonStatement) LIMIT(limit int64) SelectJsonStatement {
 func (s *selectJsonStatement) OFFSET(offset int64) SelectJsonStatement {
 	s.Offset.Count = Int(offset)
 	return s
+}
+
+func (s *selectJsonStatement) AS(alias string) Projection {
+	if s.statementType == jet.SelectJsonObjStatementType {
+		return Func("JSON", s.selectStatementImpl).AS(alias)
+	}
+
+	return s.selectStatementImpl.AS(alias)
 }
