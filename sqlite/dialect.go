@@ -39,11 +39,11 @@ func newDialect() jet.Dialect {
 			case TimestampExpression:
 				return CustomExpression(Token("strftime('%Y-%m-%dT%H:%M:%fZ', "), e, Token(")"))
 			case TimeExpression:
-				return CustomExpression(Token("strftime('%Y-%m-%dT%H:%M:%fZ', "), e, Token(")"))
+				return CustomExpression(Token("strftime('0000-01-01T%H:%M:%fZ', "), e, Token(")"))
 			case DateExpression:
 				return CustomExpression(Token("strftime('%Y-%m-%dT00:00:00Z', "), e, Token(")"))
 			case BoolExpression:
-				return CustomExpression(Token("CASE"), e, Token("WHEN 1 THEN json('true') ELSE json('false') END"))
+				return CustomExpression(Token("CASE"), e, Token("WHEN 1 THEN json('true') WHEN 0 THEN json('false') ELSE json('null') END"))
 			}
 
 			return expr
