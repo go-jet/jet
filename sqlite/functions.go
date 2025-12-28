@@ -216,7 +216,7 @@ var OCTET_LENGTH = jet.OCTET_LENGTH
 // TO_BASE64 converts the string argument to base-64 encoded form and returns the
 // result as a character string with the connection character set and collation.
 func TO_BASE64(data jet.StringOrBlobExpression) StringExpression {
-	return StringExp(Func("TO_BASE64", data))
+	return StringExp(Func("BASE64_ENCODE", data))
 }
 
 // LPAD fills up the string to length length by prepending the characters
