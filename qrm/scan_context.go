@@ -20,6 +20,8 @@ type ScanContext struct {
 	typesVisited    typeStack // to prevent circular dependency scan
 	columnAlias     []string
 	columnIndexRead []bool
+
+	unmappedFields []string
 }
 
 // NewScanContext creates new ScanContext from rows
@@ -77,6 +79,33 @@ func (s *ScanContext) EnsureEveryColumnRead() {
 	if len(neverUsedColumns) > 0 {
 		panic("jet: columns never used: " + strings.Join(neverUsedColumns, ", "))
 	}
+}
+
+func (s *ScanContext) recordUnmappedField(structType reflect.Type, parentField *reflect.StructField, field reflect.StructField) {
+	// skip private/unsettable fields (those are ignored by mapRowToStruct anyway)
+	if field.PkgPath != "" {
+		return
+	}
+
+	// NOTE: For unnamed/anonymous structs, Name() is empty, so String() is used for readability/uniqueness.
+	typeName := structType.String()
+	if structType.Name() != "" {
+		typeName = structType.Name()
+	}
+
+	fieldIdent := fmt.Sprintf("%s.%s", typeName, field.Name)
+	if parentField != nil {
+		fieldIdent = fmt.Sprintf("%s.%s.%s", typeName, parentField.Name, field.Name)
+	}
+
+	s.unmappedFields = append(s.unmappedFields, fmt.Sprintf("'%s'", fieldIdent))
+}
+
+func (s *ScanContext) EnsureEveryFieldMapped() {
+	if len(s.unmappedFields) == 0 {
+		return
+	}
+	panic("jet: fields never mapped: " + strings.Join(s.unmappedFields, ", "))
 }
 
 func createScanSlice(columnCount int) []interface{} {
@@ -142,6 +171,10 @@ func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 			fieldMap.Type = complexType
 		} else {
 			fieldMap.Type = simpleType
+		}
+
+		if GlobalConfig.StrictFieldMapping && fieldMap.rowIndex == -1 && fieldMap.Type != complexType {
+			s.recordUnmappedField(structType, parentField, field)
 		}
 
 		newTypeInfo.fieldMappings = append(newTypeInfo.fieldMappings, fieldMap)

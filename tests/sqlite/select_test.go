@@ -2,12 +2,13 @@ package sqlite
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/internal/utils/ptr"
-	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/chinook/model"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/chinook/table"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/chinook/model"
+	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/chinook/table"
 
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -41,6 +42,151 @@ WHERE actor.actor_id = ?;
 	testutils.AssertDeepEqual(t, actor, actor2)
 	requireLogged(t, query)
 	requireQueryLogged(t, query, 1)
+}
+
+func TestStrictFieldMapping(t *testing.T) {
+	queryAll := SELECT(
+		Actor.AllColumns,
+	).FROM(
+		Actor,
+	).WHERE(
+		Actor.ActorID.EQ(Int(2)),
+	).LIMIT(1)
+
+	testutils.AssertStatementSql(t, queryAll, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name",
+     actor.last_name AS "actor.last_name",
+     actor.last_update AS "actor.last_update"
+FROM actor
+WHERE actor.actor_id = ?
+LIMIT ?;
+`, int64(2), int64(1))
+
+	queryPartial := SELECT(
+		Actor.ActorID,
+		Actor.FirstName,
+	).FROM(
+		Actor,
+	).WHERE(
+		Actor.ActorID.EQ(Int(2)),
+	).LIMIT(1)
+
+	testutils.AssertStatementSql(t, queryPartial, `
+SELECT actor.actor_id AS "actor.actor_id",
+     actor.first_name AS "actor.first_name"
+FROM actor
+WHERE actor.actor_id = ?
+LIMIT ?;
+`, int64(2), int64(1))
+
+	// Destination model mapped via explicit field aliases ("actor.*").
+	type AliasedActor struct {
+		ActorID    int32  `alias:"actor.actor_id"`
+		FirstName  string `alias:"actor.first_name"`
+		LastName   string `alias:"actor.last_name"`
+		LastUpdate string `alias:"actor.last_update"`
+	}
+
+	t.Run("all columns scan succeeds for generated model", func(t *testing.T) {
+		allowUnmappedFields(func() {
+			var dest model.Actor
+			require.NoError(t, queryAll.Query(db, &dest))
+		})
+		requireStrictFieldMapping(func() {
+			var dest model.Actor
+			require.NoError(t, queryAll.Query(db, &dest))
+		})
+	})
+
+	t.Run("all columns scan succeeds for aliased destination", func(t *testing.T) {
+		allowUnmappedFields(func() {
+			var dest []AliasedActor
+			require.NoError(t, queryAll.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+		requireStrictFieldMapping(func() {
+			var dest []AliasedActor
+			require.NoError(t, queryAll.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+	})
+
+	t.Run("partial columns panics in strict mode for generated model", func(t *testing.T) {
+		allowUnmappedFields(func() {
+			var dest []model.Actor
+			require.NoError(t, queryPartial.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+		requireStrictFieldMapping(func() {
+			require.PanicsWithValue(t, "jet: fields never mapped: 'Actor.LastName', 'Actor.LastUpdate'", func() {
+				var dest []model.Actor
+				_ = queryPartial.Query(db, &dest)
+			})
+		})
+	})
+
+	t.Run("partial columns panics in strict mode for aliased destination", func(t *testing.T) {
+		allowUnmappedFields(func() {
+			var dest []AliasedActor
+			require.NoError(t, queryPartial.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+		requireStrictFieldMapping(func() {
+			require.PanicsWithValue(t, "jet: fields never mapped: 'AliasedActor.LastName', 'AliasedActor.LastUpdate'", func() {
+				var dest []AliasedActor
+				_ = queryPartial.Query(db, &dest)
+			})
+		})
+	})
+
+	t.Run("unexported fields are ignored by strict field mapping", func(t *testing.T) {
+		type Dest struct {
+			actorID int32 `alias:"actor.missing_column"`
+		}
+
+		requireStrictFieldMapping(func() {
+			var dest []Dest
+			require.NoError(t, queryAll.Query(db, &dest))
+		})
+	})
+
+	t.Run("nested unmapped field uses parent field name in error", func(t *testing.T) {
+		type Inner struct {
+			Missing string `alias:"actor.missing_column"`
+		}
+		type Outer struct {
+			Child Inner
+		}
+
+		requireStrictFieldMapping(func() {
+			require.PanicsWithValue(t, "jet: fields never mapped: 'Inner.Child.Missing'", func() {
+				var dest []Outer
+				_ = queryAll.Query(db, &dest)
+			})
+		})
+	})
+
+	t.Run("Rows.Scan triggers strict field mapping check", func(t *testing.T) {
+		type ActorLiteMissing struct {
+			ActorID   int32  `alias:"actor.actor_id"`
+			FirstName string `alias:"actor.first_name"`
+			LastName  string `alias:"actor.last_name"`
+		}
+
+		requireStrictFieldMapping(func() {
+			rows, err := queryPartial.Rows(context.Background(), db)
+			require.NoError(t, err)
+			require.True(t, rows.Next())
+
+			require.PanicsWithValue(t, "jet: fields never mapped: 'ActorLiteMissing.LastName'", func() {
+				var dest ActorLiteMissing
+				_ = rows.Scan(&dest)
+			})
+
+			_ = rows.Close()
+		})
+	})
 }
 
 var actor2 = model.Actor{
