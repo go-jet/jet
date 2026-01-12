@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -564,40 +565,40 @@ func TestSelectJson_QueryWithoutUnMarshaling(t *testing.T) {
 		).AS("raw_json"),
 	)
 
-	// for some reason i cant get the formatting to work
+	fmt.Println(stmt.DebugSql())
 
-	// 	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
-	// SELECT (
-	//     SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
-	//         'iD', customer_list.''ID'',
-	//         'name', customer_list.name,
-	//         'address', customer_list.address,
-	//         'zipCode', customer_list.zip_code,
-	//         'phone', customer_list.phone,
-	//         'city', customer_list.city,
-	//         'country', customer_list.country,
-	//         'notes', customer_list.notes,
-	//         'sID', customer_list.''SID'',
-	//         'Rentals', (
-	//             SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
-	//                     'rentalID', rental.rental_id,
-	//                     'rentalDate', strftime('%Y-%m-%dT%H:%M:%fZ', rental.rental_date),
-	//                     'inventoryID', rental.inventory_id,
-	//                     'customerID', rental.customer_id,
-	//                     'returnDate', strftime('%Y-%m-%dT%H:%M:%fZ', rental.return_date),
-	//                     'staffID', rental.staff_id,
-	//                     'lastUpdate', strftime('%Y-%m-%dT%H:%M:%fZ', rental.last_update)
-	//                 )) AS "json"
-	//             FROM rental
-	//             WHERE customer_list.''ID'' = rental.customer_id
-	//             ORDER BY rental.customer_id
-	//         )
-	//     )) AS "json"
-	//     FROM customer_list
-	//     WHERE customer_list.''ID'' <= 2
-	//     ORDER BY customer_list.''ID''
-	// ) AS "raw_json";
-	// `, "''", "`"))
+	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT (
+          SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+                    'iD', customer_list.''ID'',
+                    'name', customer_list.name,
+                    'address', customer_list.address,
+                    'zipCode', customer_list.zip_code,
+                    'phone', customer_list.phone,
+                    'city', customer_list.city,
+                    'country', customer_list.country,
+                    'notes', customer_list.notes,
+                    'sID', customer_list.''SID'',
+                    'Rentals', (
+                         SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+                                   'rentalID', rental.rental_id,
+                                   'rentalDate', strftime('%Y-%m-%dT%H:%M:%fZ', rental.rental_date),
+                                   'inventoryID', rental.inventory_id,
+                                   'customerID', rental.customer_id,
+                                   'returnDate', strftime('%Y-%m-%dT%H:%M:%fZ', rental.return_date),
+                                   'staffID', rental.staff_id,
+                                   'lastUpdate', strftime('%Y-%m-%dT%H:%M:%fZ', rental.last_update)
+                              )) AS "json"
+                         FROM rental
+                         WHERE customer_list.''ID'' = rental.customer_id
+                         ORDER BY rental.customer_id
+                    )
+               )) AS "json"
+          FROM customer_list
+          WHERE customer_list.''ID'' <= 2
+          ORDER BY customer_list.''ID''
+     ) AS "raw_json";
+`, "''", "`"))
 
 	var dest struct {
 		RawJson []byte
