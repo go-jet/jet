@@ -3,7 +3,6 @@ package sqlite
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -565,8 +564,6 @@ func TestSelectJson_QueryWithoutUnMarshaling(t *testing.T) {
 		).AS("raw_json"),
 	)
 
-	fmt.Println(stmt.DebugSql())
-
 	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
 SELECT (
           SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
@@ -610,6 +607,56 @@ SELECT (
 	require.Equal(t, string(dest.RawJson), `[{"iD":1,"name":"MARY SMITH","address":"1913 Hanoi Way","zipCode":"35200","phone":" ","city":"Sasebo","country":"Japan","notes":"active","sID":1,"Rentals":[{"rentalID":76,"rentalDate":"2005-05-25T11:30:37.000Z","inventoryID":3021,"customerID":1,"returnDate":"2005-06-03T12:00:37.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":573,"rentalDate":"2005-05-28T10:35:23.000Z","inventoryID":4020,"customerID":1,"returnDate":"2005-06-03T06:32:23.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":1185,"rentalDate":"2005-06-15T00:54:12.000Z","inventoryID":2785,"customerID":1,"returnDate":"2005-06-23T02:42:12.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":1422,"rentalDate":"2005-06-15T18:02:53.000Z","inventoryID":1021,"customerID":1,"returnDate":"2005-06-19T15:54:53.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":1476,"rentalDate":"2005-06-15T21:08:46.000Z","inventoryID":1407,"customerID":1,"returnDate":"2005-06-25T02:26:46.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":1725,"rentalDate":"2005-06-16T15:18:57.000Z","inventoryID":726,"customerID":1,"returnDate":"2005-06-17T21:05:57.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":2308,"rentalDate":"2005-06-18T08:41:48.000Z","inventoryID":197,"customerID":1,"returnDate":"2005-06-22T03:36:48.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":2363,"rentalDate":"2005-06-18T13:33:59.000Z","inventoryID":3497,"customerID":1,"returnDate":"2005-06-19T17:40:59.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":3284,"rentalDate":"2005-06-21T06:24:45.000Z","inventoryID":4566,"customerID":1,"returnDate":"2005-06-28T03:28:45.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":4526,"rentalDate":"2005-07-08T03:17:05.000Z","inventoryID":1443,"customerID":1,"returnDate":"2005-07-14T01:19:05.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":4611,"rentalDate":"2005-07-08T07:33:56.000Z","inventoryID":3486,"customerID":1,"returnDate":"2005-07-12T13:25:56.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":5244,"rentalDate":"2005-07-09T13:24:07.000Z","inventoryID":3726,"customerID":1,"returnDate":"2005-07-14T14:01:07.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":5326,"rentalDate":"2005-07-09T16:38:01.000Z","inventoryID":797,"customerID":1,"returnDate":"2005-07-13T18:02:01.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":6163,"rentalDate":"2005-07-11T10:13:46.000Z","inventoryID":1330,"customerID":1,"returnDate":"2005-07-19T13:15:46.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":7273,"rentalDate":"2005-07-27T11:31:22.000Z","inventoryID":2465,"customerID":1,"returnDate":"2005-07-31T06:50:22.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":7841,"rentalDate":"2005-07-28T09:04:45.000Z","inventoryID":1092,"customerID":1,"returnDate":"2005-07-30T12:37:45.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8033,"rentalDate":"2005-07-28T16:18:23.000Z","inventoryID":4268,"customerID":1,"returnDate":"2005-07-30T17:56:23.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8074,"rentalDate":"2005-07-28T17:33:39.000Z","inventoryID":1558,"customerID":1,"returnDate":"2005-07-29T20:17:39.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8116,"rentalDate":"2005-07-28T19:20:07.000Z","inventoryID":4497,"customerID":1,"returnDate":"2005-07-29T22:54:07.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8326,"rentalDate":"2005-07-29T03:58:49.000Z","inventoryID":108,"customerID":1,"returnDate":"2005-08-01T05:16:49.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":9571,"rentalDate":"2005-07-31T02:42:18.000Z","inventoryID":2219,"customerID":1,"returnDate":"2005-08-02T23:26:18.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":10437,"rentalDate":"2005-08-01T08:51:04.000Z","inventoryID":14,"customerID":1,"returnDate":"2005-08-10T12:12:04.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11299,"rentalDate":"2005-08-02T15:36:52.000Z","inventoryID":3232,"customerID":1,"returnDate":"2005-08-10T16:40:52.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11367,"rentalDate":"2005-08-02T18:01:38.000Z","inventoryID":1440,"customerID":1,"returnDate":"2005-08-04T13:19:38.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11824,"rentalDate":"2005-08-17T12:37:54.000Z","inventoryID":2639,"customerID":1,"returnDate":"2005-08-19T10:11:54.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":12250,"rentalDate":"2005-08-18T03:57:29.000Z","inventoryID":921,"customerID":1,"returnDate":"2005-08-22T23:05:29.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":13068,"rentalDate":"2005-08-19T09:55:16.000Z","inventoryID":3019,"customerID":1,"returnDate":"2005-08-20T14:44:16.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":13176,"rentalDate":"2005-08-19T13:56:54.000Z","inventoryID":2269,"customerID":1,"returnDate":"2005-08-23T08:50:54.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":14762,"rentalDate":"2005-08-21T23:33:57.000Z","inventoryID":4249,"customerID":1,"returnDate":"2005-08-23T01:30:57.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:50.000Z"},{"rentalID":14825,"rentalDate":"2005-08-22T01:27:57.000Z","inventoryID":1449,"customerID":1,"returnDate":"2005-08-27T07:01:57.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:50.000Z"},{"rentalID":15298,"rentalDate":"2005-08-22T19:41:37.000Z","inventoryID":1446,"customerID":1,"returnDate":"2005-08-28T22:49:37.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:50.000Z"},{"rentalID":15315,"rentalDate":"2005-08-22T20:03:46.000Z","inventoryID":312,"customerID":1,"returnDate":"2005-08-30T01:51:46.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:50.000Z"}]},{"iD":2,"name":"PATRICIA JOHNSON","address":"1121 Loja Avenue","zipCode":"17886","phone":" ","city":"San Bernardino","country":"United States","notes":"active","sID":1,"Rentals":[{"rentalID":320,"rentalDate":"2005-05-27T00:09:24.000Z","inventoryID":1090,"customerID":2,"returnDate":"2005-05-28T04:30:24.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":2128,"rentalDate":"2005-06-17T20:54:58.000Z","inventoryID":352,"customerID":2,"returnDate":"2005-06-24T00:41:58.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":5636,"rentalDate":"2005-07-10T06:31:24.000Z","inventoryID":4116,"customerID":2,"returnDate":"2005-07-13T02:36:24.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":5755,"rentalDate":"2005-07-10T12:38:56.000Z","inventoryID":2760,"customerID":2,"returnDate":"2005-07-19T17:02:56.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":7346,"rentalDate":"2005-07-27T14:30:42.000Z","inventoryID":741,"customerID":2,"returnDate":"2005-08-02T16:48:42.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":7376,"rentalDate":"2005-07-27T15:23:02.000Z","inventoryID":488,"customerID":2,"returnDate":"2005-08-04T10:35:02.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":7459,"rentalDate":"2005-07-27T18:40:20.000Z","inventoryID":2053,"customerID":2,"returnDate":"2005-08-02T21:07:20.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8230,"rentalDate":"2005-07-29T00:12:59.000Z","inventoryID":1937,"customerID":2,"returnDate":"2005-08-06T19:52:59.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8598,"rentalDate":"2005-07-29T12:56:59.000Z","inventoryID":626,"customerID":2,"returnDate":"2005-08-01T08:39:59.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":8705,"rentalDate":"2005-07-29T17:14:29.000Z","inventoryID":4038,"customerID":2,"returnDate":"2005-08-02T16:01:29.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":9031,"rentalDate":"2005-07-30T06:06:10.000Z","inventoryID":2377,"customerID":2,"returnDate":"2005-08-04T10:45:10.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":9236,"rentalDate":"2005-07-30T13:47:43.000Z","inventoryID":4030,"customerID":2,"returnDate":"2005-08-08T18:52:43.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":9248,"rentalDate":"2005-07-30T14:14:11.000Z","inventoryID":1382,"customerID":2,"returnDate":"2005-08-05T11:19:11.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":9296,"rentalDate":"2005-07-30T16:21:13.000Z","inventoryID":4088,"customerID":2,"returnDate":"2005-08-08T11:57:13.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":9465,"rentalDate":"2005-07-30T22:39:53.000Z","inventoryID":3084,"customerID":2,"returnDate":"2005-08-06T16:43:53.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":10136,"rentalDate":"2005-07-31T21:58:56.000Z","inventoryID":3142,"customerID":2,"returnDate":"2005-08-03T19:44:56.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":10466,"rentalDate":"2005-08-01T09:45:26.000Z","inventoryID":138,"customerID":2,"returnDate":"2005-08-06T06:28:26.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":10918,"rentalDate":"2005-08-02T02:10:56.000Z","inventoryID":3418,"customerID":2,"returnDate":"2005-08-02T21:23:56.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11087,"rentalDate":"2005-08-02T07:41:41.000Z","inventoryID":654,"customerID":2,"returnDate":"2005-08-10T10:37:41.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11177,"rentalDate":"2005-08-02T10:43:48.000Z","inventoryID":1149,"customerID":2,"returnDate":"2005-08-10T10:55:48.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11256,"rentalDate":"2005-08-02T13:44:53.000Z","inventoryID":2060,"customerID":2,"returnDate":"2005-08-04T16:39:53.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":11614,"rentalDate":"2005-08-17T03:52:18.000Z","inventoryID":805,"customerID":2,"returnDate":"2005-08-20T07:04:18.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":12963,"rentalDate":"2005-08-19T06:26:04.000Z","inventoryID":1521,"customerID":2,"returnDate":"2005-08-23T11:37:04.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:49.000Z"},{"rentalID":14475,"rentalDate":"2005-08-21T13:24:32.000Z","inventoryID":3164,"customerID":2,"returnDate":"2005-08-27T08:59:32.000Z","staffID":2,"lastUpdate":"2019-04-11T18:11:50.000Z"},{"rentalID":14743,"rentalDate":"2005-08-21T22:41:56.000Z","inventoryID":4570,"customerID":2,"returnDate":"2005-08-29T00:18:56.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:50.000Z"},{"rentalID":15145,"rentalDate":"2005-08-22T13:53:04.000Z","inventoryID":2179,"customerID":2,"returnDate":"2005-08-31T15:51:04.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:50.000Z"},{"rentalID":15907,"rentalDate":"2005-08-23T17:39:35.000Z","inventoryID":2898,"customerID":2,"returnDate":"2005-08-25T23:23:35.000Z","staffID":1,"lastUpdate":"2019-04-11T18:11:50.000Z"}]}]`)
 
 }
+
+func TestSelectJson_InvalidDestination(t *testing.T) {
+	t.Run("json obj", func(t *testing.T) {
+		stmt := SELECT_JSON_OBJ(Actor.AllColumns).
+			FROM(Actor)
+
+		testutils.AssertQueryPanicErr(t, stmt, db, &[]model.Actor{}, "jet: SELECT_JSON_OBJ destination has to be a pointer to struct or pointer to map[string]any")
+		testutils.AssertQueryPanicErr(t, stmt, db, model.Actor{}, "jet: SELECT_JSON_OBJ destination has to be a pointer to struct or pointer to map[string]any")
+		testutils.AssertQueryPanicErr(t, stmt, nil, &model.Actor{}, "jet: db is nil")
+		testutils.AssertQueryPanicErr(t, stmt, db, nil, "jet: destination is nil")
+	})
+
+	t.Run("json arr", func(t *testing.T) {
+		stmt := SELECT_JSON_ARR(Actor.AllColumns).
+			FROM(Actor)
+
+		testutils.AssertQueryPanicErr(t, stmt, db, &model.Actor{}, "jet: SELECT_JSON_ARR destination has to be a pointer to slice of struct or pointer to []map[string]any")
+		testutils.AssertQueryPanicErr(t, stmt, db, []model.Actor{}, "jet: SELECT_JSON_ARR destination has to be a pointer to slice of struct or pointer to []map[string]any")
+		testutils.AssertQueryPanicErr(t, stmt, nil, &[]model.Actor{}, "jet: db is nil")
+		testutils.AssertQueryPanicErr(t, stmt, db, nil, "jet: destination is nil")
+	})
+}
+
+// func TestSelectJson_ProjectionNotAliased(t *testing.T) {
+// 	t.Run("statement not aliased", func(t *testing.T) {
+// 		testutils.AssertPanicErr(t, func() {
+// 			stmt := SELECT_JSON_ARR(
+// 				Customer.AllColumns,
+
+// 				SELECT_JSON_ARR(Rental.AllColumns).
+// 					FROM(Rental).
+// 					WHERE(Rental.CustomerID.EQ(Customer.CustomerID)),
+// 			).FROM(Customer)
+
+// 			stmt.DebugSql()
+
+// 		}, "jet: SELECT JSON statements need to be aliased when used as a projection.")
+// 	})
+
+// 	t.Run("expression not aliased", func(t *testing.T) {
+// 		testutils.AssertPanicErr(t, func() {
+// 			stmt := SELECT_JSON_ARR(
+// 				Int(2).ADD(Customer.CustomerID),
+// 			).FROM(Customer)
+
+// 			stmt.DebugSql()
+
+// 		}, "jet: expression need to be aliased when used as SELECT JSON projection.")
+// 	})
+// }
 
 func TestSelectJson_InvalidJson(t *testing.T) {
 	stmt := SELECT(
