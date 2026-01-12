@@ -142,8 +142,8 @@ var allTypesJSON = `
 		"TextPtr": "text-ptr",
 		"Blob": "YmxvYjE=",
 		"BlobPtr": "YmxvYi1wdHI=",
-		"JSON": "{\"a\": 3, \"b\": 1}",
-		"JSONPtr": "{\"a\": 3, \"b\": 1}"
+		"JSON": "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+		"JSONPtr": "{\"key1\": \"value1\", \"key2\": \"value2\"}"
 	},
 	{
 		"Boolean": false,
@@ -184,7 +184,7 @@ var allTypesJSON = `
 		"TextPtr": null,
 		"Blob": "YmxvYjI=",
 		"BlobPtr": null,
-		"JSON": "{\"a\": 3, \"b\": 1}",
+		"JSON": "{\"key1\": \"value1\", \"key2\": \"value2\"}",
 		"JSONPtr": null
 	}
 ]
