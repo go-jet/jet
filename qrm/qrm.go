@@ -22,7 +22,12 @@ type Config struct {
 	// StrictFieldMapping, when true, causes the scanning function to panic if it encounters any
 	// destination struct fields that do not have matching columns in the SQL query result.
 	// This check applies only to fields that are mapped from a single column (simple/scanner/json_column).
-	// Complex fields (struct/slice) are excluded because they are populated recursively and can be optional.
+	// Complex fields (struct/slice) are excluded because they are not mapped from a single column.
+	//
+	// Optional fields:
+	// If a destination field (including struct/slice fields) is not always selected by a query,
+	// it can be marked as optional using `qrm:"optional"`. When StrictFieldMapping is enabled,
+	// unmapped fields under an optional field will not trigger a panic.
 	// Does not apply to statements build with SELECT_JSON_OBJ or SELECT_JSON_ARR
 	StrictFieldMapping bool
 

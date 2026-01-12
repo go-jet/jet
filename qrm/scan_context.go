@@ -83,19 +83,19 @@ func (s *ScanContext) EnsureEveryColumnRead() {
 
 func (s *ScanContext) recordUnmappedField(structType reflect.Type, parentField *reflect.StructField, field reflect.StructField) {
 	// skip private/unsettable fields (those are ignored by mapRowToStruct anyway)
-	if field.PkgPath != "" {
+	if !field.IsExported() {
 		return
 	}
 
 	// NOTE: For unnamed/anonymous structs, Name() is empty, so String() is used for readability/uniqueness.
-	typeName := structType.String()
-	if structType.Name() != "" {
-		typeName = structType.Name()
+	typeName := structType.Name()
+	if typeName == "" {
+		typeName = structType.String()
 	}
 
 	fieldIdent := fmt.Sprintf("%s.%s", typeName, field.Name)
 	if parentField != nil {
-		fieldIdent = fmt.Sprintf("%s.%s.%s", typeName, parentField.Name, field.Name)
+		fieldIdent = fmt.Sprintf("%s %s.%s", parentField.Name, typeName, field.Name)
 	}
 
 	s.unmappedFields = append(s.unmappedFields, fmt.Sprintf("'%s'", fieldIdent))
@@ -106,6 +106,38 @@ func (s *ScanContext) EnsureEveryFieldMapped() {
 		return
 	}
 	panic("jet: fields never mapped: " + strings.Join(s.unmappedFields, ", "))
+}
+
+func isOptionalQrmField(field *reflect.StructField) bool {
+	if field == nil {
+		return false
+	}
+	tag := field.Tag.Get("qrm")
+	if tag == "" {
+		return false
+	}
+	for _, part := range strings.Split(tag, ",") {
+		if strings.TrimSpace(part) == "optional" {
+			return true
+		}
+	}
+	return false
+}
+
+func shouldRecordUnmappedField(parentField *reflect.StructField, field reflect.StructField, fieldMap fieldMapping) bool {
+	if !GlobalConfig.StrictFieldMapping {
+		return false
+	}
+	if fieldMap.Type == complexType {
+		return false
+	}
+	if fieldMap.rowIndex != -1 {
+		return false
+	}
+	if isOptionalQrmField(parentField) || isOptionalQrmField(&field) {
+		return false
+	}
+	return true
 }
 
 func createScanSlice(columnCount int) []interface{} {
@@ -173,7 +205,7 @@ func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 			fieldMap.Type = simpleType
 		}
 
-		if GlobalConfig.StrictFieldMapping && fieldMap.rowIndex == -1 && fieldMap.Type != complexType {
+		if shouldRecordUnmappedField(parentField, field, fieldMap) {
 			s.recordUnmappedField(structType, parentField, field)
 		}
 

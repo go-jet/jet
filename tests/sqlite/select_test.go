@@ -160,7 +160,7 @@ LIMIT ?;
 		}
 
 		requireStrictFieldMapping(func() {
-			require.PanicsWithValue(t, "jet: fields never mapped: 'Inner.Child.Missing'", func() {
+			require.PanicsWithValue(t, "jet: fields never mapped: 'Child Inner.Missing'", func() {
 				var dest []Outer
 				_ = queryAll.Query(db, &dest)
 			})
@@ -185,6 +185,95 @@ LIMIT ?;
 			})
 
 			_ = rows.Close()
+		})
+	})
+
+	t.Run("missing joined table columns panics for nested struct field", func(t *testing.T) {
+		filmOnly := SELECT(Film.AllColumns).FROM(Film).LIMIT(1)
+
+		type Dest struct {
+			model.Film
+			Actor model.Actor
+		}
+
+		allowUnmappedFields(func() {
+			var dest []Dest
+			require.NoError(t, filmOnly.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+
+		requireStrictFieldMapping(func() {
+			require.PanicsWithValue(t, "jet: fields never mapped: 'Actor Actor.ActorID', 'Actor Actor.FirstName', 'Actor Actor.LastName', 'Actor Actor.LastUpdate'", func() {
+				var dest []Dest
+				_ = filmOnly.Query(db, &dest)
+			})
+		})
+	})
+
+	t.Run("missing joined table columns do not panic when nested struct field is optional", func(t *testing.T) {
+		filmOnly := SELECT(Film.AllColumns).FROM(Film).LIMIT(1)
+
+		type Dest struct {
+			model.Film
+			Actor model.Actor `qrm:"optional"`
+		}
+
+		requireStrictFieldMapping(func() {
+			var dest []Dest
+			require.NoError(t, filmOnly.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+	})
+
+	t.Run("missing joined table columns panics for nested slice field", func(t *testing.T) {
+		filmOnly := SELECT(Film.AllColumns).FROM(Film).LIMIT(1)
+
+		type Dest struct {
+			model.Film
+			Actor []model.Actor
+		}
+
+		allowUnmappedFields(func() {
+			var dest []Dest
+			require.NoError(t, filmOnly.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+
+		requireStrictFieldMapping(func() {
+			require.PanicsWithValue(t, "jet: fields never mapped: 'Actor Actor.ActorID', 'Actor Actor.FirstName', 'Actor Actor.LastName', 'Actor Actor.LastUpdate'", func() {
+				var dest []Dest
+				_ = filmOnly.Query(db, &dest)
+			})
+		})
+	})
+
+	t.Run("missing joined table columns do not panic when nested slice field is optional", func(t *testing.T) {
+		filmOnly := SELECT(Film.AllColumns).FROM(Film).LIMIT(1)
+
+		type Dest struct {
+			model.Film
+			Actor []model.Actor `qrm:"optional"`
+		}
+
+		requireStrictFieldMapping(func() {
+			var dest []Dest
+			require.NoError(t, filmOnly.Query(db, &dest))
+			require.Len(t, dest, 1)
+		})
+	})
+
+	t.Run("optional tag skips strict field mapping for missing simple field", func(t *testing.T) {
+		query := SELECT(Actor.ActorID).FROM(Actor).WHERE(Actor.ActorID.EQ(Int(2))).LIMIT(1)
+
+		type DestOptional struct {
+			ActorID         int32  `alias:"actor.actor_id"`
+			OptionalMissing string `alias:"actor.missing_column" qrm:"optional"`
+		}
+
+		requireStrictFieldMapping(func() {
+			var dest []DestOptional
+			require.NoError(t, query.Query(db, &dest))
+			require.Len(t, dest, 1)
 		})
 	})
 }
