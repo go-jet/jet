@@ -20,6 +20,8 @@ type ScanContext struct {
 	typesVisited    typeStack // to prevent circular dependency scan
 	columnAlias     []string
 	columnIndexRead []bool
+
+	unmappedFields []string
 }
 
 // NewScanContext creates new ScanContext from rows
@@ -77,6 +79,65 @@ func (s *ScanContext) EnsureEveryColumnRead() {
 	if len(neverUsedColumns) > 0 {
 		panic("jet: columns never used: " + strings.Join(neverUsedColumns, ", "))
 	}
+}
+
+func (s *ScanContext) recordUnmappedField(structType reflect.Type, parentField *reflect.StructField, field reflect.StructField) {
+	// skip private/unsettable fields (those are ignored by mapRowToStruct anyway)
+	if !field.IsExported() {
+		return
+	}
+
+	// NOTE: For unnamed/anonymous structs, Name() is empty, so String() is used for readability/uniqueness.
+	typeName := structType.Name()
+	if typeName == "" {
+		typeName = structType.String()
+	}
+
+	fieldIdent := fmt.Sprintf("%s.%s", typeName, field.Name)
+	if parentField != nil {
+		fieldIdent = fmt.Sprintf("%s %s.%s", parentField.Name, typeName, field.Name)
+	}
+
+	s.unmappedFields = append(s.unmappedFields, fmt.Sprintf("'%s'", fieldIdent))
+}
+
+func (s *ScanContext) EnsureEveryFieldMapped() {
+	if len(s.unmappedFields) == 0 {
+		return
+	}
+	panic("jet: fields never mapped: " + strings.Join(s.unmappedFields, ", "))
+}
+
+func isOptionalQrmField(field *reflect.StructField) bool {
+	if field == nil {
+		return false
+	}
+	tag := field.Tag.Get("qrm")
+	if tag == "" {
+		return false
+	}
+	for _, part := range strings.Split(tag, ",") {
+		if strings.TrimSpace(part) == "optional" {
+			return true
+		}
+	}
+	return false
+}
+
+func shouldRecordUnmappedField(parentField *reflect.StructField, field reflect.StructField, fieldMap fieldMapping) bool {
+	if !GlobalConfig.StrictFieldMapping {
+		return false
+	}
+	if fieldMap.Type == complexType {
+		return false
+	}
+	if fieldMap.rowIndex != -1 {
+		return false
+	}
+	if isOptionalQrmField(parentField) || isOptionalQrmField(&field) {
+		return false
+	}
+	return true
 }
 
 func createScanSlice(columnCount int) []interface{} {
@@ -142,6 +203,10 @@ func (s *ScanContext) getTypeInfo(structType reflect.Type, parentField *reflect.
 			fieldMap.Type = complexType
 		} else {
 			fieldMap.Type = simpleType
+		}
+
+		if shouldRecordUnmappedField(parentField, field, fieldMap) {
+			s.recordUnmappedField(structType, parentField, field)
 		}
 
 		newTypeInfo.fieldMappings = append(newTypeInfo.fieldMappings, fieldMap)
