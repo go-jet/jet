@@ -136,6 +136,20 @@ func SaveJSONFile(v interface{}, testRelativePath string) {
 	throw.OnError(err)
 }
 
+func ReadJSONFile(t require.TestingT, testRelativePath string, dest any) {
+	if _, ok := t.(*testing.B); ok {
+		return // skip assert for benchmarks
+	}
+
+	filePath := getFullPath(testRelativePath)
+	fileJSONData, err := os.ReadFile(filePath) // #nosec G304
+	require.NoError(t, err)
+
+	err = json.Unmarshal(fileJSONData, dest)
+
+	require.NoError(t, err)
+}
+
 // AssertJSONFile check if data json representation is the same as json at testRelativePath
 func AssertJSONFile(t require.TestingT, data interface{}, testRelativePath string) {
 	if _, ok := t.(*testing.B); ok {
