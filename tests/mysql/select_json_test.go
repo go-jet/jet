@@ -2,8 +2,8 @@ package mysql
 
 import (
 	"context"
-	"fmt"
 	"github.com/go-jet/jet/v2/qrm"
+	"slices"
 	"strings"
 	"testing"
 
@@ -127,32 +127,91 @@ WHERE actor.actor_id = ?;
 }
 
 func TestSelectJsonArr(t *testing.T) {
-	stmt := SELECT_JSON_ARR(Actor.AllColumns).
-		FROM(Actor).
-		ORDER_BY(Actor.ActorID)
+	onlyMariaDB(t)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
+	var savedActors []model.Actor
+	testutils.ReadJSONFile(t, "./testdata/results/mysql/all_actors.json", &savedActors)
+
+	t.Run("order by", func(t *testing.T) {
+		stmt := SELECT_JSON_ARR(Actor.AllColumns).
+			FROM(Actor).
+			ORDER_BY(
+				Actor.LastName.DESC(),
+				Actor.FirstName.ASC(),
+				Actor.ActorID.ASC(),
+			)
+
+		testutils.AssertDebugStatementSql(t, stmt, `
 SELECT JSON_ARRAYAGG(JSON_OBJECT(
           'actorID', actor.actor_id,
           'firstName', actor.first_name,
           'lastName', actor.last_name,
           'lastUpdate', DATE_FORMAT(actor.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
-     )) AS "json"
-FROM dvds.actor
-ORDER BY actor.actor_id;
+     )
+     ORDER BY actor.last_name DESC, actor.first_name ASC, actor.actor_id ASC) AS "json"
+FROM dvds.actor;
 `)
 
-	var dest []model.Actor
+		var dest []model.Actor
 
-	err := stmt.Query(db, &dest)
-	require.Nil(t, err)
+		err := stmt.Query(db, &dest)
+		require.Nil(t, err)
 
-	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/all_actors.json")
-	requireLogged(t, stmt)
-	requireQueryLogged(t, stmt, 1)
+		// sort by actor.LastName desc
+		slices.SortFunc(savedActors, func(a, b model.Actor) int {
+			if l := strings.Compare(b.LastName, a.LastName); l != 0 {
+				return l
+			}
+
+			if f := strings.Compare(a.FirstName, b.FirstName); f != 0 {
+				return f
+			}
+
+			return int(a.ActorID) - int(b.ActorID)
+		})
+
+		require.Equal(t, dest, savedActors)
+		requireLogged(t, stmt)
+		requireQueryLogged(t, stmt, 1)
+	})
+
+	t.Run("order by, limit, offset", func(t *testing.T) {
+		stmt := SELECT_JSON_ARR(Actor.AllColumns).
+			FROM(Actor).
+			ORDER_BY(Actor.ActorID.DESC()).
+			LIMIT(5).
+			OFFSET(10)
+
+		testutils.AssertStatementSql(t, stmt, `
+SELECT JSON_ARRAYAGG(JSON_OBJECT(
+          'actorID', actor.actor_id,
+          'firstName', actor.first_name,
+          'lastName', actor.last_name,
+          'lastUpdate', DATE_FORMAT(actor.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
+     )
+     ORDER BY actor.actor_id DESC
+     LIMIT ?
+     OFFSET ?) AS "json"
+FROM dvds.actor;
+`)
+
+		var dest []model.Actor
+
+		err := stmt.Query(db, &dest)
+		require.Nil(t, err)
+
+		slices.SortFunc(savedActors, func(a, b model.Actor) int {
+			return int(b.ActorID) - int(a.ActorID)
+		})
+
+		require.Equal(t, dest, savedActors[10:15])
+	})
+
 }
 
 func TestSelectJsonArr_NestedArr(t *testing.T) {
+	onlyMariaDB(t)
+
 	stmt := SELECT_JSON_ARR(
 		Actor.AllColumns,
 
@@ -198,16 +257,16 @@ SELECT JSON_ARRAYAGG(JSON_OBJECT(
                          'rating', film.rating,
                          'specialFeatures', film.special_features,
                          'lastUpdate', DATE_FORMAT(film.last_update,'%Y-%m-%dT%H:%i:%s.%fZ')
-                    )) AS "json"
+                    )
+                    ORDER BY film.length DESC) AS "json"
                FROM dvds.film_actor
                     INNER JOIN dvds.film ON ((film.film_id = film_actor.film_id) AND (actor.actor_id = film_actor.actor_id))
                WHERE (film.film_id % 17) = 0
-               ORDER BY film.length DESC
           )
-     )) AS "json"
+     )
+     ORDER BY actor.actor_id) AS "json"
 FROM dvds.actor
-WHERE actor.actor_id BETWEEN 1 AND 3
-ORDER BY actor.actor_id;
+WHERE actor.actor_id BETWEEN 1 AND 3;
 `)
 
 	var dest []struct {
@@ -217,8 +276,8 @@ ORDER BY actor.actor_id;
 	}
 
 	err := stmt.QueryContext(ctx, db, &dest)
-	fmt.Println(err)
-	require.Nil(t, err)
+	require.NoError(t, err)
+
 	testutils.AssertJSON(t, dest, `
 [
 	{
@@ -235,21 +294,6 @@ ORDER BY actor.actor_id;
 		"LastUpdate": "2006-02-15T04:34:33Z",
 		"Films": [
 			{
-				"FilmID": 357,
-				"Title": "GILBERT PELICAN",
-				"Description": "A Fateful Tale of a Man And a Feminist who must Conquer a Crocodile in A Manhattan Penthouse",
-				"ReleaseYear": 2006,
-				"LanguageID": 1,
-				"OriginalLanguageID": null,
-				"RentalDuration": 7,
-				"RentalRate": 0.99,
-				"Length": 114,
-				"ReplacementCost": 13.99,
-				"Rating": "G",
-				"SpecialFeatures": "Trailers,Commentaries",
-				"LastUpdate": "2006-02-15T05:03:42Z"
-			},
-			{
 				"FilmID": 561,
 				"Title": "MASK PEACH",
 				"Description": "A Boring Character Study of a Student And a Robot who must Meet a Woman in California",
@@ -262,6 +306,21 @@ ORDER BY actor.actor_id;
 				"ReplacementCost": 26.99,
 				"Rating": "NC-17",
 				"SpecialFeatures": "Commentaries,Deleted Scenes",
+				"LastUpdate": "2006-02-15T05:03:42Z"
+			},
+			{
+				"FilmID": 357,
+				"Title": "GILBERT PELICAN",
+				"Description": "A Fateful Tale of a Man And a Feminist who must Conquer a Crocodile in A Manhattan Penthouse",
+				"ReleaseYear": 2006,
+				"LanguageID": 1,
+				"OriginalLanguageID": null,
+				"RentalDuration": 7,
+				"RentalRate": 0.99,
+				"Length": 114,
+				"ReplacementCost": 13.99,
+				"Rating": "G",
+				"SpecialFeatures": "Trailers,Commentaries",
 				"LastUpdate": "2006-02-15T05:03:42Z"
 			}
 		]

@@ -30,26 +30,46 @@ func SELECT_JSON_OBJ(projections ...Projection) SelectJsonStatement {
 
 type selectJsonStatement struct {
 	*selectStatementImpl
+
+	projections   []Projection
+	statementType jet.StatementType
+
+	// SELECT_JSON_ARR internal clauses
+	arrOrderBy *jet.ClauseOrderBy
+	arrLimit   *jet.ClauseLimit
+	arrOffset  *jet.ClauseOffset
 }
 
 func newSelectStatementJson(projections []Projection, statementType jet.StatementType) SelectJsonStatement {
-	newSelect := &selectJsonStatement{
+	newSelectJson := &selectJsonStatement{
 		selectStatementImpl: newSelectStatement(statementType, nil, nil),
+
+		projections:   projections,
+		statementType: statementType,
+
+		arrOrderBy: &jet.ClauseOrderBy{},
+		arrLimit:   &jet.ClauseLimit{Count: -1},
+		arrOffset:  &jet.ClauseOffset{},
 	}
 
-	newSelect.Select.ProjectionList = ProjectionList{constructJsonFunc(projections, statementType).AS("json")}
+	newSelectJson.constructProjectionList()
 
-	return newSelect
+	return newSelectJson
 }
 
-func constructJsonFunc(projections []Projection, statementType jet.StatementType) Expression {
-	jsonObj := Func("JSON_OBJECT", CustomExpression(jet.JsonObjProjectionList(projections)))
+func (s *selectJsonStatement) constructProjectionList() {
+	jsonProjection := Func("JSON_OBJECT", CustomExpression(jet.JsonObjProjectionList(s.projections)))
 
-	if statementType == jet.SelectJsonArrStatementType {
-		return Func("JSON_ARRAYAGG", jsonObj)
+	if s.statementType == jet.SelectJsonArrStatementType {
+		jsonProjection = Func("JSON_ARRAYAGG", CustomExpression(
+			jsonProjection,
+			s.arrOrderBy,
+			s.arrLimit,
+			s.arrOffset,
+		))
 	}
 
-	return jsonObj
+	s.Select.ProjectionList = ProjectionList{jsonProjection.AS("json")}
 }
 
 func (s *selectJsonStatement) FROM(table ReadableTable) SelectJsonStatement {
@@ -63,17 +83,32 @@ func (s *selectJsonStatement) WHERE(condition BoolExpression) SelectJsonStatemen
 	return s
 }
 
-func (s *selectJsonStatement) ORDER_BY(orderByClauses ...OrderByClause) SelectJsonStatement {
-	s.OrderBy.List = orderByClauses
+func (s *selectJsonStatement) ORDER_BY(orderBy ...OrderByClause) SelectJsonStatement {
+	if s.statementType == jet.SelectJsonArrStatementType {
+		s.arrOrderBy.List = orderBy
+	} else {
+		s.OrderBy.List = orderBy
+	}
+
 	return s
 }
 
 func (s *selectJsonStatement) LIMIT(limit int64) SelectJsonStatement {
-	s.Limit.Count = limit
+	if s.statementType == jet.SelectJsonArrStatementType {
+		s.arrLimit.Count = limit
+	} else {
+		s.Limit.Count = limit
+	}
+
 	return s
 }
 
 func (s *selectJsonStatement) OFFSET(offset int64) SelectJsonStatement {
-	s.Offset.Count = Int(offset)
+	if s.statementType == jet.SelectJsonArrStatementType {
+		s.arrOffset.Count = Int(offset)
+	} else {
+		s.Offset.Count = Int(offset)
+	}
+
 	return s
 }
