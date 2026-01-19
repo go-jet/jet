@@ -229,7 +229,9 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 		return fmt.Errorf("jet: failed to scan a row into destination, %w", err)
 	}
 
-	scanContext.EnsureEveryColumnRead() // can panic
+	if scanContext.rowNum == 1 && GlobalConfig.StrictScan {
+		scanContext.EnsureEveryColumnRead() // can panic
+	}
 
 	return nil
 }
