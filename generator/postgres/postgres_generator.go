@@ -79,6 +79,54 @@ func GenerateDB(db *sql.DB, schema, destDir string, templates ...template.Templa
 	return nil
 }
 
+type GeneratorOption func(opts *generatorOptions)
+
+type generatorOptions struct {
+	DestDir   string
+	SkipClean bool
+}
+
+func WithSkipClean() GeneratorOption {
+	return func(opts *generatorOptions) {
+		opts.SkipClean = true
+	}
+}
+
+func WithDestDir(destDir string) GeneratorOption {
+	return func(opts *generatorOptions) {
+		opts.DestDir = destDir
+	}
+}
+
+func GenerateWithOptions(db *sql.DB, schema string, templates []template.Template, options ...GeneratorOption) error {
+	generatorTemplate := template.Default(postgres.Dialect)
+	if len(templates) > 0 {
+		generatorTemplate = templates[0]
+	}
+
+	schemaMetadata, err := metadata.GetSchema(db, &postgresQuerySet{}, schema)
+	if err != nil {
+		return fmt.Errorf("failed to get '%s' schema metadata: %w", schema, err)
+	}
+
+	genOptions := &generatorOptions{}
+	for _, option := range options {
+		option(genOptions)
+	}
+
+	processOptions := make([]template.ProcessSchemaOption, 0)
+	if genOptions.SkipClean {
+		processOptions = append(processOptions, template.WithSkipClean())
+	}
+
+	err = template.ProcessSchema(genOptions.DestDir, schemaMetadata, generatorTemplate, processOptions...)
+	if err != nil {
+		return fmt.Errorf("failed to generate schema %s: %d", schemaMetadata.Name, err)
+	}
+
+	return nil
+}
+
 func openConnection(dsn string) (*sql.DB, error) {
 	fmt.Println("Connecting to postgres database...")
 
