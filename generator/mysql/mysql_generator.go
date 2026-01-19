@@ -16,8 +16,18 @@ const mysqlMaxConns = 10
 
 // DBConnection contains MySQL connection details
 type DBConnection struct {
-	Host     string
-	Port     int
+	// The server host.
+	// Has no effect if LocalSocket is set.
+	Host string
+
+	// The server port.
+	// Has no effect if LocalSocket is set.
+	Port int
+
+	// The local UNIX socket to connect to.
+	// Overrides Host and Port if set.
+	LocalSocket string
+
 	User     string
 	Password string
 	Params   string
@@ -27,7 +37,17 @@ type DBConnection struct {
 
 // Generate generates jet files at destination dir from database connection details
 func Generate(destDir string, dbConn DBConnection, generatorTemplate ...template.Template) error {
-	connectionString := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s", dbConn.User, dbConn.Password, dbConn.Host, dbConn.Port, dbConn.DBName)
+	var network string
+	var addr string
+	if dbConn.LocalSocket == "" {
+		network = "tcp"
+		addr = fmt.Sprintf("%s:%d", dbConn.Host, dbConn.Port)
+	} else {
+		network = "unix"
+		addr = dbConn.LocalSocket
+	}
+
+	connectionString := fmt.Sprintf("%s:%s@%s(%s)/%s", dbConn.User, dbConn.Password, network, addr, dbConn.DBName)
 	if dbConn.Params != "" {
 		connectionString += "?" + dbConn.Params
 	}
