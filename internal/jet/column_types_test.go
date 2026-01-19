@@ -144,3 +144,36 @@ func TestNewTimestampzColumnColumn(t *testing.T) {
 		`(sub_query."table1.col_timestampz" = $1)`, "0002-02-02 02:02:02 UTC")
 	assertProjectionSerialize(t, timestampzColumn2, `sub_query."table1.col_timestampz" AS "table1.col_timestampz"`)
 }
+
+func TestIntegerColumn_SET(t *testing.T) {
+	assignment := table1ColInt.SET(Int(42))
+	assertClauseSerialize(t, assignment, "col_int = $1", int64(42))
+}
+
+func TestStringColumn_SET(t *testing.T) {
+	strCol := StringColumn("name")
+	assignment := strCol.SET(String("test"))
+	assertClauseSerialize(t, assignment, "name = $1", "test")
+}
+
+func TestBoolColumn_SET(t *testing.T) {
+	assignment := table1ColBool.SET(Bool(true))
+	assertClauseSerialize(t, assignment, "col_bool = $1", true)
+}
+
+func TestFloatColumn_SET(t *testing.T) {
+	assignment := table1ColFloat.SET(Float(3.14))
+	assertClauseSerialize(t, assignment, "col_float = $1", float64(3.14))
+}
+
+func TestIntervalColumn_SET(t *testing.T) {
+	intervalCol1 := IntervalColumn("duration")
+	intervalCol2 := IntervalColumn("other_duration")
+	assignment := intervalCol1.SET(intervalCol2)
+	assertClauseSerialize(t, assignment, "duration = other_duration")
+}
+
+func TestRangeColumn_SET(t *testing.T) {
+	assignment := table1ColRange.SET(Int8Range(Int8(1), Int8(10)))
+	assertClauseSerialize(t, assignment, "col_range = int8range($1, $2)", int8(1), int8(10))
+}

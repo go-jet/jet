@@ -8,11 +8,11 @@ type conflictAction interface {
 }
 
 // SET creates conflict action for ON_CONFLICT clause
-func SET(assigments ...ColumnAssigment) conflictAction {
+func SET(assignments ...ColumnAssignment) conflictAction {
 	conflictAction := updateConflictActionImpl{}
 	conflictAction.doUpdate = jet.KeywordClause{Keyword: "DO UPDATE"}
 	conflictAction.Serializer = jet.NewSerializerClauseImpl(&conflictAction.doUpdate, &conflictAction.set, &conflictAction.where)
-	conflictAction.set = assigments
+	conflictAction.set = assignments
 	return &conflictAction
 }
 

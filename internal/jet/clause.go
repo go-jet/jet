@@ -635,7 +635,7 @@ type SetPair struct {
 }
 
 // SetClauseNew clause
-type SetClauseNew []ColumnAssigment
+type SetClauseNew []ColumnAssignment
 
 // Serialize for SetClauseNew
 func (s SetClauseNew) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
@@ -646,13 +646,13 @@ func (s SetClauseNew) Serialize(statementType StatementType, out *SQLBuilder, op
 	out.WriteString("SET")
 	out.IncreaseIdent(4)
 
-	for i, assigment := range s {
+	for i, assignment := range s {
 		if i > 0 {
 			out.WriteString(",")
 			out.NewLine()
 		}
 
-		assigment.serialize(statementType, out, FallTrough(options)...)
+		assignment.serialize(statementType, out, FallTrough(options)...)
 	}
 
 	out.DecreaseIdent(4)

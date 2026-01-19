@@ -6,7 +6,7 @@ type ColumnBool interface {
 	Column
 
 	From(subQuery SelectTable) ColumnBool
-	SET(boolExp BoolExpression) ColumnAssigment
+	SET(boolExp BoolExpression) ColumnAssignment
 }
 
 type boolColumnImpl struct {
@@ -26,8 +26,8 @@ func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
 	return newBoolColumn
 }
 
-func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: boolExp,
 	}
@@ -50,7 +50,7 @@ type ColumnFloat interface {
 	Column
 
 	From(subQuery SelectTable) ColumnFloat
-	SET(floatExp FloatExpression) ColumnAssigment
+	SET(floatExp FloatExpression) ColumnAssignment
 }
 
 type floatColumnImpl struct {
@@ -70,8 +70,8 @@ func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
 	return newFloatColumn
 }
 
-func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: floatExp,
 	}
@@ -94,7 +94,7 @@ type ColumnInteger interface {
 	Column
 
 	From(subQuery SelectTable) ColumnInteger
-	SET(intExp IntegerExpression) ColumnAssigment
+	SET(intExp IntegerExpression) ColumnAssignment
 }
 
 type integerColumnImpl struct {
@@ -115,8 +115,8 @@ func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
 	return newIntColumn
 }
 
-func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: intExp,
 	}
@@ -138,7 +138,7 @@ type ColumnArray[E Expression] interface {
 	Column
 
 	From(subQuery SelectTable) ColumnArray[E]
-	SET(stringExp Array[E]) ColumnAssigment
+	SET(stringExp Array[E]) ColumnAssignment
 }
 
 type arrayColumnImpl[E Expression] struct {
@@ -159,8 +159,8 @@ func (a arrayColumnImpl[E]) From(subQuery SelectTable) ColumnArray[E] {
 	return newArrayColumn
 }
 
-func (a *arrayColumnImpl[E]) SET(stringExp Array[E]) ColumnAssigment {
-	return columnAssigmentImpl{
+func (a *arrayColumnImpl[E]) SET(stringExp Array[E]) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   a,
 		toAssign: stringExp,
 	}
@@ -184,7 +184,7 @@ type ColumnString interface {
 	Column
 
 	From(subQuery SelectTable) ColumnString
-	SET(stringExp StringExpression) ColumnAssigment
+	SET(stringExp StringExpression) ColumnAssignment
 }
 
 type stringColumnImpl struct {
@@ -205,8 +205,8 @@ func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
 	return newStrColumn
 }
 
-func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: stringExp,
 	}
@@ -229,7 +229,7 @@ type ColumnBlob interface {
 	Column
 
 	From(subQuery SelectTable) ColumnBlob
-	SET(blob BlobExpression) ColumnAssigment
+	SET(blob BlobExpression) ColumnAssignment
 }
 
 type blobColumnImpl struct {
@@ -250,8 +250,8 @@ func (i *blobColumnImpl) From(subQuery SelectTable) ColumnBlob {
 	return newBlobColumn
 }
 
-func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *blobColumnImpl) SET(blobExp BlobExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: blobExp,
 	}
@@ -274,7 +274,7 @@ type ColumnTime interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTime
-	SET(timeExp TimeExpression) ColumnAssigment
+	SET(timeExp TimeExpression) ColumnAssignment
 }
 
 type timeColumnImpl struct {
@@ -294,8 +294,8 @@ func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
 	return newTimeColumn
 }
 
-func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: timeExp,
 	}
@@ -317,7 +317,7 @@ type ColumnTimez interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTimez
-	SET(timeExp TimezExpression) ColumnAssigment
+	SET(timeExp TimezExpression) ColumnAssignment
 }
 
 type timezColumnImpl struct {
@@ -337,8 +337,8 @@ func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
 	return newTimezColumn
 }
 
-func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: timezExp,
 	}
@@ -361,7 +361,7 @@ type ColumnTimestamp interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTimestamp
-	SET(timestampExp TimestampExpression) ColumnAssigment
+	SET(timestampExp TimestampExpression) ColumnAssignment
 }
 
 type timestampColumnImpl struct {
@@ -381,8 +381,8 @@ func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
 	return newTimestampColumn
 }
 
-func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: timestampExp,
 	}
@@ -405,7 +405,7 @@ type ColumnTimestampz interface {
 	Column
 
 	From(subQuery SelectTable) ColumnTimestampz
-	SET(timestampzExp TimestampzExpression) ColumnAssigment
+	SET(timestampzExp TimestampzExpression) ColumnAssignment
 }
 
 type timestampzColumnImpl struct {
@@ -425,8 +425,8 @@ func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
 	return newTimestampzColumn
 }
 
-func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: timestampzExp,
 	}
@@ -449,7 +449,7 @@ type ColumnDate interface {
 	Column
 
 	From(subQuery SelectTable) ColumnDate
-	SET(dateExp DateExpression) ColumnAssigment
+	SET(dateExp DateExpression) ColumnAssignment
 }
 
 type dateColumnImpl struct {
@@ -469,8 +469,8 @@ func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
 	return newDateColumn
 }
 
-func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: dateExp,
 	}
@@ -492,7 +492,7 @@ type ColumnInterval interface {
 	Column
 
 	From(subQuery SelectTable) ColumnInterval
-	SET(intervalExp IntervalExpression) ColumnAssigment
+	SET(intervalExp IntervalExpression) ColumnAssignment
 }
 
 //------------------------------------------------------//
@@ -502,8 +502,8 @@ type intervalColumnImpl struct {
 	intervalInterfaceImpl
 }
 
-func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *intervalColumnImpl) SET(intervalExp IntervalExpression) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: intervalExp,
 	}
@@ -538,7 +538,7 @@ type ColumnRange[T Expression] interface {
 	Column
 
 	From(subQuery SelectTable) ColumnRange[T]
-	SET(rangeExp Range[T]) ColumnAssigment
+	SET(rangeExp Range[T]) ColumnAssignment
 }
 
 type rangeColumnImpl[T Expression] struct {
@@ -558,8 +558,8 @@ func (i *rangeColumnImpl[T]) From(subQuery SelectTable) ColumnRange[T] {
 	return newRangeColumn
 }
 
-func (i *rangeColumnImpl[T]) SET(rangeExp Range[T]) ColumnAssigment {
-	return columnAssigmentImpl{
+func (i *rangeColumnImpl[T]) SET(rangeExp Range[T]) ColumnAssignment {
+	return columnAssignmentImpl{
 		column:   i,
 		toAssign: rangeExp,
 	}

@@ -23,3 +23,17 @@ func TestColumnList_SET(t *testing.T) {
 		columnList1.SET(columnList4)
 	})
 }
+
+func TestColumnList_SET_Serialization(t *testing.T) {
+	columnList1 := ColumnList{IntegerColumn("id"), StringColumn("name")}
+	columnList2 := ColumnList{IntegerColumn("id"), StringColumn("name")}
+
+	assignment := columnList1.SET(columnList2)
+	assertClauseSerialize(t, assignment, "id = id,\nname = name")
+}
+
+func TestColumnList_SET_WithExpression(t *testing.T) {
+	columnList := ColumnList{IntegerColumn("count")}
+	assignment := columnList.SET(Int(100))
+	assertClauseSerialize(t, assignment, "(count) = $1", int64(100))
+}
