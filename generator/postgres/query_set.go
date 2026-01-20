@@ -14,7 +14,7 @@ type postgresQuerySet struct{}
 
 func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name", obj_description((quote_ident(table_schema)||'.'||quote_ident(table_name))::regclass) as "table.comment"
+SELECT table_name as "table.name", obj_description((quote_ident(table_schema)||'.'||quote_ident(table_name))::regclass, 'pg_class') as "table.comment"
 FROM information_schema.tables
 WHERE table_schema = $1 and table_type = $2
 ORDER BY table_name;
@@ -105,7 +105,7 @@ order by
 func (p postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
 	query := `
 SELECT t.typname as "enum.name",  
-	   obj_description(t.oid) as "enum.comment",
+	   obj_description(t.oid, 'pg_class') as "enum.comment",
        e.enumlabel as "values"
 FROM pg_catalog.pg_type t 
    JOIN pg_catalog.pg_enum e on t.oid = e.enumtypid  
