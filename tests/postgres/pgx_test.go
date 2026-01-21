@@ -309,3 +309,32 @@ func TestSelectQuickStartJsonPgxV5(t *testing.T) {
 
 	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-json-dest.json")
 }
+
+func TestPgxV5Exec(t *testing.T) {
+	linkData := model2.Link{
+		ID:   12345,
+		URL:  "http://www.duckduckgo.com",
+		Name: "Duck Duck go",
+	}
+
+	stmt := table.Link.
+		INSERT(table.Link.ID, table.Link.URL, table.Link.Name).
+		MODEL(linkData)
+
+	testutils.ExecuteInTxAndRollbackPgxV5(t, pgxConn, func(tx pgx.Tx) {
+		result, err := pgxV5.Exec(ctx, stmt, tx)
+
+		require.NoError(t, err)
+		require.Equal(t, result.RowsAffected(), int64(1))
+
+		requireLogged(t, stmt)
+
+		t.Run("failed", func(t *testing.T) {
+			result, err := pgxV5.Exec(ctx, stmt, tx)
+
+			require.Errorf(t, err, "ERROR: duplicate key value violates unique constraint \"link_pkey\" (SQLSTATE 23505)")
+			require.Equal(t, result.RowsAffected(), int64(0))
+			requireLogged(t, stmt)
+		})
+	})
+}

@@ -5,12 +5,18 @@ import (
 	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/must"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"reflect"
 )
 
 // QueryablePgxV5 interface for pgx Query method
 type QueryablePgxV5 interface {
 	Query(ctx context.Context, query string, args ...any) (pgx.Rows, error)
+}
+
+// ExecutablePgxV5 interface for pgx Exec method
+type ExecutablePgxV5 interface {
+	Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error)
 }
 
 // QueryJsonObjPgxV5 executes a SQL query that returns a JSON object, unmarshals the result into the provided destination,
