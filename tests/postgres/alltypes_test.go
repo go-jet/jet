@@ -2,12 +2,12 @@ package postgres
 
 import (
 	"encoding/base64"
+	"fmt"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
-	"github.com/stretchr/testify/assert"
-	"math"
-
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/lib/pq"
+	"github.com/stretchr/testify/assert"
+	"math"
 	"testing"
 	"time"
 
@@ -1726,6 +1726,134 @@ SELECT ROW($1::integer, $2::real, $3::text) AS "row",
 		err := stmt.Query(db, &struct{}{})
 		require.NoError(t, err)
 	})
+}
+
+func TestSubQueryAllExpTypes(t *testing.T) {
+
+	subquery := SELECT(
+		Bool(true).AS("bool"),
+		Int(11).AS("int"),
+		Text("doe").AS("text"),
+		Date(2000, 2, 2).AS("date"),
+		Time(11, 20, 40).AS("time"),
+		Timez(11, 20, 40, 200, "UTC").AS("timez"),
+		Timestamp(2030, 3, 4, 11, 20, 40).AS("timestamp"),
+		Timestampz(2023, 1, 2, 11, 20, 40, 200, "UTC").AS("timestampz"),
+		INTERVAL(100, HOUR).AS("interval"),
+		Bytea("bytes").AS("bytea"),
+
+		ARRAY(Bool(true)).AS("bool_arr"),
+		ARRAY(Int(11)).AS("int_arr"),
+		ARRAY(Text("doe")).AS("text_arr"),
+		ARRAY(Date(2000, 2, 2)).AS("date_arr"),
+		ARRAY(Time(11, 20, 40)).AS("time_arr"),
+		ARRAY(Timez(11, 20, 40, 200, "UTC")).AS("timez_arr"),
+		ARRAY(Timestamp(2030, 3, 4, 11, 20, 40)).AS("timestamp_arr"),
+		ARRAY(Timestampz(2023, 1, 2, 11, 20, 40, 200, "UTC")).AS("timestampz_arr"),
+		ARRAY(INTERVAL(100, HOUR)).AS("interval_arr"),
+		ARRAY(Bytea("bytes")).AS("bytea_arr"),
+
+		INT4_RANGE(Int(1), Int(200)).AS("int4_range"),
+		DATE_RANGE(Date(2000, 2, 2), Date(2000, 3, 3)).AS("date_range"),
+		NUM_RANGE(Float(33.22), Float(22.1)).AS("num_range"),
+		TS_RANGE(LOCALTIMESTAMP(), LOCALTIMESTAMP()).AS("ts_range"),
+		TSTZ_RANGE(NOW(), NOW()).AS("tstz_range"),
+	).AsTable("sub")
+
+	var result = "\n"
+	for _, projection := range subquery.AllColumns() {
+		result += fmt.Sprintf("Column type: %T\n", projection)
+	}
+
+	require.Equal(t, result, `
+Column type: *jet.boolColumnImpl
+Column type: *jet.integerColumnImpl
+Column type: *jet.stringColumnImpl
+Column type: *jet.dateColumnImpl
+Column type: *jet.timeColumnImpl
+Column type: *jet.timezColumnImpl
+Column type: *jet.timestampColumnImpl
+Column type: *jet.timestampzColumnImpl
+Column type: *jet.intervalColumnImpl
+Column type: *jet.blobColumnImpl
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.BoolExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.IntegerExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.StringExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.DateExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.TimeExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.TimezExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.TimestampExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.TimestampzExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.IntervalExpression]
+Column type: *jet.arrayColumnImpl[github.com/go-jet/jet/v2/internal/jet.BlobExpression]
+Column type: *jet.rangeColumnImpl[github.com/go-jet/jet/v2/internal/jet.IntegerExpression]
+Column type: *jet.rangeColumnImpl[github.com/go-jet/jet/v2/internal/jet.DateExpression]
+Column type: *jet.rangeColumnImpl[github.com/go-jet/jet/v2/internal/jet.NumericExpression]
+Column type: *jet.rangeColumnImpl[github.com/go-jet/jet/v2/internal/jet.TimestampExpression]
+Column type: *jet.rangeColumnImpl[github.com/go-jet/jet/v2/internal/jet.TimestampzExpression]
+`)
+
+	stmt := SELECT(
+		subquery.AllColumns(),
+	).FROM(subquery)
+
+	testutils.AssertStatementSql(t, stmt, `
+SELECT sub.bool AS "bool",
+     sub.int AS "int",
+     sub.text AS "text",
+     sub.date AS "date",
+     sub.time AS "time",
+     sub.timez AS "timez",
+     sub.timestamp AS "timestamp",
+     sub.timestampz AS "timestampz",
+     sub.interval AS "interval",
+     sub.bytea AS "bytea",
+     sub.bool_arr AS "bool_arr",
+     sub.int_arr AS "int_arr",
+     sub.text_arr AS "text_arr",
+     sub.date_arr AS "date_arr",
+     sub.time_arr AS "time_arr",
+     sub.timez_arr AS "timez_arr",
+     sub.timestamp_arr AS "timestamp_arr",
+     sub.timestampz_arr AS "timestampz_arr",
+     sub.interval_arr AS "interval_arr",
+     sub.bytea_arr AS "bytea_arr",
+     sub.int4_range AS "int4_range",
+     sub.date_range AS "date_range",
+     sub.num_range AS "num_range",
+     sub.ts_range AS "ts_range",
+     sub.tstz_range AS "tstz_range"
+FROM (
+          SELECT $1::boolean AS "bool",
+               $2 AS "int",
+               $3::text AS "text",
+               $4::date AS "date",
+               $5::time without time zone AS "time",
+               $6::time with time zone AS "timez",
+               $7::timestamp without time zone AS "timestamp",
+               $8::timestamp with time zone AS "timestampz",
+               INTERVAL '100 HOUR' AS "interval",
+               $9::bytea AS "bytea",
+               ARRAY[$10::boolean] AS "bool_arr",
+               ARRAY[$11] AS "int_arr",
+               ARRAY[$12::text] AS "text_arr",
+               ARRAY[$13::date] AS "date_arr",
+               ARRAY[$14::time without time zone] AS "time_arr",
+               ARRAY[$15::time with time zone] AS "timez_arr",
+               ARRAY[$16::timestamp without time zone] AS "timestamp_arr",
+               ARRAY[$17::timestamp with time zone] AS "timestampz_arr",
+               ARRAY[INTERVAL '100 HOUR'] AS "interval_arr",
+               ARRAY[$18::bytea] AS "bytea_arr",
+               int4range($19, $20) AS "int4_range",
+               daterange($21::date, $22::date) AS "date_range",
+               numrange($23, $24) AS "num_range",
+               tsrange(LOCALTIMESTAMP, LOCALTIMESTAMP) AS "ts_range",
+               tstzrange(NOW(), NOW()) AS "tstz_range"
+     ) AS sub;
+`)
+
+	_, err := stmt.Exec(db)
+	require.NoError(t, err)
 }
 
 func TestAllTypesSubQueryFrom(t *testing.T) {
