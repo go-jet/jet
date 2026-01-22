@@ -3,6 +3,7 @@ package qrm
 import (
 	"database/sql"
 	"fmt"
+	"github.com/jackc/pgx/v5"
 	"reflect"
 	"strings"
 )
@@ -22,6 +23,15 @@ type ScanContext struct {
 	columnIndexRead []bool
 }
 
+func NewScanContextPGXv5(rows pgx.Rows) (*ScanContext, error) {
+	var aliases []string
+	for _, fieldDesc := range rows.FieldDescriptions() {
+		aliases = append(aliases, fieldDesc.Name)
+	}
+
+	return newScanContext(aliases), nil
+}
+
 // NewScanContext creates new ScanContext from rows
 func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 	aliases, err := rows.Columns()
@@ -30,12 +40,10 @@ func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 		return nil, err
 	}
 
-	columnTypes, err := rows.ColumnTypes()
+	return newScanContext(aliases), nil
+}
 
-	if err != nil {
-		return nil, err
-	}
-
+func newScanContext(aliases []string) *ScanContext {
 	commonIdentToColumnIndex := map[string]int{}
 
 	for i, alias := range aliases {
@@ -50,7 +58,7 @@ func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 	}
 
 	return &ScanContext{
-		row:                  createScanSlice(len(columnTypes)),
+		row:                  createScanSlice(len(aliases)),
 		uniqueDestObjectsMap: make(map[string]int),
 
 		groupKeyInfoCache:        make(map[string]groupKeyInfo),
@@ -62,7 +70,7 @@ func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 
 		columnAlias:     aliases,
 		columnIndexRead: make([]bool, len(aliases)),
-	}, nil
+	}
 }
 
 func (s *ScanContext) EnsureEveryColumnRead() {
