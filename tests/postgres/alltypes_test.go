@@ -1729,10 +1729,11 @@ SELECT ROW($1::integer, $2::real, $3::text) AS "row",
 }
 
 func TestSubQueryAllExpTypes(t *testing.T) {
+	skipForCockroachDB(t)
 
 	subquery := SELECT(
 		Bool(true).AS("bool"),
-		Int(11).AS("int"),
+		Int32(11).AS("int"),
 		Text("doe").AS("text"),
 		Date(2000, 2, 2).AS("date"),
 		Time(11, 20, 40).AS("time"),
@@ -1743,7 +1744,7 @@ func TestSubQueryAllExpTypes(t *testing.T) {
 		Bytea("bytes").AS("bytea"),
 
 		ARRAY(Bool(true)).AS("bool_arr"),
-		ARRAY(Int(11)).AS("int_arr"),
+		ARRAY(Int32(11)).AS("int_arr"),
 		ARRAY(Text("doe")).AS("text_arr"),
 		ARRAY(Date(2000, 2, 2)).AS("date_arr"),
 		ARRAY(Time(11, 20, 40)).AS("time_arr"),
@@ -1754,10 +1755,10 @@ func TestSubQueryAllExpTypes(t *testing.T) {
 		ARRAY(Bytea("bytes")).AS("bytea_arr"),
 
 		INT4_RANGE(Int(1), Int(200)).AS("int4_range"),
-		DATE_RANGE(Date(2000, 2, 2), Date(2000, 3, 3)).AS("date_range"),
-		NUM_RANGE(Float(33.22), Float(22.1)).AS("num_range"),
-		TS_RANGE(LOCALTIMESTAMP(), LOCALTIMESTAMP()).AS("ts_range"),
-		TSTZ_RANGE(NOW(), NOW()).AS("tstz_range"),
+		DATE_RANGE(Date(2000, 2, 2), Date(2010, 3, 3)).AS("date_range"),
+		NUM_RANGE(Float(0.22), Float(22.1)).AS("num_range"),
+		TS_RANGE(LOCALTIMESTAMP(), LOCALTIMESTAMP().ADD(INTERVAL(1, HOUR))).AS("ts_range"),
+		TSTZ_RANGE(NOW(), NOW().ADD(INTERVAL(3, MONTH))).AS("tstz_range"),
 	).AsTable("sub")
 
 	var result = "\n"
@@ -1825,7 +1826,7 @@ SELECT sub.bool AS "bool",
      sub.tstz_range AS "tstz_range"
 FROM (
           SELECT $1::boolean AS "bool",
-               $2 AS "int",
+               $2::integer AS "int",
                $3::text AS "text",
                $4::date AS "date",
                $5::time without time zone AS "time",
@@ -1835,7 +1836,7 @@ FROM (
                INTERVAL '100 HOUR' AS "interval",
                $9::bytea AS "bytea",
                ARRAY[$10::boolean] AS "bool_arr",
-               ARRAY[$11] AS "int_arr",
+               ARRAY[$11::integer] AS "int_arr",
                ARRAY[$12::text] AS "text_arr",
                ARRAY[$13::date] AS "date_arr",
                ARRAY[$14::time without time zone] AS "time_arr",
@@ -1847,8 +1848,8 @@ FROM (
                int4range($19, $20) AS "int4_range",
                daterange($21::date, $22::date) AS "date_range",
                numrange($23, $24) AS "num_range",
-               tsrange(LOCALTIMESTAMP, LOCALTIMESTAMP) AS "ts_range",
-               tstzrange(NOW(), NOW()) AS "tstz_range"
+               tsrange(LOCALTIMESTAMP, LOCALTIMESTAMP + INTERVAL '1 HOUR') AS "ts_range",
+               tstzrange(NOW(), NOW() + INTERVAL '3 MONTH') AS "tstz_range"
      ) AS sub;
 `)
 
