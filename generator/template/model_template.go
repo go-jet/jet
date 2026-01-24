@@ -2,11 +2,12 @@ package template
 
 import (
 	"fmt"
-	"github.com/lib/pq"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
+
+	"github.com/lib/pq"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgtype"
@@ -112,19 +113,15 @@ func (t TableModel) UseField(structFieldFunc func(columnMetaData metadata.Column
 }
 
 func getTableModelImports(modelType TableModel, tableMetaData metadata.Table) []string {
-	importPaths := map[string]bool{}
+	seen := map[string]bool{}
+	var ret []string
 	for _, columnMetaData := range tableMetaData.Columns {
 		field := modelType.Field(columnMetaData)
 		for _, importPath := range append([]string{field.Type.ImportPath}, field.Type.AdditionalImportPaths...) {
-			if importPath != "" {
-				importPaths[importPath] = true
+			if importPath != "" && !seen[importPath] {
+				ret = append(ret, importPath)
 			}
 		}
-	}
-
-	var ret []string
-	for importPath := range importPaths {
-		ret = append(ret, importPath)
 	}
 
 	return ret
@@ -318,7 +315,6 @@ func toGoArrayType(elemType any, column metadata.Column) any {
 
 // toGoType returns model type for column info.
 func toGoType(column metadata.Column) interface{} {
-
 	switch strings.ToLower(column.DataType.Name) {
 	case "user-defined", "enum":
 		return ""
@@ -329,14 +325,13 @@ func toGoType(column metadata.Column) interface{} {
 			return uint8(0)
 		}
 		return int8(0)
-	case "smallint", "int2",
-		"year":
+	case "smallint", "int2", "year":
 		if column.DataType.IsUnsigned {
 			return uint16(0)
 		}
 		return int16(0)
 	case "integer", "int4",
-		"mediumint", "int": //MySQL
+		"mediumint", "int": // MySQL
 		if column.DataType.IsUnsigned {
 			return uint32(0)
 		}
@@ -354,7 +349,7 @@ func toGoType(column metadata.Column) interface{} {
 		"datetime": // MySQL
 		return time.Time{}
 	case "bytea",
-		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": //MySQL
+		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": // MySQL
 		return []byte("")
 	case "text",
 		"character", "bpchar",
