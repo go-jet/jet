@@ -633,7 +633,7 @@ Typically, two releases are published each year — one in early spring and anot
 
 ## License
 
-Copyright 2019-2025 Goran Bjelanovic  
+Copyright 2019-2026 Goran Bjelanovic  
 Licensed under the Apache License, Version 2.0.
 
 ## Support the Project

@@ -80,9 +80,10 @@ type arrayExpressionWrapper[E Expression] struct {
 }
 
 func newArrayExpressionWrap[E Expression](expression Expression) Array[E] {
-	arrayExpressionWrapper := arrayExpressionWrapper[E]{Expression: expression}
-	arrayExpressionWrapper.arrayInterfaceImpl.parent = &arrayExpressionWrapper
-	return &arrayExpressionWrapper
+	arrayExpressionWrapper := &arrayExpressionWrapper[E]{Expression: expression}
+	arrayExpressionWrapper.arrayInterfaceImpl.parent = arrayExpressionWrapper
+	expression.setRoot(arrayExpressionWrapper)
+	return arrayExpressionWrapper
 }
 
 // ArrayExp is array expression wrapper around arbitrary expression.

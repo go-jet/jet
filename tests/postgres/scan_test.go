@@ -841,6 +841,42 @@ func TestRowsScan(t *testing.T) {
 	requireQueryLogged(t, stmt, 0)
 }
 
+func TestRowsNonStrictScan(t *testing.T) {
+	stmt := SELECT(
+		Inventory.AllColumns,
+		Store.AllColumns,
+	).FROM(
+		Inventory.INNER_JOIN(Store, Store.StoreID.EQ(Inventory.StoreID)),
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
+
+	require.PanicsWithValue(t, "jet: columns never used: 'store.store_id', 'store.manager_staff_id', 'store.address_id', 'store.last_update'", func() {
+		rows, err := stmt.Rows(context.Background(), db)
+
+		var dest model.Inventory
+
+		for rows.Next() {
+			err = rows.Scan(&dest)
+			require.NoError(t, err)
+		}
+	})
+
+	allowUnusedColumns(func() {
+		rows, err := stmt.Rows(context.Background(), db)
+
+		var dest model.Inventory
+
+		for rows.Next() {
+			err = rows.Scan(&dest)
+			require.NoError(t, err)
+		}
+
+		require.NoError(t, rows.Close())
+		require.NoError(t, rows.Err())
+	})
+}
+
 func TestScanNullColumn(t *testing.T) {
 	stmt := SELECT(
 		Address.AllColumns,
