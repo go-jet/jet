@@ -67,7 +67,17 @@ func NewScanContext(rows *sql.Rows) (*ScanContext, error) {
 	}, nil
 }
 
-func (s *ScanContext) EnsureEveryColumnRead() {
+func (s *ScanContext) ensureStrictness() { // can panic
+	if GlobalConfig.StrictScan {
+		s.ensureEveryColumnRead() // can panic
+	}
+
+	if GlobalConfig.StrictFieldMapping {
+		s.ensureEveryFieldMapped() // can panic
+	}
+}
+
+func (s *ScanContext) ensureEveryColumnRead() {
 	var neverUsedColumns []string
 
 	for index, read := range s.columnIndexRead {
@@ -95,13 +105,13 @@ func (s *ScanContext) recordUnmappedField(structType reflect.Type, parentField *
 
 	fieldIdent := fmt.Sprintf("%s.%s", typeName, field.Name)
 	if parentField != nil {
-		fieldIdent = fmt.Sprintf("%s %s.%s", parentField.Name, typeName, field.Name)
+		fieldIdent = fmt.Sprintf("%s %s", parentField.Name, fieldIdent)
 	}
 
 	s.unmappedFields = append(s.unmappedFields, fmt.Sprintf("'%s'", fieldIdent))
 }
 
-func (s *ScanContext) EnsureEveryFieldMapped() {
+func (s *ScanContext) ensureEveryFieldMapped() {
 	if len(s.unmappedFields) == 0 {
 		return
 	}
@@ -328,7 +338,7 @@ func (s *ScanContext) typeToColumnIndex(typeName, fieldName string) int {
 // rowElemValue always returns non-ptr value,
 // invalid value is nil
 func (s *ScanContext) rowElemValue(index int) reflect.Value {
-	if s.rowNum == 1 {
+	if s.rowNum == 1 && GlobalConfig.StrictScan {
 		s.columnIndexRead[index] = true
 	}
 	scannedValue := reflect.ValueOf(s.row[index])

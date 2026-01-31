@@ -241,12 +241,8 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 		return fmt.Errorf("jet: failed to scan a row into destination, %w", err)
 	}
 
-	if scanContext.rowNum == 1 && GlobalConfig.StrictScan {
-		scanContext.EnsureEveryColumnRead() // can panic
-	}
-
-	if GlobalConfig.StrictFieldMapping {
-		scanContext.EnsureEveryFieldMapped() // can panic
+	if scanContext.rowNum == 1 {
+		scanContext.ensureStrictness()
 	}
 
 	return nil
@@ -291,11 +287,8 @@ func queryToSlice(ctx context.Context, db Queryable, query string, args []interf
 			return scanContext.rowNum, err
 		}
 
-		if scanContext.rowNum == 1 && GlobalConfig.StrictScan {
-			scanContext.EnsureEveryColumnRead()
-		}
-		if scanContext.rowNum == 1 && GlobalConfig.StrictFieldMapping {
-			scanContext.EnsureEveryFieldMapped()
+		if scanContext.rowNum == 1 {
+			scanContext.ensureStrictness()
 		}
 	}
 
