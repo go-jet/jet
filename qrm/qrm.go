@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/must"
 	"reflect"
+
+	"github.com/go-jet/jet/v2/internal/utils/must"
 )
 
 // Config holds the configuration settings for QRM scanning behavior.
@@ -17,6 +18,16 @@ type Config struct {
 	// to a field in the destination struct.
 	// Does not apply to statements build with SELECT_JSON_OBJ or SELECT_JSON_ARR
 	StrictScan bool
+
+	// StrictFieldMapping, when true, causes the scanning function to panic if it encounters any
+	// destination struct fields that do not have matching columns in the SQL query result.
+	//
+	// Optional fields:
+	// If a destination field (including struct/slice fields) is not always selected by a query,
+	// it can be marked as optional using `qrm:"optional"`. When StrictFieldMapping is enabled,
+	// unmapped fields under an optional field will not trigger a panic.
+	// Does not apply to statements build with SELECT_JSON_OBJ or SELECT_JSON_ARR
+	StrictFieldMapping bool
 
 	// JsonUnmarshalFunc is called by the Query method to unmarshal JSON query results created by
 	// SELECT_JSON_OBJ and SELECT_JSON_ARR statements.
@@ -28,8 +39,9 @@ type Config struct {
 // GlobalConfig is the package-wide configuration for SQL scanning.
 // This variable is not thread safe, and it should be modified only once, for instance, during application initialization.
 var GlobalConfig = Config{
-	StrictScan:        false,
-	JsonUnmarshalFunc: json.Unmarshal,
+	StrictScan:         false,
+	StrictFieldMapping: false,
+	JsonUnmarshalFunc:  json.Unmarshal,
 }
 
 // ErrNoRows is returned by Query when query result set is empty
@@ -233,6 +245,10 @@ func ScanOneRowToDest(scanContext *ScanContext, rows *sql.Rows, destPtr interfac
 		scanContext.EnsureEveryColumnRead() // can panic
 	}
 
+	if GlobalConfig.StrictFieldMapping {
+		scanContext.EnsureEveryFieldMapped() // can panic
+	}
+
 	return nil
 }
 
@@ -277,6 +293,9 @@ func queryToSlice(ctx context.Context, db Queryable, query string, args []interf
 
 		if scanContext.rowNum == 1 && GlobalConfig.StrictScan {
 			scanContext.EnsureEveryColumnRead()
+		}
+		if scanContext.rowNum == 1 && GlobalConfig.StrictFieldMapping {
+			scanContext.EnsureEveryFieldMapped()
 		}
 	}
 
