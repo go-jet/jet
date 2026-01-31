@@ -15,6 +15,9 @@
 .idea
 *.iml
 
+# Mac
+**.DS_Store
+
 # Test files
 gen
 .gentestdata
@@ -24,3 +27,4 @@ gen
 .env
 .tempTestDir
 .gentestdata3
+.gentestdata2

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"database/sql"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"runtime"
@@ -16,6 +17,7 @@ import (
 	"github.com/pkg/profile"
 	"github.com/stretchr/testify/require"
 
+	"github.com/mattn/go-sqlite3"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -42,9 +44,24 @@ func TestMain(m *testing.M) {
 		_, err = db.Exec(fmt.Sprintf("ATTACH DATABASE '%s' as 'chinook';", dbconfig.ChinookDBPath))
 		throw.OnError(err)
 
-		sqlSampleDB, err := sql.Open("sqlite3", dbconfig.TestSampleDBPath)
+		sql.Register("sqlite3_base64", &sqlite3.SQLiteDriver{
+			ConnectHook: func(sc *sqlite3.SQLiteConn) error {
+				return sc.RegisterFunc("BASE64_ENCODE", func(input any) any {
+					_, ok := input.(string)
+					if !ok {
+						return nil
+					}
+					value := fmt.Sprintf("%v", input)
+					return base64.StdEncoding.EncodeToString([]byte(value))
+				}, true)
+			},
+		})
+
+		sqlSampleDB, err := sql.Open("sqlite3_base64", dbconfig.TestSampleDBPath)
+
 		throw.OnError(err)
 		sampleDB = stmtcache.New(sqlSampleDB).SetCaching(withStatementCaching)
+
 		defer sampleDB.Close()
 
 		for i := 0; i < runCount(withStatementCaching); i++ {

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"encoding/hex"
 	"fmt"
+
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
@@ -28,6 +29,24 @@ func newDialect() jet.Dialect {
 		ReservedWords:    reservedWords2,
 		ValuesDefaultColumnName: func(index int) string {
 			return fmt.Sprintf("column%d", index+1)
+		},
+		JsonValueEncode: func(expr Expression) Expression {
+			switch e := expr.(type) {
+			case BlobExpression:
+				return TO_BASE64(e)
+
+			// CustomExpression used bellow (instead DATE_FORMAT function) so that only expr is parametrized
+			case TimestampExpression:
+				return CustomExpression(Token("strftime('%Y-%m-%dT%H:%M:%fZ', "), e, Token(")"))
+			case TimeExpression:
+				return CustomExpression(Token("strftime('0000-01-01T%H:%M:%fZ', "), e, Token(")"))
+			case DateExpression:
+				return CustomExpression(Token("strftime('%Y-%m-%dT00:00:00Z', "), e, Token(")"))
+			case BoolExpression:
+				return CustomExpression(Token("CASE"), e, Token("WHEN 1 THEN json('true') WHEN 0 THEN json('false') ELSE json('null') END"))
+			}
+
+			return expr
 		},
 	}
 

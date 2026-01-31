@@ -2,6 +2,11 @@ package sqlite
 
 import (
 	"encoding/hex"
+	"encoding/json"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -9,12 +14,10 @@ import (
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/test_sample/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/test_sample/view"
 	"github.com/go-jet/jet/v2/tests/testdata/results/common"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestAllTypes(t *testing.T) {
@@ -27,6 +30,75 @@ func TestAllTypes(t *testing.T) {
 
 	require.NoError(t, err)
 	testutils.AssertJSON(t, dest, allTypesJSON)
+}
+
+func TestAllTypesJSON(t *testing.T) {
+
+	stmt := SELECT_JSON_ARR(
+		AllTypes.AllColumns.Except(
+			AllTypes.JSON,
+			AllTypes.JSONPtr,
+		),
+		CAST(AllTypes.JSON).AS_TEXT().AS("Json"),
+		CAST(AllTypes.JSONPtr).AS_TEXT().AS("JsonPtr"),
+	).FROM(AllTypes)
+
+	testutils.AssertStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT JSON_GROUP_ARRAY(JSON_OBJECT(
+          'boolean', CASE all_types.boolean WHEN 1 THEN json('true') WHEN 0 THEN json('false') ELSE json('null') END,
+          'booleanPtr', CASE all_types.boolean_ptr WHEN 1 THEN json('true') WHEN 0 THEN json('false') ELSE json('null') END,
+          'tinyInt', all_types.tiny_int,
+          'tinyIntPtr', all_types.tiny_int_ptr,
+          'smallInt', all_types.small_int,
+          'smallIntPtr', all_types.small_int_ptr,
+          'mediumInt', all_types.medium_int,
+          'mediumIntPtr', all_types.medium_int_ptr,
+          'integer', all_types.integer,
+          'integerPtr', all_types.integer_ptr,
+          'bigInt', all_types.big_int,
+          'bigIntPtr', all_types.big_int_ptr,
+          'decimal', all_types.decimal,
+          'decimalPtr', all_types.decimal_ptr,
+          'numeric', all_types.numeric,
+          'numericPtr', all_types.numeric_ptr,
+          'float', all_types.float,
+          'floatPtr', all_types.float_ptr,
+          'double', all_types.double,
+          'doublePtr', all_types.double_ptr,
+          'real', all_types.real,
+          'realPtr', all_types.real_ptr,
+          'time', strftime('0000-01-01T%H:%M:%fZ', all_types.time),
+          'timePtr', strftime('0000-01-01T%H:%M:%fZ', all_types.time_ptr),
+          'date', strftime('%Y-%m-%dT00:00:00Z', all_types.date),
+          'datePtr', strftime('%Y-%m-%dT00:00:00Z', all_types.date_ptr),
+          'dateTime', strftime('%Y-%m-%dT%H:%M:%fZ', all_types.date_time),
+          'dateTimePtr', strftime('%Y-%m-%dT%H:%M:%fZ', all_types.date_time_ptr),
+          'timestamp', strftime('%Y-%m-%dT%H:%M:%fZ', all_types.timestamp),
+          'timestampPtr', strftime('%Y-%m-%dT%H:%M:%fZ', all_types.timestamp_ptr),
+          'char', all_types.char,
+          'charPtr', all_types.char_ptr,
+          'varChar', all_types.var_char,
+          'varCharPtr', all_types.var_char_ptr,
+          'text', all_types.text,
+          'textPtr', all_types.text_ptr,
+          'blob', BASE64_ENCODE(all_types.blob),
+          'blobPtr', BASE64_ENCODE(all_types.blob_ptr),
+          'Json', CAST(all_types.json AS TEXT),
+          'JsonPtr', CAST(all_types.json_ptr AS TEXT)
+     )) AS "json"
+FROM all_types;
+`, "''", "`"))
+
+	var dest []model.AllTypes
+
+	err := stmt.QueryContext(ctx, sampleDB, &dest)
+	require.NoError(t, err)
+
+	var expected []model.AllTypes
+	err = json.Unmarshal([]byte(allTypesJSON), &expected)
+	require.NoError(t, err)
+
+	testutils.AssertDeepEqual(t, dest, expected, cmpopts.EquateApproxTime(time.Second))
 }
 
 var allTypesJSON = `
@@ -69,7 +141,9 @@ var allTypesJSON = `
 		"Text": "text",
 		"TextPtr": "text-ptr",
 		"Blob": "YmxvYjE=",
-		"BlobPtr": "YmxvYi1wdHI="
+		"BlobPtr": "YmxvYi1wdHI=",
+		"JSON": "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+		"JSONPtr": "{\"key1\": \"value1\", \"key2\": \"value2\"}"
 	},
 	{
 		"Boolean": false,
@@ -109,7 +183,9 @@ var allTypesJSON = `
 		"Text": "text",
 		"TextPtr": null,
 		"Blob": "YmxvYjI=",
-		"BlobPtr": null
+		"BlobPtr": null,
+		"JSON": "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+		"JSONPtr": null
 	}
 ]
 `
@@ -905,8 +981,6 @@ func TestTimeExpressions(t *testing.T) {
 
 		CURRENT_TIME(),
 	)
-
-	//fmt.Println(query.DebugSql())
 
 	var dest struct {
 		Time1 string
