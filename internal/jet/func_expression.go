@@ -652,12 +652,6 @@ type funcSerializer struct {
 }
 
 func (f *funcSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(ToSerializerList(f.parameters)...)
-		serializeOverrideFunc(statement, out, FallTrough(options)...)
-		return
-	}
-
 	out.WriteString(f.name + "(")
 
 	f.parameters.serialize(statement, out, options...)

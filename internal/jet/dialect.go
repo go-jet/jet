@@ -9,7 +9,6 @@ type Dialect interface {
 	Name() string
 	PackageName() string
 	OperatorSerializeOverride(operator string) SerializeOverride
-	FunctionSerializeOverride(function string) SerializeOverride
 	AliasQuoteChar() byte
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
@@ -35,7 +34,6 @@ type DialectParams struct {
 	Name                       string
 	PackageName                string
 	OperatorSerializeOverrides map[string]SerializeOverride
-	FunctionSerializeOverrides map[string]SerializeOverride
 	AliasQuoteChar             byte
 	IdentifierQuoteChar        byte
 	ArgumentPlaceholder        QueryPlaceholderFunc
@@ -53,7 +51,6 @@ func NewDialect(params DialectParams) Dialect {
 		name:                       params.Name,
 		packageName:                params.PackageName,
 		operatorSerializeOverrides: params.OperatorSerializeOverrides,
-		functionSerializeOverrides: params.FunctionSerializeOverrides,
 		aliasQuoteChar:             params.AliasQuoteChar,
 		identifierQuoteChar:        params.IdentifierQuoteChar,
 		argumentPlaceholder:        params.ArgumentPlaceholder,
@@ -70,7 +67,6 @@ type dialectImpl struct {
 	name                       string
 	packageName                string
 	operatorSerializeOverrides map[string]SerializeOverride
-	functionSerializeOverrides map[string]SerializeOverride
 	aliasQuoteChar             byte
 	identifierQuoteChar        byte
 	argumentPlaceholder        QueryPlaceholderFunc
@@ -95,13 +91,6 @@ func (d *dialectImpl) OperatorSerializeOverride(operator string) SerializeOverri
 		return nil
 	}
 	return d.operatorSerializeOverrides[operator]
-}
-
-func (d *dialectImpl) FunctionSerializeOverride(function string) SerializeOverride {
-	if d.functionSerializeOverrides == nil {
-		return nil
-	}
-	return d.functionSerializeOverrides[function]
 }
 
 func (d *dialectImpl) AliasQuoteChar() byte {
