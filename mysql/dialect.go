@@ -42,11 +42,11 @@ func newDialect() jet.Dialect {
 
 			// CustomExpression used bellow (instead DATE_FORMAT function) so that only expr is parametrized
 			case TimestampExpression:
-				return CustomExpression(Token("DATE_FORMAT("), e, Token(",'%Y-%m-%dT%H:%i:%s.%fZ')"))
+				return jet.AtomicCustomExpression(Token("DATE_FORMAT("), e, Token(",'%Y-%m-%dT%H:%i:%s.%fZ')"))
 			case TimeExpression:
-				return CustomExpression(Token("CONCAT('0000-01-01T', DATE_FORMAT("), e, Token(",'%H:%i:%s.%fZ'))"))
+				return jet.AtomicCustomExpression(Token("CONCAT('0000-01-01T', DATE_FORMAT("), e, Token(",'%H:%i:%s.%fZ'))"))
 			case DateExpression:
-				return CustomExpression(Token("CONCAT(DATE_FORMAT("), e, Token(",'%Y-%m-%d')"), Token(", 'T00:00:00Z')"))
+				return jet.AtomicCustomExpression(Token("CONCAT(DATE_FORMAT("), e, Token(",'%Y-%m-%d')"), Token(", 'T00:00:00Z')"))
 			case BoolExpression:
 				return CustomExpression(e, Token(" = 1"))
 			}

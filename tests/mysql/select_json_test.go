@@ -2,10 +2,11 @@ package mysql
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/qrm"
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/go-jet/jet/v2/qrm"
 
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/mysql"
@@ -410,7 +411,7 @@ SELECT JSON_ARRAYAGG(JSON_OBJECT(
           'lastName', customers_info.''customer.last_name'',
           'email', customers_info.''customer.email'',
           'addressID', customers_info.''customer.address_id'',
-          'active', customers_info.''customer.active'' = 1,
+          'active', (customers_info.''customer.active'' = 1),
           'createDate', DATE_FORMAT(customers_info.''customer.create_date'','%Y-%m-%dT%H:%i:%s.%fZ'),
           'lastUpdate', DATE_FORMAT(customers_info.''customer.last_update'','%Y-%m-%dT%H:%i:%s.%fZ'),
           'amount', (

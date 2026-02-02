@@ -2,11 +2,12 @@ package sqlite
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/qrm"
 	model2 "github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/model"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/sqlite/sakila/table"
-	"testing"
-	"time"
 
 	"github.com/go-jet/jet/v2/internal/testutils"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -156,7 +157,7 @@ RETURNING link.id AS "link.id",
           (link.id + ?) AS "dest.binary_operator",
           CAST(link.id AS TEXT) AS "dest.cast_operator",
           (link.name LIKE ?) AS "dest.like_operator",
-          link.description IS NULL AS "dest.is_null",
+          (link.description IS NULL) AS "dest.is_null",
           (CASE link.name WHEN ? THEN ? WHEN ? THEN ? ELSE ? END) AS "dest.case_operator";
 `
 	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(20), "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(20),

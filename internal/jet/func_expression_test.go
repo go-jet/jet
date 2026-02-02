@@ -6,7 +6,7 @@ import (
 
 func TestAND(t *testing.T) {
 	assertClauseSerializeErr(t, AND(), "jet: syntax error, expression list empty")
-	assertClauseSerialize(t, AND(table1ColInt.IS_NULL()), `table1.col_int IS NULL`) // IS NULL doesn't add parenthesis
+	assertClauseSerialize(t, AND(table1ColInt.IS_NULL()), `(table1.col_int IS NULL)`) // IS NULL doesn't add parenthesis
 	assertClauseSerialize(t, AND(table1ColInt.LT(Int(11))), `(table1.col_int < $1)`, int64(11))
 	assertClauseSerialize(t, AND(table1ColInt.GT(Int(11)), table1ColFloat.EQ(Float(0))),
 		`(
@@ -17,7 +17,7 @@ func TestAND(t *testing.T) {
 
 func TestOR(t *testing.T) {
 	assertClauseSerializeErr(t, OR(), "jet: syntax error, expression list empty")
-	assertClauseSerialize(t, OR(table1ColInt.IS_NULL()), `table1.col_int IS NULL`) // IS NULL doesn't add parenthesis
+	assertClauseSerialize(t, OR(table1ColInt.IS_NULL()), `(table1.col_int IS NULL)`) // IS NULL doesn't add parenthesis
 	assertClauseSerialize(t, OR(table1ColInt.LT(Int(11))), `(table1.col_int < $1)`, int64(11))
 	assertClauseSerialize(t, OR(table1ColInt.GT(Int(11)), table1ColFloat.EQ(Float(0))),
 		`(
@@ -205,7 +205,7 @@ func TestFunc(t *testing.T) {
 
 func Test_rangePointCaster(t *testing.T) {
 	mainRange := Int8Range(Int8(10), Int8(12))
-	exp := NewFunc("UPPER", []Expression{mainRange}, nil)
+	exp := newFunc("UPPER", []Expression{mainRange})
 
 	got := rangeTypeCaster(mainRange, exp)
 	_, ok := got.(IntegerExpression)

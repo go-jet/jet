@@ -3,13 +3,14 @@ package postgres
 import (
 	"encoding/base64"
 	"fmt"
+	"math"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
-	"math"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -89,12 +90,12 @@ FROM (
                all_types.timestampz AS "timestampz",
                to_char(all_types.timestamp_ptr, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestampPtr",
                to_char(all_types.timestamp, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestamp",
-               to_char(all_types.date_ptr::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "datePtr",
-               to_char(all_types.date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "date",
-               '0000-01-01T' || to_char('2000-10-10'::date + all_types.timez_ptr, 'HH24:MI:SS.USTZH:TZM') AS "timezPtr",
-               '0000-01-01T' || to_char('2000-10-10'::date + all_types.timez, 'HH24:MI:SS.USTZH:TZM') AS "timez",
-               '0000-01-01T' || to_char('2000-10-10'::date + all_types.time_ptr, 'HH24:MI:SS.USZ') AS "timePtr",
-               '0000-01-01T' || to_char('2000-10-10'::date + all_types.time, 'HH24:MI:SS.USZ') AS "time",
+               (to_char(all_types.date_ptr::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "datePtr",
+               (to_char(all_types.date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "date",
+               ('0000-01-01T' || to_char('2000-10-10'::date + all_types.timez_ptr, 'HH24:MI:SS.USTZH:TZM')) AS "timezPtr",
+               ('0000-01-01T' || to_char('2000-10-10'::date + all_types.timez, 'HH24:MI:SS.USTZH:TZM')) AS "timez",
+               ('0000-01-01T' || to_char('2000-10-10'::date + all_types.time_ptr, 'HH24:MI:SS.USZ')) AS "timePtr",
+               ('0000-01-01T' || to_char('2000-10-10'::date + all_types.time, 'HH24:MI:SS.USZ')) AS "time",
                all_types.interval_ptr AS "intervalPtr",
                all_types.interval AS "interval",
                all_types.boolean_ptr AS "booleanPtr",
@@ -480,11 +481,14 @@ func TestExpressionOperators(t *testing.T) {
 
 		AllTypes.SmallIntPtr.NOT_IN(Int(11), Int16(22), NULL).AS("result.not_in"),
 		AllTypes.SmallIntPtr.NOT_IN(AllTypes.SELECT(AllTypes.Integer)).AS("result.not_in_select"),
+
+		Bool(true).EQ(String("foo").IS_NOT_NULL()),
+		Bool(true).EQ(String("foo").IS_NOT_NULL()).AS("complex"),
 	).LIMIT(2)
 
 	testutils.AssertStatementSql(t, query, `
-SELECT all_types.integer IS NULL AS "result.is_null",
-     all_types.date_ptr IS NOT NULL AS "result.is_not_null",
+SELECT (all_types.integer IS NULL) AS "result.is_null",
+     (all_types.date_ptr IS NOT NULL) AS "result.is_not_null",
      (all_types.small_int_ptr IN ($1::smallint, $2::smallint)) AS "result.in",
      (all_types.small_int_ptr IN ((
           SELECT all_types.integer AS "all_types.integer"
@@ -497,18 +501,22 @@ SELECT all_types.integer IS NULL AS "result.is_null",
      (all_types.small_int_ptr NOT IN ((
           SELECT all_types.integer AS "all_types.integer"
           FROM test_sample.all_types
-     ))) AS "result.not_in_select"
+     ))) AS "result.not_in_select",
+     $11::boolean = ($12::text IS NOT NULL),
+     ($13::boolean = ($14::text IS NOT NULL)) AS "complex"
 FROM test_sample.all_types
-LIMIT $11;
-`, int8(11), int8(22), 78, 56, 11, 22, 33, 44, int64(11), int16(22), int64(2))
+LIMIT $15;
+`, int8(11), int8(22), 78, 56, 11, 22, 33, 44, int64(11), int16(22), true, "foo", true, "foo", int64(2))
 
 	var dest []struct {
 		common.ExpressionTestResult `alias:"result.*"`
 	}
 
-	err := query.Query(db, &dest)
+	allowUnusedColumns(func() {
+		err := query.Query(db, &dest)
+		require.NoError(t, err)
+	})
 
-	require.NoError(t, err)
 	testutils.AssertJSON(t, dest, `
 [
 	{
@@ -904,12 +912,12 @@ SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
      (all_types.boolean IS DISTINCT FROM $3::boolean) AS "distinct2",
      (all_types.boolean IS NOT DISTINCT FROM all_types.boolean_ptr) AS "not_distinct_1",
      (all_types.boolean IS NOT DISTINCT FROM $4::boolean) AS "NOTDISTINCT2",
-     all_types.boolean IS TRUE AS "ISTRUE",
-     all_types.boolean IS NOT TRUE AS "isnottrue",
-     all_types.boolean IS FALSE AS "is_False",
-     all_types.boolean IS NOT FALSE AS "is not false",
-     all_types.boolean IS UNKNOWN AS "is unknown",
-     all_types.boolean IS NOT UNKNOWN AS "is_not_unknown",
+     (all_types.boolean IS TRUE) AS "ISTRUE",
+     (all_types.boolean IS NOT TRUE) AS "isnottrue",
+     (all_types.boolean IS FALSE) AS "is_False",
+     (all_types.boolean IS NOT FALSE) AS "is not false",
+     (all_types.boolean IS UNKNOWN) AS "is unknown",
+     (all_types.boolean IS NOT UNKNOWN) AS "is_not_unknown",
      ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
      ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
 FROM test_sample.all_types
@@ -1267,7 +1275,72 @@ func TestTimeExpression(t *testing.T) {
 		NOW(),
 	)
 
-	// fmt.Println(query.DebugSql())
+	testutils.AssertStatementSql(t, query, `
+SELECT all_types.time = all_types.time,
+     all_types.time = $1::time without time zone,
+     all_types.timez = all_types.timez_ptr,
+     all_types.timez = $2::time with time zone,
+     all_types.timestamp = all_types.timestamp_ptr,
+     all_types.timestamp = $3::timestamp without time zone,
+     all_types.timestampz = all_types.timestampz_ptr,
+     all_types.timestampz = $4::timestamp with time zone,
+     all_types.date = all_types.date_ptr,
+     all_types.date = $5::date,
+     all_types.time != all_types.time,
+     all_types.time != $6::time without time zone,
+     all_types.timez != all_types.timez_ptr,
+     all_types.timez != $7::time with time zone,
+     all_types.timestamp != all_types.timestamp_ptr,
+     all_types.timestamp != $8::timestamp without time zone,
+     all_types.timestampz != all_types.timestampz_ptr,
+     all_types.timestampz != $9::timestamp with time zone,
+     all_types.date != all_types.date_ptr,
+     all_types.date != $10::date,
+     all_types.time IS DISTINCT FROM all_types.time,
+     all_types.time IS DISTINCT FROM $11::time without time zone,
+     all_types.time IS NOT DISTINCT FROM all_types.time,
+     all_types.time IS NOT DISTINCT FROM $12::time without time zone,
+     all_types.time < all_types.time,
+     all_types.time < $13::time without time zone,
+     all_types.time <= all_types.time,
+     all_types.time <= $14::time without time zone,
+     all_types.time > all_types.time,
+     all_types.time > $15::time without time zone,
+     all_types.time >= all_types.time,
+     all_types.time >= $16::time without time zone,
+     all_types.time BETWEEN $17::time without time zone AND $18::time without time zone,
+     all_types.time NOT BETWEEN all_types.time_ptr AND (all_types.time + INTERVAL '2 HOUR'),
+     all_types.date + INTERVAL '1 HOUR',
+     all_types.date - INTERVAL '1 MINUTE',
+     all_types.time + INTERVAL '1 HOUR',
+     all_types.time - INTERVAL '1 MINUTE',
+     all_types.timez + INTERVAL '1 HOUR',
+     all_types.timez - INTERVAL '1 MINUTE',
+     all_types.timez BETWEEN $19::time with time zone AND all_types.timez_ptr,
+     all_types.timez NOT BETWEEN all_types.timez AND $20::time with time zone,
+     all_types.timestamp + INTERVAL '1 HOUR',
+     all_types.timestamp - INTERVAL '1 MINUTE',
+     all_types.timestamp BETWEEN all_types.timestamp_ptr AND $21::timestamp without time zone,
+     all_types.timestamp NOT BETWEEN $22::timestamp without time zone AND all_types.timestamp_ptr,
+     all_types.timestampz + INTERVAL '1 HOUR',
+     all_types.timestampz - INTERVAL '1 MINUTE',
+     all_types.timestamp BETWEEN all_types.timestamp_ptr AND $23::timestamp without time zone,
+     all_types.timestamp NOT BETWEEN all_types.timestamp_ptr AND $24::timestamp without time zone,
+     all_types.date - $25::text::interval,
+     all_types.date BETWEEN $26::date AND $27::date,
+     all_types.date NOT BETWEEN all_types.date_ptr AND $28::date,
+     CURRENT_DATE,
+     CURRENT_TIME,
+     CURRENT_TIME(2),
+     CURRENT_TIMESTAMP,
+     CURRENT_TIMESTAMP(1),
+     LOCALTIME,
+     LOCALTIME(11),
+     LOCALTIMESTAMP,
+     LOCALTIMESTAMP(4),
+     NOW()
+FROM test_sample.all_types;
+`)
 
 	var dest []struct{}
 
@@ -1339,16 +1412,16 @@ SELECT $1::time without time zone AS "time",
      (
           SELECT row_to_json(json_records) AS "json_json"
           FROM (
-                    SELECT '0000-01-01T' || to_char('2000-10-10'::date + $11::time without time zone, 'HH24:MI:SS.USZ') AS "time",
-                         '0000-01-01T' || to_char('2000-10-10'::date + $12::time without time zone, 'HH24:MI:SS.USZ') AS "timeWithNanoSeconds",
-                         '0000-01-01T' || to_char('2000-10-10'::date + $13::time with time zone, 'HH24:MI:SS.USTZH:TZM') AS "timez",
-                         '0000-01-01T' || to_char('2000-10-10'::date + $14::time with time zone, 'HH24:MI:SS.USTZH:TZM') AS "timezWithNanoSeconds",
+                    SELECT ('0000-01-01T' || to_char('2000-10-10'::date + $11::time without time zone, 'HH24:MI:SS.USZ')) AS "time",
+                         ('0000-01-01T' || to_char('2000-10-10'::date + $12::time without time zone, 'HH24:MI:SS.USZ')) AS "timeWithNanoSeconds",
+                         ('0000-01-01T' || to_char('2000-10-10'::date + $13::time with time zone, 'HH24:MI:SS.USTZH:TZM')) AS "timez",
+                         ('0000-01-01T' || to_char('2000-10-10'::date + $14::time with time zone, 'HH24:MI:SS.USTZH:TZM')) AS "timezWithNanoSeconds",
                          to_char($15::timestamp without time zone, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestamp",
                          to_char($16::timestamp without time zone, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestampWithNanoSeconds",
                          $17::timestamp with time zone AS "timestampz",
                          $18::timestamp with time zone AS "timestampzWithNanoSeconds",
-                         to_char($19::date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "date",
-                         '0000-01-01T' || to_char('2000-10-10'::date + ($20::time without time zone + INTERVAL '2 HOUR'), 'HH24:MI:SS.USZ') AS "timeExpression"
+                         (to_char($19::date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "date",
+                         ('0000-01-01T' || to_char('2000-10-10'::date + ($20::time without time zone + INTERVAL '2 HOUR'), 'HH24:MI:SS.USZ')) AS "timeExpression"
                ) AS json_records
      ) AS "json";
 `)
@@ -1626,21 +1699,21 @@ FROM test_sample.all_types;
 
 func TestTimeEXTRACT(t *testing.T) {
 	stmt := SELECT(
-		EXTRACT(CENTURY, AllTypes.Timestampz),
+		EXTRACT(CENTURY, AllTypes.Timestampz).AS("century"),
 		EXTRACT(DAY, AllTypes.Timestamp),
 		EXTRACT(DECADE, AllTypes.Date),
 		EXTRACT(DOW, AllTypes.TimestampzPtr),
-		EXTRACT(DOY, DateT(time.Now())),
+		EXTRACT(DOY, DateT(time.Now())).AS("date"),
 		EXTRACT(EPOCH, TimestampT(time.Now())),
-		EXTRACT(HOUR, AllTypes.Time.ADD(INTERVAL(1, HOUR))),
-		EXTRACT(ISODOW, AllTypes.Timestampz),
+		EXTRACT(HOUR, AllTypes.Time.ADD(INTERVAL(1, HOUR))).AS("hour"),
+		EXTRACT(ISODOW, AllTypes.Date.SUB(INTERVAL(1, DAY))),
 		EXTRACT(ISOYEAR, AllTypes.Timestampz),
-		EXTRACT(JULIAN, AllTypes.Timestampz).EQ(Float(3456.123)),
-		EXTRACT(MICROSECOND, AllTypes.Timestampz),
+		EXTRACT(JULIAN, AllTypes.Timestampz).EQ(Float(3456.123)).AS("microsecond_equal"),
+		EXTRACT(MICROSECOND, AllTypes.Timestampz).EQ(Float(123.001)),
 		EXTRACT(MILLENNIUM, AllTypes.Timestampz),
 		EXTRACT(MILLISECOND, AllTypes.Timez),
-		EXTRACT(MINUTE, INTERVAL(1, HOUR, 2, MINUTE)),
-		EXTRACT(MONTH, AllTypes.Timestampz),
+		EXTRACT(MINUTE, INTERVAL(1, HOUR, 2, MINUTE)).AS("minute_interval"),
+		EXTRACT(MONTH, INTERVAL(11, DAY)),
 		EXTRACT(QUARTER, AllTypes.Timestampz),
 		EXTRACT(SECOND, AllTypes.Timestampz),
 		EXTRACT(TIMEZONE, AllTypes.Timestampz),
@@ -1652,24 +1725,24 @@ func TestTimeEXTRACT(t *testing.T) {
 		AllTypes,
 	)
 
-	// fmt.Println(stmt.Sql())
+	//fmt.Println(stmt.Sql())
 
 	testutils.AssertStatementSql(t, stmt, `
-SELECT EXTRACT(CENTURY FROM all_types.timestampz),
+SELECT EXTRACT(CENTURY FROM all_types.timestampz) AS "century",
      EXTRACT(DAY FROM all_types.timestamp),
      EXTRACT(DECADE FROM all_types.date),
      EXTRACT(DOW FROM all_types.timestampz_ptr),
-     EXTRACT(DOY FROM $1::date),
+     EXTRACT(DOY FROM $1::date) AS "date",
      EXTRACT(EPOCH FROM $2::timestamp without time zone),
-     EXTRACT(HOUR FROM all_types.time + INTERVAL '1 HOUR'),
-     EXTRACT(ISODOW FROM all_types.timestampz),
+     EXTRACT(HOUR FROM (all_types.time + INTERVAL '1 HOUR')) AS "hour",
+     EXTRACT(ISODOW FROM (all_types.date - INTERVAL '1 DAY')),
      EXTRACT(ISOYEAR FROM all_types.timestampz),
-     EXTRACT(JULIAN FROM all_types.timestampz) = $3,
-     EXTRACT(MICROSECOND FROM all_types.timestampz),
+     (EXTRACT(JULIAN FROM all_types.timestampz) = $3) AS "microsecond_equal",
+     EXTRACT(MICROSECOND FROM all_types.timestampz) = $4,
      EXTRACT(MILLENNIUM FROM all_types.timestampz),
      EXTRACT(MILLISECOND FROM all_types.timez),
-     EXTRACT(MINUTE FROM INTERVAL '1 HOUR 2 MINUTE'),
-     EXTRACT(MONTH FROM all_types.timestampz),
+     EXTRACT(MINUTE FROM INTERVAL '1 HOUR 2 MINUTE') AS "minute_interval",
+     EXTRACT(MONTH FROM INTERVAL '11 DAY'),
      EXTRACT(QUARTER FROM all_types.timestampz),
      EXTRACT(SECOND FROM all_types.timestampz),
      EXTRACT(TIMEZONE FROM all_types.timestampz),
@@ -1947,9 +2020,9 @@ FROM (
                "subQuery"."all_types.integer" AS "integer",
                "subQuery"."all_types.double_precision" AS "doublePrecision",
                "subQuery"."all_types.text" AS "text",
-               to_char("subQuery"."all_types.date"::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "date",
-               '0000-01-01T' || to_char('2000-10-10'::date + "subQuery"."all_types.time", 'HH24:MI:SS.USZ') AS "time",
-               '0000-01-01T' || to_char('2000-10-10'::date + "subQuery"."all_types.timez", 'HH24:MI:SS.USTZH:TZM') AS "timez",
+               (to_char("subQuery"."all_types.date"::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "date",
+               ('0000-01-01T' || to_char('2000-10-10'::date + "subQuery"."all_types.time", 'HH24:MI:SS.USZ')) AS "time",
+               ('0000-01-01T' || to_char('2000-10-10'::date + "subQuery"."all_types.timez", 'HH24:MI:SS.USTZH:TZM')) AS "timez",
                to_char("subQuery"."all_types.timestamp", 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "timestamp",
                "subQuery"."all_types.timestampz" AS "timestampz",
                "subQuery"."all_types.interval" AS "interval",

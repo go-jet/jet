@@ -552,10 +552,10 @@ func DATE_TRUNC(field unit, source Expression, timezone ...string) TimestampExpr
 // GENERATE_SERIES generates a series of values from start to stop, with a step size of step.
 func GENERATE_SERIES(start Expression, stop Expression, step ...Expression) Expression {
 	if len(step) > 0 {
-		return jet.NewFunc("GENERATE_SERIES", []Expression{start, stop, step[0]}, nil)
+		return Func("GENERATE_SERIES", start, stop, step[0])
 	}
 
-	return jet.NewFunc("GENERATE_SERIES", []Expression{start, stop}, nil)
+	return Func("GENERATE_SERIES", start, stop)
 }
 
 // --------------- Conditional Expressions Functions -------------//

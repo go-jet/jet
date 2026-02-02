@@ -3,8 +3,9 @@ package postgres
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/jet"
 	"strconv"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // Dialect is implementation of postgres dialect for SQL Builder serialisation.
@@ -42,7 +43,7 @@ func newDialect() jet.Dialect {
 			case TimezExpression:
 				return CustomExpression(Token("'0000-01-01T' || to_char('2000-10-10'::date + "), e, Token(`, 'HH24:MI:SS.USTZH:TZM')`))
 			case TimestampExpression:
-				return CustomExpression(Token("to_char("), e, Token(`, 'YYYY-MM-DD"T"HH24:MI:SS.USZ')`))
+				return jet.AtomicCustomExpression(Token("to_char("), e, Token(`, 'YYYY-MM-DD"T"HH24:MI:SS.USZ')`))
 			case DateExpression:
 				return CustomExpression(Token("to_char("), e, Token(`::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z'`))
 			}

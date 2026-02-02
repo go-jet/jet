@@ -12,11 +12,12 @@ func TestOptionalOrDefaultString(t *testing.T) {
 }
 
 func TestOptionalOrDefaultExpression(t *testing.T) {
-	defaultExpression := table2ColFloat
+	defaultExpression := []Expression{table2ColFloat}
 	optionalExpression := table1Col1
 
-	require.Equal(t, OptionalOrDefaultExpression(defaultExpression), defaultExpression)
-	require.Equal(t, OptionalOrDefaultExpression(defaultExpression, optionalExpression), optionalExpression)
+	require.Equal(t, OptionalOrDefault(defaultExpression, nil), table2ColFloat)
+	require.Equal(t, OptionalOrDefault(defaultExpression, optionalExpression), table2ColFloat)
+	require.Equal(t, OptionalOrDefault(nil, optionalExpression), table1Col1)
 }
 
 func TestJoinAlias(t *testing.T) {

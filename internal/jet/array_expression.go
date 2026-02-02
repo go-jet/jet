@@ -71,7 +71,7 @@ func (a arrayInterfaceImpl[E]) CONCAT_ELEMENT(rhs E) Array[E] {
 }
 
 func (a arrayInterfaceImpl[E]) AT(at IntegerExpression) E {
-	return CastToArrayElemType[E](a.parent, CustomExpression(a.parent, Token("["), at, Token("]")))
+	return CastToArrayElemType[E](a.parent, AtomicCustomExpression(a.parent, Token("["), at, Token("]")))
 }
 
 type arrayExpressionWrapper[E Expression] struct {
@@ -126,12 +126,8 @@ func CastToArrayElemType[E Expression](array Array[E], exp Expression) E {
 
 // ARRAY constructor builds an array value using list of expressions.
 func ARRAY[E Expression](elems ...E) Array[E] {
-	var args = make([]Serializer, len(elems))
-	for i, each := range elems {
-		args[i] = each
-	}
-	return ArrayExp[E](CustomExpression(Token("ARRAY["), ListSerializer{
-		Serializers: args,
+	return ArrayExp[E](AtomicCustomExpression(Token("ARRAY["), ListSerializer{
+		Serializers: ToSerializerList(elems),
 		Separator:   ",",
 	}, Token("]")))
 }

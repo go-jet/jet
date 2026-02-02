@@ -1,13 +1,14 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/view"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
@@ -155,7 +156,7 @@ FROM (
                customer.email AS "email",
                customer.address_id AS "addressID",
                customer.activebool AS "activebool",
-               to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "createDate",
+               (to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "createDate",
                to_char(customer.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
                customer.active AS "active",
                (
@@ -307,7 +308,7 @@ FROM (
                customer.email AS "email",
                customer.address_id AS "addressID",
                customer.activebool AS "activebool",
-               to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "createDate",
+               (to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "createDate",
                to_char(customer.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
                customer.active AS "active",
                (
@@ -522,7 +523,7 @@ RETURNING rental.rental_id AS "rental.rental_id",
                               customer.email AS "email",
                               customer.address_id AS "addressID",
                               customer.activebool AS "activebool",
-                              to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "createDate",
+                              (to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "createDate",
                               to_char(customer.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
                               customer.active AS "active"
                          FROM dvds.customer

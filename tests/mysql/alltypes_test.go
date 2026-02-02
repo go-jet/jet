@@ -1,12 +1,13 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/utils/ptr"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
 
@@ -53,8 +54,8 @@ func TestAllTypesJSON(t *testing.T) {
 	testutils.AssertStatementSql(t, stmt, strings.ReplaceAll(`
 SELECT JSON_ARRAYAGG(JSON_OBJECT(
           'id', all_types.id,
-          'boolean', all_types.boolean = 1,
-          'booleanPtr', all_types.boolean_ptr = 1,
+          'boolean', (all_types.boolean = 1),
+          'booleanPtr', (all_types.boolean_ptr = 1),
           'tinyInt', all_types.tiny_int,
           'uTinyInt', all_types.u_tiny_int,
           'smallInt', all_types.small_int,
@@ -190,8 +191,8 @@ func TestExpressionOperators(t *testing.T) {
 	).LIMIT(2)
 
 	testutils.AssertStatementSql(t, query, strings.Replace(`
-SELECT all_types.'integer' IS NULL AS "result.is_null",
-     all_types.date_ptr IS NOT NULL AS "result.is_not_null",
+SELECT (all_types.'integer' IS NULL) AS "result.is_null",
+     (all_types.date_ptr IS NOT NULL) AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
      (all_types.small_int_ptr IN ((
           SELECT all_types.'integer' AS "all_types.integer"
@@ -259,12 +260,12 @@ SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
      (NOT(all_types.boolean <=> ?)) AS "distinct2",
      (all_types.boolean <=> all_types.boolean_ptr) AS "not_distinct_1",
      (all_types.boolean <=> ?) AS "NOTDISTINCT2",
-     all_types.boolean IS TRUE AS "ISTRUE",
-     all_types.boolean IS NOT TRUE AS "isnottrue",
-     all_types.boolean IS FALSE AS "is_False",
-     all_types.boolean IS NOT FALSE AS "is not false",
-     all_types.boolean IS UNKNOWN AS "is unknown",
-     all_types.boolean IS NOT UNKNOWN AS "is_not_unknown",
+     (all_types.boolean IS TRUE) AS "ISTRUE",
+     (all_types.boolean IS NOT TRUE) AS "isnottrue",
+     (all_types.boolean IS FALSE) AS "is_False",
+     (all_types.boolean IS NOT FALSE) AS "is not false",
+     (all_types.boolean IS UNKNOWN) AS "is unknown",
+     (all_types.boolean IS NOT UNKNOWN) AS "is_not_unknown",
      ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
      ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
 FROM test_sample.all_types;
@@ -1143,7 +1144,7 @@ SELECT EXTRACT(MICROSECOND FROM CAST(? AS TIME)),
      EXTRACT(HOUR FROM all_types.timestamp),
      EXTRACT(DAY FROM all_types.date),
      EXTRACT(WEEK FROM all_types.timestamp),
-     EXTRACT(MONTH FROM all_types.timestamp + INTERVAL 1 DAY),
+     EXTRACT(MONTH FROM (all_types.timestamp + INTERVAL 1 DAY)),
      EXTRACT(QUARTER FROM all_types.timestamp),
      EXTRACT(YEAR FROM all_types.timestamp) = ?,
      EXTRACT(SECOND_MICROSECOND FROM all_types.time),
@@ -1305,7 +1306,7 @@ FROM (
 
 		testutils.AssertDebugStatementSql(t, stmtJson, strings.ReplaceAll(`
 SELECT JSON_ARRAYAGG(JSON_OBJECT(
-          'boolean', sub_query.''all_types.boolean'' = 1,
+          'boolean', (sub_query.''all_types.boolean'' = 1),
           'integer', sub_query.''all_types.integer'',
           'double', sub_query.''all_types.double'',
           'text', sub_query.''all_types.text'',
