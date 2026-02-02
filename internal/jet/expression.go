@@ -141,24 +141,27 @@ type binaryOperatorSerializer struct {
 }
 
 func (c *binaryOperatorSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
-		serializeOverrideFunc(statement, out, FallTrough(options)...)
-	} else {
-		c.lhs.serialize(statement, out, FallTrough(options)...)
-		out.WriteString(c.operator)
-		c.rhs.serialize(statement, out, FallTrough(options)...)
-	}
+	optionalWrap(out, options, func(out *SQLBuilder, options []SerializeOption) {
+		if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
+			serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
+			serializeOverrideFunc(statement, out, FallTrough(options)...)
+		} else {
+			c.lhs.serialize(statement, out, FallTrough(options)...)
+			out.WriteString(c.operator)
+			c.rhs.serialize(statement, out, FallTrough(options)...)
+		}
+	})
+
 }
 
 // NewBinaryOperatorExpression creates new binaryOperatorExpression
 func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) Expression {
-	return newExpression(optionalWrap(&binaryOperatorSerializer{
+	return newExpression(&binaryOperatorSerializer{
 		lhs:             lhs,
 		rhs:             rhs,
 		additionalParam: OptionalOrDefault(additionalParam, nil),
 		operator:        operator,
-	}))
+	})
 }
 
 type serializersWithOperator struct {
@@ -226,24 +229,24 @@ type betweenOperatorSerializer struct {
 }
 
 func (b *betweenOperatorSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	b.expression.serialize(statement, out, FallTrough(options)...)
-	if b.notBetween {
-		out.WriteString("NOT")
-	}
-	out.WriteString("BETWEEN")
-	b.min.serialize(statement, out, FallTrough(options)...)
-	out.WriteString("AND")
-	b.max.serialize(statement, out, FallTrough(options)...)
+	optionalWrap(out, options, func(out *SQLBuilder, options []SerializeOption) {
+		b.expression.serialize(statement, out, FallTrough(options)...)
+		if b.notBetween {
+			out.WriteString("NOT")
+		}
+		out.WriteString("BETWEEN")
+		b.min.serialize(statement, out, FallTrough(options)...)
+		out.WriteString("AND")
+		b.max.serialize(statement, out, FallTrough(options)...)
+	})
 }
 
 // NewBetweenOperatorExpression creates new BETWEEN operator expression
 func NewBetweenOperatorExpression(expression, min, max Expression, notBetween bool) BoolExpression {
-	return BoolExp(newExpression(
-		optionalWrap(&betweenOperatorSerializer{
-			expression: expression,
-			notBetween: notBetween,
-			min:        min,
-			max:        max,
-		}),
-	))
+	return BoolExp(newExpression(&betweenOperatorSerializer{
+		expression: expression,
+		notBetween: notBetween,
+		min:        min,
+		max:        max,
+	}))
 }

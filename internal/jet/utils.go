@@ -160,7 +160,7 @@ func ToSerializerValue(value interface{}) Serializer {
 		return clause
 	}
 
-	return literal(value)
+	return Literal(value)
 }
 
 // UnwindRowFromModel func
@@ -189,7 +189,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 			field = reflect.Indirect(structField).Interface()
 		}
 
-		row[i] = literal(field)
+		row[i] = Literal(field)
 	}
 
 	return row
@@ -293,7 +293,7 @@ func joinAlias(tableAlias, columnAlias string) string {
 	return strings.TrimRight(tableAlias, ".*") + "." + columnAlias
 }
 
-func optional[T any](value []T) T {
+func singleOptional[T any](value []T) T {
 	if len(value) > 0 {
 		return value[0]
 	}

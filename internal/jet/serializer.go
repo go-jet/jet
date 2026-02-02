@@ -121,61 +121,47 @@ func (t Token) serialize(statement StatementType, out *SQLBuilder, options ...Se
 // CustomExpression creates new custom expression. When serialized may require parentheses
 // depending on context.
 func CustomExpression(parts ...Serializer) Expression {
-	return newExpression(optionalWrap(&customSerializer{
+	return newExpression(&customSerializer{
 		parts: parts,
-	}))
-}
-
-type customSerializer struct {
-	parts []Serializer
-}
-
-func (c *customSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	for _, expression := range c.parts {
-		expression.serialize(statement, out, options...)
-	}
-}
-
-type optionalWrapSerializer struct {
-	serializer []Serializer
-}
-
-func optionalWrap(serializer ...Serializer) Serializer {
-	return &optionalWrapSerializer{serializer: serializer}
-}
-
-func (s *optionalWrapSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if !contains(options, NoWrap) {
-		out.WriteString("(")
-	}
-
-	for _, ser := range s.serializer {
-		ser.serialize(statement, out, without(options, NoWrap)...)
-	}
-
-	if !contains(options, NoWrap) {
-		out.WriteString(")")
-	}
+	})
 }
 
 // AtomicCustomExpression creates new custom expression. When serialized does not require parentheses.
 func AtomicCustomExpression(parts ...Serializer) Expression {
-	return newExpression(noWrap(&customSerializer{
-		parts: parts,
-	}))
+	return newExpression(&customSerializer{
+		parts:  parts,
+		atomic: true,
+	})
 }
 
-type noWrapSerializer struct {
-	serializer []Serializer
+type customSerializer struct {
+	parts  []Serializer
+	atomic bool
 }
 
-func noWrap(serializer ...Serializer) Serializer {
-	return &noWrapSerializer{serializer: serializer}
+func (c *customSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if c.atomic {
+		for _, expr := range c.parts {
+			expr.serialize(statement, out, without(options, NoWrap)...)
+		}
+	} else {
+		optionalWrap(out, options, func(out *SQLBuilder, options []SerializeOption) {
+			for _, expr := range c.parts {
+				expr.serialize(statement, out, options...)
+			}
+		})
+	}
 }
 
-func (s *noWrapSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	for _, ser := range s.serializer {
-		ser.serialize(statement, out, without(options, NoWrap)...)
+func optionalWrap(out *SQLBuilder, options []SerializeOption, ser func(out *SQLBuilder, options []SerializeOption)) {
+	if !contains(options, NoWrap) {
+		out.WriteString("(")
+	}
+
+	ser(out, without(options, NoWrap))
+
+	if !contains(options, NoWrap) {
+		out.WriteString(")")
 	}
 }
 

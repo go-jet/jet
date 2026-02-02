@@ -18,6 +18,7 @@ type Dialect interface {
 	SerializeOrderBy() func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName(index int) string
 	JsonValueEncode(expr Expression) Expression
+	RegexpLike(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
 }
 
 // SerializerFunc func
@@ -43,6 +44,7 @@ type DialectParams struct {
 	SerializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName    func(index int) string
 	JsonValueEncode            func(expr Expression) Expression
+	RegexpLike                 func(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
 }
 
 // NewDialect creates new dialect with params
@@ -60,6 +62,7 @@ func NewDialect(params DialectParams) Dialect {
 		serializeOrderBy:           params.SerializeOrderBy,
 		valuesDefaultColumnName:    params.ValuesDefaultColumnName,
 		jsonValueEncode:            params.JsonValueEncode,
+		regexpLike:                 params.RegexpLike,
 	}
 }
 
@@ -76,6 +79,7 @@ type dialectImpl struct {
 	serializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	valuesDefaultColumnName    func(index int) string
 	jsonValueEncode            func(expr Expression) Expression
+	regexpLike                 func(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
 }
 
 func (d *dialectImpl) Name() string {
@@ -131,6 +135,21 @@ func (d *dialectImpl) ValuesDefaultColumnName(index int) string {
 
 func (d *dialectImpl) JsonValueEncode(expr Expression) Expression {
 	return d.jsonValueEncode(expr)
+}
+
+func (d *dialectImpl) RegexpLike(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc {
+	if d.regexpLike != nil {
+		return d.regexpLike(str, not, pattern, caseSensitive)
+	}
+
+	return func(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+		str.serialize(statement, out, FallTrough(options)...)
+		if not {
+			out.WriteString("NOT")
+		}
+		out.WriteString("REGEXP")
+		pattern.serialize(statement, out, FallTrough(options)...)
+	}
 }
 
 func arrayOfStringsToMapOfStrings(arr []string) map[string]bool {

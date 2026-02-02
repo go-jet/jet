@@ -244,7 +244,7 @@ func leadLagImpl(name string, expr Expression, offsetAndDefault ...interface{}) 
 		defaultValue, ok = offsetAndDefault[1].(Expression)
 
 		if !ok {
-			defaultValue = literal(offsetAndDefault[1])
+			defaultValue = Literal(offsetAndDefault[1])
 		}
 
 		params = append(params, FixedLiteral(offset), defaultValue)

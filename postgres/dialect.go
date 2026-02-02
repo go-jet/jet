@@ -13,15 +13,10 @@ var Dialect = newDialect()
 
 func newDialect() jet.Dialect {
 
-	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
-	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgresREGEXPLIKEoperator
-	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = postgresNOTREGEXPLIKEoperator
-	operatorSerializeOverrides["CAST"] = postgresCAST
-
 	dialectParams := jet.DialectParams{
 		Name:                       "PostgreSQL",
 		PackageName:                "postgres",
-		OperatorSerializeOverrides: operatorSerializeOverrides,
+		OperatorSerializeOverrides: nil,
 		AliasQuoteChar:             '"',
 		IdentifierQuoteChar:        '"',
 		ArgumentPlaceholder: func(ord int) string {
@@ -49,6 +44,7 @@ func newDialect() jet.Dialect {
 			}
 			return expr
 		},
+		RegexpLike: regexpLike,
 	}
 
 	return jet.NewDialect(dialectParams)
@@ -63,80 +59,23 @@ func argumentToString(value any) (string, bool) {
 	return "", false
 }
 
-func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {
+func regexpLike(str jet.StringExpression, not bool, pattern jet.StringExpression, caseSensitive bool) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
+		jet.Serialize(str, statement, out, options...)
 
-		expression := expressions[0]
+		var notOperator string
 
-		litExpr, ok := expressions[1].(jet.LiteralExpression)
-
-		if !ok {
-			panic("jet: cast invalid cast type")
-		}
-
-		castType, ok := litExpr.Value().(string)
-
-		if !ok {
-			panic("jet: cast type is not string")
-		}
-
-		jet.Serialize(expression, statement, out, options...)
-		out.WriteString("::" + castType)
-	}
-}
-
-func postgresREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-
-		jet.Serialize(expressions[0], statement, out, options...)
-
-		caseSensitive := false
-
-		if len(expressions) >= 3 {
-			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
-				caseSensitive = stringLiteral.Value().(bool)
-			}
+		if not {
+			notOperator = "!"
 		}
 
 		if caseSensitive {
-			out.WriteString("~")
+			out.WriteString(notOperator + "~")
 		} else {
-			out.WriteString("~*")
+			out.WriteString(notOperator + "~*")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
-	}
-}
-
-func postgresNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-
-		jet.Serialize(expressions[0], statement, out, options...)
-
-		caseSensitive := false
-
-		if len(expressions) >= 3 {
-			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
-				caseSensitive = stringLiteral.Value().(bool)
-			}
-		}
-
-		if caseSensitive {
-			out.WriteString("!~")
-		} else {
-			out.WriteString("!~*")
-		}
-
-		jet.Serialize(expressions[1], statement, out, options...)
+		jet.Serialize(pattern, statement, out, options...)
 	}
 }
 

@@ -12,8 +12,6 @@ var Dialect = newDialect()
 
 func newDialect() jet.Dialect {
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
-	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = mysqlREGEXPLIKEoperator
-	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = mysqlNOTREGEXPLIKEoperator
 	operatorSerializeOverrides["IS DISTINCT FROM"] = mysqlISDISTINCTFROM
 	operatorSerializeOverrides["IS NOT DISTINCT FROM"] = mysqlISNOTDISTINCTFROM
 	operatorSerializeOverrides["/"] = mysqlDivision
@@ -52,6 +50,7 @@ func newDialect() jet.Dialect {
 			}
 			return expr
 		},
+		RegexpLike: regexpLikeOperator,
 	}
 
 	return jet.NewDialect(mySQLDialectParams)
@@ -144,20 +143,12 @@ func mysqlISDISTINCTFROM(expressions ...jet.Serializer) jet.SerializerFunc {
 	}
 }
 
-func mysqlREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
+func regexpLikeOperator(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
+		jet.Serialize(str, statement, out, options...)
 
-		jet.Serialize(expressions[0], statement, out, options...)
-
-		caseSensitive := false
-
-		if len(expressions) >= 3 {
-			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
-				caseSensitive = stringLiteral.Value().(bool)
-			}
+		if not {
+			out.WriteString("NOT")
 		}
 
 		out.WriteString("REGEXP")
@@ -166,33 +157,7 @@ func mysqlREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 			out.WriteString("BINARY")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
-	}
-}
-
-func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-
-		jet.Serialize(expressions[0], statement, out, options...)
-
-		caseSensitive := false
-
-		if len(expressions) >= 3 {
-			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
-				caseSensitive = stringLiteral.Value().(bool)
-			}
-		}
-
-		out.WriteString("NOT REGEXP")
-
-		if caseSensitive {
-			out.WriteString("BINARY")
-		}
-
-		jet.Serialize(expressions[1], statement, out, options...)
+		jet.Serialize(pattern, statement, out, options...)
 	}
 }
 

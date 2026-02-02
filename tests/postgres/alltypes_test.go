@@ -648,10 +648,10 @@ func TestStringOperators(t *testing.T) {
 		LTRIM(String("Ltrim"), String("A")),
 		RTRIM(String("rtrim")),
 		RTRIM(AllTypes.VarChar, String("B")),
-		CHR(Int(65)),
-		CONCAT(AllTypes.VarCharPtr, AllTypes.VarCharPtr, String("aaa"), Int(1)),
-		CONCAT(Bool(false), Int(1), Float(22.2), String("test test")),
-		CONCAT_WS(String("string1"), Int(1), Float(11.22), String("bytea"), Bool(false)), //Float(11.12)),
+		CHR(Int8(65)),
+		CONCAT(AllTypes.VarCharPtr, AllTypes.VarCharPtr, Text("aaa"), Int8(1)),
+		CONCAT(Bool(false), Int16(1), Real(22.2), Text("test test")),
+		CONCAT_WS(Text("string1"), Int64(1), Real(11.22), Text("bytea"), Bool(false)), //Float(11.12)),
 		CONVERT(Bytea("bytea"), UTF8, LATIN1),
 		CONVERT(AllTypes.Bytea, UTF8, LATIN1),
 		CONVERT_FROM(Bytea("text_in_utf8"), UTF8),
@@ -1117,8 +1117,8 @@ func TestIntegerOperators(t *testing.T) {
 		AllTypes.SmallInt.BIT_XOR(AllTypes.SmallInt).AS("bit xor 1"),
 		AllTypes.SmallInt.BIT_XOR(Int(11)).AS("bit xor 2"),
 
-		BIT_NOT(Int(-1).MUL(AllTypes.SmallInt)).AS("bit_not_1"),
-		BIT_NOT(Int(-11)).AS("bit_not_2"),
+		BIT_NOT(Int32(-1).MUL(AllTypes.SmallInt)).AS("bit_not_1"),
+		BIT_NOT(Int32(-11)).AS("bit_not_2"),
 
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(AllTypes.SmallInt.DIV(Int8(2))).AS("bit shift left 1"),
 		AllTypes.SmallInt.BIT_SHIFT_LEFT(Int(4)).AS("bit shift left 2"),
@@ -1129,8 +1129,6 @@ func TestIntegerOperators(t *testing.T) {
 		SQRT(ABSi(AllTypes.BigInt)).AS("sqrt"),
 		CBRT(ABSi(AllTypes.BigInt)).AS("cbrt"),
 	).LIMIT(2)
-
-	// fmt.Println(query.Sql())
 
 	testutils.AssertStatementSql(t, query, `
 SELECT all_types.big_int AS "all_types.big_int",
@@ -1173,17 +1171,17 @@ SELECT all_types.big_int AS "all_types.big_int",
      (all_types.small_int | $20) AS "bit or 2",
      (all_types.small_int # all_types.small_int) AS "bit xor 1",
      (all_types.small_int # $21) AS "bit xor 2",
-     (~ ($22 * all_types.small_int)) AS "bit_not_1",
-     (~ -11) AS "bit_not_2",
-     (all_types.small_int << (all_types.small_int / $23::smallint)) AS "bit shift left 1",
-     (all_types.small_int << $24) AS "bit shift left 2",
-     (all_types.small_int >> (all_types.small_int / $25)) AS "bit shift right 1",
-     (all_types.small_int >> $26) AS "bit shift right 2",
+     (~ ($22::integer * all_types.small_int)) AS "bit_not_1",
+     (~ $23::integer) AS "bit_not_2",
+     (all_types.small_int << (all_types.small_int / $24::smallint)) AS "bit shift left 1",
+     (all_types.small_int << $25) AS "bit shift left 2",
+     (all_types.small_int >> (all_types.small_int / $26)) AS "bit shift right 1",
+     (all_types.small_int >> $27) AS "bit shift right 2",
      ABS(all_types.big_int) AS "abs",
      SQRT(ABS(all_types.big_int)) AS "sqrt",
      CBRT(ABS(all_types.big_int)) AS "cbrt"
 FROM test_sample.all_types
-LIMIT $27;
+LIMIT $28;
 `)
 
 	var dest []struct {
