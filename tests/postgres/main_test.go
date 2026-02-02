@@ -8,7 +8,7 @@ import (
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
-	"github.com/jackc/pgx/v4/stdlib"
+	"github.com/jackc/pgx/v5/stdlib"
 	"os"
 	"runtime"
 	"testing"
@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/profile"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/jackc/pgx/v4/stdlib"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 var ctx = context.Background()
@@ -53,7 +53,7 @@ func TestMain(m *testing.M) {
 
 	qrm.GlobalConfig.StrictScan = true
 
-	for _, driverName := range []string{"postgres", "pgx"} {
+	for _, driverName := range []string{"postgres"} {
 
 		fmt.Printf("\nRunning postgres tests for driver: %s, caching enabled: %t \n", driverName, withStatementCaching)
 

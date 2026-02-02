@@ -11,6 +11,7 @@ import (
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -69,6 +70,18 @@ func ExecuteInTxAndRollback(t *testing.T, db *stmtcache.DB, f func(tx qrm.DB)) {
 	require.NoError(t, err)
 	defer func() {
 		err := tx.Rollback()
+		require.NoError(t, err)
+	}()
+
+	f(tx)
+}
+
+// ExecuteInTxAndRollbackPgxV5 will execute function in sql transaction and then rollback transaction
+func ExecuteInTxAndRollbackPgxV5(t *testing.T, db *pgx.Conn, f func(db pgx.Tx)) {
+	tx, err := db.Begin(context.Background())
+	require.NoError(t, err)
+	defer func() {
+		err := tx.Rollback(context.Background())
 		require.NoError(t, err)
 	}()
 
