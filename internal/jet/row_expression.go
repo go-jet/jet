@@ -74,7 +74,7 @@ func newRowExpression(name string, dialect Dialect, expressions ...Expression) R
 	ret := &rowExpressionWrapper{}
 	ret.rowInterfaceImpl.root = ret
 
-	ret.Expression = NewFunc(name, expressions, ret)
+	ret.Expression = newFunc(name, expressions)
 	ret.dialect = dialect
 	ret.expressions = expressions
 

@@ -66,7 +66,7 @@ func TestIntExpressionPOW(t *testing.T) {
 
 func TestIntExpressionBIT_NOT(t *testing.T) {
 	assertClauseSerialize(t, BIT_NOT(table2ColInt), "(~ table2.col_int)")
-	assertClauseSerialize(t, BIT_NOT(Int(11)), "(~ 11)")
+	assertClauseSerialize(t, BIT_NOT(Int(11)), "(~ $1)", int64(11))
 }
 
 func TestIntExpressionBIT_AND(t *testing.T) {

@@ -2,9 +2,10 @@ package mysql
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/datetime"
 	"regexp"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/utils/datetime"
 
 	"github.com/go-jet/jet/v2/internal/jet"
 )
@@ -98,7 +99,7 @@ func INTERVAL(value interface{}, unitType unitType) Interval {
 
 // INTERVALe creates new temporal interval from expresion and unit type.
 func INTERVALe(expr Expression, unitType unitType) Interval {
-	return jet.IntervalExp(CustomExpression(Token("INTERVAL"), expr, Token(unitType)))
+	return jet.IntervalExp(jet.AtomicCustomExpression(Token("INTERVAL"), expr, Token(unitType)))
 }
 
 // INTERVALd creates new temporal interval from time.Duration

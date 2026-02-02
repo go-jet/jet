@@ -2,6 +2,10 @@ package sqlite
 
 import (
 	"encoding/hex"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -12,9 +16,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestAllTypes(t *testing.T) {
@@ -232,8 +233,8 @@ func TestExpressionOperators(t *testing.T) {
 	).LIMIT(2)
 
 	testutils.AssertStatementSql(t, query, strings.Replace(`
-SELECT all_types.integer IS NULL AS "result.is_null",
-     all_types.date_ptr IS NOT NULL AS "result.is_not_null",
+SELECT (all_types.integer IS NULL) AS "result.is_null",
+     (all_types.date_ptr IS NOT NULL) AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
      (all_types.small_int_ptr IN ((
           SELECT all_types.integer AS "all_types.integer"
@@ -299,12 +300,12 @@ SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
      (all_types.boolean IS NOT ?) AS "distinct2",
      (all_types.boolean IS all_types.boolean_ptr) AS "not_distinct_1",
      (all_types.boolean IS ?) AS "NOTDISTINCT2",
-     all_types.boolean IS TRUE AS "ISTRUE",
-     all_types.boolean IS NOT TRUE AS "isnottrue",
-     all_types.boolean IS FALSE AS "is_False",
-     all_types.boolean IS NOT FALSE AS "is not false",
-     all_types.boolean IS NULL AS "is unknown",
-     all_types.boolean IS NOT NULL AS "is_not_unknown",
+     (all_types.boolean IS TRUE) AS "ISTRUE",
+     (all_types.boolean IS NOT TRUE) AS "isnottrue",
+     (all_types.boolean IS FALSE) AS "is_False",
+     (all_types.boolean IS NOT FALSE) AS "is not false",
+     (all_types.boolean IS NULL) AS "is unknown",
+     (all_types.boolean IS NOT NULL) AS "is_not_unknown",
      ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
      ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
 FROM all_types;

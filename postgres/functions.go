@@ -184,12 +184,12 @@ var CHR = jet.CHR
 
 // CONCAT adds two or more expressions together
 var CONCAT = func(expressions ...Expression) StringExpression {
-	return jet.CONCAT(explicitLiteralCasts(expressions...)...)
+	return jet.CONCAT(expressions...)
 }
 
 // CONCAT_WS adds two or more expressions together with a separator.
 func CONCAT_WS(separator Expression, expressions ...Expression) StringExpression {
-	return jet.CONCAT_WS(explicitLiteralCast(separator), explicitLiteralCasts(expressions...)...)
+	return jet.CONCAT_WS(separator, expressions...)
 }
 
 // Character encodings for CONVERT, CONVERT_FROM and CONVERT_TO functions
@@ -239,7 +239,7 @@ var DECODE = jet.DECODE
 
 // FORMAT formats the arguments according to a format string. This function is similar to the C function sprintf.
 func FORMAT(formatStr StringExpression, formatArgs ...Expression) StringExpression {
-	return jet.FORMAT(formatStr, explicitLiteralCasts(formatArgs...)...)
+	return jet.FORMAT(formatStr, formatArgs...)
 }
 
 // INITCAP converts the first letter of each word to upper case
@@ -552,10 +552,10 @@ func DATE_TRUNC(field unit, source Expression, timezone ...string) TimestampExpr
 // GENERATE_SERIES generates a series of values from start to stop, with a step size of step.
 func GENERATE_SERIES(start Expression, stop Expression, step ...Expression) Expression {
 	if len(step) > 0 {
-		return jet.NewFunc("GENERATE_SERIES", []Expression{start, stop, step[0]}, nil)
+		return Func("GENERATE_SERIES", start, stop, step[0])
 	}
 
-	return jet.NewFunc("GENERATE_SERIES", []Expression{start, stop}, nil)
+	return Func("GENERATE_SERIES", start, stop)
 }
 
 // --------------- Conditional Expressions Functions -------------//
@@ -578,55 +578,19 @@ var EXISTS = jet.EXISTS
 // CASE create CASE operator with optional list of expressions
 var CASE = jet.CASE
 
-func explicitLiteralCasts(expressions ...Expression) []jet.Expression {
-	ret := []jet.Expression{}
-
-	for _, exp := range expressions {
-		ret = append(ret, explicitLiteralCast(exp))
-	}
-
-	return ret
-}
-
-func explicitLiteralCast(expresion Expression) jet.Expression {
-	if _, ok := expresion.(jet.LiteralExpression); !ok {
-		return expresion
-	}
-
-	switch expresion.(type) {
-	case jet.BoolExpression:
-		return CAST(expresion).AS_BOOL()
-	case jet.IntegerExpression:
-		return CAST(expresion).AS_INTEGER()
-	case jet.FloatExpression:
-		return CAST(expresion).AS_NUMERIC()
-	case jet.StringExpression:
-		return CAST(expresion).AS_TEXT()
-	}
-
-	return expresion
-}
-
 // MODE computes the most frequent value of the aggregated argument
 var MODE = jet.MODE
 
 // PERCENTILE_CONT computes a value corresponding to the specified fraction within the ordered set of
 // aggregated argument values. This will interpolate between adjacent input items if needed.
 func PERCENTILE_CONT(fraction FloatExpression) *jet.OrderSetAggregateFunc {
-	return jet.PERCENTILE_CONT(castFloatLiteral(fraction))
+	return jet.PERCENTILE_CONT(fraction)
 }
 
 // PERCENTILE_DISC computes  the first value within the ordered set of aggregated argument values whose position
 // in the ordering equals or exceeds the specified fraction. The aggregated argument must be of a sortable type.
 func PERCENTILE_DISC(fraction FloatExpression) *jet.OrderSetAggregateFunc {
-	return jet.PERCENTILE_DISC(castFloatLiteral(fraction))
-}
-
-func castFloatLiteral(fraction FloatExpression) FloatExpression {
-	if _, ok := fraction.(jet.LiteralExpression); ok {
-		return CAST(fraction).AS_DOUBLE() // to make postgres aware of the type
-	}
-	return fraction
+	return jet.PERCENTILE_DISC(fraction)
 }
 
 // ----------------- Group By operators --------------------------//

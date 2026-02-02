@@ -2,8 +2,9 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/lib/pq"
 	"time"
+
+	"github.com/lib/pq"
 
 	"github.com/go-jet/jet/v2/internal/jet"
 )

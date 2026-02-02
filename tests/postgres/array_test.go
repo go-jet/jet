@@ -1,6 +1,9 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/postgres"
@@ -11,8 +14,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestArraySelect(t *testing.T) {
@@ -158,8 +159,8 @@ SELECT $1::boolean[] AS "bool_array",
      (sample_arrays.bool_array = $13::boolean[]) AS "bool_eq",
      (sample_arrays.text_array = sample_arrays.text_array) AS "text_eq",
      (sample_arrays.text_array != $14::text[]) AS "text_neq",
-     (sample_arrays.int4_array < $15::integer[]) IS TRUE AS "int4_lt",
-     (sample_arrays.int8_array <= $16::bigint[]) IS FALSE AS "int8_lteq",
+     ((sample_arrays.int4_array < $15::integer[]) IS TRUE) AS "int4_lt",
+     ((sample_arrays.int8_array <= $16::bigint[]) IS FALSE) AS "int8_lteq",
      (sample_arrays.real_array > $17::real[]) AS "decimal_gt",
      (sample_arrays.double_array >= $18::double precision[]) AS "numeric_gt_eq",
      (sample_arrays.bytea_array @> $19::bytea[]) AS "bytea_contains",

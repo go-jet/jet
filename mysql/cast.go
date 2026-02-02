@@ -1,25 +1,25 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"strconv"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-type cast struct {
-	jet.Cast
+// CAST function converts an expr (of any type) into later specified datatype.
+func CAST(expr Expression) *cast {
+	return &cast{
+		expr: expr,
+	}
 }
 
-// CAST function converts a expr (of any type) into latter specified datatype.
-func CAST(expr Expression) *cast {
-	ret := &cast{}
-	ret.Cast = jet.NewCastImpl(expr)
-
-	return ret
+type cast struct {
+	expr Expression
 }
 
 // AS casts expressions to castType
 func (c *cast) AS(castType string) Expression {
-	return c.Cast.AS(castType)
+	return jet.AtomicCustomExpression(Token("CAST("), c.expr, Token("AS "+castType+")"))
 }
 
 // AS_DATETIME cast expression to DATETIME type

@@ -121,12 +121,12 @@ func SerializeColumnExpressionNames(columns []ColumnExpression, out *SQLBuilder)
 	}
 }
 
-// ExpressionListToSerializerList converts list of expressions to list of serializers
-func ExpressionListToSerializerList(expressions []Expression) []Serializer {
-	var ret []Serializer
+// ToSerializerList converts list of expressions to list of serializers
+func ToSerializerList[T Serializer](elems []T) []Serializer {
+	ret := make([]Serializer, len(elems))
 
-	for _, expr := range expressions {
-		ret = append(ret, expr)
+	for i, ser := range elems {
+		ret[i] = ser
 	}
 
 	return ret
@@ -134,10 +134,10 @@ func ExpressionListToSerializerList(expressions []Expression) []Serializer {
 
 // ToExpressionList converts list of any expressions to list of expressions
 func ToExpressionList[T Expression](expressions []T) []Expression {
-	var ret []Expression
+	ret := make([]Expression, len(expressions))
 
-	for _, expression := range expressions {
-		ret = append(ret, expression)
+	for i, expr := range expressions {
+		ret[i] = expr
 	}
 
 	return ret
@@ -145,10 +145,10 @@ func ToExpressionList[T Expression](expressions []T) []Expression {
 
 // ColumnListToProjectionList func
 func ColumnListToProjectionList(columns []ColumnExpression) []Projection {
-	var ret []Projection
+	ret := make([]Projection, len(columns))
 
-	for _, column := range columns {
-		ret = append(ret, column)
+	for i, column := range columns {
+		ret[i] = column
 	}
 
 	return ret
@@ -160,7 +160,7 @@ func ToSerializerValue(value interface{}) Serializer {
 		return clause
 	}
 
-	return literal(value)
+	return Literal(value)
 }
 
 // UnwindRowFromModel func
@@ -189,7 +189,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 			field = reflect.Indirect(structField).Interface()
 		}
 
-		row[i] = literal(field)
+		row[i] = Literal(field)
 	}
 
 	return row
@@ -252,11 +252,11 @@ func OptionalOrDefaultString(defaultStr string, str ...string) string {
 	return defaultStr
 }
 
-// OptionalOrDefaultExpression will return first value from variable argument list expression or
+// OptionalOrDefault will return first value from variable argument list expression or
 // defaultExpression if variable argument list is empty
-func OptionalOrDefaultExpression(defaultExpression Expression, expression ...Expression) Expression {
-	if len(expression) > 0 {
-		return expression[0]
+func OptionalOrDefault(expressions []Expression, defaultExpression Expression) Expression {
+	if len(expressions) > 0 {
+		return expressions[0]
 	}
 
 	return defaultExpression
@@ -291,4 +291,14 @@ func joinAlias(tableAlias, columnAlias string) string {
 		return columnAlias
 	}
 	return strings.TrimRight(tableAlias, ".*") + "." + columnAlias
+}
+
+func singleOptional[T any](value []T) T {
+	if len(value) > 0 {
+		return value[0]
+	}
+
+	var def T
+
+	return def
 }

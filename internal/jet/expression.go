@@ -118,92 +118,84 @@ func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, o
 	e.Root.serialize(statement, out, NoWrap)
 }
 
-// Representation of binary operations (e.g. comparisons, arithmetic)
-type binaryOperatorExpression struct {
+type expression struct {
 	ExpressionInterfaceImpl
+	Serializer
+}
 
+func newExpression(serializer Serializer) Expression {
+	expr := &expression{
+		Serializer: serializer,
+	}
+
+	expr.ExpressionInterfaceImpl.Root = expr
+
+	return expr
+}
+
+// Representation of binary operations (e.g. comparisons, arithmetic)
+type binaryOperatorSerializer struct {
 	lhs, rhs        Serializer
 	additionalParam Serializer
 	operator        string
 }
 
+func (c *binaryOperatorSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	optionalWrap(out, options, func(out *SQLBuilder, options []SerializeOption) {
+		if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
+			serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
+			serializeOverrideFunc(statement, out, FallTrough(options)...)
+		} else {
+			c.lhs.serialize(statement, out, FallTrough(options)...)
+			out.WriteString(c.operator)
+			c.rhs.serialize(statement, out, FallTrough(options)...)
+		}
+	})
+
+}
+
 // NewBinaryOperatorExpression creates new binaryOperatorExpression
 func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additionalParam ...Expression) Expression {
-	binaryExpression := &binaryOperatorExpression{
-		lhs:      lhs,
-		rhs:      rhs,
-		operator: operator,
-	}
-
-	if len(additionalParam) > 0 {
-		binaryExpression.additionalParam = additionalParam[0]
-	}
-
-	binaryExpression.ExpressionInterfaceImpl.Root = binaryExpression
-
-	return complexExpr(binaryExpression)
+	return newExpression(&binaryOperatorSerializer{
+		lhs:             lhs,
+		rhs:             rhs,
+		additionalParam: OptionalOrDefault(additionalParam, nil),
+		operator:        operator,
+	})
 }
 
-func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.OperatorSerializeOverride(c.operator); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
-		serializeOverrideFunc(statement, out, FallTrough(options)...)
-	} else {
-		c.lhs.serialize(statement, out, FallTrough(options)...)
-		out.WriteString(c.operator)
-		c.rhs.serialize(statement, out, FallTrough(options)...)
-	}
-}
-
-type expressionListOperator struct {
-	ExpressionInterfaceImpl
-
+type serializersWithOperator struct {
 	operator    string
-	expressions []Expression
+	serializers []Serializer
 }
 
-func newExpressionListOperator(operator string, expressions ...Expression) *expressionListOperator {
-	ret := &expressionListOperator{
-		operator:    operator,
-		expressions: expressions,
-	}
-
-	ret.ExpressionInterfaceImpl.Root = ret
-
-	return ret
-}
-
-func newBoolExpressionListOperator(operator string, expressions ...BoolExpression) BoolExpression {
-	return BoolExp(newExpressionListOperator(operator, ToExpressionList(expressions)...))
-}
-
-func (elo *expressionListOperator) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if len(elo.expressions) == 0 {
+func (s *serializersWithOperator) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(s.serializers) == 0 {
 		panic("jet: syntax error, expression list empty")
 	}
 
-	shouldWrap := len(elo.expressions) > 1
+	shouldWrap := len(s.serializers) > 1
 	if shouldWrap {
 		out.WriteByte('(')
 		out.IncreaseIdent(tabSize)
 		out.NewLine()
 	}
 
-	for i, expression := range elo.expressions {
+	for i, expression := range s.serializers {
 		if i == 1 {
 			out.IncreaseIdent(tabSize)
 		}
 		if i > 0 {
 			out.NewLine()
-			out.WriteString(elo.operator)
+			out.WriteString(s.operator)
 		}
 
-		out.IncreaseIdent(len(elo.operator) + 1)
+		out.IncreaseIdent(len(s.operator) + 1)
 		expression.serialize(statement, out, FallTrough(options)...)
-		out.DecreaseIdent(len(elo.operator) + 1)
+		out.DecreaseIdent(len(s.operator) + 1)
 	}
 
-	if len(elo.expressions) > 1 {
+	if len(s.serializers) > 1 {
 		out.DecreaseIdent(tabSize)
 	}
 
@@ -214,130 +206,47 @@ func (elo *expressionListOperator) serialize(statement StatementType, out *SQLBu
 	}
 }
 
-// A prefix operator Expression
-type prefixExpression struct {
-	ExpressionInterfaceImpl
-
-	expression Expression
-	operator   string
+func newBoolExpressionListOperator(operator string, expressions []BoolExpression) BoolExpression {
+	return BoolExp(newExpression(&serializersWithOperator{
+		operator:    operator,
+		serializers: ToSerializerList(expressions),
+	}))
 }
 
 func newPrefixOperatorExpression(expression Expression, operator string) Expression {
-	prefixExpression := &prefixExpression{
-		expression: expression,
-		operator:   operator,
-	}
-	prefixExpression.ExpressionInterfaceImpl.Root = prefixExpression
-
-	return complexExpr(prefixExpression)
+	return CustomExpression(Token(operator), expression)
 }
 
-func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.WriteString(p.operator)
-	p.expression.serialize(statement, out, FallTrough(options)...)
+func newPostfixOperatorExpression(expression Expression, operator string) Expression {
+	return CustomExpression(expression, Token(operator))
 }
 
-// A postfix operator Expression
-type postfixOpExpression struct {
-	ExpressionInterfaceImpl
-
-	expression Expression
-	operator   string
-}
-
-func newPostfixOperatorExpression(expression Expression, operator string) *postfixOpExpression {
-	postfixOpExpression := &postfixOpExpression{
-		expression: expression,
-		operator:   operator,
-	}
-
-	postfixOpExpression.ExpressionInterfaceImpl.Root = postfixOpExpression
-
-	return postfixOpExpression
-}
-
-func (p *postfixOpExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	p.expression.serialize(statement, out, FallTrough(options)...)
-	out.WriteString(p.operator)
-}
-
-type betweenOperatorExpression struct {
-	ExpressionInterfaceImpl
-
+type betweenOperatorSerializer struct {
 	expression Expression
 	notBetween bool
 	min        Expression
 	max        Expression
 }
 
+func (b *betweenOperatorSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	optionalWrap(out, options, func(out *SQLBuilder, options []SerializeOption) {
+		b.expression.serialize(statement, out, FallTrough(options)...)
+		if b.notBetween {
+			out.WriteString("NOT")
+		}
+		out.WriteString("BETWEEN")
+		b.min.serialize(statement, out, FallTrough(options)...)
+		out.WriteString("AND")
+		b.max.serialize(statement, out, FallTrough(options)...)
+	})
+}
+
 // NewBetweenOperatorExpression creates new BETWEEN operator expression
 func NewBetweenOperatorExpression(expression, min, max Expression, notBetween bool) BoolExpression {
-	newBetweenOperator := &betweenOperatorExpression{
+	return BoolExp(newExpression(&betweenOperatorSerializer{
 		expression: expression,
 		notBetween: notBetween,
 		min:        min,
 		max:        max,
-	}
-
-	newBetweenOperator.ExpressionInterfaceImpl.Root = newBetweenOperator
-
-	return BoolExp(complexExpr(newBetweenOperator))
-}
-
-func (p *betweenOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	p.expression.serialize(statement, out, FallTrough(options)...)
-	if p.notBetween {
-		out.WriteString("NOT")
-	}
-	out.WriteString("BETWEEN")
-	p.min.serialize(statement, out, FallTrough(options)...)
-	out.WriteString("AND")
-	p.max.serialize(statement, out, FallTrough(options)...)
-}
-
-type customExpression struct {
-	ExpressionInterfaceImpl
-	parts []Serializer
-}
-
-func CustomExpression(parts ...Serializer) Expression {
-	ret := customExpression{
-		parts: parts,
-	}
-	ret.ExpressionInterfaceImpl.Root = &ret
-	return &ret
-}
-
-func (c *customExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	for _, expression := range c.parts {
-		expression.serialize(statement, out, options...)
-	}
-}
-
-type complexExpression struct {
-	ExpressionInterfaceImpl
-	expressions Expression
-}
-
-func complexExpr(expression Expression) Expression {
-	complexExpression := &complexExpression{expressions: expression}
-	complexExpression.ExpressionInterfaceImpl.Root = complexExpression
-
-	return complexExpression
-}
-
-func (s *complexExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if !contains(options, NoWrap) {
-		out.WriteString("(")
-	}
-
-	s.expressions.serialize(statement, out, options...) // FallTrough here because complexExpression is just a wrapper
-
-	if !contains(options, NoWrap) {
-		out.WriteString(")")
-	}
-}
-
-func wrap(expressions ...Expression) Expression {
-	return NewFunc("", expressions, nil)
+	}))
 }
