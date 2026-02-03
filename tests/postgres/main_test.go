@@ -5,13 +5,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"os"
+	"runtime"
+	"testing"
+
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/internal/utils/repo"
 	"github.com/jackc/pgx/v4/stdlib"
-	"os"
-	"runtime"
-	"testing"
 
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
@@ -31,6 +32,7 @@ var source string
 var withStatementCaching bool
 
 const CockroachDB = "COCKROACH_DB"
+const Postgres = "POSTGRESQL_DB"
 
 func init() {
 	source = os.Getenv("PG_SOURCE")
@@ -40,6 +42,10 @@ func init() {
 
 func sourceIsCockroachDB() bool {
 	return source == CockroachDB
+}
+
+func sourceIsPostgres() bool {
+	return source == Postgres
 }
 
 func skipForCockroachDB(t *testing.T) {

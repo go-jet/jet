@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -752,8 +753,6 @@ func UseSchema(schema string) {
 `
 
 func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
-	skipForCockroachDB(t) // because of rowid column
-
 	enumDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/enum/")
 	modelDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/model/")
 	tableDir := filepath.Join(testRoot, "/.gentestdata/jetdb/test_sample/table/")
@@ -761,19 +760,56 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 
 	testutils.AssertFileNamesEqual(t, enumDir, "mood.go", "level.go")
 	testutils.AssertFileContent(t, enumDir+"/mood.go", moodEnumContent)
-	testutils.AssertFileContent(t, enumDir+"/level.go", levelEnumContent)
 
-	testutils.AssertFileNamesEqual(t, modelDir, "all_types.go", "all_types_view.go", "employee.go", "link.go",
+	if sourceIsPostgres() {
+		testutils.AssertFileContent(t, enumDir+"/level.go", levelEnumContent)
+	}
+
+	var cockroachModels = []string{"all_types.go", "all_types_view.go", "employee.go", "link.go",
 		"mood.go", "person.go", "person_phone.go", "weird_names_table.go", "level.go", "user.go", "floats.go", "people.go",
-		"components.go", "vulnerabilities.go", "all_types_materialized_view.go", "sample_ranges.go", "sample_arrays.go")
-	testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
+		"components.go", "vulnerabilities.go", "all_types_materialized_view.go", "sample_arrays.go"}
+
+	var postgresModels = append(cockroachModels, "sample_ranges.go")
+
+	if sourceIsCockroachDB() {
+		testutils.AssertFileNamesEqual(t, modelDir, cockroachModels...)
+	} else {
+		testutils.AssertFileNamesEqual(t, modelDir, postgresModels...)
+	}
+
+	if sourceIsCockroachDB() {
+		enumFileData, err := os.ReadFile(modelDir + "/all_types.go") // #nosec G304
+
+		require.NoError(t, err)
+
+		r := strings.NewReplacer(
+			"Smallserial          int64", "Smallserial          int16",
+			"Serial               int64", "Serial               int32",
+		)
+
+		require.Equal(t, "\n"+r.Replace(string(enumFileData)), allTypesModelContent)
+	} else {
+		testutils.AssertFileContent(t, modelDir+"/all_types.go", allTypesModelContent)
+	}
+
 	testutils.AssertFileContent(t, modelDir+"/link.go", linkModelContent)
 
-	testutils.AssertFileNamesEqual(t, tableDir, "all_types.go", "employee.go", "link.go",
+	var cdbSqlBuilders = []string{"all_types.go", "employee.go", "link.go",
 		"person.go", "person_phone.go", "weird_names_table.go", "user.go", "floats.go", "people.go", "table_use_schema.go",
-		"components.go", "vulnerabilities.go", "sample_ranges.go", "sample_arrays.go")
+		"components.go", "vulnerabilities.go", "sample_arrays.go"}
+	var postgresSqlBuilders = append(cdbSqlBuilders, "sample_ranges.go")
+
+	if sourceIsCockroachDB() {
+		testutils.AssertFileNamesEqual(t, tableDir, cdbSqlBuilders...)
+	} else {
+		testutils.AssertFileNamesEqual(t, tableDir, postgresSqlBuilders...)
+	}
+
 	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
-	testutils.AssertFileContent(t, tableDir+"/sample_ranges.go", sampleRangeTableContent)
+
+	if sourceIsPostgres() {
+		testutils.AssertFileContent(t, tableDir+"/sample_ranges.go", sampleRangeTableContent)
+	}
 
 	testutils.AssertFileContent(t, tableDir+"/link.go", linkTableContent)
 
@@ -864,7 +900,7 @@ type AllTypes struct {
 	DoublePrecisionPtr   *float64
 	DoublePrecision      float64
 	Smallserial          int16
-	Serial               int32
+	Serial               int32 ` + "`sql:\"primary_key\"`" + `
 	Bigserial            int64
 	VarCharPtr           *string
 	VarChar              string
@@ -1122,7 +1158,7 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		MoodPtrColumn              = postgres.StringColumn("mood_ptr")
 		MoodColumn                 = postgres.StringColumn("mood")
 		allColumns                 = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
-		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
+		mutableColumns             = postgres.ColumnList{SmallIntPtrColumn, SmallIntColumn, IntegerPtrColumn, IntegerColumn, BigIntPtrColumn, BigIntColumn, DecimalPtrColumn, DecimalColumn, NumericPtrColumn, NumericColumn, RealPtrColumn, RealColumn, DoublePrecisionPtrColumn, DoublePrecisionColumn, SmallserialColumn, BigserialColumn, VarCharPtrColumn, VarCharColumn, CharPtrColumn, CharColumn, TextPtrColumn, TextColumn, ByteaPtrColumn, ByteaColumn, TimestampzPtrColumn, TimestampzColumn, TimestampPtrColumn, TimestampColumn, DatePtrColumn, DateColumn, TimezPtrColumn, TimezColumn, TimePtrColumn, TimeColumn, IntervalPtrColumn, IntervalColumn, BooleanPtrColumn, BooleanColumn, PointPtrColumn, BitPtrColumn, BitColumn, BitVaryingPtrColumn, BitVaryingColumn, TsvectorPtrColumn, TsvectorColumn, UUIDPtrColumn, UUIDColumn, XMLPtrColumn, XMLColumn, JSONPtrColumn, JSONColumn, JsonbPtrColumn, JsonbColumn, IntegerArrayPtrColumn, IntegerArrayColumn, TextArrayPtrColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayPtrColumn, TextMultiDimArrayColumn, MoodPtrColumn, MoodColumn}
 		defaultColumns             = postgres.ColumnList{SmallIntColumn, IntegerColumn, BigIntColumn, DecimalColumn, NumericColumn, RealColumn, DoublePrecisionColumn, SmallserialColumn, SerialColumn, BigserialColumn, VarCharColumn, CharColumn, TextColumn, ByteaColumn, TimestampzColumn, TimestampColumn, DateColumn, TimezColumn, TimeColumn, IntervalColumn, BooleanColumn, BitColumn, BitVaryingColumn, TsvectorColumn, UUIDColumn, XMLColumn, JSONColumn, JsonbColumn, IntegerArrayColumn, TextArrayColumn, JsonbArrayColumn, TextMultiDimArrayColumn, MoodColumn}
 	)
 
