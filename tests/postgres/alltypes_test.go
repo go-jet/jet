@@ -24,13 +24,11 @@ import (
 	"github.com/go-jet/jet/v2/tests/testdata/results/common"
 )
 
-var AllTypesAllColumns = AllTypes.AllColumns.
-	Except(IntegerColumn("rowid")) // cockroachDB: exclude rowid column
-
 func TestAllTypesSelect(t *testing.T) {
 	var dest []model.AllTypes
 
-	err := AllTypes.SELECT(AllTypesAllColumns).
+	err := SELECT(AllTypes.AllColumns).
+		FROM(AllTypes).
 		LIMIT(2).
 		Query(db, &dest)
 
@@ -42,7 +40,7 @@ func TestAllTypesSelect(t *testing.T) {
 func TestAllTypesSelectJson(t *testing.T) {
 
 	stmt := SELECT_JSON_ARR(
-		AllTypesAllColumns.Except(
+		AllTypes.AllColumns.Except(
 			AllTypes.JSON, AllTypes.JSONPtr,
 			AllTypes.Jsonb, AllTypes.JsonbPtr,
 			AllTypes.JsonbArray,
@@ -203,9 +201,14 @@ func TestMaterializedViewAllTypes(t *testing.T) {
 func TestAllTypesInsertModel(t *testing.T) {
 	skipForPgxDriver(t) // pgx driver bug ERROR: date/time field value out of range: "0000-01-01 12:05:06Z" (SQLSTATE 22008)
 
-	query := AllTypes.INSERT(AllTypesAllColumns).
-		MODEL(allTypesRow0).
-		MODEL(&allTypesRow1).
+	row0 := testutils.DeepCopy(t, allTypesRow0)
+	row0.Serial = 10
+	row1 := testutils.DeepCopy(t, allTypesRow1)
+	row1.Serial = 11
+
+	query := AllTypes.INSERT(AllTypes.AllColumns).
+		MODEL(row0).
+		MODEL(&row1).
 		RETURNING(AllTypes.AllColumns)
 
 	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
@@ -217,19 +220,19 @@ func TestAllTypesInsertModel(t *testing.T) {
 			return
 		}
 		require.Equal(t, len(dest), 2)
-		testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
-		testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
+		testutils.AssertDeepEqual(t, dest[0], row0)
+		testutils.AssertDeepEqual(t, dest[1], row1)
 	})
 }
 
 func TestAllTypesInsertQuery(t *testing.T) {
-	query := AllTypes.INSERT(AllTypesAllColumns).
+	query := AllTypes.INSERT(AllTypes.MutableColumns).
 		QUERY(
 			AllTypes.
-				SELECT(AllTypesAllColumns).
+				SELECT(AllTypes.MutableColumns).
 				LIMIT(2),
 		).
-		RETURNING(AllTypesAllColumns)
+		RETURNING(AllTypes.AllColumns)
 
 	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
 		var dest []model.AllTypes
@@ -237,6 +240,8 @@ func TestAllTypesInsertQuery(t *testing.T) {
 
 		require.NoError(t, err)
 		require.Equal(t, len(dest), 2)
+		dest[0].Serial = allTypesRow0.Serial
+		dest[1].Serial = allTypesRow1.Serial
 		testutils.AssertDeepEqual(t, dest[0], allTypesRow0)
 		testutils.AssertDeepEqual(t, dest[1], allTypesRow1)
 	})
@@ -319,7 +324,7 @@ WHERE all_types.bytea_ptr = $1::bytea;
 }
 
 func TestAllTypesFromSubQuery(t *testing.T) {
-	subQuery := SELECT(AllTypesAllColumns).
+	subQuery := SELECT(AllTypes.AllColumns).
 		FROM(AllTypes).
 		AsTable("allTypesSubQuery")
 
