@@ -14,8 +14,11 @@ type Projection = jet.Projection
 // ProjectionList can be used to create conditional constructed projection list.
 type ProjectionList = jet.ProjectionList
 
-// ColumnAssigment is interface wrapper around column assigment
-type ColumnAssigment = jet.ColumnAssigment
+// ColumnAssignment is interface wrapper around column assignment
+type ColumnAssignment = jet.ColumnAssignment
+
+// Deprecated: ColumnAssigment is a typo. Use ColumnAssignment instead.
+type ColumnAssigment = jet.ColumnAssignment
 
 // PrintableStatement is a statement which sql query can be logged
 type PrintableStatement = jet.PrintableStatement
