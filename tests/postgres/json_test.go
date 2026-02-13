@@ -27,13 +27,11 @@ func TestJsonRawMessage(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, dest, 2)
 
-	// Row 0: JSON, Jsonb, and JsonbPtr all set
 	require.JSONEq(t, allTypesRow0.JSON, dest[0].JSON)
 	require.JSONEq(t, allTypesRow0.Jsonb, string(dest[0].Jsonb))
 	require.NotNil(t, dest[0].JsonbPtr)
 	require.JSONEq(t, *allTypesRow0.JsonbPtr, string(*dest[0].JsonbPtr))
 
-	// Row 1: JSON and Jsonb set, JsonbPtr is nil
 	require.JSONEq(t, allTypesRow1.JSON, dest[1].JSON)
 	require.JSONEq(t, allTypesRow1.Jsonb, string(dest[1].Jsonb))
 	require.Nil(t, dest[1].JsonbPtr)
