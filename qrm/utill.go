@@ -2,14 +2,16 @@ package qrm
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"reflect"
+	"strings"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/utils/must"
 	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"github.com/go-jet/jet/v2/qrm/internal"
 	"github.com/google/uuid"
-	"reflect"
-	"strings"
-	"time"
 )
 
 var scannerInterfaceType = reflect.TypeOf((*sql.Scanner)(nil)).Elem()
@@ -148,6 +150,7 @@ func initializeValueIfNilPtr(value reflect.Value) {
 var timeType = reflect.TypeOf(time.Now())
 var uuidType = reflect.TypeOf(uuid.New())
 var byteArrayType = reflect.TypeOf([]byte(""))
+var jsonRawMessageType = reflect.TypeOf(json.RawMessage{})
 
 func isSimpleModelType(objType reflect.Type) bool {
 	objType = indirectType(objType)
@@ -161,7 +164,7 @@ func isSimpleModelType(objType reflect.Type) bool {
 		return true
 	}
 
-	return objType == timeType || objType == uuidType || objType == byteArrayType
+	return objType == timeType || objType == uuidType || objType == byteArrayType || objType == jsonRawMessageType
 }
 
 // source can't be pointer
