@@ -1,6 +1,6 @@
 module github.com/go-jet/jet/v2
 
-go 1.26.1
+go 1.24.0
 
 // used by jet generator
 require (
@@ -10,7 +10,7 @@ require (
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/lib/pq v1.10.9
 	github.com/mattn/go-sqlite3 v1.14.28
-	github.com/search5/cubrid-go v0.0.0-20260401132336-2d0e4e85b096
+	github.com/search5/cubrid-go v0.0.0-20260402083206-6eec8567cccc
 )
 
 // used in tests
@@ -51,5 +51,3 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/search5/cubrid-go => ../golang
