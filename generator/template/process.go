@@ -281,6 +281,8 @@ func generateUseSchemaFunc(dirPath, fileTypes string, builders []TableSQLBuilder
 func insertedRowAlias(dialect jet.Dialect) string {
 	if dialect.Name() == "MySQL" {
 		return "new"
+	} else if dialect.Name() == "CUBRID" {
+		return "new"
 	}
 
 	return "excluded"

@@ -11,6 +11,41 @@ func TestToGoEnumValueIdentifier(t *testing.T) {
 	require.Equal(t, defaultEnumValueName("NumEnum", "100"), "NumEnum100")
 }
 
+func TestCubridColumnTypes(t *testing.T) {
+	tests := []struct {
+		dataType string
+		want     string
+	}{
+		{"short", "Integer"},
+		{"monetary", "Float"},
+		{"string", "String"},
+		{"nchar", "String"},
+		{"nchar varying", "String"},
+		{"clob", "String"},
+		{"set", "String"},
+		{"multiset", "String"},
+		{"sequence", "String"},
+		{"list", "String"},
+		{"object", "String"},
+		{"oid", "String"},
+		{"timestamptz", "Timestampz"},
+		{"timestampltz", "Timestamp"},
+		{"datetimetz", "Timestampz"},
+		{"datetimeltz", "Timestamp"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.dataType, func(t *testing.T) {
+			col := metadata.Column{
+				Name:     "test_col",
+				DataType: metadata.DataType{Name: tt.dataType, Kind: metadata.BaseType},
+			}
+			got := getSqlBuilderColumnType(col)
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestColumnRenameReserved(t *testing.T) {
 	tests := []struct {
 		col  string
