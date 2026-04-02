@@ -37,4 +37,21 @@ func TestINTERVALd(t *testing.T) {
 	assertSerialize(t, INTERVALd(2*time.Hour), "INTERVAL 7200 SECOND")
 	assertSerialize(t, INTERVALd(24*time.Hour), "INTERVAL 86400 SECOND")
 	assertSerialize(t, INTERVALd(3*time.Millisecond), "INTERVAL 3000 MILLISECOND")
+	assertSerialize(t, INTERVALd(0), "INTERVAL 0 SECOND")
+}
+
+func TestUnitTypeString(t *testing.T) {
+	if SECOND.String() != "SECOND" {
+		t.Errorf("SECOND.String() = %q, want %q", SECOND.String(), "SECOND")
+	}
+	if DAY.String() != "DAY" {
+		t.Errorf("DAY.String() = %q, want %q", DAY.String(), "DAY")
+	}
+}
+
+func TestIntervalDebugString(t *testing.T) {
+	s := intervalDebugString(5, SECOND)
+	if s != "INTERVAL 5 SECOND" {
+		t.Errorf("intervalDebugString(5, SECOND) = %q, want %q", s, "INTERVAL 5 SECOND")
+	}
 }

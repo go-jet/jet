@@ -126,3 +126,55 @@ WHERE NOT (EXISTS (
       ));
 `)
 }
+
+func TestSelectWINDOW(t *testing.T) {
+	assertStatementSql(t,
+		SELECT(table1ColInt, ROW_NUMBER().OVER(Window("w1"))).
+			FROM(table1).
+			WINDOW("w1").AS(ORDER_BY(table1ColInt.ASC())), `
+SELECT table1.col_int AS "table1.col_int",
+     ROW_NUMBER() OVER (w1)
+FROM db.table1
+WINDOW w1 AS (ORDER BY table1.col_int ASC);
+`)
+}
+
+func TestSelectAsTable(t *testing.T) {
+	subQ := SELECT(table1ColInt).FROM(table1).AsTable("sub")
+	assertStatementSql(t,
+		SELECT(subQ.AllColumns()).FROM(subQ), `
+SELECT sub."table1.col_int" AS "table1.col_int"
+FROM (
+          SELECT table1.col_int AS "table1.col_int"
+          FROM db.table1
+     ) AS sub;
+`)
+}
+
+func TestSelectOrderByNullsFirst(t *testing.T) {
+	assertStatementSql(t, SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.ASC().NULLS_FIRST()), `
+SELECT table2.col_float AS "table2.col_float"
+FROM db.table2
+ORDER BY table2.col_int ASC NULLS FIRST;
+`)
+}
+
+func TestSelectOrderByNullsLast(t *testing.T) {
+	assertStatementSql(t, SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.DESC().NULLS_LAST()), `
+SELECT table2.col_float AS "table2.col_float"
+FROM db.table2
+ORDER BY table2.col_int DESC NULLS LAST;
+`)
+}
+
+func TestSelectPRECEDING_FOLLOWING(t *testing.T) {
+	assertStatementSql(t,
+		SELECT(
+			ROW_NUMBER().OVER(
+				ORDER_BY(table1Col1.ASC()).ROWS(PRECEDING(1), FOLLOWING(1)),
+			),
+		).FROM(table1), `
+SELECT ROW_NUMBER() OVER (ORDER BY table1.col1 ASC ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING)
+FROM db.table1;
+`)
+}

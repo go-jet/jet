@@ -102,3 +102,21 @@ INSERT INTO db.table1 (col1) (
 );
 `)
 }
+
+func TestInsertMODELS(t *testing.T) {
+	type Row struct {
+		Col1     int
+		ColFloat float64
+	}
+
+	rows := []Row{{Col1: 1, ColFloat: 1.1}, {Col1: 2, ColFloat: 2.2}}
+
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		MODELS(rows)
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?);
+`, 1, 1.1, 2, 2.2)
+}

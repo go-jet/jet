@@ -143,3 +143,27 @@ func TestRANK(t *testing.T) {
 func TestDENSE_RANK(t *testing.T) {
 	assertSerialize(t, DENSE_RANK(), "DENSE_RANK()")
 }
+
+func TestLPAD(t *testing.T) {
+	assertSerialize(t, LPAD(table1ColString, Int(10), String("0")),
+		"LPAD(table1.col_string, ?, ?)", int64(10), "0")
+}
+
+func TestRPAD(t *testing.T) {
+	assertSerialize(t, RPAD(table1ColString, Int(10), String("0")),
+		"RPAD(table1.col_string, ?, ?)", int64(10), "0")
+}
+
+func TestCURRENT_TIME(t *testing.T) {
+	assertSerialize(t, CURRENT_TIME(), "CURRENT_TIME")
+	assertSerialize(t, CURRENT_TIME(6), "CURRENT_TIME(6)")
+}
+
+func TestCURRENT_TIMESTAMP(t *testing.T) {
+	assertSerialize(t, CURRENT_TIMESTAMP(), "CURRENT_TIMESTAMP")
+	assertSerialize(t, CURRENT_TIMESTAMP(3), "CURRENT_TIMESTAMP(3)")
+}
+
+func TestNOW(t *testing.T) {
+	assertSerialize(t, NOW(), "NOW()")
+}

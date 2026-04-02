@@ -275,3 +275,26 @@ func TestSUPERSETEQ(t *testing.T) {
 	assertSerialize(t, SUPERSETEQ(table1ColString, table2ColStr),
 		"(table1.col_string SUPERSETEQ table2.col_str)")
 }
+
+func TestTIMEDIFF(t *testing.T) {
+	assertSerialize(t, TIMEDIFF(table1ColTime, table1ColTime),
+		"TIMEDIFF(table1.col_time, table1.col_time)")
+}
+
+func TestCURRENT_USER_(t *testing.T) {
+	assertSerialize(t, CURRENT_USER_(), "CURRENT_USER()")
+}
+
+func TestDRANDOM_WithSeed(t *testing.T) {
+	assertSerialize(t, DRANDOM(Int(42)), "DRANDOM(?)", int64(42))
+}
+
+func TestTO_DATETIME_WithFormat(t *testing.T) {
+	assertSerialize(t, TO_DATETIME(String("2024-01-01"), String("YYYY-MM-DD")),
+		"TO_DATETIME(?, ?)", "2024-01-01", "YYYY-MM-DD")
+}
+
+func TestTO_TIMESTAMP_WithFormat(t *testing.T) {
+	assertSerialize(t, TO_TIMESTAMP(String("2024-01-01"), String("YYYY-MM-DD")),
+		"TO_TIMESTAMP(?, ?)", "2024-01-01", "YYYY-MM-DD")
+}

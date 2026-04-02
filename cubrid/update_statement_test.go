@@ -59,3 +59,14 @@ func TestUpdateUnconditionally(t *testing.T) {
 func TestUpdateNilColumn(t *testing.T) {
 	assertStatementSqlErr(t, table1.UPDATE(nil).SET(1), "jet: nil column in columns list for SET clause")
 }
+
+func TestUpdateWithColumnAssignment(t *testing.T) {
+	assertStatementSql(t, table1.UPDATE(table1ColInt, table1ColFloat).
+		SET(table1ColInt.SET(Int(10)), table1ColFloat.SET(Float(3.14))).
+		WHERE(table1Col1.EQ(Int(1))), `
+UPDATE db.table1
+SET col_int = ?,
+    col_float = ?
+WHERE table1.col1 = ?;
+`, int64(10), 3.14, int64(1))
+}

@@ -96,3 +96,25 @@ func TestReservedWordQuoting(t *testing.T) {
 		_ = col
 	}
 }
+
+func TestArgumentToString_Bytes(t *testing.T) {
+	result, ok := argumentToString([]byte{0xDE, 0xAD})
+	if !ok {
+		t.Error("expected ok for []byte")
+	}
+	if result != "X'dead'" {
+		t.Errorf("got %q, want %q", result, "X'dead'")
+	}
+}
+
+func TestArgumentToString_NonBytes(t *testing.T) {
+	_, ok := argumentToString("hello")
+	if ok {
+		t.Error("expected not ok for string type")
+	}
+}
+
+func TestFloatDivision(t *testing.T) {
+	// Float / Float should use "/" not "DIV"
+	assertSerialize(t, table1ColFloat.DIV(Float(2.0)), "(table1.col_float / ?)", 2.0)
+}

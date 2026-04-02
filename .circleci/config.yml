@@ -45,6 +45,10 @@ jobs:
           COCKROACH_PASSWORD: jet
           COCKROACH_DATABASE: jetdb
 
+      - image: cubrid/cubrid:11.4
+        environment:
+          CUBRID_DB: cubdb
+
     environment: # environment variables for the build itself
       TEST_RESULTS: /tmp/test-results # path to where test results will be saved
 
@@ -105,7 +109,18 @@ jobs:
               echo -n .
               sleep 1
             done
-            echo Failed waiting for Cockroach && exit 1            
+            echo Failed waiting for Cockroach && exit 1
+
+      - run:
+          name: Waiting for CUBRID to be ready
+          command: |
+            for i in `seq 1 30`;
+            do
+              nc -z localhost 33000 && echo Success && exit 0
+              echo -n .
+              sleep 2
+            done
+            echo Failed waiting for CUBRID && exit 1
 
       - run:
           name: Install MySQL CLI;
@@ -142,7 +157,7 @@ jobs:
 
       - run:
           name: Running tests
-          command:  gotestsum --junitfile $TEST_RESULTS/report.xml --format testname   -- -tags postgres -coverprofile=cover.out  -covermode=atomic -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/...,github.com/go-jet/jet/v2/stmtcache/... ./...
+          command:  gotestsum --junitfile $TEST_RESULTS/report.xml --format testname   -- -tags postgres -coverprofile=cover.out  -covermode=atomic -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/cubrid/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/...,github.com/go-jet/jet/v2/stmtcache/... ./...
 
       - run:
           name: Running tests with statement caching enabled
@@ -159,10 +174,23 @@ jobs:
       - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
       - run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/
 
+      # run CUBRID integration tests
+      - run:
+          name: Running CUBRID integration tests
+          command: CUBRID_DSN="cubrid://dba:@localhost:33000/cubdb" go test -tags integration -v -coverprofile=cover_cubrid.out -covermode=atomic ./generator/cubrid/...
+
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}
           paths:
             - "/go/pkg/mod"
+
+      # merge coverage profiles
+      - run:
+          name: Merge coverage profiles
+          command: |
+            if [ -f cover_cubrid.out ]; then
+              tail -n +2 cover_cubrid.out >> cover.out
+            fi
 
       - codecov/upload:
           file: cover.out
