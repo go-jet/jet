@@ -1,0 +1,138 @@
+package cubrid
+
+import (
+	"testing"
+)
+
+func TestInsertNilValue(t *testing.T) {
+	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(nil), `
+INSERT INTO db.table1 (col1)
+VALUES (?);
+`, nil)
+}
+
+func TestInsertSingleValue(t *testing.T) {
+	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(1), `
+INSERT INTO db.table1 (col1)
+VALUES (?);
+`, int(1))
+}
+
+func TestInsertWithColumnList(t *testing.T) {
+	columnList := ColumnList{table3ColInt}
+	columnList = append(columnList, table3StrCol)
+
+	assertStatementSql(t, table3.INSERT(columnList).VALUES(1, 3), `
+INSERT INTO db.table3 (col_int, col2)
+VALUES (?, ?);
+`, 1, 3)
+}
+
+func TestInsertMultipleValues(t *testing.T) {
+	assertStatementSql(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
+INSERT INTO db.table1 (col1, col_float, col3)
+VALUES (?, ?, ?);
+`, 1, 2, 3)
+}
+
+func TestInsertMultipleRows(t *testing.T) {
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		VALUES(1, 2).
+		VALUES(11, 22).
+		VALUES(111, 222)
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?),
+       (?, ?);
+`, 1, 2, 11, 22, 111, 222)
+}
+
+func TestInsertDefaultValue(t *testing.T) {
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		VALUES(DEFAULT, "two")
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?);
+`, "two")
+}
+
+func TestInsertOnDuplicateKeyUpdate(t *testing.T) {
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		VALUES(DEFAULT, "two").
+		ON_DUPLICATE_KEY_UPDATE(table1ColFloat.SET(Float(11.1)))
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?)
+ON DUPLICATE KEY UPDATE col_float = ?;
+`, "two", 11.1)
+}
+
+func TestInsertOnDuplicateKeyUpdateMultiple(t *testing.T) {
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		VALUES(1, 2.2).
+		ON_DUPLICATE_KEY_UPDATE(
+			table1Col1.SET(Int(99)),
+			table1ColFloat.SET(Float(3.3)),
+		)
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE col1 = ?,
+                        col_float = ?;
+`, 1, 2.2, int64(99), 3.3)
+}
+
+func TestInsertValuesFromModel(t *testing.T) {
+	type Table1Model struct {
+		Col1     *int
+		ColFloat float64
+	}
+
+	one := 1
+	toInsert := Table1Model{Col1: &one, ColFloat: 1.11}
+
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		MODEL(toInsert).
+		MODEL(&toInsert)
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?);
+`, int(1), float64(1.11), int(1), float64(1.11))
+}
+
+func TestInsertQuery(t *testing.T) {
+	stmt := table1.INSERT(table1Col1).
+		QUERY(SELECT(table2ColInt).FROM(table2))
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1) (
+     SELECT table2.col_int AS "table2.col_int"
+     FROM db.table2
+);
+`)
+}
+
+func TestInsertMODELS(t *testing.T) {
+	type Row struct {
+		Col1     int
+		ColFloat float64
+	}
+
+	rows := []Row{{Col1: 1, ColFloat: 1.1}, {Col1: 2, ColFloat: 2.2}}
+
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		MODELS(rows)
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?);
+`, 1, 1.1, 2, 2.2)
+}

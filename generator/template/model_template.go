@@ -330,7 +330,8 @@ func toGoType(column metadata.Column) interface{} {
 		}
 		return int8(0)
 	case "smallint", "int2",
-		"year":
+		"year",
+		"short": // CUBRID
 		if column.DataType.IsUnsigned {
 			return uint16(0)
 		}
@@ -351,7 +352,8 @@ func toGoType(column metadata.Column) interface{} {
 		"timestamp with time zone", "timestamptz",
 		"time without time zone", "time",
 		"time with time zone", "timetz",
-		"datetime": // MySQL
+		"datetime", // MySQL
+		"timestampltz", "datetimeltz", "datetimetz": // CUBRID timezone-aware types
 		return time.Time{}
 	case "bytea",
 		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": //MySQL
@@ -362,13 +364,17 @@ func toGoType(column metadata.Column) interface{} {
 		"tsvector", "bit", "bit varying", "varbit",
 		"money", "json", "jsonb",
 		"xml", "point", "interval", "line", "array",
-		"char", "tinytext", "mediumtext", "longtext": // MySQL
+		"char", "tinytext", "mediumtext", "longtext", // MySQL
+		"string", "nchar", "nchar varying", "clob", // CUBRID
+		"set", "multiset", "sequence", "list", // CUBRID collections
+		"object", "oid": // CUBRID OID
 		return ""
 	case "real", "float4":
 		return float32(0.0)
 	case "numeric", "decimal",
 		"double precision", "float8", "float",
-		"double": // MySQL
+		"double", // MySQL
+		"monetary": // CUBRID
 		return float64(0.0)
 	case "uuid":
 		return uuid.UUID{}

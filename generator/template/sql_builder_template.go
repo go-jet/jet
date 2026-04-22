@@ -192,14 +192,17 @@ func sqlToColumnType(columnMetaData metadata.Column) string {
 	case "boolean", "bool":
 		return "Bool"
 	case "smallint", "integer", "bigint", "int2", "int4", "int8",
-		"tinyint", "mediumint", "int", "year": //MySQL
+		"tinyint", "mediumint", "int", "year", //MySQL
+		"short": // CUBRID
 		return "Integer"
 	case "date":
 		return "Date"
 	case "timestamp without time zone",
-		"timestamp", "datetime": //MySQL:
+		"timestamp", "datetime", // MySQL
+		"timestampltz", "datetimeltz": // CUBRID (local timezone variants)
 		return "Timestamp"
-	case "timestamp with time zone", "timestamptz":
+	case "timestamp with time zone", "timestamptz",
+		"datetimetz": // CUBRID
 		return "Timestampz"
 	case "time without time zone",
 		"time": //MySQL
@@ -211,14 +214,18 @@ func sqlToColumnType(columnMetaData metadata.Column) string {
 	case "user-defined", "enum", "text", "character", "character varying", "uuid",
 		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "nvarchar", "bpchar", "varbit",
-		"tinytext", "mediumtext", "longtext": // MySQL
+		"tinytext", "mediumtext", "longtext", // MySQL
+		"string", "nchar", "nchar varying", "clob", // CUBRID
+		"set", "multiset", "sequence", "list", // CUBRID collection types (mapped as string/JSON)
+		"object", "oid": // CUBRID OID
 		return "String"
 	case "bytea": // postgres
 		return "Bytea"
 	case "binary", "varbinary", "tinyblob", "mediumblob", "longblob", "blob": // mysql and sqlite
 		return "Blob"
 	case "real", "numeric", "decimal", "double precision", "float", "float4", "float8",
-		"double": // MySQL
+		"double", // MySQL
+		"monetary": // CUBRID
 		return "Float"
 	case "daterange":
 		return "DateRange"

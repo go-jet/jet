@@ -12,7 +12,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	_ "github.com/search5/cubrid-go"
 
+	"github.com/go-jet/jet/v2/cubrid"
+	cubridgen "github.com/go-jet/jet/v2/generator/cubrid"
 	"github.com/go-jet/jet/v2/generator/metadata"
 	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
 	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
@@ -181,6 +184,28 @@ func main() {
 			dsn,
 			destDir,
 			genTemplate(sqlite.Dialect, tablesFilter, viewsFilter, enumsFilter),
+		)
+
+	case "cubrid":
+		generatorTemplate := genTemplate(cubrid.Dialect, tablesFilter, viewsFilter, enumsFilter)
+
+		if dsn != "" {
+			err = cubridgen.GenerateDSN(dsn, destDir, generatorTemplate)
+			break
+		}
+
+		dbConn := cubridgen.DBConnection{
+			Host:     host,
+			Port:     port,
+			User:     user,
+			Password: password,
+			DBName:   dbName,
+		}
+
+		err = cubridgen.Generate(
+			destDir,
+			dbConn,
+			generatorTemplate,
 		)
 
 	case "":
