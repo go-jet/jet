@@ -2,6 +2,7 @@ package template
 
 import (
 	"github.com/go-jet/jet/v2/generator/metadata"
+	jet "github.com/go-jet/jet/v2/internal/jet"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -69,4 +70,32 @@ func TestColumnRenameReserved(t *testing.T) {
 			require.Equal(t, builder.Name, tt.want)
 		})
 	}
+}
+
+func TestInsertedRowAlias(t *testing.T) {
+	cubridDialect := jet.NewDialect(jet.DialectParams{
+		Name:        "CUBRID",
+		PackageName: "cubrid",
+		ArgumentPlaceholder: func(int) string { return "?" },
+		ValuesDefaultColumnName: func(index int) string { return "column_0" },
+		JsonValueEncode: func(expr jet.Expression) jet.Expression { return expr },
+	})
+	mysqlDialect := jet.NewDialect(jet.DialectParams{
+		Name:        "MySQL",
+		PackageName: "mysql",
+		ArgumentPlaceholder: func(int) string { return "?" },
+		ValuesDefaultColumnName: func(index int) string { return "column_0" },
+		JsonValueEncode: func(expr jet.Expression) jet.Expression { return expr },
+	})
+	postgresDialect := jet.NewDialect(jet.DialectParams{
+		Name:        "PostgreSQL",
+		PackageName: "postgres",
+		ArgumentPlaceholder: func(ord int) string { return "$1" },
+		ValuesDefaultColumnName: func(index int) string { return "column_0" },
+		JsonValueEncode: func(expr jet.Expression) jet.Expression { return expr },
+	})
+
+	require.Equal(t, "new", insertedRowAlias(cubridDialect))
+	require.Equal(t, "new", insertedRowAlias(mysqlDialect))
+	require.Equal(t, "excluded", insertedRowAlias(postgresDialect))
 }

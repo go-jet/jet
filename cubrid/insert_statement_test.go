@@ -71,6 +71,22 @@ ON DUPLICATE KEY UPDATE col_float = ?;
 `, "two", 11.1)
 }
 
+func TestInsertOnDuplicateKeyUpdateMultiple(t *testing.T) {
+	stmt := table1.INSERT(table1Col1, table1ColFloat).
+		VALUES(1, 2.2).
+		ON_DUPLICATE_KEY_UPDATE(
+			table1Col1.SET(Int(99)),
+			table1ColFloat.SET(Float(3.3)),
+		)
+
+	assertStatementSql(t, stmt, `
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?)
+ON DUPLICATE KEY UPDATE col1 = ?,
+                        col_float = ?;
+`, 1, 2.2, int64(99), 3.3)
+}
+
 func TestInsertValuesFromModel(t *testing.T) {
 	type Table1Model struct {
 		Col1     *int

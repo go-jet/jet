@@ -139,6 +139,19 @@ WINDOW w1 AS (ORDER BY table1.col_int ASC);
 `)
 }
 
+func TestSelectWINDOW_NoArgs(t *testing.T) {
+	// windowExpand.AS() with no arguments returns the select statement unchanged
+	stmt := SELECT(table1ColInt, ROW_NUMBER().OVER(Window("w1"))).
+		FROM(table1).
+		WINDOW("w1").AS()
+	assertStatementSql(t, stmt, `
+SELECT table1.col_int AS "table1.col_int",
+     ROW_NUMBER() OVER (w1)
+FROM db.table1
+WINDOW w1 AS ();
+`)
+}
+
 func TestSelectAsTable(t *testing.T) {
 	subQ := SELECT(table1ColInt).FROM(table1).AsTable("sub")
 	assertStatementSql(t,

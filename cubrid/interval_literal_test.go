@@ -35,6 +35,7 @@ func TestINTERVALd(t *testing.T) {
 	assertSerialize(t, INTERVALd(-1*time.Second), "INTERVAL -1 SECOND")
 	assertSerialize(t, INTERVALd(3*time.Minute), "INTERVAL 180 SECOND")
 	assertSerialize(t, INTERVALd(2*time.Hour), "INTERVAL 7200 SECOND")
+	assertSerialize(t, INTERVALd(2*time.Hour+500*time.Microsecond), "INTERVAL 7200 SECOND")
 	assertSerialize(t, INTERVALd(24*time.Hour), "INTERVAL 86400 SECOND")
 	assertSerialize(t, INTERVALd(3*time.Millisecond), "INTERVAL 3000 MILLISECOND")
 	assertSerialize(t, INTERVALd(0), "INTERVAL 0 SECOND")

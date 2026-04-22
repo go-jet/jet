@@ -29,6 +29,23 @@ func TestDialectArgumentPlaceholder(t *testing.T) {
 	}
 }
 
+func TestDialectValuesDefaultColumnName(t *testing.T) {
+	if Dialect.ValuesDefaultColumnName(0) != "column_0" {
+		t.Errorf("ValuesDefaultColumnName(0) = %q, want %q", Dialect.ValuesDefaultColumnName(0), "column_0")
+	}
+	if Dialect.ValuesDefaultColumnName(1) != "column_1" {
+		t.Errorf("ValuesDefaultColumnName(1) = %q, want %q", Dialect.ValuesDefaultColumnName(1), "column_1")
+	}
+}
+
+func TestDialectJsonValueEncode(t *testing.T) {
+	expr := Int(42)
+	encoded := Dialect.JsonValueEncode(expr)
+	if encoded != expr {
+		t.Errorf("JsonValueEncode should return the expression unchanged for CUBRID dialect")
+	}
+}
+
 func TestBoolExpressionIS_DISTINCT_FROM(t *testing.T) {
 	// CUBRID emulates IS DISTINCT FROM: (NOT (a = b OR (a IS NULL AND b IS NULL)))
 	assertSerialize(t, table1ColBool.IS_DISTINCT_FROM(table2ColBool),

@@ -298,3 +298,8 @@ func TestTO_TIMESTAMP_WithFormat(t *testing.T) {
 	assertSerialize(t, TO_TIMESTAMP(String("2024-01-01"), String("YYYY-MM-DD")),
 		"TO_TIMESTAMP(?, ?)", "2024-01-01", "YYYY-MM-DD")
 }
+
+func TestTRUNC(t *testing.T) {
+	assertSerialize(t, TRUNC(table1ColFloat, Int(2)), "TRUNC(table1.col_float, ?)", int64(2))
+	assertSerialize(t, TRUNC(table1ColFloat, Int(0)), "TRUNC(table1.col_float, ?)", int64(0))
+}
