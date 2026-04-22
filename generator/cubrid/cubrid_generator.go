@@ -25,6 +25,24 @@ type DBConnection struct {
 	DBName   string
 }
 
+// poolProvider and haProvider are minimal interfaces to allow mocking in tests.
+type poolProvider interface {
+	DB() *sql.DB
+	Close() error
+}
+
+type haProvider interface {
+	DB(readOnly bool) *sql.DB
+	Close() error
+}
+
+// Dependency injection points, overridable in tests.
+var (
+	sqlOpen      = func(driverName, dsn string) (*sql.DB, error) { return sql.Open(driverName, dsn) }
+	newPool      = func(cfg cubriddriver.PoolConfig) (poolProvider, error) { return cubriddriver.NewPool(cfg) }
+	newHACluster = func(cfg cubriddriver.HAConfig) (haProvider, error) { return cubriddriver.NewHACluster(cfg) }
+)
+
 // Generate generates jet files at destination dir from database connection details.
 func Generate(destDir string, dbConn DBConnection, generatorTemplate ...template.Template) error {
 	dsn := fmt.Sprintf("cubrid://%s:%s@%s:%d/%s",
@@ -81,11 +99,11 @@ func GenerateDB(db *sql.DB, dbName, destDir string, templates ...template.Templa
 // GeneratePool generates jet files using a CUBRID-aware connection pool.
 // The pool provides health validation and broker failover handling.
 func GeneratePool(config cubriddriver.PoolConfig, dbName, destDir string, templates ...template.Template) error {
-	pool, err := cubriddriver.NewPool(config)
+	pool, err := newPool(config)
 	if err != nil {
 		return fmt.Errorf("failed to create pool: %w", err)
 	}
-	defer pool.Close()
+	defer pool.Close() //nolint:errcheck
 
 	return GenerateDB(pool.DB(), dbName, destDir, templates...)
 }
@@ -93,11 +111,11 @@ func GeneratePool(config cubriddriver.PoolConfig, dbName, destDir string, templa
 // GenerateHA generates jet files using an HA cluster connection.
 // If readOnly is true, the generator reads from a standby broker.
 func GenerateHA(config cubriddriver.HAConfig, dbName, destDir string, readOnly bool, templates ...template.Template) error {
-	cluster, err := cubriddriver.NewHACluster(config)
+	cluster, err := newHACluster(config)
 	if err != nil {
 		return fmt.Errorf("failed to create HA cluster: %w", err)
 	}
-	defer cluster.Close()
+	defer cluster.Close() //nolint:errcheck
 
 	return GenerateDB(cluster.DB(readOnly), dbName, destDir, templates...)
 }
@@ -105,7 +123,7 @@ func GenerateHA(config cubriddriver.HAConfig, dbName, destDir string, readOnly b
 func openConnection(dsn string) (*sql.DB, error) {
 	fmt.Println("Connecting to CUBRID database...")
 
-	db, err := sql.Open("cubrid", dsn)
+	db, err := sqlOpen("cubrid", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open cubrid connection: %w", err)
 	}

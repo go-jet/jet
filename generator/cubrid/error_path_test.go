@@ -3,11 +3,14 @@ package cubrid
 import (
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"io"
 	"strings"
 	"testing"
 
 	cubriddriver "github.com/search5/cubrid-go"
+	jetcubrid "github.com/go-jet/jet/v2/cubrid"
+	jettemplate "github.com/go-jet/jet/v2/generator/template"
 )
 
 // TestGenerateDSN_MissingDBName covers the extractDBName error path in GenerateDSN.
@@ -177,7 +180,157 @@ func (r *schemaRows) Next(dest []driver.Value) error {
 	return nil
 }
 
+// pingableDriver opens a connection that succeeds on Ping,
+// allowing openConnection success path to be tested without a real CUBRID server.
+type pingableDriver struct{ inner driver.Driver }
+
+func (d *pingableDriver) Open(name string) (driver.Conn, error) { return &pingableConn{inner: d.inner}, nil }
+
+type pingableConn struct{ inner driver.Driver }
+
+func (c *pingableConn) Prepare(q string) (driver.Stmt, error) {
+	inner, err := c.inner.Open("test")
+	if err != nil {
+		return nil, err
+	}
+	return inner.Prepare(q)
+}
+func (c *pingableConn) Close() error          { return nil }
+func (c *pingableConn) Begin() (driver.Tx, error) { return nil, nil }
+func (c *pingableConn) Ping(_ interface{}) error  { return nil } // satisfies driver.Pinger shape
+
+// mockPool wraps a *sql.DB to satisfy poolProvider.
+type mockPool struct{ db *sql.DB }
+
+func (p *mockPool) DB() *sql.DB   { return p.db }
+func (p *mockPool) Close() error  { return nil }
+
+// mockHA wraps a *sql.DB to satisfy haProvider.
+type mockHA struct{ db *sql.DB }
+
+func (h *mockHA) DB(_ bool) *sql.DB { return h.db }
+func (h *mockHA) Close() error      { return nil }
+
 func init() {
 	sql.Register("cubrid-mock-empty", &emptyDriver{})
 	sql.Register("cubrid-mock-schema", &schemaDriver{})
+}
+
+// withMockSQLOpen temporarily replaces sqlOpen with one that returns a mock DB
+// built from driverName, then restores the original after the test.
+func withMockSQLOpen(t *testing.T, driverName string) *sql.DB {
+	t.Helper()
+	db, err := sql.Open(driverName, "test")
+	if err != nil {
+		t.Fatalf("failed to open mock db: %v", err)
+	}
+	orig := sqlOpen
+	sqlOpen = func(_, _ string) (*sql.DB, error) { return db, nil }
+	t.Cleanup(func() {
+		sqlOpen = orig
+		db.Close()
+	})
+	return db
+}
+
+// TestOpenConnection_Success covers the happy path of openConnection (return db, nil).
+func TestOpenConnection_Success(t *testing.T) {
+	withMockSQLOpen(t, "cubrid-mock-empty")
+	db, err := openConnection("cubrid://dba:@mock:33000/testdb")
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+	if db == nil {
+		t.Fatal("expected non-nil db")
+	}
+	db.Close()
+}
+
+// TestGenerate_Success covers the Generate happy path (openConnection + GenerateDB succeed).
+func TestGenerate_Success(t *testing.T) {
+	withMockSQLOpen(t, "cubrid-mock-empty")
+	err := Generate(t.TempDir(), DBConnection{
+		Host: "mock", Port: 33000, User: "dba", DBName: "testdb",
+	})
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+}
+
+// TestGenerateDSN_Success covers the GenerateDSN happy path.
+func TestGenerateDSN_Success(t *testing.T) {
+	withMockSQLOpen(t, "cubrid-mock-empty")
+	err := GenerateDSN("cubrid://dba:@mock:33000/testdb", t.TempDir())
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+}
+
+// TestGeneratePool_Success covers the GeneratePool happy path using mockPool.
+func TestGeneratePool_Success(t *testing.T) {
+	db, err := sql.Open("cubrid-mock-empty", "test")
+	if err != nil {
+		t.Fatalf("failed to open mock db: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	orig := newPool
+	newPool = func(_ cubriddriver.PoolConfig) (poolProvider, error) {
+		return &mockPool{db: db}, nil
+	}
+	t.Cleanup(func() { newPool = orig })
+
+	err = GeneratePool(cubriddriver.PoolConfig{DSN: "unused"}, "testdb", t.TempDir())
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+}
+
+// TestGenerateHA_Success covers the GenerateHA happy path using mockHA.
+func TestGenerateHA_Success(t *testing.T) {
+	db, err := sql.Open("cubrid-mock-empty", "test")
+	if err != nil {
+		t.Fatalf("failed to open mock db: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	orig := newHACluster
+	newHACluster = func(_ cubriddriver.HAConfig) (haProvider, error) {
+		return &mockHA{db: db}, nil
+	}
+	t.Cleanup(func() { newHACluster = orig })
+
+	err = GenerateHA(cubriddriver.HAConfig{DSN: "unused"}, "testdb", t.TempDir(), false)
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+}
+
+// TestGenerateDB_CustomTemplate covers the "len(templates) > 0" branch in GenerateDB.
+func TestGenerateDB_CustomTemplate(t *testing.T) {
+	db, err := sql.Open("cubrid-mock-empty", "test")
+	if err != nil {
+		t.Fatalf("failed to open mock db: %v", err)
+	}
+	defer db.Close()
+
+	genTemplate := jettemplate.Default(jetcubrid.Dialect)
+	err = GenerateDB(db, "testdb", t.TempDir(), genTemplate)
+	if err != nil {
+		t.Fatalf("expected success, got: %v", err)
+	}
+}
+
+// TestOpenConnection_SqlOpenError covers the sqlOpen error path in openConnection.
+func TestOpenConnection_SqlOpenError(t *testing.T) {
+	orig := sqlOpen
+	sqlOpen = func(_, _ string) (*sql.DB, error) {
+		return nil, fmt.Errorf("mock open error")
+	}
+	t.Cleanup(func() { sqlOpen = orig })
+
+	_, err := openConnection("cubrid://dba:@mock:33000/testdb")
+	if err == nil {
+		t.Fatal("expected error from sqlOpen failure, got nil")
+	}
 }
