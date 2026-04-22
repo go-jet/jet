@@ -28,6 +28,10 @@ func TestMapCubridDataType(t *testing.T) {
 		{"SET", "json"}, {"MULTISET", "json"}, {"SEQUENCE", "json"},
 		{"OBJECT", "varchar"}, {"OID", "varchar"},
 		{"int", "integer"}, {"Varchar", "varchar"},
+		{"DEC", "numeric"}, {"CHARACTER", "char"}, {"CHARACTER VARYING", "varchar"},
+		{"UTIME", "timestamp"}, {"TIMESTAMPLTZ", "timestamp"}, {"DATETIMELTZ", "datetime"},
+		{"VARBIT", "blob"}, {"LIST", "json"},
+		{"UNKNOWN_CUSTOM_TYPE", "unknown_custom_type"}, // default branch
 	}
 	for _, tt := range tests {
 		t.Run(tt.cubridType, func(t *testing.T) {
