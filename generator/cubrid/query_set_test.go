@@ -149,3 +149,137 @@ func TestGetTablesMetaData_ColumnError(t *testing.T) {
 		t.Fatal("expected error when getColumnMetaData fails, got nil")
 	}
 }
+
+// colsPksDriver returns one column from ListColumns and one PK from ListPrimaryKeys,
+// covering the loops in getColumnMetaData.
+type colsPksDriver struct{}
+
+func (d *colsPksDriver) Open(_ string) (driver.Conn, error) { return &colsPksConn{}, nil }
+
+type colsPksConn struct{}
+
+func (c *colsPksConn) Prepare(query string) (driver.Stmt, error) {
+	if strings.Contains(query, "db_attribute") {
+		return &colsStmt{}, nil
+	}
+	if strings.Contains(query, "db_index") {
+		return &pksStmt{}, nil
+	}
+	return nil, errors.New("unexpected query")
+}
+func (c *colsPksConn) Close() error          { return nil }
+func (c *colsPksConn) Begin() (driver.Tx, error) { return nil, errors.New("no tx") }
+
+type colsStmt struct{ fetched bool }
+
+func (s *colsStmt) Close() error { return nil }
+func (s *colsStmt) NumInput() int { return -1 }
+func (s *colsStmt) Exec(_ []driver.Value) (driver.Result, error) { return nil, nil }
+func (s *colsStmt) Query(_ []driver.Value) (driver.Rows, error)  { return &colsRows{}, nil }
+
+type colsRows struct{ fetched bool }
+
+func (r *colsRows) Columns() []string {
+	return []string{"attr_name", "data_type", "prec", "scale", "is_nullable", "default_value"}
+}
+func (r *colsRows) Close() error { return nil }
+func (r *colsRows) Next(dest []driver.Value) error {
+	if r.fetched {
+		return io.EOF
+	}
+	r.fetched = true
+	dest[0] = "id"
+	dest[1] = "integer"
+	dest[2] = int64(10)
+	dest[3] = int64(0)
+	dest[4] = "NO"
+	dest[5] = nil
+	return nil
+}
+
+type pksStmt struct{}
+
+func (s *pksStmt) Close() error { return nil }
+func (s *pksStmt) NumInput() int { return -1 }
+func (s *pksStmt) Exec(_ []driver.Value) (driver.Result, error) { return nil, nil }
+func (s *pksStmt) Query(_ []driver.Value) (driver.Rows, error)  { return &pksRows{}, nil }
+
+type pksRows struct{ fetched bool }
+
+func (r *pksRows) Columns() []string             { return []string{"key_attr_name"} }
+func (r *pksRows) Close() error                  { return nil }
+func (r *pksRows) Next(dest []driver.Value) error {
+	if r.fetched {
+		return io.EOF
+	}
+	r.fetched = true
+	dest[0] = "id"
+	return nil
+}
+
+// pksErrDriver succeeds on ListColumns but fails on ListPrimaryKeys.
+type pksErrDriver struct{}
+
+func (d *pksErrDriver) Open(_ string) (driver.Conn, error) { return &pksErrConn{}, nil }
+
+type pksErrConn struct{}
+
+func (c *pksErrConn) Prepare(query string) (driver.Stmt, error) {
+	if strings.Contains(query, "db_attribute") {
+		return &colsStmt{}, nil
+	}
+	return nil, errors.New("list primary keys error")
+}
+func (c *pksErrConn) Close() error          { return nil }
+func (c *pksErrConn) Begin() (driver.Tx, error) { return nil, errors.New("no tx") }
+
+func init() {
+	sql.Register("cubrid-mock-cols-pks", &colsPksDriver{})
+	sql.Register("cubrid-mock-pks-err", &pksErrDriver{})
+}
+
+func newColsPksDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db, err := sql.Open("cubrid-mock-cols-pks", "test")
+	if err != nil {
+		t.Fatalf("failed to open cols+pks mock db: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
+	return db
+}
+
+func newPksErrDB(t *testing.T) *sql.DB {
+	t.Helper()
+	db, err := sql.Open("cubrid-mock-pks-err", "test")
+	if err != nil {
+		t.Fatalf("failed to open pks-err mock db: %v", err)
+	}
+	t.Cleanup(func() { db.Close() })
+	return db
+}
+
+// TestGetColumnMetaData_Success covers the columns + pkSet construction loops.
+func TestGetColumnMetaData_Success(t *testing.T) {
+	db := newColsPksDB(t)
+
+	cols, err := getColumnMetaData(context.Background(), db, "mock_table")
+	if err != nil {
+		t.Fatalf("expected success, got error: %v", err)
+	}
+	if len(cols) != 1 {
+		t.Fatalf("expected 1 column, got %d", len(cols))
+	}
+	if !cols[0].IsPrimaryKey {
+		t.Error("expected 'id' column to be primary key")
+	}
+}
+
+// TestGetColumnMetaData_PKsError covers the ListPrimaryKeys error path.
+func TestGetColumnMetaData_PKsError(t *testing.T) {
+	db := newPksErrDB(t)
+
+	_, err := getColumnMetaData(context.Background(), db, "mock_table")
+	if err == nil {
+		t.Fatal("expected error from ListPrimaryKeys failure, got nil")
+	}
+}
