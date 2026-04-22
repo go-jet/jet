@@ -178,3 +178,31 @@ SELECT ROW_NUMBER() OVER (ORDER BY table1.col1 ASC ROWS BETWEEN 1 PRECEDING AND 
 FROM db.table1;
 `)
 }
+
+func TestSelectPRECEDING_FOLLOWING_UNBOUNDED(t *testing.T) {
+	assertStatementSql(t,
+		SELECT(
+			ROW_NUMBER().OVER(
+				ORDER_BY(table1Col1.ASC()).ROWS(PRECEDING(UNBOUNDED), FOLLOWING(UNBOUNDED)),
+			),
+		).FROM(table1), `
+SELECT ROW_NUMBER() OVER (ORDER BY table1.col1 ASC ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
+FROM db.table1;
+`)
+}
+
+func TestSelectFOR(t *testing.T) {
+	assertStatementSql(t,
+		SELECT(table1Col1).FROM(table1).FOR(UPDATE()), `
+SELECT table1.col1 AS "table1.col1"
+FROM db.table1
+FOR UPDATE;
+`)
+
+	assertStatementSql(t,
+		SELECT(table1Col1).FROM(table1).FOR(SHARE()), `
+SELECT table1.col1 AS "table1.col1"
+FROM db.table1
+FOR SHARE;
+`)
+}

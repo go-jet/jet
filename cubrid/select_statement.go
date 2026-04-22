@@ -5,6 +5,12 @@ import "github.com/go-jet/jet/v2/internal/jet"
 // RowLock is interface for SELECT statement row lock types
 type RowLock = jet.RowLock
 
+// Row lock modes for SELECT ... FOR clause
+var (
+	UPDATE = jet.NewRowLock("UPDATE")
+	SHARE  = jet.NewRowLock("SHARE")
+)
+
 // Window function clauses
 var (
 	PARTITION_BY = jet.PARTITION_BY

@@ -12,8 +12,6 @@ var Dialect = newDialect()
 
 func newDialect() jet.Dialect {
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
-	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = cubridREGEXPLIKEoperator
-	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = cubridNOTREGEXPLIKEoperator
 	operatorSerializeOverrides["IS DISTINCT FROM"] = cubridISDISTINCTFROM
 	operatorSerializeOverrides["IS NOT DISTINCT FROM"] = cubridISNOTDISTINCTFROM
 	operatorSerializeOverrides["/"] = cubridDivision
@@ -105,28 +103,6 @@ func cubridISDISTINCTFROM(expressions ...jet.Serializer) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		out.WriteString("NOT ")
 		cubridISNOTDISTINCTFROM(expressions...)(statement, out, options...)
-	}
-}
-
-func cubridREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-		jet.Serialize(expressions[0], statement, out, options...)
-		out.WriteString("REGEXP")
-		jet.Serialize(expressions[1], statement, out, options...)
-	}
-}
-
-func cubridNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-		jet.Serialize(expressions[0], statement, out, options...)
-		out.WriteString("NOT REGEXP")
-		jet.Serialize(expressions[1], statement, out, options...)
 	}
 }
 
