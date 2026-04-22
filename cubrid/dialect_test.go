@@ -2,6 +2,8 @@ package cubrid
 
 import (
 	"testing"
+
+	jet "github.com/go-jet/jet/v2/internal/jet"
 )
 
 func TestDialectName(t *testing.T) {
@@ -134,4 +136,25 @@ func TestArgumentToString_NonBytes(t *testing.T) {
 func TestFloatDivision(t *testing.T) {
 	// Float / Float should use "/" not "DIV"
 	assertSerialize(t, table1ColFloat.DIV(Float(2.0)), "(table1.col_float / ?)", 2.0)
+}
+
+func TestCubridDivision_PanicOnTooFewArgs(t *testing.T) {
+	fn := cubridDivision() // 0 arguments
+	out := &jet.SQLBuilder{Dialect: Dialect}
+	assertPanicErr(t, func() { fn(jet.SelectStatementType, out) },
+		"jet: invalid number of expressions for operator DIV")
+}
+
+func TestCubridCONCAT_PanicOnTooFewArgs(t *testing.T) {
+	fn := cubridCONCAToperator() // 0 arguments
+	out := &jet.SQLBuilder{Dialect: Dialect}
+	assertPanicErr(t, func() { fn(jet.SelectStatementType, out) },
+		"jet: invalid number of expressions for operator CONCAT")
+}
+
+func TestCubridISNOTDISTINCTFROM_PanicOnTooFewArgs(t *testing.T) {
+	fn := cubridISNOTDISTINCTFROM() // 0 arguments
+	out := &jet.SQLBuilder{Dialect: Dialect}
+	assertPanicErr(t, func() { fn(jet.SelectStatementType, out) },
+		"jet: invalid number of expressions for operator")
 }
