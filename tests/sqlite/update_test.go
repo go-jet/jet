@@ -126,7 +126,7 @@ func TestUpdateWithModelDataAndReturning(t *testing.T) {
 
 	stmt := Link.UPDATE(Link.AllColumns).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int32(link.ID))).
+		WHERE(Link.ID.EQ(Int(link.ID))).
 		RETURNING(
 			Link.AllColumns,
 			String("str").AS("dest.literal"),
@@ -160,7 +160,7 @@ RETURNING link.id AS "link.id",
           (link.description IS NULL) AS "dest.is_null",
           (CASE link.name WHEN ? THEN ? WHEN ? THEN ? ELSE ? END) AS "dest.case_operator";
 `
-	testutils.AssertStatementSql(t, stmt, expectedSQL, int32(20), "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(20),
+	testutils.AssertStatementSql(t, stmt, expectedSQL, int64(20), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(20),
 		"str", false, int64(11), "Bing", "Yahoo", "search", "GMail", "mail", "unknown")
 
 	type Dest struct {
@@ -205,7 +205,7 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 
 	stmt := Link.UPDATE(updateColumnList).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int32(link.ID)))
+		WHERE(Link.ID.EQ(Int(link.ID)))
 
 	var expectedSQL = `
 UPDATE link
@@ -215,7 +215,7 @@ SET description = NULL,
 WHERE link.id = 20;
 `
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int32(20))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(20))
 
 	testutils.AssertExec(t, stmt, tx, 1)
 	requireLogged(t, stmt)
@@ -233,7 +233,7 @@ func TestUpdateWithModelDataAndMutableColumns(t *testing.T) {
 
 	stmt := Link.UPDATE(Link.MutableColumns).
 		MODEL(link).
-		WHERE(Link.ID.EQ(Int32(link.ID)))
+		WHERE(Link.ID.EQ(Int(link.ID)))
 
 	var expectedSQL = `
 UPDATE link
@@ -243,7 +243,7 @@ SET url = 'http://www.duckduckgo.com',
 WHERE link.id = 201;
 `
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int32(201))
+	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
 	testutils.AssertExec(t, stmt, tx)
 }
 

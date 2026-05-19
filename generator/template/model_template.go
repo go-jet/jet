@@ -318,8 +318,18 @@ func toGoArrayType(elemType any, column metadata.Column) any {
 
 // toGoType returns model type for column info.
 func toGoType(column metadata.Column) interface{} {
+	dataTypeName := strings.ToLower(column.DataType.Name)
 
-	switch strings.ToLower(column.DataType.Name) {
+	if column.DataType.SourceDialect == "SQLite" {
+		switch dataTypeName {
+		case "integer", "int":
+			return int64(0)
+		case "real":
+			return float64(0.0)
+		}
+	}
+
+	switch dataTypeName {
 	case "user-defined", "enum":
 		return ""
 	case "boolean", "bool":

@@ -129,7 +129,7 @@ func TestInsertModelObjectEmptyColumnList(t *testing.T) {
 	testutils.AssertDebugStatementSql(t, query, `
 INSERT INTO link
 VALUES (1000, 'http://www.duckduckgo.com', 'Duck Duck go', NULL);
-`, int32(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
+`, int64(1000), "http://www.duckduckgo.com", "Duck Duck go", nil)
 
 	testutils.ExecuteInTxAndRollback(t, sampleDB, func(tx qrm.DB) {
 		_, err := query.Exec(tx)
@@ -266,7 +266,7 @@ RETURNING link.id AS "link.id",
 func TestInsertOnConflict(t *testing.T) {
 
 	t.Run("do nothing", func(t *testing.T) {
-		link := model.Link{ID: rand.Int31()}
+		link := model.Link{ID: rand.Int63()}
 
 		stmt := Link.INSERT(Link.AllColumns).
 			MODEL(link).
@@ -284,7 +284,7 @@ ON CONFLICT DO NOTHING;
 	})
 
 	t.Run("do nothing with index", func(t *testing.T) {
-		link := model.Link{ID: rand.Int31()}
+		link := model.Link{ID: rand.Int63()}
 
 		stmt := Link.INSERT(Link.AllColumns).
 			MODEL(link).
@@ -362,7 +362,7 @@ ON CONFLICT (id) WHERE (id * 2) > 10 DO UPDATE
 	})
 
 	t.Run("nil action removes ON CONFLICT clause", func(t *testing.T) {
-		link := model.Link{ID: rand.Int31()}
+		link := model.Link{ID: rand.Int63()}
 
 		stmt := Link.INSERT(Link.AllColumns).
 			MODEL(link).

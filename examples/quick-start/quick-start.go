@@ -75,7 +75,7 @@ func main() {
 	panicOnError(err)
 
 	printStatementInfo(stmt)
-	jsonSave("./dest.json", dest)
+	jsonSave("./quick-start/dest.json", dest)
 
 	// New Destination
 
@@ -89,7 +89,7 @@ func main() {
 	err = stmt.Query(db, &dest2)
 	panicOnError(err)
 
-	jsonSave("./dest2.json", dest2)
+	jsonSave("./quick-start/dest2.json", dest2)
 }
 
 func jsonSave(path string, v interface{}) {

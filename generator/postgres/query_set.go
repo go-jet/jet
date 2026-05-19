@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
+	postgresdialect "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
 )
 
@@ -79,7 +80,8 @@ select
           when tp.typcategory = 'A' then elem.typname
           else tp.typname
         end) as "dataType.Name",
-    false as "dataType.isUnsigned"
+    false as "dataType.isUnsigned",
+    $3::text as "dataType.SourceDialect"
 from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
@@ -94,7 +96,7 @@ order by
     attr.attnum;
 `
 	var columns []metadata.Column
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName}, &columns)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, postgresdialect.Dialect.Name()}, &columns)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query '%s' columns metadata: %w", tableName, err)
 	}
