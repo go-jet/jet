@@ -2,14 +2,13 @@ package template
 
 import (
 	"fmt"
-	"github.com/lib/pq"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/dbidentifier"
@@ -265,7 +264,7 @@ func getType(columnMetadata metadata.Column) Type {
 		}
 	}
 
-	return NewType(getGoType(columnMetadata))
+	return getGoType(columnMetadata)
 }
 
 func getUserDefinedType(column metadata.Column) string {
@@ -279,7 +278,7 @@ func getUserDefinedType(column metadata.Column) string {
 	return ""
 }
 
-func getGoType(column metadata.Column) interface{} {
+func getGoType(column metadata.Column) Type {
 	goType := toGoType(column)
 
 	if column.DataType.IsArray() {
@@ -287,85 +286,85 @@ func getGoType(column metadata.Column) interface{} {
 	}
 
 	if column.IsNullable {
-		return reflect.New(reflect.TypeOf(goType)).Interface()
+		goType.Name = "*" + goType.Name
 	}
 
 	return goType
 }
 
-func toGoArrayType(elemType any, column metadata.Column) any {
+func toGoArrayType(elemType Type, column metadata.Column) Type {
 	if column.DataType.Dimensions > 1 {
-		return "" // unsupported multidimensional arrays
+		return NewType("") // unsupported multidimensional arrays
 	}
 
-	switch elemType.(type) {
-	case bool:
-		return pq.BoolArray{}
-	case int32:
-		return pq.Int32Array{}
-	case int64:
-		return pq.Int64Array{}
-	case float32:
-		return pq.Float32Array{}
-	case float64:
-		return pq.Float64Array{}
-	case []byte:
-		return pq.ByteaArray{}
+	switch elemType.Name {
+	case "bool":
+		return NewType(pq.BoolArray{})
+	case "int32":
+		return NewType(pq.Int32Array{})
+	case "int64":
+		return NewType(pq.Int64Array{})
+	case "float32":
+		return NewType(pq.Float32Array{})
+	case "float64":
+		return NewType(pq.Float64Array{})
+	case "[]byte":
+		return NewType(pq.ByteaArray{})
 	default:
-		return pq.StringArray{}
+		return NewType(pq.StringArray{})
 	}
 }
 
 // toGoType returns model type for column info.
-func toGoType(column metadata.Column) interface{} {
+func toGoType(column metadata.Column) Type {
 	dataTypeName := strings.ToLower(column.DataType.Name)
 
 	if column.DataType.SourceDialect == "SQLite" {
 		switch dataTypeName {
 		case "integer", "int":
-			return int64(0)
+			return NewType(int64(0))
 		case "real":
-			return float64(0.0)
+			return NewType(float64(0.0))
 		}
 	}
 
 	switch dataTypeName {
 	case "user-defined", "enum":
-		return ""
+		return NewType("")
 	case "boolean", "bool":
-		return false
+		return NewType(false)
 	case "tinyint":
 		if column.DataType.IsUnsigned {
-			return uint8(0)
+			return NewType(uint8(0))
 		}
-		return int8(0)
+		return NewType(int8(0))
 	case "smallint", "int2",
 		"year":
 		if column.DataType.IsUnsigned {
-			return uint16(0)
+			return NewType(uint16(0))
 		}
-		return int16(0)
+		return NewType(int16(0))
 	case "integer", "int4",
 		"mediumint", "int": //MySQL
 		if column.DataType.IsUnsigned {
-			return uint32(0)
+			return NewType(uint32(0))
 		}
-		return int32(0)
+		return NewType(int32(0))
 	case "bigint", "int8":
 		if column.DataType.IsUnsigned {
-			return uint64(0)
+			return NewType(uint64(0))
 		}
-		return int64(0)
+		return NewType(int64(0))
 	case "date",
 		"timestamp without time zone", "timestamp",
 		"timestamp with time zone", "timestamptz",
 		"time without time zone", "time",
 		"time with time zone", "timetz",
 		"datetime": // MySQL
-		return time.Time{}
+		return NewType(time.Time{})
 	case "bytea",
 		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": //MySQL
-		return []byte("")
+		return NewType([]byte(""))
 	case "text",
 		"character", "bpchar",
 		"character varying", "varchar", "nvarchar",
@@ -373,29 +372,47 @@ func toGoType(column metadata.Column) interface{} {
 		"money", "json", "jsonb",
 		"xml", "point", "interval", "line", "array",
 		"char", "tinytext", "mediumtext", "longtext": // MySQL
-		return ""
+		return NewType("")
 	case "real", "float4":
-		return float32(0.0)
+		return NewType(float32(0.0))
 	case "numeric", "decimal",
 		"double precision", "float8", "float",
 		"double": // MySQL
-		return float64(0.0)
+		return NewType(float64(0.0))
 	case "uuid":
-		return uuid.UUID{}
+		return NewType(uuid.UUID{})
 	case "daterange":
-		return pgtype.Daterange{}
+		return Type{
+			Name:       "pgtype.Daterange",
+			ImportPath: "github.com/jackc/pgtype",
+		}
 	case "tsrange":
-		return pgtype.Tsrange{}
+		return Type{
+			Name:       "pgtype.Tsrange",
+			ImportPath: "github.com/jackc/pgtype",
+		}
 	case "tstzrange":
-		return pgtype.Tstzrange{}
+		return Type{
+			Name:       "pgtype.Tstzrange",
+			ImportPath: "github.com/jackc/pgtype",
+		}
 	case "int4range":
-		return pgtype.Int4range{}
+		return Type{
+			Name:       "pgtype.Int4range",
+			ImportPath: "github.com/jackc/pgtype",
+		}
 	case "int8range":
-		return pgtype.Int8range{}
+		return Type{
+			Name:       "pgtype.Int8range",
+			ImportPath: "github.com/jackc/pgtype",
+		}
 	case "numrange":
-		return pgtype.Numrange{}
+		return Type{
+			Name:       "pgtype.Numrange",
+			ImportPath: "github.com/jackc/pgtype",
+		}
 	default:
 		fmt.Println("- [Model      ] Unsupported sql column '" + column.Name + " " + column.DataType.Name + "', using string instead.")
-		return ""
+		return NewType("")
 	}
 }
