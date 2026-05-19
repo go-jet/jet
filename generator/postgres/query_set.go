@@ -81,7 +81,7 @@ select
           else tp.typname
         end) as "dataType.Name",
     false as "dataType.isUnsigned",
-    $3 as "dataType.SourceDialect"
+    $3::text as "dataType.SourceDialect"
 from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
