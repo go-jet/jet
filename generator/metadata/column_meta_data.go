@@ -24,10 +24,11 @@ const (
 
 // DataType contains information about column data type
 type DataType struct {
-	Name       string
-	Kind       DataTypeKind
-	IsUnsigned bool
-	Dimensions int // The number of array dimensions
+	Name          string
+	Kind          DataTypeKind
+	IsUnsigned    bool
+	Dimensions    int // The number of array dimensions
+	SourceDialect string
 }
 
 func (d DataType) IsArray() bool {

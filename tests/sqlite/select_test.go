@@ -1082,7 +1082,7 @@ func TestSimpleView(t *testing.T) {
 
 	require.Equal(t, len(dest), 10)
 	require.Equal(t, dest[2], model.CustomerList{
-		ID:      ptr.Of(int32(3)),
+		ID:      ptr.Of(int64(3)),
 		Name:    ptr.Of("LINDA WILLIAMS"),
 		Address: ptr.Of("692 Joliet Street"),
 		ZipCode: ptr.Of("83579"),
@@ -1090,7 +1090,7 @@ func TestSimpleView(t *testing.T) {
 		City:    ptr.Of("Athenai"),
 		Country: ptr.Of("Greece"),
 		Notes:   ptr.Of("active"),
-		Sid:     ptr.Of(int32(1)),
+		Sid:     ptr.Of(int64(1)),
 	})
 }
 
@@ -1245,8 +1245,8 @@ func TestRowsScan(t *testing.T) {
 		require.NotEqual(t, inventory.LastUpdate, time.Time{})
 
 		if inventory.InventoryID == 2103 {
-			require.Equal(t, inventory.FilmID, int32(456))
-			require.Equal(t, inventory.StoreID, int32(2))
+			require.Equal(t, inventory.FilmID, int64(456))
+			require.Equal(t, inventory.StoreID, int64(2))
 			require.Equal(t, inventory.LastUpdate.Format(time.RFC3339), "2019-04-11T18:11:48Z")
 		}
 	}
