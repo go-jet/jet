@@ -121,3 +121,45 @@ func TestTableModelFieldSourceDialect(t *testing.T) {
 		})
 	}
 }
+
+func TestTableModelFieldPostgresRangeTypes(t *testing.T) {
+	testCases := []struct {
+		name         string
+		dataTypeName string
+		isNullable   bool
+		expectedType string
+	}{
+		{
+			name:         "date range",
+			dataTypeName: "daterange",
+			expectedType: "pgtype.Daterange",
+		},
+		{
+			name:         "timestamp range",
+			dataTypeName: "tsrange",
+			expectedType: "pgtype.Tsrange",
+		},
+		{
+			name:         "nullable numeric range",
+			dataTypeName: "numrange",
+			isNullable:   true,
+			expectedType: "*pgtype.Numrange",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			field := DefaultTableModelField(metadata.Column{
+				Name:       "field",
+				IsNullable: testCase.isNullable,
+				DataType: metadata.DataType{
+					Name: testCase.dataTypeName,
+					Kind: metadata.BaseType,
+				},
+			})
+
+			require.Equal(t, testCase.expectedType, field.Type.Name)
+			require.Equal(t, "github.com/jackc/pgtype", field.Type.ImportPath)
+		})
+	}
+}
