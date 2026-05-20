@@ -375,8 +375,12 @@ func toGoType(column metadata.Column) Type {
 		return NewType("")
 	case "real", "float4":
 		return NewType(float32(0.0))
-	case "numeric", "decimal",
-		"double precision", "float8", "float",
+	case "numeric", "decimal":
+		return Type{
+			Name:       "decimal.Decimal",
+			ImportPath: "github.com/shopspring/decimal",
+		}
+	case "double precision", "float8", "float",
 		"double": // MySQL
 		return NewType(float64(0.0))
 	case "uuid":

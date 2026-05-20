@@ -4,13 +4,13 @@ import (
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
 	"testing"
 
 	. "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/model"
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/test_sample/table"
-
 )
 
 func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
@@ -36,8 +36,8 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Carla", result.PeopleName)
-		require.Equal(t, 155., *result.PeopleHeightCm)
-		require.InEpsilon(t, 61.02, *result.PeopleHeightIn, 1e-3)
+		require.Equal(t, "155", result.PeopleHeightCm.String())
+		require.InEpsilon(t, 61.02, result.PeopleHeightIn.InexactFloat64(), 1e-3)
 	})
 
 	t.Run("should insert without generated columns", func(t *testing.T) {
@@ -47,13 +47,13 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: ptr.Of(120.0),
+					PeopleHeightCm: ptr.Of(decimal.RequireFromString("120.0")),
 				},
 			)
 
 			testutils.AssertDebugStatementSql(t, insertQuery, `
 INSERT INTO test_sample.people (people_name, people_height_cm)
-VALUES ('Dario', 120);
+VALUES ('Dario', '120');
 `)
 			_, err := insertQuery.Exec(tx)
 			require.NoError(t, err)
@@ -71,7 +71,7 @@ VALUES ('Dario', 120);
 			require.NoError(t, err)
 
 			require.Equal(t, "Dario", result.PeopleName)
-			require.Equal(t, 120., *result.PeopleHeightCm)
+			require.Equal(t, "120", result.PeopleHeightCm.String())
 
 			query := SELECT(
 				People.AllColumns,
@@ -87,8 +87,8 @@ VALUES ('Dario', 120);
 			require.NoError(t, err)
 
 			require.Equal(t, "Dario", result.PeopleName)
-			require.Equal(t, 120., *result.PeopleHeightCm)
-			require.InEpsilon(t, 47.24, *result.PeopleHeightIn, 1e-3)
+			require.Equal(t, "120", result.PeopleHeightCm.String())
+			require.InEpsilon(t, 47.24, result.PeopleHeightIn.InexactFloat64(), 1e-3)
 		})
 	})
 }

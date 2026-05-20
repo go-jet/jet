@@ -48,6 +48,7 @@ func TestGeneratedModel(t *testing.T) {
 }
 
 var testDatabaseFilePath = repo.GetTestDataFilePath("/init/sqlite/sakila.db")
+var cmdTestDatabaseDSN = "file:" + testDatabaseFilePath
 var genDestDir = repo.GetTestsFilePath("/sqlite/.gen")
 
 func TestGenerator(t *testing.T) {
@@ -93,7 +94,7 @@ func TestGenerator_TableMetadata(t *testing.T) {
 }
 
 func TestCmdGenerator(t *testing.T) {
-	cmd := exec.Command("jet", "-source=SQLite", "-dsn=file://"+testDatabaseFilePath, "-path="+genDestDir)
+	cmd := exec.Command("jet", "-source=SQLite", "-dsn="+cmdTestDatabaseDSN, "-path="+genDestDir)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -110,7 +111,7 @@ func TestCmdGenerator(t *testing.T) {
 func TestCmdGeneratorIgnoreTablesViewsEnums(t *testing.T) {
 	cmd := exec.Command("jet",
 		"-source=SQLite",
-		"-dsn=file://"+testDatabaseFilePath,
+		"-dsn="+cmdTestDatabaseDSN,
 		"-ignore-tables=actor,Address,CATEGORY , city ,film,rental,store",
 		"-ignore-views=customer_list, film_list,STAFF_LIst",
 		"-path="+genDestDir)
@@ -432,7 +433,7 @@ type Address struct {
 func TestAllowTablesEnums(t *testing.T) {
 	cmd := exec.Command("jet",
 		"-source=SQLite",
-		"-dsn=file://"+testDatabaseFilePath,
+		"-dsn="+cmdTestDatabaseDSN,
 		"-tables=actor,Address,CATEGORY , city ,film,rental,store",
 		"-views=customer_list, film_list,STAFF_LIst",
 		"-path="+genDestDir)
@@ -456,7 +457,7 @@ func TestAllowTablesEnums(t *testing.T) {
 func TestAllowAndIgnoreViews(t *testing.T) {
 	cmd := exec.Command("jet",
 		"-source=SQLite",
-		"-dsn=file://"+testDatabaseFilePath,
+		"-dsn="+cmdTestDatabaseDSN,
 		"-views=customer_list, film_list,STAFF_LIst",
 		"-ignore-views=customer_list",
 		"-path="+genDestDir)

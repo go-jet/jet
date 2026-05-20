@@ -167,9 +167,9 @@ ORDER BY film_values.title;
 			"ReleaseYear": 2006,
 			"LanguageID": 1,
 			"RentalDuration": 6,
-			"RentalRate": 4.99,
+			"RentalRate": "4.99",
 			"Length": 54,
-			"ReplacementCost": 15.99,
+			"ReplacementCost": "15.99",
 			"Rating": "R",
 			"LastUpdate": "2013-05-26T14:50:58.951Z",
 			"SpecialFeatures": [
@@ -191,9 +191,9 @@ ORDER BY film_values.title;
 			"ReleaseYear": 2006,
 			"LanguageID": 1,
 			"RentalDuration": 4,
-			"RentalRate": 4.99,
+			"RentalRate": "4.99",
 			"Length": 73,
-			"ReplacementCost": 12.99,
+			"ReplacementCost": "12.99",
 			"Rating": "PG-13",
 			"LastUpdate": "2013-05-26T14:50:58.951Z",
 			"SpecialFeatures": [
@@ -270,7 +270,7 @@ RETURNING payment.payment_id AS "payment.payment_id",
 		"CustomerID": 379,
 		"StaffID": 2,
 		"RentalID": 11457,
-		"Amount": 4.83,
+		"Amount": "4.83",
 		"PaymentDate": "2007-03-02T19:42:42.996577Z"
 	},
 	{
@@ -278,7 +278,7 @@ RETURNING payment.payment_id AS "payment.payment_id",
 		"CustomerID": 379,
 		"StaffID": 2,
 		"RentalID": 13397,
-		"Amount": 8.15,
+		"Amount": "8.15",
 		"PaymentDate": "2007-03-19T20:35:01.996577Z"
 	}
 ]

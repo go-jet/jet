@@ -881,6 +881,7 @@ package model
 import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -891,10 +892,10 @@ type AllTypes struct {
 	Integer              int32
 	BigIntPtr            *int64
 	BigInt               int64
-	DecimalPtr           *float64
-	Decimal              float64
-	NumericPtr           *float64
-	Numeric              float64
+	DecimalPtr           *decimal.Decimal
+	Decimal              decimal.Decimal
+	NumericPtr           *decimal.Decimal
+	Numeric              decimal.Decimal
 	RealPtr              *float32
 	Real                 float32
 	DoublePrecisionPtr   *float64
@@ -1753,8 +1754,8 @@ type SampleArrays struct {
 	Int2ArrayPtr     *pq.StringArray
 	Int4Array        pq.Int32Array
 	Int8Array        pq.Int64Array
-	NumericArray     pq.Float64Array
-	DecimalArray     pq.Float64Array
+	NumericArray     pq.StringArray
+	DecimalArray     pq.StringArray
 	RealArray        pq.Float32Array
 	DoubleArray      pq.Float64Array
 	TextArray        pq.StringArray
