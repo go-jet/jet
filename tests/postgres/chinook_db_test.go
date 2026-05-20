@@ -133,7 +133,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": null,
 						"Milliseconds": 366837,
 						"Bytes": 12089673,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					},
 					{
 						"TrackId": 76,
@@ -144,7 +144,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": null,
 						"Milliseconds": 271856,
 						"Bytes": 8719426,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					}
 				]
 			}
@@ -169,7 +169,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": "Billy Cobham",
 						"Milliseconds": 261851,
 						"Bytes": 8538199,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					},
 					{
 						"TrackId": 124,
@@ -180,7 +180,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": "Billy Cobham",
 						"Milliseconds": 456071,
 						"Bytes": 15075616,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					}
 				]
 			}

@@ -44,10 +44,10 @@ func TestExactDecimals(t *testing.T) {
 		require.Equal(t, "2.22222222222222222222", result.Numeric.String())
 		require.Equal(t, "0", result.NumericPtr.String()) // NULL
 
-		require.Equal(t, 1.1111111111111112, result.Floats.Decimal) // precision loss
-		require.Equal(t, (*float64)(nil), result.Floats.DecimalPtr)
-		require.Equal(t, 2.2222222222222223, result.Floats.Numeric) // precision loss
-		require.Equal(t, (*float64)(nil), result.Floats.NumericPtr)
+		require.Equal(t, "1.11111111111111111111", result.Floats.Decimal.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.Floats.DecimalPtr)
+		require.Equal(t, "2.22222222222222222222", result.Floats.Numeric.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.Floats.NumericPtr)
 
 		// floating point
 		require.Equal(t, float32(3.3333333), result.Floats.Real) // precision loss
@@ -64,10 +64,10 @@ func TestExactDecimals(t *testing.T) {
 			floats{
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
-					Numeric:    0.1,
-					NumericPtr: ptr.Of(0.1),
-					Decimal:    0.1,
-					DecimalPtr: ptr.Of(0.1),
+					Numeric:    decimal.RequireFromString("0.1"),
+					NumericPtr: ptr.Of(decimal.RequireFromString("0.1")),
+					Decimal:    decimal.RequireFromString("0.1"),
+					DecimalPtr: ptr.Of(decimal.RequireFromString("0.1")),
 
 					// not overwritten
 					Real:      0.4,
@@ -107,11 +107,10 @@ RETURNING floats.decimal_ptr AS "floats.decimal_ptr",
 		require.Equal(t, "2.2222222222222222222", result.Decimal.String())
 		require.Equal(t, "3.3333333333333333333", result.DecimalPtr.String())
 
-		// precision loss
-		require.Equal(t, 0.12345678901234568, result.Floats.Numeric)
-		require.Equal(t, 1.1111111111111112, *result.Floats.NumericPtr)
-		require.Equal(t, 2.2222222222222223, result.Floats.Decimal)
-		require.Equal(t, 3.3333333333333335, *result.Floats.DecimalPtr)
+		require.Equal(t, "0.1234567890123456789", result.Floats.Numeric.String())
+		require.Equal(t, "1.1111111111111111111", result.Floats.NumericPtr.String())
+		require.Equal(t, "2.2222222222222222222", result.Floats.Decimal.String())
+		require.Equal(t, "3.3333333333333333333", result.Floats.DecimalPtr.String())
 
 		// floating points numbers
 		require.Equal(t, float32(0.4), result.Floats.Real)
@@ -539,8 +538,8 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 		require.NoError(t, err)
 
 		require.Equal(t, "Carla", result.PeopleName)
-		require.Equal(t, 155., *result.PeopleHeightCm)
-		require.InEpsilon(t, 61.02, *result.PeopleHeightIn, 1e-3)
+		require.Equal(t, "155", result.PeopleHeightCm.String())
+		require.InEpsilon(t, 61.02, result.PeopleHeightIn.InexactFloat64(), 1e-3)
 	})
 
 	t.Run("should insert without generated columns", func(t *testing.T) {
@@ -550,7 +549,7 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 			).MODEL(
 				model.People{
 					PeopleName:     "Dario",
-					PeopleHeightCm: ptr.Of(120.0),
+					PeopleHeightCm: ptr.Of(decimal.RequireFromString("120.0")),
 				},
 			).RETURNING(
 				People.MutableColumns,
@@ -558,7 +557,7 @@ func TestMutableColumnsExcludeGeneratedColumn(t *testing.T) {
 
 			testutils.AssertDebugStatementSql(t, insertQuery, `
 INSERT INTO test_sample.people (people_name, people_height_cm)
-VALUES ('Dario', 120)
+VALUES ('Dario', '120')
 RETURNING people.people_name AS "people.people_name",
           people.people_height_cm AS "people.people_height_cm";
 `)
@@ -567,7 +566,7 @@ RETURNING people.people_name AS "people.people_name",
 			require.NoError(t, err)
 
 			require.Equal(t, "Dario", result.PeopleName)
-			require.Equal(t, 120., *result.PeopleHeightCm)
+			require.Equal(t, "120", result.PeopleHeightCm.String())
 
 			query := SELECT(
 				People.AllColumns,
@@ -583,8 +582,8 @@ RETURNING people.people_name AS "people.people_name",
 			require.NoError(t, err)
 
 			require.Equal(t, "Dario", result.PeopleName)
-			require.Equal(t, 120., *result.PeopleHeightCm)
-			require.InEpsilon(t, 47.24, *result.PeopleHeightIn, 1e-3)
+			require.Equal(t, "120", result.PeopleHeightCm.String())
+			require.InEpsilon(t, 47.24, result.PeopleHeightIn.InexactFloat64(), 1e-3)
 		})
 	})
 }

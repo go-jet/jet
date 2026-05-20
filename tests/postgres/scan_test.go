@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
 	"testing"
 	"time"
@@ -1052,9 +1053,9 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 		ReleaseYear     *MyInt16
 		LanguageID      MyUint8
 		RentalDuration  MyUint8
-		RentalRate      MyFloat32
+		RentalRate      decimal.Decimal
 		Length          *MyUint32
-		ReplacementCost MyFloat64
+		ReplacementCost decimal.Decimal
 		Rating          *model.MpaaRating
 		LastUpdate      MyTime
 		SpecialFeatures pq.StringArray
@@ -1284,9 +1285,9 @@ var film1 = model.Film{
 	ReleaseYear:     ptr.Of(int32(2006)),
 	LanguageID:      1,
 	RentalDuration:  6,
-	RentalRate:      0.99,
+	RentalRate:      decimal.RequireFromString("0.99"),
 	Length:          ptr.Of(int16(86)),
-	ReplacementCost: 20.99,
+	ReplacementCost: decimal.RequireFromString("20.99"),
 	Rating:          &pgRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 	SpecialFeatures: &pq.StringArray{"Deleted Scenes", "Behind the Scenes"},
@@ -1300,9 +1301,9 @@ var film2 = model.Film{
 	ReleaseYear:     ptr.Of(int32(2006)),
 	LanguageID:      1,
 	RentalDuration:  3,
-	RentalRate:      4.99,
+	RentalRate:      decimal.RequireFromString("4.99"),
 	Length:          ptr.Of(int16(48)),
-	ReplacementCost: 12.99,
+	ReplacementCost: decimal.RequireFromString("12.99"),
 	Rating:          &gRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 	SpecialFeatures: &pq.StringArray{"Trailers", "Deleted Scenes"},

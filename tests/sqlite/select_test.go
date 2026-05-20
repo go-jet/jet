@@ -657,7 +657,7 @@ GROUP BY payment.customer_id;
 	"CustomerID": 1,
 	"StaffID": 0,
 	"RentalID": null,
-	"Amount": 0,
+	"Amount": "0",
 	"PaymentDate": "0001-01-01T00:00:00Z",
 	"LastUpdate": "0001-01-01T00:00:00Z",
 	"Count": 8,

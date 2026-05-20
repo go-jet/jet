@@ -169,9 +169,9 @@ ORDER BY film_values.title;
 			"LanguageID": 1,
 			"OriginalLanguageID": null,
 			"RentalDuration": 6,
-			"RentalRate": 4.99,
+			"RentalRate": "4.99",
 			"Length": 54,
-			"ReplacementCost": 15.99,
+			"ReplacementCost": "15.99",
 			"Rating": "R",
 			"SpecialFeatures": "Trailers",
 			"LastUpdate": "2006-02-15T05:03:42Z"
@@ -191,9 +191,9 @@ ORDER BY film_values.title;
 			"LanguageID": 1,
 			"OriginalLanguageID": null,
 			"RentalDuration": 4,
-			"RentalRate": 4.99,
+			"RentalRate": "4.99",
 			"Length": 73,
-			"ReplacementCost": 12.99,
+			"ReplacementCost": "12.99",
 			"Rating": "PG-13",
 			"SpecialFeatures": "Trailers",
 			"LastUpdate": "2006-02-15T05:03:42Z"
@@ -317,7 +317,7 @@ ORDER BY values_cte.increase;
 		"CustomerID": 7,
 		"StaffID": 1,
 		"RentalID": 13476,
-		"Amount": 2.99,
+		"Amount": "2.99",
 		"PaymentDate": "2005-08-20T01:06:04Z",
 		"LastUpdate": "2006-02-15T22:12:31Z",
 		"Increase": 1.21
@@ -327,7 +327,7 @@ ORDER BY values_cte.increase;
 		"CustomerID": 7,
 		"StaffID": 2,
 		"RentalID": 11542,
-		"Amount": 7.99,
+		"Amount": "7.99",
 		"PaymentDate": "2005-08-17T00:51:32Z",
 		"LastUpdate": "2006-02-15T22:12:31Z",
 		"Increase": 1.34
@@ -337,7 +337,7 @@ ORDER BY values_cte.increase;
 		"CustomerID": 7,
 		"StaffID": 2,
 		"RentalID": 13373,
-		"Amount": 2.99,
+		"Amount": "2.99",
 		"PaymentDate": "2005-08-19T21:23:31Z",
 		"LastUpdate": "2006-02-15T22:12:31Z",
 		"Increase": 1.72

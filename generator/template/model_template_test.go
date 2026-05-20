@@ -47,11 +47,13 @@ func TestTableModelField(t *testing.T) {
 
 func TestTableModelFieldSourceDialect(t *testing.T) {
 	testCases := []struct {
-		name          string
-		dataTypeName  string
-		sourceDialect string
-		isNullable    bool
-		expectedType  string
+		name               string
+		dataTypeName       string
+		sourceDialect      string
+		isNullable         bool
+		dimensions         int
+		expectedType       string
+		expectedImportPath string
 	}{
 		{
 			name:          "sqlite integer",
@@ -103,6 +105,43 @@ func TestTableModelFieldSourceDialect(t *testing.T) {
 			sourceDialect: "MySQL",
 			expectedType:  "int32",
 		},
+		{
+			name:          "mysql int",
+			dataTypeName:  "int",
+			sourceDialect: "MySQL",
+			dimensions:    4,
+			expectedType:  "string",
+		},
+		{
+			name:               "postgres decimal",
+			dataTypeName:       "decimal",
+			sourceDialect:      "PostgreSQL",
+			expectedType:       "decimal.Decimal",
+			expectedImportPath: "github.com/shopspring/decimal",
+		},
+		{
+			name:               "mysql numeric",
+			dataTypeName:       "numeric",
+			sourceDialect:      "MySQL",
+			expectedType:       "decimal.Decimal",
+			expectedImportPath: "github.com/shopspring/decimal",
+		},
+		{
+			name:               "sqlite nullable numeric",
+			dataTypeName:       "numeric",
+			sourceDialect:      "SQLite",
+			isNullable:         true,
+			expectedType:       "*decimal.Decimal",
+			expectedImportPath: "github.com/shopspring/decimal",
+		},
+		{
+			name:               "postgres numeric array",
+			dataTypeName:       "numeric",
+			sourceDialect:      "PostgreSQL",
+			dimensions:         1,
+			expectedType:       "pq.StringArray",
+			expectedImportPath: "github.com/lib/pq",
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -113,11 +152,13 @@ func TestTableModelFieldSourceDialect(t *testing.T) {
 				DataType: metadata.DataType{
 					Name:          testCase.dataTypeName,
 					Kind:          metadata.BaseType,
+					Dimensions:    testCase.dimensions,
 					SourceDialect: testCase.sourceDialect,
 				},
 			})
 
 			require.Equal(t, testCase.expectedType, field.Type.Name)
+			require.Equal(t, testCase.expectedImportPath, field.Type.ImportPath)
 		})
 	}
 }

@@ -1370,10 +1370,10 @@ var toInsert = model.AllTypes{
 	UIntegerPtr:   ptr.Of(uint32(88)),
 	BigIntPtr:     ptr.Of(int64(99)),
 	UBigIntPtr:    ptr.Of(uint64(111)),
-	Decimal:       11.22,
-	DecimalPtr:    ptr.Of(33.44),
-	Numeric:       55.66,
-	NumericPtr:    ptr.Of(77.88),
+	Decimal:       decimal.RequireFromString("11.22"),
+	DecimalPtr:    ptr.Of(decimal.RequireFromString("33.44")),
+	Numeric:       decimal.RequireFromString("55.66"),
+	NumericPtr:    ptr.Of(decimal.RequireFromString("77.88")),
 	Float:         99.00,
 	FloatPtr:      ptr.Of(11.22),
 	Double:        33.44,
@@ -1435,10 +1435,10 @@ var allTypesJson = `
 		"UIntegerPtr": 1600,
 		"BigIntPtr": 50000,
 		"UBigIntPtr": 50000,
-		"Decimal": 1.11,
-		"DecimalPtr": 1.11,
-		"Numeric": 2.22,
-		"NumericPtr": 2.22,
+		"Decimal": "1.11",
+		"DecimalPtr": "1.11",
+		"Numeric": "2.22",
+		"NumericPtr": "2.22",
 		"Float": 3.33,
 		"FloatPtr": 3.33,
 		"Double": 4.44,
@@ -1500,9 +1500,9 @@ var allTypesJson = `
 		"UIntegerPtr": null,
 		"BigIntPtr": null,
 		"UBigIntPtr": null,
-		"Decimal": 1.11,
+		"Decimal": "1.11",
 		"DecimalPtr": null,
-		"Numeric": 2.22,
+		"Numeric": "2.22",
 		"NumericPtr": null,
 		"Float": 3.33,
 		"FloatPtr": null,
@@ -1619,10 +1619,10 @@ func TestExactDecimals(t *testing.T) {
 		require.Equal(t, "2.22222222222222222222", result.Numeric.String())
 		require.Equal(t, "0", result.NumericPtr.String()) // NULL
 
-		require.Equal(t, 1.1111111111111112, result.Floats.Decimal) // precision loss
-		require.Equal(t, (*float64)(nil), result.Floats.DecimalPtr)
-		require.Equal(t, 2.2222222222222223, result.Floats.Numeric) // precision loss
-		require.Equal(t, (*float64)(nil), result.Floats.NumericPtr)
+		require.Equal(t, "1.11111111111111111111", result.Floats.Decimal.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.Floats.DecimalPtr)
+		require.Equal(t, "2.22222222222222222222", result.Floats.Numeric.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.Floats.NumericPtr)
 
 		// floating point
 		require.Equal(t, 3.3333333, result.Floats.Float) // precision loss
@@ -1641,10 +1641,10 @@ func TestExactDecimals(t *testing.T) {
 			floats{
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
-					Numeric:    0.1,
-					NumericPtr: ptr.Of(0.1),
-					Decimal:    0.1,
-					DecimalPtr: ptr.Of(0.1),
+					Numeric:    decimal.RequireFromString("0.1"),
+					NumericPtr: ptr.Of(decimal.RequireFromString("0.1")),
+					Decimal:    decimal.RequireFromString("0.1"),
+					DecimalPtr: ptr.Of(decimal.RequireFromString("0.1")),
 
 					// not overwritten
 					Float:     0.2,
@@ -1681,10 +1681,10 @@ VALUES ('91.23', '45.67', '12.35', '56.79', 0.2, 0.22, 0.3, 0.33, 0.4, 0.44);
 		require.Equal(t, "91.23", result.Decimal.String())
 		require.Equal(t, "45.67", result.DecimalPtr.String())
 
-		require.Equal(t, 12.35, result.Floats.Numeric)
-		require.Equal(t, 56.79, *result.Floats.NumericPtr)
-		require.Equal(t, 91.23, result.Floats.Decimal)
-		require.Equal(t, 45.67, *result.Floats.DecimalPtr)
+		require.Equal(t, "12.35", result.Floats.Numeric.String())
+		require.Equal(t, "56.79", result.Floats.NumericPtr.String())
+		require.Equal(t, "91.23", result.Floats.Decimal.String())
+		require.Equal(t, "45.67", result.Floats.DecimalPtr.String())
 	})
 }
 

@@ -10,6 +10,7 @@ import (
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
@@ -2390,10 +2391,10 @@ var allTypesRow0 = model.AllTypes{
 	Integer:            300,
 	BigIntPtr:          ptr.Of(int64(50000)),
 	BigInt:             5000,
-	DecimalPtr:         ptr.Of(1.11),
-	Decimal:            1.11,
-	NumericPtr:         ptr.Of(2.22),
-	Numeric:            2.22,
+	DecimalPtr:         ptr.Of(decimal.RequireFromString("1.11")),
+	Decimal:            decimal.RequireFromString("1.11"),
+	NumericPtr:         ptr.Of(decimal.RequireFromString("2.22")),
+	Numeric:            decimal.RequireFromString("2.22"),
 	RealPtr:            ptr.Of(float32(5.55)),
 	Real:               5.55,
 	DoublePrecisionPtr: ptr.Of(11111111.22),
@@ -2459,9 +2460,9 @@ var allTypesRow1 = model.AllTypes{
 	BigIntPtr:          nil,
 	BigInt:             5000,
 	DecimalPtr:         nil,
-	Decimal:            1.11,
+	Decimal:            decimal.RequireFromString("1.11"),
 	NumericPtr:         nil,
-	Numeric:            2.22,
+	Numeric:            decimal.RequireFromString("2.22"),
 	RealPtr:            nil,
 	Real:               5.55,
 	DoublePrecisionPtr: nil,

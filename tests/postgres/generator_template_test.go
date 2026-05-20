@@ -626,7 +626,7 @@ func TestGeneratorTemplate_Model_SqlBuilder_RenameStructFieldNames(t *testing.T)
 	require.NoError(t, err)
 
 	filmModelData := file2.Exists(t, defaultModelPath, "payment.go")
-	require.Contains(t, filmModelData, "AmountInCents float64")
+	require.Contains(t, filmModelData, "AmountInCents decimal.Decimal")
 	filmSqlBuilderData := file2.Exists(t, defaultSqlBuilderPath, "payment.go")
 	require.Contains(t, filmSqlBuilderData, "AmountInCents postgres.ColumnFloat")
 	require.Contains(t, filmSqlBuilderData, "AmountInCentsColumn = postgres.FloatColumn(\"amount\")")

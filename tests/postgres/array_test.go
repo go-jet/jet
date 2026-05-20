@@ -547,12 +547,12 @@ RETURNING sample_arrays.id AS "sample_arrays.id",
 		600
 	],
 	"NumericArray": [
-		1.11,
-		2.22
+		"1.11",
+		"2.22"
 	],
 	"DecimalArray": [
-		1.11,
-		2.22
+		"1.11",
+		"2.22"
 	],
 	"RealArray": [
 		4.4,
@@ -631,7 +631,7 @@ func TestArrayTableUpdate(t *testing.T) {
 
 		testutils.AssertDebugStatementSql(t, stmt, `
 UPDATE test_sample.sample_arrays
-SET (bool_array, int2_array_ptr, int4_array, int8_array, numeric_array, decimal_array, real_array, double_array, text_array, varchar_array, char_array, bytea_array, date_array, timestamp_array, timestamptz_array, time_array, timetz_array, interval_array, uuid_array, mood_enum_array) = ('{t,f,t}', '{"1","2","3","4"}', '{10,20,30,40}', '{100,200,300,400}', '{1.8881,2.8882,3.8883,4.8884}', '{1.0001,2.0002,3.0003,4.0004}', '{100.11,200.22,300.33}', '{11.11,22.22,33.33}', '{"alpha","beta","gama"}', '{"hello","world"}', '{"a","b","c"}', '{"\\x01020304","\\x11223344"}', '{"2024-11-01","2025-02-28"}', '{"2025-01-01 10:00:00","2025-02-01 10:00:00"}', '{"2025-01-01 09:00:00+00","2025-02-01 09:00:00+00"}', '{"12:00:00","13:00:00"}', '{"12:00:00+01","13:00:00+02"}', '{"1 day","02:00:00"}', '{"550e8400-e29b-41d4-a716-446655440000"}', '{"happy","ok"}')
+SET (bool_array, int2_array_ptr, int4_array, int8_array, numeric_array, decimal_array, real_array, double_array, text_array, varchar_array, char_array, bytea_array, date_array, timestamp_array, timestamptz_array, time_array, timetz_array, interval_array, uuid_array, mood_enum_array) = ('{t,f,t}', '{"1","2","3","4"}', '{10,20,30,40}', '{100,200,300,400}', '{"1.8881","2.8882","3.8883","4.8884"}', '{"1.0001","2.0002","3.0003","4.0004"}', '{100.11,200.22,300.33}', '{11.11,22.22,33.33}', '{"alpha","beta","gama"}', '{"hello","world"}', '{"a","b","c"}', '{"\\x01020304","\\x11223344"}', '{"2024-11-01","2025-02-28"}', '{"2025-01-01 10:00:00","2025-02-01 10:00:00"}', '{"2025-01-01 09:00:00+00","2025-02-01 09:00:00+00"}', '{"12:00:00","13:00:00"}', '{"12:00:00+01","13:00:00+02"}', '{"1 day","02:00:00"}', '{"550e8400-e29b-41d4-a716-446655440000"}', '{"happy","ok"}')
 WHERE 'alpha'::text = ANY(sample_arrays.text_array)
 RETURNING sample_arrays.id AS "sample_arrays.id",
           sample_arrays.bool_array AS "sample_arrays.bool_array",
@@ -708,8 +708,8 @@ var sampleArrayRow0 = model.SampleArrays{
 	Int2ArrayPtr:     ptr.Of(pq.StringArray{"1", "2", "3", "4"}),
 	Int4Array:        pq.Int32Array{10, 20, 30, 40},
 	Int8Array:        pq.Int64Array{100, 200, 300, 400},
-	NumericArray:     pq.Float64Array{1.8881, 2.8882, 3.8883, 4.8884},
-	DecimalArray:     pq.Float64Array{1.0001, 2.0002, 3.0003, 4.0004},
+	NumericArray:     pq.StringArray{"1.8881", "2.8882", "3.8883", "4.8884"},
+	DecimalArray:     pq.StringArray{"1.0001", "2.0002", "3.0003", "4.0004"},
 	RealArray:        pq.Float32Array{1.0099999904632568, 2.0199999809265137, 3.0299999713897705, 4.039999961853027},
 	DoubleArray:      pq.Float64Array{11.11, 22.22, 33.33},
 	TextArray:        pq.StringArray{"alpha", "beta", "gama"},

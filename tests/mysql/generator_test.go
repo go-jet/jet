@@ -667,6 +667,7 @@ var allTypesModelContent = `
 package model
 
 import (
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -694,10 +695,10 @@ type AllTypes struct {
 	UIntegerPtr   *uint32
 	BigIntPtr     *int64
 	UBigIntPtr    *uint64
-	Decimal       float64
-	DecimalPtr    *float64
-	Numeric       float64
-	NumericPtr    *float64
+	Decimal       decimal.Decimal
+	DecimalPtr    *decimal.Decimal
+	Numeric       decimal.Decimal
+	NumericPtr    *decimal.Decimal
 	Float         float64
 	FloatPtr      *float64
 	Double        float64
