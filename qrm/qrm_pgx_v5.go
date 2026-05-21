@@ -132,7 +132,12 @@ func queryToSlicePgxV5(ctx context.Context, db QueryablePgxV5, query string, arg
 	if err != nil {
 		return
 	}
-	defer rows.Close()
+	defer func() {
+		rows.Close()
+		if err == nil {
+			err = rows.Err()
+		}
+	}()
 
 	scanContext, err := NewScanContextPGXv5(rows)
 
@@ -162,9 +167,8 @@ func queryToSlicePgxV5(ctx context.Context, db QueryablePgxV5, query string, arg
 		}
 	}
 
-	rows.Close()
-
-	return scanContext.rowNum, rows.Err()
+	rowsProcessed = scanContext.rowNum
+	return
 }
 
 func queryJsonPgxV5(ctx context.Context, db QueryablePgxV5, query string, args []interface{}, destPtr interface{}) (rowsProcessed int64, err error) {
