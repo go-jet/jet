@@ -77,3 +77,25 @@ func TestRawHelperMethods(t *testing.T) {
 	assertSerialize(t, RawDate("table.colDate").EQ(DateT(now)),
 		"((table.colDate) = $1::date)", now)
 }
+
+func TestSerializer_CustomExpressionDynamicArgs(t *testing.T) {
+	JSONField := func(exp StringExpression, fields ...string) Expression {
+		args := []Serializer{exp}
+
+		for i, field := range fields {
+			op := "->"
+			if i == len(fields)-1 {
+				op = "->>"
+			}
+
+			args = append(args, Token(op), String(field))
+		}
+
+		return CustomExpression(args...)
+	}
+
+	details := StringColumn("details")
+
+	assertSerialize(t, JSONField(details, "address", "city"),
+		"(details -> $1::text ->> $2::text)", "address", "city")
+}
