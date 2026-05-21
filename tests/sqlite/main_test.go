@@ -4,15 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
+	"runtime"
+	"testing"
+
 	"github.com/go-jet/jet/v2/internal/utils/throw"
+	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/sqlite"
 	"github.com/go-jet/jet/v2/stmtcache"
 	"github.com/go-jet/jet/v2/tests/dbconfig"
 	"github.com/pkg/profile"
 	"github.com/stretchr/testify/require"
-	"os"
-	"runtime"
-	"testing"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -55,6 +57,20 @@ func TestMain(m *testing.M) {
 
 	}()
 
+}
+
+func allowUnmappedFields(f func()) {
+	previous := qrm.GlobalConfig.StrictFieldMapping
+	defer func() { qrm.GlobalConfig.StrictFieldMapping = previous }()
+	qrm.GlobalConfig.StrictFieldMapping = false
+	f()
+}
+
+func requireStrictFieldMapping(f func()) {
+	previous := qrm.GlobalConfig.StrictFieldMapping
+	defer func() { qrm.GlobalConfig.StrictFieldMapping = previous }()
+	qrm.GlobalConfig.StrictFieldMapping = true
+	f()
 }
 
 func runCount(stmtCaching bool) int {

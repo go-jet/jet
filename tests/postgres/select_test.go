@@ -5,11 +5,12 @@ import (
 	"database/sql"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/lib/pq"
+	"github.com/shopspring/decimal"
+	"gopkg.in/guregu/null.v4"
 	"testing"
 	"time"
 
 	"github.com/go-jet/jet/v2/qrm"
-	"gopkg.in/guregu/null.v4"
 
 	"github.com/stretchr/testify/require"
 
@@ -1738,9 +1739,9 @@ ORDER BY "rFilms"."film.film_id" ASC, actor.actor_id ASC;
 	"ReleaseYear": null,
 	"LanguageID": 0,
 	"RentalDuration": 0,
-	"RentalRate": 0,
+	"RentalRate": "0",
 	"Length": null,
-	"ReplacementCost": 0,
+	"ReplacementCost": "0",
 	"Rating": "R",
 	"LastUpdate": "0001-01-01T00:00:00Z",
 	"SpecialFeatures": null,
@@ -1847,9 +1848,9 @@ ORDER BY film.film_id ASC;
 		Description:     ptr.Of("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
 		ReleaseYear:     ptr.Of(int32(2006)),
 		LanguageID:      1,
-		RentalRate:      4.99,
+		RentalRate:      decimal.RequireFromString("4.99"),
 		Length:          ptr.Of(int16(48)),
-		ReplacementCost: 12.99,
+		ReplacementCost: decimal.RequireFromString("12.99"),
 		Rating:          &gRating,
 		RentalDuration:  3,
 		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
@@ -2227,7 +2228,7 @@ GROUP BY payment.customer_id;
 	"CustomerID": 1,
 	"StaffID": 0,
 	"RentalID": 0,
-	"Amount": 0,
+	"Amount": "0",
 	"PaymentDate": "0001-01-01T00:00:00Z",
 	"Count": 8,
 	"Sum": 38.92,
@@ -2378,7 +2379,7 @@ ORDER BY payment.payment_date ASC;
 		CustomerID:  416,
 		StaffID:     2,
 		RentalID:    1158,
-		Amount:      2.99,
+		Amount:      decimal.RequireFromString("2.99"),
 		PaymentDate: *testutils.TimestampWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
 	})
 }
@@ -2424,15 +2425,15 @@ OFFSET 20;
 	require.Equal(t, len(dest), 10)
 	testutils.AssertDeepEqual(t, dest[0], model.Payment{
 		PaymentID: 17523,
-		Amount:    4.99,
+		Amount:    decimal.RequireFromString("4.99"),
 	})
 	testutils.AssertDeepEqual(t, dest[1], model.Payment{
 		PaymentID: 17524,
-		Amount:    0.99,
+		Amount:    decimal.RequireFromString("0.99"),
 	})
 	testutils.AssertDeepEqual(t, dest[9], model.Payment{
 		PaymentID: 17532,
-		Amount:    8.99,
+		Amount:    decimal.RequireFromString("8.99"),
 	})
 }
 
@@ -3433,9 +3434,9 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReleaseYear": 2006,
 		"LanguageID": 1,
 		"RentalDuration": 6,
-		"RentalRate": 0.99,
+		"RentalRate": "0.99",
 		"Length": 86,
-		"ReplacementCost": 20.99,
+		"ReplacementCost": "20.99",
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
 		"SpecialFeatures": [
@@ -3460,9 +3461,9 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReleaseYear": 2006,
 		"LanguageID": 1,
 		"RentalDuration": 3,
-		"RentalRate": 0.99,
+		"RentalRate": "0.99",
 		"Length": 92,
-		"ReplacementCost": 9.99,
+		"ReplacementCost": "9.99",
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
 		"SpecialFeatures": [
@@ -3511,9 +3512,9 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReleaseYear": 2006,
 		"LanguageID": 1,
 		"RentalDuration": 6,
-		"RentalRate": 0.99,
+		"RentalRate": "0.99",
 		"Length": 86,
-		"ReplacementCost": 20.99,
+		"ReplacementCost": "20.99",
 		"Rating": "PG",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
 		"SpecialFeatures": [
@@ -3530,9 +3531,9 @@ func TestSelectRecursionScanNxM(t *testing.T) {
 		"ReleaseYear": 2006,
 		"LanguageID": 1,
 		"RentalDuration": 3,
-		"RentalRate": 0.99,
+		"RentalRate": "0.99",
 		"Length": 92,
-		"ReplacementCost": 9.99,
+		"ReplacementCost": "9.99",
 		"Rating": "R",
 		"LastUpdate": "2013-05-26T14:50:58.951Z",
 		"SpecialFeatures": [

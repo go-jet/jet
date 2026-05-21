@@ -4,7 +4,8 @@ import (
 	"context"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/lib/pq"
-	"github.com/volatiletech/null/v8"
+	"github.com/shopspring/decimal"
+	"gopkg.in/guregu/null.v4"
 	"testing"
 	"time"
 
@@ -841,6 +842,42 @@ func TestRowsScan(t *testing.T) {
 	requireQueryLogged(t, stmt, 0)
 }
 
+func TestRowsNonStrictScan(t *testing.T) {
+	stmt := SELECT(
+		Inventory.AllColumns,
+		Store.AllColumns,
+	).FROM(
+		Inventory.INNER_JOIN(Store, Store.StoreID.EQ(Inventory.StoreID)),
+	).ORDER_BY(
+		Inventory.InventoryID.ASC(),
+	)
+
+	require.PanicsWithValue(t, "jet: columns never used: 'store.store_id', 'store.manager_staff_id', 'store.address_id', 'store.last_update'", func() {
+		rows, err := stmt.Rows(context.Background(), db)
+
+		var dest model.Inventory
+
+		for rows.Next() {
+			err = rows.Scan(&dest)
+			require.NoError(t, err)
+		}
+	})
+
+	allowUnusedColumns(func() {
+		rows, err := stmt.Rows(context.Background(), db)
+
+		var dest model.Inventory
+
+		for rows.Next() {
+			err = rows.Scan(&dest)
+			require.NoError(t, err)
+		}
+
+		require.NoError(t, rows.Close())
+		require.NoError(t, rows.Err())
+	})
+}
+
 func TestScanNullColumn(t *testing.T) {
 	stmt := SELECT(
 		Address.AllColumns,
@@ -1016,9 +1053,9 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 		ReleaseYear     *MyInt16
 		LanguageID      MyUint8
 		RentalDuration  MyUint8
-		RentalRate      MyFloat32
+		RentalRate      decimal.Decimal
 		Length          *MyUint32
-		ReplacementCost MyFloat64
+		ReplacementCost decimal.Decimal
 		Rating          *model.MpaaRating
 		LastUpdate      MyTime
 		SpecialFeatures pq.StringArray
@@ -1090,8 +1127,8 @@ func TestScanToPrimitiveElementsSlice(t *testing.T) {
 // https://github.com/go-jet/jet/issues/127
 func TestValuerTypeDebugSQL(t *testing.T) {
 	type customer struct {
-		CustomerID null.Int32 `sql:"primary_key"`
-		StoreID    null.Int16
+		CustomerID null.Int `sql:"primary_key"`
+		StoreID    null.Int
 		FirstName  null.String
 		LastName   string
 		Email      null.String
@@ -1099,14 +1136,14 @@ func TestValuerTypeDebugSQL(t *testing.T) {
 		Activebool null.Bool
 		CreateDate null.Time
 		LastUpdate null.Time
-		Active     null.Int8
+		Active     null.Int
 	}
 
 	stmt := Customer.INSERT().
 		MODEL(
 			customer{
-				CustomerID: null.Int32From(1234),
-				StoreID:    null.Int16From(0),
+				CustomerID: null.IntFrom(1234),
+				StoreID:    null.IntFrom(0),
 				FirstName:  null.StringFrom("Joe"),
 				LastName:   "",
 				Email:      null.StringFromPtr(nil),
@@ -1114,7 +1151,7 @@ func TestValuerTypeDebugSQL(t *testing.T) {
 				Activebool: null.BoolFrom(true),
 				CreateDate: null.TimeFrom(time.Date(2020, 2, 2, 10, 0, 0, 0, time.UTC)),
 				LastUpdate: null.TimeFromPtr(nil),
-				Active:     null.Int8From(1),
+				Active:     null.IntFrom(1),
 			},
 		)
 
@@ -1248,9 +1285,9 @@ var film1 = model.Film{
 	ReleaseYear:     ptr.Of(int32(2006)),
 	LanguageID:      1,
 	RentalDuration:  6,
-	RentalRate:      0.99,
+	RentalRate:      decimal.RequireFromString("0.99"),
 	Length:          ptr.Of(int16(86)),
-	ReplacementCost: 20.99,
+	ReplacementCost: decimal.RequireFromString("20.99"),
 	Rating:          &pgRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 	SpecialFeatures: &pq.StringArray{"Deleted Scenes", "Behind the Scenes"},
@@ -1264,9 +1301,9 @@ var film2 = model.Film{
 	ReleaseYear:     ptr.Of(int32(2006)),
 	LanguageID:      1,
 	RentalDuration:  3,
-	RentalRate:      4.99,
+	RentalRate:      decimal.RequireFromString("4.99"),
 	Length:          ptr.Of(int16(48)),
-	ReplacementCost: 12.99,
+	ReplacementCost: decimal.RequireFromString("12.99"),
 	Rating:          &gRating,
 	LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
 	SpecialFeatures: &pq.StringArray{"Trailers", "Deleted Scenes"},

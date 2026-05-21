@@ -57,7 +57,7 @@ func (t *Tx) QueryContext(ctx context.Context, query string, args ...interface{}
 		return nil, err
 	}
 
-	return prepStmt.Query(args...)
+	return prepStmt.QueryContext(ctx, args...)
 }
 
 // Prepare delegates call to PrepareContext using context.Background as a parameter.

@@ -12,16 +12,18 @@ type DeleteStatement interface {
 	WHERE(expression BoolExpression) DeleteStatement
 	ORDER_BY(orderByClauses ...OrderByClause) DeleteStatement
 	LIMIT(limit int64) DeleteStatement
+	RETURNING(projections ...jet.Projection) DeleteStatement
 }
 
 type deleteStatementImpl struct {
 	jet.SerializerStatement
 
-	Delete  jet.ClauseDelete
-	Using   jet.ClauseFrom
-	Where   jet.ClauseWhere
-	OrderBy jet.ClauseOrderBy
-	Limit   jet.ClauseLimit
+	Delete    jet.ClauseDelete
+	Using     jet.ClauseFrom
+	Where     jet.ClauseWhere
+	OrderBy   jet.ClauseOrderBy
+	Limit     jet.ClauseLimit
+	Returning jet.ClauseReturning
 }
 
 func newDeleteStatement(table Table) DeleteStatement {
@@ -32,6 +34,7 @@ func newDeleteStatement(table Table) DeleteStatement {
 		&newDelete.Where,
 		&newDelete.OrderBy,
 		&newDelete.Limit,
+		&newDelete.Returning,
 	)
 
 	newDelete.Delete.Table = table
@@ -64,5 +67,10 @@ func (d *deleteStatementImpl) ORDER_BY(orderByClauses ...OrderByClause) DeleteSt
 
 func (d *deleteStatementImpl) LIMIT(limit int64) DeleteStatement {
 	d.Limit.Count = limit
+	return d
+}
+
+func (d *deleteStatementImpl) RETURNING(projections ...jet.Projection) DeleteStatement {
+	d.Returning.ProjectionList = projections
 	return d
 }

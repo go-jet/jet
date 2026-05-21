@@ -2,10 +2,12 @@ package postgres
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils/datetime"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
+	"github.com/go-jet/jet/v2/internal/utils/datetime"
 )
 
 type quantityAndUnit = float64
@@ -40,11 +42,12 @@ func INTERVAL(quantityAndUnit ...quantityAndUnit) IntervalExpression {
 
 	for i := 0; i < len(quantityAndUnit); i += 2 {
 		quantity := strconv.FormatFloat(quantityAndUnit[i], 'f', -1, 64)
+		// #nosec G602 -- false positive guarded by even-length check above and i+1 < n in loop
 		unitString := unitToString(quantityAndUnit[i+1])
 		fields = append(fields, quantity+" "+unitString)
 	}
 
-	return IntervalExp(CustomExpression(Token(fmt.Sprintf("INTERVAL '%s'", strings.Join(fields, " ")))))
+	return IntervalExp(jet.AtomicCustomExpression(Token(fmt.Sprintf("INTERVAL '%s'", strings.Join(fields, " ")))))
 }
 
 // INTERVALd creates interval expression from time.Duration

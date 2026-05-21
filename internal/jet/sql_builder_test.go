@@ -45,6 +45,14 @@ func TestArgToString(t *testing.T) {
 	}()
 }
 
+func TestWriteJsonObjKeyEscapesStringLiteral(t *testing.T) {
+	s := &SQLBuilder{Dialect: defaultDialect}
+
+	s.WriteJsonObjKey("author's name")
+
+	require.Equal(t, "'author''s name', ", s.Buff.String())
+}
+
 func TestFallTrough(t *testing.T) {
 	require.Equal(t, FallTrough([]SerializeOption{ShortName}), []SerializeOption{ShortName})
 	require.Equal(t, FallTrough([]SerializeOption{SkipNewLine}), []SerializeOption(nil))

@@ -65,10 +65,10 @@ func TestGenerator_TableMetadata(t *testing.T) {
 	want := metadata.Table{
 		Name: "actor",
 		Columns: []metadata.Column{
-			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "smallint", Kind: "base", IsUnsigned: true}, Comment: ""},
-			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false}, Comment: ""},
-			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false}, Comment: ""},
-			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "timestamp", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "smallint", Kind: "base", IsUnsigned: true, SourceDialect: "MySQL"}, Comment: ""},
+			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false, SourceDialect: "MySQL"}, Comment: ""},
+			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "varchar", Kind: "base", IsUnsigned: false, SourceDialect: "MySQL"}, Comment: ""},
+			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "timestamp", Kind: "base", IsUnsigned: false, SourceDialect: "MySQL"}, Comment: ""},
 		},
 	}
 	require.Equal(t, want, got)
@@ -667,6 +667,7 @@ var allTypesModelContent = `
 package model
 
 import (
+	"github.com/shopspring/decimal"
 	"time"
 )
 
@@ -694,10 +695,10 @@ type AllTypes struct {
 	UIntegerPtr   *uint32
 	BigIntPtr     *int64
 	UBigIntPtr    *uint64
-	Decimal       float64
-	DecimalPtr    *float64
-	Numeric       float64
-	NumericPtr    *float64
+	Decimal       decimal.Decimal
+	DecimalPtr    *decimal.Decimal
+	Numeric       decimal.Decimal
+	NumericPtr    *decimal.Decimal
 	Float         float64
 	FloatPtr      *float64
 	Double        float64

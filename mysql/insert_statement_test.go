@@ -1,9 +1,10 @@
 package mysql
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestInvalidInsert(t *testing.T) {
@@ -21,6 +22,14 @@ func TestInsertSingleValue(t *testing.T) {
 	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(1), `
 INSERT INTO db.table1 (col1)
 VALUES (?);
+`, int(1))
+}
+
+func TestInsertWithReturing(t *testing.T) {
+	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(1).RETURNING(table1Col1), `
+INSERT INTO db.table1 (col1)
+VALUES (?)
+RETURNING table1.col1 AS "table1.col1";
 `, int(1))
 }
 

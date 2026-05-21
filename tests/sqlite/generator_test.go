@@ -21,7 +21,7 @@ import (
 func TestGeneratedModel(t *testing.T) {
 	actor := model.Actor{}
 
-	require.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int32")
+	require.Equal(t, reflect.TypeOf(actor.ActorID).String(), "int64")
 	actorIDField, ok := reflect.TypeOf(actor).FieldByName("ActorID")
 	require.True(t, ok)
 	require.Equal(t, actorIDField.Tag.Get("sql"), "primary_key")
@@ -31,12 +31,12 @@ func TestGeneratedModel(t *testing.T) {
 
 	filmActor := model.FilmActor{}
 
-	require.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int32")
+	require.Equal(t, reflect.TypeOf(filmActor.FilmID).String(), "int64")
 	filmIDField, ok := reflect.TypeOf(filmActor).FieldByName("FilmID")
 	require.True(t, ok)
 	require.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
 
-	require.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int32")
+	require.Equal(t, reflect.TypeOf(filmActor.ActorID).String(), "int64")
 	actorIDField, ok = reflect.TypeOf(filmActor).FieldByName("ActorID")
 	require.True(t, ok)
 	require.Equal(t, filmIDField.Tag.Get("sql"), "primary_key")
@@ -48,6 +48,7 @@ func TestGeneratedModel(t *testing.T) {
 }
 
 var testDatabaseFilePath = repo.GetTestDataFilePath("/init/sqlite/sakila.db")
+var cmdTestDatabaseDSN = "file:" + testDatabaseFilePath
 var genDestDir = repo.GetTestsFilePath("/sqlite/.gen")
 
 func TestGenerator(t *testing.T) {
@@ -83,17 +84,17 @@ func TestGenerator_TableMetadata(t *testing.T) {
 	want := metadata.Table{
 		Name: "actor",
 		Columns: []metadata.Column{
-			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "INTEGER", Kind: "base", IsUnsigned: false}, Comment: ""},
-			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "VARCHAR", Kind: "base", IsUnsigned: false}, Comment: ""},
-			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "VARCHAR", Kind: "base", IsUnsigned: false}, Comment: ""},
-			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "TIMESTAMP", Kind: "base", IsUnsigned: false}, Comment: ""},
+			{Name: "actor_id", IsPrimaryKey: true, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "INTEGER", Kind: "base", IsUnsigned: false, SourceDialect: "SQLite"}, Comment: ""},
+			{Name: "first_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "VARCHAR", Kind: "base", IsUnsigned: false, SourceDialect: "SQLite"}, Comment: ""},
+			{Name: "last_name", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: false, DataType: metadata.DataType{Name: "VARCHAR", Kind: "base", IsUnsigned: false, SourceDialect: "SQLite"}, Comment: ""},
+			{Name: "last_update", IsPrimaryKey: false, IsNullable: false, IsGenerated: false, HasDefault: true, DataType: metadata.DataType{Name: "TIMESTAMP", Kind: "base", IsUnsigned: false, SourceDialect: "SQLite"}, Comment: ""},
 		},
 	}
 	require.Equal(t, want, got)
 }
 
 func TestCmdGenerator(t *testing.T) {
-	cmd := exec.Command("jet", "-source=SQLite", "-dsn=file://"+testDatabaseFilePath, "-path="+genDestDir)
+	cmd := exec.Command("jet", "-source=SQLite", "-dsn="+cmdTestDatabaseDSN, "-path="+genDestDir)
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -110,7 +111,7 @@ func TestCmdGenerator(t *testing.T) {
 func TestCmdGeneratorIgnoreTablesViewsEnums(t *testing.T) {
 	cmd := exec.Command("jet",
 		"-source=SQLite",
-		"-dsn=file://"+testDatabaseFilePath,
+		"-dsn="+cmdTestDatabaseDSN,
 		"-ignore-tables=actor,Address,CATEGORY , city ,film,rental,store",
 		"-ignore-views=customer_list, film_list,STAFF_LIst",
 		"-path="+genDestDir)
@@ -418,11 +419,11 @@ import (
 )
 
 type Address struct {
-	AddressID  int32 ` + "`sql:\"primary_key\"`" + `
+	AddressID  int64 ` + "`sql:\"primary_key\"`" + `
 	Address    string
 	Address2   *string
 	District   string
-	CityID     int32
+	CityID     int64
 	PostalCode *string
 	Phone      string
 	LastUpdate time.Time
@@ -432,7 +433,7 @@ type Address struct {
 func TestAllowTablesEnums(t *testing.T) {
 	cmd := exec.Command("jet",
 		"-source=SQLite",
-		"-dsn=file://"+testDatabaseFilePath,
+		"-dsn="+cmdTestDatabaseDSN,
 		"-tables=actor,Address,CATEGORY , city ,film,rental,store",
 		"-views=customer_list, film_list,STAFF_LIst",
 		"-path="+genDestDir)
@@ -456,7 +457,7 @@ func TestAllowTablesEnums(t *testing.T) {
 func TestAllowAndIgnoreViews(t *testing.T) {
 	cmd := exec.Command("jet",
 		"-source=SQLite",
-		"-dsn=file://"+testDatabaseFilePath,
+		"-dsn="+cmdTestDatabaseDSN,
 		"-views=customer_list, film_list,STAFF_LIst",
 		"-ignore-views=customer_list",
 		"-path="+genDestDir)

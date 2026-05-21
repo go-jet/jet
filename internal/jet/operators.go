@@ -16,9 +16,6 @@ func NOT(exp BoolExpression) BoolExpression {
 
 // BIT_NOT inverts every bit in integer expression result
 func BIT_NOT(expr IntegerExpression) IntegerExpression {
-	if literalExp, ok := expr.(LiteralExpression); ok {
-		literalExp.SetConstant(true)
-	}
 	return newPrefixIntegerOperatorExpression(expr, "~")
 }
 
@@ -131,10 +128,8 @@ type caseOperatorImpl struct {
 
 // CASE create CASE operator with optional list of expressions
 func CASE(expression ...Expression) CaseOperator {
-	caseExp := &caseOperatorImpl{}
-
-	if len(expression) > 0 {
-		caseExp.expression = expression[0]
+	caseExp := &caseOperatorImpl{
+		expression: singleOptional(expression),
 	}
 
 	caseExp.ExpressionInterfaceImpl.Root = caseExp

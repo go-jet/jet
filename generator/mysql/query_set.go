@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
+	mysqldialect "github.com/go-jet/jet/v2/mysql"
 	"github.com/go-jet/jet/v2/qrm"
 )
 
@@ -30,7 +31,8 @@ SELECT
 		) AS "dataType.Name",
 		IF (col.DATA_TYPE = 'enum', 'enum', 'base') AS "dataType.Kind",
 		col.COLUMN_TYPE LIKE '%unsigned%' AS "dataType.IsUnsigned",
-		col.EXTRA LIKE '%VIRTUAL GENERATED%' AS "column.isGenerated"
+		col.EXTRA LIKE '%VIRTUAL GENERATED%' AS "column.isGenerated",
+		? AS "dataType.SourceDialect"
 FROM INFORMATION_SCHEMA.tables AS t
 INNER JOIN
 		information_schema.columns AS col
@@ -51,7 +53,7 @@ ORDER BY
 
 	var tables []metadata.Table
 
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, schemaName, tableType}, &tables)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{mysqldialect.Dialect.Name(), schemaName, schemaName, tableType}, &tables)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query column meta data: %w", err)
 	}

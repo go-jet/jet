@@ -15,11 +15,8 @@ func RawStatement(dialect Dialect, rawQuery string, namedArgument ...map[string]
 			statementType: "",
 			root:          nil,
 		},
-		RawQuery: rawQuery,
-	}
-
-	if len(namedArgument) > 0 {
-		newRawStatement.NamedArguments = namedArgument[0]
+		RawQuery:       rawQuery,
+		NamedArguments: singleOptional(namedArgument),
 	}
 
 	newRawStatement.root = &newRawStatement

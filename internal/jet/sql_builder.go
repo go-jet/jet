@@ -112,7 +112,8 @@ func (s *SQLBuilder) WriteString(str string) {
 
 // WriteJsonObjKey serializes json object key
 func (s *SQLBuilder) WriteJsonObjKey(key string) {
-	s.WriteString(fmt.Sprintf(`'%s', `, key))
+	s.WriteString(stringQuote(key))
+	s.WriteString(", ")
 }
 
 // WriteIdentifier adds identifier to output SQL

@@ -58,7 +58,7 @@ func TestRawInvalidArguments(t *testing.T) {
 
 func TestRawHelperMethods(t *testing.T) {
 	assertSerialize(t, RawBool("table.colInt < :float", RawArgs{":float": 11.22}).IS_FALSE(),
-		"(table.colInt < $1) IS FALSE", 11.22)
+		"((table.colInt < $1) IS FALSE)", 11.22)
 
 	assertSerialize(t, RawFloat("table.colInt + :float", RawArgs{":float": 11.22}).EQ(Float(3.14)),
 		"((table.colInt + $1) = $2)", 11.22, 3.14)
@@ -76,4 +76,26 @@ func TestRawHelperMethods(t *testing.T) {
 		"((table.colTimestampz) = $1::timestamp with time zone)", now)
 	assertSerialize(t, RawDate("table.colDate").EQ(DateT(now)),
 		"((table.colDate) = $1::date)", now)
+}
+
+func TestSerializer_CustomExpressionDynamicArgs(t *testing.T) {
+	JSONField := func(exp StringExpression, fields ...string) Expression {
+		args := []Serializer{exp}
+
+		for i, field := range fields {
+			op := "->"
+			if i == len(fields)-1 {
+				op = "->>"
+			}
+
+			args = append(args, Token(op), String(field))
+		}
+
+		return CustomExpression(args...)
+	}
+
+	details := StringColumn("details")
+
+	assertSerialize(t, JSONField(details, "address", "city"),
+		"(details -> $1::text ->> $2::text)", "address", "city")
 }

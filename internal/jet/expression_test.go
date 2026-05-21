@@ -5,13 +5,13 @@ import (
 )
 
 func TestExpressionIS_NULL(t *testing.T) {
-	assertClauseSerialize(t, table2Col3.IS_NULL(), "table2.col3 IS NULL")
-	assertClauseSerialize(t, table2Col3.ADD(table2Col3).IS_NULL(), "(table2.col3 + table2.col3) IS NULL")
+	assertClauseSerialize(t, table2Col3.IS_NULL(), "(table2.col3 IS NULL)")
+	assertClauseSerialize(t, table2Col3.ADD(table2Col3).IS_NULL(), "((table2.col3 + table2.col3) IS NULL)")
 }
 
 func TestExpressionIS_NOT_NULL(t *testing.T) {
-	assertClauseSerialize(t, table2Col3.IS_NOT_NULL(), "table2.col3 IS NOT NULL")
-	assertClauseSerialize(t, table2Col3.ADD(table2Col3).IS_NOT_NULL(), "(table2.col3 + table2.col3) IS NOT NULL")
+	assertClauseSerialize(t, table2Col3.IS_NOT_NULL(), "(table2.col3 IS NOT NULL)")
+	assertClauseSerialize(t, table2Col3.ADD(table2Col3).IS_NOT_NULL(), "((table2.col3 + table2.col3) IS NOT NULL)")
 }
 
 func TestExpressionIS_DISTINCT_FROM(t *testing.T) {

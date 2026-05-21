@@ -3,8 +3,9 @@ package postgres
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/jet"
 	"strconv"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // Dialect is implementation of postgres dialect for SQL Builder serialisation.
@@ -12,15 +13,10 @@ var Dialect = newDialect()
 
 func newDialect() jet.Dialect {
 
-	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
-	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgresREGEXPLIKEoperator
-	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = postgresNOTREGEXPLIKEoperator
-	operatorSerializeOverrides["CAST"] = postgresCAST
-
 	dialectParams := jet.DialectParams{
 		Name:                       "PostgreSQL",
 		PackageName:                "postgres",
-		OperatorSerializeOverrides: operatorSerializeOverrides,
+		OperatorSerializeOverrides: nil,
 		AliasQuoteChar:             '"',
 		IdentifierQuoteChar:        '"',
 		ArgumentPlaceholder: func(ord int) string {
@@ -42,12 +38,13 @@ func newDialect() jet.Dialect {
 			case TimezExpression:
 				return CustomExpression(Token("'0000-01-01T' || to_char('2000-10-10'::date + "), e, Token(`, 'HH24:MI:SS.USTZH:TZM')`))
 			case TimestampExpression:
-				return CustomExpression(Token("to_char("), e, Token(`, 'YYYY-MM-DD"T"HH24:MI:SS.USZ')`))
+				return jet.AtomicCustomExpression(Token("to_char("), e, Token(`, 'YYYY-MM-DD"T"HH24:MI:SS.USZ')`))
 			case DateExpression:
 				return CustomExpression(Token("to_char("), e, Token(`::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z'`))
 			}
 			return expr
 		},
+		RegexpLike: regexpLike,
 	}
 
 	return jet.NewDialect(dialectParams)
@@ -62,80 +59,23 @@ func argumentToString(value any) (string, bool) {
 	return "", false
 }
 
-func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {
+func regexpLike(str jet.StringExpression, not bool, pattern jet.StringExpression, caseSensitive bool) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
+		jet.Serialize(str, statement, out, options...)
 
-		expression := expressions[0]
+		var notOperator string
 
-		litExpr, ok := expressions[1].(jet.LiteralExpression)
-
-		if !ok {
-			panic("jet: cast invalid cast type")
-		}
-
-		castType, ok := litExpr.Value().(string)
-
-		if !ok {
-			panic("jet: cast type is not string")
-		}
-
-		jet.Serialize(expression, statement, out, options...)
-		out.WriteString("::" + castType)
-	}
-}
-
-func postgresREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-
-		jet.Serialize(expressions[0], statement, out, options...)
-
-		caseSensitive := false
-
-		if len(expressions) >= 3 {
-			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
-				caseSensitive = stringLiteral.Value().(bool)
-			}
+		if not {
+			notOperator = "!"
 		}
 
 		if caseSensitive {
-			out.WriteString("~")
+			out.WriteString(notOperator + "~")
 		} else {
-			out.WriteString("~*")
+			out.WriteString(notOperator + "~*")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
-	}
-}
-
-func postgresNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
-	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
-		if len(expressions) < 2 {
-			panic("jet: invalid number of expressions for operator")
-		}
-
-		jet.Serialize(expressions[0], statement, out, options...)
-
-		caseSensitive := false
-
-		if len(expressions) >= 3 {
-			if stringLiteral, ok := expressions[2].(jet.LiteralExpression); ok {
-				caseSensitive = stringLiteral.Value().(bool)
-			}
-		}
-
-		if caseSensitive {
-			out.WriteString("!~")
-		} else {
-			out.WriteString("!~*")
-		}
-
-		jet.Serialize(expressions[1], statement, out, options...)
+		jet.Serialize(pattern, statement, out, options...)
 	}
 }
 

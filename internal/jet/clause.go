@@ -190,6 +190,10 @@ type ClauseOrderBy struct {
 	SkipNewLine bool
 }
 
+func (o *ClauseOrderBy) serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	o.Serialize(statementType, out, options...)
+}
+
 // Serialize serializes clause into SQLBuilder
 func (o *ClauseOrderBy) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if o.List == nil {
@@ -219,6 +223,10 @@ type ClauseLimit struct {
 	Count int64
 }
 
+func (o *ClauseLimit) serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	o.Serialize(statementType, out, options...)
+}
+
 // Serialize serializes clause into SQLBuilder
 func (l *ClauseLimit) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if l.Count >= 0 {
@@ -231,6 +239,10 @@ func (l *ClauseLimit) Serialize(statementType StatementType, out *SQLBuilder, op
 // ClauseOffset struct
 type ClauseOffset struct {
 	Count IntegerExpression
+}
+
+func (o *ClauseOffset) serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
+	o.Serialize(statementType, out, options...)
 }
 
 // Serialize serializes clause into SQLBuilder

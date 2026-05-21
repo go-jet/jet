@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
+	postgresdialect "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
 )
 
@@ -14,7 +15,7 @@ type postgresQuerySet struct{}
 
 func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name", obj_description((quote_ident(table_schema)||'.'||quote_ident(table_name))::regclass) as "table.comment"
+SELECT table_name as "table.name", obj_description((quote_ident(table_schema)||'.'||quote_ident(table_name))::regclass, 'pg_class') as "table.comment"
 FROM information_schema.tables
 WHERE table_schema = $1 and table_type = $2
 ORDER BY table_name;
@@ -79,7 +80,8 @@ select
           when tp.typcategory = 'A' then elem.typname
           else tp.typname
         end) as "dataType.Name",
-    false as "dataType.isUnsigned"
+    false as "dataType.isUnsigned",
+    $3::text as "dataType.SourceDialect"
 from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_class as cls on cls.oid = attr.attrelid
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
@@ -94,7 +96,7 @@ order by
     attr.attnum;
 `
 	var columns []metadata.Column
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName}, &columns)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, postgresdialect.Dialect.Name()}, &columns)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query '%s' columns metadata: %w", tableName, err)
 	}
@@ -105,7 +107,7 @@ order by
 func (p postgresQuerySet) GetEnumsMetaData(db *sql.DB, schemaName string) ([]metadata.Enum, error) {
 	query := `
 SELECT t.typname as "enum.name",  
-	   obj_description(t.oid) as "enum.comment",
+	   obj_description(t.oid, 'pg_type') as "enum.comment",
        e.enumlabel as "values"
 FROM pg_catalog.pg_type t 
    JOIN pg_catalog.pg_enum e on t.oid = e.enumtypid  

@@ -7,21 +7,19 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-type cast struct {
-	jet.Cast
-}
-
 // CAST function converts an expr (of any type) into later specified datatype.
 func CAST(expr Expression) *cast {
-	ret := &cast{}
-	ret.Cast = jet.NewCastImpl(expr)
-
-	return ret
+	return &cast{
+		expr: expr,
+	}
 }
 
-// AS casts expression as castType
+type cast struct {
+	expr Expression
+}
+
 func (b *cast) AS(castType string) Expression {
-	return b.Cast.AS(castType)
+	return jet.AtomicCustomExpression(b.expr, Token("::"+castType))
 }
 
 // AS_BOOL casts expression as bool type

@@ -9,6 +9,7 @@ import (
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/internal/utils/semantic"
 	"github.com/go-jet/jet/v2/qrm"
+	sqlitedialect "github.com/go-jet/jet/v2/sqlite"
 )
 
 // sqliteQuerySet is dialect query set for SQLite
@@ -102,9 +103,10 @@ func (p sqliteQuerySet) GetTableColumnsMetaData(db *sql.DB, schemaName string, t
 			IsGenerated:  isGenerated,
 			HasDefault:   hasDefault,
 			DataType: metadata.DataType{
-				Name:       columnType,
-				Kind:       metadata.BaseType,
-				IsUnsigned: false,
+				Name:          columnType,
+				Kind:          metadata.BaseType,
+				IsUnsigned:    false,
+				SourceDialect: sqlitedialect.Dialect.Name(),
 			},
 		})
 	}

@@ -2,6 +2,9 @@ package postgres
 
 import "github.com/go-jet/jet/v2/internal/jet"
 
+// Serializer is a common interface for all serializable SQL builder components.
+type Serializer = jet.Serializer
+
 // Expression is a common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
 type Expression = jet.Expression

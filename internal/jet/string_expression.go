@@ -85,11 +85,33 @@ func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression 
 }
 
 func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return newBinaryBoolOperatorExpression(s.root, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return BoolExp(newExpression(&regexpLikeSerializer{
+		str:           s.root,
+		pattern:       pattern,
+		caseSensitive: len(caseSensitive) > 0 && caseSensitive[0],
+	}))
 }
 
 func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return newBinaryBoolOperatorExpression(s.root, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return BoolExp(newExpression(&regexpLikeSerializer{
+		not:           true,
+		str:           s.root,
+		pattern:       pattern,
+		caseSensitive: len(caseSensitive) > 0 && caseSensitive[0],
+	}))
+}
+
+type regexpLikeSerializer struct {
+	not           bool
+	str           StringExpression
+	pattern       StringExpression
+	caseSensitive bool
+}
+
+func (r *regexpLikeSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	optionalWrap(out, options, func(out *SQLBuilder, options []SerializeOption) {
+		out.Dialect.RegexpLike(r.str, r.not, r.pattern, r.caseSensitive)(statement, out, options...)
+	})
 }
 
 // ---------------------------------------------------//

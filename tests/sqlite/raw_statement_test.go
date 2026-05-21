@@ -110,7 +110,7 @@ func TestRawStatementRows(t *testing.T) {
 		require.NotEqual(t, actor.LastUpdate, time.Time{})
 
 		if actor.ActorID == 54 {
-			require.Equal(t, actor.ActorID, int32(54))
+			require.Equal(t, actor.ActorID, int64(54))
 			require.Equal(t, actor.FirstName, "PENELOPE")
 			require.Equal(t, actor.LastName, "PINKETT")
 			require.Equal(t, actor.LastUpdate.Format(time.RFC3339), "2019-04-11T18:11:48Z")

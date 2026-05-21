@@ -27,8 +27,7 @@ func (a *alias) fromImpl(subQuery SelectTable) Projection {
 
 // This function is used to create dummy columns when exporting sub-query columns using subQuery.AllColumns()
 // In most case we don't care about type of the column, except when sub-query columns are used as SELECT_JSON projection.
-// We need to know type to encode value for json unmarshal. At the moment only bool, time and blob columns are of interest,
-// so we don't have to support every column type.
+// We need to know type to encode value for json unmarshal.
 func newDummyColumnForExpression(exp Expression, name string) ColumnExpression {
 
 	switch exp.(type) {
@@ -54,6 +53,41 @@ func newDummyColumnForExpression(exp Expression, name string) ColumnExpression {
 		return IntervalColumn(name)
 	case StringExpression:
 		return StringColumn(name)
+
+	case Array[BoolExpression]:
+		return ArrayColumn[BoolExpression](name)
+	case Array[IntegerExpression]:
+		return ArrayColumn[IntegerExpression](name)
+	case Array[FloatExpression]:
+		return ArrayColumn[FloatExpression](name)
+	case Array[BlobExpression]:
+		return ArrayColumn[BlobExpression](name)
+	case Array[DateExpression]:
+		return ArrayColumn[DateExpression](name)
+	case Array[TimeExpression]:
+		return ArrayColumn[TimeExpression](name)
+	case Array[TimezExpression]:
+		return ArrayColumn[TimezExpression](name)
+	case Array[TimestampExpression]:
+		return ArrayColumn[TimestampExpression](name)
+	case Array[TimestampzExpression]:
+		return ArrayColumn[TimestampzExpression](name)
+	case Array[IntervalExpression]:
+		return ArrayColumn[IntervalExpression](name)
+	case Array[StringExpression]:
+		return ArrayColumn[StringExpression](name)
+
+	case Range[Int4Expression], Range[Int8Expression]:
+		return RangeColumn[IntegerExpression](name)
+	case Range[NumericExpression]:
+		return RangeColumn[NumericExpression](name)
+	case Range[DateExpression]:
+		return RangeColumn[DateExpression](name)
+	case Range[TimestampExpression]:
+		return RangeColumn[TimestampExpression](name)
+	case Range[TimestampzExpression]:
+		return RangeColumn[TimestampzExpression](name)
+
 	}
 
 	return StringColumn(name)

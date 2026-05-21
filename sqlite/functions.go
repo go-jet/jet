@@ -2,8 +2,9 @@ package sqlite
 
 import (
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/jet"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // This functions can be used, instead of its method counterparts, to have a better indentation of a complex condition
@@ -297,7 +298,7 @@ func modifier(modifierName string) func(value float64) Expression {
 func DATE(timeValue interface{}, modifiers ...Expression) DateExpression {
 	exprList := getFuncExprList(timeValue, modifiers...)
 
-	return jet.NewDateFunc("DATE", exprList...)
+	return DateExp(Func("DATE", exprList...))
 }
 
 // TIME function creates new time from time-value and zero or more time modifiers

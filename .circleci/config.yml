@@ -8,7 +8,7 @@ jobs:
   build_and_tests:
     docker:
       # specify the version
-      - image: cimg/go:1.23.8
+      - image: cimg/go:1.24.8
 
       # Please keep the version in sync with test/docker-compose.yaml
       - image: cimg/postgres:14.1
@@ -142,11 +142,31 @@ jobs:
 
       - run:
           name: Running tests
-          command:  gotestsum --junitfile $TEST_RESULTS/report.xml --format testname   -- -tags postgres -coverprofile=cover.out  -covermode=atomic -coverpkg=github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/...,github.com/go-jet/jet/v2/stmtcache/... ./...
+          command: |
+            COVERPKG="github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/...,github.com/go-jet/jet/v2/stmtcache/..."
+
+            gotestsum --junitfile $TEST_RESULTS/root-report.xml --format testname -- \
+              -coverprofile=root-cover.out \
+              -covermode=atomic \
+              -coverpkg="$COVERPKG" \
+              ./...
+
+            cd tests
+            gotestsum --junitfile $TEST_RESULTS/integration-report.xml --format testname -- \
+              -tags postgres \
+              -coverprofile=../integration-cover.out \
+              -covermode=atomic \
+              -coverpkg="$COVERPKG" \
+              ./...
+            cd -
+
+            head -n 1 root-cover.out > cover.out
+            tail -n +2 root-cover.out >> cover.out
+            tail -n +2 integration-cover.out >> cover.out
 
       - run:
           name: Running tests with statement caching enabled
-          command: JET_TESTS_WITH_STMT_CACHE=true go test -tags postgres -v ./tests/...
+          command: cd tests && JET_TESTS_WITH_STMT_CACHE=true go test -v ./... && cd -
 
       - run:
           name: Init databases (mariadb, cockroachdb) and generate jet files
@@ -156,8 +176,8 @@ jobs:
             go run ./init/init.go -testsuite cockroach        
 
       # run mariaDB and cockroachdb tests. No need to collect coverage, because coverage is already included with mysql and postgres tests
-      - run: MY_SQL_SOURCE=MariaDB go test -v  ./tests/mysql/
-      - run: PG_SOURCE=COCKROACH_DB go test -v ./tests/postgres/
+      - run: cd tests && MY_SQL_SOURCE=MariaDB go test -v ./mysql/
+      - run: cd tests && PG_SOURCE=COCKROACH_DB go test -v ./postgres/
 
       - save_cache:
           key: go-mod-v4-{{ checksum "go.sum" }}

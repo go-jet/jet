@@ -2,6 +2,10 @@ package sqlite
 
 import (
 	"encoding/hex"
+	"strings"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	. "github.com/go-jet/jet/v2/sqlite"
@@ -12,9 +16,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
-	"time"
 )
 
 func TestAllTypes(t *testing.T) {
@@ -44,10 +45,10 @@ var allTypesJSON = `
 		"IntegerPtr": 1600,
 		"BigInt": 5000,
 		"BigIntPtr": 50000,
-		"Decimal": 1.11,
-		"DecimalPtr": 1.01,
-		"Numeric": 2.22,
-		"NumericPtr": 2.02,
+		"Decimal": "1.11",
+		"DecimalPtr": "1.01",
+		"Numeric": "2.22",
+		"NumericPtr": "2.02",
 		"Float": 3.33,
 		"FloatPtr": 3.03,
 		"Double": 4.44,
@@ -69,7 +70,9 @@ var allTypesJSON = `
 		"Text": "text",
 		"TextPtr": "text-ptr",
 		"Blob": "YmxvYjE=",
-		"BlobPtr": "YmxvYi1wdHI="
+		"BlobPtr": "YmxvYi1wdHI=",
+		"JSON": "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+		"JSONPtr": "{\"key1\": \"value1\", \"key2\": \"value2\"}"
 	},
 	{
 		"Boolean": false,
@@ -84,9 +87,9 @@ var allTypesJSON = `
 		"IntegerPtr": null,
 		"BigInt": 5000,
 		"BigIntPtr": null,
-		"Decimal": 1.11,
+		"Decimal": "1.11",
 		"DecimalPtr": null,
-		"Numeric": 2.22,
+		"Numeric": "2.22",
 		"NumericPtr": null,
 		"Float": 3.33,
 		"FloatPtr": null,
@@ -109,7 +112,9 @@ var allTypesJSON = `
 		"Text": "text",
 		"TextPtr": null,
 		"Blob": "YmxvYjI=",
-		"BlobPtr": null
+		"BlobPtr": null,
+		"JSON": "{\"key1\": \"value1\", \"key2\": \"value2\"}",
+		"JSONPtr": null
 	}
 ]
 `
@@ -164,18 +169,18 @@ var toInsert = model.AllTypes{
 	TinyIntPtr:   ptr.Of(int8(11)),
 	SmallIntPtr:  ptr.Of(int16(33)),
 	MediumIntPtr: ptr.Of(int32(55)),
-	IntegerPtr:   ptr.Of(int32(77)),
+	IntegerPtr:   ptr.Of(int64(77)),
 	BigIntPtr:    ptr.Of(int64(99)),
-	Decimal:      11.22,
-	DecimalPtr:   ptr.Of(33.44),
-	Numeric:      55.66,
-	NumericPtr:   ptr.Of(77.88),
+	Decimal:      decimal.RequireFromString("11.22"),
+	DecimalPtr:   ptr.Of(decimal.RequireFromString("33.44")),
+	Numeric:      decimal.RequireFromString("55.66"),
+	NumericPtr:   ptr.Of(decimal.RequireFromString("77.88")),
 	Float:        99.00,
 	FloatPtr:     ptr.Of(11.22),
 	Double:       33.44,
 	DoublePtr:    ptr.Of(55.66),
 	Real:         77.88,
-	RealPtr:      ptr.Of(float32(99.00)),
+	RealPtr:      ptr.Of(float64(99.00)),
 	Time:         time.Date(1, 1, 1, 1, 1, 1, 10, time.UTC),
 	TimePtr:      ptr.Of(time.Date(2, 2, 2, 2, 2, 2, 200, time.UTC)),
 	Date:         time.Now(),
@@ -232,8 +237,8 @@ func TestExpressionOperators(t *testing.T) {
 	).LIMIT(2)
 
 	testutils.AssertStatementSql(t, query, strings.Replace(`
-SELECT all_types.integer IS NULL AS "result.is_null",
-     all_types.date_ptr IS NOT NULL AS "result.is_not_null",
+SELECT (all_types.integer IS NULL) AS "result.is_null",
+     (all_types.date_ptr IS NOT NULL) AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
      (all_types.small_int_ptr IN ((
           SELECT all_types.integer AS "all_types.integer"
@@ -299,12 +304,12 @@ SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
      (all_types.boolean IS NOT ?) AS "distinct2",
      (all_types.boolean IS all_types.boolean_ptr) AS "not_distinct_1",
      (all_types.boolean IS ?) AS "NOTDISTINCT2",
-     all_types.boolean IS TRUE AS "ISTRUE",
-     all_types.boolean IS NOT TRUE AS "isnottrue",
-     all_types.boolean IS FALSE AS "is_False",
-     all_types.boolean IS NOT FALSE AS "is not false",
-     all_types.boolean IS NULL AS "is unknown",
-     all_types.boolean IS NOT NULL AS "is_not_unknown",
+     (all_types.boolean IS TRUE) AS "ISTRUE",
+     (all_types.boolean IS NOT TRUE) AS "isnottrue",
+     (all_types.boolean IS FALSE) AS "is_False",
+     (all_types.boolean IS NOT FALSE) AS "is not false",
+     (all_types.boolean IS NULL) AS "is unknown",
+     (all_types.boolean IS NOT NULL) AS "is_not_unknown",
      ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
      ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
 FROM all_types;
@@ -711,34 +716,77 @@ FROM ''ReservedWords'';
 
 func TestExactDecimals(t *testing.T) {
 
+	t.Run("should query decimal", func(t *testing.T) {
+		query := SELECT(
+			ExactDecimals.AllColumns,
+		).FROM(
+			ExactDecimals,
+		).WHERE(
+			ExactDecimals.Decimal.NOT_EQ(Decimal("1.1111111111")),
+		).ORDER_BY(
+			ExactDecimals.Decimal,
+		)
+
+		var result []model.ExactDecimals
+
+		err := query.Query(sampleDB, &result)
+		require.NoError(t, err)
+
+		testutils.AssertJSON(t, result, `
+[
+	{
+		"Decimal": "1.23",
+		"DecimalPtr": null,
+		"Numeric": "2.22222222222",
+		"NumericPtr": null
+	},
+	{
+		"Decimal": "2.333333333333333",
+		"DecimalPtr": "3.44444444",
+		"Numeric": "5.6666666666",
+		"NumericPtr": "7.88888888"
+	},
+	{
+		"Decimal": "25",
+		"DecimalPtr": "34",
+		"Numeric": "356",
+		"NumericPtr": "67"
+	}
+]
+`)
+	})
+
+	// overwrite test
 	type exactDecimals struct {
 		model.ExactDecimals
 		Decimal    decimal.Decimal
 		DecimalPtr decimal.Decimal
 	}
 
-	t.Run("should query decimal", func(t *testing.T) {
+	t.Run("should query decimal with overwrite", func(t *testing.T) {
 		query := SELECT(
 			ExactDecimals.AllColumns,
 		).FROM(
 			ExactDecimals,
-		).WHERE(ExactDecimals.Decimal.EQ(String("1.11111111111111111111")))
+		).WHERE(
+			ExactDecimals.Decimal.EQ(Decimal("1.23")),
+		)
 
 		var result exactDecimals
 
 		err := query.Query(sampleDB, &result)
 		require.NoError(t, err)
 
-		require.Equal(t, "1.11111111111111111111", result.Decimal.String())
+		require.Equal(t, "1.23", result.Decimal.String())
 		require.Equal(t, "0", result.DecimalPtr.String()) // NULL
 
-		require.Equal(t, "1.11111111111111111111", result.ExactDecimals.Decimal) // precision loss
-		require.Equal(t, (*string)(nil), result.ExactDecimals.DecimalPtr)
-		require.Equal(t, "2.22222222222222222222", result.ExactDecimals.Numeric)
-		require.Equal(t, (*string)(nil), result.ExactDecimals.NumericPtr) // NULL
+		require.Equal(t, "1.23", result.ExactDecimals.Decimal.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.ExactDecimals.DecimalPtr)
+		require.Equal(t, "2.22222222222", result.ExactDecimals.Numeric.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.ExactDecimals.NumericPtr) // NULL
 	})
 
-	t.Run("should insert decimal", func(t *testing.T) {
+	t.Run("should insert decimal with overwrite", func(t *testing.T) {
 
 		insertQuery := ExactDecimals.INSERT(
 			ExactDecimals.AllColumns,
@@ -746,12 +794,12 @@ func TestExactDecimals(t *testing.T) {
 			exactDecimals{
 				ExactDecimals: model.ExactDecimals{
 					// overwritten by wrapped(exactDecimals) scope
-					Decimal:    "0.1",
+					Decimal:    decimal.RequireFromString("0.1"),
 					DecimalPtr: nil,
 
 					// not overwritten
-					Numeric:    "6.7",
-					NumericPtr: ptr.Of("7.7"),
+					Numeric:    decimal.RequireFromString("6.7"),
+					NumericPtr: ptr.Of(decimal.RequireFromString("7.7")),
 				},
 				Decimal:    decimal.RequireFromString("91.23"),
 				DecimalPtr: decimal.RequireFromString("45.67"),
@@ -778,10 +826,11 @@ RETURNING exact_decimals.decimal AS "exact_decimals.decimal",
 		require.Equal(t, "91.23", result.Decimal.String())
 		require.Equal(t, "45.67", result.DecimalPtr.String())
 
-		require.Equal(t, "6.7", result.ExactDecimals.Numeric)
-		require.Equal(t, "7.7", *result.ExactDecimals.NumericPtr)
-		require.Equal(t, "91.23", result.ExactDecimals.Decimal)
-		require.Equal(t, "45.67", *result.ExactDecimals.DecimalPtr)
+		require.Equal(t, "6.7", result.ExactDecimals.Numeric.String())
+		require.Equal(t, "7.7", result.ExactDecimals.NumericPtr.String())
+		require.Equal(t, "91.23", result.ExactDecimals.Decimal.String())
+		require.Equal(t, "45.67", result.ExactDecimals.DecimalPtr.String())
+
 	})
 }
 

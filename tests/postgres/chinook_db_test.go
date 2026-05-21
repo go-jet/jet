@@ -2,6 +2,9 @@ package postgres
 
 import (
 	"context"
+	"testing"
+	"time"
+
 	"github.com/bytedance/sonic"
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
@@ -10,8 +13,6 @@ import (
 	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/table"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook2/table"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 )
 
 func TestSelectAlbum(t *testing.T) {
@@ -132,7 +133,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": null,
 						"Milliseconds": 366837,
 						"Bytes": 12089673,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					},
 					{
 						"TrackId": 76,
@@ -143,7 +144,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": null,
 						"Milliseconds": 271856,
 						"Bytes": 8719426,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					}
 				]
 			}
@@ -168,7 +169,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": "Billy Cobham",
 						"Milliseconds": 261851,
 						"Bytes": 8538199,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					},
 					{
 						"TrackId": 124,
@@ -179,7 +180,7 @@ ORDER BY "Artist"."ArtistId", "Album"."AlbumId", "Track"."TrackId";
 						"Composer": "Billy Cobham",
 						"Milliseconds": 456071,
 						"Bytes": 15075616,
-						"UnitPrice": 0.99
+						"UnitPrice": "0.99"
 					}
 				]
 			}
@@ -1301,13 +1302,13 @@ func TestAggregateFunc(t *testing.T) {
 	skipForCockroachDB(t)
 
 	stmt := SELECT(
-		PERCENTILE_DISC(Float(0.1)).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceId).AS("percentile_disc_1"),
+		PERCENTILE_DISC(Double(0.1)).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceId).AS("percentile_disc_1"),
 		PERCENTILE_DISC(Invoice.Total.DIV(Float(100))).WITHIN_GROUP_ORDER_BY(Invoice.InvoiceDate.ASC()).AS("percentile_disc_2"),
 		PERCENTILE_DISC(RawFloat("(select array_agg(s) from generate_series(0, 1, 0.2) as s)")).
 			WITHIN_GROUP_ORDER_BY(Invoice.BillingAddress.DESC()).AS("percentile_disc_3"),
 
-		PERCENTILE_CONT(Float(0.3)).WITHIN_GROUP_ORDER_BY(Invoice.Total).AS("percentile_cont_1"),
-		PERCENTILE_CONT(Float(0.2)).WITHIN_GROUP_ORDER_BY(INTERVAL(1, HOUR).DESC()).AS("percentile_cont_interval"),
+		PERCENTILE_CONT(Double(0.3)).WITHIN_GROUP_ORDER_BY(Invoice.Total).AS("percentile_cont_1"),
+		PERCENTILE_CONT(Double(0.2)).WITHIN_GROUP_ORDER_BY(INTERVAL(1, HOUR).DESC()).AS("percentile_cont_interval"),
 
 		MODE().WITHIN_GROUP_ORDER_BY(Invoice.BillingPostalCode.DESC()).AS("mode_1"),
 	).FROM(

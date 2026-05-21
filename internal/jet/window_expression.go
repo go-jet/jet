@@ -28,12 +28,13 @@ type windowExpression interface {
 	OVER(window ...Window) Expression
 }
 
-func newWindowExpression(Exp Expression) windowExpression {
+func newWindowExpression(exp Expression) windowExpression {
 	newExp := &windowExpressionImpl{
-		Expression: Exp,
+		Expression: exp,
 	}
 
-	newExp.commonWindowImpl.expression = Exp
+	newExp.commonWindowImpl.expression = exp
+	exp.setRoot(newExp)
 
 	return newExp
 }
@@ -65,6 +66,7 @@ func newFloatWindowExpression(floatExp FloatExpression) floatWindowExpression {
 	}
 
 	newExp.commonWindowImpl.expression = floatExp
+	floatExp.setRoot(newExp)
 
 	return newExp
 }
@@ -96,6 +98,7 @@ func newIntegerWindowExpression(intExp IntegerExpression) integerWindowExpressio
 	}
 
 	newExp.commonWindowImpl.expression = intExp
+	intExp.setRoot(newExp)
 
 	return newExp
 }
@@ -127,6 +130,7 @@ func newBoolWindowExpression(boolExp BoolExpression) boolWindowExpression {
 	}
 
 	newExp.commonWindowImpl.expression = boolExp
+	boolExp.setRoot(newExp)
 
 	return newExp
 }

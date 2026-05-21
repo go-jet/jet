@@ -4,14 +4,15 @@
 package postgres
 
 import (
+	"math/big"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/google/go-cmp/cmp"
 	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/require"
-	"math/big"
-	"testing"
-	"time"
 
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
@@ -81,8 +82,8 @@ SELECT sample_ranges.date_range AS "sample_ranges.date_range",
      (sample_ranges.int4_range = sample_ranges.int4_range) AS "sample.int4eq",
      (sample_ranges.int8_range = int8range($1, $2, $3::text)) AS "sample.int8eq",
      (sample_ranges.int4_range != int4range($4, $5)) AS "sample.int4neq",
-     (sample_ranges.num_range < numrange($6, $7)) IS TRUE AS "sample.num_lt",
-     (sample_ranges.date_range <= daterange($8::date, $9)) IS FALSE AS "sample.date_lteq",
+     ((sample_ranges.num_range < numrange($6, $7)) IS TRUE) AS "sample.num_lt",
+     ((sample_ranges.date_range <= daterange($8::date, $9)) IS FALSE) AS "sample.date_lteq",
      (sample_ranges.timestamp_range > tsrange($10::timestamp without time zone, $11::timestamp without time zone)) AS "sample.ts_gt",
      (sample_ranges.timestampz_range >= tstzrange($12, $13::timestamp with time zone)) AS "sample.tstz_gteq",
      (sample_ranges.int4_range @> $14::integer) AS "sample.int4cont",

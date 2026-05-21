@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/qrm"
+	"github.com/shopspring/decimal"
 	"strings"
 	"testing"
 	"time"
@@ -86,9 +87,9 @@ func TestSelect_NestedObject(t *testing.T) {
 		"LanguageID": 1,
 		"OriginalLanguageID": null,
 		"RentalDuration": 7,
-		"RentalRate": 2.99,
+		"RentalRate": "2.99",
 		"Length": 50,
-		"ReplacementCost": 18.99,
+		"ReplacementCost": "18.99",
 		"Rating": "NC-17",
 		"SpecialFeatures": "Trailers,Deleted Scenes",
 		"LastUpdate": "2006-02-15T05:03:42Z"
@@ -254,7 +255,7 @@ GROUP BY payment.customer_id;
 	"CustomerID": 1,
 	"StaffID": 0,
 	"RentalID": null,
-	"Amount": 0,
+	"Amount": "0",
 	"PaymentDate": "0001-01-01T00:00:00Z",
 	"LastUpdate": "0001-01-01T00:00:00Z",
 	"Count": 8,
@@ -668,7 +669,7 @@ func TestSubQuery(t *testing.T) {
 	err := query.Query(db, &dest)
 	require.NoError(t, err)
 
-	//testutils.SaveJsonFile(dest, "mysql/testdata/r_rating_films.json")
+	//testutils.SaveJSONFile(dest, "./testdata/results/mysql/r_rating_films.json")
 	testutils.AssertJSONFile(t, dest, "./testdata/results/mysql/r_rating_films.json")
 }
 
@@ -913,6 +914,8 @@ func getRowLockTestData() map[RowLock]string {
 }
 
 func TestRowLock(t *testing.T) {
+	skipForMariaDB(t)
+
 	expectedSQL := `
 SELECT *
 FROM dvds.address
@@ -1574,8 +1577,6 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 	type MyUint16 uint16
 	type MyUint32 uint32
 	type MyInt16 int16
-	type MyFloat32 float32
-	type MyFloat64 float64
 	type MyString string
 	type MyTime = time.Time
 
@@ -1587,9 +1588,9 @@ func TestScanIntoCustomBaseTypes(t *testing.T) {
 		LanguageID         MyUint8
 		OriginalLanguageID *MyUint8
 		RentalDuration     MyUint8
-		RentalRate         MyFloat32
+		RentalRate         decimal.Decimal
 		Length             *MyUint32
-		ReplacementCost    MyFloat64
+		ReplacementCost    decimal.Decimal
 		Rating             *model.FilmRating
 		SpecialFeatures    *MyString
 		LastUpdate         MyTime

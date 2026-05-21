@@ -16,9 +16,10 @@ const mysqlMaxConns = 10
 
 // DBConnection contains MySQL connection details
 type DBConnection struct {
-	Host     string
-	Port     int
-	User     string
+	Host string
+	Port int
+	User string
+	// #nosec G117 -- password is used only for the local development
 	Password string
 	Params   string
 

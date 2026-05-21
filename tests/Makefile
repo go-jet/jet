@@ -41,7 +41,8 @@ else
 endif
 
 install-jet-gen:
-	go build -o ${GOPATH}/bin/${target} ../cmd/jet/
+	cd ../cmd/jet && go install . && cd -
+
 
 jet-gen-postgres:
 	jet -dsn=postgres://jet:jet@localhost:50901/jetdb?sslmode=disable -schema=dvds  -path=./.gentestdata/

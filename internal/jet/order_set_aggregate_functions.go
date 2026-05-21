@@ -34,25 +34,20 @@ func newOrderSetAggregateFunction(name string, fraction FloatExpression) *OrderS
 // WITHIN_GROUP_ORDER_BY specifies ordered set of aggregated argument values
 func (p *OrderSetAggregateFunc) WITHIN_GROUP_ORDER_BY(orderBy OrderByClause) Expression {
 	p.orderBy = ORDER_BY(orderBy)
-	return newOrderSetAggregateFuncExpression(*p)
+	return newOrderSetAggregateFuncExpression(p)
 }
 
-func newOrderSetAggregateFuncExpression(aggFunc OrderSetAggregateFunc) *orderSetAggregateFuncExpression {
-	ret := &orderSetAggregateFuncExpression{
+func newOrderSetAggregateFuncExpression(aggFunc *OrderSetAggregateFunc) Expression {
+	return newExpression(&orderSetAggregateFuncSerializer{
 		OrderSetAggregateFunc: aggFunc,
-	}
-
-	ret.ExpressionInterfaceImpl.Root = ret
-
-	return ret
+	})
 }
 
-type orderSetAggregateFuncExpression struct {
-	ExpressionInterfaceImpl
-	OrderSetAggregateFunc
+type orderSetAggregateFuncSerializer struct {
+	*OrderSetAggregateFunc
 }
 
-func (p *orderSetAggregateFuncExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (p *orderSetAggregateFuncSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(p.name)
 
 	if p.fraction != nil {

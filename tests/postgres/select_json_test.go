@@ -1,13 +1,14 @@
 package postgres
 
 import (
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/testutils"
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/go-jet/jet/v2/qrm"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/view"
 	"github.com/stretchr/testify/require"
-	"testing"
-	"time"
 
 	. "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
@@ -155,7 +156,7 @@ FROM (
                customer.email AS "email",
                customer.address_id AS "addressID",
                customer.activebool AS "activebool",
-               to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "createDate",
+               (to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "createDate",
                to_char(customer.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
                customer.active AS "active",
                (
@@ -307,7 +308,7 @@ FROM (
                customer.email AS "email",
                customer.address_id AS "addressID",
                customer.activebool AS "activebool",
-               to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "createDate",
+               (to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "createDate",
                to_char(customer.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
                customer.active AS "active",
                (
@@ -522,7 +523,7 @@ RETURNING rental.rental_id AS "rental.rental_id",
                               customer.email AS "email",
                               customer.address_id AS "addressID",
                               customer.activebool AS "activebool",
-                              to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z' AS "createDate",
+                              (to_char(customer.create_date::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "createDate",
                               to_char(customer.last_update, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "lastUpdate",
                               customer.active AS "active"
                          FROM dvds.customer
@@ -912,4 +913,56 @@ func TestSelectJson_InvalidJson(t *testing.T) {
 	}
 	err := stmt.QueryContext(ctx, db, &dest)
 	require.ErrorContains(t, err, "invalid json")
+}
+
+func TestSelectJsonObject_EscapesJsonKeys(t *testing.T) {
+	stmt := SELECT_JSON_OBJ(
+		String("value").AS("author"),
+		String("value").AS("author's name"),
+		String("value").AS("author''s name"),
+		String("value").AS(`C:\tmp\file`),
+		String("value").AS("hello\nworld"),
+		String("value").AS("a'b\\\\c\\nd\\r\\x00e\\x1af"),
+		String("value").AS("žika 😀"),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT row_to_json(records) AS "json"
+FROM (
+          SELECT 'value'::text AS "author",
+               'value'::text AS "author's name",
+               'value'::text AS "author''s name",
+               'value'::text AS "C:\tmp\file",
+               'value'::text AS "hello
+world",
+               'value'::text AS "a'b\\c\nd\r\x00e\x1af",
+               'value'::text AS "žika 😀"
+     ) AS records;
+`)
+
+	var dest map[string]any
+
+	err := stmt.QueryContext(ctx, db, &dest)
+	require.NoError(t, err)
+	testutils.AssertJSON(t, dest, `
+{
+	"C:\\tmp\\file": "value",
+	"a'b\\\\c\\nd\\r\\x00e\\x1af": "value",
+	"author": "value",
+	"author''s name": "value",
+	"author's name": "value",
+	"hello\nworld": "value",
+	"žika 😀": "value"
+}
+`)
+}
+
+func TestSelectJsonObject_NullMoreThanOneRow(t *testing.T) {
+	var dest map[string]any
+
+	_, err := qrm.QueryJsonObj(ctx, db, `
+SELECT NULL::json AS "json"
+UNION ALL
+SELECT NULL::json AS "json"`, nil, &dest)
+	require.ErrorContains(t, err, "jet: query returned more then one row")
 }

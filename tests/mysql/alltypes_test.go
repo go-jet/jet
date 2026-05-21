@@ -1,12 +1,13 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/utils/ptr"
-	"github.com/shopspring/decimal"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/utils/ptr"
+	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
 
@@ -53,8 +54,8 @@ func TestAllTypesJSON(t *testing.T) {
 	testutils.AssertStatementSql(t, stmt, strings.ReplaceAll(`
 SELECT JSON_ARRAYAGG(JSON_OBJECT(
           'id', all_types.id,
-          'boolean', all_types.boolean = 1,
-          'booleanPtr', all_types.boolean_ptr = 1,
+          'boolean', (all_types.boolean = 1),
+          'booleanPtr', (all_types.boolean_ptr = 1),
           'tinyInt', all_types.tiny_int,
           'uTinyInt', all_types.u_tiny_int,
           'smallInt', all_types.small_int,
@@ -190,8 +191,8 @@ func TestExpressionOperators(t *testing.T) {
 	).LIMIT(2)
 
 	testutils.AssertStatementSql(t, query, strings.Replace(`
-SELECT all_types.'integer' IS NULL AS "result.is_null",
-     all_types.date_ptr IS NOT NULL AS "result.is_not_null",
+SELECT (all_types.'integer' IS NULL) AS "result.is_null",
+     (all_types.date_ptr IS NOT NULL) AS "result.is_not_null",
      (all_types.small_int_ptr IN (?, ?)) AS "result.in",
      (all_types.small_int_ptr IN ((
           SELECT all_types.'integer' AS "all_types.integer"
@@ -259,12 +260,12 @@ SELECT (all_types.boolean = all_types.boolean_ptr) AS "EQ1",
      (NOT(all_types.boolean <=> ?)) AS "distinct2",
      (all_types.boolean <=> all_types.boolean_ptr) AS "not_distinct_1",
      (all_types.boolean <=> ?) AS "NOTDISTINCT2",
-     all_types.boolean IS TRUE AS "ISTRUE",
-     all_types.boolean IS NOT TRUE AS "isnottrue",
-     all_types.boolean IS FALSE AS "is_False",
-     all_types.boolean IS NOT FALSE AS "is not false",
-     all_types.boolean IS UNKNOWN AS "is unknown",
-     all_types.boolean IS NOT UNKNOWN AS "is_not_unknown",
+     (all_types.boolean IS TRUE) AS "ISTRUE",
+     (all_types.boolean IS NOT TRUE) AS "isnottrue",
+     (all_types.boolean IS FALSE) AS "is_False",
+     (all_types.boolean IS NOT FALSE) AS "is not false",
+     (all_types.boolean IS UNKNOWN) AS "is unknown",
+     (all_types.boolean IS NOT UNKNOWN) AS "is_not_unknown",
      ((all_types.boolean AND all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex1",
      ((all_types.boolean OR all_types.boolean) = (all_types.boolean AND all_types.boolean)) AS "complex2"
 FROM test_sample.all_types;
@@ -1143,7 +1144,7 @@ SELECT EXTRACT(MICROSECOND FROM CAST(? AS TIME)),
      EXTRACT(HOUR FROM all_types.timestamp),
      EXTRACT(DAY FROM all_types.date),
      EXTRACT(WEEK FROM all_types.timestamp),
-     EXTRACT(MONTH FROM all_types.timestamp + INTERVAL 1 DAY),
+     EXTRACT(MONTH FROM (all_types.timestamp + INTERVAL 1 DAY)),
      EXTRACT(QUARTER FROM all_types.timestamp),
      EXTRACT(YEAR FROM all_types.timestamp) = ?,
      EXTRACT(SECOND_MICROSECOND FROM all_types.time),
@@ -1305,7 +1306,7 @@ FROM (
 
 		testutils.AssertDebugStatementSql(t, stmtJson, strings.ReplaceAll(`
 SELECT JSON_ARRAYAGG(JSON_OBJECT(
-          'boolean', sub_query.''all_types.boolean'' = 1,
+          'boolean', (sub_query.''all_types.boolean'' = 1),
           'integer', sub_query.''all_types.integer'',
           'double', sub_query.''all_types.double'',
           'text', sub_query.''all_types.text'',
@@ -1369,10 +1370,10 @@ var toInsert = model.AllTypes{
 	UIntegerPtr:   ptr.Of(uint32(88)),
 	BigIntPtr:     ptr.Of(int64(99)),
 	UBigIntPtr:    ptr.Of(uint64(111)),
-	Decimal:       11.22,
-	DecimalPtr:    ptr.Of(33.44),
-	Numeric:       55.66,
-	NumericPtr:    ptr.Of(77.88),
+	Decimal:       decimal.RequireFromString("11.22"),
+	DecimalPtr:    ptr.Of(decimal.RequireFromString("33.44")),
+	Numeric:       decimal.RequireFromString("55.66"),
+	NumericPtr:    ptr.Of(decimal.RequireFromString("77.88")),
 	Float:         99.00,
 	FloatPtr:      ptr.Of(11.22),
 	Double:        33.44,
@@ -1434,10 +1435,10 @@ var allTypesJson = `
 		"UIntegerPtr": 1600,
 		"BigIntPtr": 50000,
 		"UBigIntPtr": 50000,
-		"Decimal": 1.11,
-		"DecimalPtr": 1.11,
-		"Numeric": 2.22,
-		"NumericPtr": 2.22,
+		"Decimal": "1.11",
+		"DecimalPtr": "1.11",
+		"Numeric": "2.22",
+		"NumericPtr": "2.22",
 		"Float": 3.33,
 		"FloatPtr": 3.33,
 		"Double": 4.44,
@@ -1499,9 +1500,9 @@ var allTypesJson = `
 		"UIntegerPtr": null,
 		"BigIntPtr": null,
 		"UBigIntPtr": null,
-		"Decimal": 1.11,
+		"Decimal": "1.11",
 		"DecimalPtr": null,
-		"Numeric": 2.22,
+		"Numeric": "2.22",
 		"NumericPtr": null,
 		"Float": 3.33,
 		"FloatPtr": null,
@@ -1618,10 +1619,10 @@ func TestExactDecimals(t *testing.T) {
 		require.Equal(t, "2.22222222222222222222", result.Numeric.String())
 		require.Equal(t, "0", result.NumericPtr.String()) // NULL
 
-		require.Equal(t, 1.1111111111111112, result.Floats.Decimal) // precision loss
-		require.Equal(t, (*float64)(nil), result.Floats.DecimalPtr)
-		require.Equal(t, 2.2222222222222223, result.Floats.Numeric) // precision loss
-		require.Equal(t, (*float64)(nil), result.Floats.NumericPtr)
+		require.Equal(t, "1.11111111111111111111", result.Floats.Decimal.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.Floats.DecimalPtr)
+		require.Equal(t, "2.22222222222222222222", result.Floats.Numeric.String())
+		require.Equal(t, (*decimal.Decimal)(nil), result.Floats.NumericPtr)
 
 		// floating point
 		require.Equal(t, 3.3333333, result.Floats.Float) // precision loss
@@ -1640,10 +1641,10 @@ func TestExactDecimals(t *testing.T) {
 			floats{
 				Floats: model.Floats{
 					// overwritten by wrapped(floats) scope
-					Numeric:    0.1,
-					NumericPtr: ptr.Of(0.1),
-					Decimal:    0.1,
-					DecimalPtr: ptr.Of(0.1),
+					Numeric:    decimal.RequireFromString("0.1"),
+					NumericPtr: ptr.Of(decimal.RequireFromString("0.1")),
+					Decimal:    decimal.RequireFromString("0.1"),
+					DecimalPtr: ptr.Of(decimal.RequireFromString("0.1")),
 
 					// not overwritten
 					Float:     0.2,
@@ -1680,10 +1681,10 @@ VALUES ('91.23', '45.67', '12.35', '56.79', 0.2, 0.22, 0.3, 0.33, 0.4, 0.44);
 		require.Equal(t, "91.23", result.Decimal.String())
 		require.Equal(t, "45.67", result.DecimalPtr.String())
 
-		require.Equal(t, 12.35, result.Floats.Numeric)
-		require.Equal(t, 56.79, *result.Floats.NumericPtr)
-		require.Equal(t, 91.23, result.Floats.Decimal)
-		require.Equal(t, 45.67, *result.Floats.DecimalPtr)
+		require.Equal(t, "12.35", result.Floats.Numeric.String())
+		require.Equal(t, "56.79", result.Floats.NumericPtr.String())
+		require.Equal(t, "91.23", result.Floats.Decimal.String())
+		require.Equal(t, "45.67", result.Floats.DecimalPtr.String())
 	})
 }
 

@@ -3,13 +3,13 @@ package jet
 // AND function adds AND operator between expressions. This function can be used, instead of method AND,
 // to have a better inlining of a complex condition in the Go code and in the generated SQL.
 func AND(expressions ...BoolExpression) BoolExpression {
-	return newBoolExpressionListOperator("AND", expressions...)
+	return newBoolExpressionListOperator("AND", expressions)
 }
 
 // OR function adds OR operator between expressions. This function can be used, instead of method OR,
 // to have a better inlining of a complex condition in the Go code and in the generated SQL.
 func OR(expressions ...BoolExpression) BoolExpression {
-	return newBoolExpressionListOperator("OR", expressions...)
+	return newBoolExpressionListOperator("OR", expressions)
 }
 
 // ------------------ Mathematical functions ---------------//
@@ -244,7 +244,7 @@ func leadLagImpl(name string, expr Expression, offsetAndDefault ...interface{}) 
 		defaultValue, ok = offsetAndDefault[1].(Expression)
 
 		if !ok {
-			defaultValue = literal(offsetAndDefault[1])
+			defaultValue = Literal(offsetAndDefault[1])
 		}
 
 		params = append(params, FixedLiteral(offset), defaultValue)
@@ -484,12 +484,12 @@ func REGEXP_LIKE(stringExp StringExpression, pattern StringExpression, matchType
 
 // LOWER_BOUND returns range expressions lower bound. Returns null if range is empty or the requested bound is infinite.
 func LOWER_BOUND[T Expression](rangeExpression Range[T]) T {
-	return rangeTypeCaster[T](rangeExpression, NewFunc("LOWER", []Expression{rangeExpression}, nil))
+	return rangeTypeCaster[T](rangeExpression, newFunc("LOWER", []Expression{rangeExpression}))
 }
 
 // UPPER_BOUND returns range expressions upper bound. Returns null if range is empty or the requested bound is infinite.
 func UPPER_BOUND[T Expression](rangeExpression Range[T]) T {
-	return rangeTypeCaster[T](rangeExpression, NewFunc("UPPER", []Expression{rangeExpression}, nil))
+	return rangeTypeCaster[T](rangeExpression, newFunc("UPPER", []Expression{rangeExpression}))
 }
 
 func rangeTypeCaster[T Expression](rangeExpression Range[T], exp Expression) T {
@@ -543,7 +543,7 @@ func TO_CHAR(expression Expression, format StringExpression) StringExpression {
 
 // TO_DATE converts string to date using format
 func TO_DATE(dateStr, format StringExpression) DateExpression {
-	return NewDateFunc("TO_DATE", dateStr, format)
+	return DateExp(newFunc("TO_DATE", []Expression{dateStr, format}))
 }
 
 // TO_NUMBER converts string to numeric using format
@@ -560,74 +560,47 @@ func TO_TIMESTAMP(timestampzStr, format StringExpression) TimestampzExpression {
 
 // EXTRACT extracts time component from time expression
 func EXTRACT(field string, from Expression) Expression {
-	return CustomExpression(Token("EXTRACT("), Token(field), Token("FROM"), from, Token(")"))
+	return AtomicCustomExpression(Token("EXTRACT("), Token(field), Token("FROM"), from, Token(")"))
 }
 
 // CURRENT_DATE returns current date
 func CURRENT_DATE() DateExpression {
-	dateFunc := NewDateFunc("CURRENT_DATE")
-	dateFunc.noBrackets = true
-	return dateFunc
+	return DateKeyword("CURRENT_DATE")
 }
 
 // CURRENT_TIME returns current time with time zone
 func CURRENT_TIME(precision ...int) TimezExpression {
-	var timezFunc *timezFunc
-
 	if len(precision) > 0 {
-		timezFunc = newTimezFunc("CURRENT_TIME", FixedLiteral(precision[0]))
-	} else {
-		timezFunc = newTimezFunc("CURRENT_TIME")
+		return newTimezFunc("CURRENT_TIME", FixedLiteral(precision[0]))
 	}
 
-	timezFunc.noBrackets = true
-
-	return timezFunc
+	return TimezKeyword("CURRENT_TIME")
 }
 
 // CURRENT_TIMESTAMP returns current timestamp with time zone
 func CURRENT_TIMESTAMP(precision ...int) TimestampzExpression {
-	var timestampzFunc *timestampzFunc
-
 	if len(precision) > 0 {
-		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP", FixedLiteral(precision[0]))
-	} else {
-		timestampzFunc = newTimestampzFunc("CURRENT_TIMESTAMP")
+		return newTimestampzFunc("CURRENT_TIMESTAMP", FixedLiteral(precision[0]))
 	}
 
-	timestampzFunc.noBrackets = true
-
-	return timestampzFunc
+	return TimestampzKeyword("CURRENT_TIMESTAMP")
 }
 
 // LOCALTIME returns local time of day using optional precision
 func LOCALTIME(precision ...int) TimeExpression {
-	var timeFunc *timeFunc
-
 	if len(precision) > 0 {
-		timeFunc = NewTimeFunc("LOCALTIME", FixedLiteral(precision[0]))
-	} else {
-		timeFunc = NewTimeFunc("LOCALTIME")
+		return NewTimeFunc("LOCALTIME", FixedLiteral(precision[0]))
 	}
 
-	timeFunc.noBrackets = true
-
-	return timeFunc
+	return TimeKeyword("LOCALTIME")
 }
 
 // LOCALTIMESTAMP returns current date and time using optional precision
 func LOCALTIMESTAMP(precision ...int) TimestampExpression {
-	var timestampFunc *timestampFunc
-
 	if len(precision) > 0 {
-		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP", FixedLiteral(precision[0]))
-	} else {
-		timestampFunc = NewTimestampFunc("LOCALTIMESTAMP")
+		return NewTimestampFunc("LOCALTIMESTAMP", FixedLiteral(precision[0]))
 	}
-
-	timestampFunc.noBrackets = true
-
-	return timestampFunc
+	return TimestampKeyword("LOCALTIMESTAMP")
 }
 
 // NOW returns current date and time
@@ -641,74 +614,53 @@ func NOW() TimestampzExpression {
 func COALESCE(value Expression, values ...Expression) Expression {
 	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
-	return NewFunc("COALESCE", allValues, nil)
+	return newFunc("COALESCE", allValues)
 }
 
 // NULLIF function returns a null value if value1 equals value2; otherwise it returns value1.
 func NULLIF(value1, value2 Expression) Expression {
-	return NewFunc("NULLIF", []Expression{value1, value2}, nil)
+	return newFunc("NULLIF", []Expression{value1, value2})
 }
 
 // GREATEST selects the largest  value from a list of expressions
 func GREATEST(value Expression, values ...Expression) Expression {
 	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
-	return NewFunc("GREATEST", allValues, nil)
+	return newFunc("GREATEST", allValues)
 }
 
 // LEAST selects the smallest  value from a list of expressions
 func LEAST(value Expression, values ...Expression) Expression {
 	var allValues = []Expression{value}
 	allValues = append(allValues, values...)
-	return NewFunc("LEAST", allValues, nil)
+	return newFunc("LEAST", allValues)
 }
 
 //--------------------------------------------------------------------//
 
-type funcExpressionImpl struct {
-	ExpressionInterfaceImpl
+// newFunc creates new function with name and expressions parameters
+func newFunc(name string, expressions []Expression) Expression {
+	return newExpression(&funcSerializer{
+		name:       name,
+		parameters: expressions,
+	})
+}
 
+type funcSerializer struct {
 	name       string
 	parameters parametersSerializer
-	noBrackets bool
 }
 
-// NewFunc creates new function with name and expressions parameters
-func NewFunc(name string, expressions []Expression, root Expression) *funcExpressionImpl {
-	funcExp := &funcExpressionImpl{
-		name:       name,
-		parameters: parametersSerializer(expressions),
-	}
-
-	if root != nil {
-		funcExp.ExpressionInterfaceImpl.Root = root
-	} else {
-		funcExp.ExpressionInterfaceImpl.Root = funcExp
-	}
-
-	return funcExp
-}
-
-func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
-		serializeOverrideFunc := serializeOverride(ExpressionListToSerializerList(f.parameters)...)
-		serializeOverrideFunc(statement, out, FallTrough(options)...)
-		return
-	}
-
-	addBrackets := !f.noBrackets || len(f.parameters) > 0
-
-	if addBrackets {
-		out.WriteString(f.name + "(")
-	} else {
-		out.WriteString(f.name)
-	}
+func (f *funcSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	out.WriteString(f.name + "(")
 
 	f.parameters.serialize(statement, out, options...)
 
-	if addBrackets {
-		out.WriteString(")")
-	}
+	out.WriteString(")")
+}
+
+func newBoolFunc(name string, expressions ...Expression) BoolExpression {
+	return BoolExp(newFunc(name, expressions))
 }
 
 type parametersSerializer []Expression
@@ -730,208 +682,83 @@ func (p parametersSerializer) serialize(statement StatementType, out *SQLBuilder
 
 // NewFloatWindowFunc creates new float function with name and expressions
 func newWindowFunc(name string, expressions ...Expression) windowExpression {
-	newFun := NewFunc(name, expressions, nil)
-	windowExpr := newWindowExpression(newFun)
-	newFun.ExpressionInterfaceImpl.Root = windowExpr
-
-	return windowExpr
-}
-
-type boolFunc struct {
-	funcExpressionImpl
-	boolInterfaceImpl
-}
-
-func newBoolFunc(name string, expressions ...Expression) BoolExpression {
-	boolFunc := &boolFunc{}
-
-	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
-	boolFunc.boolInterfaceImpl.root = boolFunc
-	boolFunc.ExpressionInterfaceImpl.Root = boolFunc
-
-	return boolFunc
+	return newWindowExpression(newFunc(name, expressions))
 }
 
 // NewFloatWindowFunc creates new float function with name and expressions
 func newBoolWindowFunc(name string, expressions ...Expression) boolWindowExpression {
-	boolFunc := &boolFunc{}
-
-	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
-	intWindowFunc := newBoolWindowExpression(boolFunc)
-	boolFunc.boolInterfaceImpl.root = intWindowFunc
-	boolFunc.ExpressionInterfaceImpl.Root = intWindowFunc
-
-	return intWindowFunc
-}
-
-type floatFunc struct {
-	funcExpressionImpl
-	floatInterfaceImpl
+	return newBoolWindowExpression(BoolExp(newFunc(name, expressions)))
 }
 
 // NewFloatFunc creates new float function with name and expressions
 func NewFloatFunc(name string, expressions ...Expression) FloatExpression {
-	floatFunc := &floatFunc{}
-
-	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
-	floatFunc.floatInterfaceImpl.root = floatFunc
-
-	return floatFunc
+	return FloatExp(newFunc(name, expressions))
 }
 
 // NewFloatWindowFunc creates new float function with name and expressions
 func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpression {
-	floatFunc := &floatFunc{}
-
-	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
-	floatWindowFunc := newFloatWindowExpression(floatFunc)
-	floatFunc.floatInterfaceImpl.root = floatWindowFunc
-	floatFunc.ExpressionInterfaceImpl.Root = floatWindowFunc
-
-	return floatWindowFunc
-}
-
-type integerFunc struct {
-	funcExpressionImpl
-	integerInterfaceImpl
+	return newFloatWindowExpression(FloatExp(newFunc(name, expressions)))
 }
 
 func newIntegerFunc(name string, expressions ...Expression) IntegerExpression {
-	intFunc := &integerFunc{}
-
-	intFunc.funcExpressionImpl = *NewFunc(name, expressions, intFunc)
-	intFunc.integerInterfaceImpl.root = intFunc
-
-	return intFunc
+	return IntExp(newFunc(name, expressions))
 }
 
 // NewFloatWindowFunc creates new float function with name and expressions
 func newIntegerWindowFunc(name string, expressions ...Expression) integerWindowExpression {
-	integerFunc := &integerFunc{}
-
-	integerFunc.funcExpressionImpl = *NewFunc(name, expressions, integerFunc)
-	intWindowFunc := newIntegerWindowExpression(integerFunc)
-	integerFunc.integerInterfaceImpl.root = intWindowFunc
-	integerFunc.ExpressionInterfaceImpl.Root = intWindowFunc
-
-	return intWindowFunc
-}
-
-type stringFunc struct {
-	funcExpressionImpl
-	stringInterfaceImpl
+	return newIntegerWindowExpression(IntExp(newFunc(name, expressions)))
 }
 
 // NewStringFunc creates new string function with name and expression parameters
 func NewStringFunc(name string, expressions ...Expression) StringExpression {
-	stringFunc := &stringFunc{}
-
-	stringFunc.funcExpressionImpl = *NewFunc(name, expressions, stringFunc)
-	stringFunc.stringInterfaceImpl.root = stringFunc
-
-	return stringFunc
-}
-
-type dateFunc struct {
-	funcExpressionImpl
-	dateInterfaceImpl
-}
-
-// NewDateFunc creates new date function with name and expression parameters
-func NewDateFunc(name string, expressions ...Expression) *dateFunc {
-	dateFunc := &dateFunc{}
-
-	dateFunc.funcExpressionImpl = *NewFunc(name, expressions, dateFunc)
-	dateFunc.dateInterfaceImpl.root = dateFunc
-
-	return dateFunc
-}
-
-type timeFunc struct {
-	funcExpressionImpl
-	timeInterfaceImpl
+	return StringExp(newFunc(name, expressions))
 }
 
 // NewTimeFunc creates new time function with name and expression parameters
-func NewTimeFunc(name string, expressions ...Expression) *timeFunc {
-	timeFun := &timeFunc{}
-
-	timeFun.funcExpressionImpl = *NewFunc(name, expressions, timeFun)
-	timeFun.timeInterfaceImpl.root = timeFun
-
-	return timeFun
+func NewTimeFunc(name string, expressions ...Expression) TimeExpression {
+	return TimeExp(newFunc(name, expressions))
 }
 
-type timezFunc struct {
-	funcExpressionImpl
-	timezInterfaceImpl
-}
-
-func newTimezFunc(name string, expressions ...Expression) *timezFunc {
-	timezFun := &timezFunc{}
-
-	timezFun.funcExpressionImpl = *NewFunc(name, expressions, timezFun)
-	timezFun.timezInterfaceImpl.root = timezFun
-
-	return timezFun
-}
-
-type timestampFunc struct {
-	funcExpressionImpl
-	timestampInterfaceImpl
+func newTimezFunc(name string, expressions ...Expression) TimezExpression {
+	return TimezExp(newFunc(name, expressions))
 }
 
 // NewTimestampFunc creates new timestamp function with name and expressions
-func NewTimestampFunc(name string, expressions ...Expression) *timestampFunc {
-	timestampFunc := &timestampFunc{}
-
-	timestampFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampFunc)
-	timestampFunc.timestampInterfaceImpl.root = timestampFunc
-
-	return timestampFunc
+func NewTimestampFunc(name string, expressions ...Expression) TimestampExpression {
+	return TimestampExp(newFunc(name, expressions))
 }
 
-type timestampzFunc struct {
-	funcExpressionImpl
-	timestampzInterfaceImpl
-}
-
-func newTimestampzFunc(name string, expressions ...Expression) *timestampzFunc {
-	timestampzFunc := &timestampzFunc{}
-
-	timestampzFunc.funcExpressionImpl = *NewFunc(name, expressions, timestampzFunc)
-	timestampzFunc.timestampzInterfaceImpl.root = timestampzFunc
-
-	return timestampzFunc
+func newTimestampzFunc(name string, expressions ...Expression) TimestampzExpression {
+	return TimestampzExp(newFunc(name, expressions))
 }
 
 // Func can be used to call custom or unsupported database functions.
 func Func(name string, expressions ...Expression) Expression {
-	return NewFunc(name, expressions, nil)
+	return newFunc(name, expressions)
 }
 
 func NumRange(lowNum, highNum NumericExpression, bounds ...StringExpression) Range[NumericExpression] {
-	return NumRangeExp(NewFunc("numrange", rangeFuncParamCombiner(lowNum, highNum, bounds...), nil))
+	return NumRangeExp(newFunc("numrange", rangeFuncParamCombiner(lowNum, highNum, bounds...)))
 }
 
 func Int4Range(lowNum, highNum IntegerExpression, bounds ...StringExpression) Range[Int4Expression] {
-	return Int4RangeExp(NewFunc("int4range", rangeFuncParamCombiner(lowNum, highNum, bounds...), nil))
+	return Int4RangeExp(newFunc("int4range", rangeFuncParamCombiner(lowNum, highNum, bounds...)))
 }
 
 func Int8Range(lowNum, highNum Int8Expression, bounds ...StringExpression) Range[Int8Expression] {
-	return Int8RangeExp(NewFunc("int8range", rangeFuncParamCombiner(lowNum, highNum, bounds...), nil))
+	return Int8RangeExp(newFunc("int8range", rangeFuncParamCombiner(lowNum, highNum, bounds...)))
 }
 
 func TsRange(lowTs, highTs TimestampExpression, bounds ...StringExpression) Range[TimestampExpression] {
-	return TsRangeExp(NewFunc("tsrange", rangeFuncParamCombiner(lowTs, highTs, bounds...), nil))
+	return TsRangeExp(newFunc("tsrange", rangeFuncParamCombiner(lowTs, highTs, bounds...)))
 }
 
 func TstzRange(lowTs, highTs TimestampzExpression, bounds ...StringExpression) Range[TimestampzExpression] {
-	return TstzRangeExp(NewFunc("tstzrange", rangeFuncParamCombiner(lowTs, highTs, bounds...), nil))
+	return TstzRangeExp(newFunc("tstzrange", rangeFuncParamCombiner(lowTs, highTs, bounds...)))
 }
 
 func DateRange(lowTs, highTs DateExpression, bounds ...StringExpression) Range[DateExpression] {
-	return DateRangeExp(NewFunc("daterange", rangeFuncParamCombiner(lowTs, highTs, bounds...), nil))
+	return DateRangeExp(newFunc("daterange", rangeFuncParamCombiner(lowTs, highTs, bounds...)))
 }
 
 func rangeFuncParamCombiner(low, high Expression, bounds ...StringExpression) []Expression {
@@ -940,4 +767,24 @@ func rangeFuncParamCombiner(low, high Expression, bounds ...StringExpression) []
 		exp = append(exp, bounds[0])
 	}
 	return exp
+}
+
+func TimeKeyword(name string) TimeExpression {
+	return TimeExp(newExpression(Keyword(name)))
+}
+
+func TimezKeyword(name string) TimezExpression {
+	return TimezExp(newExpression(Keyword(name)))
+}
+
+func TimestampKeyword(name string) TimestampExpression {
+	return TimestampExp(newExpression(Keyword(name)))
+}
+
+func TimestampzKeyword(name string) TimestampzExpression {
+	return TimestampzExp(newExpression(Keyword(name)))
+}
+
+func DateKeyword(name string) DateExpression {
+	return DateExp(newExpression(Keyword(name)))
 }

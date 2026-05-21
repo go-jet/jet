@@ -10,14 +10,14 @@ import (
 	"github.com/go-jet/jet/v2/generator/metadata"
 	"github.com/go-jet/jet/v2/generator/template"
 	"github.com/go-jet/jet/v2/postgres"
-	"github.com/jackc/pgconn"
 )
 
 // DBConnection contains postgres connection details
 type DBConnection struct {
-	Host     string
-	Port     int
-	User     string
+	Host string
+	Port int
+	User string
+	// #nosec G117 -- password is used only for the local development
 	Password string
 	SslMode  string
 	Params   string
@@ -42,21 +42,28 @@ func Generate(destDir string, dbConn DBConnection, genTemplate ...template.Templ
 
 // GenerateDSN generates jet files using dsn connection string
 func GenerateDSN(dsn, schema, destDir string, templates ...template.Template) error {
-	cfg, err := pgconn.ParseConfig(dsn)
+	_, err := url.Parse(dsn)
 	if err != nil {
-		return fmt.Errorf("failed to parse config: %w", err)
+		return fmt.Errorf("failed to parse as DSN: %w", err)
 	}
-	if cfg.Database == "" {
-		return fmt.Errorf("database name is required")
-	}
+
 	db, err := openConnection(dsn)
 	if err != nil {
 		return fmt.Errorf("failed to open db connection: %w", err)
 	}
 	defer db.Close()
 
+	var dbName string
+	err = db.QueryRow("SELECT current_database()").Scan(&dbName)
+	if err != nil {
+		return fmt.Errorf("failed to get current database name: %w", err)
+	}
+	if dbName == "" {
+		return fmt.Errorf("database name is required")
+	}
+
 	fmt.Println("Retrieving schema information...")
-	return GenerateDB(db, schema, filepath.Join(destDir, cfg.Database), templates...)
+	return GenerateDB(db, schema, filepath.Join(destDir, dbName), templates...)
 }
 
 // GenerateDB generates jet files using the provided *sql.DB
@@ -73,7 +80,7 @@ func GenerateDB(db *sql.DB, schema, destDir string, templates ...template.Templa
 
 	err = template.ProcessSchema(destDir, schemaMetadata, generatorTemplate)
 	if err != nil {
-		return fmt.Errorf("failed to generate schema %s: %d", schemaMetadata.Name, err)
+		return fmt.Errorf("failed to generate schema %s: %w", schemaMetadata.Name, err)
 	}
 
 	return nil
