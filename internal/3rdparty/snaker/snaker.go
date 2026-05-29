@@ -8,6 +8,69 @@ import (
 	"unicode"
 )
 
+// Config holds the configuration settings for the Snaker behavior.
+type Config struct {
+	// commonInitialisms, taken from
+	// https://github.com/golang/lint/blob/206c0f020eba0f7fbcfbc467a5eb808037df2ed6/lint.go#L731
+	Initialisms map[string]bool
+
+	// Add exceptions here for things that are not automatically convertable
+	SnakeToCamelExceptions map[string]string
+}
+
+
+// GlobalConfig is the package-wide configuration
+// This variable is not thread safe.
+var GlobalConfig = Config{
+	Initialisms: map[string]bool{
+		"ACL":   true,
+		"API":   true,
+		"ASCII": true,
+		"CPU":   true,
+		"CSS":   true,
+		"DNS":   true,
+		"EOF":   true,
+		"ETA":   true,
+		"GPU":   true,
+		"GUID":  true,
+		"HTML":  true,
+		"HTTP":  true,
+		"HTTPS": true,
+		"ID":    true,
+		"IP":    true,
+		"JSON":  true,
+		"LHS":   true,
+		"OS":    true,
+		"QPS":   true,
+		"RAM":   true,
+		"RHS":   true,
+		"RPC":   true,
+		"SLA":   true,
+		"SMTP":  true,
+		"SQL":   true,
+		"SSH":   true,
+		"TCP":   true,
+		"TLS":   true,
+		"TTL":   true,
+		"UDP":   true,
+		"UI":    true,
+		"UID":   true,
+		"UUID":  true,
+		"URI":   true,
+		"URL":   true,
+		"UTF8":  true,
+		"VM":    true,
+		"XML":   true,
+		"XMPP":  true,
+		"XSRF":  true,
+		"XSS":   true,
+		"OAuth": true,
+	},
+	SnakeToCamelExceptions: map[string]string{
+		"oauth": "OAuth",
+	},
+}
+
 // CamelToSnake converts a given string to snake case
 func CamelToSnake(s string) string {
 	var result string
@@ -64,13 +127,13 @@ func snakeToCamel(s string, upperCase bool) string {
 	words := strings.Split(s, "_")
 
 	for i, word := range words {
-		if exception := snakeToCamelExceptions[word]; len(exception) > 0 {
+		if exception := GlobalConfig.SnakeToCamelExceptions[word]; len(exception) > 0 {
 			result += exception
 			continue
 		}
 
 		if upperCase || i > 0 {
-			if upper := strings.ToUpper(word); commonInitialisms[upper] {
+			if upper := strings.ToUpper(word); GlobalConfig.Initialisms[upper] {
 				result += upper
 				continue
 			}
@@ -91,7 +154,7 @@ func startsWithInitialism(s string) string {
 	var initialism string
 	// the longest initialism is 5 char, the shortest 2
 	for i := 1; i <= 5; i++ {
-		if len(s) > i-1 && commonInitialisms[s[:i]] {
+		if len(s) > i-1 && GlobalConfig.Initialisms[s[:i]] {
 			initialism = s[:i]
 		}
 	}
@@ -123,56 +186,4 @@ func camelizeWord(word string, force bool) string {
 	}
 
 	return string(runes)
-}
-
-// commonInitialisms, taken from
-// https://github.com/golang/lint/blob/206c0f020eba0f7fbcfbc467a5eb808037df2ed6/lint.go#L731
-var commonInitialisms = map[string]bool{
-	"ACL":   true,
-	"API":   true,
-	"ASCII": true,
-	"CPU":   true,
-	"CSS":   true,
-	"DNS":   true,
-	"EOF":   true,
-	"ETA":   true,
-	"GPU":   true,
-	"GUID":  true,
-	"HTML":  true,
-	"HTTP":  true,
-	"HTTPS": true,
-	"ID":    true,
-	"IP":    true,
-	"JSON":  true,
-	"LHS":   true,
-	"OS":    true,
-	"QPS":   true,
-	"RAM":   true,
-	"RHS":   true,
-	"RPC":   true,
-	"SLA":   true,
-	"SMTP":  true,
-	"SQL":   true,
-	"SSH":   true,
-	"TCP":   true,
-	"TLS":   true,
-	"TTL":   true,
-	"UDP":   true,
-	"UI":    true,
-	"UID":   true,
-	"UUID":  true,
-	"URI":   true,
-	"URL":   true,
-	"UTF8":  true,
-	"VM":    true,
-	"XML":   true,
-	"XMPP":  true,
-	"XSRF":  true,
-	"XSS":   true,
-	"OAuth": true,
-}
-
-// add exceptions here for things that are not automatically convertable
-var snakeToCamelExceptions = map[string]string{
-	"oauth": "OAuth",
 }
