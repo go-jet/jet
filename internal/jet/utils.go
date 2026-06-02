@@ -172,14 +172,7 @@ func UnwindRowFromModel(columns []Column, data interface{}) []Serializer {
 	must.ValueBeOfTypeKind(structValue, reflect.Struct, "jet: data has to be a struct")
 
 	for i, column := range columns {
-		columnName := column.Name()
-		structFieldName := dbidentifier.ToGoIdentifier(columnName)
-
-		structField := structValue.FieldByName(structFieldName)
-
-		if !structField.IsValid() {
-			panic("missing struct field for column : " + columnName)
-		}
+		structField := dbidentifier.GetStructFieldForColumn(structValue, column.Name())
 
 		var field interface{}
 

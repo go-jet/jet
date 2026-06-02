@@ -2,6 +2,7 @@ package dbidentifier
 
 import (
 	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
+	"reflect"
 	"strings"
 	"unicode"
 )
@@ -14,6 +15,28 @@ func ToGoIdentifier(databaseIdentifier string) string {
 // ToGoFileName converts database identifier to Go file name.
 func ToGoFileName(databaseIdentifier string) string {
 	return strings.ToLower(replaceInvalidChars(databaseIdentifier))
+}
+
+// GetStructFieldForColumn retrieves a column value in a struct
+func GetStructFieldForColumn(
+	structValue reflect.Value,
+	columnName string,
+) reflect.Value {
+	// Search the field using the standard name for the column
+	structField := structValue.FieldByName(ToGoIdentifier(columnName))
+	if structField.IsValid() {
+		return structField
+	}
+
+	// In case of a non-standard name, search for a matching column tag
+	for fieldIndex := range structValue.NumField() {
+		columnTag := structValue.Type().Field(fieldIndex).Tag.Get("column")
+		if columnTag == columnName {
+			return structValue.Field(fieldIndex)
+		}
+	}
+
+	panic("missing struct field for column : " + columnName)
 }
 
 func replaceInvalidChars(identifier string) string {
