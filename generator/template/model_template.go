@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -211,6 +212,26 @@ func (f TableModelField) TagsString() string {
 	}
 
 	return fmt.Sprintf("`%s`", strings.Join(f.Tags, " "))
+}
+
+// addColumnTag adds the column tag to ensure that the right column is used at runtime,
+// if the name of the field has been changed in UseField.
+func addColumnTag(field TableModelField, columnMetaData metadata.Column) TableModelField {
+	if field.Name == DefaultTableModelField(columnMetaData).Name {
+		// No change in name: don't need the column tag
+		return field
+	}
+
+	columnTagExists := slices.ContainsFunc(field.Tags, func(tag string) bool {
+		return strings.HasPrefix(tag, "column:")
+	})
+	if columnTagExists {
+		// A conflicting tag already exists: keep it as-it-is
+		return field
+	}
+
+	field.Tags = append(field.Tags, fmt.Sprintf("column:%q", columnMetaData.Name))
+	return field
 }
 
 // Type represents type of the struct field

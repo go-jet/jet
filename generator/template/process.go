@@ -319,14 +319,10 @@ func processTableModels(fileTypes, modelDirPath string, tablesMetaData []metadat
 					return tableTemplate
 				},
 				"structField": func(columnMetaData metadata.Column) TableModelField {
-					field := tableTemplate.Field(columnMetaData)
-					if field.Name != DefaultTableModelField(columnMetaData).Name {
-						// If the name has been changed in UseField, we need to add the column tag
-						// to ensure that the right column will be used at runtime.
-						field.Tags = append(field.Tags, fmt.Sprintf("column:%q", columnMetaData.Name))
-					}
-
-					return field
+					return addColumnTag(
+						tableTemplate.Field(columnMetaData),
+						columnMetaData,
+					)
 				},
 				"golangComment": formatGolangComment,
 			})
