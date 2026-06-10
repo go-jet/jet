@@ -319,7 +319,10 @@ func processTableModels(fileTypes, modelDirPath string, tablesMetaData []metadat
 					return tableTemplate
 				},
 				"structField": func(columnMetaData metadata.Column) TableModelField {
-					return tableTemplate.Field(columnMetaData)
+					return addColumnTag(
+						tableTemplate.Field(columnMetaData),
+						columnMetaData,
+					)
 				},
 				"golangComment": formatGolangComment,
 			})

@@ -354,6 +354,27 @@ VALUES ('http://www.postgresqltutorial.com', 'PostgreSQL Tutorial'),
 	testutils.AssertExecAndRollback(t, stmt, db, 3)
 }
 
+func TestInsertModelObjectWithCustomFieldName(t *testing.T) {
+	linkData := struct {
+		Url  string `column:"url"`
+		NAME string `column:"name"`
+	}{
+		Url:  "http://www.duckduckgo.com",
+		NAME: "Duck Duck go",
+	}
+
+	query := Link.
+		INSERT(Link.URL, Link.Name).
+		MODEL(linkData)
+
+	testutils.AssertDebugStatementSql(t, query, `
+INSERT INTO test_sample.link (url, name)
+VALUES ('http://www.duckduckgo.com', 'Duck Duck go');
+`, "http://www.duckduckgo.com", "Duck Duck go")
+
+	testutils.AssertExecAndRollback(t, query, db, 1)
+}
+
 func TestInsertUsingMutableColumns(t *testing.T) {
 	google := model.Link{
 		URL:  "http://www.google.com",

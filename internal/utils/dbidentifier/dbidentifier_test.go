@@ -2,6 +2,7 @@ package dbidentifier
 
 import (
 	"github.com/stretchr/testify/require"
+	"reflect"
 	"testing"
 )
 
@@ -65,4 +66,19 @@ func TestToGoFileName(t *testing.T) {
 	require.Equal(t, ToGoFileName("File\bName"), "filename")
 	require.Equal(t, ToGoFileName("File\tName"), "file_name")
 	require.Equal(t, ToGoFileName("File^^Name"), "file_caret__caret_name")
+}
+
+func TestGetStructFieldForColumn(t *testing.T) {
+	value := reflect.ValueOf(struct {
+		FooID            int
+		Bar              int
+		BazId            int `column:"baz_id"`
+		CustomINITIALISM int `column:"custom_initialism"`
+	}{1, 2, 3, 4})
+
+	require.Equal(t, int64(1), GetStructFieldForColumn(value, "foo_id").Int())
+	require.Equal(t, int64(2), GetStructFieldForColumn(value, "bar").Int())
+	require.Equal(t, int64(3), GetStructFieldForColumn(value, "baz_id").Int())
+	require.Equal(t, int64(4), GetStructFieldForColumn(value, "custom_initialism").Int())
+	require.Panics(t, func() { GetStructFieldForColumn(value, "wrong_property") })
 }
