@@ -18,7 +18,7 @@ type InsertStatement interface {
 
 	ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement
 
-	QUERY(selectStatement SelectStatement) InsertStatement
+	QUERY(statement Statement) InsertStatement
 
 	RETURNING(projections ...Projection) InsertStatement
 }
@@ -82,8 +82,13 @@ func (is *insertStatementImpl) ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssig
 	return is
 }
 
-func (is *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
-	is.ValuesQuery.Query = selectStatement
+func (is *insertStatementImpl) QUERY(statement Statement) InsertStatement {
+	query, ok := statement.(jet.SerializerStatement)
+	if !ok {
+		panic("jet: unsupported INSERT query statement")
+	}
+
+	is.ValuesQuery.Query = query
 	return is
 }
 

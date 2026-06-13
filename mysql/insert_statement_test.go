@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -140,6 +141,34 @@ VALUES (DEFAULT, ?);
 `
 
 	assertStatementSql(t, stmt, expectedSQL, "two")
+}
+
+func TestInsertQueryWithStatement(t *testing.T) {
+	valuesToInsert := CTE("values_to_insert")
+	valueToInsert := table2ColInt.From(valuesToInsert)
+
+	stmt := table1.INSERT(table1Col1).QUERY(
+		WITH(
+			valuesToInsert.AS(
+				SELECT(table2ColInt).
+					FROM(table2).
+					WHERE(table2ColBool.IS_TRUE()),
+			),
+		)(
+			SELECT(valueToInsert).FROM(valuesToInsert),
+		),
+	)
+
+	assertStatementSql(t, stmt, strings.Replace(`
+INSERT INTO db.table1 (col1)
+WITH values_to_insert AS (
+     SELECT table2.col_int AS "table2.col_int"
+     FROM db.table2
+     WHERE table2.col_bool IS TRUE
+)
+SELECT values_to_insert.''table2.col_int'' AS "table2.col_int"
+FROM values_to_insert;
+`, "''", "`", -1))
 }
 
 func TestInsertOnDuplicateKeyUpdate(t *testing.T) {

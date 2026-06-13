@@ -44,9 +44,9 @@ func (w withImpl) serialize(statement StatementType, out *SQLBuilder, options ..
 			out.WriteString(",")
 		}
 
-		cte.serialize(statement, out, FallTrough(options)...)
+		cte.serialize(WithStatementType, out, FallTrough(options)...)
 	}
-	w.primaryStatement.serialize(statement, out, NoWrap.WithFallTrough(options)...)
+	w.primaryStatement.serialize(WithStatementType, out, NoWrap.WithFallTrough(options)...)
 }
 
 func (w withImpl) projections() ProjectionList {
