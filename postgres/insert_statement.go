@@ -12,7 +12,9 @@ type InsertStatement interface {
 	// If data is not struct or there is no field for every column selected, this method will panic.
 	MODEL(data interface{}) InsertStatement
 	MODELS(data interface{}) InsertStatement
-	QUERY(selectStatement SelectStatement) InsertStatement
+	// QUERY inserts the rows produced by the provided query. The query is usually a SELECT, but any serializable
+	// statement is accepted, such as a WITH (CTE) statement wrapping a SELECT.
+	QUERY(query jet.SerializerStatement) InsertStatement
 
 	ON_CONFLICT(indexExpressions ...jet.ColumnExpression) onConflict
 
@@ -63,8 +65,8 @@ func (i *insertStatementImpl) RETURNING(projections ...jet.Projection) InsertSta
 	return i
 }
 
-func (i *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
-	i.ValuesQuery.Query = selectStatement
+func (i *insertStatementImpl) QUERY(query jet.SerializerStatement) InsertStatement {
+	i.ValuesQuery.Query = query
 	return i
 }
 

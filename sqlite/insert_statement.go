@@ -9,7 +9,9 @@ type InsertStatement interface {
 	VALUES(value interface{}, values ...interface{}) InsertStatement
 	MODEL(data interface{}) InsertStatement
 	MODELS(data interface{}) InsertStatement
-	QUERY(selectStatement SelectStatement) InsertStatement
+	// QUERY inserts the rows produced by the provided query. The query is usually a SELECT, but any serializable
+	// statement is accepted, such as a WITH (CTE) statement wrapping a SELECT.
+	QUERY(query jet.SerializerStatement) InsertStatement
 	DEFAULT_VALUES() InsertStatement
 
 	ON_CONFLICT(indexExpressions ...jet.ColumnExpression) onConflict
@@ -63,8 +65,8 @@ func (is *insertStatementImpl) MODELS(data interface{}) InsertStatement {
 	return is
 }
 
-func (is *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
-	is.ValuesQuery.Query = selectStatement
+func (is *insertStatementImpl) QUERY(query jet.SerializerStatement) InsertStatement {
+	is.ValuesQuery.Query = query
 	return is
 }
 

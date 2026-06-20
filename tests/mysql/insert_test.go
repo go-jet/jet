@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"math/rand"
+	"strings"
 	"testing"
 	"time"
 )
@@ -239,6 +240,46 @@ INSERT INTO test_sample.link (url, name) (
 
 		require.NoError(t, err)
 		require.Equal(t, len(youtubeLinks), 2)
+	})
+}
+
+// TestInsertFromCTEQuery verifies that an INSERT can take a WITH (CTE) statement as its source query.
+// MySQL and MariaDB do not support the `WITH ... INSERT ...` form, so the CTE has to be nested inside the INSERT's
+// QUERY, producing `INSERT INTO t (...) WITH cte AS (...) SELECT ... FROM cte`. See go-jet/jet#599.
+func TestInsertFromCTEQuery(t *testing.T) {
+	newLinks := CTE("new_links")
+
+	stmt := Link.
+		INSERT(Link.URL, Link.Name).
+		QUERY(
+			WITH(
+				newLinks.AS(
+					SELECT(Link.URL, Link.Name).
+						FROM(Link).
+						WHERE(Link.ID.EQ(Int(1))),
+				),
+			)(
+				SELECT(Link.URL.From(newLinks), Link.Name.From(newLinks)).
+					FROM(newLinks),
+			),
+		)
+
+	testutils.AssertDebugStatementSql(t, stmt, strings.Replace(`
+INSERT INTO test_sample.link (url, name)
+WITH new_links AS (
+     SELECT link.url AS "link.url",
+          link.name AS "link.name"
+     FROM test_sample.link
+     WHERE link.id = 1
+)
+SELECT new_links.''link.url'' AS "link.url",
+     new_links.''link.name'' AS "link.name"
+FROM new_links;
+`, "''", "`", -1), int64(1))
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		_, err := stmt.Exec(tx)
+		require.NoError(t, err)
 	})
 }
 
