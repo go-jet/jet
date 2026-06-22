@@ -43,12 +43,12 @@ func newUpdateStatement(table Table, columns []jet.Column) UpdateStatement {
 }
 
 func (u *updateStatementImpl) SET(value interface{}, values ...interface{}) UpdateStatement {
-	columnAssigment, isColumnAssigment := value.(ColumnAssigment)
+	columnAssignment, isColumnAssignment := value.(ColumnAssignment)
 
-	if isColumnAssigment {
-		u.SetNew = []ColumnAssigment{columnAssigment}
+	if isColumnAssignment {
+		u.SetNew = []ColumnAssignment{columnAssignment}
 		for _, value := range values {
-			u.SetNew = append(u.SetNew, value.(ColumnAssigment))
+			u.SetNew = append(u.SetNew, value.(ColumnAssignment))
 		}
 	} else {
 		u.Set.Values = jet.UnwindRowFromValues(value, values)

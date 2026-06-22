@@ -27,14 +27,14 @@ func (cl ColumnList) isExpressionOrColumnList() {}
 //	    FROM(Link).
 //	    WHERE(Link.ID.EQ(Int(200))),
 //	)
-func (cl ColumnList) SET(toAssignExp expressionOrColumnList) ColumnAssigment {
+func (cl ColumnList) SET(toAssignExp expressionOrColumnList) ColumnAssignment {
 
 	if toAssign, ok := toAssignExp.(ColumnList); ok {
 		if len(cl) != len(toAssign) {
 			panic(fmt.Sprintf("jet: column list length mismatch: expected %d columns, got %d", len(cl), len(toAssign)))
 		}
 
-		var ret columnListAssigment
+		var ret columnListAssignment
 
 		for i, column := range cl {
 			if column.Name() != toAssign[i].Name() {
@@ -43,7 +43,7 @@ func (cl ColumnList) SET(toAssignExp expressionOrColumnList) ColumnAssigment {
 				))
 			}
 
-			ret = append(ret, columnAssigmentImpl{
+			ret = append(ret, columnAssignmentImpl{
 				column:   column,
 				toAssign: toAssign[i],
 			})
@@ -52,7 +52,7 @@ func (cl ColumnList) SET(toAssignExp expressionOrColumnList) ColumnAssigment {
 		return ret
 	}
 
-	return columnAssigmentImpl{
+	return columnAssignmentImpl{
 		column:   cl,
 		toAssign: toAssignExp,
 	}
