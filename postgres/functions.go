@@ -351,12 +351,12 @@ func UPPER_BOUND[T Expression](expression jet.Range[T]) T {
 
 // ANY should be used in combination with a boolean operator. The result of ANY is "true" if any true result is obtained
 func ANY[E Expression](arr Array[E]) E {
-	return jet.CastToArrayElemType(arr, Func("ANY", arr))
+	return jet.CastToArrayElemType[E](arr, Func("ANY", arr))
 }
 
 // ALL should be used in combination with a boolean operator. The result of ALL is “true” if all comparisons yield true
 func ALL[E Expression](arr Array[E]) E {
-	return jet.CastToArrayElemType(arr, Func("ALL", arr))
+	return jet.CastToArrayElemType[E](arr, Func("ALL", arr))
 }
 
 // ARRAY_APPEND appends an element to the end of an array

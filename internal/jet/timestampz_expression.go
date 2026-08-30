@@ -21,7 +21,7 @@ type TimestampzExpression interface {
 }
 
 type timestampzInterfaceImpl struct {
-	root TimestampzExpression
+	root Expression
 }
 
 func (t *timestampzInterfaceImpl) EQ(rhs TimestampzExpression) BoolExpression {
@@ -77,6 +77,11 @@ func (t *timestampzInterfaceImpl) SUB(rhs Interval) TimestampzExpression {
 type timestampzExpressionWrapper struct {
 	timestampzInterfaceImpl
 	Expression
+}
+
+func (b *timestampzExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.timestampzInterfaceImpl.root = root
 }
 
 func newTimestampzExpressionWrap(expression Expression) TimestampzExpression {

@@ -70,6 +70,11 @@ type rowExpressionWrapper struct {
 	Expression
 }
 
+func (b *rowExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.rowInterfaceImpl.root = root
+}
+
 func newRowExpression(name string, dialect Dialect, expressions ...Expression) RowExpression {
 	ret := &rowExpressionWrapper{}
 	ret.rowInterfaceImpl.root = ret

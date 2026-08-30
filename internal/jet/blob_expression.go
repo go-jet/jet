@@ -25,7 +25,7 @@ type BlobExpression interface {
 }
 
 type blobInterfaceImpl struct {
-	root BlobExpression
+	root Expression
 }
 
 func (b *blobInterfaceImpl) isStringOrBlob() {}
@@ -87,6 +87,11 @@ func (b *blobInterfaceImpl) NOT_LIKE(pattern BlobExpression) BoolExpression {
 type blobExpressionWrapper struct {
 	Expression
 	blobInterfaceImpl
+}
+
+func (b *blobExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.blobInterfaceImpl.root = root
 }
 
 func newBlobExpressionWrap(expression Expression) BlobExpression {

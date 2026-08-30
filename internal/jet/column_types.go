@@ -169,7 +169,7 @@ func (a *arrayColumnImpl[E]) SET(stringExp Array[E]) ColumnAssigment {
 // StringColumn creates named string column.
 func ArrayColumn[E Expression](name string) ColumnArray[E] {
 	arrayColumn := &arrayColumnImpl[E]{}
-	arrayColumn.arrayInterfaceImpl.parent = arrayColumn
+	arrayColumn.arrayInterfaceImpl.root = arrayColumn
 	arrayColumn.ColumnExpressionImpl = NewColumnImpl(name, "", arrayColumn)
 
 	return arrayColumn

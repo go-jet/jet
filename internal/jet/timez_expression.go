@@ -21,7 +21,7 @@ type TimezExpression interface {
 }
 
 type timezInterfaceImpl struct {
-	root TimezExpression
+	root Expression
 }
 
 func (t *timezInterfaceImpl) EQ(rhs TimezExpression) BoolExpression {
@@ -77,6 +77,11 @@ func (t *timezInterfaceImpl) SUB(rhs Interval) TimezExpression {
 type timezExpressionWrapper struct {
 	Expression
 	timezInterfaceImpl
+}
+
+func (b *timezExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.timezInterfaceImpl.root = root
 }
 
 func newTimezExpressionWrap(expression Expression) TimezExpression {

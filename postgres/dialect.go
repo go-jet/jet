@@ -59,7 +59,7 @@ func argumentToString(value any) (string, bool) {
 	return "", false
 }
 
-func regexpLike(str jet.StringExpression, not bool, pattern jet.StringExpression, caseSensitive bool) jet.SerializerFunc {
+func regexpLike(str Expression, not bool, pattern jet.StringExpression, caseSensitive bool) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		jet.Serialize(str, statement, out, options...)
 

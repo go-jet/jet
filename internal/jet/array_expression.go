@@ -21,57 +21,57 @@ type Array[E Expression] interface {
 }
 
 type arrayInterfaceImpl[E Expression] struct {
-	parent Array[E]
+	root Expression
 }
 
 type BinaryBoolOp func(Expression, Expression) BoolExpression
 
 func (a arrayInterfaceImpl[E]) EQ(rhs Array[E]) BoolExpression {
-	return Eq(a.parent, rhs)
+	return Eq(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) NOT_EQ(rhs Array[E]) BoolExpression {
-	return NotEq(a.parent, rhs)
+	return NotEq(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) LT(rhs Array[E]) BoolExpression {
-	return Lt(a.parent, rhs)
+	return Lt(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) GT(rhs Array[E]) BoolExpression {
-	return Gt(a.parent, rhs)
+	return Gt(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) LT_EQ(rhs Array[E]) BoolExpression {
-	return LtEq(a.parent, rhs)
+	return LtEq(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) GT_EQ(rhs Array[E]) BoolExpression {
-	return GtEq(a.parent, rhs)
+	return GtEq(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) CONTAINS(rhs Array[E]) BoolExpression {
-	return Contains(a.parent, rhs)
+	return Contains(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) IS_CONTAINED_BY(rhs Array[E]) BoolExpression {
-	return IsContainedBy(a.parent, rhs)
+	return IsContainedBy(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) OVERLAP(rhs Array[E]) BoolExpression {
-	return Overlap(a.parent, rhs)
+	return Overlap(a.root, rhs)
 }
 
 func (a arrayInterfaceImpl[E]) CONCAT(rhs Array[E]) Array[E] {
-	return ArrayExp[E](NewBinaryOperatorExpression(a.parent, rhs, "||"))
+	return ArrayExp[E](NewBinaryOperatorExpression(a.root, rhs, "||"))
 }
 
 func (a arrayInterfaceImpl[E]) CONCAT_ELEMENT(rhs E) Array[E] {
-	return ArrayExp[E](NewBinaryOperatorExpression(a.parent, rhs, "||"))
+	return ArrayExp[E](NewBinaryOperatorExpression(a.root, rhs, "||"))
 }
 
 func (a arrayInterfaceImpl[E]) AT(at IntegerExpression) E {
-	return CastToArrayElemType[E](a.parent, AtomicCustomExpression(a.parent, Token("["), at, Token("]")))
+	return CastToArrayElemType[E](a.root, AtomicCustomExpression(a.root, Token("["), at, Token("]")))
 }
 
 type arrayExpressionWrapper[E Expression] struct {
@@ -79,9 +79,14 @@ type arrayExpressionWrapper[E Expression] struct {
 	Expression
 }
 
+func (b *arrayExpressionWrapper[E]) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.arrayInterfaceImpl.root = root
+}
+
 func newArrayExpressionWrap[E Expression](expression Expression) Array[E] {
 	arrayExpressionWrapper := &arrayExpressionWrapper[E]{Expression: expression}
-	arrayExpressionWrapper.arrayInterfaceImpl.parent = arrayExpressionWrapper
+	arrayExpressionWrapper.arrayInterfaceImpl.root = arrayExpressionWrapper
 	expression.setRoot(arrayExpressionWrapper)
 	return arrayExpressionWrapper
 }
@@ -94,7 +99,7 @@ func ArrayExp[E Expression](expression Expression) Array[E] {
 }
 
 // CastToArrayElemType casts exp to array element type
-func CastToArrayElemType[E Expression](array Array[E], exp Expression) E {
+func CastToArrayElemType[E Expression](array Expression, exp Expression) E {
 	var i Expression
 	switch array.(type) {
 	case Array[BoolExpression]:

@@ -33,7 +33,7 @@ type BoolExpression interface {
 }
 
 type boolInterfaceImpl struct {
-	root BoolExpression
+	root Expression
 }
 
 func (b *boolInterfaceImpl) EQ(expression BoolExpression) BoolExpression {
@@ -103,9 +103,7 @@ type boolExpressionWrapper struct {
 
 func (b *boolExpressionWrapper) setRoot(root Expression) {
 	b.Expression.setRoot(root)
-	if boolRoot, ok := root.(BoolExpression); ok {
-		b.boolInterfaceImpl.root = boolRoot
-	}
+	b.boolInterfaceImpl.root = root
 }
 
 func newBoolExpressionWrap(expression Expression) BoolExpression {

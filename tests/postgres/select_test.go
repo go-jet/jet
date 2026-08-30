@@ -3,12 +3,13 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"testing"
+	"time"
+
 	"github.com/go-jet/jet/v2/internal/utils/ptr"
 	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
 	"gopkg.in/guregu/null.v4"
-	"testing"
-	"time"
 
 	"github.com/go-jet/jet/v2/qrm"
 
@@ -3028,6 +3029,51 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 		err := query.Query(db, &[]struct{}{})
 		require.NoError(t, err)
 	})
+}
+
+func TestWindowFunctionChainedOperators(t *testing.T) {
+	stmt := SELECT(
+		ROW_NUMBER().OVER(ORDER_BY(Customer.CustomerID)).ADD(Int64(10)).SUB(Int64(2)),
+	).FROM(
+		Customer,
+	).ORDER_BY(
+		Customer.CustomerID,
+	).LIMIT(3)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT (ROW_NUMBER() OVER (ORDER BY customer.customer_id) + 10::bigint) - 2::bigint
+FROM dvds.customer
+ORDER BY customer.customer_id
+LIMIT 3;
+`, int64(10), int64(2), int64(3))
+
+	var dest []int64
+	err := stmt.Query(db, &dest)
+	require.NoError(t, err)
+	testutils.AssertDeepEqual(t, dest, []int64{9, 10, 11})
+
+	stmt2 := SELECT(
+		SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.CustomerID)).
+			SUB(
+				SUMf(Payment.Amount).OVER(PARTITION_BY(Payment.RentalID)),
+			),
+	).FROM(
+		Payment,
+	).ORDER_BY(
+		Payment.PaymentID,
+	).LIMIT(3)
+
+	testutils.AssertDebugStatementSql(t, stmt2, `
+SELECT SUM(payment.amount) OVER (PARTITION BY payment.customer_id) - SUM(payment.amount) OVER (PARTITION BY payment.rental_id)
+FROM dvds.payment
+ORDER BY payment.payment_id
+LIMIT 3;
+`)
+
+	var dest2 []float64
+	err2 := stmt2.Query(db, &dest2)
+	require.NoError(t, err2)
+	testutils.AssertDeepEqual(t, dest2, []float64{95.79, 101.79, 95.79})
 }
 
 func TestSelectWindowClause(t *testing.T) {

@@ -25,7 +25,7 @@ type IntervalExpression interface {
 }
 
 type intervalInterfaceImpl struct {
-	root IntervalExpression
+	root Expression
 }
 
 func (i *intervalInterfaceImpl) isInterval() {}
@@ -89,6 +89,11 @@ func (i *intervalInterfaceImpl) DIV(rhs NumericExpression) IntervalExpression {
 type intervalWrapper struct {
 	intervalInterfaceImpl
 	Expression
+}
+
+func (b *intervalWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.intervalInterfaceImpl.root = root
 }
 
 func newIntervalExpressionWrap(expression Expression) IntervalExpression {

@@ -21,7 +21,7 @@ type TimeExpression interface {
 }
 
 type timeInterfaceImpl struct {
-	root TimeExpression
+	root Expression
 }
 
 func (t *timeInterfaceImpl) EQ(rhs TimeExpression) BoolExpression {
@@ -77,6 +77,11 @@ func (t *timeInterfaceImpl) SUB(rhs Interval) TimeExpression {
 type timeExpressionWrapper struct {
 	Expression
 	timeInterfaceImpl
+}
+
+func (b *timeExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.timeInterfaceImpl.root = root
 }
 
 func newTimeExpressionWrap(expression Expression) TimeExpression {

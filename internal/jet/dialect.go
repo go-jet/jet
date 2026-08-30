@@ -17,7 +17,7 @@ type Dialect interface {
 	SerializeOrderBy() func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName(index int) string
 	JsonValueEncode(expr Expression) Expression
-	RegexpLike(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
+	RegexpLike(str Expression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
 }
 
 // SerializerFunc func
@@ -42,7 +42,7 @@ type DialectParams struct {
 	SerializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	ValuesDefaultColumnName    func(index int) string
 	JsonValueEncode            func(expr Expression) Expression
-	RegexpLike                 func(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
+	RegexpLike                 func(str Expression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
 }
 
 // NewDialect creates new dialect with params
@@ -75,7 +75,7 @@ type dialectImpl struct {
 	serializeOrderBy           func(expression Expression, ascending, nullsFirst *bool) SerializerFunc
 	valuesDefaultColumnName    func(index int) string
 	jsonValueEncode            func(expr Expression) Expression
-	regexpLike                 func(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
+	regexpLike                 func(str Expression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc
 }
 
 func (d *dialectImpl) Name() string {
@@ -126,7 +126,7 @@ func (d *dialectImpl) JsonValueEncode(expr Expression) Expression {
 	return d.jsonValueEncode(expr)
 }
 
-func (d *dialectImpl) RegexpLike(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc {
+func (d *dialectImpl) RegexpLike(str Expression, not bool, pattern StringExpression, caseSensitive bool) SerializerFunc {
 	if d.regexpLike != nil {
 		return d.regexpLike(str, not, pattern, caseSensitive)
 	}

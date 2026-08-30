@@ -21,7 +21,7 @@ type DateExpression interface {
 }
 
 type dateInterfaceImpl struct {
-	root DateExpression
+	root Expression
 }
 
 func (d *dateInterfaceImpl) EQ(rhs DateExpression) BoolExpression {
@@ -77,6 +77,11 @@ func (d *dateInterfaceImpl) SUB(rhs Interval) TimestampExpression {
 type dateExpressionWrapper struct {
 	dateInterfaceImpl
 	Expression
+}
+
+func (b *dateExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.dateInterfaceImpl.root = root
 }
 
 func newDateExpressionWrap(expression Expression) DateExpression {

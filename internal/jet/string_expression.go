@@ -27,7 +27,7 @@ type StringExpression interface {
 }
 
 type stringInterfaceImpl struct {
-	root StringExpression
+	root Expression
 }
 
 func (s *stringInterfaceImpl) isStringOrBlob() {}
@@ -103,7 +103,7 @@ func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSens
 
 type regexpLikeSerializer struct {
 	not           bool
-	str           StringExpression
+	str           Expression
 	pattern       StringExpression
 	caseSensitive bool
 }
@@ -124,6 +124,11 @@ func newBinaryStringOperatorExpression(lhs, rhs Expression, operator string) Str
 type stringExpressionWrapper struct {
 	stringInterfaceImpl
 	Expression
+}
+
+func (b *stringExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	b.stringInterfaceImpl.root = root
 }
 
 func newStringExpressionWrap(expression Expression) StringExpression {

@@ -143,7 +143,7 @@ func mysqlISDISTINCTFROM(expressions ...jet.Serializer) jet.SerializerFunc {
 	}
 }
 
-func regexpLikeOperator(str StringExpression, not bool, pattern StringExpression, caseSensitive bool) jet.SerializerFunc {
+func regexpLikeOperator(str Expression, not bool, pattern StringExpression, caseSensitive bool) jet.SerializerFunc {
 	return func(statement jet.StatementType, out *jet.SQLBuilder, options ...jet.SerializeOption) {
 		jet.Serialize(str, statement, out, options...)
 

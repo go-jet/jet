@@ -39,7 +39,7 @@ type (
 
 type integerInterfaceImpl struct {
 	numericExpressionImpl
-	root IntegerExpression
+	root Expression
 }
 
 func (i *integerInterfaceImpl) EQ(rhs IntegerExpression) BoolExpression {
@@ -103,7 +103,7 @@ func (i *integerInterfaceImpl) MOD(rhs IntegerExpression) IntegerExpression {
 }
 
 func (i *integerInterfaceImpl) POW(rhs IntegerExpression) IntegerExpression {
-	return IntExp(POW(i.root, rhs))
+	return IntExp(NewFloatFunc("POW", i.root, rhs))
 }
 
 func (i *integerInterfaceImpl) BIT_AND(rhs IntegerExpression) IntegerExpression {
@@ -126,11 +126,11 @@ func (i *integerInterfaceImpl) BIT_SHIFT_RIGHT(intExpression IntegerExpression) 
 	return newBinaryIntegerOperatorExpression(i.root, intExpression, ">>")
 }
 
-func newBinaryIntegerOperatorExpression(lhs, rhs IntegerExpression, operator string) IntegerExpression {
+func newBinaryIntegerOperatorExpression(lhs, rhs Expression, operator string) IntegerExpression {
 	return IntExp(NewBinaryOperatorExpression(lhs, rhs, operator))
 }
 
-func newPrefixIntegerOperatorExpression(expression IntegerExpression, operator string) IntegerExpression {
+func newPrefixIntegerOperatorExpression(expression Expression, operator string) IntegerExpression {
 	return IntExp(newPrefixOperatorExpression(expression, operator))
 }
 
@@ -142,9 +142,7 @@ type integerExpressionWrapper struct {
 
 func (i *integerExpressionWrapper) setRoot(root Expression) {
 	i.Expression.setRoot(root)
-	if integerRoot, ok := root.(IntegerExpression); ok {
-		i.integerInterfaceImpl.root = integerRoot
-	}
+	i.integerInterfaceImpl.root = root
 }
 
 func newIntExpressionWrap(expression Expression) IntegerExpression {
