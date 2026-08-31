@@ -58,12 +58,12 @@ type SelectStatement interface {
 	FETCH_FIRST(count IntegerExpression) fetchExpand
 	FOR(lock RowLock) SelectStatement
 
-	UNION(rhs SelectStatement) setStatement
-	UNION_ALL(rhs SelectStatement) setStatement
-	INTERSECT(rhs SelectStatement) setStatement
-	INTERSECT_ALL(rhs SelectStatement) setStatement
-	EXCEPT(rhs SelectStatement) setStatement
-	EXCEPT_ALL(rhs SelectStatement) setStatement
+	UNION(rhs SelectStatement) SetStatement
+	UNION_ALL(rhs SelectStatement) SetStatement
+	INTERSECT(rhs SelectStatement) SetStatement
+	INTERSECT_ALL(rhs SelectStatement) SetStatement
+	EXCEPT(rhs SelectStatement) SetStatement
+	EXCEPT_ALL(rhs SelectStatement) SetStatement
 
 	AsTable(alias string) SelectTable
 }

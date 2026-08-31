@@ -101,6 +101,13 @@ type floatExpressionWrapper struct {
 	Expression
 }
 
+func (f *floatExpressionWrapper) setRoot(root Expression) {
+	f.Expression.setRoot(root)
+	if floatRoot, ok := root.(FloatExpression); ok {
+		f.floatInterfaceImpl.root = floatRoot
+	}
+}
+
 func newFloatExpressionWrap(expression Expression) FloatExpression {
 	floatExpressionWrap := &floatExpressionWrapper{Expression: expression}
 	floatExpressionWrap.floatInterfaceImpl.root = floatExpressionWrap

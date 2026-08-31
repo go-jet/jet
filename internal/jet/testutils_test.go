@@ -1,21 +1,10 @@
 package jet
 
 import (
-	"github.com/stretchr/testify/require"
-	"strconv"
 	"testing"
-)
 
-var defaultDialect = NewDialect(DialectParams{ // just for tests
-	AliasQuoteChar:      '"',
-	IdentifierQuoteChar: '"',
-	ArgumentPlaceholder: func(ord int) string {
-		return "$" + strconv.Itoa(ord)
-	},
-	ArgumentToString: func(value any) (string, bool) {
-		return "", false
-	},
-})
+	"github.com/stretchr/testify/require"
+)
 
 var (
 	table1Col1           = IntegerColumn("col1")

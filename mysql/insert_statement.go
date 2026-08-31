@@ -18,7 +18,9 @@ type InsertStatement interface {
 
 	ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssigment) InsertStatement
 
-	QUERY(selectStatement SelectStatement) InsertStatement
+	// QUERY inserts the rows produced by the provided query. The query is usually a SELECT, but any serializable
+	// statement is accepted, such as a WITH (CTE) statement wrapping a SELECT.
+	QUERY(query jet.SerializerStatement) InsertStatement
 
 	RETURNING(projections ...Projection) InsertStatement
 }
@@ -82,8 +84,8 @@ func (is *insertStatementImpl) ON_DUPLICATE_KEY_UPDATE(assigments ...ColumnAssig
 	return is
 }
 
-func (is *insertStatementImpl) QUERY(selectStatement SelectStatement) InsertStatement {
-	is.ValuesQuery.Query = selectStatement
+func (is *insertStatementImpl) QUERY(query jet.SerializerStatement) InsertStatement {
+	is.ValuesQuery.Query = query
 	return is
 }
 

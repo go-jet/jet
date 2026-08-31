@@ -45,6 +45,31 @@ func TestTableModelField(t *testing.T) {
 	})
 }
 
+func TestAddColumnTag(t *testing.T) {
+	t.Run("default name", func(t *testing.T) {
+		field := TableModelField{Name: "FooID"}
+		column := metadata.Column{Name: "foo_id"}
+		resultField := addColumnTag(field, column)
+		require.NotContains(t, resultField.Tags, `column:"foo_id"`)
+	})
+	t.Run("custom name", func(t *testing.T) {
+		field := TableModelField{Name: "CustomINITIALISM"}
+		column := metadata.Column{Name: "custom_initialism"}
+		resultField := addColumnTag(field, column)
+		require.Contains(t, resultField.Tags, `column:"custom_initialism"`)
+	})
+	t.Run("custom name and tag", func(t *testing.T) {
+		field := TableModelField{
+			Name: "CustomINITIALISM",
+			Tags: []string{`column:"some_column"`},
+		}
+		column := metadata.Column{Name: "custom_initialism"}
+		resultField := addColumnTag(field, column)
+		require.Contains(t, resultField.Tags, `column:"some_column"`)
+		require.NotContains(t, resultField.Tags, `column:"custom_initialism"`)
+	})
+}
+
 func TestTableModelFieldSourceDialect(t *testing.T) {
 	testCases := []struct {
 		name               string

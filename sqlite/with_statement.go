@@ -20,12 +20,12 @@ type commonTableExpression struct {
 }
 
 // WITH function creates new WITH statement from list of common table expressions
-func WITH(cte ...CommonTableExpression) func(statement jet.Statement) Statement {
+func WITH(cte ...CommonTableExpression) func(statement jet.Statement) jet.SerializerStatement {
 	return jet.WITH(Dialect, false, toInternalCTE(cte)...)
 }
 
 // WITH_RECURSIVE function creates new WITH RECURSIVE statement from list of common table expressions
-func WITH_RECURSIVE(cte ...CommonTableExpression) func(statement jet.Statement) Statement {
+func WITH_RECURSIVE(cte ...CommonTableExpression) func(statement jet.Statement) jet.SerializerStatement {
 	return jet.WITH(Dialect, true, toInternalCTE(cte)...)
 }
 
@@ -49,7 +49,7 @@ func (c *commonTableExpression) AS(statement jet.SerializerHasProjections) Commo
 
 // AS_NOT_MATERIALIZED is used to define not materialized CTE query
 func (c *commonTableExpression) AS_NOT_MATERIALIZED(statement jet.SerializerHasProjections) CommonTableExpression {
-	c.CommonTableExpression.NotMaterialized = true
+	c.CommonTableExpression.Materialization = jet.CTEMaterializationDisabled
 	c.CommonTableExpression.Statement = statement
 	return c
 }

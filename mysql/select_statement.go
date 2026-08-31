@@ -54,8 +54,8 @@ type SelectStatement interface {
 	FOR(lock RowLock) SelectStatement
 	LOCK_IN_SHARE_MODE() SelectStatement
 
-	UNION(rhs SelectStatement) setStatement
-	UNION_ALL(rhs SelectStatement) setStatement
+	UNION(rhs SelectStatement) SetStatement
+	UNION_ALL(rhs SelectStatement) SetStatement
 
 	AsTable(alias string) SelectTable
 }

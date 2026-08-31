@@ -19,3 +19,17 @@ func TestWindowFunctions(t *testing.T) {
 	assertClauseSerialize(t, ORDER_BY(table1Col1).RANGE(PRECEDING(UNBOUNDED), CURRENT_ROW),
 		"(ORDER BY table1.col1 RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW)")
 }
+
+func TestWindowFunctionChainedOperators(t *testing.T) {
+	assertClauseSerialize(t,
+		ROW_NUMBER().OVER(ORDER_BY(table1ColInt)).ADD(Int(1)),
+		"(ROW_NUMBER() OVER (ORDER BY table1.col_int) + $1)", int64(1))
+	assertClauseSerialize(t,
+		SUMf(table1ColFloat).OVER(PARTITION_BY(table1ColInt)).SUB(
+			SUMf(table2ColFloat).OVER(PARTITION_BY(table1ColInt)),
+		),
+		"(SUM(table1.col_float) OVER (PARTITION BY table1.col_int) - SUM(table2.col_float) OVER (PARTITION BY table1.col_int))")
+	assertClauseSerialize(t,
+		BOOL_AND(table1ColBool).OVER(PARTITION_BY(table1ColInt)).AND(table2ColBool),
+		"(BOOL_AND(table1.col_bool) OVER (PARTITION BY table1.col_int) AND table2.col_bool)")
+}

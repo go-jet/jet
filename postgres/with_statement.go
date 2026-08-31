@@ -7,7 +7,8 @@ type CommonTableExpression interface {
 	SelectTable
 
 	AS(statement jet.SerializerHasProjections) CommonTableExpression
-	AS_NOT_MATERIALIZED(statement jet.SerializerStatement) CommonTableExpression
+	AS_MATERIALIZED(statement jet.SerializerHasProjections) CommonTableExpression
+	AS_NOT_MATERIALIZED(statement jet.SerializerHasProjections) CommonTableExpression
 	// ALIAS is used to create another alias of the CTE, if a CTE needs to appear multiple times in the main query.
 	ALIAS(alias string) SelectTable
 
@@ -20,12 +21,12 @@ type commonTableExpression struct {
 }
 
 // WITH function creates new WITH statement from list of common table expressions
-func WITH(cte ...CommonTableExpression) func(statement jet.Statement) Statement {
+func WITH(cte ...CommonTableExpression) func(statement jet.Statement) jet.SerializerStatement {
 	return jet.WITH(Dialect, false, toInternalCTE(cte)...)
 }
 
 // WITH_RECURSIVE function creates new WITH RECURSIVE statement from list of common table expressions
-func WITH_RECURSIVE(cte ...CommonTableExpression) func(statement jet.Statement) Statement {
+func WITH_RECURSIVE(cte ...CommonTableExpression) func(statement jet.Statement) jet.SerializerStatement {
 	return jet.WITH(Dialect, true, toInternalCTE(cte)...)
 }
 
@@ -47,9 +48,16 @@ func (c *commonTableExpression) AS(statement jet.SerializerHasProjections) Commo
 	return c
 }
 
+// AS_MATERIALIZED is used to define a materialized CTE query
+func (c *commonTableExpression) AS_MATERIALIZED(statement jet.SerializerHasProjections) CommonTableExpression {
+	c.CommonTableExpression.Materialization = jet.CTEMaterializationForced
+	c.CommonTableExpression.Statement = statement
+	return c
+}
+
 // AS_NOT_MATERIALIZED is used to define not materialized CTE query
-func (c *commonTableExpression) AS_NOT_MATERIALIZED(statement jet.SerializerStatement) CommonTableExpression {
-	c.CommonTableExpression.NotMaterialized = true
+func (c *commonTableExpression) AS_NOT_MATERIALIZED(statement jet.SerializerHasProjections) CommonTableExpression {
+	c.CommonTableExpression.Materialization = jet.CTEMaterializationDisabled
 	c.CommonTableExpression.Statement = statement
 	return c
 }

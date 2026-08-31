@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path"
 	"slices"
 	"strings"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils/errfmt"
-	"github.com/go-jet/jet/v2/internal/utils/strslice"
 	"github.com/go-jet/jet/v2/mysql"
 	postgres2 "github.com/go-jet/jet/v2/postgres"
 	"github.com/go-jet/jet/v2/sqlite"
@@ -58,6 +58,8 @@ var (
 	enums  string
 
 	modelJsonTag string
+
+	showVersion bool
 )
 
 type templateFilter struct {
@@ -86,9 +88,9 @@ func init() {
 	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public")(PostgreSQL only)`)
 	flag.StringVar(&params, "params", "", "Additional connection string parameters(optional). Used only if dsn is not set.")
 	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL. Used only if dsn is not set. (optional)(default "disable")(PostgreSQL only)`)
-	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore.`)
-	flag.StringVar(&ignoreViews, "ignore-views", "", `Comma-separated list of views to ignore.`)
-	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore.`)
+	flag.StringVar(&ignoreTables, "ignore-tables", "", `Comma-separated list of tables to ignore. Names may use shell wildcards, e.g. "user_*".`)
+	flag.StringVar(&ignoreViews, "ignore-views", "", `Comma-separated list of views to ignore. Names may use shell wildcards, e.g. "user_*".`)
+	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore. Names may use shell wildcards, e.g. "user_*".`)
 	flag.BoolVar(&skipModel, "skip-model", false, `Skip model generation.`)
 	flag.BoolVar(&skipSQLBuilder, "skip-sql-builder", false, `Skip SQL builder generation.`)
 
@@ -99,14 +101,21 @@ func init() {
 	flag.StringVar(&enumPkg, "rel-enum-path", "enum", "Relative path for the Enum files package from the destination directory.")
 	flag.StringVar(&modelJsonTag, "model-json-tag", "", "Json tag model to be included in Go structs. (optional)(default <empty>)(allowed values: <empty>, pascal-case, camel-case, snake-case")
 
-	flag.StringVar(&tables, "tables", "", `Comma-separated list of tables to generate.`)
-	flag.StringVar(&views, "views", "", `Comma-separated list of views to generate.`)
-	flag.StringVar(&enums, "enums", "", `Comma-separated list of enums to generate.`)
+	flag.StringVar(&tables, "tables", "", `Comma-separated list of tables to generate. Names may use shell wildcards, e.g. "user_*".`)
+	flag.StringVar(&views, "views", "", `Comma-separated list of views to generate. Names may use shell wildcards, e.g. "user_*".`)
+	flag.StringVar(&enums, "enums", "", `Comma-separated list of enums to generate. Names may use shell wildcards, e.g. "user_*".`)
+
+	flag.BoolVar(&showVersion, "version", false, "Print version.")
 }
 
 func main() {
 	flag.Usage = usage
 	flag.Parse()
+
+	if showVersion {
+		fmt.Println(version)
+		return
+	}
 
 	if dsn == "" && (source == "" || host == "" || port == 0 || user == "" || dbName == "") {
 		printErrorAndExit("ERROR: required flag(s) missing")
@@ -208,6 +217,7 @@ func usage() {
 		"skip-model", "skip-sql-builder",
 		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path", "tables", "views",
 		"enums",
+		"version",
 	}
 
 	for _, name := range order {
@@ -348,18 +358,35 @@ func createTemplateFilter(ignoreList, allowList, filterType string) templateFilt
 
 func shouldSkipTable(table metadata.Table, filter templateFilter) bool {
 	if filter.ignore {
-		return strslice.Contains(filter.names, strings.ToLower(table.Name))
+		return matchesFilter(filter.names, table.Name)
 	}
 
-	return !strslice.Contains(filter.names, strings.ToLower(table.Name))
+	return !matchesFilter(filter.names, table.Name)
 }
 
 func shouldSkipEnum(enum metadata.Enum, filter templateFilter) bool {
 	if filter.ignore {
-		return strslice.Contains(filter.names, strings.ToLower(enum.Name))
+		return matchesFilter(filter.names, enum.Name)
 	}
 
-	return !strslice.Contains(filter.names, strings.ToLower(enum.Name))
+	return !matchesFilter(filter.names, enum.Name)
+}
+
+// matchesFilter reports whether name matches any of the filter patterns.
+// Patterns support shell style wildcards (for example "user_*"), which makes it
+// possible to match dynamically named tables such as partitions with a single
+// entry. Patterns without wildcard characters still match exactly.
+func matchesFilter(patterns []string, name string) bool {
+	name = strings.ToLower(name)
+
+	for _, pattern := range patterns {
+		// pattern is already lower cased and trimmed by parseList.
+		if matched, err := path.Match(pattern, name); err == nil && matched {
+			return true
+		}
+	}
+
+	return false
 }
 
 func createModelTags(columnMetaData metadata.Column) []string {

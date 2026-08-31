@@ -101,6 +101,13 @@ type boolExpressionWrapper struct {
 	Expression
 }
 
+func (b *boolExpressionWrapper) setRoot(root Expression) {
+	b.Expression.setRoot(root)
+	if boolRoot, ok := root.(BoolExpression); ok {
+		b.boolInterfaceImpl.root = boolRoot
+	}
+}
+
 func newBoolExpressionWrap(expression Expression) BoolExpression {
 	boolExpressionWrap := &boolExpressionWrapper{Expression: expression}
 	boolExpressionWrap.boolInterfaceImpl.root = boolExpressionWrap
