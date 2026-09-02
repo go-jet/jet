@@ -1036,6 +1036,103 @@ FOR UPDATE OF ''myFilm'';
 	})
 }
 
+func TestRowLockMultipleLockClauses(t *testing.T) {
+	skipForMariaDB(t) // MariaDB does not support UPDATE OF
+
+	myFilm := Film.AS("myFilm")
+	myActor := Actor.AS("myActor")
+
+	stmt := SELECT(
+		myFilm.FilmID,
+		myFilm.Title,
+		myActor.ActorID,
+		myActor.FirstName,
+	).FROM(
+		myFilm.
+			INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(myFilm.FilmID)).
+			INNER_JOIN(myActor, myActor.ActorID.EQ(FilmActor.ActorID)),
+	).LIMIT(
+		1,
+	).FOR(
+		UPDATE().OF(myFilm).NOWAIT(),
+		SHARE().OF(myActor).SKIP_LOCKED(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT ''myFilm''.film_id AS "myFilm.film_id",
+     ''myFilm''.title AS "myFilm.title",
+     ''myActor''.actor_id AS "myActor.actor_id",
+     ''myActor''.first_name AS "myActor.first_name"
+FROM dvds.film AS ''myFilm''
+     INNER JOIN dvds.film_actor ON (film_actor.film_id = ''myFilm''.film_id)
+     INNER JOIN dvds.actor AS ''myActor'' ON (''myActor''.actor_id = film_actor.actor_id)
+LIMIT 1
+FOR UPDATE OF ''myFilm'' NOWAIT
+FOR SHARE OF ''myActor'' SKIP LOCKED;
+`, "''", "`"))
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		var dest []struct {
+			model.Film  `alias:"myFilm.*"`
+			model.Actor `alias:"myActor.*"`
+		}
+
+		err := stmt.Query(tx, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 1)
+	})
+}
+
+func TestRowLockMultipleLockClausesMultipleTables(t *testing.T) {
+	skipForMariaDB(t) // MariaDB does not support UPDATE OF
+
+	myActor := Actor.AS("myActor")
+
+	stmt := SELECT(
+		Film.FilmID,
+		FilmActor.ActorID,
+		myActor.FirstName,
+		FilmCategory.CategoryID,
+	).FROM(
+		Film.
+			INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(myActor, myActor.ActorID.EQ(FilmActor.ActorID)).
+			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)),
+	).LIMIT(
+		1,
+	).FOR(
+		SHARE().OF(Film, FilmActor),
+		UPDATE().OF(myActor).NOWAIT(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, strings.ReplaceAll(`
+SELECT film.film_id AS "film.film_id",
+     film_actor.actor_id AS "film_actor.actor_id",
+     ''myActor''.first_name AS "myActor.first_name",
+     film_category.category_id AS "film_category.category_id"
+FROM dvds.film
+     INNER JOIN dvds.film_actor ON (film_actor.film_id = film.film_id)
+     INNER JOIN dvds.actor AS ''myActor'' ON (''myActor''.actor_id = film_actor.actor_id)
+     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+LIMIT 1
+FOR SHARE OF film, film_actor
+FOR UPDATE OF ''myActor'' NOWAIT;
+`, "''", "`"))
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		var dest []struct {
+			model.Film
+			model.FilmActor
+			model.Actor `alias:"myActor.*"`
+			model.FilmCategory
+		}
+
+		err := stmt.Query(tx, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 1)
+	})
+}
+
 func TestExpressionWrappers(t *testing.T) {
 	query := SELECT(
 		BoolExp(Raw("true")),

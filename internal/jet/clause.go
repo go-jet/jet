@@ -281,18 +281,20 @@ func (o *ClauseFetch) Serialize(statementType StatementType, out *SQLBuilder, op
 
 // ClauseFor struct
 type ClauseFor struct {
-	Lock RowLock
+	Locks []RowLock
 }
 
 // Serialize serializes clause into SQLBuilder
 func (f *ClauseFor) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if f.Lock == nil {
-		return
-	}
+	for _, lock := range f.Locks {
+		if lock == nil {
+			continue
+		}
 
-	out.NewLine()
-	out.WriteString("FOR")
-	f.Lock.serialize(statementType, out, FallTrough(options)...)
+		out.NewLine()
+		out.WriteString("FOR")
+		lock.serialize(statementType, out, FallTrough(options)...)
+	}
 }
 
 // ClauseSetStmtOperator struct
