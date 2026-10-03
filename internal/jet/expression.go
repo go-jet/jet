@@ -184,13 +184,25 @@ func (e *expressionWrapper) serializeForRowToJsonProjection(statement StatementT
 }
 
 // jsonProjection returns the wrapped expression, except for the wrapped column, which is serialized as the column
-// (column name as json key), but with the json value encoded according to the wrapper type.
+// (column name as json key), but with the json value encoded according to the outermost wrapper type.
 func (e *expressionWrapper) jsonProjection() Projection {
-	if column, ok := e.expression.(Column); ok {
+	if column := e.wrappedColumn(); column != nil {
 		return newAlias(e.Root, snaker.SnakeToCamel(column.Name(), false))
 	}
 
 	return e.expression
+}
+
+// wrappedColumn returns the column wrapped directly or through other type wrappers, or nil if there is none.
+func (e *expressionWrapper) wrappedColumn() Column {
+	switch expression := e.expression.(type) {
+	case Column:
+		return expression
+	case interface{ wrappedColumn() Column }:
+		return expression.wrappedColumn()
+	}
+
+	return nil
 }
 
 func (e *expressionWrapper) fromImpl(subQuery SelectTable) Projection {

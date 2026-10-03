@@ -150,6 +150,11 @@ func TestTypeWrappersOnColumnsInSelectJson(t *testing.T) {
 	stmt := SELECT_JSON_OBJ(
 		table1ColTimestamp,
 		TimestampExp(table2ColStr),
+		DateExp(table1ColTimestampz).AS("oneWrapper"),
+		StringExp(TimestampExp(table2ColTimestampz)),
+		StringExp(TimestampExp(table1ColDate)).AS("twoWrappers"),
+		TimestampExp(StringExp(DateExp(table2ColDate))),
+		TimestampExp(StringExp(DateExp(table1ColTime))).AS("threeWrappers"),
 	).FROM(
 		table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
 	)
@@ -158,7 +163,12 @@ func TestTypeWrappersOnColumnsInSelectJson(t *testing.T) {
 SELECT row_to_json(records) AS "json"
 FROM (
           SELECT to_char(table1.col_timestamp, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "colTimestamp",
-               to_char(table2.col_str, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "colStr"
+               to_char(table2.col_str, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "colStr",
+               (to_char(table1.col_timestampz::timestamp, 'YYYY-MM-DD') || 'T00:00:00Z') AS "oneWrapper",
+               table2.col_timestampz AS "colTimestampz",
+               table1.col_date AS "twoWrappers",
+               to_char(table2.col_date, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "colDate",
+               to_char(table1.col_time, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "threeWrappers"
           FROM db.table1
                INNER JOIN db.table2 ON (table1.col_int = table2.col_int)
      ) AS records;
@@ -166,8 +176,10 @@ FROM (
 	assertDebugStatementSql(t, stmt, expectedSQL)
 
 	// wrapping the same columns again does not change the statement
-	StringExp(table1ColTimestamp)
-	StringExp(table2ColStr)
+	for _, column := range []Expression{table1ColTimestamp, table2ColStr, table1ColTimestampz, table2ColTimestampz,
+		table1ColDate, table2ColDate, table1ColTime} {
+		StringExp(TimestampExp(column))
+	}
 
 	assertDebugStatementSql(t, stmt, expectedSQL)
 }
