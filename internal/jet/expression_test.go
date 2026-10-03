@@ -2,6 +2,8 @@ package jet
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestExpressionIS_NULL(t *testing.T) {
@@ -35,4 +37,33 @@ func TestNOT_IN(t *testing.T) {
 	assertClauseSerialize(t, table2ColInt.NOT_IN(Int(1), Int(2), Int(3)),
 		`(table2.col_int NOT IN ($1, $2, $3))`, int64(1), int64(2), int64(3))
 
+}
+
+func TestTypeWrappersDoNotModifyWrappedExpression(t *testing.T) {
+	column := StringColumn("col")
+	function := Func("FUNC", column)
+
+	for _, expression := range []Expression{column, function} {
+		wrappers := []Expression{
+			BoolExp(expression),
+			IntExp(expression),
+			FloatExp(expression),
+			StringExp(expression),
+			BlobExp(expression),
+			DateExp(expression),
+			TimeExp(expression),
+			TimezExp(expression),
+			TimestampExp(expression),
+			TimestampzExp(expression),
+			IntervalExp(expression),
+			ArrayExp[StringExpression](expression),
+			RangeExp[Int8Expression](expression),
+		}
+
+		for _, wrapper := range wrappers {
+			require.Same(t, wrapper, wrapper.AS("alias").(*alias).expression)
+		}
+
+		require.Same(t, expression, expression.AS("alias").(*alias).expression)
+	}
 }

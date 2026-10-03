@@ -1,6 +1,10 @@
 package jet
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
+)
 
 // Expression is a common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
@@ -12,6 +16,8 @@ type Expression interface {
 	expressionOrColumnList
 
 	serializeForJsonValue(statement StatementType, out *SQLBuilder)
+	// setRoot should be called only on newly created expressions, never on expressions received from the user, because
+	// those might be shared between statements and goroutines (for instance, generated table columns).
 	setRoot(root Expression)
 
 	// IS_NULL tests expression whether it is a NULL value.
@@ -131,6 +137,64 @@ func newExpression(serializer Serializer) Expression {
 	expr.ExpressionInterfaceImpl.Root = expr
 
 	return expr
+}
+
+// expressionWrapper is a base type for the type wrappers (BoolExp, IntExp, StringExp, ...). Wrapped expression is never
+// modified, because it might be shared between statements and goroutines (for instance, generated table columns).
+// Methods that depend on the expression root are served by the wrapper ExpressionInterfaceImpl, while serialization is
+// forwarded to the wrapped expression.
+type expressionWrapper struct {
+	ExpressionInterfaceImpl
+
+	expression Expression
+}
+
+func newExpressionWrapper(expression, root Expression) expressionWrapper {
+	return expressionWrapper{
+		ExpressionInterfaceImpl: ExpressionInterfaceImpl{Root: root},
+		expression:              expression,
+	}
+}
+
+// setRoot is called only on wrappers created in the same call chain (see window expressions), so the new root can be
+// propagated to the wrapped expression as well.
+func (e *expressionWrapper) setRoot(root Expression) {
+	e.ExpressionInterfaceImpl.setRoot(root)
+	e.expression.setRoot(root)
+}
+
+func (e *expressionWrapper) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	e.expression.serialize(statement, out, options...)
+}
+
+func (e *expressionWrapper) serializeForProjection(statement StatementType, out *SQLBuilder) {
+	e.expression.serializeForProjection(statement, out)
+}
+
+func (e *expressionWrapper) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
+	e.expression.serializeForOrderBy(statement, out)
+}
+
+func (e *expressionWrapper) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
+	e.jsonProjection().serializeForJsonObjEntry(statement, out)
+}
+
+func (e *expressionWrapper) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
+	e.jsonProjection().serializeForRowToJsonProjection(statement, out)
+}
+
+// jsonProjection returns the wrapped expression, except for the wrapped column, which is serialized as the column
+// (column name as json key), but with the json value encoded according to the wrapper type.
+func (e *expressionWrapper) jsonProjection() Projection {
+	if column, ok := e.expression.(Column); ok {
+		return newAlias(e.Root, snaker.SnakeToCamel(column.Name(), false))
+	}
+
+	return e.expression
+}
+
+func (e *expressionWrapper) fromImpl(subQuery SelectTable) Projection {
+	return e.expression.fromImpl(subQuery)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)

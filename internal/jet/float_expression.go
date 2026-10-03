@@ -98,20 +98,20 @@ func (n *floatInterfaceImpl) POW(rhs NumericExpression) FloatExpression {
 
 type floatExpressionWrapper struct {
 	floatInterfaceImpl
-	Expression
+	expressionWrapper
 }
 
 func (f *floatExpressionWrapper) setRoot(root Expression) {
-	f.Expression.setRoot(root)
+	f.expressionWrapper.setRoot(root)
 	if floatRoot, ok := root.(FloatExpression); ok {
 		f.floatInterfaceImpl.root = floatRoot
 	}
 }
 
 func newFloatExpressionWrap(expression Expression) FloatExpression {
-	floatExpressionWrap := &floatExpressionWrapper{Expression: expression}
+	floatExpressionWrap := &floatExpressionWrapper{}
 	floatExpressionWrap.floatInterfaceImpl.root = floatExpressionWrap
-	expression.setRoot(floatExpressionWrap)
+	floatExpressionWrap.expressionWrapper = newExpressionWrapper(expression, floatExpressionWrap)
 	return floatExpressionWrap
 }
 
