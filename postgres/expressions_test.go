@@ -1,9 +1,11 @@
 package postgres
 
 import (
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -98,4 +100,74 @@ func TestSerializer_CustomExpressionDynamicArgs(t *testing.T) {
 
 	assertSerialize(t, JSONField(details, "address", "city"),
 		"(details -> $1::text ->> $2::text)", "address", "city")
+}
+
+func TestTypeWrappersOnSharedColumnsConcurrently(t *testing.T) {
+	newStatement := func() SelectStatement {
+		return SELECT(
+			BoolExp(table1ColBool),
+			IntExp(table1ColInt).ADD(Int(1)),
+			FloatExp(table1ColFloat).AS("float"),
+			DateExp(table1ColDate),
+			TimeExp(table1ColTime),
+			TimezExp(table1ColTimez),
+			TimestampExp(table1ColTimestamp),
+			TimestampzExp(table1ColTimestampz),
+			IntervalExp(table1ColInterval),
+			Int8RangeExp(table1ColRange).IS_EMPTY(),
+			ArrayExp[StringExpression](table1ColStringArray).AT(Int(1)),
+			ByteaExp(table2ColStr),
+		).FROM(
+			table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+		).WHERE(
+			StringExp(table2ColStr).EQ(String("x")),
+		)
+	}
+
+	expectedQuery, expectedArgs := newStatement().Sql()
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for j := 0; j < 100; j++ {
+				query, args := newStatement().Sql()
+
+				assert.Equal(t, expectedQuery, query)
+				assert.Equal(t, expectedArgs, args)
+			}
+		}()
+	}
+
+	wg.Wait()
+}
+
+func TestTypeWrappersOnColumnsInSelectJson(t *testing.T) {
+	stmt := SELECT_JSON_OBJ(
+		table1ColTimestamp,
+		TimestampExp(table2ColStr),
+	).FROM(
+		table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+	)
+
+	expectedSQL := `
+SELECT row_to_json(records) AS "json"
+FROM (
+          SELECT to_char(table1.col_timestamp, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "colTimestamp",
+               to_char(table2.col_str, 'YYYY-MM-DD"T"HH24:MI:SS.USZ') AS "colStr"
+          FROM db.table1
+               INNER JOIN db.table2 ON (table1.col_int = table2.col_int)
+     ) AS records;
+`
+	assertDebugStatementSql(t, stmt, expectedSQL)
+
+	// wrapping the same columns again does not change the statement
+	StringExp(table1ColTimestamp)
+	StringExp(table2ColStr)
+
+	assertDebugStatementSql(t, stmt, expectedSQL)
 }
