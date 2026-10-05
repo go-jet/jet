@@ -1,0 +1,44 @@
+name: Docs PR check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs*.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: docs
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      # Fails on dead links and invalid markdown. Base '/' so the artifact
+      # can be previewed locally with `npx vitepress preview`.
+      - name: Build
+        run: npm run build
+        env:
+          DOCS_BASE: /
+
+      - name: Upload preview artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: docs-preview
+          path: docs/.vitepress/dist
+          retention-days: 7
