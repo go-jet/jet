@@ -67,11 +67,11 @@ func TestRawType(t *testing.T) {
 func TestTypeWrappersOnColumnsInSelectJson(t *testing.T) {
 	stmt := SELECT_JSON_OBJ(
 		table1ColTimestamp,
-		TimestampExp(table2ColStr),
+		TimestampExp(table2ColStr).AS("colStr"),
 		DateExp(table1ColString).AS("oneWrapper"),
-		StringExp(TimestampExp(table1ColTime)),
+		StringExp(TimestampExp(table1ColTime)).AS("colTime"),
 		StringExp(TimestampExp(table2ColTimestamp)).AS("twoWrappers"),
-		TimestampExp(StringExp(DateExp(table2ColDate))),
+		TimestampExp(StringExp(DateExp(table2ColDate))).AS("colDate"),
 		TimestampExp(StringExp(DateExp(table1ColDate))).AS("threeWrappers"),
 	).FROM(
 		table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
@@ -99,4 +99,14 @@ FROM db.table1
 	}
 
 	assertStatementSql(t, stmt, expectedSQL)
+
+	// only columns have default alias, wrapped column has to be aliased
+	for _, projection := range []Projection{
+		TimestampExp(table2ColStr),
+		StringExp(TimestampExp(table2ColTimestamp)),
+		TimestampExp(StringExp(DateExp(table2ColDate))),
+	} {
+		assertStatementSqlErr(t, SELECT_JSON_OBJ(projection).FROM(table2),
+			"jet: expression need to be aliased when used as SELECT JSON projection.")
+	}
 }

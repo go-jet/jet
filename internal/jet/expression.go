@@ -1,10 +1,6 @@
 package jet
 
-import (
-	"fmt"
-
-	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
-)
+import "fmt"
 
 // Expression is a common interface for all expressions.
 // Can be Bool, Int, Float, String, Date, Time, Timez, Timestamp or Timestampz expressions.
@@ -142,7 +138,8 @@ func newExpression(serializer Serializer) Expression {
 // expressionWrapper is a base type for the type wrappers (BoolExp, IntExp, StringExp, ...). Wrapped expression is never
 // modified, because it might be shared between statements and goroutines (for instance, generated table columns).
 // Methods that depend on the expression root are served by the wrapper ExpressionInterfaceImpl, while serialization is
-// forwarded to the wrapped expression.
+// forwarded to the wrapped expression. Only columns have default alias in SELECT_JSON statements, so the wrapper has
+// to be aliased there, the same as any other expression.
 type expressionWrapper struct {
 	ExpressionInterfaceImpl
 
@@ -173,36 +170,6 @@ func (e *expressionWrapper) serializeForProjection(statement StatementType, out 
 
 func (e *expressionWrapper) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	e.expression.serializeForOrderBy(statement, out)
-}
-
-func (e *expressionWrapper) serializeForJsonObjEntry(statement StatementType, out *SQLBuilder) {
-	e.jsonProjection().serializeForJsonObjEntry(statement, out)
-}
-
-func (e *expressionWrapper) serializeForRowToJsonProjection(statement StatementType, out *SQLBuilder) {
-	e.jsonProjection().serializeForRowToJsonProjection(statement, out)
-}
-
-// jsonProjection returns the wrapped expression, except for the wrapped column, which is serialized as the column
-// (column name as json key), but with the json value encoded according to the outermost wrapper type.
-func (e *expressionWrapper) jsonProjection() Projection {
-	if column := e.wrappedColumn(); column != nil {
-		return newAlias(e.Root, snaker.SnakeToCamel(column.Name(), false))
-	}
-
-	return e.expression
-}
-
-// wrappedColumn returns the column wrapped directly or through other type wrappers, or nil if there is none.
-func (e *expressionWrapper) wrappedColumn() Column {
-	switch expression := e.expression.(type) {
-	case Column:
-		return expression
-	case interface{ wrappedColumn() Column }:
-		return expression.wrappedColumn()
-	}
-
-	return nil
 }
 
 func (e *expressionWrapper) fromImpl(subQuery SelectTable) Projection {

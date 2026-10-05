@@ -149,11 +149,11 @@ func TestTypeWrappersOnSharedColumnsConcurrently(t *testing.T) {
 func TestTypeWrappersOnColumnsInSelectJson(t *testing.T) {
 	stmt := SELECT_JSON_OBJ(
 		table1ColTimestamp,
-		TimestampExp(table2ColStr),
+		TimestampExp(table2ColStr).AS("colStr"),
 		DateExp(table1ColTimestampz).AS("oneWrapper"),
-		StringExp(TimestampExp(table2ColTimestampz)),
+		StringExp(TimestampExp(table2ColTimestampz)).AS("colTimestampz"),
 		StringExp(TimestampExp(table1ColDate)).AS("twoWrappers"),
-		TimestampExp(StringExp(DateExp(table2ColDate))),
+		TimestampExp(StringExp(DateExp(table2ColDate))).AS("colDate"),
 		TimestampExp(StringExp(DateExp(table1ColTime))).AS("threeWrappers"),
 	).FROM(
 		table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
@@ -182,4 +182,14 @@ FROM (
 	}
 
 	assertDebugStatementSql(t, stmt, expectedSQL)
+
+	// only columns have default alias, wrapped column has to be aliased
+	for _, projection := range []Projection{
+		TimestampExp(table2ColStr),
+		StringExp(TimestampExp(table2ColTimestampz)),
+		TimestampExp(StringExp(DateExp(table2ColDate))),
+	} {
+		assertStatementSqlErr(t, SELECT_JSON_OBJ(projection).FROM(table2),
+			"jet: expression need to be aliased when used as SELECT JSON projection.")
+	}
 }
