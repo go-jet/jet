@@ -140,13 +140,6 @@ type integerExpressionWrapper struct {
 	expressionWrapper
 }
 
-func (i *integerExpressionWrapper) setRoot(root Expression) {
-	i.expressionWrapper.setRoot(root)
-	if integerRoot, ok := root.(IntegerExpression); ok {
-		i.integerInterfaceImpl.root = integerRoot
-	}
-}
-
 func newIntExpressionWrap(expression Expression) IntegerExpression {
 	intExpressionWrap := &integerExpressionWrapper{}
 	intExpressionWrap.integerInterfaceImpl.root = intExpressionWrap

@@ -12,9 +12,6 @@ type Expression interface {
 	expressionOrColumnList
 
 	serializeForJsonValue(statement StatementType, out *SQLBuilder)
-	// setRoot should be called only on newly created expressions, never on expressions received from the user, because
-	// those might be shared between statements and goroutines (for instance, generated table columns).
-	setRoot(root Expression)
 
 	// IS_NULL tests expression whether it is a NULL value.
 	IS_NULL() BoolExpression
@@ -41,10 +38,6 @@ type ExpressionInterfaceImpl struct {
 }
 
 func (e *ExpressionInterfaceImpl) isExpressionOrColumnList() {}
-
-func (e *ExpressionInterfaceImpl) setRoot(root Expression) {
-	e.Root = root
-}
 
 func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 	panic(fmt.Sprintf("jet: can't export unaliased expression subQuery: %s, expression: %s",
@@ -137,9 +130,7 @@ func newExpression(serializer Serializer) Expression {
 
 // expressionWrapper is a base type for the type wrappers (BoolExp, IntExp, StringExp, ...). Wrapped expression is never
 // modified, because it might be shared between statements and goroutines (for instance, generated table columns).
-// Methods that depend on the expression root are served by the wrapper ExpressionInterfaceImpl, while serialization is
-// forwarded to the wrapped expression. Only columns have default alias in SELECT_JSON statements, so the wrapper has
-// to be aliased there, the same as any other expression.
+// Expression methods are served by the wrapper ExpressionInterfaceImpl, with the wrapper as the root.
 type expressionWrapper struct {
 	ExpressionInterfaceImpl
 
@@ -153,16 +144,13 @@ func newExpressionWrapper(expression, root Expression) expressionWrapper {
 	}
 }
 
-// setRoot is called only on wrappers created in the same call chain (see window expressions), so the new root can be
-// propagated to the wrapped expression as well.
-func (e *expressionWrapper) setRoot(root Expression) {
-	e.ExpressionInterfaceImpl.setRoot(root)
-	e.expression.setRoot(root)
-}
-
 func (e *expressionWrapper) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	e.expression.serialize(statement, out, options...)
 }
+
+// Type wrapper changes only the go type of the expression, so the methods below are forwarded to the wrapped
+// expression. Otherwise, a wrapped column would lose its default alias (and could not be exported from a sub-query),
+// and a wrapped sub-query would lose its parentheses, when used as a projection.
 
 func (e *expressionWrapper) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	e.expression.serializeForProjection(statement, out)

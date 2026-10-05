@@ -1,6 +1,10 @@
 package jet
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
 
 func TestFrameExtent(t *testing.T) {
 	assertClauseSerialize(t, PRECEDING(Int(2)), "$1 PRECEDING", int64(2))
@@ -32,4 +36,17 @@ func TestWindowFunctionChainedOperators(t *testing.T) {
 	assertClauseSerialize(t,
 		BOOL_AND(table1ColBool).OVER(PARTITION_BY(table1ColInt)).AND(table2ColBool),
 		"(BOOL_AND(table1.col_bool) OVER (PARTITION BY table1.col_int) AND table2.col_bool)")
+}
+
+func TestWindowFunctionExpressionMethods(t *testing.T) {
+	assertProjectionSerialize(t, ROW_NUMBER().OVER(), "ROW_NUMBER() OVER ()")
+	assertProjectionSerialize(t, SUMf(table1ColFloat).OVER(PARTITION_BY(table1ColInt)).AS("sum"),
+		`SUM(table1.col_float) OVER (PARTITION BY table1.col_int) AS "sum"`)
+	assertProjectionSerialize(t, FIRST_VALUE(table1ColInt).OVER().AS("first"), `FIRST_VALUE(table1.col_int) OVER () AS "first"`)
+	assertClauseSerialize(t, BOOL_OR(table1ColBool).OVER().IS_NULL(), "(BOOL_OR(table1.col_bool) OVER () IS NULL)")
+	assertClauseSerialize(t, ROW_NUMBER().OVER().IN(Int(1), Int(2)), "(ROW_NUMBER() OVER () IN ($1, $2))", int64(1), int64(2))
+
+	out := SQLBuilder{Dialect: defaultDialect}
+	SUMf(table1ColFloat).OVER().DESC().serializeForOrderBy(SelectStatementType, &out)
+	require.Equal(t, "SUM(table1.col_float) OVER () DESC", out.Buff.String())
 }
