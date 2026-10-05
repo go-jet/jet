@@ -195,30 +195,35 @@ FROM (
 }
 
 func TestTypeWrappersAsProjection(t *testing.T) {
-	// wrapped column keeps the column default alias, and wrapped sub-query keeps its parentheses
+	// only columns have default alias, wrapped column is projected as any other expression
 	assertDebugStatementSql(t,
 		SELECT(
+			table1ColInt,
 			StringExp(table1ColInt),
 			IntExp(StringExp(table1ColBool)),
-			IntExp(SELECT(MAXi(table2ColInt)).FROM(table2)),
-			FloatExp(table1ColInt.ADD(Int(2))),
 			FloatExp(table1ColFloat).AS("float"),
+			StringExp(table1ColDate).AS("table1.col_date"),
 		).FROM(table1), `
 SELECT table1.col_int AS "table1.col_int",
-     table1.col_bool AS "table1.col_bool",
-     (
-          SELECT MAX(table2.col_int)
-          FROM db.table2
-     ),
-     table1.col_int + 2,
-     table1.col_float AS "float"
+     table1.col_int,
+     table1.col_bool,
+     table1.col_float AS "float",
+     table1.col_date AS "table1.col_date"
 FROM db.table1;
 `)
 
-	// wrapped column can be exported from the sub-query
+	// wrapped column has to be aliased to be exported from the sub-query
 	subQuery := SELECT(
 		StringExp(table1ColInt),
-		IntExp(StringExp(table1ColBool)),
+	).FROM(
+		table1,
+	).AsTable("sub_query")
+
+	assertPanicErr(t, func() { subQuery.AllColumns() },
+		"jet: can't export unaliased expression subQuery: sub_query, expression: table1.col_int")
+
+	subQuery = SELECT(
+		StringExp(table1ColInt).AS("table1.col_int"),
 		FloatExp(table1ColFloat).AS("float"),
 	).FROM(
 		table1,
@@ -226,24 +231,24 @@ FROM db.table1;
 
 	assertDebugStatementSql(t, SELECT(subQuery.AllColumns()).FROM(subQuery), `
 SELECT sub_query."table1.col_int" AS "table1.col_int",
-     sub_query."table1.col_bool" AS "table1.col_bool",
      sub_query.float AS "float"
 FROM (
           SELECT table1.col_int AS "table1.col_int",
-               table1.col_bool AS "table1.col_bool",
                table1.col_float AS "float"
           FROM db.table1
      ) AS sub_query;
 `)
 
-	// wrapped column is referenced by the default alias in the set statement order by
+	// wrapped column is not referenced by the column default alias in the set statement order by
 	assertDebugStatementSql(t,
 		UNION(
 			SELECT(table1ColInt).FROM(table1),
 			SELECT(table2ColInt).FROM(table2),
 		).ORDER_BY(
+			table1ColInt,
 			IntExp(table1ColInt).DESC(),
 			StringExp(table1ColInt),
+			IntegerColumn("table1.col_int").ASC(),
 		), `
 (
      SELECT table1.col_int AS "table1.col_int"
@@ -254,6 +259,6 @@ UNION
      SELECT table2.col_int AS "table2.col_int"
      FROM db.table2
 )
-ORDER BY "table1.col_int" DESC, "table1.col_int";
+ORDER BY "table1.col_int", table1.col_int DESC, table1.col_int, "table1.col_int" ASC;
 `)
 }

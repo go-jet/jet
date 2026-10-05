@@ -128,9 +128,10 @@ func newExpression(serializer Serializer) Expression {
 	return expr
 }
 
-// expressionWrapper is a base type for the type wrappers (BoolExp, IntExp, StringExp, ...). Wrapped expression is never
-// modified, because it might be shared between statements and goroutines (for instance, generated table columns).
-// Expression methods are served by the wrapper ExpressionInterfaceImpl, with the wrapper as the root.
+// expressionWrapper is a base type for the expressions that wrap another expression (type wrappers BoolExp, IntExp,
+// StringExp, ... and window expressions). Wrapped expression is never modified, because it might be shared between
+// statements and goroutines (for instance, generated table columns). Expression methods are served by the wrapper
+// ExpressionInterfaceImpl, with the wrapper as the root, and only serialize is forwarded to the wrapped expression.
 type expressionWrapper struct {
 	ExpressionInterfaceImpl
 
@@ -146,22 +147,6 @@ func newExpressionWrapper(expression, root Expression) expressionWrapper {
 
 func (e *expressionWrapper) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	e.expression.serialize(statement, out, options...)
-}
-
-// Type wrapper changes only the go type of the expression, so the methods below are forwarded to the wrapped
-// expression. Otherwise, a wrapped column would lose its default alias (and could not be exported from a sub-query),
-// and a wrapped sub-query would lose its parentheses, when used as a projection.
-
-func (e *expressionWrapper) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	e.expression.serializeForProjection(statement, out)
-}
-
-func (e *expressionWrapper) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
-	e.expression.serializeForOrderBy(statement, out)
-}
-
-func (e *expressionWrapper) fromImpl(subQuery SelectTable) Projection {
-	return e.expression.fromImpl(subQuery)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
