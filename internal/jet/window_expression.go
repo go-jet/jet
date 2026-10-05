@@ -31,14 +31,14 @@ type windowExpression interface {
 func newWindowExpression(exp Expression) windowExpression {
 	newExp := &windowExpressionImpl{}
 
-	newExp.ExpressionInterfaceImpl.Root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(exp, newExp)
 	newExp.commonWindowImpl.expression = exp
 
 	return newExp
 }
 
 type windowExpressionImpl struct {
-	ExpressionInterfaceImpl
+	expressionWrapper
 	commonWindowImpl
 }
 
@@ -62,15 +62,14 @@ func newFloatWindowExpression(floatExp FloatExpression) floatWindowExpression {
 	newExp := &floatWindowExpressionImpl{}
 
 	newExp.floatInterfaceImpl.root = newExp
-	newExp.ExpressionInterfaceImpl.Root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(floatExp, newExp)
 	newExp.commonWindowImpl.expression = floatExp
 
 	return newExp
 }
 
 type floatWindowExpressionImpl struct {
-	floatInterfaceImpl
-	ExpressionInterfaceImpl
+	floatExpressionWrapper
 	commonWindowImpl
 }
 
@@ -94,15 +93,14 @@ func newIntegerWindowExpression(intExp IntegerExpression) integerWindowExpressio
 	newExp := &integerWindowExpressionImpl{}
 
 	newExp.integerInterfaceImpl.root = newExp
-	newExp.ExpressionInterfaceImpl.Root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(intExp, newExp)
 	newExp.commonWindowImpl.expression = intExp
 
 	return newExp
 }
 
 type integerWindowExpressionImpl struct {
-	integerInterfaceImpl
-	ExpressionInterfaceImpl
+	integerExpressionWrapper
 	commonWindowImpl
 }
 
@@ -126,15 +124,14 @@ func newBoolWindowExpression(boolExp BoolExpression) boolWindowExpression {
 	newExp := &boolWindowExpressionImpl{}
 
 	newExp.boolInterfaceImpl.root = newExp
-	newExp.ExpressionInterfaceImpl.Root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(boolExp, newExp)
 	newExp.commonWindowImpl.expression = boolExp
 
 	return newExp
 }
 
 type boolWindowExpressionImpl struct {
-	boolInterfaceImpl
-	ExpressionInterfaceImpl
+	boolExpressionWrapper
 	commonWindowImpl
 }
 
