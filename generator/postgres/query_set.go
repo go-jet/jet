@@ -15,10 +15,14 @@ type postgresQuerySet struct{}
 
 func (p postgresQuerySet) GetTablesMetaData(db *sql.DB, schemaName string, tableType metadata.TableType) ([]metadata.Table, error) {
 	query := `
-SELECT table_name as "table.name", obj_description((quote_ident(table_schema)||'.'||quote_ident(table_name))::regclass, 'pg_class') as "table.comment"
-FROM information_schema.tables
-WHERE table_schema = $1 and table_type = $2
-ORDER BY table_name;
+SELECT t.table_name as "table.name",
+       obj_description((quote_ident(t.table_schema)||'.'||quote_ident(t.table_name))::regclass, 'pg_class') as "table.comment",
+       coalesce(cls.relispartition, false) as "table.isPartition"
+FROM information_schema.tables t
+     left join pg_catalog.pg_namespace ns on ns.nspname = t.table_schema
+     left join pg_catalog.pg_class cls on cls.relname = t.table_name and cls.relnamespace = ns.oid
+WHERE t.table_schema = $1 and t.table_type = $2
+ORDER BY t.table_name;
 `
 	var tables []metadata.Table
 
