@@ -41,6 +41,8 @@ type Statement interface {
 
 	// Rows executes statements over db connection/transaction and returns rows
 	Rows(ctx context.Context, db qrm.Queryable) (*Rows, error)
+
+	Type() StatementType
 }
 
 // Rows wraps sql.Rows type with a support for query result mapping
@@ -104,7 +106,7 @@ func (s *statementInterfaceImpl) Query(db qrm.Queryable, destination interface{}
 }
 
 func (s *statementInterfaceImpl) QueryContext(ctx context.Context, db qrm.Queryable, destination interface{}) error {
-	return s.query(ctx, func(query string, args []interface{}) (int64, error) {
+	return QueryWithLogging(ctx, s, func(query string, args []interface{}) (int64, error) {
 		switch s.statementType {
 		case SelectJsonObjStatementType:
 			return qrm.QueryJsonObj(ctx, db, query, args, destination)
@@ -116,13 +118,14 @@ func (s *statementInterfaceImpl) QueryContext(ctx context.Context, db qrm.Querya
 	})
 }
 
-func (s *statementInterfaceImpl) query(
+func QueryWithLogging(
 	ctx context.Context,
+	stmt Statement,
 	queryFunc func(query string, args []interface{}) (int64, error),
 ) error {
-	query, args := s.Sql()
+	query, args := stmt.Sql()
 
-	callLogger(ctx, s)
+	callLogger(ctx, stmt)
 
 	var rowsProcessed int64
 	var err error
@@ -132,7 +135,7 @@ func (s *statementInterfaceImpl) query(
 	})
 
 	callQueryLoggerFunc(ctx, QueryInfo{
-		Statement:     s,
+		Statement:     stmt,
 		RowsProcessed: rowsProcessed,
 		Duration:      duration,
 		Err:           err,
@@ -210,6 +213,10 @@ func duration(f func()) time.Duration {
 	f()
 
 	return time.Since(start)
+}
+
+func (s *statementInterfaceImpl) Type() StatementType {
+	return s.statementType
 }
 
 // ExpressionStatement interfacess
