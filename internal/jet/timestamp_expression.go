@@ -76,13 +76,13 @@ func (t *timestampInterfaceImpl) SUB(rhs Interval) TimestampExpression {
 
 type timestampExpressionWrapper struct {
 	timestampInterfaceImpl
-	Expression
+	expressionWrapper
 }
 
 func newTimestampExpressionWrap(expression Expression) TimestampExpression {
-	timestampExpressionWrap := &timestampExpressionWrapper{Expression: expression}
+	timestampExpressionWrap := &timestampExpressionWrapper{}
 	timestampExpressionWrap.timestampInterfaceImpl.root = timestampExpressionWrap
-	expression.setRoot(timestampExpressionWrap)
+	timestampExpressionWrap.expressionWrapper = newExpressionWrapper(expression, timestampExpressionWrap)
 	return timestampExpressionWrap
 }
 

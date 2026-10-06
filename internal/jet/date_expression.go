@@ -76,13 +76,13 @@ func (d *dateInterfaceImpl) SUB(rhs Interval) TimestampExpression {
 
 type dateExpressionWrapper struct {
 	dateInterfaceImpl
-	Expression
+	expressionWrapper
 }
 
 func newDateExpressionWrap(expression Expression) DateExpression {
-	dateExpressionWrap := &dateExpressionWrapper{Expression: expression}
+	dateExpressionWrap := &dateExpressionWrapper{}
 	dateExpressionWrap.dateInterfaceImpl.root = dateExpressionWrap
-	expression.setRoot(dateExpressionWrap)
+	dateExpressionWrap.expressionWrapper = newExpressionWrapper(expression, dateExpressionWrap)
 	return dateExpressionWrap
 }
 

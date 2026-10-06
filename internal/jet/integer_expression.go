@@ -137,20 +137,13 @@ func newPrefixIntegerOperatorExpression(expression IntegerExpression, operator s
 type integerExpressionWrapper struct {
 	integerInterfaceImpl
 
-	Expression
-}
-
-func (i *integerExpressionWrapper) setRoot(root Expression) {
-	i.Expression.setRoot(root)
-	if integerRoot, ok := root.(IntegerExpression); ok {
-		i.integerInterfaceImpl.root = integerRoot
-	}
+	expressionWrapper
 }
 
 func newIntExpressionWrap(expression Expression) IntegerExpression {
-	intExpressionWrap := &integerExpressionWrapper{Expression: expression}
+	intExpressionWrap := &integerExpressionWrapper{}
 	intExpressionWrap.integerInterfaceImpl.root = intExpressionWrap
-	expression.setRoot(intExpressionWrap)
+	intExpressionWrap.expressionWrapper = newExpressionWrapper(expression, intExpressionWrap)
 
 	return intExpressionWrap
 }

@@ -114,13 +114,13 @@ func (r *rangeInterfaceImpl[T]) UPPER_INF() BoolExpression {
 
 type rangeExpressionWrapper[T Expression] struct {
 	rangeInterfaceImpl[T]
-	Expression
+	expressionWrapper
 }
 
 func newRangeExpressionWrap[T Expression](expression Expression) Range[T] {
-	rangeExpressionWrap := &rangeExpressionWrapper[T]{Expression: expression}
+	rangeExpressionWrap := &rangeExpressionWrapper[T]{}
 	rangeExpressionWrap.rangeInterfaceImpl.root = rangeExpressionWrap
-	expression.setRoot(rangeExpressionWrap)
+	rangeExpressionWrap.expressionWrapper = newExpressionWrapper(expression, rangeExpressionWrap)
 	return rangeExpressionWrap
 }
 

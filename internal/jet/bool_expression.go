@@ -98,20 +98,13 @@ func newPostfixBoolOperatorExpression(expression Expression, operator string) Bo
 
 type boolExpressionWrapper struct {
 	boolInterfaceImpl
-	Expression
-}
-
-func (b *boolExpressionWrapper) setRoot(root Expression) {
-	b.Expression.setRoot(root)
-	if boolRoot, ok := root.(BoolExpression); ok {
-		b.boolInterfaceImpl.root = boolRoot
-	}
+	expressionWrapper
 }
 
 func newBoolExpressionWrap(expression Expression) BoolExpression {
-	boolExpressionWrap := &boolExpressionWrapper{Expression: expression}
+	boolExpressionWrap := &boolExpressionWrapper{}
 	boolExpressionWrap.boolInterfaceImpl.root = boolExpressionWrap
-	expression.setRoot(boolExpressionWrap)
+	boolExpressionWrap.expressionWrapper = newExpressionWrapper(expression, boolExpressionWrap)
 	return boolExpressionWrap
 }
 
