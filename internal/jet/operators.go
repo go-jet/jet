@@ -186,7 +186,7 @@ func (c *caseOperatorImpl) serialize(statement StatementType, out *SQLBuilder, o
 
 // DISTINCT operator can be used to return distinct values of expr
 func DISTINCT(expr Expression) Expression {
-	return newPrefixOperatorExpression(expr, "DISTINCT")
+	return AtomicCustomExpression(Token("DISTINCT"), expr)
 }
 
 func BinaryOperator(lhs Expression, rhs Expression, operator string) Expression {
