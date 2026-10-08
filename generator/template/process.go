@@ -15,19 +15,39 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
+type processSchemaOptions struct {
+	SkipClean bool
+}
+
+type ProcessSchemaOption func(*processSchemaOptions)
+
+func WithSkipClean() func(*processSchemaOptions) {
+	return func(o *processSchemaOptions) {
+		o.SkipClean = true
+	}
+}
+
 // ProcessSchema will process schema metadata and constructs go files using generator Template
-func ProcessSchema(dirPath string, schemaMetaData metadata.Schema, generatorTemplate Template) error {
+func ProcessSchema(dirPath string, schemaMetaData metadata.Schema, generatorTemplate Template, opts ...ProcessSchemaOption) error {
 	if schemaMetaData.IsEmpty() {
 		return nil
+	}
+
+	options := &processSchemaOptions{}
+	for _, optFn := range opts {
+		optFn(options)
 	}
 
 	schemaTemplate := generatorTemplate.Schema(schemaMetaData)
 	schemaPath := filepath.Join(dirPath, schemaTemplate.Path)
 
 	fmt.Println("Destination directory:", schemaPath)
-	fmt.Println("Cleaning up destination directory...")
-	if err := os.RemoveAll(schemaPath); err != nil {
-		return errors.New("failed to cleanup generated files")
+
+	if !options.SkipClean {
+		fmt.Println("Cleaning up destination directory...")
+		if err := os.RemoveAll(schemaPath); err != nil {
+			return errors.New("failed to cleanup generated files")
+		}
 	}
 
 	err := processModel(schemaPath, schemaMetaData, schemaTemplate)
