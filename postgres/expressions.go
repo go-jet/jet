@@ -15,6 +15,12 @@ type BoolExpression = jet.BoolExpression
 // StringExpression interface
 type StringExpression = jet.StringExpression
 
+// JsonExpression interface
+type JsonExpression = jet.JsonExpression
+
+// JsonbExpression interface
+type JsonbExpression = jet.JsonbExpression
+
 type ByteaExpression = jet.BlobExpression
 
 // NumericExpression interface
@@ -89,6 +95,14 @@ var TimeExp = jet.TimeExp
 // Allows go compiler to see any expression as string expression.
 // Does not add sql cast to generated sql builder output.
 var StringExp = jet.StringExp
+
+// JsonExp is a json expression wrapper around arbitrary expression.
+// Allows go compiler to see any expression as a json expression.
+// Does not add sql cast to generated sql builder output.
+var JsonExp = jet.JsonExp
+
+// JsonbExp is a jsonb expression wrapper around arbitrary expression.
+var JsonbExp = jet.JsonbExp
 
 // ByteaExp is blob expression wrapper around arbitrary expression.
 // Allows go compiler to see any expression as string expression.

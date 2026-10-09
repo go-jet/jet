@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/go-jet/jet/v2/generator/metadata"
 	postgresdialect "github.com/go-jet/jet/v2/postgres"
@@ -55,6 +56,15 @@ ORDER BY table_name;
 }
 
 func getColumnsMetaData(db *sql.DB, schemaName string, tableName string) ([]metadata.Column, error) {
+	// CockroachDB collapses the json type into jsonb, so clients can't tell a
+	// `json` from a `jsonb` column. Distinguish it so the SQL builder maps both
+	// to a single Json column type there (jsonb operators don't apply anyway).
+	var sourceDialect = postgresdialect.Dialect.Name() // "PostgreSQL"
+	var serverVersion string
+	if err := db.QueryRow("SELECT version()").Scan(&serverVersion); err == nil && strings.Contains(serverVersion, "CockroachDB") {
+		sourceDialect = "CockroachDB"
+	}
+
 	query := `
 select  
     attr.attname as "column.Name",
@@ -96,7 +106,7 @@ order by
     attr.attnum;
 `
 	var columns []metadata.Column
-	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, postgresdialect.Dialect.Name()}, &columns)
+	_, err := qrm.Query(context.Background(), db, query, []interface{}{schemaName, tableName, sourceDialect}, &columns)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query '%s' columns metadata: %w", tableName, err)
 	}

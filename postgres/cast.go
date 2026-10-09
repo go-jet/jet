@@ -71,6 +71,16 @@ func (b *cast) AS_TEXT() StringExpression {
 	return StringExp(b.AS("text"))
 }
 
+// AS_JSON casts expression AS json type
+func (b *cast) AS_JSON() JsonExpression {
+	return JsonExp(b.AS("json"))
+}
+
+// AS_JSONB casts expression AS jsonb type
+func (b *cast) AS_JSONB() JsonbExpression {
+	return JsonbExp(b.AS("jsonb"))
+}
+
 // AS_CHAR casts expression AS a character type
 func (b *cast) AS_CHAR(length ...int) StringExpression {
 	if len(length) > 0 {

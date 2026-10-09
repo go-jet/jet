@@ -18,6 +18,7 @@
 # Test files
 gen
 .gentestdata
+.gentestdata2
 .tests/testdata/
 .gen
 .docker

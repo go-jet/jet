@@ -223,6 +223,96 @@ func StringColumn(name string) ColumnString {
 
 //------------------------------------------------------//
 
+// ColumnJson is interface for SQL json columns.
+type ColumnJson interface {
+	JsonExpression
+	Column
+
+	From(subQuery SelectTable) ColumnJson
+	SET(jsonExp JsonExpression) ColumnAssigment
+}
+
+type jsonColumnImpl struct {
+	jsonInterfaceImpl
+
+	*ColumnExpressionImpl
+}
+
+func (i *jsonColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
+}
+
+func (i *jsonColumnImpl) From(subQuery SelectTable) ColumnJson {
+	newJsonColumn := JsonColumn(i.name)
+	newJsonColumn.setTableName(i.tableName)
+	newJsonColumn.setSubQuery(subQuery)
+
+	return newJsonColumn
+}
+
+func (i *jsonColumnImpl) SET(jsonExp JsonExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:   i,
+		toAssign: jsonExp,
+	}
+}
+
+// JsonColumn creates named json column.
+func JsonColumn(name string) ColumnJson {
+	jsonColumn := &jsonColumnImpl{}
+	jsonColumn.jsonInterfaceImpl.root = jsonColumn
+	jsonColumn.ColumnExpressionImpl = NewColumnImpl(name, "", jsonColumn)
+
+	return jsonColumn
+}
+
+//------------------------------------------------------//
+
+// ColumnJsonb is interface for SQL jsonb columns.
+type ColumnJsonb interface {
+	JsonbExpression
+	Column
+
+	From(subQuery SelectTable) ColumnJsonb
+	SET(jsonbExp JsonbExpression) ColumnAssigment
+}
+
+type jsonbColumnImpl struct {
+	jsonbInterfaceImpl
+
+	*ColumnExpressionImpl
+}
+
+func (i *jsonbColumnImpl) fromImpl(subQuery SelectTable) Projection {
+	return i.From(subQuery)
+}
+
+func (i *jsonbColumnImpl) From(subQuery SelectTable) ColumnJsonb {
+	newJsonbColumn := JsonbColumn(i.name)
+	newJsonbColumn.setTableName(i.tableName)
+	newJsonbColumn.setSubQuery(subQuery)
+
+	return newJsonbColumn
+}
+
+func (i *jsonbColumnImpl) SET(jsonbExp JsonbExpression) ColumnAssigment {
+	return columnAssigmentImpl{
+		column:   i,
+		toAssign: jsonbExp,
+	}
+}
+
+// JsonbColumn creates named jsonb column.
+func JsonbColumn(name string) ColumnJsonb {
+	jsonbColumn := &jsonbColumnImpl{}
+	jsonbColumn.jsonbInterfaceImpl.root = jsonbColumn
+	jsonbColumn.ColumnExpressionImpl = NewColumnImpl(name, "", jsonbColumn)
+
+	return jsonbColumn
+}
+
+//------------------------------------------------------//
+
 // ColumnBlob is interface for binary data types (bytea, binary, blob, etc...)
 type ColumnBlob interface {
 	BlobExpression

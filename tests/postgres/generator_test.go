@@ -805,7 +805,11 @@ func TestGeneratedAllTypesSQLBuilderFiles(t *testing.T) {
 		testutils.AssertFileNamesEqual(t, tableDir, postgresSqlBuilders...)
 	}
 
-	testutils.AssertFileContent(t, tableDir+"/all_types.go", allTypesTableContent)
+	content := allTypesTableContent
+	if sourceIsCockroachDB() {
+		content = allTypesTableContentCockroach
+	}
+	testutils.AssertFileContent(t, tableDir+"/all_types.go", content)
 
 	if sourceIsPostgres() {
 		testutils.AssertFileContent(t, tableDir+"/sample_ranges.go", sampleRangeTableContent)
@@ -1041,10 +1045,10 @@ type allTypesTable struct {
 	UUID                 postgres.ColumnString
 	XMLPtr               postgres.ColumnString
 	XML                  postgres.ColumnString
-	JSONPtr              postgres.ColumnString
-	JSON                 postgres.ColumnString
-	JsonbPtr             postgres.ColumnString
-	Jsonb                postgres.ColumnString
+	JSONPtr              postgres.ColumnJson
+	JSON                 postgres.ColumnJson
+	JsonbPtr             postgres.ColumnJsonb
+	Jsonb                postgres.ColumnJsonb
 	IntegerArrayPtr      postgres.ColumnIntegerArray
 	IntegerArray         postgres.ColumnIntegerArray
 	TextArrayPtr         postgres.ColumnStringArray
@@ -1145,10 +1149,10 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 		UUIDColumn                 = postgres.StringColumn("uuid")
 		XMLPtrColumn               = postgres.StringColumn("xml_ptr")
 		XMLColumn                  = postgres.StringColumn("xml")
-		JSONPtrColumn              = postgres.StringColumn("json_ptr")
-		JSONColumn                 = postgres.StringColumn("json")
-		JsonbPtrColumn             = postgres.StringColumn("jsonb_ptr")
-		JsonbColumn                = postgres.StringColumn("jsonb")
+		JSONPtrColumn              = postgres.JsonColumn("json_ptr")
+		JSONColumn                 = postgres.JsonColumn("json")
+		JsonbPtrColumn             = postgres.JsonbColumn("jsonb_ptr")
+		JsonbColumn                = postgres.JsonbColumn("jsonb")
 		IntegerArrayPtrColumn      = postgres.IntegerArrayColumn("integer_array_ptr")
 		IntegerArrayColumn         = postgres.IntegerArrayColumn("integer_array")
 		TextArrayPtrColumn         = postgres.StringArrayColumn("text_array_ptr")
@@ -1237,6 +1241,16 @@ func newAllTypesTableImpl(schemaName, tableName, alias string) allTypesTable {
 	}
 }
 `
+
+// CockroachDB collapses the json type into jsonb, so its json-ish columns are
+// all generated as ColumnJson (postgres keeps json and jsonb distinct).
+// The generator also emits the constructor as JsonColumn(...) for those columns,
+// so both the field type and the constructor must be remapped.
+var allTypesTableContentCockroach = strings.ReplaceAll(
+	strings.ReplaceAll(
+		allTypesTableContent,
+		"postgres.ColumnJsonb", "postgres.ColumnJson"),
+	"postgres.JsonbColumn(", "postgres.JsonColumn(")
 
 var sampleRangeTableContent = `
 //

@@ -23,6 +23,18 @@ type ColumnString = jet.ColumnString
 // StringColumn creates named string column.
 var StringColumn = jet.StringColumn
 
+// ColumnJson is interface for SQL json columns.
+type ColumnJson = jet.ColumnJson
+
+// JsonColumn creates named json column.
+var JsonColumn = jet.JsonColumn
+
+// ColumnJsonb is interface for SQL jsonb columns.
+type ColumnJsonb = jet.ColumnJsonb
+
+// JsonbColumn creates named jsonb column.
+var JsonbColumn = jet.JsonbColumn
+
 // ColumnBytea is interface for bytea columns
 type ColumnBytea = jet.ColumnBlob
 

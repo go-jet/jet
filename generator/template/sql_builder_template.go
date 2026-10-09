@@ -179,6 +179,11 @@ func getSqlBuilderColumnType(columnMetaData metadata.Column) string {
 			return "String"
 		}
 
+		// json/jsonb arrays have no dedicated jet column type, fall back to StringArray
+		if columnType == "Json" || columnType == "Jsonb" {
+			return "StringArray"
+		}
+
 		columnType = columnType + "Array"
 	}
 
@@ -209,10 +214,26 @@ func sqlToColumnType(columnMetaData metadata.Column) string {
 	case "interval":
 		return "Interval"
 	case "user-defined", "enum", "text", "character", "character varying", "uuid",
-		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
+		"tsvector", "bit", "bit varying", "money", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "nvarchar", "bpchar", "varbit",
 		"tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
+	case "json", "jsonb":
+		// json/jsonb column types are only exposed as Json/Jsonb for PostgreSQL.
+		// MySQL's json type has no jsonb distinction or json-only operators, so it
+		// stays a String column there. CockroachDB collapses json into jsonb, so
+		// both map to a single Json column type there (no jsonb operator support).
+		switch columnMetaData.DataType.SourceDialect {
+		case "CockroachDB":
+			return "Json"
+		case "PostgreSQL":
+			if strings.ToLower(columnMetaData.DataType.Name) == "jsonb" {
+				return "Jsonb"
+			}
+			return "Json"
+		default:
+			return "String"
+		}
 	case "bytea": // postgres
 		return "Bytea"
 	case "binary", "varbinary", "tinyblob", "mediumblob", "longblob", "blob": // mysql and sqlite

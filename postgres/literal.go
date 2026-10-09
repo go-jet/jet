@@ -118,14 +118,28 @@ func VarChar(length ...int) func(value string) StringExpression {
 	}
 }
 
+// JSON is a parameter constructor for the PostgreSQL json type. It accepts a
+// []byte, json.RawMessage or string holding valid JSON and adds an explicit
+// placeholder type cast to json in the generated query, such as `$1::json`.
+func JSON(value []byte) JsonExpression {
+	return CAST(jet.Literal(value)).AS_JSON()
+}
+
+// JSONB is a parameter constructor for the PostgreSQL jsonb type. It accepts a
+// []byte, json.RawMessage or string holding valid JSON and adds an explicit
+// placeholder type cast to jsonb in the generated query, such as `$1::jsonb`.
+func JSONB(value []byte) JsonbExpression {
+	return CAST(jet.Literal(value)).AS_JSONB()
+}
+
 // Json creates new json literal expression
-func Json(value interface{}) StringExpression {
+func Json(value interface{}) JsonExpression {
 	switch value.(type) {
 	case string, []byte:
 	default:
-		panic("Bytea parameter value has to be of the type string or []byte")
+		panic("Json parameter value has to be of the type string or []byte")
 	}
-	return StringExp(CAST(jet.Literal(value)).AS("json"))
+	return JsonExp(CAST(jet.Literal(value)).AS("json"))
 }
 
 // UUID is a helper function to create string literal expression from uuid object
