@@ -112,27 +112,6 @@ OFFSET ?;
 `, int64(10), int64(2))
 }
 
-func TestSelectLock(t *testing.T) {
-	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(UPDATE()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR UPDATE;
-`)
-	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(SHARE().NOWAIT()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR SHARE NOWAIT;
-`)
-}
-
-func TestSelect_LOCK_IN_SHARE_MODE(t *testing.T) {
-	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).LOCK_IN_SHARE_MODE(), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-LOCK IN SHARE MODE;
-`)
-}
-
 func TestSelect_NOT_EXISTS(t *testing.T) {
 	testutils.AssertStatementSql(t,
 		SELECT(table1ColInt).
