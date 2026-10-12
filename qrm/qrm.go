@@ -358,6 +358,12 @@ func mapRowToBaseTypeSlice(scanContext *ScanContext, slicePtrValue reflect.Value
 
 	if rowElemPtr.IsValid() && !rowElemPtr.IsNil() {
 		updated = true
+		// pgx hands an SQL array column over as []any: fill the slice element-wise instead of
+		// appending the whole array as one element, which is what a one-row-per-element column does.
+		if elems, isArray := rowElemPtr.Elem().Interface().([]any); isArray {
+			err = assignArrayToSlice(slicePtrValue, elems)
+			return
+		}
 		err = appendElemToSlice(slicePtrValue, rowElemPtr)
 		if err != nil {
 			return
@@ -365,6 +371,31 @@ func mapRowToBaseTypeSlice(scanContext *ScanContext, slicePtrValue reflect.Value
 	}
 
 	return
+}
+
+// assignArrayToSlice replaces the slice behind slicePtrValue with the converted elements of an SQL array.
+func assignArrayToSlice(slicePtrValue reflect.Value, elems []any) error {
+	sliceValue := slicePtrValue.Elem()
+	sliceElemType := sliceValue.Type().Elem()
+	newSlice := reflect.MakeSlice(sliceValue.Type(), 0, len(elems))
+
+	for _, elem := range elems {
+		newElem := reflect.New(sliceElemType).Elem()
+		if elem != nil {
+			target := newElem
+			if sliceElemType.Kind() == reflect.Ptr {
+				newElem.Set(reflect.New(sliceElemType.Elem()))
+				target = newElem.Elem()
+			}
+			if err := assign(reflect.ValueOf(elem), target); err != nil {
+				return fmt.Errorf("can't assign array element %T to %s: %w", elem, sliceElemType, err)
+			}
+		}
+		newSlice = reflect.Append(newSlice, newElem)
+	}
+
+	sliceValue.Set(newSlice)
+	return nil
 }
 
 func mapRowToStruct(
