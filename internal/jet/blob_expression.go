@@ -85,14 +85,14 @@ func (b *blobInterfaceImpl) NOT_LIKE(pattern BlobExpression) BoolExpression {
 //---------------------------------------------------//
 
 type blobExpressionWrapper struct {
-	Expression
+	expressionWrapper
 	blobInterfaceImpl
 }
 
 func newBlobExpressionWrap(expression Expression) BlobExpression {
-	blobExpressionWrap := &blobExpressionWrapper{Expression: expression}
+	blobExpressionWrap := &blobExpressionWrapper{}
 	blobExpressionWrap.blobInterfaceImpl.root = blobExpressionWrap
-	expression.setRoot(blobExpressionWrap)
+	blobExpressionWrap.expressionWrapper = newExpressionWrapper(expression, blobExpressionWrap)
 	return blobExpressionWrap
 }
 

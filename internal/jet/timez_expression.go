@@ -75,14 +75,14 @@ func (t *timezInterfaceImpl) SUB(rhs Interval) TimezExpression {
 //---------------------------------------------------//
 
 type timezExpressionWrapper struct {
-	Expression
+	expressionWrapper
 	timezInterfaceImpl
 }
 
 func newTimezExpressionWrap(expression Expression) TimezExpression {
-	timezExpressionWrap := &timezExpressionWrapper{Expression: expression}
+	timezExpressionWrap := &timezExpressionWrapper{}
 	timezExpressionWrap.timezInterfaceImpl.root = timezExpressionWrap
-	expression.setRoot(timezExpressionWrap)
+	timezExpressionWrap.expressionWrapper = newExpressionWrapper(expression, timezExpressionWrap)
 	return timezExpressionWrap
 }
 

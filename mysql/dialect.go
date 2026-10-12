@@ -3,6 +3,7 @@ package mysql
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 
 	"github.com/go-jet/jet/v2/internal/jet"
 )
@@ -60,9 +61,19 @@ func argumentToString(value any) (string, bool) {
 	switch bindVal := value.(type) {
 	case []byte:
 		return fmt.Sprintf("X'%s'", hex.EncodeToString(bindVal)), true
+	case string:
+		return stringQuote(bindVal), true
 	}
 
 	return "", false
+}
+
+// MySQL treats backslash as an escape character inside string literals (unless NO_BACKSLASH_ESCAPES sql mode
+// is enabled), so in addition to doubling single quotes, backslashes have to be escaped as well.
+var stringQuoteReplacer = strings.NewReplacer(`\`, `\\`, `'`, `''`)
+
+func stringQuote(value string) string {
+	return `'` + stringQuoteReplacer.Replace(value) + `'`
 }
 
 func mysqlBitXor(expressions ...jet.Serializer) jet.SerializerFunc {

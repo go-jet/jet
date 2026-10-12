@@ -24,3 +24,9 @@ gen
 .env
 .tempTestDir
 .gentestdata3
+tests/postgres/.gentestdata2
+
+# Docs (VitePress)
+docs/node_modules
+docs/.vitepress/dist
+docs/.vitepress/cache

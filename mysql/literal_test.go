@@ -4,6 +4,8 @@ import (
 	"math"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 func TestBool(t *testing.T) {
@@ -80,4 +82,12 @@ func TestDateTime(t *testing.T) {
 func TestTimestamp(t *testing.T) {
 	assertSerialize(t, Timestamp(2010, time.March, 30, 10, 15, 30), `TIMESTAMP(?)`, "2010-03-30 10:15:30")
 	assertSerialize(t, TimestampT(time.Now()), `TIMESTAMP(?)`)
+}
+
+func TestStringLiteralBackslashEscaping(t *testing.T) {
+	// MySQL treats backslash as an escape character inside string literals (unless NO_BACKSLASH_ESCAPES is set),
+	// so backslashes have to be escaped as well, otherwise value can break out of the string literal.
+	assertSerialize(t, jet.FixedLiteral(`\'; DROP TABLE sensitive; --`), `'\\''; DROP TABLE sensitive; --'`)
+	assertSerialize(t, jet.FixedLiteral(`C:\path\to\file`), `'C:\\path\\to\\file'`)
+	assertDebugSerialize(t, String(`it's a \ backslash`), `'it''s a \\ backslash'`)
 }

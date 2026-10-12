@@ -615,7 +615,7 @@ Without Jet these bugs will have to be either caught by tests or by manual testi
 
 ## Dependencies
 
-To execute Jet SQL statements, **ANY** SQL driver that implements Go's standard `database/sql` interface can be used. 
+To execute Jet SQL statements, **ANY** SQL driver that implements Go's standard `database/sql` interface can be used. There is also an experimental support for pgx/v5 interface on `pgx` branch.
 
 By default, the `Jet` generator executable uses the following SQL drivers to read database schema information:
 - `github.com/lib/pq` _(`PostgreSQL` and `CockroachDB` )_

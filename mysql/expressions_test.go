@@ -63,3 +63,50 @@ func TestRawType(t *testing.T) {
 	assertSerialize(t, RawDate("table.colDate").EQ(DateT(time)),
 		"((table.colDate) = CAST(? AS DATE))", time)
 }
+
+func TestTypeWrappersOnColumnsInSelectJson(t *testing.T) {
+	stmt := SELECT_JSON_OBJ(
+		table1ColTimestamp,
+		TimestampExp(table2ColStr).AS("colStr"),
+		DateExp(table1ColString).AS("oneWrapper"),
+		StringExp(TimestampExp(table1ColTime)).AS("colTime"),
+		StringExp(TimestampExp(table2ColTimestamp)).AS("twoWrappers"),
+		TimestampExp(StringExp(DateExp(table2ColDate))).AS("colDate"),
+		TimestampExp(StringExp(DateExp(table1ColDate))).AS("threeWrappers"),
+	).FROM(
+		table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)),
+	)
+
+	expectedSQL := `
+SELECT JSON_OBJECT(
+          'colTimestamp', DATE_FORMAT(table1.col_timestamp,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'colStr', DATE_FORMAT(table2.col_str,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'oneWrapper', CONCAT(DATE_FORMAT(table1.col_string,'%Y-%m-%d'), 'T00:00:00Z'),
+          'colTime', table1.col_time,
+          'twoWrappers', table2.col_timestamp,
+          'colDate', DATE_FORMAT(table2.col_date,'%Y-%m-%dT%H:%i:%s.%fZ'),
+          'threeWrappers', DATE_FORMAT(table1.col_date,'%Y-%m-%dT%H:%i:%s.%fZ')
+     ) AS "json"
+FROM db.table1
+     INNER JOIN db.table2 ON (table1.col_int = table2.col_int);
+`
+	assertStatementSql(t, stmt, expectedSQL)
+
+	// wrapping the same columns again does not change the statement
+	for _, column := range []Expression{table1ColTimestamp, table2ColStr, table1ColString, table1ColTime,
+		table2ColTimestamp, table2ColDate, table1ColDate} {
+		StringExp(TimestampExp(column))
+	}
+
+	assertStatementSql(t, stmt, expectedSQL)
+
+	// only columns have default alias, wrapped column has to be aliased
+	for _, projection := range []Projection{
+		TimestampExp(table2ColStr),
+		StringExp(TimestampExp(table2ColTimestamp)),
+		TimestampExp(StringExp(DateExp(table2ColDate))),
+	} {
+		assertStatementSqlErr(t, SELECT_JSON_OBJ(projection).FROM(table2),
+			"jet: expression need to be aliased when used as SELECT JSON projection.")
+	}
+}

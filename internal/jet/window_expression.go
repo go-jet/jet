@@ -29,18 +29,16 @@ type windowExpression interface {
 }
 
 func newWindowExpression(exp Expression) windowExpression {
-	newExp := &windowExpressionImpl{
-		Expression: exp,
-	}
+	newExp := &windowExpressionImpl{}
 
+	newExp.expressionWrapper = newExpressionWrapper(exp, newExp)
 	newExp.commonWindowImpl.expression = exp
-	exp.setRoot(newExp)
 
 	return newExp
 }
 
 type windowExpressionImpl struct {
-	Expression
+	expressionWrapper
 	commonWindowImpl
 }
 
@@ -61,18 +59,17 @@ type floatWindowExpression interface {
 }
 
 func newFloatWindowExpression(floatExp FloatExpression) floatWindowExpression {
-	newExp := &floatWindowExpressionImpl{
-		FloatExpression: floatExp,
-	}
+	newExp := &floatWindowExpressionImpl{}
 
+	newExp.floatInterfaceImpl.root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(floatExp, newExp)
 	newExp.commonWindowImpl.expression = floatExp
-	floatExp.setRoot(newExp)
 
 	return newExp
 }
 
 type floatWindowExpressionImpl struct {
-	FloatExpression
+	floatExpressionWrapper
 	commonWindowImpl
 }
 
@@ -93,18 +90,17 @@ type integerWindowExpression interface {
 }
 
 func newIntegerWindowExpression(intExp IntegerExpression) integerWindowExpression {
-	newExp := &integerWindowExpressionImpl{
-		IntegerExpression: intExp,
-	}
+	newExp := &integerWindowExpressionImpl{}
 
+	newExp.integerInterfaceImpl.root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(intExp, newExp)
 	newExp.commonWindowImpl.expression = intExp
-	intExp.setRoot(newExp)
 
 	return newExp
 }
 
 type integerWindowExpressionImpl struct {
-	IntegerExpression
+	integerExpressionWrapper
 	commonWindowImpl
 }
 
@@ -125,18 +121,17 @@ type boolWindowExpression interface {
 }
 
 func newBoolWindowExpression(boolExp BoolExpression) boolWindowExpression {
-	newExp := &boolWindowExpressionImpl{
-		BoolExpression: boolExp,
-	}
+	newExp := &boolWindowExpressionImpl{}
 
+	newExp.boolInterfaceImpl.root = newExp
+	newExp.expressionWrapper = newExpressionWrapper(boolExp, newExp)
 	newExp.commonWindowImpl.expression = boolExp
-	boolExp.setRoot(newExp)
 
 	return newExp
 }
 
 type boolWindowExpressionImpl struct {
-	BoolExpression
+	boolExpressionWrapper
 	commonWindowImpl
 }
 

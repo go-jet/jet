@@ -128,6 +128,37 @@ SELECT table1.col_bool AS "table1.col_bool"
 FROM db.table1
 FOR UPDATE OF table1 NOWAIT;
 `)
+	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt))).
+		FOR(UPDATE().OF(table1), SHARE().OF(table2)), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+     INNER JOIN db.table2 ON (table1.col_int = table2.col_int)
+FOR UPDATE OF table1
+FOR SHARE OF table2;
+`)
+	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(UPDATE().OF(table1).NOWAIT(), SHARE().OF(table2).SKIP_LOCKED()), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR UPDATE OF table1 NOWAIT
+FOR SHARE OF table2 SKIP LOCKED;
+`)
+	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(SHARE().OF(table1, table2), UPDATE().OF(table3)), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR SHARE OF table1, table2
+FOR UPDATE OF table3;
+`)
+	locks := []RowLock{UPDATE().OF(table1), SHARE().OF(table2)}
+	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(locks...), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR UPDATE OF table1
+FOR SHARE OF table2;
+`)
+	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(), `
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1;
+`)
 }
 
 func TestSelect_LOCK_IN_SHARE_MODE(t *testing.T) {

@@ -2710,6 +2710,57 @@ FOR UPDATE OF "myFilm";
 	})
 }
 
+func TestSelectRowLockMultipleLockClauses(t *testing.T) {
+
+	myActor := Actor.AS("myActor")
+
+	stmt := SELECT(
+		Film.FilmID,
+		FilmActor.ActorID,
+		myActor.FirstName,
+		FilmCategory.CategoryID,
+	).FROM(
+		Film.
+			INNER_JOIN(FilmActor, FilmActor.FilmID.EQ(Film.FilmID)).
+			INNER_JOIN(myActor, myActor.ActorID.EQ(FilmActor.ActorID)).
+			INNER_JOIN(FilmCategory, FilmCategory.FilmID.EQ(Film.FilmID)),
+	).LIMIT(
+		1,
+	).FOR(
+		SHARE().OF(Film, FilmActor),
+		UPDATE().OF(myActor).NOWAIT(),
+		KEY_SHARE().OF(FilmCategory).SKIP_LOCKED(),
+	)
+
+	testutils.AssertDebugStatementSql(t, stmt, `
+SELECT film.film_id AS "film.film_id",
+     film_actor.actor_id AS "film_actor.actor_id",
+     "myActor".first_name AS "myActor.first_name",
+     film_category.category_id AS "film_category.category_id"
+FROM dvds.film
+     INNER JOIN dvds.film_actor ON (film_actor.film_id = film.film_id)
+     INNER JOIN dvds.actor AS "myActor" ON ("myActor".actor_id = film_actor.actor_id)
+     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
+LIMIT 1
+FOR SHARE OF film, film_actor
+FOR UPDATE OF "myActor" NOWAIT
+FOR KEY SHARE OF film_category SKIP LOCKED;
+`)
+
+	testutils.ExecuteInTxAndRollback(t, db, func(tx qrm.DB) {
+		var dest []struct {
+			model.Film
+			model.FilmActor
+			model.Actor `alias:"myActor.*"`
+			model.FilmCategory
+		}
+
+		err := stmt.Query(tx, &dest)
+		require.NoError(t, err)
+		require.Len(t, dest, 1)
+	})
+}
+
 func TestSelectQuickStart(t *testing.T) {
 
 	stmt := SELECT(

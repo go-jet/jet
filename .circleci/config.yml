@@ -147,6 +147,7 @@ jobs:
             COVERPKG="github.com/go-jet/jet/v2/postgres/...,github.com/go-jet/jet/v2/mysql/...,github.com/go-jet/jet/v2/sqlite/...,github.com/go-jet/jet/v2/qrm/...,github.com/go-jet/jet/v2/generator/...,github.com/go-jet/jet/v2/internal/...,github.com/go-jet/jet/v2/stmtcache/..."
 
             gotestsum --junitfile $TEST_RESULTS/root-report.xml --format testname -- \
+              -race \
               -coverprofile=root-cover.out \
               -covermode=atomic \
               -coverpkg="$COVERPKG" \
@@ -155,6 +156,7 @@ jobs:
             cd tests
             gotestsum --junitfile $TEST_RESULTS/integration-report.xml --format testname -- \
               -tags postgres \
+              -race \
               -coverprofile=../integration-cover.out \
               -covermode=atomic \
               -coverpkg="$COVERPKG" \

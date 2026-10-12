@@ -4,15 +4,6 @@ import (
 	"github.com/go-jet/jet/v2/internal/jet"
 )
 
-// RowLock is interface for SELECT statement row lock types
-type RowLock = jet.RowLock
-
-// Row lock types
-var (
-	UPDATE = jet.NewRowLock("UPDATE")
-	SHARE  = jet.NewRowLock("SHARE")
-)
-
 // Window function clauses
 var (
 	PARTITION_BY = jet.PARTITION_BY
@@ -49,8 +40,6 @@ type SelectStatement interface {
 	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
-	FOR(lock RowLock) SelectStatement
-	LOCK_IN_SHARE_MODE() SelectStatement
 
 	UNION(rhs SelectStatement) SetStatement
 	UNION_ALL(rhs SelectStatement) SetStatement
@@ -67,15 +56,13 @@ func newSelectStatement(table ReadableTable, projections []Projection) SelectSta
 	newSelect := &selectStatementImpl{}
 	newSelect.ExpressionStatement = jet.NewExpressionStatementImpl(Dialect, jet.SelectStatementType, newSelect, &newSelect.Select,
 		&newSelect.From, &newSelect.Where, &newSelect.GroupBy, &newSelect.Having, &newSelect.Window, &newSelect.OrderBy,
-		&newSelect.Limit, &newSelect.Offset, &newSelect.For, &newSelect.ShareLock)
+		&newSelect.Limit, &newSelect.Offset)
 
 	newSelect.Select.ProjectionList = projections
 	if table != nil {
 		newSelect.From.Tables = []jet.Serializer{table}
 	}
 	newSelect.Limit.Count = -1
-	newSelect.ShareLock.Name = "LOCK IN SHARE MODE"
-	newSelect.ShareLock.InNewLine = true
 
 	newSelect.setOperatorsImpl.root = newSelect
 
@@ -86,17 +73,15 @@ type selectStatementImpl struct {
 	jet.ExpressionStatement
 	setOperatorsImpl
 
-	Select    jet.ClauseSelect
-	From      jet.ClauseFrom
-	Where     jet.ClauseWhere
-	GroupBy   jet.ClauseGroupBy
-	Having    jet.ClauseHaving
-	Window    jet.ClauseWindow
-	OrderBy   jet.ClauseOrderBy
-	Limit     jet.ClauseLimit
-	Offset    jet.ClauseOffset
-	For       jet.ClauseFor
-	ShareLock jet.ClauseOptional
+	Select  jet.ClauseSelect
+	From    jet.ClauseFrom
+	Where   jet.ClauseWhere
+	GroupBy jet.ClauseGroupBy
+	Having  jet.ClauseHaving
+	Window  jet.ClauseWindow
+	OrderBy jet.ClauseOrderBy
+	Limit   jet.ClauseLimit
+	Offset  jet.ClauseOffset
 }
 
 func (s *selectStatementImpl) DISTINCT() SelectStatement {
@@ -141,16 +126,6 @@ func (s *selectStatementImpl) LIMIT(limit int64) SelectStatement {
 
 func (s *selectStatementImpl) OFFSET(offset int64) SelectStatement {
 	s.Offset.Count = Int(offset)
-	return s
-}
-
-func (s *selectStatementImpl) FOR(lock RowLock) SelectStatement {
-	s.For.Lock = lock
-	return s
-}
-
-func (s *selectStatementImpl) LOCK_IN_SHARE_MODE() SelectStatement {
-	s.ShareLock.Show = true
 	return s
 }
 

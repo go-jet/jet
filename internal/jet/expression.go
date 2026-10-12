@@ -12,7 +12,6 @@ type Expression interface {
 	expressionOrColumnList
 
 	serializeForJsonValue(statement StatementType, out *SQLBuilder)
-	setRoot(root Expression)
 
 	// IS_NULL tests expression whether it is a NULL value.
 	IS_NULL() BoolExpression
@@ -39,10 +38,6 @@ type ExpressionInterfaceImpl struct {
 }
 
 func (e *ExpressionInterfaceImpl) isExpressionOrColumnList() {}
-
-func (e *ExpressionInterfaceImpl) setRoot(root Expression) {
-	e.Root = root
-}
 
 func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 	panic(fmt.Sprintf("jet: can't export unaliased expression subQuery: %s, expression: %s",
@@ -131,6 +126,27 @@ func newExpression(serializer Serializer) Expression {
 	expr.ExpressionInterfaceImpl.Root = expr
 
 	return expr
+}
+
+// expressionWrapper is a base type for the expressions that wrap another expression (type wrappers BoolExp, IntExp,
+// StringExp, ... and window expressions). Wrapped expression is never modified, because it might be shared between
+// statements and goroutines (for instance, generated table columns). Expression methods are served by the wrapper
+// ExpressionInterfaceImpl, with the wrapper as the root, and only serialize is forwarded to the wrapped expression.
+type expressionWrapper struct {
+	ExpressionInterfaceImpl
+
+	expression Expression
+}
+
+func newExpressionWrapper(expression, root Expression) expressionWrapper {
+	return expressionWrapper{
+		ExpressionInterfaceImpl: ExpressionInterfaceImpl{Root: root},
+		expression:              expression,
+	}
+}
+
+func (e *expressionWrapper) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	e.expression.serialize(statement, out, options...)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)

@@ -92,8 +92,8 @@ func (s *selectJsonStatement) FETCH_FIRST(count IntegerExpression) fetchExpand {
 	}
 }
 
-func (s *selectJsonStatement) FOR(lock RowLock) SelectStatement {
-	s.subQuery.For.Lock = lock
+func (s *selectJsonStatement) FOR(locks ...RowLock) SelectStatement {
+	s.subQuery.For.Locks = locks
 	return s
 }
 

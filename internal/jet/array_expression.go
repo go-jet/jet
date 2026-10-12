@@ -76,13 +76,13 @@ func (a arrayInterfaceImpl[E]) AT(at IntegerExpression) E {
 
 type arrayExpressionWrapper[E Expression] struct {
 	arrayInterfaceImpl[E]
-	Expression
+	expressionWrapper
 }
 
 func newArrayExpressionWrap[E Expression](expression Expression) Array[E] {
-	arrayExpressionWrapper := &arrayExpressionWrapper[E]{Expression: expression}
+	arrayExpressionWrapper := &arrayExpressionWrapper[E]{}
 	arrayExpressionWrapper.arrayInterfaceImpl.parent = arrayExpressionWrapper
-	expression.setRoot(arrayExpressionWrapper)
+	arrayExpressionWrapper.expressionWrapper = newExpressionWrapper(expression, arrayExpressionWrapper)
 	return arrayExpressionWrapper
 }
 

@@ -123,13 +123,13 @@ func newBinaryStringOperatorExpression(lhs, rhs Expression, operator string) Str
 
 type stringExpressionWrapper struct {
 	stringInterfaceImpl
-	Expression
+	expressionWrapper
 }
 
 func newStringExpressionWrap(expression Expression) StringExpression {
-	stringExpressionWrap := &stringExpressionWrapper{Expression: expression}
+	stringExpressionWrap := &stringExpressionWrapper{}
 	stringExpressionWrap.stringInterfaceImpl.root = stringExpressionWrap
-	expression.setRoot(stringExpressionWrap)
+	stringExpressionWrap.expressionWrapper = newExpressionWrapper(expression, stringExpressionWrap)
 	return stringExpressionWrap
 }
 

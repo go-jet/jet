@@ -88,13 +88,13 @@ func (i *intervalInterfaceImpl) DIV(rhs NumericExpression) IntervalExpression {
 
 type intervalWrapper struct {
 	intervalInterfaceImpl
-	Expression
+	expressionWrapper
 }
 
 func newIntervalExpressionWrap(expression Expression) IntervalExpression {
-	intervalWrap := &intervalWrapper{Expression: expression}
+	intervalWrap := &intervalWrapper{}
 	intervalWrap.intervalInterfaceImpl.root = intervalWrap
-	expression.setRoot(intervalWrap)
+	intervalWrap.expressionWrapper = newExpressionWrapper(expression, intervalWrap)
 	return intervalWrap
 }
 
