@@ -65,6 +65,29 @@ func TestShouldSkipTableAllow(t *testing.T) {
 	}
 }
 
+func TestShouldSkipPartitionTables(t *testing.T) {
+	defer func() { skipPartitionTables = false }()
+
+	// an empty ignore filter keeps every table by default
+	filter := templateFilter{names: parseList(""), ignore: true}
+
+	partition := metadata.Table{Name: "measurement_y2020", IsPartition: true}
+	parent := metadata.Table{Name: "measurement", IsPartition: false}
+
+	skipPartitionTables = false
+	if shouldSkipTable(partition, filter) {
+		t.Error("partition should be kept when -skip-partition-tables is off")
+	}
+
+	skipPartitionTables = true
+	if !shouldSkipTable(partition, filter) {
+		t.Error("partition should be skipped when -skip-partition-tables is on")
+	}
+	if shouldSkipTable(parent, filter) {
+		t.Error("partitioned parent table should be kept")
+	}
+}
+
 func TestShouldSkipEnum(t *testing.T) {
 	filter := templateFilter{names: parseList("mpaa_*"), ignore: true}
 

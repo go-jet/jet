@@ -44,8 +44,9 @@ var (
 	ignoreViews  string
 	ignoreEnums  string
 
-	skipModel      bool
-	skipSQLBuilder bool
+	skipModel           bool
+	skipSQLBuilder      bool
+	skipPartitionTables bool
 
 	destDir  string
 	modelPkg string
@@ -93,6 +94,7 @@ func init() {
 	flag.StringVar(&ignoreEnums, "ignore-enums", "", `Comma-separated list of enums to ignore. Names may use shell wildcards, e.g. "user_*".`)
 	flag.BoolVar(&skipModel, "skip-model", false, `Skip model generation.`)
 	flag.BoolVar(&skipSQLBuilder, "skip-sql-builder", false, `Skip SQL builder generation.`)
+	flag.BoolVar(&skipPartitionTables, "skip-partition-tables", false, `Skip generation for partition child tables. (PostgreSQL only)`)
 
 	flag.StringVar(&destDir, "path", "", "Destination directory for files generated.")
 	flag.StringVar(&modelPkg, "rel-model-path", "model", "Relative path for the Model files package from the destination directory.")
@@ -214,7 +216,7 @@ func usage() {
 		"source", "dsn", "host", "port", "user", "password", "dbname", "schema", "params", "sslmode",
 		"path",
 		"ignore-tables", "ignore-views", "ignore-enums",
-		"skip-model", "skip-sql-builder",
+		"skip-model", "skip-sql-builder", "skip-partition-tables",
 		"rel-model-path", "rel-table-path", "rel-view-path", "rel-enum-path", "tables", "views",
 		"enums",
 		"version",
@@ -357,6 +359,10 @@ func createTemplateFilter(ignoreList, allowList, filterType string) templateFilt
 }
 
 func shouldSkipTable(table metadata.Table, filter templateFilter) bool {
+	if skipPartitionTables && table.IsPartition {
+		return true
+	}
+
 	if filter.ignore {
 		return matchesFilter(filter.names, table.Name)
 	}
