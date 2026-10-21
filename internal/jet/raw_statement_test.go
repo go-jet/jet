@@ -61,3 +61,30 @@ func TestRawStatementOverlappingArgumentNames(t *testing.T) {
 		})
 	}
 }
+
+func TestRawExpressionOverlappingArgumentNames(t *testing.T) {
+	cases := []struct {
+		name string
+		stmt jet.SerializerStatement
+		sql  string
+		args []interface{}
+	}{
+		{"postgres", postgres.SELECT(postgres.Int(700).ADD(postgres.RawInt(":level + :levels + :level",
+			postgres.RawArgs{":level": 11, ":levels": 22}))),
+			"SELECT $1 + ($2 + $3 + $2);", []interface{}{int64(700), 11, 22}},
+		{"mysql", mysql.SELECT(mysql.Int(700).ADD(mysql.RawInt(":level + :levels + :level",
+			mysql.RawArgs{":level": 11, ":levels": 22}))),
+			"SELECT ? + (? + ? + ?);", []interface{}{int64(700), 11, 22, 11}},
+		{"sqlite", sqlite.SELECT(sqlite.Int(700).ADD(sqlite.RawInt(":level + :levels + :level",
+			sqlite.RawArgs{":level": 11, ":levels": 22}))),
+			"SELECT ? + (? + ? + ?);", []interface{}{int64(700), 11, 22, 11}},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			sql, args := tc.stmt.Sql()
+			require.Equal(t, tc.sql, strings.Join(strings.Fields(sql), " "))
+			require.Equal(t, tc.args, args)
+			require.Equal(t, "SELECT 700 + (11 + 22 + 11);", strings.Join(strings.Fields(tc.stmt.DebugSql()), " "))
+		})
+	}
+}
