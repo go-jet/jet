@@ -1914,3 +1914,75 @@ func newSampleArraysTableImpl(schemaName, tableName, alias string) sampleArraysT
 }
 `)
 }
+
+func TestGeneratorHandlesDomains(t *testing.T) {
+	// CockroachDB does not support all the domain definitions used below.
+	skipForCockroachDB(t)
+
+	// The domains and the table that uses them live in a dedicated schema, so the
+	// generator can run on it without disturbing the other test schemas.
+	const schemaName = "jet_domain_test"
+
+	_, err := db.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", schemaName))
+	require.NoError(t, err)
+
+	_, err = db.ExecContext(ctx, fmt.Sprintf("CREATE SCHEMA %s", schemaName))
+	require.NoError(t, err)
+
+	defer func() {
+		_, err := db.ExecContext(ctx, fmt.Sprintf("DROP SCHEMA IF EXISTS %s CASCADE", schemaName))
+		require.NoError(t, err)
+	}()
+
+	// Execute each statement separately: the test suite enables statement caching,
+	// and PostgreSQL refuses multiple commands in a prepared statement.
+	statements := []string{
+		fmt.Sprintf("CREATE TYPE %s.mood AS ENUM ('sad', 'ok', 'happy')", schemaName),
+		fmt.Sprintf("CREATE DOMAIN %s.mood_domain AS %s.mood", schemaName, schemaName),
+		fmt.Sprintf("CREATE DOMAIN %s.positive_int AS int CHECK (VALUE > 0)", schemaName),
+		fmt.Sprintf("CREATE DOMAIN %s.int_range_domain AS int4range", schemaName),
+		fmt.Sprintf("CREATE TYPE %s.address AS (street text, city text)", schemaName),
+		fmt.Sprintf(`CREATE TABLE %s.domain_user (
+			id serial PRIMARY KEY,
+			mood %s.mood,
+			mood_domain %s.mood_domain,
+			positive_int %s.positive_int,
+			int_range_domain %s.int_range_domain,
+			mood_array %s.mood_domain[],
+			address %s.address
+		)`, schemaName, schemaName, schemaName, schemaName, schemaName, schemaName, schemaName),
+	}
+
+	for _, statement := range statements {
+		_, err = db.ExecContext(ctx, statement)
+		require.NoError(t, err)
+	}
+
+	err = os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
+
+	err = postgres.GenerateDSN(defaultDSN(), schemaName, genTestDir2)
+	require.NoError(t, err)
+
+	modelDir := filepath.Join(genTestDir2, "jetdb", schemaName, "model")
+
+	content, err := os.ReadFile(filepath.Join(modelDir, "domain_user.go"))
+	require.NoError(t, err)
+
+	generated := string(content)
+
+	// A domain over an enum is mapped to the enum.
+	require.Regexp(t, `Mood\s+\*Mood`, generated)
+	require.Regexp(t, `MoodDomain\s+\*Mood`, generated)
+	// A domain over a base type is mapped to the base type.
+	require.Regexp(t, `PositiveInt\s+\*int32`, generated)
+	// A domain over a range is mapped to the range type.
+	require.Regexp(t, `IntRangeDomain\s+\*pgtype.Int4range`, generated)
+	// An array of a domain over an enum is mapped to a string array.
+	require.Regexp(t, `MoodArray\s+\*pq.StringArray`, generated)
+	// A composite type is still not supported: it is mapped to its text representation.
+	require.Regexp(t, `Address\s+\*string`, generated)
+
+	err = os.RemoveAll(genTestDir2)
+	require.NoError(t, err)
+}

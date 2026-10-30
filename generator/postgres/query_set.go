@@ -70,16 +70,15 @@ select
     (case when tp.typcategory = 'A' then greatest(1, attr.attndims) --cockroach num dims fix
           else 0
         end) as "dataType.dimensions",
-    (case coalesce(elem.typtype, tp.typtype)
-         when 'b' then 'base'
-         when 'd' then 'base'
-         when 'e' then 'enum'
+    -- the kind of the type the column is based on: the elements of an array, or the
+    -- base type of a domain. An enum of another schema is not usable by the generated
+    -- code, so it is treated as a base type.
+    (case eff_tp.typtype
+         when 'e' then (case when eff_tp.typnamespace = ns.oid then 'enum' else 'base' end)
          when 'r' then 'range'
+         else 'base'
         end) as "dataType.Kind",
-    (case when tp.typtype = 'd' then (select pg_type.typname from pg_catalog.pg_type where pg_type.oid = tp.typbasetype)
-          when tp.typcategory = 'A' then elem.typname
-          else tp.typname
-        end) as "dataType.Name",
+    eff_tp.typname as "dataType.Name",
     false as "dataType.isUnsigned",
     $3::text as "dataType.SourceDialect"
 from pg_catalog.pg_attribute as attr
@@ -87,6 +86,17 @@ from pg_catalog.pg_attribute as attr
      join pg_catalog.pg_namespace as ns on ns.oid = cls.relnamespace
      join pg_catalog.pg_type as tp on tp.oid = attr.atttypid
 	 left join pg_catalog.pg_type elem ON tp.typelem = elem.oid -- only for arrays
+     -- the type the column is really based on: the type of the elements of an array, or
+     -- the base type of a domain
+     cross join lateral (
+        select coalesce(
+            (select dom.typbasetype from pg_catalog.pg_type dom where dom.oid = elem.oid and dom.typtype = 'd'),
+            (select dom.typbasetype from pg_catalog.pg_type dom where dom.oid = tp.oid and dom.typtype = 'd'),
+            (case when tp.typcategory = 'A' then elem.oid end),
+            tp.oid
+        ) as basetype
+     ) eff
+     join pg_catalog.pg_type eff_tp on eff_tp.oid = eff.basetype
 where 
     ns.nspname = $1 and
     cls.relname = $2 and 
