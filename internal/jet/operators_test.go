@@ -29,3 +29,14 @@ func TestCase2(t *testing.T) {
 	assertClauseSerialize(t, query, `(CASE table3.col1 WHEN $1 THEN table3.col1 + $2 WHEN $3 THEN table3.col1 + $4 ELSE $5 END)`,
 		int64(1), int64(1), int64(2), int64(2), int64(0))
 }
+
+func TestOperatorDISTINCT(t *testing.T) {
+	assertClauseSerialize(t, DISTINCT(table1ColInt), "DISTINCT table1.col_int")
+	assertClauseSerialize(t, COUNT(DISTINCT(table1ColInt)), "COUNT(DISTINCT table1.col_int)")
+	assertClauseSerialize(t, COUNT(DISTINCT(table1ColInt.ADD(Int(1)))), "COUNT(DISTINCT (table1.col_int + $1))", int64(1))
+	assertClauseSerialize(t,
+		Func("array_agg", CustomExpression(DISTINCT(table1ColInt), Token("ORDER BY"), table1ColInt)),
+		"array_agg(DISTINCT table1.col_int ORDER BY table1.col_int)",
+	)
+	assertProjectionSerialize(t, DISTINCT(table1ColInt).AS("distinct_int"), `DISTINCT table1.col_int AS "distinct_int"`)
+}
