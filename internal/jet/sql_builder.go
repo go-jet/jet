@@ -193,33 +193,40 @@ func (s *SQLBuilder) insertRawQuery(raw string, namedArg map[string]interface{})
 	}
 
 	sort.Slice(namedArgumentPositions, func(i, j int) bool {
+		if namedArgumentPositions[i].Position == namedArgumentPositions[j].Position {
+			return len(namedArgumentPositions[i].Name) > len(namedArgumentPositions[j].Name)
+		}
 		return namedArgumentPositions[i].Position < namedArgumentPositions[j].Position
 	})
 
-	for _, namedArgumentPos := range namedArgumentPositions {
-		// if named argument does not exists in raw string do not add argument to the list of arguments
-		// It can happen if the same argument occurs multiple times in postgres query.
-		if !strings.Contains(raw, namedArgumentPos.Name) {
+	var query strings.Builder
+	placeholders := make(map[string]string)
+	position := 0
+
+	for _, argument := range namedArgumentPositions {
+		// Prefer the longest name at each position and skip overlapping matches.
+		if argument.Position < position {
 			continue
 		}
-		s.Args = append(s.Args, namedArgumentPos.Value)
-		currentArgNum := len(s.Args)
 
-		placeholder := s.Dialect.ArgumentPlaceholder()(currentArgNum)
-		// if placeholder is not unique identifier ($1, $2, etc..), we will replace just one occurrence of the argument
-		toReplace := -1 // all occurrences
-		if placeholder == "?" {
-			toReplace = 1 // just one occurrence
+		query.WriteString(raw[position:argument.Position])
+
+		placeholder, exists := placeholders[argument.Name]
+		if !exists || placeholder == "?" {
+			s.Args = append(s.Args, argument.Value)
+			placeholder = s.Dialect.ArgumentPlaceholder()(len(s.Args))
+			placeholders[argument.Name] = placeholder
 		}
-
 		if s.Debug {
-			placeholder = s.argToString(namedArgumentPos.Value)
+			placeholder = s.argToString(argument.Value)
 		}
 
-		raw = strings.Replace(raw, namedArgumentPos.Name, placeholder, toReplace)
+		query.WriteString(placeholder)
+		position = argument.Position + len(argument.Name)
 	}
 
-	s.WriteString(raw)
+	query.WriteString(raw[position:])
+	s.WriteString(query.String())
 }
 
 func (s *SQLBuilder) argToString(value interface{}) string {

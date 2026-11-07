@@ -127,3 +127,25 @@ func TestRawStatementRows(t *testing.T) {
 
 	requireLogged(t, stmt)
 }
+
+func TestRawOverlappingArgumentNames(t *testing.T) {
+	for _, query := range []string{
+		"SELECT :level + :levels + :level AS value",
+		"SELECT :levels + :level + :level AS value",
+	} {
+		t.Run(query, func(t *testing.T) {
+			stmt := RawStatement(query, RawArgs{":level": 11, ":levels": 22})
+			var result struct{ Value int64 }
+			require.NoError(t, stmt.Query(db, &result))
+			require.Equal(t, int64(44), result.Value)
+		})
+	}
+
+	t.Run("expression after existing argument", func(t *testing.T) {
+		stmt := SELECT(Int(700).ADD(RawInt(":level + :levels + :level",
+			RawArgs{":level": 11, ":levels": 22})).AS("value"))
+		var result struct{ Value int64 }
+		require.NoError(t, stmt.Query(db, &result))
+		require.Equal(t, int64(744), result.Value)
+	})
+}
