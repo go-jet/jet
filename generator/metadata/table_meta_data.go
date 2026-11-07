@@ -4,7 +4,10 @@ package metadata
 type Table struct {
 	Name    string `sql:"primary_key"`
 	Comment string
-	Columns []Column
+	// IsPartition is true when the table is a partition child of a partitioned
+	// table. Currently only populated for PostgreSQL.
+	IsPartition bool
+	Columns     []Column
 }
 
 // MutableColumns returns list of mutable columns for table
